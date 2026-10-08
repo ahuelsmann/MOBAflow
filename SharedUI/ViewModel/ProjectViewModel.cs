@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 
@@ -65,6 +66,67 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
         // Synchronize back to Model
         Model.Name = value;
     }
+
+    /// <summary>
+    /// Gets or sets the IP address of the Z21 this project controls; empty when none is assigned.
+    /// A different address clears the remembered serial number.
+    /// </summary>
+    public string Z21IpAddress
+    {
+        get => Model.Z21.IpAddress;
+        set
+        {
+            if (SetProperty(Model.Z21.IpAddress, value?.Trim() ?? string.Empty, Model.Z21, (z21, ip) => z21.IpAddress = ip))
+            {
+                Z21SerialNumber = null;
+                OnPropertyChanged(nameof(Z21Summary));
+                RemoveZ21Command.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the UDP port of the Z21 this project controls.
+    /// </summary>
+    public int Z21Port
+    {
+        get => Model.Z21.Port;
+        set
+        {
+            if (SetProperty(Model.Z21.Port, value, Model.Z21, (z21, port) => z21.Port = port))
+            {
+                OnPropertyChanged(nameof(Z21Summary));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the serial number of the assigned Z21, when it is known from a network search.
+    /// </summary>
+    public uint? Z21SerialNumber
+    {
+        get => Model.Z21.SerialNumber;
+        set => SetProperty(Model.Z21.SerialNumber, value, Model.Z21, (z21, serialNumber) => z21.SerialNumber = serialNumber);
+    }
+
+    /// <summary>
+    /// Gets a short description of the assigned Z21 for lists.
+    /// </summary>
+    public string Z21Summary => string.IsNullOrEmpty(Z21IpAddress)
+        ? "No Z21 assigned"
+        : $"Z21 {Z21IpAddress}:{Z21Port}";
+
+    /// <summary>
+    /// Removes the Z21 assignment so the Z21 can be assigned to another project.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(HasZ21))]
+    private void RemoveZ21()
+    {
+        Z21IpAddress = string.Empty;
+        Z21Port = Z21Endpoint.DefaultPort;
+    }
+
+    private bool HasZ21() => !string.IsNullOrEmpty(Z21IpAddress);
 
     /// <summary>
     /// Hierarchical collection of Journey ViewModels.

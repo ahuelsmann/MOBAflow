@@ -35,6 +35,11 @@ public class Project
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the Z21 command station this project controls.
+    /// </summary>
+    public Z21Endpoint Z21 { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets the locomotives belonging to this project.
     /// </summary>
     public List<Locomotive> Locomotives { get; set; }
