@@ -276,7 +276,8 @@ jobs:
 
       - name: Install pinned PlatformIO
         shell: bash
-        run: python3 -m pip install --user platformio==6.1.19
+        run: |
+          python3 -m pip install --user --only-binary :all: platformio==6.1.19
 
       - name: Run native firmware parser and protocol tests
         shell: bash

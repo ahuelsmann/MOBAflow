@@ -19,6 +19,9 @@ using System.ComponentModel;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    private static readonly string ExplorerPath =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+
     private const string LocomotivesPageTag = "locomotives";
     private const string PassengerWagonsPageTag = "passengerwagons";
     private const string GoodsWagonsPageTag = "goodswagons";
@@ -209,7 +212,7 @@ public partial class MainWindowViewModel
 
             try
             {
-                Process.Start("explorer.exe", $"/select,\"{fullPath}\"");
+                Process.Start(ExplorerPath, $"/select,\"{fullPath}\"");
                 _logger.LogInformation("Opened Explorer at: {Path}", fullPath);
             }
             catch (Exception ex)
@@ -268,7 +271,7 @@ public partial class MainWindowViewModel
 
             try
             {
-                Process.Start("explorer.exe", $"/select,\"{fullPath}\"");
+                Process.Start(ExplorerPath, $"/select,\"{fullPath}\"");
                 _logger.LogInformation("Opened Explorer at: {Path}", fullPath);
             }
             catch (Exception ex)

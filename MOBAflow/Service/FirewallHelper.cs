@@ -11,6 +11,9 @@ using System.Diagnostics;
 /// </summary>
 internal static class FirewallHelper
 {
+    // An absolute path prevents a different netsh earlier in PATH from running with elevated rights.
+    private static readonly string NetshPath = Path.Combine(Environment.SystemDirectory, "netsh.exe");
+
     private const string RuleNameUdp = "MOBAflow WebApp UDP Discovery";
     private const string RuleNameHttpPrefix = "MOBAflow WebApp REST-API";
     private const int UdpPort = 21106;
@@ -69,7 +72,7 @@ internal static class FirewallHelper
         {
             var psi = new ProcessStartInfo
             {
-                FileName = "netsh",
+                FileName = NetshPath,
                 Arguments = $"advfirewall firewall delete rule name=\"{ruleName}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -96,7 +99,7 @@ internal static class FirewallHelper
         {
             var psi = new ProcessStartInfo
             {
-                FileName = "netsh",
+                FileName = NetshPath,
                 Arguments = $"advfirewall firewall show rule name=\"{ruleName}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -167,7 +170,7 @@ internal static class FirewallHelper
     {
         var psi = new ProcessStartInfo
         {
-            FileName = "netsh",
+            FileName = NetshPath,
             Arguments = arguments,
             UseShellExecute = false,
             CreateNoWindow = true,

@@ -50,19 +50,19 @@ $inactiveFiles = [Collections.Generic.List[string]]::new()
 $laneCounts = @{}
 
 foreach ($testFile in $testFiles) {
-    $matches = @($laneDirectories | Where-Object {
+    $laneMatches = @($laneDirectories | Where-Object {
         $testFile.FullName.StartsWith($_.Directory + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)
     })
-    $matches += @($laneFiles | Where-Object {
+    $laneMatches += @($laneFiles | Where-Object {
         $testFile.FullName.Equals($_.File, [StringComparison]::OrdinalIgnoreCase)
     })
 
-    if ($matches.Count -eq 0) {
+    if ($laneMatches.Count -eq 0) {
         $unmappedFiles.Add($testFile.FullName)
         continue
     }
 
-    foreach ($match in $matches) {
+    foreach ($match in $laneMatches) {
         if (-not $laneCounts.ContainsKey($match.Lane)) {
             $laneCounts[$match.Lane] = 0
         }
