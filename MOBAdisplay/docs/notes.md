@@ -18,9 +18,28 @@ The current target assumes a display with a fixed backlight connection; no
 `TFT_BL` pin is configured. Do not reuse the older GPIO 23/18/5/2/4 wiring notes
 with this firmware without also changing `User_Setup.h`.
 
-The PlatformIO memory settings currently target an ESP32-S3 module with 8 MB
-flash and octal PSRAM. Match `platformio.ini` to the exact module marking before
-flashing another board variant.
+## Module and flash layout
+
+The minimum supported module is the ESP32-S3 N16R8 (16 MB flash, 8 MB octal
+PSRAM). `platformio.ini` and `sdkconfig.defaults` configure 16 MB flash and the
+custom partition table `MOBAdisplay/esp32/partitions.csv`:
+
+| Partition | Offset | Size |
+| --- | --- | --- |
+| `nvs` | `0x9000` | 24 KB |
+| `phy_init` | `0xf000` | 4 KB |
+| `factory` (app) | `0x10000` | 4 MB |
+
+`nvs` and `phy_init` keep the ESP-IDF default offsets, so provisioned Wi-Fi
+credentials survive reflashing. The flash after the app partition stays
+unallocated for later use.
+
+After changing the flash size or partition table, delete the generated
+`MOBAdisplay/esp32/sdkconfig.esp32s3` and `MOBAdisplay/esp32/.pio` before the
+next build, because PlatformIO keeps the old values otherwise. Flash the
+complete bundle, not only the app: `bootloader.bin` at `0x0`, `partitions.bin`
+at `0x8000` and `firmware.bin` at `0x10000`. The CI artifact contains these
+three files with `flash-offsets.txt` and `flash-bundle.sha256`.
 
 ## Current-hardware acceptance record
 
@@ -31,7 +50,7 @@ allowed dropped or rejected frames.
 
 Record these identity fields in Issue #36:
 
-- tested Git commit and SHA-256 of `firmware.bin`;
+- tested Git commit and the SHA-256 values from `flash-bundle.sha256`;
 - board module marking, flash/PSRAM configuration, and display controller;
 - display resolution and relevant pin configuration;
 - negotiated protocol version, firmware version, device identity, and adapter

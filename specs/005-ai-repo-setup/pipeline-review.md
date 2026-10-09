@@ -35,25 +35,26 @@ Governance runs only for its configured PR paths; a successful issues-event run 
 
 ## Findings and concrete follow-up tasks
 These are separately reviewable follow-ups, not authorization to weaken checks or change administration.
-Issue145 tracks their disposition until assigned to dedicated work.
+Owners decided on 2026-10-09: CI-02 to CI-04 move to #209, CI-05 and CI-06 to #197.
 
-- [ ] CI-01 (high): main has no enforced merge gates. API evidence: protected:false, branch protection404
-  “Branch not protected”, repository rulesets[], effective main rules[]. Token admin:true rules out a
-  permission blind spot. Agree required check names, review/bypass policy and filtered-workflow behavior,
-  then configure branch protection in a separately authorized task.
-  Done: a disposable failing PR cannot merge; a fully passing current commit can.
-- [ ] CI-02 (medium): remove global issues:write from spec-kit-governance.yml; retain it only on the
+- [x] CI-01 (high): done without a change from this review. Earlier on 2026-09-25 the API showed
+  protected:false, branch protection 404 "Branch not protected", repository rulesets [] and effective main rules [];
+  token admin:true ruled out a permission blind spot. Later that day (18:03) the owner created the active
+  repository ruleset "main": pull request required, squash merge only, resolved review threads, six required
+  checks including SonarCloud, no force-push and no deletion. The observation was correct at its time and is
+  historical. Whether the required check names still match after #197 is checked in #209.
+- [ ] CI-02 (medium, #209): remove global issues:write from spec-kit-governance.yml; retain it only on the
   issue job, which already has job-level rights. Done: issue validation still works and PR plan job is read-only.
-- [ ] CI-03 (low): add explicit timeouts to Pages and stale jobs based on observed runtime.
+- [ ] CI-03 (low, #209): add explicit timeouts to Pages and stale jobs based on observed runtime.
   Done: both jobs have bounded runtime and normal runs pass.
-- [ ] CI-04 (medium): decide reproducible SDK/workload pins. global.json specifies SDK10.0.302 with
+- [ ] CI-04 (medium, #209): decide reproducible SDK/workload pins. global.json specifies SDK10.0.302 with
   rollForward latestFeature; actual PR154 used SDK/workload10.0.401, no workloadVersion.
   --skip-manifest-update is not a workload pin. Done: clean runner uses the agreed versions and
   Windows/Android Release tests, analyzers and bundle checks pass.
-- [ ] CI-05 (medium): evaluate scoped docs-only CI after CI-01. Preserve required-check names/results;
+- [ ] CI-05 (medium, #197 CI-3): evaluate scoped docs-only CI. Preserve required-check names/results;
   do not introduce permanently pending filtered checks. Done: docs, shared code, WinUI and Android
   sample diffs receive the intended jobs without bypassing product gates.
-- [ ] CI-06 (existing main): triage the two failed Sonar rating conditions against current main findings.
+- [ ] CI-06 (existing main, #197 CI-1): triage the two failed Sonar rating conditions against current main findings.
   Keep product fixes out of repository-setup scope unless they block the current PR gate.
   Done: current main Sonar passes with evidence and no suppressed valid findings.
 
