@@ -107,6 +107,36 @@ internal sealed class SustainedRefreshReportTests
     }
 
     [Test]
+    public void UptimeCounterWrapDuringTheRun_IsNotAReboot()
+    {
+        // The firmware's 32-bit millisecond counter wraps after about 49.7 days.
+        var before = new HealthResponsePayload(DisplayHealthState.Ready, DisplayResultCode.Ok, 4_294_000, 100_000, 0, 0, 0);
+        var after = before with { UptimeSeconds = 6_233, AcceptedFrameCount = 72_000 };
+        var report = new SustainedRefreshReport(TwoHours, NormalRefreshHz, NormalRefreshHz, 72_000, 72_000, 0, 0, before, after);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(report.RebootDetected, Is.False);
+            Assert.That(report.Passed, Is.True);
+        }
+    }
+
+    [Test]
+    public void RunStartedRightAfterBoot_IsNotAnAcceptanceRun()
+    {
+        // A reboot before the first presented frame could hide within the uptime tolerance, so this is no evidence.
+        var before = new HealthResponsePayload(DisplayHealthState.Ready, DisplayResultCode.Ok, 2, 100_000, 0, 0, 0);
+        var after = before with { UptimeSeconds = 7_202, AcceptedFrameCount = 72_000 };
+        var report = new SustainedRefreshReport(TwoHours, NormalRefreshHz, NormalRefreshHz, 72_000, 72_000, 0, 0, before, after);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(report.IsAcceptanceConfiguration, Is.False);
+            Assert.That(report.Format(), Does.EndWith("Result: PASSED (not an acceptance run)"));
+        }
+    }
+
+    [Test]
     public void ShortRun_IsMarkedAsNotAnAcceptanceRun()
     {
         var before = new HealthResponsePayload(DisplayHealthState.Ready, DisplayResultCode.Ok, 1_000, 100_000, 0, 0, 0);
@@ -129,7 +159,7 @@ internal sealed class SustainedRefreshReportTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(text, Does.Contain("Acceptance configuration: yes (requires 2 hours at 10 Hz)"));
+            Assert.That(text, Does.Contain("Acceptance configuration: yes (requires 2 hours at 10 Hz, starting at least 60 s after boot)"));
             Assert.That(text, Does.Contain("Expected frames: 72000"));
             Assert.That(text, Does.Contain("Skipped timer ticks: 100"));
             Assert.That(text, Does.Contain("Lost frames: 110"));

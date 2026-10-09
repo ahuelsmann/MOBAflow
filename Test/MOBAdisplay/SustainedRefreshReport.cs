@@ -27,8 +27,19 @@ internal sealed record SustainedRefreshReport(
     /// <summary>Minimum run duration for acceptance evidence.</summary>
     public static readonly TimeSpan AcceptanceDuration = TimeSpan.FromHours(2);
 
-    // Uptime is reported in whole seconds and sampled around the run, so allow a small clock difference.
+    /// <summary>
+    /// Minimum device uptime when the run starts. A reboot then always costs more uptime than
+    /// the tolerance, so it cannot hide even before the first frame is presented.
+    /// </summary>
+    public static readonly TimeSpan MinimumUptimeBeforeRun = TimeSpan.FromMinutes(1);
+
+    // Uptime is reported in whole seconds and sampled around the run, so allow a small clock difference below the
+    // run duration and the time needed to stop the scheduler and query health again above it.
     private static readonly TimeSpan UptimeTolerance = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan UptimeOverrun = TimeSpan.FromMinutes(1);
+
+    // The firmware reports millis() / 1000, and the 32-bit millisecond counter wraps after 2^32 ms.
+    private const double UptimeWrapSeconds = 4_294_967.296;
 
     /// <summary>Frames the scheduler should have produced at the configured refresh rate.</summary>
     public long ExpectedFrames => (long)Math.Floor(Duration.TotalSeconds * RefreshHz);
@@ -45,12 +56,18 @@ internal sealed record SustainedRefreshReport(
     /// </summary>
     public long DeviceRejectedFrames => (long)HealthAfter.RejectedFrameCount - HealthBefore.RejectedFrameCount;
 
+    /// <summary>Device uptime gained during the run, across a wrap of the firmware's millisecond counter.</summary>
+    public double UptimeAdvanceSeconds => HealthAfter.UptimeSeconds >= HealthBefore.UptimeSeconds
+        ? HealthAfter.UptimeSeconds - HealthBefore.UptimeSeconds
+        : HealthAfter.UptimeSeconds + UptimeWrapSeconds - HealthBefore.UptimeSeconds;
+
     /// <summary>
-    /// True when the device uptime did not advance by the run duration, the frame counters went backwards, or the
-    /// device counted fewer accepted frames than it confirmed as presented (its counters restarted).
+    /// True when the device uptime did not advance by about the run duration, the frame counters went backwards, or
+    /// the device counted fewer accepted frames than it confirmed as presented (its counters restarted).
     /// </summary>
     public bool RebootDetected =>
-        HealthAfter.UptimeSeconds + UptimeTolerance.TotalSeconds < HealthBefore.UptimeSeconds + Duration.TotalSeconds
+        UptimeAdvanceSeconds + UptimeTolerance.TotalSeconds < Duration.TotalSeconds
+        || UptimeAdvanceSeconds > Duration.TotalSeconds + UptimeOverrun.TotalSeconds
         || DeviceAcceptedFrames < PresentedFrames
         || DeviceRejectedFrames < 0;
 
@@ -63,8 +80,14 @@ internal sealed record SustainedRefreshReport(
     /// <summary>Share of expected frames that were lost.</summary>
     public double LossRatio => ExpectedFrames == 0 ? 1 : (double)LostFrames / ExpectedFrames;
 
-    /// <summary>True when the run lasted at least 2 hours at the normal refresh rate.</summary>
-    public bool IsAcceptanceConfiguration => Duration >= AcceptanceDuration && RefreshHz == NormalRefreshHz;
+    /// <summary>
+    /// True when the run lasted at least 2 hours at the normal refresh rate and started at least one minute after
+    /// the device booted.
+    /// </summary>
+    public bool IsAcceptanceConfiguration =>
+        Duration >= AcceptanceDuration
+        && RefreshHz == NormalRefreshHz
+        && HealthBefore.UptimeSeconds >= MinimumUptimeBeforeRun.TotalSeconds;
 
     /// <summary>True when the loss and reboot thresholds of the run are met.</summary>
     public bool Passed => ExpectedFrames > 0 && !RebootDetected && LossRatio <= MaximumLossRatio;
@@ -78,7 +101,8 @@ internal sealed record SustainedRefreshReport(
         builder.AppendLine(
             culture,
             $"Acceptance configuration: {(IsAcceptanceConfiguration ? "yes" : "no")} "
-            + $"(requires {AcceptanceDuration.TotalHours} hours at {NormalRefreshHz} Hz)");
+            + $"(requires {AcceptanceDuration.TotalHours} hours at {NormalRefreshHz} Hz, "
+            + $"starting at least {MinimumUptimeBeforeRun.TotalSeconds} s after boot)");
         builder.AppendLine(culture, $"Expected frames: {ExpectedFrames}");
         builder.AppendLine(culture, $"Rendered and sent: {RenderedFrames}");
         builder.AppendLine(culture, $"Presented (host confirmed): {PresentedFrames}");
