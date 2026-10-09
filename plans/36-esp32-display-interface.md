@@ -13,42 +13,44 @@
 - Implementation baseline: `github/main` at `7f4edea0`, including merged PR #89; WP4.1 is implemented from that baseline
 - Lifecycle: delete this plan after issue #36 is complete; the closed issue, pull requests, and Git history remain the permanent record
 
-## Remaining work and clarifications (2026-10-08)
+## Remaining work and clarifications (2026-10-08, answered 2026-10-09)
 
 Status on `main` `d45e14c5`: the software scope is merged (PR #112). The blocker recorded on 2026-07-24 is
 resolved: `MOBAdisplay/esp32/sdkconfig.defaults` exists on `main`. What remains are the manual UI checks, the
 current-hardware acceptance in `MOBAdisplay/docs/notes.md`, the flash budget and the final cleanup. This work is
 independent of RF-23 (#191): it touches only `MOBAdisplay/` and the Display page checks.
 
-### Clarifications (Spec Kit clarify; open, answers from the maintainer required)
-
-Each question lists the recommended answer.
+### Clarifications (Spec Kit clarify, session 2026-10-09)
 
 - Q1: How is the flash risk (1,047,357 of 1,048,576 bytes used, 1,219 bytes free) resolved before acceptance? ->
-  Recommended: add a custom partition table with a larger single app partition (for example 3 MB) on the 8 MB
-  module, keeping the NVS partition at its current offset and size so provisioned Wi-Fi credentials survive. The
-  firmware currently uses the default partition table (no `partitions` entry in `platformio.ini`, no
-  `CONFIG_PARTITION_TABLE_CUSTOM` in `sdkconfig.defaults`), whose app partition is about 1 MB. Optional second
-  step: exclude Arduino components the firmware does not use (RainMaker, Insights, Zigbee are pulled in by
-  `arduino-esp32`, see `dependencies.lock`).
-- Q2: Which sustained-refresh duration and thresholds apply? -> Recommended: 30 minutes at the normal MOBAflow
-  refresh rate; at most 1 percent dropped or rejected frames; zero partially presented frames; the device stays
-  negotiated without a reboot.
+  A: MOBAdisplay supports ESP32-S3 modules only, and the minimum module is **ESP32-S3 N16R8** (16 MB flash, 8 MB
+  octal PSRAM), which is the module in use. The firmware configuration is raised from 8 MB to 16 MB flash
+  (`board_upload.flash_size = 16MB`, `CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y`). A custom partition table replaces the
+  ESP-IDF default single-app table (about 1 MB app): `nvs` stays at `0x9000` with size `0x6000` so provisioned
+  Wi-Fi credentials survive, `phy_init` stays at `0xF000`, the `factory` app partition at `0x10000` grows to 4 MB,
+  and the rest of the flash stays unallocated (for example for later OTA). Excluding unused Arduino components
+  (RainMaker, Insights, Zigbee) is not needed for acceptance.
+- Q2: Which sustained-refresh duration and thresholds apply? -> A: 2 hours at the normal MOBAflow refresh rate; at
+  most 1 percent dropped or rejected frames; zero partially presented frames; the device stays negotiated without
+  a reboot.
 - Q3: Who runs the manual Light, Dark, High Contrast, keyboard, focus and Narrator checks of the Display page, and
-  do they block closure? -> Recommended: the maintainer runs them once with the checklist below (about 15 minutes,
-  needs launch approval); they block closure.
-- Q4: Can the `blocked` label be removed? -> Recommended: yes; the issue waits only for hardware acceptance, not on
-  another work item.
+  do they block closure? -> A: The maintainer runs them once from the checklist and starts the app for it; they
+  block closure of #36.
+- Q4: Can the `blocked` label be removed? -> A: Yes; removed on 2026-10-09 with a comment on #36 (and on #35).
 
 ### Remaining slices
 
-1. **Flash headroom** (after Q1): `partitions.csv` plus the matching PlatformIO and `sdkconfig.defaults` entries;
-   firmware CI build reports the new free space; native tests unchanged; provisioning (RF-02) unchanged. One draft
-   PR.
+1. **Flash headroom**: `MOBAdisplay/esp32/partitions.csv` with the Q1 layout, `board_build.partitions` and
+   `board_upload.flash_size = 16MB` in `platformio.ini`, `CONFIG_PARTITION_TABLE_CUSTOM`, the custom table file
+   name and `CONFIG_ESPTOOLPY_FLASHSIZE_16MB` in `sdkconfig.defaults`; remove the 4 MB and 8 MB module comments
+   that no longer apply and document N16R8 as the minimum module in `MOBAdisplay/docs`. The firmware CI build
+   reports the new free space; native tests unchanged; provisioning (RF-02) unchanged. One draft PR with the Sonar
+   quality gate green.
 2. **Acceptance checklist**: turn `MOBAdisplay/docs/notes.md` items 1 to 8 plus the Q2 thresholds and the Q3 UI
    checks into one fill-in record template for issue #36.
-3. **Maintainer acceptance run** on the ESP32-S3/ST7789 reference device: flash the image from slice 1, run the
-   checklist, post the record in #36 (hardware actions are maintainer-led).
+3. **Maintainer acceptance run** on the ESP32-S3 N16R8/ST7789 reference device: flash the image from slice 1, run
+   the 2-hour test and the UI checks, post the record in #36 (hardware actions and the app start are
+   maintainer-led).
 4. **Cleanup**: fix any defect found in slice 3 in its own PR; then delete this plan and close #36.
 
 ## Implementation progress
