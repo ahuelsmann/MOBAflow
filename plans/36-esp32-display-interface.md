@@ -43,15 +43,28 @@ independent of RF-23 (#191): it touches only `MOBAdisplay/` and the Display page
 1. **Flash headroom**: `MOBAdisplay/esp32/partitions.csv` with the Q1 layout, `board_build.partitions` and
    `board_upload.flash_size = 16MB` in `platformio.ini`, `CONFIG_PARTITION_TABLE_CUSTOM`, the custom table file
    name and `CONFIG_ESPTOOLPY_FLASHSIZE_16MB` in `sdkconfig.defaults`; remove the 4 MB and 8 MB module comments
-   that no longer apply and document N16R8 as the minimum module in `MOBAdisplay/docs`. The firmware CI build
-   reports the new free space; native tests unchanged; provisioning (RF-02) unchanged. One draft PR with the Sonar
-   quality gate green.
-2. **Acceptance checklist**: turn `MOBAdisplay/docs/notes.md` items 1 to 8 plus the Q2 thresholds and the Q3 UI
-   checks into one fill-in record template for issue #36.
-3. **Maintainer acceptance run** on the ESP32-S3 N16R8/ST7789 reference device: flash the image from slice 1, run
-   the 2-hour test and the UI checks, post the record in #36 (hardware actions and the app start are
+   that no longer apply and document N16R8, the 16 MB configuration and the partition layout in
+   `MOBAdisplay/docs/notes.md`, so these requirements outlive this plan. The firmware CI job in
+   `.github/workflows/quality.yml` archives a complete flash bundle (`bootloader.bin` at `0x0`, `partitions.bin` at
+   `0x8000`, `firmware.bin` at `0x10000`) with SHA-256 hashes and the offsets, because flashing `firmware.bin` alone
+   would keep the old partition table; coordinate the workflow edit with #197. The CI build reports the new free
+   space; native tests unchanged; provisioning (RF-02) unchanged. One draft PR with the Sonar quality gate green.
+2. **Sustained-refresh harness**: today no shipped path sends frames continuously (`FrameLoopScheduler` is only
+   registered in DI, and the Display page offers one-shot pattern commands). Add a maintainer-run harness, by
+   default an explicit hardware test in `Test/MOBAdisplay` that is excluded from CI, which drives
+   `FrameLoopScheduler` against the configured endpoint at the normal refresh rate for the Q2 duration and reports
+   sent, accepted, rejected and dropped frames plus reconnects. One draft PR with the Sonar quality gate green.
+3. **Acceptance checklist**: turn `MOBAdisplay/docs/notes.md` items 1 to 8 plus the Q2 thresholds, the harness
+   command and the Q3 UI checks into one fill-in record template for issue #36 in that file, so the acceptance
+   rules outlive this plan.
+4. **Maintainer acceptance run** on the ESP32-S3 N16R8/ST7789 reference device: flash the bundle from slice 1, run
+   the 2-hour harness and the UI checks, post the record in #36 (hardware actions and the app start are
    maintainer-led).
-4. **Cleanup**: fix any defect found in slice 3 in its own PR; then delete this plan and close #36.
+5. **Cleanup**: fix any defect found in slice 4 in its own PR; then delete this plan and close #36.
+
+Durable record: the minimum module, partition layout, thresholds and acceptance procedure live in
+`MOBAdisplay/docs/notes.md` after slices 1 and 3; the closed issue and Git history keep the rest, as the Spec Kit
+governance rules expect for a deleted standalone plan.
 
 ## Implementation progress
 
@@ -823,9 +836,9 @@ Tasks:
 8. Record the tested commit and firmware-image hash, board/display identity,
    protocol and firmware versions, exact commands, results, and safe diagnostic
    evidence in issue #36.
-9. Before the hardware run, approve the sustained-refresh duration and allowed
-   dropped/rejected-frame thresholds. These values are an open acceptance
-   detail but do not block WP4.1 or WP5.
+9. Sustained-refresh duration and thresholds are approved (2026-10-09): 2 hours
+   at the normal refresh rate, at most 1 percent dropped or rejected frames, no
+   partially presented frame, no device reboot.
 10. Close issue #36 only after automated and maintainer-led hardware evidence
     satisfies every acceptance criterion.
 11. Delete this completed plan in the final cleanup pull request.
