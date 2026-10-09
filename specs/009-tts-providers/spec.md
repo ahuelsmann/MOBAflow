@@ -33,13 +33,15 @@ a MOBAflow-on-Windows feature only; MOBAsmart will never offer speech output (ma
 localisation (#140), speech output on Android or in MOBAsmart, runtime loading of provider assemblies (plugins),
 paid live calls in automated tests.
 
-**Sensitive Data**: The Azure AI Speech key and region. They are stored in the Windows credential store, never in
-versioned files, `appsettings.json`, `solution.json`, logs, diagnostics or cache file names.
+**Sensitive Data**: The Azure AI Speech key. It is stored in the Windows credential store, never in versioned files,
+`appsettings.json`, `solution.json`, logs, diagnostics or cache file names. The Azure region is not secret and is
+stored in the app settings.
 
 **Data and API Effects**: `AppSettings.Speech` gains a provider id, a fallback provider id and provider-specific
 option sections; the current Piper and System Speech fields move into their provider sections. A new audio cache
 lives in the MOBAflow application data folder. No migration: a settings file with the old fields loads with the
-default provider. `solution.json` is unchanged.
+default provider `system-speech`; the shipped `MOBAflow/appsettings.json` selects `piper` as today. `solution.json`
+is unchanged.
 
 ## Current State (main at `d45e14c5`)
 
@@ -62,20 +64,20 @@ default provider. `solution.json` is unchanged.
   and Azure AI Speech, each in its own library behind one common interface. The core of the request is the
   modularisation: any further text-to-speech connection must be addable as another library.
 - Q: Should generated announcements be cached? → A: Yes (maintainer's addition). One audio cache for all
-  providers in the shared layer, stored in the application data folder with a size limit (oldest entries are
-  removed first). Settings show the cache size and offer "Clear cache".
+  providers in the shared layer, stored in the application data folder with a size limit (the entries not played
+  for the longest time are removed first). Settings show the cache size and offer "Clear cache".
 - Q: When does a changed provider selection take effect? → A: Immediately, for the next announcement and the
   Settings test button, without a restart.
 - Q: What happens when the selected provider fails? → A: The workflow always continues. A cached announcement is
   played from the cache. Without a cache entry and with the provider unreachable, the local provider speaks
-  immediately as a fallback (Piper if configured, otherwise Windows System Speech). The text is remembered and its
-  audio is synthesised with the selected provider and cached once the provider is reachable again; the
-  announcement itself is not replayed later.
+  immediately as a fallback (Piper if configured, otherwise Windows System Speech; never the provider that just
+  failed). The text is remembered and its audio is synthesised with the selected provider and cached once the
+  provider is reachable again; the announcement itself is not replayed later.
 - Q: Does MOBAsmart get speech output? → A: No, never. Speech output is a MOBAflow-on-Windows feature; no
   follow-up issue for Android.
 - Q: Does this feature take over RF-29's speech part? → A: Yes. Windows speech moves into a Windows provider
-  library, and `Sound` no longer references Windows speech packages; RF-29 keeps sound playback and the
-  file-service split.
+  library, and `Sound` no longer references `System.Speech`; RF-29 keeps sound playback (including
+  `System.Windows.Extensions` for `WindowsSoundPlayer`) and the file-service split.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -129,9 +131,13 @@ call.
 
 1. **Given** an announcement was spoken once, **When** it is requested again with the same settings, **Then** the
    cached audio is played and the provider is not called.
-2. **Given** the cache exceeds its size limit, **When** a new entry is added, **Then** the oldest entries are
-   removed first.
-3. **Given** the operator presses "Clear cache", **When** the next announcement runs, **Then** it is synthesised
+2. **Given** the cache exceeds its size limit, **When** a new entry is added, **Then** the entries not played for
+   the longest time are removed first.
+3. **Given** a synthesis-affecting provider option changes (for example the Piper model), **When** the announcement
+   runs again, **Then** it is synthesised again instead of played from the old entry.
+4. **Given** two identical announcements overlap, **When** neither is cached yet, **Then** the provider is called
+   once.
+5. **Given** the operator presses "Clear cache", **When** the next announcement runs, **Then** it is synthesised
    again.
 
 ---
@@ -180,14 +186,14 @@ without playback.
   show only supported options.
 - **FR-005**: Providers MUST return synthesised audio to the shared layer, which plays it; this makes caching and
   fallback provider-independent.
-- **FR-006**: The shared layer MUST cache audio keyed by provider id, voice, language, rate, volume and text,
-  MUST enforce a size limit by removing the oldest entries first, and MUST expose the cache size and a clear
-  command.
-- **FR-007**: On a cache miss with the selected provider unavailable, the shared layer MUST speak through the
-  local fallback provider, record the reason in the speech diagnostics, and synthesise and cache the text with the
-  selected provider once it is available again, without playing it.
-- **FR-008**: Synthesis MUST be asynchronous and cancellable; provider errors MUST be returned as structured
-  failures and MUST NOT stop the calling workflow.
+- **FR-006**: The shared layer MUST cache audio keyed by provider id, a provider options fingerprint, voice,
+  language, rate, volume and text, MUST synthesise concurrent identical misses once, MUST enforce a size limit by
+  removing the least recently played entries first, and MUST expose the cache size and a clear command.
+- **FR-007**: On a cache miss with the selected provider unavailable, the shared layer MUST speak through an
+  available local fallback provider other than the failed one, record the reason in the speech diagnostics, and
+  synthesise and cache the text with the selected provider once it is available again, without playing it.
+- **FR-008**: Synthesis and playback MUST be asynchronous and cancellable; provider errors MUST be returned as
+  structured failures and MUST NOT stop the calling workflow.
 - **FR-009**: Credentials MUST stay in the Windows credential store and MUST NOT appear in logs, diagnostics or
   cache file names.
 - **FR-010**: Existing announcements MUST keep working through the new contract with the current default voice,
@@ -200,8 +206,8 @@ without playback.
 - **Speech provider**: stable id, display name, capabilities, availability state.
 - **Speech request**: text, voice, language, rate, volume.
 - **Speech result**: audio on success, or a failure with a reason that is safe to display.
-- **Audio cache entry**: key derived from provider id, voice, language, rate, volume and text; audio file; last
-  use time.
+- **Audio cache entry**: key derived from provider id, provider options fingerprint, voice, language, rate, volume
+  and text; audio file; last use time.
 - **Pending synthesis**: text and request settings waiting for the selected provider to become available.
 
 ## Success Criteria *(mandatory)*
@@ -211,7 +217,7 @@ without playback.
 - **SC-001**: Three providers (System Speech, Piper, Azure) are selectable in Settings and use the same contract.
 - **SC-002**: Adding a provider changes no file in the contract project or in other provider libraries.
 - **SC-003**: A repeated identical announcement causes zero additional provider calls.
-- **SC-004**: The Android build contains no Windows speech packages.
+- **SC-004**: The Android build contains no speech provider library and no `System.Speech` package.
 - **SC-005**: A failing provider never fails or blocks a workflow in automated tests.
 
 ## Assumptions

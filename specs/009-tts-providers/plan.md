@@ -29,7 +29,7 @@ voice names.
 
 **Storage/Protocols**: `AppSettings.Speech` (app settings JSON): provider id, fallback provider id, cache size limit
 and one options section per provider. Audio cache as WAV files plus a small index in the MOBAflow application data
-folder. Azure key and region in the Windows credential store.
+folder. Azure key in the Windows credential store; Azure region and voice in the app settings.
 
 **Testing**: NUnit and Moq; fake providers and a fake clock/file system for the cache; existing
 `SpeakerEngineFactoryTests`, `PiperSpeechEngineTest`, `SystemSpeechEngineTest`, `AnnouncementServiceTests` and
@@ -107,22 +107,30 @@ Names follow the `TrackLibrary.Base` / `TrackLibrary.PikoA` pattern; final names
 `SpeechOutput` runs each announcement in this order:
 
 1. Build the request from the current settings and resolve the selected provider by id (FR-003, takes effect for
-   the next call). An unknown id selects the default provider and writes a diagnostic.
+   the next call). An unknown or missing id selects the default provider `system-speech` and writes a diagnostic.
 2. **Cache hit**: play the cached WAV through `ISoundPlayer`; no provider call (FR-006, SC-003).
-3. **Cache miss**: synthesise with the selected provider, store the audio in the cache, play it.
-4. **Selected provider unavailable**: write a diagnostic, speak through the fallback provider immediately (Piper if
-   configured, otherwise System Speech), and add the request to the pending queue (FR-007). Fallback audio is not
-   cached under the selected provider's key.
+3. **Cache miss**: synthesise with the selected provider, store the audio in the cache, play it. Concurrent misses
+   for the same cache key share one synthesis (per-key single flight), so overlapping identical announcements cause
+   one provider call; different keys synthesise independently.
+4. **Selected provider unavailable**: write a diagnostic, speak through the first available local fallback provider
+   other than the failed one (the configured fallback, Piper if configured, then System Speech), and add the request
+   to the pending queue (FR-007). Fallback audio is not cached under the selected provider's key.
 5. **Nothing available**: skip the announcement with a diagnostic; the workflow continues (FR-008, SC-005).
 
-Overlapping announcements keep today's ordering, characterised in slice 1.
+Overlapping announcements keep today's ordering, characterised in slice 1. Cancellation stops synthesis and audible
+playback: today's `WindowsSoundPlayer` checks the token only before `SoundPlayer.PlaySync()`, so the shared layer
+needs a player that stops on cancellation (for example `SoundPlayer.Play()` plus `Stop()` on cancellation and a
+completion wait from the WAV duration), covered by a regression test.
 
 ### Audio cache
 
-- Key: SHA-256 of provider id, voice, language, rate, volume and normalised text; file name is the hash, so no text
-  or credential appears in a file name (FR-009).
-- WAV files plus an index with size and last-use time; the size limit (default 500 MB) removes the
-  least-recently-used entries first. A corrupt or missing file is dropped and synthesised again.
+- Key: SHA-256 of provider id, a provider-supplied options fingerprint (for Piper: model, config, sentence silence,
+  normalisation and pronunciation replacements; for Azure: region and output format), voice, language, rate, volume
+  and normalised text; file name is the hash, so no text or credential appears in a file name (FR-009). Changing a
+  synthesis-affecting provider option therefore misses the cache.
+- WAV files plus an index with size and last-use time; at the size limit (default 500 MB) the entries not played for
+  the longest time are removed first (least recently used), so frequently repeated announcements stay cached. A
+  corrupt or missing file is dropped and synthesised again.
 - `GetSizeAsync` and `ClearAsync` back the Settings size display and the "Clear cache" command.
 
 ### Pending synthesis
@@ -133,9 +141,12 @@ Overlapping announcements keep today's ordering, characterised in slice 1.
 
 ### Settings
 
-- `SpeechSettings.ProviderId`, `FallbackProviderId` (`piper` or `system-speech`), `CacheSizeLimitMegabytes`, plus
-  `Piper`, `SystemSpeech` and `Azure` option sections (Azure: region and voice only; the key is in the credential
-  store). Shared `Rate`, `Volume`, `VoiceName`, `TestMessage` stay at the top level.
+- `SpeechSettings.ProviderId` (code default `system-speech`, available on every Windows machine without setup; the
+  shipped `MOBAflow/appsettings.json` selects `piper` as today), `FallbackProviderId` (`piper` or `system-speech`),
+  `CacheSizeLimitMegabytes`, plus `Piper`, `SystemSpeech` and `Azure` option sections. The Azure section holds the
+  region and voice, which are not secret; only the key is in the credential store. Shared `Rate`, `Volume`,
+  `VoiceName`, `TestMessage` stay at the top level. A settings file with only the removed fields loads with
+  `system-speech`.
 - The Settings ViewModel lists providers with their capabilities, enables only supported options, shows the cache
   size and offers "Clear cache"; the Azure key is entered in a password box and saved to the credential store.
 
@@ -143,17 +154,20 @@ Overlapping announcements keep today's ordering, characterised in slice 1.
 
 1. **Characterise**: tests for current announcement behavior (selection, voice, rate/volume forwarding, ordering,
    cancellation) against the existing engines.
-2. **Contract and shared output**: add `Speech.Base` with `ISpeechOutput`, `SpeechOutput` (no cache yet) and
-   `NullSpeechOutput`; switch Backend callers; MOBAsmart registers the null output.
-3. **Local providers**: add `Speech.SystemSpeech` and `Speech.Piper`, move code and tests, synthesise to WAV and
-   play through `ISoundPlayer`; remove `System.Speech` and `System.Windows.Extensions` from `Sound`; remove
-   `ISpeakerEngine`, `SpeakerEngineFactory` and the old settings fields.
-4. **Cache**: `AudioCache` with size limit, size display and "Clear cache".
-5. **Azure and fallback**: `Speech.Azure` with credential store and fake HTTP tests; fallback provider setting;
-   pending synthesis queue.
-6. **Settings and diagnostics**: provider list with capabilities, immediate switch, diagnostics for fallback and
+2. **Contract, shared output and local providers** (one cutover, so no merged state lacks a working speaker): add
+   `Speech.Base` with `ISpeechOutput`, `SpeechOutput` (no cache yet) and `NullSpeechOutput`; add
+   `Speech.SystemSpeech` and `Speech.Piper`, move code and tests, synthesise to WAV and play through a cancellable
+   player; switch Backend callers and register both providers in MOBAflow; MOBAsmart registers the null output;
+   remove `System.Speech` from `Sound` (`System.Windows.Extensions` stays for `WindowsSoundPlayer`, whose split
+   belongs to RF-29); remove `ISpeakerEngine`, `SpeakerEngineFactory`, `SpeechSpeakerEngineSelection` and the old
+   settings fields.
+3. **Cache**: `AudioCache` with options fingerprint, least-recently-used eviction, per-key single flight, size
+   display and "Clear cache".
+4. **Azure and fallback**: `Speech.Azure` with credential store and fake HTTP tests; fallback provider setting
+   excluding the failed provider; pending synthesis queue.
+5. **Settings and diagnostics**: provider list with capabilities, immediate switch, diagnostics for fallback and
    skipped announcements.
-7. **Documentation**: `docs/wiki/PIPER-TTS-SETUP.md`, user guide speech section, `docs/ARCHITECTURE.md`, and a
+6. **Documentation**: `docs/wiki/PIPER-TTS-SETUP.md`, user guide speech section, `docs/ARCHITECTURE.md`, and a
    short "add a provider" guide.
 
 Each slice is one draft PR from its own worktree.
@@ -164,7 +178,7 @@ Each slice is one draft PR from its own worktree.
   and the Settings page. Spec and plan work is independent.
 - Coordinate with #141: this feature is the ADR's example; the ADR can reference the result instead of
   re-deciding it.
-- RF-29 (#47) drops its speech part (spec Q5); a comment on #47 records this when slice 3 lands.
+- RF-29 (#47) drops its speech part (spec Q5); a comment on #47 records this when slice 2 lands.
 
 ## Validation Strategy
 
