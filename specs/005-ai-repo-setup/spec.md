@@ -19,7 +19,9 @@ Follow AGENTS.md and constitution 4.0.0; local evidence, agent probes and curren
 Remaining acceptance after PR #156 and #157 were merged.
 
 - Q1: Which clients count as "supported" for the final fresh-client probe (T019, SC-003)? -> A: Codex CLI and
-  Claude Code. Other clients are out of scope.
+  Claude Code. Other clients are out of scope. Claude Code needs its own project entry points before the probe
+  (`CLAUDE.md` importing `AGENTS.md`, the shared skills under `.claude/skills`, the secrets hook in
+  `.claude/settings.json`); today only the Codex entry points exist (T025).
 - Q2: Who runs the authenticated probe, given that an isolated `CODEX_HOME` has no login and personal credentials
   must not be copied? -> A: The agent runs the Claude Code probe itself in a fresh clone and worktree. The
   maintainer runs the Codex CLI probe locally from a checklist and sends the result. No credentials are copied.
@@ -29,9 +31,11 @@ Remaining acceptance after PR #156 and #157 were merged.
   become one small follow-up issue. #145 closes after the probes.
 - Q4: May CI-01 configure branch protection for `main`? -> A: Not needed. `main` has been protected since
   2026-09-25 18:03 by the active repository ruleset "main" (pull request required, squash merge only, resolved
-  review threads, six required checks including SonarCloud, no force-push, no deletion). The `protected:false`
-  evidence in `pipeline-review.md` came from the classic branch protection API, which does not report rulesets.
-  CI-01 is done; the follow-up issue only checks that the required check names still match after #197.
+  review threads, six required checks including SonarCloud, no force-push, no deletion). The `protected:false`,
+  empty `rulesets[]` and empty effective rules recorded in `pipeline-review.md` were correct when observed earlier
+  on 2026-09-25, before the owner created the ruleset; they are historical, not an API blind spot (the branch
+  `protected` state also covers rulesets, while the classic `/protection` endpoint does not). CI-01 is done; the
+  follow-up issue only checks that the required check names still match after #197.
 - Q5: Does `AGENTS.md` keep the sentence "tuned for GPT-6 Astra"? -> A: No. The introduction becomes neutral for
   every coding agent; the guidance source list stays as provenance.
 

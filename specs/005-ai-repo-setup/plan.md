@@ -54,15 +54,20 @@ Clarifications Q1 to Q5 in spec.md.
 1. Write a probe checklist in `specs/005-ai-repo-setup/quickstart.md` for Codex CLI and Claude Code: fresh clone
    and worktree, instruction loading, skill discovery, review and diagnosis skill run, file access stays in the
    worktree, remote resolution with `origin` and `github`, hook activation. No credentials in the repository.
-2. The agent runs the Claude Code probe; the maintainer runs the Codex CLI probe from the checklist. Both results
+2. Add the Claude Code entry points (T025): `CLAUDE.md` importing `AGENTS.md`, the MOBAflow review and diagnosis
+   skills under `.claude/skills` kept in sync with `.agents/skills` (provenance in `sources.json`), and the secrets
+   hook in `.claude/settings.json`; extend `scripts/Test-AiRepositorySetup.py` to check them.
+3. The agent runs the Claude Code probe; the maintainer runs the Codex CLI probe from the checklist. Both results
    go into `validation.md` (T019).
-3. Correct CI-01 in `pipeline-review.md`: `main` is protected by the repository ruleset "main" since 2026-09-25;
-   the classic branch protection API does not report rulesets.
-4. Move CI-05 and CI-06 to #197 with a comment there, open one follow-up issue for CI-02 to CI-04 plus a check of
-   the required check names after #197, and record the new owners in `pipeline-review.md`.
-5. Make the `AGENTS.md` introduction neutral (Q5); run `scripts/Test-InstructionConsistency.ps1`.
-6. Record the latest `main` CI and Sonar results for the setup files in `validation.md` (T017).
-7. Close #145 and delete `plans/ai-repo-setup.md` in the final documentation-only PR.
+4. Move CI-05 and CI-06 to #197 with a comment there and open one follow-up issue for CI-02 to CI-04 plus a check
+   of the required check names after #197.
+5. Correct CI-01 in `pipeline-review.md` with the chronology (unprotected when observed on 2026-09-25, ruleset
+   "main" created later that day) and record the owners established in step 4.
+6. Make the `AGENTS.md` introduction neutral (Q5); run `scripts/Test-InstructionConsistency.ps1`.
+7. Re-run the local publication checks on all files changed since T016 (secrets scan, `Test-LineEndings.ps1` on the
+   paths and `-Staged`, instruction consistency, setup checks), then record the CI and Sonar results of the final PR
+   commit in `validation.md` (T017).
+8. Close #145 and delete `plans/ai-repo-setup.md` in the final documentation-only PR.
 
 Independent of RF-23 (#191): no product code is touched. Overlap only with #197 (CI), resolved by Q3.
 

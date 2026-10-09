@@ -43,7 +43,10 @@ MVP is US1; each subsequent story has its own independent check.
 ## Phase 5: Convergence
 - [ ] T019 Complete authenticated fresh-client documentation/review/diagnosis probes and hook activation on supported clients; record specs/005-ai-repo-setup/validation.md (SC-003, FR-006, FR-010). Supported clients are Codex CLI and Claude Code; the agent runs the Claude Code probe, the maintainer runs the Codex CLI probe from the checklist (T020); personal credentials are not copied.
 - [ ] T020 Write the probe checklist for Codex CLI and Claude Code in specs/005-ai-repo-setup/quickstart.md (Q1, Q2).
-- [ ] T021 Correct CI-01 in specs/005-ai-repo-setup/pipeline-review.md (ruleset "main" active since 2026-09-25) and record the owners of CI-02 to CI-06 (Q3, Q4).
+- [ ] T021 Correct CI-01 in specs/005-ai-repo-setup/pipeline-review.md with the chronology (unprotected when observed on 2026-09-25, ruleset "main" created later that day) and record the owners of CI-02 to CI-06 established by T022 (Q3, Q4).
 - [ ] T022 Hand CI-05/CI-06 to #197 and open one follow-up issue for CI-02 to CI-04 plus a required-check name check after #197 (Q3).
 - [ ] T023 Make the AGENTS.md introduction neutral for every coding agent and run scripts/Test-InstructionConsistency.ps1 for validation (Q5).
-- [ ] T024 Final documentation PR as draft with the Sonar quality gate (SonarCloud) green and zero open issues; close #145 and delete plans/ai-repo-setup.md.
+- [ ] T024 Re-run the local secrets scan, line-ending checks (paths and -Staged), instruction consistency and setup checks on all files changed since T016 for validation; open the final documentation PR as draft with the Sonar quality gate (SonarCloud) green and zero open issues; record that commit's CI and Sonar results for T017; close #145 and delete plans/ai-repo-setup.md.
+- [ ] T025 Add the Claude Code entry points: CLAUDE.md importing AGENTS.md, the MOBAflow review and diagnosis skills under .claude/skills kept in sync with .agents/skills, the secrets hook in .claude/settings.json, and checks for them in scripts/Test-AiRepositorySetup.py (Q1).
+
+Order in Phase 5: T020 and T025 before T019; T022 before T021; T024 last.
