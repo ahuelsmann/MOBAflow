@@ -64,10 +64,13 @@ independent of RF-23 (#191): it touches only `MOBAdisplay/` and the Display page
 
 Slice status: slice 1 merged in PR #208. Slice 2 is `Test/MOBAdisplay/SustainedRefreshHardwareTests.cs`
 (explicit, category `Hardware`); `SustainedRefreshReport` evaluates the Q2 thresholds and is unit-tested in CI.
-Dropped frames are skipped timer ticks plus frames that failed on the host, rejected frames are the device's
-rejected-frame counter delta, reconnects are reported as recoveries after a failed frame, and a reboot is detected
-from device uptime and counters. Partially presented frames are excluded by the protocol, which presents only
-complete frames, and are confirmed visually during slice 4.
+Lost frames are expected frames the device did not confirm as presented (skipped timer ticks, host failures and
+frames the device rejected for good), each counted once; the device's rejected-frame counter is reported for
+information because it also counts incomplete transfers the host repaired. Reconnects are reported as recoveries
+after a failed frame. A reboot is detected from device uptime and from an accepted-frame counter below the frames
+the host saw presented. A run shorter than 2 hours or at another rate is marked as not an acceptance run.
+Partially presented frames are excluded by the protocol, which presents only complete frames, and are confirmed
+visually during slice 4.
 
 Durable record: the minimum module, partition layout, thresholds and acceptance procedure live in
 `MOBAdisplay/docs/notes.md` after slices 1 and 3; the closed issue and Git history keep the rest, as the Spec Kit

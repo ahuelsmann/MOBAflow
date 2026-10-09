@@ -14,7 +14,8 @@ using System.Globalization;
 /// <c>MOBADISPLAY_IP=&lt;address&gt; dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
 /// --filter "FullyQualifiedName~SustainedRefreshHardwareTests"</c>.
 /// Optional: <c>MOBADISPLAY_PORT</c> (default 4210), <c>MOBADISPLAY_SOAK_MINUTES</c> (default 120) and
-/// <c>MOBADISPLAY_REFRESH_HZ</c> (default: the MOBAflow refresh rate).
+/// <c>MOBADISPLAY_REFRESH_HZ</c> (default: the MOBAflow refresh rate). A shorter run or another rate is reported as
+/// "not an acceptance run". Cancelling the test run stops sending frames.
 /// </summary>
 [TestFixture]
 [Category("Hardware")]
@@ -28,7 +29,9 @@ internal sealed class SustainedRefreshHardwareTests
     {
         var endpoint = ReadEndpoint();
         var duration = TimeSpan.FromMinutes(ReadInt("MOBADISPLAY_SOAK_MINUTES", 120));
-        var refreshHz = ReadInt("MOBADISPLAY_REFRESH_HZ", new FrameLoopOptions().RefreshHz);
+        var normalRefreshHz = new FrameLoopOptions().RefreshHz;
+        var refreshHz = ReadInt("MOBADISPLAY_REFRESH_HZ", normalRefreshHz);
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var options = new FrameLoopOptions
         {
             IpAddress = endpoint.Address.ToString(),
@@ -36,7 +39,7 @@ internal sealed class SustainedRefreshHardwareTests
             RefreshHz = refreshHz
         };
 
-        var healthBefore = await QueryHealthAsync(endpoint).ConfigureAwait(false);
+        var healthBefore = await QueryHealthAsync(endpoint, cancellationToken).ConfigureAwait(false);
 
         long rendered = 0, presented = 0, failed = 0, recoveries = 0;
         var lastFailed = false;
@@ -63,24 +66,27 @@ internal sealed class SustainedRefreshHardwareTests
         await scheduler.StartAsync(options).ConfigureAwait(false);
         try
         {
-            await Task.Delay(duration).ConfigureAwait(false);
+            await Task.Delay(duration, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
             await scheduler.StopAsync().ConfigureAwait(false);
         }
 
-        var healthAfter = await QueryHealthAsync(endpoint).ConfigureAwait(false);
+        var healthAfter = await QueryHealthAsync(endpoint, cancellationToken).ConfigureAwait(false);
         var report = new SustainedRefreshReport(
-            duration, refreshHz, rendered, presented, failed, recoveries, healthBefore, healthAfter);
+            duration, refreshHz, normalRefreshHz, rendered, presented, failed, recoveries, healthBefore, healthAfter);
         await TestContext.Out.WriteLineAsync(report.Format()).ConfigureAwait(false);
 
         Assert.That(report.Passed, Is.True, report.Format());
     }
 
-    private static async Task<HealthResponsePayload> QueryHealthAsync(DisplayEndpoint endpoint)
+    private static async Task<HealthResponsePayload> QueryHealthAsync(
+        DisplayEndpoint endpoint,
+        CancellationToken cancellationToken)
     {
-        using var timeout = new CancellationTokenSource(HealthTimeout);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(HealthTimeout);
         using var client = new UdpDisplayDeviceClient();
         var negotiation = await client.ConnectAsync(endpoint, timeout.Token).ConfigureAwait(false);
         Assert.That(negotiation.IsSuccessful, Is.True, $"Negotiation failed: {negotiation.Diagnostic}");
