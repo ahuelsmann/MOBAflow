@@ -7,6 +7,9 @@ param(
     # internal links only and a scheduled workflow checks external links.
     [switch] $IncludeExternal,
 
+    # Lists the unique external links instead of checking anything.
+    [switch] $ListExternalLinks,
+
     [ValidateRange(1, 120)]
     [int] $TimeoutSeconds = 20
 )
@@ -22,6 +25,8 @@ $markdownLinkPattern = '!?\[[^\]]*\]\(\s*<?(?<target>[^)\s>]+)>?(?:\s+"[^"]*")?\
 $referencePattern = '(?m)^\s{0,3}\[[^\]]+\]:\s*<?(?<target>[^\s>]+)>?'
 # HTML attributes in Markdown and in the website.
 $htmlAttributePattern = '(?i)\b(?:href|src)\s*=\s*"(?<target>[^"]+)"'
+# Markdown autolinks: <https://example.com>.
+$autolinkPattern = '<(?<target>https?://[^>\s]+)>'
 
 function Get-DocumentationFiles {
     Push-Location -LiteralPath $Root
@@ -45,7 +50,7 @@ function Get-LinkTargets([string] $Content) {
     # Code spans and fenced blocks show link syntax as text; they are not links.
     $withoutCode = [regex]::Replace($Content, '(?ms)^\s*(```|~~~).*?^\s*\1', '')
     $withoutCode = [regex]::Replace($withoutCode, '`[^`\r\n]*`', '')
-    foreach ($pattern in @($markdownLinkPattern, $referencePattern, $htmlAttributePattern)) {
+    foreach ($pattern in @($markdownLinkPattern, $referencePattern, $htmlAttributePattern, $autolinkPattern)) {
         foreach ($match in [regex]::Matches($withoutCode, $pattern)) {
             $match.Groups['target'].Value
         }
@@ -99,6 +104,10 @@ foreach ($file in Get-DocumentationFiles) {
             $failures.Add("${file}: missing link target '$target'")
         }
     }
+}
+
+if ($ListExternalLinks) {
+    return @($externalTargets.Keys | Sort-Object)
 }
 
 $checkedExternal = 0

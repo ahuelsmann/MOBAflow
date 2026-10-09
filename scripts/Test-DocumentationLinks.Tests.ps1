@@ -74,6 +74,17 @@ try {
     Assert-Breaks @{ 'docs/index.html' = '<img src="images/missing.png">' } 'missing website image'
     Assert-Breaks @{ 'docs/a.md' = "[ref]: ../missing.md`n`nSee [ref]." } 'missing reference definition'
 
+    # External links are requested only by the scheduled workflow; check that every link syntax is found.
+    Initialize-Fixture @{
+        'README.md' = "[a](https://a.invalid/) <https://b.invalid/path> [c][ref]`n`n[ref]: https://c.invalid/`n<a href=`"https://d.invalid/`">d</a>"
+    }
+    $external = @(& $scriptPath -Root $fixture -ListExternalLinks 6> $null)
+    $expected = @('https://a.invalid/', 'https://b.invalid/path', 'https://c.invalid/', 'https://d.invalid/')
+    if ((Compare-Object $expected $external)) {
+        throw "Expected external links $($expected -join ', '), but found $($external -join ', ')."
+    }
+    $checks++
+
     Write-Host "Documentation link self-tests passed ($checks checks)."
 }
 finally {
