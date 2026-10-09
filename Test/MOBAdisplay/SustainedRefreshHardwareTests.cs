@@ -36,7 +36,7 @@ internal sealed class SustainedRefreshHardwareTests
             RefreshHz = refreshHz
         };
 
-        var healthBefore = await QueryHealthAsync(endpoint);
+        var healthBefore = await QueryHealthAsync(endpoint).ConfigureAwait(false);
 
         long rendered = 0, presented = 0, failed = 0, recoveries = 0;
         var lastFailed = false;
@@ -60,20 +60,20 @@ internal sealed class SustainedRefreshHardwareTests
             lastFailed = !e.Success;
         };
 
-        await scheduler.StartAsync(options);
+        await scheduler.StartAsync(options).ConfigureAwait(false);
         try
         {
-            await Task.Delay(duration);
+            await Task.Delay(duration).ConfigureAwait(false);
         }
         finally
         {
-            await scheduler.StopAsync();
+            await scheduler.StopAsync().ConfigureAwait(false);
         }
 
-        var healthAfter = await QueryHealthAsync(endpoint);
+        var healthAfter = await QueryHealthAsync(endpoint).ConfigureAwait(false);
         var report = new SustainedRefreshReport(
             duration, refreshHz, rendered, presented, failed, recoveries, healthBefore, healthAfter);
-        await TestContext.Out.WriteLineAsync(report.Format());
+        await TestContext.Out.WriteLineAsync(report.Format()).ConfigureAwait(false);
 
         Assert.That(report.Passed, Is.True, report.Format());
     }
@@ -82,9 +82,9 @@ internal sealed class SustainedRefreshHardwareTests
     {
         using var timeout = new CancellationTokenSource(HealthTimeout);
         using var client = new UdpDisplayDeviceClient();
-        var negotiation = await client.ConnectAsync(endpoint, timeout.Token);
+        var negotiation = await client.ConnectAsync(endpoint, timeout.Token).ConfigureAwait(false);
         Assert.That(negotiation.IsSuccessful, Is.True, $"Negotiation failed: {negotiation.Diagnostic}");
-        var health = await client.QueryHealthAsync(timeout.Token);
+        var health = await client.QueryHealthAsync(timeout.Token).ConfigureAwait(false);
         Assert.That(health.IsSuccessful, Is.True, $"Health query failed: {health.Diagnostic}");
         return health.Health!.Value;
     }

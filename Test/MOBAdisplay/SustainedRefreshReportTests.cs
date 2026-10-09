@@ -14,9 +14,12 @@ internal sealed class SustainedRefreshReportTests
     {
         var report = Create(rendered: 72_000, presented: 72_000, failed: 0, accepted: 72_000, rejected: 0);
 
-        Assert.That(report.ExpectedFrames, Is.EqualTo(72_000));
-        Assert.That(report.LostFrames, Is.Zero);
-        Assert.That(report.Passed, Is.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(report.ExpectedFrames, Is.EqualTo(72_000));
+            Assert.That(report.LostFrames, Is.Zero);
+            Assert.That(report.Passed, Is.True);
+        }
     }
 
     [Test]
@@ -26,10 +29,13 @@ internal sealed class SustainedRefreshReportTests
         var atLimit = Create(rendered: 71_700, presented: 71_400, failed: 300, accepted: 71_580, rejected: 120);
         var aboveLimit = Create(rendered: 71_700, presented: 71_400, failed: 300, accepted: 71_579, rejected: 121);
 
-        Assert.That(atLimit.LostFrames, Is.EqualTo(720));
-        Assert.That(atLimit.Passed, Is.True);
-        Assert.That(aboveLimit.LostFrames, Is.EqualTo(721));
-        Assert.That(aboveLimit.Passed, Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(atLimit.LostFrames, Is.EqualTo(720));
+            Assert.That(atLimit.Passed, Is.True);
+            Assert.That(aboveLimit.LostFrames, Is.EqualTo(721));
+            Assert.That(aboveLimit.Passed, Is.False);
+        }
     }
 
     [Test]
@@ -37,8 +43,11 @@ internal sealed class SustainedRefreshReportTests
     {
         var report = Create(rendered: 72_000, presented: 72_000, failed: 0, accepted: 500, rejected: 0, uptimeAfter: 600);
 
-        Assert.That(report.RebootDetected, Is.True);
-        Assert.That(report.Passed, Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(report.RebootDetected, Is.True);
+            Assert.That(report.Passed, Is.False);
+        }
     }
 
     [Test]
@@ -46,8 +55,11 @@ internal sealed class SustainedRefreshReportTests
     {
         var report = Create(rendered: 72_000, presented: 72_000, failed: 0, accepted: -1, rejected: 0);
 
-        Assert.That(report.RebootDetected, Is.True);
-        Assert.That(report.Passed, Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(report.RebootDetected, Is.True);
+            Assert.That(report.Passed, Is.False);
+        }
     }
 
     [Test]
@@ -55,10 +67,13 @@ internal sealed class SustainedRefreshReportTests
     {
         var text = Create(rendered: 71_900, presented: 71_890, failed: 10, accepted: 71_890, rejected: 0).Format();
 
-        Assert.That(text, Does.Contain("Expected frames: 72000"));
-        Assert.That(text, Does.Contain("Skipped timer ticks: 100"));
-        Assert.That(text, Does.Contain("Reboot detected: no"));
-        Assert.That(text, Does.Contain("Result: PASSED"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(text, Does.Contain("Expected frames: 72000"));
+            Assert.That(text, Does.Contain("Skipped timer ticks: 100"));
+            Assert.That(text, Does.Contain("Reboot detected: no"));
+            Assert.That(text, Does.Contain("Result: PASSED"));
+        }
     }
 
     private static SustainedRefreshReport Create(
