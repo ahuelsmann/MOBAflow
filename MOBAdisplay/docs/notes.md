@@ -88,6 +88,7 @@ item `Fail` with its evidence rather than leaving it out.
 - Display resolution and pin configuration (`User_Setup.h`):
 - Negotiated protocol version, firmware version, device identity, adapter identity:
 - Build, flash, monitor, host-test and native-test commands used:
+- Harness command and every `MOBADISPLAY_*` value used (the address may be masked):
 
 ### Hardware results
 
