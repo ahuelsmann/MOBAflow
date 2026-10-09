@@ -201,6 +201,32 @@ public sealed partial class MobaRuntimeService
         PublishSnapshot();
     }
 
+    /// <summary>
+    /// Sets every known locomotive to speed 0 before the runtime is discarded: the locomotives this runtime
+    /// commanded or saw on its Z21 and the locomotives of its project. Does nothing while the Z21 is not connected.
+    /// </summary>
+    public async Task StopAllLocomotivesAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_isConnected)
+        {
+            return;
+        }
+
+        var directions = _locomotiveStates.ToDictionary(pair => pair.Key, pair => pair.Value.IsForward);
+        foreach (var locomotive in _activeProjectContext?.ActiveProject.Locomotives ?? [])
+        {
+            if (locomotive.DigitalAddress is { } address and > 0 and <= int.MaxValue)
+            {
+                directions.TryAdd((int)address, true);
+            }
+        }
+
+        foreach (var (address, forward) in directions)
+        {
+            await SetLocomotiveDriveAsync(address, 0, forward, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     /// <inheritdoc />
     public async Task SetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default)
     {

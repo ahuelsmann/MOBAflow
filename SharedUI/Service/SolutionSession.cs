@@ -275,6 +275,22 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     public Task StartRuntimesAsync() => _projectRuntimes.LoadAsync([.. Solution.Projects]);
 
     /// <inheritdoc />
+    public IReadOnlyList<string> GetConnectedProjectNames(IReadOnlyCollection<Guid>? projectIds = null)
+    {
+        var connected = _projectRuntimes.ConnectedProjectIds;
+        return
+        [
+            .. Solution.Projects
+                .Where(project => connected.Contains(project.Id) && (projectIds is null || projectIds.Contains(project.Id)))
+                .Select(project => project.Name)
+        ];
+    }
+
+    /// <inheritdoc />
+    public Task StopRuntimesAsync(CancellationToken cancellationToken = default) =>
+        _projectRuntimes.LoadAsync([], cancellationToken);
+
+    /// <inheritdoc />
     public ProjectViewModel AddProject(Project project)
     {
         ArgumentNullException.ThrowIfNull(project);

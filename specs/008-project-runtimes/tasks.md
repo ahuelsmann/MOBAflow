@@ -40,12 +40,12 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 - [x] T016 Add `ProjectRuntimeFactory`: one runtime graph per project with its `IZ21`, runtime, counters, interlocking, workflow context and whistle automation
 - [x] T017 Session creates and discards project runtimes; selected-project event forwarding to the UI bus; fixes #190
 - [x] T018 Per-project counter store and duplicate-Z21 diagnostics (later runtime does not connect)
-- [ ] T018a Tests with two fake Z21 endpoints (independence, conflict, takeover); slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
+- [x] T018a Tests with two fake Z21 endpoints (independence, conflict, takeover); slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ### 3c - Safe switch
 
-- [ ] T019 Switch/close warning dialog and speed 0 for every known locomotive before discarding runtimes or changing a project's Z21 address
-- [ ] T020 Tests for switch, close, cancel and address change with fake Z21 endpoints; run suites and analyzer gates for validation
+- [x] T019 Switch/close warning dialog and speed 0 for every known locomotive before discarding runtimes or changing a project's Z21 address
+- [x] T020 Tests for switch, close, cancel and address change with fake Z21 endpoints; run suites and analyzer gates for validation
 - [ ] T021 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 4 - MOBApi and MOBAsmart

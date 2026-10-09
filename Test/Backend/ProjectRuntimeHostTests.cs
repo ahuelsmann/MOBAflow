@@ -135,6 +135,26 @@ internal sealed class ProjectRuntimeHostTests
     }
 
     [Test]
+    public async Task DiscardingAConnectedRuntime_FirstSetsItsLocomotivesToSpeedZero()
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
+        var yard = Project("Yard", "192.168.0.112");
+        yard.Locomotives.Add(new Locomotive { Name = "V 60", DigitalAddress = 5 });
+        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        _createdZ21s[0].Raise(z21 => z21.OnConnectedChanged += null, true);
+
+        Assert.That(_host.ConnectedProjectIds, Is.EqualTo(new[] { station.Id }));
+
+        await _host.LoadAsync([]).ConfigureAwait(false);
+
+        _createdZ21s[0].Verify(z21 => z21.SetLocoDriveAsync(3, 0, true, It.IsAny<CancellationToken>()), Times.Once);
+        // A runtime that never connected has no trains to stop.
+        _createdZ21s[1].Verify(z21 => z21.SetLocoDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        _createdZ21s[0].Verify(z21 => z21.DisconnectAsync(), Times.Once);
+    }
+
+    [Test]
     public async Task Selecting_ForwardsOnlyTheSelectedRuntimeEventsToTheApplicationBus()
     {
         var station = Project("Station", "192.168.0.111");

@@ -14,6 +14,12 @@ using Microsoft.Extensions.Logging;
 public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<ProjectRuntimeHost> logger)
     : IProjectRuntimeHost, IAsyncDisposable
 {
+    private static readonly Action<ILogger, Guid, Exception?> LogStopLocomotivesFailed =
+        LoggerMessage.Define<Guid>(
+            LogLevel.Error,
+            new EventId(2, nameof(LogStopLocomotivesFailed)),
+            "Setting the locomotives of project {ProjectId} to speed 0 failed");
+
     private static readonly Action<ILogger, string, Exception?> LogRuntimeStartFailed =
         LoggerMessage.Define<string>(
             LogLevel.Warning,
@@ -44,6 +50,10 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
             }
         }
     }
+
+    /// <inheritdoc />
+    public IReadOnlyCollection<Guid> ConnectedProjectIds =>
+        [.. Runtimes.Where(runtime => runtime.IsConnected).Select(runtime => runtime.ProjectId)];
 
     /// <summary>Gets the runtime of a project, if it exists.</summary>
     public ProjectRuntime? Get(Guid projectId)
@@ -172,10 +182,22 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
     private async Task RemoveCoreAsync(Guid projectId)
     {
         var runtime = Detach(projectId);
-        if (runtime is not null)
+        if (runtime is null)
         {
-            await runtime.DisposeAsync().ConfigureAwait(false);
+            return;
         }
+
+        // No runtime is discarded while its trains could still be moving.
+        try
+        {
+            await runtime.StopLocomotivesAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            LogStopLocomotivesFailed(_logger, projectId, ex);
+        }
+
+        await runtime.DisposeAsync().ConfigureAwait(false);
     }
 
     private async Task DisposeAllAsync()

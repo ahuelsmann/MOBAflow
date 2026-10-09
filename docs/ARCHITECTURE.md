@@ -270,7 +270,14 @@ IZ21 / JourneyManager / WorkflowService
   on solution load and new, project add and remove, and recreates a runtime when
   its project's Z21 changes. Selecting a project only selects its runtime; it never
   activates or restarts one.
-- Covered by `Test/Backend/ProjectRuntimeHostTests.cs`.
+- Safe switch: before the host discards a connected runtime (solution switch, project
+  removal, a changed Z21 assignment, app close), the runtime sets every known
+  locomotive (commanded, seen on its Z21 or listed in its project) to speed 0. The
+  shell asks first ("Stop all trains?") before a new or opened solution, a project
+  deletion or closing MOBAflow when an affected runtime is connected; cancelling keeps
+  everything running.
+- Covered by `Test/Backend/ProjectRuntimeHostTests.cs` and
+  `Test/SharedUI/MainWindowViewModelShutdownTests.cs`.
 
 **Editor vs runtime state (done):**
 
