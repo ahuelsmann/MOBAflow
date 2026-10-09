@@ -4,6 +4,7 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using SharedUI.Interface;
+using SharedUI.ViewModel;
 
 using Common.Events;
 
@@ -44,7 +45,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     private CancellationTokenSource? _debounceCts;
 
-    private string? _lastPushedZ21Ip;
+    private string? _lastPushedZ21Endpoint;
 
     private bool _disposed;
     private readonly object _metricsLock = new();
@@ -117,6 +118,8 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         solutionSession.PropertyChanged += OnSolutionSessionPropertyChanged;
 
+        solutionSession.ModelChanged += OnSolutionModelChanged;
+
         restApiProcessService.ApiBecameReachable += OnApiBecameReachable;
 
         _eventSubscriptions.Add(_eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => QueueRuntimeSettingsPush()));
@@ -132,11 +135,19 @@ public sealed class RestApiSolutionSyncService : IDisposable
             QueuePush();
         }
     }
+    private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // MOBAsmart connects to the Z21 of the selected project until it selects a project itself (slice 4).
+        if (sender is ProjectViewModel && e.PropertyName is nameof(ProjectViewModel.Z21IpAddress) or nameof(ProjectViewModel.Z21Port))
+        {
+            QueueRuntimeSettingsPush();
+        }
+    }
 
     private void OnApiBecameReachable(object? sender, int port)
     {
         _ = port;
-        _lastPushedZ21Ip = null;
+        _lastPushedZ21Endpoint = null;
         QueuePush();
         QueueRuntimeSettingsPush();
     }
@@ -368,17 +379,9 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     {
 
-        var z21Ip = _appSettings.Z21.CurrentIpAddress?.Trim();
+        // MOBAsmart connects to the Z21 of the project selected in MOBAflow.
 
-        if (string.IsNullOrEmpty(z21Ip))
-
-        {
-
-            return;
-
-        }
-
-        if (string.Equals(_lastPushedZ21Ip, z21Ip, StringComparison.Ordinal))
+        if (_solutionSession.SelectedProject?.Model.Z21 is not { } z21 || string.IsNullOrWhiteSpace(z21.IpAddress))
 
         {
 
@@ -386,17 +389,17 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         }
 
-        var z21Port = 21105;
+        var z21Ip = z21.IpAddress.Trim();
 
-        if (!string.IsNullOrWhiteSpace(_appSettings.Z21.DefaultPort)
+        var z21Port = z21.Port > 0 ? z21.Port : Z21Endpoint.DefaultPort;
 
-            && int.TryParse(_appSettings.Z21.DefaultPort, out var parsedPort)
+        var endpointKey = $"{z21Ip}:{z21Port}";
 
-            && parsedPort > 0)
+        if (string.Equals(_lastPushedZ21Endpoint, endpointKey, StringComparison.Ordinal))
 
         {
 
-            z21Port = parsedPort;
+            return;
 
         }
 
@@ -422,7 +425,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
             {
 
-                _lastPushedZ21Ip = z21Ip;
+                _lastPushedZ21Endpoint = endpointKey;
 
                 _logger.LogDebug("Runtime settings pushed to MOBApi on port {Port}", port);
 

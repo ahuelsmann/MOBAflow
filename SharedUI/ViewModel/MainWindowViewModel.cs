@@ -56,7 +56,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly Func<string, Task>? _speechTestAction;
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
     private readonly IDialogService? _dialogService;
-    private readonly ILocomotiveWhistleAutomationService? _locomotiveWhistleAutomation;
 
     // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
     private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
@@ -109,7 +108,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ILoggerFactory? loggerFactory = null,
         IDialogService? dialogService = null,
         Func<string, Task>? speechTestAction = null,
-        ILocomotiveWhistleAutomationService? locomotiveWhistleAutomation = null,
         IProjectDiagnosticsService? projectDiagnosticsService = null,
         IWorkflowService? workflowService = null,
         IWorkflowTraceStore? workflowTraceStore = null)
@@ -144,7 +142,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _speechTestAction = speechTestAction;
         _featureTogglePageProvider = featureTogglePageProvider;
         _dialogService = dialogService;
-        _locomotiveWhistleAutomation = locomotiveWhistleAutomation;
         _projectDiagnosticsService = projectDiagnosticsService;
 
         WorkflowLibrary = new WorkflowLibraryViewModel(

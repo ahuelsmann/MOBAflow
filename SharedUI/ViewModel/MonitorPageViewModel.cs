@@ -62,7 +62,7 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
     /// Connection status text.
     /// </summary>
     public string ConnectionStatus => _mainWindowViewModel.IsConnected
-        ? $"✅ Connected to {_mainWindowViewModel.IpAddress}"
+        ? $"✅ Connected to {_mainWindowViewModel.SelectedProject?.Z21IpAddress}"
         : "❌ Not connected";
 
     /// <summary>

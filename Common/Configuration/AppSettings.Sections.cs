@@ -75,11 +75,6 @@ public class Z21Settings
     /// Set to 1-30 if you want redundant polling in addition to broadcasts.
     /// </summary>
     public int SystemStatePollingIntervalSeconds { get; set; }
-
-    /// <summary>
-    /// List of recently used IP addresses.
-    /// </summary>
-    public List<string> RecentIpAddresses { get; set; } = [];
 }
 
 /// <summary>

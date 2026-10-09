@@ -63,6 +63,11 @@ public interface ISolutionSession : IProjectContext
     /// <summary>Adds a new empty project to the solution and selects it.</summary>
     ProjectViewModel AddProject(Project project);
 
+    /// <summary>
+    /// Creates one runtime per project of the current solution; loading or creating a solution does it later.
+    /// </summary>
+    Task StartRuntimesAsync();
+
     /// <summary>Removes <paramref name="project"/> from the solution and selects the first remaining project.</summary>
     void RemoveProject(ProjectViewModel project);
 

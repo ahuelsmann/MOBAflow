@@ -79,25 +79,10 @@
                     </Expander.HeaderTemplate>
 
                     <StackPanel Padding="56,16,0,16" Spacing="16">
-                        <TextBox
-                            HorizontalAlignment="Left"
-                            Header="IP Address"
-                            PlaceholderText="192.168.0.111"
-                            Text="{x:Bind ViewModel.IpAddress, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
-                            <TextBox.Description>
-                                <TextBlock Text="IP address of your Z21 digital command station" />
-                            </TextBox.Description>
-                        </TextBox>
-
-                        <TextBox
-                            HorizontalAlignment="Left"
-                            Header="Port"
-                            PlaceholderText="21105"
-                            Text="{x:Bind ViewModel.Port, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
-                            <TextBox.Description>
-                                <TextBlock Text="Z21 communication port (default: 21105)" />
-                            </TextBox.Description>
-                        </TextBox>
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Each project controls its own Z21. Assign it on the Solution page with the Z21 Finder."
+                            TextWrapping="Wrap" />
 
                         <NumberBox
                             HorizontalAlignment="Left"
