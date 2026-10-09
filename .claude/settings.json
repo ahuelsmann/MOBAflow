@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/sonar-secrets/build-scripts/prompt-secrets.ps1\" -Client claude",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -23,6 +23,7 @@ Resolve ambiguity explicitly before creating issues. Never guess `origin`.
 | Client | Repository entry | Behavior |
 | --- | --- | --- |
 | Codex | AGENTS.md, .agents/skills, .codex/config.toml, .codex/hooks.json | Project config/hooks require project trust; native file/search tools use the active working directory |
+| Claude Code | CLAUDE.md (imports AGENTS.md), .claude/skills, .claude/settings.json | Settings and hooks apply after the workspace trust prompt; personal settings stay in .claude/settings.local.json (ignored) |
 | GitHub Copilot | .github/copilot-instructions.md and matching scoped instructions | Links to the same policy; installed tools/authentication depend on the client |
 | Clients reading .mcp.json | Empty mcpServers map | No extra server needed for this repository baseline; native tools remain available |
 
@@ -43,6 +44,9 @@ It uses Sonar's deterministic prompt hook, not local Sonar/Vortex code analysis.
 Missing Sonar prints a visible limitation; scanner failures propagate. Never paste tokens into prompts.
 Project trust and actual hook execution must be checked in the client; valid JSON is not proof of activation.
 The hook requires Git and pwsh in PATH. Windows and POSIX launch commands are recorded separately.
+Claude Code runs the same script with `-Client claude` from `.claude/settings.json`; it calls
+`sonar hook claude-prompt-submit` instead of `codex-prompt-submit`. Claude Code runs hook commands through
+a POSIX shell (Git Bash on Windows), so one command serves both platforms.
 
 Repository policy scans likely secret-bearing inputs before reads and all changed files before publication.
 A session/global instruction can require every file to be scanned first; the stricter active rule still applies.
@@ -57,6 +61,9 @@ Codex discovers repository skills in `.agents/skills/`. A fresh clone includes t
 Examples: “Use $mobaflow-code-review to review this PR against Issue145”;
 “Use $mobaflow-diagnosing-bugs to investigate rows from the previous project reappearing”.
 A documentation edit should not trigger a whole-repository audit or a product build.
+Claude Code loads the two MOBAflow skills from `.claude/skills/`. Those folders are copies of the
+`.agents/skills/` sources, recorded as `mirrors` in the source registry; change both together, and
+`python scripts/Test-AiRepositorySetup.py` fails when they differ. Spec Kit and audit skills are not mirrored.
 Personal skills are separate. A globally installed `audit-code-quality` may duplicate the repository name;
 check which source the client loads. This repo does not remove personal installations.
 The [source registry](../.agents/skills/sources.json) records active origins and adaptations.

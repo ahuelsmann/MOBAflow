@@ -33,9 +33,9 @@ class StructureTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="mobaflow-ai-")
         self.root = Path(self.temp.name)
         # Copy only active development inputs, never operator data or credentials.
-        for folder in (".agents", ".codex", ".specify", ".github/instructions"):
+        for folder in (".agents", ".claude", ".codex", ".specify", ".github/instructions"):
             shutil.copytree(ROOT / folder, self.root / folder)
-        for name in ("AGENTS.md", ".mcp.json", ".github/copilot-instructions.md"):
+        for name in ("AGENTS.md", "CLAUDE.md", ".mcp.json", ".github/copilot-instructions.md"):
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, target)
@@ -111,6 +111,30 @@ class StructureTests(unittest.TestCase):
     def test_empty_hook_rejected(self):
         (self.root / ".codex/hooks.json").write_text('{"hooks": {}}')
         self.assertTrue(any("hook is missing" in x for x in checker.validate(self.root)))
+
+    def test_claude_import_missing(self):
+        (self.root / "CLAUDE.md").write_text("# No import\n", encoding="utf-8")
+        self.assertTrue(any("does not import AGENTS.md" in x for x in checker.validate(self.root)))
+
+    def test_claude_hook_missing(self):
+        (self.root / ".claude/settings.json").write_text('{"hooks": {}}', encoding="utf-8")
+        self.assertTrue(any("Claude Code prompt secrets hook" in x for x in checker.validate(self.root)))
+
+    def test_claude_skill_mirror_drift(self):
+        path = self.root / ".claude/skills/mobaflow-code-review/SKILL.md"
+        path.write_text(path.read_text() + "\nLocal drift.\n")
+        self.assertTrue(any("mirror differs" in x for x in checker.validate(self.root)))
+
+    def test_claude_skill_mirror_line_endings_ignored(self):
+        path = self.root / ".claude/skills/mobaflow-code-review/SKILL.md"
+        path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n"))
+        self.assertEqual([], checker.validate(self.root))
+
+    def test_unregistered_claude_skill(self):
+        folder = self.root / ".claude/skills/unlisted"
+        folder.mkdir()
+        (folder / "SKILL.md").write_text("---\nname: unlisted\ndescription: fixture\n---\n")
+        self.assertTrue(any("Unregistered Claude Code skill" in x for x in checker.validate(self.root)))
 
     def test_invalid_mcp_command_and_url_types(self):
         for field, value in (("command", 42), ("url", True), ("command", "  ")):
@@ -248,6 +272,29 @@ class GitTests(unittest.TestCase):
         result = run(command, nested, {"PATH": str(fake) + os.pathsep + os.environ["PATH"]}, "{}")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn(str(self.root), result.stdout)
+
+    def test_claude_hook_selects_claude_prompt_format(self):
+        hook = Path(".codex/hooks/sonar-secrets/build-scripts/prompt-secrets.ps1")
+        target = self.root / hook
+        target.parent.mkdir(parents=True)
+        shutil.copyfile(ROOT / hook, target)
+        (self.root / "AGENTS.md").write_text("fixture")
+        fake = self.root / "fake"
+        fake.mkdir()
+        if os.name == "nt":
+            (fake / "sonar.cmd").write_text('@echo off\necho %*\nexit /b 0\n')
+        else:
+            launcher = fake / "sonar"
+            launcher.write_text('#!/bin/sh\necho "$@"\nexit 0\n')
+            launcher.chmod(0o755)
+        nested = self.root / "nested"
+        nested.mkdir()
+        config = json.loads((ROOT / ".claude/settings.json").read_text())
+        command = config["hooks"]["UserPromptSubmit"][0]["hooks"][0]["command"]
+        shell = shutil.which("bash") or shutil.which("sh")
+        result = run([shell, "-c", command], nested, {"PATH": str(fake) + os.pathsep + os.environ["PATH"]}, "{}")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("hook claude-prompt-submit", result.stdout)
 
     def test_specify_feature_pointer_and_template_override(self):
         folder = self.root / ".specify/scripts/powershell"
