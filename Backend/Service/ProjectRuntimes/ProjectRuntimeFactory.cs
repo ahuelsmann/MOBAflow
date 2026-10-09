@@ -29,39 +29,39 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
     public ProjectRuntime Create(Project project)
     {
         ArgumentNullException.ThrowIfNull(project);
-        var services = _services;
+        var shared = _services;
         var lease = _connections.Acquire(project);
         var bus = lease.EventBus;
         var z21 = lease.Z21;
-        var loggers = services.LoggerFactory;
+        var loggers = shared.LoggerFactory;
 
         var counters = new InPortCounterService(
             z21,
-            services.Settings,
-            services.TimeProvider,
+            shared.Settings,
+            shared.TimeProvider,
             loggers.CreateLogger<InPortCounterService>(),
-            services.CounterStoreFactory?.Invoke(project.Id));
+            shared.CounterStoreFactory?.Invoke(project.Id));
         var interlocking = new InterlockingRuntimeService(
             z21,
             bus,
-            services.TimeProvider,
+            shared.TimeProvider,
             loggers.CreateLogger<InterlockingRuntimeService>());
         var workflowService = new WorkflowService(
-            services.ActionExecutor,
+            shared.ActionExecutor,
             new WorkflowServiceDependencies
             {
-                Validator = services.WorkflowDependencies.Validator,
-                EffectPlanner = services.WorkflowDependencies.EffectPlanner,
+                Validator = shared.WorkflowDependencies.Validator,
+                EffectPlanner = shared.WorkflowDependencies.EffectPlanner,
                 EventBus = bus,
-                TraceStore = services.WorkflowDependencies.TraceStore,
-                TimeProvider = services.WorkflowDependencies.TimeProvider,
-                Logger = services.WorkflowDependencies.Logger
+                TraceStore = shared.WorkflowDependencies.TraceStore,
+                TimeProvider = shared.WorkflowDependencies.TimeProvider,
+                Logger = shared.WorkflowDependencies.Logger
             });
         var executionContext = new ActionExecutionContext
         {
             Z21 = z21,
-            SpeakerEngine = services.SharedExecutionContext.SpeakerEngine,
-            SoundPlayer = services.SharedExecutionContext.SoundPlayer
+            SpeakerEngine = shared.SharedExecutionContext.SpeakerEngine,
+            SoundPlayer = shared.SharedExecutionContext.SoundPlayer
         };
         var unavailableReason = lease.ConflictProjectName is { } owner
             ? $"Z21 {Z21ConnectionRegistry.ToKey(project.Z21)} is already used by project '{owner}'"
@@ -70,7 +70,7 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
             z21,
             workflowService,
             new ActionExecutionContextFactory(executionContext),
-            services.Settings,
+            shared.Settings,
             loggers.CreateLogger<MobaRuntimeService>(),
             bus,
             journeyManagerFactory: new JourneyManagerFactory(
@@ -78,14 +78,14 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
                 workflowService,
                 new JourneyManagerDependencies
                 {
-                    StopTransitionService = services.StopTransitionService,
-                    RuntimeStateStore = services.RuntimeStateStore,
-                    TimeProvider = services.TimeProvider,
+                    StopTransitionService = shared.StopTransitionService,
+                    RuntimeStateStore = shared.RuntimeStateStore,
+                    TimeProvider = shared.TimeProvider,
                     EventBus = bus,
                     InPortCounterService = counters
                 },
                 loggers.CreateLogger<JourneyManager>()),
-            timeProvider: services.TimeProvider,
+            timeProvider: shared.TimeProvider,
             interlockingRuntime: interlocking,
             inPortCounterService: counters,
             endpointSource: new ProjectZ21EndpointSource(project, unavailableReason));
@@ -93,7 +93,7 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
             bus,
             new MobaRuntimeLocomotiveFunctionCommandGateway(runtime),
             loggers.CreateLogger<LocomotiveWhistleAutomationService>(),
-            services.TimeProvider);
+            shared.TimeProvider);
 
         return new ProjectRuntime(project, runtime, lease, counters, interlocking, whistle);
     }
@@ -196,7 +196,8 @@ public sealed class ProjectRuntime : IAsyncDisposable
         _whistle.Dispose();
         ((IDisposable)Runtime).Dispose();
         await Interlocking.DisposeAsync().ConfigureAwait(false);
-        _counters.Dispose();
+        // Flushes a pending counter save before the runtime goes away.
+        await _counters.DisposeAsync().ConfigureAwait(false);
         Connection.Release();
     }
 }

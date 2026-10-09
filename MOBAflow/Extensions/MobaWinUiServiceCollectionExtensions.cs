@@ -121,7 +121,7 @@ public static class MobaWinUiServiceCollectionExtensions
     /// services use the selected project's runtime and interlocking. Registered before the backend services so
     /// these registrations replace the single-runtime defaults.
     /// </summary>
-    private static IServiceCollection AddMobaWinUiProjectRuntimes(this IServiceCollection services)
+    private static void AddMobaWinUiProjectRuntimes(this IServiceCollection services)
     {
         services.AddSingleton(sp =>
         {
@@ -158,7 +158,6 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IProjectRuntimeHost>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
         services.AddSingleton<IMobaRuntime, SelectedProjectRuntime>();
         services.AddSingleton<IInterlockingRuntime, SelectedProjectInterlocking>();
-        return services;
     }
 
     /// <summary>
