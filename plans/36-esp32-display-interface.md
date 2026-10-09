@@ -62,6 +62,17 @@ independent of RF-23 (#191): it touches only `MOBAdisplay/` and the Display page
    maintainer-led).
 5. **Cleanup**: fix any defect found in slice 4 in its own PR; then delete this plan and close #36.
 
+Slice status: slice 1 merged in PR #208. Slice 2 is `Test/MOBAdisplay/SustainedRefreshHardwareTests.cs`
+(explicit, category `Hardware`); `SustainedRefreshReport` evaluates the Q2 thresholds and is unit-tested in CI.
+Lost frames are expected frames the device did not confirm as presented (skipped timer ticks, host failures and
+frames the device rejected for good), each counted once; the device's rejected-frame counter is reported for
+information because it also counts incomplete transfers the host repaired. Reconnects are reported as recoveries
+after a failed frame. A reboot is detected from device uptime and from an accepted-frame counter below the frames
+the host saw presented, and the uptime check handles the firmware's 49.7-day millisecond wrap. A run shorter
+than 2 hours, at another rate or started less than a minute after boot is marked as not an acceptance run.
+Partially presented frames are excluded by the protocol, which presents only complete frames, and are confirmed
+visually during slice 4.
+
 Durable record: the minimum module, partition layout, thresholds and acceptance procedure live in
 `MOBAdisplay/docs/notes.md` after slices 1 and 3; the closed issue and Git history keep the rest, as the Spec Kit
 governance rules expect for a deleted standalone plan.
