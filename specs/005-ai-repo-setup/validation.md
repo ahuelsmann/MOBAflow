@@ -42,6 +42,28 @@ it was corrected and negative tests now reject numeric MCP/hook commands. The pr
 focused review and structural checks, not a full audit or product build, for README-only work.
 This explicit-path probe does not establish fresh-client automatic discovery.
 
+## Fresh-client probes (T019)
+Checklist: [quickstart.md](quickstart.md#fresh-client-probe-checklist-t019).
+
+**Claude Code** (agent, 2026-10-09): Claude Code 2.1.295 in headless mode (`claude -p`) on Linux 6.18,
+commit 7657f5eb, fresh clone plus task worktree. The client used the environment's existing login;
+no credentials were copied.
+
+| Step | Result |
+| --- | --- |
+| 1 Fresh clone and worktree | Passed |
+| 2 Remote resolution | Passed with `origin` and `github`; both reported `ahuelsmann/MOBAflow` and the worktree root |
+| 3 Instruction loading | Passed; cited AGENTS.md for task branch and PR, draft PR until Sonar is green, no launch |
+| 4 Skill discovery | Passed; `mobaflow-code-review` and `mobaflow-diagnosing-bugs` listed as project skills |
+| 5 Documentation task | Passed; one-line edit, line-ending check and diff review only, no .NET build or tests |
+| 6 Review skill | Passed; read-only review of 688472d6 with file references and two low documentation findings |
+| 7 Diagnosis skill | Passed; ranked hypotheses, bounded NUnit reproduction and one regression test, no file changes |
+| 8 Worktree confinement | Passed; every file path the client used was inside the probe worktree |
+| 9 Prompt secrets hook | Passed for activation: the hook ran on every prompt and reported "Secrets scan unavailable" because Sonar CLI is not installed here; the `claude-prompt-submit` subcommand is unverified |
+| 10 Clean up | Passed |
+
+**Codex CLI** (maintainer): open; result pending from the maintainer's local run of the checklist.
+
 ## GitHub baseline and delivery
 At task start there were no open PRs; PR154/155 had merged. The task worktree was fast-forwarded
 to current main while preserving the owned plan extension. Shared main and the unrelated review worktree were untouched.

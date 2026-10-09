@@ -103,6 +103,7 @@
     {
       "name": "mobaflow-code-review",
       "path": ".agents/skills/mobaflow-code-review",
+      "mirrors": [".claude/skills/mobaflow-code-review"],
       "source": "https://github.com/mattpocock/skills/tree/c55ee46073ed923f86ce59a5eb3b6d895095d1b7/skills/engineering/code-review",
       "revision": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
       "license": ".agents/skills/mobaflow-code-review/LICENSE",
@@ -111,6 +112,7 @@
     {
       "name": "mobaflow-diagnosing-bugs",
       "path": ".agents/skills/mobaflow-diagnosing-bugs",
+      "mirrors": [".claude/skills/mobaflow-diagnosing-bugs"],
       "source": "https://github.com/mattpocock/skills/tree/c55ee46073ed923f86ce59a5eb3b6d895095d1b7/skills/engineering/diagnosing-bugs",
       "revision": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
       "license": ".agents/skills/mobaflow-diagnosing-bugs/LICENSE",
