@@ -41,4 +41,9 @@ No concurrent edits to shared files. Read-only pipeline and instruction research
 MVP is US1; each subsequent story has its own independent check.
 
 ## Phase 5: Convergence
-- [ ] T019 Complete authenticated fresh-client documentation/review/diagnosis probes and hook activation on supported clients; record specs/005-ai-repo-setup/validation.md (SC-003, FR-006, FR-010). Isolated CODEX_HOME currently has no login; personal credentials are not copied.
+- [ ] T019 Complete authenticated fresh-client documentation/review/diagnosis probes and hook activation on supported clients; record specs/005-ai-repo-setup/validation.md (SC-003, FR-006, FR-010). Supported clients are Codex CLI and Claude Code; the agent runs the Claude Code probe, the maintainer runs the Codex CLI probe from the checklist (T020); personal credentials are not copied.
+- [ ] T020 Write the probe checklist for Codex CLI and Claude Code in specs/005-ai-repo-setup/quickstart.md (Q1, Q2).
+- [ ] T021 Correct CI-01 in specs/005-ai-repo-setup/pipeline-review.md (ruleset "main" active since 2026-09-25) and record the owners of CI-02 to CI-06 (Q3, Q4).
+- [ ] T022 Hand CI-05/CI-06 to #197 and open one follow-up issue for CI-02 to CI-04 plus a required-check name check after #197 (Q3).
+- [ ] T023 Make the AGENTS.md introduction neutral for every coding agent and run scripts/Test-InstructionConsistency.ps1 for validation (Q5).
+- [ ] T024 Final documentation PR as draft with the Sonar quality gate (SonarCloud) green and zero open issues; close #145 and delete plans/ai-repo-setup.md.

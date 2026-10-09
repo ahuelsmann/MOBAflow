@@ -14,26 +14,26 @@ Follow AGENTS.md and constitution 4.0.0; local evidence, agent probes and curren
 
 ## Clarifications
 
-### Session 2026-10-08 (open, answers from the maintainer required)
+### Session 2026-10-08, answered 2026-10-09
 
-Remaining acceptance after PR #156 and #157 were merged. Each question lists the recommended answer.
+Remaining acceptance after PR #156 and #157 were merged.
 
-- Q1: Which clients count as "supported" for the final fresh-client probe (T019, SC-003)? -> Recommended: Codex
-  CLI and Claude Code, because both work on this repository today and read `AGENTS.md`; other clients are out of
-  scope.
+- Q1: Which clients count as "supported" for the final fresh-client probe (T019, SC-003)? -> A: Codex CLI and
+  Claude Code. Other clients are out of scope.
 - Q2: Who runs the authenticated probe, given that an isolated `CODEX_HOME` has no login and personal credentials
-  must not be copied? -> Recommended: the maintainer runs the documented probe once per client in a fresh clone
-  and worktree and pastes the result into `validation.md`; the agent prepares the script and checklist.
+  must not be copied? -> A: The agent runs the Claude Code probe itself in a fresh clone and worktree. The
+  maintainer runs the Codex CLI probe locally from a checklist and sends the result. No credentials are copied.
 - Q3: Where do the pipeline follow-ups CI-01 to CI-06 from `pipeline-review.md` belong now that #197 exists? ->
-  Recommended: CI-05 (scoped docs-only CI, delivered by #175 and extended by #197 CI-3) and CI-06 (main Sonar gate,
-  #197 CI-1) move to #197; CI-01 (branch protection), CI-02 (spec-kit-governance `issues: write` at workflow
-  level), CI-03 (timeouts for Pages and stale jobs) and CI-04 (SDK and workload pins) become one small follow-up
-  issue; #145 closes once P6 is accepted.
-- Q4: May CI-01 configure branch protection for `main` (required checks, review and bypass rules)? ->
-  Recommended: yes, in a separately approved step after #197 settles the required check names, because changing
-  repository administration needs your explicit approval.
-- Q5: Does `AGENTS.md` keep the sentence "tuned for GPT-6 Astra"? -> Recommended: replace it with a neutral
-  sentence that the instructions apply to every coding agent, since Claude Code also works on the repository.
+  A: Split. CI-05 (scoped docs-only CI) and CI-06 (main Sonar gate) move to #197. CI-02 (spec-kit-governance
+  `issues: write` at workflow level), CI-03 (timeouts for Pages and stale jobs) and CI-04 (SDK and workload pins)
+  become one small follow-up issue. #145 closes after the probes.
+- Q4: May CI-01 configure branch protection for `main`? -> A: Not needed. `main` has been protected since
+  2026-09-25 18:03 by the active repository ruleset "main" (pull request required, squash merge only, resolved
+  review threads, six required checks including SonarCloud, no force-push, no deletion). The `protected:false`
+  evidence in `pipeline-review.md` came from the classic branch protection API, which does not report rulesets.
+  CI-01 is done; the follow-up issue only checks that the required check names still match after #197.
+- Q5: Does `AGENTS.md` keep the sentence "tuned for GPT-6 Astra"? -> A: No. The introduction becomes neutral for
+  every coding agent; the guidance source list stays as provenance.
 
 ## User Scenarios & Testing
 
