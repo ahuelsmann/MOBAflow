@@ -1,0 +1,7 @@
+# actionlint configuration (https://github.com/rhysd/actionlint/blob/main/docs/config.md).
+paths:
+  .github/workflows/quality.yml:
+    ignore:
+      # The Android Release AAB job is disabled on purpose with `if: ${{ false }}` while MOBAsmart is not
+      # distributed; the job stays so its required check name remains (see docs/BUILD-PERFORMANCE.md).
+      - 'constant expression "false" in condition'
