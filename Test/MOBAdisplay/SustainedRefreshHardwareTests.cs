@@ -7,12 +7,14 @@ using Moba.Display.Runtime;
 using Moba.Display.Transport;
 
 using System.Globalization;
+using System.Net;
 
 /// <summary>
 /// Maintainer-run sustained-refresh acceptance for Issue #36 on the reference ESP32-S3 display.
 /// Explicit, so CI and normal test runs never contact hardware. Run it only with a flashed device on the network:
 /// <c>MOBADISPLAY_IP=&lt;address&gt; dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
-/// --filter "FullyQualifiedName~SustainedRefreshHardwareTests"</c>.
+/// --filter "FullyQualifiedName~SustainedRefreshHardwareTests" -l "console;verbosity=detailed"</c>.
+/// The detailed console logger shows the report of a passing run as well.
 /// Optional: <c>MOBADISPLAY_PORT</c> (default 4210), <c>MOBADISPLAY_SOAK_MINUTES</c> (default 120) and
 /// <c>MOBADISPLAY_REFRESH_HZ</c> (default: the MOBAflow refresh rate). A shorter run or another rate is reported as
 /// "not an acceptance run". Cancelling the test run stops sending frames.
@@ -44,7 +46,9 @@ internal sealed class SustainedRefreshHardwareTests
         long rendered = 0, presented = 0, failed = 0, recoveries = 0;
         var lastFailed = false;
         using var renderer = new SkiaFrameRenderer();
-        using var sender = new UdpDisplayFrameSender();
+        ObservedFrameSessionConnection? connection = null;
+        using var sender = new UdpDisplayFrameSender(displayEndpoint =>
+            connection = new ObservedFrameSessionConnection(displayEndpoint));
         var scheduler = new FrameLoopScheduler(renderer, sender);
         scheduler.FrameReady += (_, _) => rendered++;
         scheduler.FrameTransmissionCompleted += (_, e) =>
@@ -74,8 +78,18 @@ internal sealed class SustainedRefreshHardwareTests
         }
 
         var healthAfter = await QueryHealthAsync(endpoint, cancellationToken).ConfigureAwait(false);
+        var sessionLosses = connection?.Observer.SessionLosses ?? 0;
         var report = new SustainedRefreshReport(
-            duration, refreshHz, normalRefreshHz, rendered, presented, failed, recoveries, healthBefore, healthAfter);
+            duration,
+            refreshHz,
+            normalRefreshHz,
+            rendered,
+            presented,
+            failed,
+            recoveries,
+            sessionLosses,
+            healthBefore,
+            healthAfter);
         await TestContext.Out.WriteLineAsync(report.Format()).ConfigureAwait(false);
 
         Assert.That(report.Passed, Is.True, report.Format());
@@ -119,5 +133,37 @@ internal sealed class SustainedRefreshHardwareTests
             Is.True,
             $"{name} must be a positive whole number.");
         return parsed;
+    }
+
+    /// <summary>The production UDP frame path with a <see cref="SessionLossObserver"/> on its transport.</summary>
+    private sealed class ObservedFrameSessionConnection : IDisplayFrameSessionConnection
+    {
+        private readonly UdpDisplayDatagramTransport _transport;
+        private readonly DisplayProtocolClient _client;
+        private readonly DisplayProtocolFrameSession _session;
+
+        public ObservedFrameSessionConnection(IPEndPoint endpoint)
+        {
+            _transport = new UdpDisplayDatagramTransport(endpoint.Address, endpoint.Port);
+            Observer = new SessionLossObserver(_transport);
+            _client = new DisplayProtocolClient(Observer);
+            _session = new DisplayProtocolFrameSession(_client);
+        }
+
+        public SessionLossObserver Observer { get; }
+
+        public Task SendFrameAsync(
+            ReadOnlyMemory<byte> rgb565Frame,
+            ushort width,
+            ushort height,
+            CancellationToken cancellationToken) =>
+            _session.SendFrameAsync(rgb565Frame, width, height, cancellationToken);
+
+        public void Dispose()
+        {
+            _client.Dispose();
+            Observer.Dispose();
+            _transport.Dispose();
+        }
     }
 }
