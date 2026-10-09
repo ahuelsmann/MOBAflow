@@ -66,8 +66,9 @@ On Windows PowerShell, set the variable first with `$env:MOBADISPLAY_IP = "<addr
 Optional variables are `MOBADISPLAY_PORT` (default `4210`),
 `MOBADISPLAY_SOAK_MINUTES` (default `120`) and `MOBADISPLAY_REFRESH_HZ`
 (default: the MOBAflow refresh rate). The test prints the report used in item 8
-and fails when a threshold is missed. Only a run of at least 2 hours at the
-normal rate ends with `Result: PASSED`; a shorter run or another rate ends with
+and fails when a threshold is missed. Start it at least one minute after the
+display booted. Only a run of at least 2 hours at the normal rate that started
+that way ends with `Result: PASSED`; any other run ends with
 `PASSED (not an acceptance run)` and is no acceptance evidence. Lost frames are
 the expected frames the device did not confirm as presented, each counted once:
 skipped timer ticks, host failures and frames the device rejected for good. The
