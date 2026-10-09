@@ -18,6 +18,18 @@ checker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(checker)
 
 
+def posix_shell():
+    # Claude Code runs hooks through Git Bash on Windows; honor its configured path before PATH lookup.
+    configured = os.environ.get("CLAUDE_CODE_GIT_BASH_PATH")
+    if configured:
+        return configured
+    if os.name == "nt" and GIT:
+        bundled = Path(GIT).resolve().parents[1] / "bin" / "bash.exe"
+        if bundled.is_file():
+            return str(bundled)
+    return shutil.which("bash") or shutil.which("sh")
+
+
 def run(args, cwd, env=None, input_text=None):
     clean = os.environ.copy()
     for key in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR"):
@@ -287,12 +299,15 @@ class GitTests(unittest.TestCase):
             launcher = fake / "sonar"
             launcher.write_text('#!/bin/sh\necho "$@"\nexit 0\n')
             launcher.chmod(0o755)
-        nested = self.root / "nested"
-        nested.mkdir()
+        elsewhere = Path(self.temp.name) / "elsewhere"
+        elsewhere.mkdir()
         config = json.loads((ROOT / ".claude/settings.json").read_text())
         command = config["hooks"]["UserPromptSubmit"][0]["hooks"][0]["command"]
-        shell = shutil.which("bash") or shutil.which("sh")
-        result = run([shell, "-c", command], nested, {"PATH": str(fake) + os.pathsep + os.environ["PATH"]}, "{}")
+        shell = posix_shell()
+        self.assertIsNotNone(shell, "Git Bash or a POSIX shell is required to run Claude Code hooks.")
+        # The session's working directory may leave the checkout; the project root comes from Claude Code.
+        env = {"PATH": str(fake) + os.pathsep + os.environ["PATH"], "CLAUDE_PROJECT_DIR": str(self.root)}
+        result = run([shell, "-c", command], elsewhere, env, "{}")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("hook claude-prompt-submit", result.stdout)
 

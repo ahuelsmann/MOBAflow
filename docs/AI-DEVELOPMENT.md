@@ -45,8 +45,10 @@ Missing Sonar prints a visible limitation; scanner failures propagate. Never pas
 Project trust and actual hook execution must be checked in the client; valid JSON is not proof of activation.
 The hook requires Git and pwsh in PATH. Windows and POSIX launch commands are recorded separately.
 Claude Code runs the same script with `-Client claude` from `.claude/settings.json`; it calls
-`sonar hook claude-prompt-submit` instead of `codex-prompt-submit`. Claude Code runs hook commands through
-a POSIX shell (Git Bash on Windows), so one command serves both platforms.
+`sonar hook claude-prompt-submit` instead of `codex-prompt-submit`. The command resolves the script from
+`$CLAUDE_PROJECT_DIR`, the project root Claude Code sets, so it still runs when the session's working directory
+moves elsewhere. Claude Code runs hook commands through a POSIX shell (Git Bash on Windows), so one command
+serves both platforms.
 
 Repository policy scans likely secret-bearing inputs before reads and all changed files before publication.
 A session/global instruction can require every file to be scanned first; the stricter active rule still applies.
