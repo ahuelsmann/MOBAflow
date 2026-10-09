@@ -287,19 +287,24 @@ jobs:
         shell: bash
         run: python3 -m platformio run -d MOBAdisplay/esp32 -e esp32s3
 
-      - name: Record firmware SHA-256
+      # The custom partition table is flashed separately; archive the complete bundle with its offsets.
+      - name: Record ESP32-S3 flash bundle
         shell: bash
-        run: >-
-          sha256sum MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin
-          | tee MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin.sha256
+        working-directory: MOBAdisplay/esp32/.pio/build/esp32s3
+        run: |
+          printf '%s\n' '0x0 bootloader.bin' '0x8000 partitions.bin' '0x10000 firmware.bin' | tee flash-offsets.txt
+          sha256sum bootloader.bin partitions.bin firmware.bin | tee flash-bundle.sha256
 
-      - name: Archive ESP32-S3 firmware
+      - name: Archive ESP32-S3 flash bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: MOBAdisplay-esp32s3-${{ github.run_number }}
           path: |
+            MOBAdisplay/esp32/.pio/build/esp32s3/bootloader.bin
+            MOBAdisplay/esp32/.pio/build/esp32s3/partitions.bin
             MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin
-            MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin.sha256
+            MOBAdisplay/esp32/.pio/build/esp32s3/flash-offsets.txt
+            MOBAdisplay/esp32/.pio/build/esp32s3/flash-bundle.sha256
           if-no-files-found: error
           retention-days: 30
 
