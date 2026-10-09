@@ -12,7 +12,8 @@ using System.Globalization;
 /// Maintainer-run sustained-refresh acceptance for Issue #36 on the reference ESP32-S3 display.
 /// Explicit, so CI and normal test runs never contact hardware. Run it only with a flashed device on the network:
 /// <c>MOBADISPLAY_IP=&lt;address&gt; dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
-/// --filter "FullyQualifiedName~SustainedRefreshHardwareTests"</c>.
+/// --filter "FullyQualifiedName~SustainedRefreshHardwareTests" -l "console;verbosity=detailed"</c>.
+/// The detailed console logger shows the report of a passing run as well.
 /// Optional: <c>MOBADISPLAY_PORT</c> (default 4210), <c>MOBADISPLAY_SOAK_MINUTES</c> (default 120) and
 /// <c>MOBADISPLAY_REFRESH_HZ</c> (default: the MOBAflow refresh rate). A shorter run or another rate is reported as
 /// "not an acceptance run". Cancelling the test run stops sending frames.
@@ -41,7 +42,7 @@ internal sealed class SustainedRefreshHardwareTests
 
         var healthBefore = await QueryHealthAsync(endpoint, cancellationToken).ConfigureAwait(false);
 
-        long rendered = 0, presented = 0, failed = 0, recoveries = 0;
+        long rendered = 0, presented = 0, failed = 0, recoveries = 0, sessionLosses = 0;
         var lastFailed = false;
         using var renderer = new SkiaFrameRenderer();
         using var sender = new UdpDisplayFrameSender();
@@ -57,6 +58,7 @@ internal sealed class SustainedRefreshHardwareTests
             else
             {
                 failed++;
+                sessionLosses += SustainedRefreshReport.IsSessionLoss(e.FailureMessage) ? 1 : 0;
                 TestContext.Out.WriteLine($"{e.Timestamp:HH:mm:ss.fff} frame failed: {e.FailureMessage}");
             }
 
@@ -75,7 +77,16 @@ internal sealed class SustainedRefreshHardwareTests
 
         var healthAfter = await QueryHealthAsync(endpoint, cancellationToken).ConfigureAwait(false);
         var report = new SustainedRefreshReport(
-            duration, refreshHz, normalRefreshHz, rendered, presented, failed, recoveries, healthBefore, healthAfter);
+            duration,
+            refreshHz,
+            normalRefreshHz,
+            rendered,
+            presented,
+            failed,
+            recoveries,
+            sessionLosses,
+            healthBefore,
+            healthAfter);
         await TestContext.Out.WriteLineAsync(report.Format()).ConfigureAwait(false);
 
         Assert.That(report.Passed, Is.True, report.Format());

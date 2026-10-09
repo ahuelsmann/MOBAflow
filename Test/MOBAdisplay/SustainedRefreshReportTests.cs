@@ -97,7 +97,7 @@ internal sealed class SustainedRefreshReportTests
         // but the restarted counter holds fewer accepted frames than the host saw presented.
         var before = new HealthResponsePayload(DisplayHealthState.Ready, DisplayResultCode.Ok, 2, 100_000, 0, 0, 0);
         var after = before with { UptimeSeconds = 7_197, AcceptedFrameCount = 71_970 };
-        var report = new SustainedRefreshReport(TwoHours, NormalRefreshHz, NormalRefreshHz, 72_000, 72_000, 0, 0, before, after);
+        var report = new SustainedRefreshReport(TwoHours, NormalRefreshHz, NormalRefreshHz, 72_000, 72_000, 0, 0, 0, before, after);
 
         using (Assert.EnterMultipleScope())
         {
@@ -112,7 +112,7 @@ internal sealed class SustainedRefreshReportTests
         // The firmware's 32-bit millisecond counter wraps after about 49.7 days.
         var before = new HealthResponsePayload(DisplayHealthState.Ready, DisplayResultCode.Ok, 4_294_000, 100_000, 0, 0, 0);
         var after = before with { UptimeSeconds = 6_233, AcceptedFrameCount = 72_000 };
-        var report = new SustainedRefreshReport(TwoHours, NormalRefreshHz, NormalRefreshHz, 72_000, 72_000, 0, 0, before, after);
+        var report = new SustainedRefreshReport(TwoHours, NormalRefreshHz, NormalRefreshHz, 72_000, 72_000, 0, 0, 0, before, after);
 
         using (Assert.EnterMultipleScope())
         {
@@ -122,12 +122,39 @@ internal sealed class SustainedRefreshReportTests
     }
 
     [Test]
+    public void SessionLostWithoutReboot_Fails()
+    {
+        // The device dropped the negotiated session; the host renegotiated and every other figure stayed clean.
+        var report = Create(
+            rendered: 72_000, presented: 71_999, failed: 1, accepted: 71_999, rejected: 0, sessionLosses: 1);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(report.RebootDetected, Is.False);
+            Assert.That(report.LossRatio, Is.LessThanOrEqualTo(SustainedRefreshReport.MaximumLossRatio));
+            Assert.That(report.Passed, Is.False);
+            Assert.That(report.Format(), Does.Contain("Session losses (renegotiations): 1 (limit 0)"));
+        }
+    }
+
+    [TestCase("Display request BeginFrame failed with WrongSession.", true)]
+    [TestCase("Display request CompleteFrame failed with WrongSession.", true)]
+    [TestCase("CompleteFrame failed with WrongSessionId: The response carried another session.", true)]
+    [TestCase("Display request CompleteFrame failed with ChecksumMismatch.", false)]
+    [TestCase("BeginFrame failed with TimedOut: No compatible response was received.", false)]
+    [TestCase(null, false)]
+    public void IsSessionLoss_RecognizesFramesThatLostTheSession(string? failureMessage, bool expected)
+    {
+        Assert.That(SustainedRefreshReport.IsSessionLoss(failureMessage), Is.EqualTo(expected));
+    }
+
+    [Test]
     public void RunStartedRightAfterBoot_IsNotAnAcceptanceRun()
     {
         // A reboot before the first presented frame could hide within the uptime tolerance, so this is no evidence.
         var before = new HealthResponsePayload(DisplayHealthState.Ready, DisplayResultCode.Ok, 2, 100_000, 0, 0, 0);
         var after = before with { UptimeSeconds = 7_202, AcceptedFrameCount = 72_000 };
-        var report = new SustainedRefreshReport(TwoHours, NormalRefreshHz, NormalRefreshHz, 72_000, 72_000, 0, 0, before, after);
+        var report = new SustainedRefreshReport(TwoHours, NormalRefreshHz, NormalRefreshHz, 72_000, 72_000, 0, 0, 0, before, after);
 
         using (Assert.EnterMultipleScope())
         {
@@ -142,7 +169,7 @@ internal sealed class SustainedRefreshReportTests
         var before = new HealthResponsePayload(DisplayHealthState.Ready, DisplayResultCode.Ok, 1_000, 100_000, 0, 0, 0);
         var after = before with { UptimeSeconds = 1_060, AcceptedFrameCount = 600 };
         var report = new SustainedRefreshReport(
-            TimeSpan.FromMinutes(1), NormalRefreshHz, NormalRefreshHz, 600, 600, 0, 0, before, after);
+            TimeSpan.FromMinutes(1), NormalRefreshHz, NormalRefreshHz, 600, 600, 0, 0, 0, before, after);
 
         using (Assert.EnterMultipleScope())
         {
@@ -164,6 +191,7 @@ internal sealed class SustainedRefreshReportTests
             Assert.That(text, Does.Contain("Skipped timer ticks: 100"));
             Assert.That(text, Does.Contain("Lost frames: 110"));
             Assert.That(text, Does.Contain("Reboot detected: no"));
+            Assert.That(text, Does.Contain("Session losses (renegotiations): 0 (limit 0)"));
             Assert.That(text, Does.EndWith("Result: PASSED"));
         }
     }
@@ -174,7 +202,8 @@ internal sealed class SustainedRefreshReportTests
         long failed,
         long accepted,
         long rejected,
-        uint uptimeAfter = 1_000 + 7_200)
+        uint uptimeAfter = 1_000 + 7_200,
+        long sessionLosses = 0)
     {
         const uint acceptedBefore = 1_000;
         const uint rejectedBefore = 10;
@@ -187,6 +216,6 @@ internal sealed class SustainedRefreshReportTests
             RejectedFrameCount = (uint)(rejectedBefore + rejected)
         };
         return new SustainedRefreshReport(
-            TwoHours, NormalRefreshHz, NormalRefreshHz, rendered, presented, failed, 0, before, after);
+            TwoHours, NormalRefreshHz, NormalRefreshHz, rendered, presented, failed, 0, sessionLosses, before, after);
     }
 }

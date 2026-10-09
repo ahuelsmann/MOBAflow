@@ -8,7 +8,8 @@ using System.Text;
 
 /// <summary>
 /// Evaluates one sustained-refresh run against the Issue #36 acceptance thresholds:
-/// at most 1 percent dropped or rejected frames and no device reboot, over at least 2 hours at the normal refresh rate.
+/// at most 1 percent dropped or rejected frames, no device reboot and no lost protocol session, over at least 2 hours
+/// at the normal refresh rate.
 /// </summary>
 internal sealed record SustainedRefreshReport(
     TimeSpan Duration,
@@ -18,6 +19,7 @@ internal sealed record SustainedRefreshReport(
     long PresentedFrames,
     long FailedFrames,
     long Recoveries,
+    long SessionLosses,
     HealthResponsePayload HealthBefore,
     HealthResponsePayload HealthAfter)
 {
@@ -40,6 +42,14 @@ internal sealed record SustainedRefreshReport(
 
     // The firmware reports millis() / 1000, and the 32-bit millisecond counter wraps after 2^32 ms.
     private const double UptimeWrapSeconds = 4_294_967.296;
+
+    /// <summary>
+    /// True when a failed frame reports that the device no longer knew the negotiated session. The frame session
+    /// then renegotiates on the next frame, so the loss is only visible in the failure message.
+    /// </summary>
+    /// <param name="failureMessage">The failure message of a frame transmission.</param>
+    public static bool IsSessionLoss(string? failureMessage) =>
+        failureMessage?.Contains($"failed with {DisplayResultCode.WrongSession}", StringComparison.Ordinal) == true;
 
     /// <summary>Frames the scheduler should have produced at the configured refresh rate.</summary>
     public long ExpectedFrames => (long)Math.Floor(Duration.TotalSeconds * RefreshHz);
@@ -89,8 +99,9 @@ internal sealed record SustainedRefreshReport(
         && RefreshHz == NormalRefreshHz
         && HealthBefore.UptimeSeconds >= MinimumUptimeBeforeRun.TotalSeconds;
 
-    /// <summary>True when the loss and reboot thresholds of the run are met.</summary>
-    public bool Passed => ExpectedFrames > 0 && !RebootDetected && LossRatio <= MaximumLossRatio;
+    /// <summary>True when the loss, reboot and negotiated-session thresholds of the run are met.</summary>
+    public bool Passed =>
+        ExpectedFrames > 0 && !RebootDetected && SessionLosses == 0 && LossRatio <= MaximumLossRatio;
 
     /// <summary>Formats the report for the Issue #36 acceptance record.</summary>
     public string Format()
@@ -114,6 +125,7 @@ internal sealed record SustainedRefreshReport(
             $"Device accepted / rejected: {DeviceAcceptedFrames} / {DeviceRejectedFrames} (rejected includes repaired transfers)");
         builder.AppendLine(culture, $"Device uptime before / after: {HealthBefore.UptimeSeconds} s / {HealthAfter.UptimeSeconds} s");
         builder.AppendLine(culture, $"Reboot detected: {(RebootDetected ? "yes" : "no")}");
+        builder.AppendLine(culture, $"Session losses (renegotiations): {SessionLosses} (limit 0)");
         builder.AppendLine(culture, $"Lost frames: {LostFrames} ({LossRatio:P2}, limit {MaximumLossRatio:P0})");
         builder.Append(culture, $"Result: {Verdict}");
         return builder.ToString();

@@ -59,21 +59,25 @@ test runs never contact the display. Run it from the repository root with the
 display on the network:
 
 ```text
-MOBADISPLAY_IP=<address> dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~SustainedRefreshHardwareTests"
+MOBADISPLAY_IP=<address> dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~SustainedRefreshHardwareTests" -l "console;verbosity=detailed"
 ```
 
 On Windows PowerShell, set the variable first with `$env:MOBADISPLAY_IP = "<address>"`.
 Optional variables are `MOBADISPLAY_PORT` (default `4210`),
 `MOBADISPLAY_SOAK_MINUTES` (default `120`) and `MOBADISPLAY_REFRESH_HZ`
 (default: the MOBAflow refresh rate). The test prints the report used in item 8
-and fails when a threshold is missed. Start it at least one minute after the
+and fails when a threshold is missed; the detailed console logger in the command
+keeps that report visible when the test passes. Start it at least one minute after the
 display booted. Only a run of at least 2 hours at the normal rate that started
 that way ends with `Result: PASSED`; any other run ends with
 `PASSED (not an acceptance run)` and is no acceptance evidence. Lost frames are
 the expected frames the device did not confirm as presented, each counted once:
 skipped timer ticks, host failures and frames the device rejected for good. The
 device's rejected-frame counter is shown for information, because it also counts
-incomplete transfers that the host repaired. Watch the display during the run:
+incomplete transfers that the host repaired. A frame the device rejects because
+it no longer knows the negotiated session counts as a session loss: the host
+renegotiates on the next frame, and the run fails even without a reboot. Watch
+the display during the run:
 the protocol presents only complete frames, so any torn or partial image is a
 failure.
 
