@@ -136,7 +136,7 @@ internal sealed class RecordingSessionServiceTests
         var stopped = await service.StopAsync();
 
         Assert.That(outcomes, Does.Contain(RecordingSubmissionResult.DroppedCapacity));
-        Assert.That(stopped.Artifact!.Entries, Has.Some.Matches<RecordingEntry>(entry => entry.TypeKey == "recorder.gap"));
+        Assert.That(stopped.Artifact!.Entries, Has.Some.Matches<RecordingEntry>(entry => entry is not null && entry.TypeKey == "recorder.gap"));
         Assert.That(stopped.Artifact.Entries.Select(entry => entry.Sequence), Is.Ordered.And.Unique);
         Assert.That(service.CurrentStatus.DroppedEntryCount, Is.GreaterThan(0));
     }
@@ -160,7 +160,7 @@ internal sealed class RecordingSessionServiceTests
             Assert.That(second, Is.EqualTo(RecordingSubmissionResult.Accepted));
             Assert.That(rejected, Is.EqualTo(RecordingSubmissionResult.RejectedLimit));
             Assert.That(rejectedAgain, Is.EqualTo(RecordingSubmissionResult.RejectedLimit));
-            Assert.That(stopped.Artifact!.Entries, Has.Some.Matches<RecordingEntry>(entry => entry.TypeKey == "recorder.limit"));
+            Assert.That(stopped.Artifact!.Entries, Has.Some.Matches<RecordingEntry>(entry => entry is not null && entry.TypeKey == "recorder.limit"));
             Assert.That(stopped.Artifact.Entries[^1].TypeKey, Is.EqualTo("recorder.completed"));
             Assert.That(stopped.Artifact.Entries.Length, Is.LessThanOrEqualTo(options.EntryLimit));
         });
@@ -182,7 +182,7 @@ internal sealed class RecordingSessionServiceTests
             Assert.That(stopped.Operation.FailureCode, Is.EqualTo(RecordingFailureCode.Cancelled));
             Assert.That(service.CurrentStatus.State, Is.EqualTo(RecordingSessionState.Faulted));
             Assert.That(stopped.Artifact, Is.Not.Null);
-            Assert.That(stopped.Artifact!.Entries, Has.Some.Matches<RecordingEntry>(entry => entry.TypeKey == "recorder.fault"));
+            Assert.That(stopped.Artifact!.Entries, Has.Some.Matches<RecordingEntry>(entry => entry is not null && entry.TypeKey == "recorder.fault"));
             Assert.That(stopped.Artifact.Entries[^1].TypeKey, Is.EqualTo("recorder.completed"));
         });
     }
@@ -243,8 +243,8 @@ internal sealed class RecordingSessionServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(submission, Is.EqualTo(RecordingSubmissionResult.RejectedLimit));
-            Assert.That(stopped.Artifact!.Entries, Has.None.Matches<RecordingEntry>(entry => entry.TypeKey == "test.event"));
-            Assert.That(stopped.Artifact.Entries, Has.Some.Matches<RecordingEntry>(entry => entry.TypeKey == "recorder.limit"));
+            Assert.That(stopped.Artifact!.Entries, Has.None.Matches<RecordingEntry>(entry => entry is not null && entry.TypeKey == "test.event"));
+            Assert.That(stopped.Artifact.Entries, Has.Some.Matches<RecordingEntry>(entry => entry is not null && entry.TypeKey == "recorder.limit"));
         });
     }
 

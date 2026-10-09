@@ -111,7 +111,7 @@ internal sealed class WorkflowActionHandlersTests
     }
 
     [Test]
-    public void AudioHandler_MissingFile_ThrowsFileNotFound()
+    public async Task AudioHandler_MissingFile_ThrowsFileNotFound()
     {
         var handler = new AudioWorkflowActionHandler(fileSystem: new FakeFileSystem());
         var action = new WorkflowAction
@@ -125,7 +125,7 @@ internal sealed class WorkflowActionHandlersTests
             SoundPlayer = new NullSoundPlayer()
         };
 
-        Assert.ThrowsAsync<FileNotFoundException>(() => handler.ExecuteAsync(action, context));
+        await Assert.ThrowsAsync<FileNotFoundException>(() => handler.ExecuteAsync(action, context));
     }
 
     [Test]
@@ -201,7 +201,7 @@ internal sealed class WorkflowActionHandlersTests
     }
 
     [Test]
-    public void ExecuteScriptHandler_MissingScriptFile_ThrowsFileNotFound()
+    public async Task ExecuteScriptHandler_MissingScriptFile_ThrowsFileNotFound()
     {
         var handler = new ExecuteScriptWorkflowActionHandler(fileSystem: new FakeFileSystem());
         var action = new WorkflowAction
@@ -210,7 +210,7 @@ internal sealed class WorkflowActionHandlersTests
             PowerShell = new PowerShellActionPayload { ScriptPath = @"C:\missing.ps1" }
         };
 
-        Assert.ThrowsAsync<FileNotFoundException>(() =>
+        await Assert.ThrowsAsync<FileNotFoundException>(() =>
             handler.ExecuteAsync(action, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }));
     }
 
@@ -277,7 +277,7 @@ internal sealed class WorkflowActionHandlersTests
     }
 
     [Test]
-    public void MutatingHandlers_PreCancelledToken_DoesNotStartEffect()
+    public async Task MutatingHandlers_PreCancelledToken_DoesNotStartEffect()
     {
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
@@ -298,13 +298,13 @@ internal sealed class WorkflowActionHandlersTests
             ChangeJourneyStop = new ChangeJourneyStopActionPayload { MoveToNextStop = true }
         };
 
-        Assert.ThrowsAsync<OperationCanceledException>(() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
             new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, context, cancellation.Token));
         Assert.That(state.CurrentStationId, Is.EqualTo(first.Id));
     }
 
     [Test]
-    public void ExecuteScriptHandler_PreCancelledToken_DoesNotStartProcess()
+    public async Task ExecuteScriptHandler_PreCancelledToken_DoesNotStartProcess()
     {
         const string path = "existing.ps1";
         using var cancellation = new CancellationTokenSource();
@@ -315,7 +315,7 @@ internal sealed class WorkflowActionHandlersTests
             PowerShell = new PowerShellActionPayload { ScriptPath = path }
         };
 
-        Assert.ThrowsAsync<OperationCanceledException>(() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
             new ExecuteScriptWorkflowActionHandler(fileSystem: new FakeFileSystem(path)).ExecuteAsync(
                 action,
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },

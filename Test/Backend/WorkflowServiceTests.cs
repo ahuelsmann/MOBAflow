@@ -38,21 +38,21 @@ internal sealed class WorkflowServiceTests
     }
 
     [Test]
-    public void ExecuteAsync_EmptyList_ThrowsWithoutCallingActionExecutor()
+    public async Task ExecuteAsync_EmptyList_ThrowsWithoutCallingActionExecutor()
     {
         var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
         var service = new WorkflowService(executor.Object);
         var workflow = new Workflow();
         var project = new Project { Workflows = [workflow] };
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(
             workflow,
             new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), CurrentProject = project }));
         executor.VerifyNoOtherCalls();
     }
 
     [Test]
-    public void ExecuteAsync_PreCancelledToken_ThrowsCancellationWithoutCallingActionExecutor()
+    public async Task ExecuteAsync_PreCancelledToken_ThrowsCancellationWithoutCallingActionExecutor()
     {
         var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
         var service = new WorkflowService(executor.Object);
@@ -61,7 +61,7 @@ internal sealed class WorkflowServiceTests
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        Assert.CatchAsync<OperationCanceledException>(() => service.ExecuteAsync(
+        await Assert.CatchAsync<OperationCanceledException>(() => service.ExecuteAsync(
             workflow,
             new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), CurrentProject = project },
             default,

@@ -141,7 +141,7 @@ internal partial class MainWindowViewModelShutdownTests
     }
 
     [Test]
-    public void SaveSolutionInternalAsync_WriteFailure_RetainsDirtyStateAndReportsNotSaved()
+    public async Task SaveSolutionInternalAsync_WriteFailure_RetainsDirtyStateAndReportsNotSaved()
     {
         // Arrange
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
@@ -154,7 +154,7 @@ internal partial class MainWindowViewModelShutdownTests
         viewModel.CurrentSolutionPath = "existing.json";
 
         // Act
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             () => viewModel.SaveSolutionInternalAsync());
 
         // Assert

@@ -115,11 +115,11 @@ internal sealed class RuntimeCommandAdmissionTests
     [TestCase(HubCommand.Drive, null)]
     [TestCase(HubCommand.Function, null)]
     [TestCase(HubCommand.SignalAspect, null)]
-    public void HubCommand_Invalid_IsRejectedAndNeitherForwardedNorQueued(HubCommand command, string? hostConnectionId)
+    public async Task HubCommand_Invalid_IsRejectedAndNeitherForwardedNorQueued(HubCommand command, string? hostConnectionId)
     {
         var fixture = new HubFixture(hostConnectionId);
 
-        Assert.ThrowsAsync<HubException>(() => fixture.InvokeInvalidAsync(command));
+        await Assert.ThrowsAsync<HubException>(() => fixture.InvokeInvalidAsync(command));
 
         using (Assert.EnterMultipleScope())
         {
@@ -138,7 +138,7 @@ internal sealed class RuntimeCommandAdmissionTests
         var fixture = new HubFixture(hostConnectionId: null, queueCapacity: 1);
         await fixture.InvokeValidAsync(command).ConfigureAwait(false);
 
-        var exception = Assert.ThrowsAsync<HubException>(() => fixture.InvokeValidAsync(command, variant: 1));
+        var exception = await Assert.ThrowsAsync<HubException>(() => fixture.InvokeValidAsync(command, variant: 1));
 
         using (Assert.EnterMultipleScope())
         {
