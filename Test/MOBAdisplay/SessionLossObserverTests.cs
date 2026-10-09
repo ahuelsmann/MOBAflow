@@ -6,14 +6,14 @@ using Moba.Display.Transport;
 
 [TestFixture]
 [Category("Integration")]
-internal sealed class SessionNegotiationObserverTests
+internal sealed class SessionLossObserverTests
 {
     [Test]
-    public async Task FramesOnTheFirstSession_AreNoRenegotiation()
+    public async Task FramesOnTheFirstSession_LoseNoSession()
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var observer = new SessionNegotiationObserver(endpoint);
+        using var observer = new SessionLossObserver(endpoint);
         using var client = new DisplayProtocolClient(observer);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
@@ -23,15 +23,15 @@ internal sealed class SessionNegotiationObserverTests
         await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
 
         // Assert
-        Assert.That(observer.Renegotiations, Is.Zero);
+        Assert.That(observer.SessionLosses, Is.Zero);
     }
 
     [Test]
-    public async Task FrameRejectedWithWrongSession_CountsTheRenegotiation()
+    public async Task FrameRejectedWithWrongSession_CountsOneSessionLoss()
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var observer = new SessionNegotiationObserver(endpoint);
+        using var observer = new SessionLossObserver(endpoint);
         using var client = new DisplayProtocolClient(observer);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
@@ -47,16 +47,36 @@ internal sealed class SessionNegotiationObserverTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(exception.ResultCode, Is.EqualTo(DisplayResultCode.WrongSession));
-            Assert.That(observer.Renegotiations, Is.EqualTo(1));
+            Assert.That(observer.SessionLosses, Is.EqualTo(1));
         }
     }
 
     [Test]
-    public async Task SessionLossFoundByTheAbort_CountsTheRenegotiation()
+    public async Task SessionRejectedOnTheLastFrame_IsCountedWithoutRenegotiation()
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var observer = new SessionNegotiationObserver(endpoint);
+        using var observer = new SessionLossObserver(endpoint);
+        using var client = new DisplayProtocolClient(observer);
+        var session = new DisplayProtocolFrameSession(client);
+        var frame = DisplayConformancePattern.CreateRgb565(4, 3);
+        await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
+        endpoint.Reboot();
+
+        // Act
+        await CaptureExceptionAsync<DisplayProtocolOperationException>(
+            () => session.SendFrameAsync(frame, 4, 3)).ConfigureAwait(false);
+
+        // Assert
+        Assert.That(observer.SessionLosses, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task SessionLossFoundByTheAbort_IsCounted()
+    {
+        // Arrange
+        var endpoint = new FakeDisplayEndpoint();
+        using var observer = new SessionLossObserver(endpoint);
         using var client = new DisplayProtocolClient(observer);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
@@ -73,16 +93,16 @@ internal sealed class SessionNegotiationObserverTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(exception.ResultCode, Is.EqualTo(DisplayResultCode.ChecksumMismatch));
-            Assert.That(observer.Renegotiations, Is.EqualTo(1));
+            Assert.That(observer.SessionLosses, Is.EqualTo(1));
         }
     }
 
     [Test]
-    public async Task ResponseWithAnotherSessionId_IsNoRenegotiation()
+    public async Task ResponseWithAnotherSessionId_IsNoSessionLoss()
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var observer = new SessionNegotiationObserver(endpoint);
+        using var observer = new SessionLossObserver(endpoint);
         using var client = new DisplayProtocolClient(observer);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
@@ -98,7 +118,7 @@ internal sealed class SessionNegotiationObserverTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(exception.RequestFailure, Is.EqualTo(DisplayRequestFailure.WrongSessionId));
-            Assert.That(observer.Renegotiations, Is.Zero);
+            Assert.That(observer.SessionLosses, Is.Zero);
         }
     }
 

@@ -78,7 +78,7 @@ internal sealed class SustainedRefreshHardwareTests
         }
 
         var healthAfter = await QueryHealthAsync(endpoint, cancellationToken).ConfigureAwait(false);
-        var sessionLosses = connection?.Observer.Renegotiations ?? 0;
+        var sessionLosses = connection?.Observer.SessionLosses ?? 0;
         var report = new SustainedRefreshReport(
             duration,
             refreshHz,
@@ -135,7 +135,7 @@ internal sealed class SustainedRefreshHardwareTests
         return parsed;
     }
 
-    /// <summary>The production UDP frame path with a <see cref="SessionNegotiationObserver"/> on its transport.</summary>
+    /// <summary>The production UDP frame path with a <see cref="SessionLossObserver"/> on its transport.</summary>
     private sealed class ObservedFrameSessionConnection : IDisplayFrameSessionConnection
     {
         private readonly UdpDisplayDatagramTransport _transport;
@@ -145,12 +145,12 @@ internal sealed class SustainedRefreshHardwareTests
         public ObservedFrameSessionConnection(IPEndPoint endpoint)
         {
             _transport = new UdpDisplayDatagramTransport(endpoint.Address, endpoint.Port);
-            Observer = new SessionNegotiationObserver(_transport);
+            Observer = new SessionLossObserver(_transport);
             _client = new DisplayProtocolClient(Observer);
             _session = new DisplayProtocolFrameSession(_client);
         }
 
-        public SessionNegotiationObserver Observer { get; }
+        public SessionLossObserver Observer { get; }
 
         public Task SendFrameAsync(
             ReadOnlyMemory<byte> rgb565Frame,

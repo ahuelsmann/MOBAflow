@@ -117,7 +117,7 @@ internal sealed record SustainedRefreshReport(
             $"Device accepted / rejected: {DeviceAcceptedFrames} / {DeviceRejectedFrames} (rejected includes repaired transfers)");
         builder.AppendLine(culture, $"Device uptime before / after: {HealthBefore.UptimeSeconds} s / {HealthAfter.UptimeSeconds} s");
         builder.AppendLine(culture, $"Reboot detected: {(RebootDetected ? "yes" : "no")}");
-        builder.AppendLine(culture, $"Session losses (renegotiations): {SessionLosses} (limit 0)");
+        builder.AppendLine(culture, $"Session losses: {SessionLosses} (limit 0)");
         builder.AppendLine(culture, $"Lost frames: {LostFrames} ({LossRatio:P2}, limit {MaximumLossRatio:P0})");
         builder.Append(culture, $"Result: {Verdict}");
         return builder.ToString();

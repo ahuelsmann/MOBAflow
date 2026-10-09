@@ -133,7 +133,7 @@ internal sealed class SustainedRefreshReportTests
             Assert.That(report.RebootDetected, Is.False);
             Assert.That(report.LossRatio, Is.LessThanOrEqualTo(SustainedRefreshReport.MaximumLossRatio));
             Assert.That(report.Passed, Is.False);
-            Assert.That(report.Format(), Does.Contain("Session losses (renegotiations): 1 (limit 0)"));
+            Assert.That(report.Format(), Does.Contain("Session losses: 1 (limit 0)"));
         }
     }
 
@@ -180,7 +180,7 @@ internal sealed class SustainedRefreshReportTests
             Assert.That(text, Does.Contain("Skipped timer ticks: 100"));
             Assert.That(text, Does.Contain("Lost frames: 110"));
             Assert.That(text, Does.Contain("Reboot detected: no"));
-            Assert.That(text, Does.Contain("Session losses (renegotiations): 0 (limit 0)"));
+            Assert.That(text, Does.Contain("Session losses: 0 (limit 0)"));
             Assert.That(text, Does.EndWith("Result: PASSED"));
         }
     }

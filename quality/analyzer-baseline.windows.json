@@ -3393,7 +3393,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/MOBAdisplay/SessionNegotiationObserverTests.cs",
+      "path": "Test/MOBAdisplay/SessionLossObserverTests.cs",
       "count": 1
     },
     {
@@ -5150,7 +5150,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1028",
-      "path": "Test/MOBAdisplay/SessionNegotiationObserver.cs",
+      "path": "Test/MOBAdisplay/SessionLossObserver.cs",
       "count": 1
     },
     {
