@@ -124,7 +124,7 @@ internal sealed class SustainedRefreshReportTests
     [Test]
     public void SessionLostWithoutReboot_Fails()
     {
-        // The device dropped the negotiated session; the host renegotiated and every other figure stayed clean.
+        // The device rejected the negotiated session once; the host renegotiated and every other figure stayed clean.
         var report = Create(
             rendered: 72_000, presented: 71_999, failed: 1, accepted: 71_999, rejected: 0, sessionLosses: 1);
 
@@ -135,17 +135,6 @@ internal sealed class SustainedRefreshReportTests
             Assert.That(report.Passed, Is.False);
             Assert.That(report.Format(), Does.Contain("Session losses (renegotiations): 1 (limit 0)"));
         }
-    }
-
-    [TestCase("Display request BeginFrame failed with WrongSession.", true)]
-    [TestCase("Display request CompleteFrame failed with WrongSession.", true)]
-    [TestCase("CompleteFrame failed with WrongSessionId: The response carried another session.", true)]
-    [TestCase("Display request CompleteFrame failed with ChecksumMismatch.", false)]
-    [TestCase("BeginFrame failed with TimedOut: No compatible response was received.", false)]
-    [TestCase(null, false)]
-    public void IsSessionLoss_RecognizesFramesThatLostTheSession(string? failureMessage, bool expected)
-    {
-        Assert.That(SustainedRefreshReport.IsSessionLoss(failureMessage), Is.EqualTo(expected));
     }
 
     [Test]

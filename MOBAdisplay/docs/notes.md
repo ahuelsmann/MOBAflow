@@ -74,9 +74,9 @@ that way ends with `Result: PASSED`; any other run ends with
 the expected frames the device did not confirm as presented, each counted once:
 skipped timer ticks, host failures and frames the device rejected for good. The
 device's rejected-frame counter is shown for information, because it also counts
-incomplete transfers that the host repaired. A frame the device rejects because
-it no longer knows the negotiated session counts as a session loss: the host
-renegotiates on the next frame, and the run fails even without a reboot. Watch
+incomplete transfers that the host repaired. Every protocol negotiation after the first one counts as a session
+loss, whichever request showed that the device rejected the session, and the
+run fails on any session loss even without a reboot. Watch
 the display during the run:
 the protocol presents only complete frames, so any torn or partial image is a
 failure.

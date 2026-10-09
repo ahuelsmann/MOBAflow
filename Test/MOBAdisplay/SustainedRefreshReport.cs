@@ -43,14 +43,6 @@ internal sealed record SustainedRefreshReport(
     // The firmware reports millis() / 1000, and the 32-bit millisecond counter wraps after 2^32 ms.
     private const double UptimeWrapSeconds = 4_294_967.296;
 
-    /// <summary>
-    /// True when a failed frame reports that the device no longer knew the negotiated session. The frame session
-    /// then renegotiates on the next frame, so the loss is only visible in the failure message.
-    /// </summary>
-    /// <param name="failureMessage">The failure message of a frame transmission.</param>
-    public static bool IsSessionLoss(string? failureMessage) =>
-        failureMessage?.Contains($"failed with {DisplayResultCode.WrongSession}", StringComparison.Ordinal) == true;
-
     /// <summary>Frames the scheduler should have produced at the configured refresh rate.</summary>
     public long ExpectedFrames => (long)Math.Floor(Duration.TotalSeconds * RefreshHz);
 

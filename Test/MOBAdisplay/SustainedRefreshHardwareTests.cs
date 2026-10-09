@@ -7,6 +7,7 @@ using Moba.Display.Runtime;
 using Moba.Display.Transport;
 
 using System.Globalization;
+using System.Net;
 
 /// <summary>
 /// Maintainer-run sustained-refresh acceptance for Issue #36 on the reference ESP32-S3 display.
@@ -42,10 +43,12 @@ internal sealed class SustainedRefreshHardwareTests
 
         var healthBefore = await QueryHealthAsync(endpoint, cancellationToken).ConfigureAwait(false);
 
-        long rendered = 0, presented = 0, failed = 0, recoveries = 0, sessionLosses = 0;
+        long rendered = 0, presented = 0, failed = 0, recoveries = 0;
         var lastFailed = false;
         using var renderer = new SkiaFrameRenderer();
-        using var sender = new UdpDisplayFrameSender();
+        ObservedFrameSessionConnection? connection = null;
+        using var sender = new UdpDisplayFrameSender(displayEndpoint =>
+            connection = new ObservedFrameSessionConnection(displayEndpoint));
         var scheduler = new FrameLoopScheduler(renderer, sender);
         scheduler.FrameReady += (_, _) => rendered++;
         scheduler.FrameTransmissionCompleted += (_, e) =>
@@ -58,7 +61,6 @@ internal sealed class SustainedRefreshHardwareTests
             else
             {
                 failed++;
-                sessionLosses += SustainedRefreshReport.IsSessionLoss(e.FailureMessage) ? 1 : 0;
                 TestContext.Out.WriteLine($"{e.Timestamp:HH:mm:ss.fff} frame failed: {e.FailureMessage}");
             }
 
@@ -76,6 +78,7 @@ internal sealed class SustainedRefreshHardwareTests
         }
 
         var healthAfter = await QueryHealthAsync(endpoint, cancellationToken).ConfigureAwait(false);
+        var sessionLosses = connection?.Observer.Renegotiations ?? 0;
         var report = new SustainedRefreshReport(
             duration,
             refreshHz,
@@ -130,5 +133,37 @@ internal sealed class SustainedRefreshHardwareTests
             Is.True,
             $"{name} must be a positive whole number.");
         return parsed;
+    }
+
+    /// <summary>The production UDP frame path with a <see cref="SessionNegotiationObserver"/> on its transport.</summary>
+    private sealed class ObservedFrameSessionConnection : IDisplayFrameSessionConnection
+    {
+        private readonly UdpDisplayDatagramTransport _transport;
+        private readonly DisplayProtocolClient _client;
+        private readonly DisplayProtocolFrameSession _session;
+
+        public ObservedFrameSessionConnection(IPEndPoint endpoint)
+        {
+            _transport = new UdpDisplayDatagramTransport(endpoint.Address, endpoint.Port);
+            Observer = new SessionNegotiationObserver(_transport);
+            _client = new DisplayProtocolClient(Observer);
+            _session = new DisplayProtocolFrameSession(_client);
+        }
+
+        public SessionNegotiationObserver Observer { get; }
+
+        public Task SendFrameAsync(
+            ReadOnlyMemory<byte> rgb565Frame,
+            ushort width,
+            ushort height,
+            CancellationToken cancellationToken) =>
+            _session.SendFrameAsync(rgb565Frame, width, height, cancellationToken);
+
+        public void Dispose()
+        {
+            _client.Dispose();
+            Observer.Dispose();
+            _transport.Dispose();
+        }
     }
 }
