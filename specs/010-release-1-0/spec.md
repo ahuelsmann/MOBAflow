@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-08
 
-**Status**: Draft (clarification pending)
+**Status**: Deferred (clarified 2026-10-09; no release date, focus is maturity)
 
 **Spec Kit**: Required
 
@@ -28,13 +28,12 @@ beginners, marketing for railway and model railroad fans, MOBAnews and the GitHu
 documentation (`README.md`, `docs/wiki/`, `docs/index.html`), external MOBAnews website.
 
 **Out of Scope**: New product features; vehicle statistics (#143); route reservations and interlocking (#34);
-maintenance; automatic journey end, repeat or follow-up journeys; a workflow action to set counters; Microsoft
-Store or Play Store publication unless Q1/Q2 choose it.
+maintenance; automatic journey end, repeat or follow-up journeys; a workflow action to set counters.
 
-**Sensitive Data**: Code-signing certificates and Android keystores, if Q1/Q2 require them; they stay in GitHub
-secrets or on the maintainer's machine and never enter the repository.
+**Sensitive Data**: Store account credentials, any MSIX signing certificate for the ZIP or sideloaded packages, and
+the Android keystore; they stay in GitHub secrets or on the maintainer's machine and never enter the repository.
 
-**Data and API Effects**: None for `solution.json`. Release Studio gains an installer artifact (Q1). Documentation
+**Data and API Effects**: None for `solution.json`. Release Studio gains an MSIX package (Q1). Documentation
 and website content change.
 
 ## Confirmed MVP Scope for 1.0 (from the issue, verified on main `d45e14c5`)
@@ -51,28 +50,22 @@ and website content change.
 
 ## Clarifications
 
-### Session 2026-10-08 (open, answers from the maintainer required)
+### Session 2026-10-08, answered 2026-10-09
 
-Each question lists the recommended answer. The plan is drafted with the recommended answers.
-
-- Q1: What does "setup" mean for Windows? → Recommended: a classic installer (Inno Setup) that wraps the existing
-  self-contained x64 publish from Release Studio, adds Start-menu and uninstall entries, and is attached to the
-  draft release next to the ZIP. Without a code-signing certificate Windows SmartScreen shows a warning; the start
-  guide explains it. Alternatives: keep only the ZIP; MSIX (needs a trusted certificate); Velopack (adds automatic
-  updates).
-- Q2: How is MOBAsmart distributed with 1.0? → Recommended: a signed APK attached to the GitHub release for
-  sideloading, with install steps in the start guide; Play Store later. Alternative: MOBAsmart is not part of the
-  1.0 release.
-- Q3: When is 1.0 released relative to the refactoring programme? → Recommended: after RF-23 (#191) and #188 are
-  merged, before RF-24 to RF-31, because those packages change neither behavior nor the file format. From 1.0 on,
-  persisted-format changes need a migration decision (today `AGENTS.md` allows breaking changes because there are
-  no released users).
-- Q4: Which role does each website play? → Recommended: the GitHub Pages project website is the entry point with
-  download and start guide link; the user wiki is the reference; MOBAnews carries progress articles. MOBAflow's
-  Info page links to the project website and MOBAnews; no news content is embedded in the app.
-- Q5: In which language are the user-facing documents written? → Recommended: README, wiki and start guide in
-  English (matches the app's English UI); the project website and MOBAnews stay German for the German-speaking
-  community, each linking to the English guide. Today the project website is German and the wiki English.
+- Q1: What does "setup" mean for Windows? → A: An **MSIX** package. End users get it through the **Microsoft
+  Store** (Microsoft signs Store packages, updates are automatic, each version passes Store certification);
+  advanced users get a **ZIP on the GitHub release**. Consequences: MOBAflow is unpackaged today
+  (`WindowsPackageType=None`), so the plan must check settings and data locations under MSIX; the Store developer
+  account cost for an individual developer is checked before implementation. GnuPG (Kleopatra) keys cannot sign
+  MSIX packages; they remain usable for signed Git tags.
+- Q2: How is MOBAsmart distributed with 1.0? → A: **Both**: a signed APK on the GitHub release for sideloading,
+  and in parallel the route into the Play Store (closed test with the required testers and test period; the
+  Android Release AAB job disabled in #195 is re-enabled for it).
+- Q3: When is 1.0 released relative to the refactoring programme? → A: **Not in the foreseeable future**
+  (maintainer, 2026-10-09): the current focus is maturity, and 1.0 has time. This feature is deferred; its
+  release steps get no date. The MVP scope stays as defined in the #144 comment of 2026-09-24.
+- Q4: Which role does each website play? → Open; deferred until a release is planned.
+- Q5: In which language are the user-facing documents written? → Open; deferred until a release is planned.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -84,13 +77,13 @@ it.
 **Why this priority**: Today MOBAflow is distributed as source code only (`docs/wiki/INSTALLATION.md`); without a
 setup there are no users.
 
-**Independent Test**: On a clean Windows 11 machine without the .NET SDK, the installer from a release candidate
+**Independent Test**: On a clean Windows 11 machine without the .NET SDK, the MSIX package from a release candidate
 installs, starts and uninstalls MOBAflow (maintainer check, launch approved for that run).
 
 **Acceptance Scenarios**:
 
-1. **Given** the published 1.0 release, **When** the user runs the installer, **Then** MOBAflow starts from the
-   Start menu without installing an SDK.
+1. **Given** the published 1.0 release, **When** the user installs it from the Microsoft Store, **Then** MOBAflow
+   starts from the Start menu without installing an SDK.
 2. **Given** an installed MOBAflow, **When** the user uninstalls it, **Then** program files are removed and user
    data (solution files, settings, counters) stays.
 
@@ -138,14 +131,14 @@ is updated.
 - Installing over an older ZIP installation: the guide explains that the ZIP folder can be deleted; user data
   locations are unchanged.
 - A user without a Z21: the start guide shows what works without hardware and states that operation needs a Z21.
-- SmartScreen or antivirus warnings for an unsigned installer: documented with the checksum from `SHA256SUMS.txt`.
+- SmartScreen or antivirus warnings for the unsigned ZIP: documented with the checksum from `SHA256SUMS.txt`.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: Release Studio MUST produce the Windows setup chosen in Q1 from the signed tag, together with the
-  existing ZIP and checksums, without publishing automatically.
+- **FR-001**: Release Studio MUST produce the MSIX package for Store submission from the signed tag, together with
+  the existing ZIP and checksums, without publishing automatically.
 - **FR-002**: The setup MUST install a self-contained MOBAflow that runs without a .NET SDK and MUST keep user data
   on uninstall.
 - **FR-003**: `docs/wiki/INSTALLATION.md` MUST describe download and installation of the release instead of a
@@ -157,12 +150,12 @@ is updated.
   link to each other as decided in Q4.
 - **FR-007**: A marketing document MUST list prioritised channels and next actions and follow the MOBAnews
   editorial rules from the issue.
-- **FR-008**: MOBAsmart distribution MUST follow Q2; if included, the release contains a signed APK and install
-  steps.
+- **FR-008**: The release MUST contain a signed MOBAsmart APK with install steps, and the AAB MUST be ready for the
+  Play Store closed test.
 
 ### Key Entities
 
-- **Release package**: tag, installer, ZIP, checksums, release notes.
+- **Release package**: tag, MSIX package, ZIP, APK, AAB, checksums, release notes.
 - **Documentation set**: README, user wiki, start guide, project website, MOBAnews.
 
 ## Success Criteria *(mandatory)*
