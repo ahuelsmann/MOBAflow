@@ -70,7 +70,7 @@ button { font: inherit; }
 .brand-mark i:first-child { left: 3px; top: 4px; }
 .brand-mark i:last-child { right: 3px; bottom: 4px; }
 
-.main-nav { display: flex; align-items: center; gap: 30px; color: #c5d3d8; font-size: 14px; font-weight: 600; }
+.main-nav { display: flex; align-items: center; gap: 20px; color: #c5d3d8; font-size: 14px; font-weight: 600; }
 .main-nav a { transition: color .2s ease; }
 .main-nav a:hover { color: white; }
 .nav-cta { padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; }
@@ -98,6 +98,8 @@ h1 { margin-bottom: 25px; font-size: clamp(52px, 6vw, 82px); line-height: .98; l
 h1 em { color: var(--accent); font-style: normal; }
 .hero-flow { color: var(--violet); }
 .hero-lead { max-width: 600px; margin-bottom: 32px; color: #b8c9cf; font-size: 19px; line-height: 1.72; }
+.development-note { max-width: 600px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); font-size: 14px; }
+.development-note strong { color: var(--ink); }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .button {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
