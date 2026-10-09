@@ -43,36 +43,82 @@ three files with `flash-offsets.txt` and `flash-bundle.sha256`.
 
 ## Current-hardware acceptance record
 
-Use the ESP32-S3/ST7789 reference device for the final Issue #36 acceptance. Do
-not copy results from a simulator or an older firmware image. Before the run,
-the maintainer must approve the sustained-refresh duration and the maximum
-allowed dropped or rejected frames.
+Use the ESP32-S3 N16R8/ST7789 reference device for the final Issue #36
+acceptance. Do not copy results from a simulator or an older firmware image.
+Flash the complete bundle of the commit under review, as described above.
 
-Record these identity fields in Issue #36:
+Approved thresholds for the sustained-refresh run:
 
-- tested Git commit and the SHA-256 values from `flash-bundle.sha256`;
-- board module marking, flash/PSRAM configuration, and display controller;
-- display resolution and relevant pin configuration;
-- negotiated protocol version, firmware version, device identity, and adapter
-  identity;
-- exact build, flash, monitor, host-test, native-test, and acceptance commands;
-- approved refresh duration and dropped/rejected-frame thresholds.
+- 2 hours at the normal MOBAflow refresh rate;
+- at most 1 percent of the expected frames dropped or rejected;
+- zero partially presented frames;
+- the device stays negotiated and does not reboot.
 
-Run and record each result separately:
+The sustained-refresh harness is an explicit hardware test, so CI and normal
+test runs never contact the display. Run it from the repository root with the
+display on the network:
 
-1. negotiate from a fresh host session and query health;
-2. present the standard host-rendered test pattern;
-3. run every optional command that the device advertises and confirm unsupported
-   commands remain disabled;
-4. inject malformed, duplicate, reordered, and conflicting packets without a
-   partial display update;
-5. interrupt an incomplete transfer and confirm the previous frame remains
-   visible;
-6. reconnect after an endpoint/session reset;
-7. reboot the device and confirm the stale host session is rejected until a new
-   negotiation succeeds;
-8. run the approved sustained-refresh interval and compare accepted, rejected,
-   and dropped-frame evidence with the approved thresholds.
+```text
+MOBADISPLAY_IP=<address> dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~SustainedRefreshHardwareTests"
+```
+
+On Windows PowerShell, set the variable first with `$env:MOBADISPLAY_IP = "<address>"`.
+Optional variables are `MOBADISPLAY_PORT` (default `4210`),
+`MOBADISPLAY_SOAK_MINUTES` (default `120`) and `MOBADISPLAY_REFRESH_HZ`
+(default: the MOBAflow refresh rate). The test prints the report used in item 8
+and fails when a threshold is missed. Dropped frames are skipped timer ticks
+plus frames that failed on the host; rejected frames are the change of the
+device's rejected-frame counter. Watch the display during the run: the protocol
+presents only complete frames, so any torn or partial image is a failure.
+
+The Display page checks are run once by the maintainer, who starts MOBAflow for
+them. They block closing Issue #36 like the hardware items.
+
+Copy this template into an Issue #36 comment and fill in every field. Mark an
+item `Fail` with its evidence rather than leaving it out.
+
+```markdown
+## Issue #36 acceptance record
+
+### Identity
+
+- Tested Git commit:
+- SHA-256 values from `flash-bundle.sha256`:
+- Board module marking, flash/PSRAM configuration, display controller:
+- Display resolution and pin configuration (`User_Setup.h`):
+- Negotiated protocol version, firmware version, device identity, adapter identity:
+- Build, flash, monitor, host-test and native-test commands used:
+
+### Hardware results
+
+| # | Check | Result (Pass/Fail) | Evidence |
+| --- | --- | --- | --- |
+| 1 | Negotiate from a fresh host session and query health | | |
+| 2 | Present the standard host-rendered test pattern | | |
+| 3 | Run every advertised optional command; unsupported commands stay disabled | | |
+| 4 | Malformed, duplicate, reordered and conflicting packets cause no partial display update | | |
+| 5 | An interrupted incomplete transfer keeps the previous frame visible | | |
+| 6 | Reconnect after an endpoint/session reset | | |
+| 7 | After a device reboot the stale host session is rejected until a new negotiation succeeds | | |
+| 8 | Sustained refresh meets the approved thresholds (paste the harness report below) | | |
+
+Harness report:
+
+    (paste the test output from "Duration:" to "Result:")
+
+Partially presented frames observed during the run (expected: none):
+
+### Display page checks (MOBAflow)
+
+| Check | Result (Pass/Fail) | Notes |
+| --- | --- | --- |
+| Light theme | | |
+| Dark theme | | |
+| High Contrast theme | | |
+| Keyboard-only operation | | |
+| Visible focus on every interactive element | | |
+| Narrator reads names, states and messages | | |
+```
 
 Issue #36 remains open until this record contains evidence from the current
 hardware and the exact firmware image under review.
