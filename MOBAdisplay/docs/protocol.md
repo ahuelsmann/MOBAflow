@@ -58,8 +58,9 @@ python -m platformio run -d MOBAdisplay/esp32 -e esp32s3
 
 The `display-protocol` job in `.github/workflows/quality.yml` permanently runs
 the .NET host conformance suite, all native parser/protocol tests, and the
-ESP32-S3 build from a clean checkout. It archives `firmware.bin` for traceable
-hardware acceptance.
+ESP32-S3 build from a clean checkout. It archives the flash bundle
+(`bootloader.bin`, `partitions.bin`, `firmware.bin`, their offsets and SHA-256
+values) for traceable hardware acceptance.
 
 ## Transport limits
 

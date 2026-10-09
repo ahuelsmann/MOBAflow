@@ -1,3 +1,5 @@
+# Shared by the Codex and Claude Code prompt hooks; -Client selects the Sonar prompt hook format.
+param([ValidateSet('codex', 'claude')][string]$Client = 'codex')
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../../..'))
 if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot 'AGENTS.md'))) {
@@ -10,7 +12,7 @@ if (-not (Get-Command sonar -ErrorAction SilentlyContinue)) {
     exit 0
 }
 $stdinData = [Console]::In.ReadToEnd()
-$stdinData | & sonar hook codex-prompt-submit
+$stdinData | & sonar hook "$Client-prompt-submit"
 $scanExitCode = $LASTEXITCODE
 if ($scanExitCode -ne 0) {
     [Console]::Error.WriteLine('Secrets hook did not pass. Resolve the scanner finding or failure before proceeding.')

@@ -1,0 +1,7 @@
+# ESP32-S3 N16R8 (16 MB flash, 8 MB octal PSRAM) is the minimum supported module.
+# nvs and phy_init keep the ESP-IDF single-app offsets so provisioned Wi-Fi credentials survive reflashing.
+# The remaining flash after the 4 MB app partition stays unallocated.
+# Name,   Type, SubType, Offset,  Size,    Flags
+nvs,      data, nvs,     0x9000,  0x6000,
+phy_init, data, phy,     0xf000,  0x1000,
+factory,  app,  factory, 0x10000, 0x400000,
