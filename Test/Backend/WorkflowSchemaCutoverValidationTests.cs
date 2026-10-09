@@ -26,6 +26,6 @@ internal sealed class WorkflowSchemaCutoverValidationTests
             .ToArray();
 
         // Assert
-        Assert.That(validationResults, Is.All.Matches<WorkflowValidationResult>(result => result.IsValid));
+        Assert.That(validationResults, Is.All.Matches<WorkflowValidationResult>(result => result is not null && result.IsValid));
     }
 }

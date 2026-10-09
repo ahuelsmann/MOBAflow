@@ -74,7 +74,7 @@ internal class ActionExecutorTests
     }
 
     [Test]
-    public void ExecuteAsync_WithCommandAction_MissingCommandPayload_ShouldThrow()
+    public async Task ExecuteAsync_WithCommandAction_MissingCommandPayload_ShouldThrow()
     {
         // Arrange
         var action = new WorkflowAction
@@ -87,11 +87,11 @@ internal class ActionExecutorTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
     }
 
     [Test]
-    public Task ExecuteAsync_WithAudioAction_WithoutSoundPlayer_ShouldThrow()
+    public async Task ExecuteAsync_WithAudioAction_WithoutSoundPlayer_ShouldThrow()
     {
         // Arrange - Context without SoundPlayer
         var action = new WorkflowAction
@@ -104,12 +104,11 @@ internal class ActionExecutorTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
-        return Task.CompletedTask;
+        await Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
     }
 
     [Test]
-    public void ExecuteAsync_WithUnsupportedActionType_ShouldThrow()
+    public async Task ExecuteAsync_WithUnsupportedActionType_ShouldThrow()
     {
         // Arrange
         var action = new WorkflowAction
@@ -121,11 +120,11 @@ internal class ActionExecutorTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<NotSupportedException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
+        await Assert.ThrowsAsync<NotSupportedException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
     }
 
     [Test]
-    public void ExecuteAsync_WithExecuteScriptAction_MissingScriptPath_ShouldThrowArgumentException()
+    public async Task ExecuteAsync_WithExecuteScriptAction_MissingScriptPath_ShouldThrowArgumentException()
     {
         var action = new WorkflowAction
         {
@@ -136,11 +135,11 @@ internal class ActionExecutorTests
             PowerShell = new PowerShellActionPayload()
         };
 
-        Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
     }
 
     [Test]
-    public void ExecuteAsync_WithTrainDestinationDisplayAction_ShouldCompleteWithoutError()
+    public async Task ExecuteAsync_WithTrainDestinationDisplayAction_ShouldCompleteWithoutError()
     {
         var action = new WorkflowAction
         {
@@ -154,7 +153,7 @@ internal class ActionExecutorTests
             }
         };
 
-        Assert.DoesNotThrowAsync(() => _actionExecutor.ExecuteAsync(action, _context));
+        await Assert.DoesNotThrowAsync(() => _actionExecutor.ExecuteAsync(action, _context));
     }
     public async Task ExecuteAsync_WithSelectSignalAspectAction_ShouldSendTurnoutCommand()
     {

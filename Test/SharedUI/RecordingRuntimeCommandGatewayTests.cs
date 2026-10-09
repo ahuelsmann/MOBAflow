@@ -109,7 +109,7 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         };
         var gateway = new RecordingRuntimeCommandGateway(inner, session);
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await gateway.SetLocomotiveDriveAsync(3, 20, true));
         var artifact = (await session.StopAsync()).Artifact!;
         var commandEntries = artifact.Entries

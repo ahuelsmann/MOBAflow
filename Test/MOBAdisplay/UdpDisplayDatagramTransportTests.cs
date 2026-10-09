@@ -98,7 +98,7 @@ internal sealed partial class UdpDisplayDatagramTransportTests
     [TestCase("127.0.0.1", 0, 1, 4210)]
     [TestCase("127.0.0.1", 1, 0, 4210)]
     [TestCase("127.0.0.1", 1, 1, 0)]
-    public void UdpDisplayFrameSender_Should_RejectInvalidOptionsBeforeCreatingConnection(
+    public async Task UdpDisplayFrameSender_Should_RejectInvalidOptionsBeforeCreatingConnection(
         string ipAddress,
         int width,
         int height,
@@ -116,7 +116,7 @@ internal sealed partial class UdpDisplayDatagramTransportTests
         };
 
         // Act
-        var exception = Assert.CatchAsync<ArgumentException>(
+        var exception = await Assert.CatchAsync<ArgumentException>(
             async () => await sender.SendFrameAsync(ExpectedDatagram, options).ConfigureAwait(false));
 
         // Assert
@@ -138,7 +138,7 @@ internal sealed partial class UdpDisplayDatagramTransportTests
 
         // Act
         sender.Dispose();
-        var exception = Assert.ThrowsAsync<ObjectDisposedException>(
+        var exception = await Assert.ThrowsAsync<ObjectDisposedException>(
             async () => await sender.SendFrameAsync(ExpectedDatagram, options).ConfigureAwait(false));
 
         // Assert

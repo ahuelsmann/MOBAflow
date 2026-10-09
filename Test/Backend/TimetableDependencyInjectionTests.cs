@@ -20,11 +20,11 @@ internal sealed class TimetableDependencyInjectionTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor.ServiceType == typeof(ITimetableEvaluationService)));
-            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor.ServiceType == typeof(ITimetableTimingService)));
-            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor.ServiceType == typeof(ITimetableStateStore)));
-            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor.ServiceType == typeof(ITimetableOperationsService)));
-            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor.ServiceType == typeof(ITimetableRuntimeProjectionService)));
+            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor is not null && descriptor.ServiceType == typeof(ITimetableEvaluationService)));
+            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor is not null && descriptor.ServiceType == typeof(ITimetableTimingService)));
+            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor is not null && descriptor.ServiceType == typeof(ITimetableStateStore)));
+            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor is not null && descriptor.ServiceType == typeof(ITimetableOperationsService)));
+            Assert.That(services, Has.Some.Matches<ServiceDescriptor>(descriptor => descriptor is not null && descriptor.ServiceType == typeof(ITimetableRuntimeProjectionService)));
         });
     }
 }

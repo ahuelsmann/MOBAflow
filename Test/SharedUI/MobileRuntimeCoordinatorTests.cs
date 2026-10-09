@@ -62,7 +62,7 @@ internal sealed class MobileRuntimeCoordinatorTests
     }
 
     [Test]
-    public void CancelledCounterReset_DoesNotReachRuntime()
+    public async Task CancelledCounterReset_DoesNotReachRuntime()
     {
         var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
         var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
@@ -70,7 +70,7 @@ internal sealed class MobileRuntimeCoordinatorTests
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        Assert.ThrowsAsync<OperationCanceledException>(async () => await coordinator.ResetInPortCountersAsync(cancellation.Token));
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await coordinator.ResetInPortCountersAsync(cancellation.Token));
 
         runtime.VerifyNoOtherCalls();
         remote.VerifyNoOtherCalls();
