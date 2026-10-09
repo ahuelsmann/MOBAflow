@@ -145,6 +145,14 @@ Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main`, manual runs and every other change run all enabled jobs.
 
+The repository consistency job also lints every workflow with a pinned,
+checksum-verified actionlint release and checks internal documentation links
+and images with `scripts/Test-DocumentationLinks.ps1`. External links are
+checked weekly and on demand by `.github/workflows/documentation-links.yml`,
+so an unreachable foreign server does not block a pull request. Run the
+internal check locally with `./scripts/Test-DocumentationLinks.ps1`; add
+`-IncludeExternal` to request external links as well.
+
 The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
 The thresholds are per production assembly as well as global, so an improvement
 in one project cannot hide a regression in another. Generated `obj` sources are
