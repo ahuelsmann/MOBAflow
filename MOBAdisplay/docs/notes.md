@@ -66,10 +66,15 @@ On Windows PowerShell, set the variable first with `$env:MOBADISPLAY_IP = "<addr
 Optional variables are `MOBADISPLAY_PORT` (default `4210`),
 `MOBADISPLAY_SOAK_MINUTES` (default `120`) and `MOBADISPLAY_REFRESH_HZ`
 (default: the MOBAflow refresh rate). The test prints the report used in item 8
-and fails when a threshold is missed. Dropped frames are skipped timer ticks
-plus frames that failed on the host; rejected frames are the change of the
-device's rejected-frame counter. Watch the display during the run: the protocol
-presents only complete frames, so any torn or partial image is a failure.
+and fails when a threshold is missed. Only a run of at least 2 hours at the
+normal rate ends with `Result: PASSED`; a shorter run or another rate ends with
+`PASSED (not an acceptance run)` and is no acceptance evidence. Lost frames are
+the expected frames the device did not confirm as presented, each counted once:
+skipped timer ticks, host failures and frames the device rejected for good. The
+device's rejected-frame counter is shown for information, because it also counts
+incomplete transfers that the host repaired. Watch the display during the run:
+the protocol presents only complete frames, so any torn or partial image is a
+failure.
 
 The Display page checks are run once by the maintainer, who starts MOBAflow for
 them. They block closing Issue #36 like the hardware items.
