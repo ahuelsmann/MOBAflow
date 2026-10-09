@@ -1,7 +1,7 @@
 # MOBAflow agent instructions
 
-MOBAflow is event-driven model railroad automation on .NET 10. These instructions are tuned for GPT-6 Astra
-and apply to coding agents across Windows and Linux.
+MOBAflow is event-driven model railroad automation on .NET 10. These instructions apply to every coding agent
+on Windows and Linux.
 
 ## Working agreement
 
