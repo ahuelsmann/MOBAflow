@@ -9,6 +9,7 @@ using Domain;
 using Microsoft.AspNetCore.Mvc;
 
 using Moba.MOBApi.Service;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// REST fallback for remote runtime commands when SignalR forwarding is unavailable.
@@ -90,9 +91,21 @@ public class RuntimeCommandsController : ControllerBase
         return Ok(command);
     }
 
-    public sealed record SetSignalAspectRequest(Guid ProjectId, Guid SignalId, SignalAspect Aspect);
+    // Every field is required: a value left out of the request must not silently become 0, false or an empty id.
+    public sealed record SetSignalAspectRequest(
+        [property: JsonRequired] Guid ProjectId,
+        [property: JsonRequired] Guid SignalId,
+        [property: JsonRequired] SignalAspect Aspect);
 
-    public sealed record SetLocomotiveDriveRequest(Guid ProjectId, int Address, int Speed, bool Forward);
+    public sealed record SetLocomotiveDriveRequest(
+        [property: JsonRequired] Guid ProjectId,
+        [property: JsonRequired] int Address,
+        [property: JsonRequired] int Speed,
+        [property: JsonRequired] bool Forward);
 
-    public sealed record SetLocomotiveFunctionRequest(Guid ProjectId, int Address, int FunctionIndex, bool IsOn);
+    public sealed record SetLocomotiveFunctionRequest(
+        [property: JsonRequired] Guid ProjectId,
+        [property: JsonRequired] int Address,
+        [property: JsonRequired] int FunctionIndex,
+        [property: JsonRequired] bool IsOn);
 }
