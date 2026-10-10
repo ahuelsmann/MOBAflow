@@ -4015,13 +4015,6 @@
     {
       "project": "Test",
       "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Test/Integration/RuntimeHubLiveE2ETests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
       "ruleId": "CA1068",
       "path": "Test/SharedUI/TimetablePageViewModelTests.cs",
       "count": 1
@@ -6207,8 +6200,15 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2000",
+      "path": "Test/Integration/MobaApiProcess.cs",
+      "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2000",
       "path": "Test/Integration/MobApiProcessTests.cs",
-      "count": 4
+      "count": 1
     },
     {
       "project": "Test",
@@ -6495,14 +6495,14 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Integration/MobApiProcessTests.cs",
-      "count": 32
+      "count": 20
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Integration/RuntimeHubLiveE2ETests.cs",
-      "count": 8
+      "count": 5
     },
     {
       "project": "Test",
@@ -6711,7 +6711,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2234",
-      "path": "Test/Integration/MobApiProcessTests.cs",
+      "path": "Test/Integration/MobaApiProcess.cs",
       "count": 1
     },
     {
@@ -6719,7 +6719,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2234",
       "path": "Test/Integration/RuntimeHubLiveE2ETests.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "Test",

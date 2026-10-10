@@ -6,12 +6,8 @@ using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Moba.Common.Discovery;
 using Moba.Common.Runtime;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
-using System.Net.Sockets;
-using System.Reflection;
-using System.Text;
 using System.Threading.Channels;
 
 /// <summary>
@@ -26,7 +22,7 @@ internal sealed class MobApiProcessTests
     [CancelAfter(45_000)]
     public async Task HealthEndpoint_ShouldMatchMobAsmartDiscoveryContract()
     {
-        var server = await MobaApiProcess.StartAsync(GetAvailablePort()).ConfigureAwait(false);
+        var server = await MobaApiProcess.StartAsync(MobaApiProcess.GetAvailablePort()).ConfigureAwait(false);
         await using var serverLifetime = server.ConfigureAwait(false);
 
         using var health = await server.SendAsync(HttpMethod.Get, MobApiHealthProbe.HealthPath).ConfigureAwait(false);
@@ -43,7 +39,7 @@ internal sealed class MobApiProcessTests
     [CancelAfter(45_000)]
     public async Task RemoteCommand_ShouldBeAcceptedAndQueued_WithoutCredentials()
     {
-        var server = await MobaApiProcess.StartAsync(GetAvailablePort()).ConfigureAwait(false);
+        var server = await MobaApiProcess.StartAsync(MobaApiProcess.GetAvailablePort()).ConfigureAwait(false);
         await using var serverLifetime = server.ConfigureAwait(false);
 
         using var accepted = await server
@@ -68,7 +64,7 @@ internal sealed class MobApiProcessTests
     [CancelAfter(120_000)]
     public async Task Reads_ShouldRemainEquivalent_AfterReconnectAndServerRestart()
     {
-        var port = GetAvailablePort();
+        var port = MobaApiProcess.GetAvailablePort();
         SignalRReconnectProbe? reconnectProbe = null;
         try
         {
@@ -100,212 +96,6 @@ internal sealed class MobApiProcessTests
         {
             if (reconnectProbe is not null)
                 await reconnectProbe.DisposeAsync();
-        }
-    }
-
-    private static int GetAvailablePort()
-    {
-        var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        try
-        {
-            return ((IPEndPoint)listener.LocalEndpoint).Port;
-        }
-        finally
-        {
-            listener.Stop();
-        }
-    }
-
-    private sealed class MobaApiProcess : IAsyncDisposable
-    {
-        private readonly HttpClient _client;
-        private readonly Process _process;
-
-        private MobaApiProcess(Process process, HttpClient client)
-        {
-            _process = process;
-            _client = client;
-        }
-
-        public Uri HubUri => new(_client.BaseAddress!, "runtime-hub");
-
-        public static async Task<MobaApiProcess> StartAsync(int httpPort)
-        {
-            var assemblyPath = ResolveAssemblyPath();
-            var output = new List<string>();
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                WorkingDirectory = Path.GetDirectoryName(assemblyPath)!,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-            startInfo.ArgumentList.Add(assemblyPath);
-            startInfo.Environment["MOBAFLOW_DISCOVERY_IN_WINUI"] = "1";
-            startInfo.Environment["MOBAFLOW_HTTP_PORT"] = httpPort.ToString(
-                System.Globalization.CultureInfo.InvariantCulture);
-
-            var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
-            process.OutputDataReceived += (_, args) => RecordOutput(output, args.Data);
-            process.ErrorDataReceived += (_, args) => RecordOutput(output, args.Data);
-            var client = new HttpClient
-            {
-                BaseAddress = new Uri($"http://127.0.0.1:{httpPort}/"),
-                Timeout = TimeSpan.FromSeconds(10)
-            };
-            try
-            {
-                if (!process.Start())
-                    throw new InvalidOperationException("MOBApi process did not start.");
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                using var startupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                await WaitUntilReachableAsync(client, process, output, startupTimeout.Token);
-                return new MobaApiProcess(process, client);
-            }
-            catch (Exception exception)
-            {
-                client.Dispose();
-                await StopProcessAsync(process);
-                process.Dispose();
-                throw new InvalidOperationException(
-                    $"MOBApi process startup failed. Output: {FormatOutput(output)}",
-                    exception);
-            }
-        }
-
-        public async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, HttpContent? content = null)
-        {
-            using var request = new HttpRequestMessage(method, path) { Content = content };
-            return await _client.SendAsync(request).ConfigureAwait(false);
-        }
-
-        public async Task PublishSnapshotAsync(string snapshotJson)
-        {
-            using var response = await SendAsync(
-                HttpMethod.Put,
-                "api/runtime/snapshot",
-                new StringContent(snapshotJson, Encoding.UTF8, "application/json"));
-            await EnsureSuccessAsync(response);
-        }
-
-        public async Task<string> ReadSnapshotAsync()
-        {
-            using var response = await SendAsync(HttpMethod.Get, "api/runtime/snapshot");
-            await EnsureSuccessAsync(response);
-            return await response.Content.ReadAsStringAsync();
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            _client.Dispose();
-            await StopProcessAsync(_process);
-            _process.Dispose();
-        }
-
-        private static string ResolveAssemblyPath()
-        {
-            // The SDK stamps the build configuration into the test assembly; output folder names differ per target.
-            var configuration = typeof(MobApiProcessTests).Assembly
-                .GetCustomAttribute<AssemblyConfigurationAttribute>()?.Configuration
-                ?? throw new InvalidOperationException("Unable to determine the test build configuration.");
-            var assemblyPath = Path.Combine(FindRepositoryRoot(), "MOBApi", "bin", configuration, "net10.0", "MOBApi.dll");
-            if (!File.Exists(assemblyPath))
-                throw new FileNotFoundException("Build MOBApi before running the process integration test.", assemblyPath);
-            return assemblyPath;
-        }
-
-        private static async Task WaitUntilReachableAsync(
-            HttpClient client,
-            Process process,
-            List<string> output,
-            CancellationToken cancellationToken)
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                if (process.HasExited)
-                {
-                    throw new InvalidOperationException(
-                        $"MOBApi exited with code {process.ExitCode}. Output: {FormatOutput(output)}");
-                }
-
-                try
-                {
-                    using var response = await client.GetAsync(MobApiHealthProbe.HealthPath, cancellationToken);
-                    if (response.IsSuccessStatusCode)
-                        return;
-                }
-                catch (HttpRequestException)
-                {
-                    // Kestrel is still starting.
-                }
-
-                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
-        }
-
-        private static async Task EnsureSuccessAsync(HttpResponseMessage response)
-        {
-            if (response.IsSuccessStatusCode)
-                return;
-
-            var body = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException(
-                $"MOBApi returned {(int)response.StatusCode} ({response.StatusCode}): {body}");
-        }
-
-        private static string FindRepositoryRoot()
-        {
-            var directory = new DirectoryInfo(AppContext.BaseDirectory);
-            while (directory is not null)
-            {
-                if (File.Exists(Path.Combine(directory.FullName, "Moba.slnx")))
-                    return directory.FullName;
-                directory = directory.Parent;
-            }
-
-            throw new DirectoryNotFoundException("Unable to locate the MOBAflow repository root.");
-        }
-
-        private static void RecordOutput(List<string> output, string? line)
-        {
-            if (string.IsNullOrWhiteSpace(line))
-                return;
-            lock (output)
-            {
-                output.Add(line);
-                if (output.Count > 100)
-                    output.RemoveAt(0);
-            }
-        }
-
-        private static string FormatOutput(List<string> output)
-        {
-            lock (output)
-                return output.Count == 0 ? "(not captured)" : string.Join(Environment.NewLine, output);
-        }
-
-        private static async Task StopProcessAsync(Process process)
-        {
-            try
-            {
-                if (process.HasExited)
-                    return;
-
-                process.Kill(entireProcessTree: true);
-                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                await process.WaitForExitAsync(timeout.Token);
-            }
-            catch (InvalidOperationException)
-            {
-                // The process exited between the state check and shutdown.
-            }
         }
     }
 

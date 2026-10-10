@@ -98,6 +98,10 @@ jobs:
         shell: pwsh
         run: ./scripts/Get-QualityChangeScope.Tests.ps1
 
+      - name: Test test-result guard
+        shell: pwsh
+        run: ./scripts/Test-TestRunResults.Tests.ps1
+
   desktop:
     name: Windows desktop build, tests, and coverage
     needs: changes
@@ -300,6 +304,28 @@ jobs:
             --no-restore `
             -p:IncludeMobaSmartTests=false `
             --filter $filter
+
+      # Each fixture starts the built MOBApi as an isolated process on a free local port. The result guard
+      # fails the step when a test is skipped or the filter selects too few tests.
+      - name: Run MOBApi process integration tests
+        shell: pwsh
+        run: |
+          $filter = @(
+            'FullyQualifiedName~Moba.Test.Integration.MobApiProcessTests'
+            'FullyQualifiedName~Moba.Test.Integration.RuntimeHubLiveE2ETests'
+          ) -join '|'
+          dotnet test Test/Test.csproj `
+            --configuration Release `
+            --framework net10.0 `
+            --no-restore `
+            -p:IncludeMobaSmartTests=false `
+            --filter $filter `
+            --logger 'trx;LogFileName=mobapi-integration.trx' `
+            --results-directory artifacts/TestResults/mobapi
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/Test-TestRunResults.ps1 `
+            -Path artifacts/TestResults/mobapi/mobapi-integration.trx `
+            -MinimumPassed 6
 
       - name: Install pinned PlatformIO
         if: ${{ needs.changes.outputs.firmware != 'false' }}
