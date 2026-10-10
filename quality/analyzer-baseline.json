@@ -4709,6 +4709,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Common/ForwardingEventBusTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Common/FunctionBacklightColorTests.cs",
       "count": 1
     },
@@ -5123,6 +5130,20 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/SkiaFrameRendererTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/SustainedRefreshHardwareTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/SustainedRefreshReportTests.cs",
       "count": 1
     },
     {

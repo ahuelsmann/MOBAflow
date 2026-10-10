@@ -79,6 +79,44 @@ def check_configuration(root, errors):
             check_hook(hook, errors)
 
 
+def check_claude_configuration(root, errors):
+    if not re.search(r"(?m)^@AGENTS\.md\s*$", (root / "CLAUDE.md").read_text(encoding="utf-8-sig")):
+        errors.append("CLAUDE.md does not import AGENTS.md")
+    settings = load_json(root / ".claude/settings.json")
+    groups = settings.get("hooks", {}).get("UserPromptSubmit", [])
+    handlers = [hook for group in groups for hook in group.get("hooks", [])]
+    for hook in handlers:
+        check_hook(hook, errors)
+    if not any("prompt-secrets.ps1" in str(hook.get("command")) and "-Client claude" in str(hook.get("command"))
+               for hook in handlers):
+        errors.append("Claude Code prompt secrets hook is missing")
+
+
+def skill_files(folder):
+    # Line endings depend on the checkout settings; mirrors must match in content.
+    return {path.relative_to(folder).as_posix(): path.read_bytes().replace(b"\r\n", b"\n")
+            for path in folder.rglob("*") if path.is_file()}
+
+
+def check_mirrors(root, records, errors):
+    expected = set()
+    for record in records.values():
+        mirrors = record.get("mirrors", [])
+        if not isinstance(mirrors, list) or any(not nonempty_string(m) for m in mirrors):
+            errors.append(f"Invalid skill mirrors: {record['name']}")
+            continue
+        for mirror in mirrors:
+            target = (root / mirror).resolve()
+            expected.add(target)
+            if not target.is_relative_to(root) or not target.is_dir():
+                errors.append(f"Missing skill mirror: {mirror}")
+            elif skill_files(root / record["path"]) != skill_files(target):
+                errors.append(f"Skill mirror differs from its source: {mirror}")
+    actual = {path.parent.resolve() for path in (root / ".claude/skills").glob("*/SKILL.md")}
+    for folder in sorted(actual - expected):
+        errors.append(f"Unregistered Claude Code skill: {folder.name}")
+
+
 def check_source_entry(root, entry, errors):
     fields = ("name", "path", "source", "revision", "license", "localChanges")
     if not all(isinstance(entry.get(key), str) and entry[key] for key in fields):
@@ -137,13 +175,14 @@ def check_skills(root, errors):
         check_links(root, path, errors)
     if seen != set(records):
         errors.append("Source registry and active skills differ")
+    check_mirrors(root, records, errors)
 
 
 def check_guidance(root, errors):
     # The index declares active instructions; historical references stay outside this traversal.
     index = root / ".github/instructions/instructions-index.md"
     index_text = index.read_text(encoding="utf-8-sig").split("## Further references")[0]
-    guidance = {root / "AGENTS.md", root / ".github/copilot-instructions.md", index,
+    guidance = {root / "AGENTS.md", root / "CLAUDE.md", root / ".github/copilot-instructions.md", index,
                 root / "docs/AI-DEVELOPMENT.md", root / "docs/SPEC-KIT.md"}
     for link in re.findall(r"\]\(([^)]+\.instructions\.md)\)", index_text):
         guidance.add((index.parent / link).resolve())
@@ -159,6 +198,7 @@ def validate(root):
     errors = []
     try:
         check_configuration(root, errors)
+        check_claude_configuration(root, errors)
         check_skills(root, errors)
         check_guidance(root, errors)
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:

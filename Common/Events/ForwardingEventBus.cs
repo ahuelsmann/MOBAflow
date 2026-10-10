@@ -8,10 +8,16 @@ namespace Moba.Common.Events;
 /// </summary>
 /// <param name="local">The bus that runtime handlers subscribe to.</param>
 /// <param name="target">The application bus that receives events while forwarding.</param>
-public sealed class ForwardingEventBus(IEventBus local, IEventBus target) : IEventBus
+/// <param name="deliver">
+/// Runs the delivery of an event, for example on the UI thread; null delivers on the publishing thread. Whether the
+/// event is forwarded is decided when it is delivered, so an event queued before the project was deselected never
+/// reaches the application bus.
+/// </param>
+public sealed class ForwardingEventBus(IEventBus local, IEventBus target, Action<Action>? deliver = null) : IEventBus
 {
     private readonly IEventBus _local = local ?? throw new ArgumentNullException(nameof(local));
     private readonly IEventBus _target = target ?? throw new ArgumentNullException(nameof(target));
+    private readonly Action<Action> _deliver = deliver ?? (action => action());
     private volatile bool _isForwarding;
 
     /// <summary>
@@ -26,11 +32,14 @@ public sealed class ForwardingEventBus(IEventBus local, IEventBus target) : IEve
     /// <inheritdoc />
     public void Publish<TEvent>(TEvent @event) where TEvent : class, IEvent
     {
-        _local.Publish(@event);
-        if (_isForwarding)
+        _deliver(() =>
         {
-            _target.Publish(@event);
-        }
+            _local.Publish(@event);
+            if (_isForwarding)
+            {
+                _target.Publish(@event);
+            }
+        });
     }
 
     /// <inheritdoc />

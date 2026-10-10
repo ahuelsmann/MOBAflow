@@ -128,10 +128,13 @@ public static class MobaWinUiServiceCollectionExtensions
             var loggers = sp.GetRequiredService<ILoggerFactory>();
             var applicationBus = sp.GetRequiredService<IEventBus>();
             var dispatcher = sp.GetRequiredService<IUiDispatcher>();
+            // Runtime handlers run on the UI thread, as with the single runtime before; the selection is checked
+            // there too, so an event of a deselected project never reaches the application bus.
             return new Z21ConnectionRegistry(
                 () => new ForwardingEventBus(
-                    new UiThreadEventBusDecorator(new EventBus(loggers.CreateLogger<EventBus>()), dispatcher),
-                    applicationBus),
+                    new EventBus(loggers.CreateLogger<EventBus>()),
+                    applicationBus,
+                    dispatcher.InvokeOnUiLowPriority),
                 bus => new Z21(
                     new UdpWrapper(loggers.CreateLogger<UdpWrapper>()),
                     bus,
