@@ -43,10 +43,13 @@ Owners decided on 2026-10-09: CI-02 to CI-04 move to #209, CI-05 and CI-06 to #1
   repository ruleset "main": pull request required, squash merge only, resolved review threads, six required
   checks including SonarCloud, no force-push and no deletion. The observation was correct at its time and is
   historical. Whether the required check names still match after #197 is checked in #209.
-- [ ] CI-02 (medium, #209): remove global issues:write from spec-kit-governance.yml; retain it only on the
+- [x] CI-02 (medium, #209): remove global issues:write from spec-kit-governance.yml; retain it only on the
   issue job, which already has job-level rights. Done: issue validation still works and PR plan job is read-only.
-- [ ] CI-03 (low, #209): add explicit timeouts to Pages and stale jobs based on observed runtime.
-  Done: both jobs have bounded runtime and normal runs pass.
+  Done by #198 (2026-10-08): the workflow grants only contents: read, and issues: write stays on the issue job.
+  The issue validation run for #209 itself passed on 2026-10-09.
+- [x] CI-03 (low, #209): add explicit timeouts to Pages and stale jobs based on observed runtime.
+  Done: both jobs have bounded runtime and normal runs pass. Both jobs have timeout-minutes: 10; observed
+  runtimes on main were under 2 minutes for Pages and under 15 seconds for the weekly stale run.
 - [ ] CI-04 (medium, #209): decide reproducible SDK/workload pins. global.json specifies SDK10.0.302 with
   rollForward latestFeature; actual PR154 used SDK/workload10.0.401, no workloadVersion.
   --skip-manifest-update is not a workload pin. Done: clean runner uses the agreed versions and
