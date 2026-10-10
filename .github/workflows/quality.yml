@@ -53,6 +53,30 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-InstructionConsistency.ps1
 
+      # Pinned release binary verified by its SHA-256; it also runs shellcheck on bash steps.
+      - name: Lint GitHub workflows
+        shell: bash
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl --proto '=https' --tlsv1.2 --fail --silent --show-error --location --output "$RUNNER_TEMP/$archive" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}"
+          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color
+
+      # External links are checked on a schedule (documentation-links.yml) so that a foreign server
+      # outage cannot block a pull request.
+      - name: Check internal documentation links and images
+        shell: pwsh
+        run: ./scripts/Test-DocumentationLinks.ps1
+
+      - name: Test documentation link check
+        shell: pwsh
+        run: ./scripts/Test-DocumentationLinks.Tests.ps1
+
       - name: Validate AI repository setup
         run: python3 scripts/Test-AiRepositorySetup.py
 
@@ -323,19 +347,24 @@ jobs:
         shell: bash
         run: python3 -m platformio run -d MOBAdisplay/esp32 -e esp32s3
 
-      - name: Record firmware SHA-256
+      # The custom partition table is flashed separately; archive the complete bundle with its offsets.
+      - name: Record ESP32-S3 flash bundle
         shell: bash
-        run: >-
-          sha256sum MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin
-          | tee MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin.sha256
+        working-directory: MOBAdisplay/esp32/.pio/build/esp32s3
+        run: |
+          printf '%s\n' '0x0 bootloader.bin' '0x8000 partitions.bin' '0x10000 firmware.bin' | tee flash-offsets.txt
+          sha256sum bootloader.bin partitions.bin firmware.bin | tee flash-bundle.sha256
 
-      - name: Archive ESP32-S3 firmware
+      - name: Archive ESP32-S3 flash bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: MOBAdisplay-esp32s3-${{ github.run_number }}
           path: |
+            MOBAdisplay/esp32/.pio/build/esp32s3/bootloader.bin
+            MOBAdisplay/esp32/.pio/build/esp32s3/partitions.bin
             MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin
-            MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin.sha256
+            MOBAdisplay/esp32/.pio/build/esp32s3/flash-offsets.txt
+            MOBAdisplay/esp32/.pio/build/esp32s3/flash-bundle.sha256
           if-no-files-found: error
           retention-days: 30
 
@@ -371,9 +400,11 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-android-
 
-      - name: Restore MAUI Android workload
+      # workload restore always moves to the newest workload set, even with --skip-manifest-update.
+      # Installing the workload with an explicit set version keeps the Android toolchain reproducible.
+      - name: Install pinned MAUI Android workload
         shell: pwsh
-        run: dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+        run: dotnet workload install maui-android --version 10.0.401.1
 
       - name: Restore Android dependency graph
         shell: pwsh

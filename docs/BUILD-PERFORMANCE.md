@@ -56,11 +56,15 @@ Use reliable deploy when fast deploy behaves inconsistently on a device.
 
 **Clean Release AAB:**
 
-The pinned .NET SDK and the MAUI Android workload are prerequisites. From a
-clean checkout, run the restore, publish, and bundle validation defined in the disabled CI job:
+The .NET SDK band from `global.json` (10.0.4xx, at least 10.0.401) and the MAUI Android workload are
+prerequisites. The workload set version is pinned in the install command, not in `global.json`: a
+`workloadVersion` there would fail every build, including desktop-only builds, on machines without that
+workload set. `dotnet workload restore` always moves to the newest workload set, so install the pinned
+set explicitly. From a clean checkout, run the install, restore, publish, and bundle validation defined
+in the disabled CI job:
 
 ```powershell
-dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+dotnet workload install maui-android --version 10.0.401.1
 dotnet restore MOBAsmart/MOBAsmart.csproj `
   --property:Configuration=Release `
   --force-evaluate
@@ -134,6 +138,14 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main`, manual runs and every other change run all enabled jobs.
+
+The repository consistency job also lints every workflow with a pinned,
+checksum-verified actionlint release and checks internal documentation links
+and images with `scripts/Test-DocumentationLinks.ps1`. External links are
+checked weekly and on demand by `.github/workflows/documentation-links.yml`,
+so an unreachable foreign server does not block a pull request. Run the
+internal check locally with `./scripts/Test-DocumentationLinks.ps1`; add
+`-IncludeExternal` to request external links as well.
 
 The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
 The thresholds are per production assembly as well as global, so an improvement
