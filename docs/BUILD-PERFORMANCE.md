@@ -145,6 +145,14 @@ skipped steps and a skipped job count as successful.
 `scripts/Get-QualityChangeScope.Tests.ps1` checks these rules, including every
 source the mutation project compiles.
 
+The repository consistency job also lints every workflow with a pinned,
+checksum-verified actionlint release and checks internal documentation links
+and images with `scripts/Test-DocumentationLinks.ps1`. External links are
+checked weekly and on demand by `.github/workflows/documentation-links.yml`,
+so an unreachable foreign server does not block a pull request. Run the
+internal check locally with `./scripts/Test-DocumentationLinks.ps1`; add
+`-IncludeExternal` to request external links as well.
+
 The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
 The thresholds are per production assembly as well as global, so an improvement
 in one project cannot hide a regression in another. Generated `obj` sources are
