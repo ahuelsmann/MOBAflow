@@ -66,13 +66,20 @@ Assert-Scope @('MOBAdisplay/esp32/lib/MobaDisplayProtocol/protocol.h', 'Backend/
 # Domain mutation inputs.
 Assert-Scope @('Domain/Project.cs') $true $false $true 'Domain model'
 Assert-Scope @('Test/Domain/ProjectTests.cs') $true $false $true 'Domain test'
+Assert-Scope @('Test/TestFile/solution.json') $true $false $true 'Domain test fixture data'
 Assert-Scope @('MutationTest/stryker-config.json') $true $false $true 'mutation configuration'
 Assert-Scope @('Directory.Packages.props') $true $false $true '.NET build configuration'
 Assert-Scope @('.config/dotnet-tools.json') $true $false $true 'Stryker tool manifest'
 
-# Every source the mutation project compiles must select the mutation job.
+# Every source and copied fixture input of the mutation project must select the mutation job.
 [xml] $mutationProject = Get-Content -Raw -LiteralPath (Join-Path $repositoryRoot 'MutationTest/Domain.MutationTests.csproj')
-$mutationSources = @($mutationProject.SelectNodes('//Compile/@Include | //ProjectReference/@Include') | ForEach-Object Value)
+$mutationInputXPath = @(
+    '//Compile/@Include'
+    '//ProjectReference/@Include'
+    '//None[@CopyToOutputDirectory or CopyToOutputDirectory]/@Include'
+    '//Content[@CopyToOutputDirectory or CopyToOutputDirectory]/@Include'
+) -join ' | '
+$mutationSources = @($mutationProject.SelectNodes($mutationInputXPath) | ForEach-Object Value)
 if ($mutationSources.Count -lt 2) {
     throw 'Expected Compile and ProjectReference items in MutationTest/Domain.MutationTests.csproj.'
 }

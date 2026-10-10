@@ -36,6 +36,7 @@ $firmwareInputPatterns = @(
 $mutationInputPatterns = @(
     '^Domain/',
     '^Test/Domain/',
+    '^Test/TestFile/',
     '^Test/Unit/(DomainDefaultsTests|NewSolutionTests|SolutionInstanceTests|SolutionTest)\.cs$',
     '^MutationTest/',
     '^\.config/dotnet-tools\.json$',
