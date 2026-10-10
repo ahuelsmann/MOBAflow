@@ -120,6 +120,33 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
         Assert.That(errors, Has.Count.EqualTo(5));
     }
 
+    [Test]
+    public async Task SavedDefinitions_AreIsolatedFromEditorChanges_AndKeepExecutingWhistles()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var gateway = new RecordingGateway();
+        using var service = new LocomotiveWhistleAutomationService(
+            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance);
+        var locomotive = new Locomotive { DigitalAddress = 12 };
+        var rule = new LocomotiveWhistleRule
+        {
+            LocomotiveId = locomotive.Id, InPort = 7, FunctionIndex = 2, ActiveDurationMilliseconds = 20
+        };
+        var project = new Project { Locomotives = [locomotive], LocomotiveWhistleRules = [rule] };
+        service.Activate(project);
+        locomotive.DigitalAddress = 24;
+        rule.FunctionIndex = 31;
+
+        var running = service.HandleFeedbackAsync(7);
+        await gateway.FunctionOn.Task.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+        service.UpdateDefinitions(project);
+        await running.ConfigureAwait(false);
+
+        Assert.That(gateway.Commands, Is.EqualTo(new[] { (12, 2, true), (12, 2, false) }));
+        await service.HandleFeedbackAsync(7).ConfigureAwait(false);
+        Assert.That(gateway.Commands, Is.EqualTo(new[] { (12, 2, true), (12, 2, false), (24, 31, true), (24, 31, false) }));
+    }
+
     private sealed class RecordingGateway : ILocomotiveFunctionCommandGateway
     {
         public List<(int Address, int Function, bool IsOn)> Commands { get; } = [];

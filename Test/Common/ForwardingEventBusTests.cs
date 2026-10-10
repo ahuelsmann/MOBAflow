@@ -25,6 +25,11 @@ internal sealed class ForwardingEventBusTests
         application.Subscribe<TestEvent>(_ => applicationReceived++);
 
         bus.Publish(new TestEvent());
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(runtimeReceived, Is.EqualTo(1), "Runtime handling must not wait for the UI queue.");
+            Assert.That(applicationReceived, Is.Zero, "Application delivery still waits for the UI queue.");
+        }
         bus.IsForwarding = false;
         queued.Dequeue().Invoke();
 
@@ -33,6 +38,35 @@ internal sealed class ForwardingEventBusTests
             Assert.That(runtimeReceived, Is.EqualTo(1));
             Assert.That(applicationReceived, Is.Zero);
         }
+    }
+
+    [Test]
+    public void SelectedRuntime_HandlesFeedbackWhileApplicationDeliveryIsQueued()
+    {
+        var queued = new Queue<Action>();
+        var application = new EventBus(NullLogger<EventBus>.Instance);
+        var bus = new ForwardingEventBus(new EventBus(NullLogger<EventBus>.Instance), application, queued.Enqueue)
+        {
+            IsForwarding = true
+        };
+        var runtimeReceived = 0;
+        var applicationReceived = 0;
+        bus.Subscribe<TestEvent>(_ => runtimeReceived++);
+        application.Subscribe<TestEvent>(_ => applicationReceived++);
+
+        bus.Publish(new TestEvent());
+        bus.Publish(new TestEvent());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(runtimeReceived, Is.EqualTo(2));
+            Assert.That(applicationReceived, Is.Zero);
+        }
+        while (queued.TryDequeue(out var deliver))
+        {
+            deliver();
+        }
+        Assert.That(applicationReceived, Is.EqualTo(2));
     }
 
     [Test]

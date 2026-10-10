@@ -45,8 +45,9 @@ Findings on `main` at `0113551f` (2026-10-06).
   would otherwise have to become scoped or be duplicated, and the graph is small and stable.
 - **Z21 takeover**: an app-lifetime `Z21ConnectionRegistry` owns connections keyed by endpoint; a runtime borrows its
   endpoint's connection, so a runtime created again for the same project reuses it (FR-005).
-- **Events**: each Z21 connection gets its own `ForwardingEventBus` (dispatched to the UI thread like the app bus)
-  for runtime-internal handlers; the bus of the selected project also publishes to the app-wide UI bus. UI subscribers therefore keep their contract and show the
+- **Events**: each Z21 connection gets its own `ForwardingEventBus` for runtime-internal handlers on the publishing
+  thread; only delivery to the app-wide UI bus waits for the UI dispatcher and checks the current selection there.
+  Runtime handling therefore continues while the UI is busy. UI subscribers keep their contract and show the
   selected project (FR-009) without a project identifier on every event.
 - **No copy**: the runtime keeps runtime values (signal aspect, current station, counters) in runtime state keyed by
   id and reads master data from the session's project; `CloneForRuntime`, `UpdateJourneyEventsAsync` and

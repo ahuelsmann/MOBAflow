@@ -53,8 +53,7 @@ public sealed class SelectedProjectRuntime : IMobaRuntime
     public Task UpdateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(editableProject);
-        return _host.Get(editableProject.Id)?.Runtime.UpdateProjectAsync(editableProject, cancellationToken)
-            ?? Task.CompletedTask;
+        return _host.UpdateAsync(editableProject, cancellationToken);
     }
 
     /// <inheritdoc />

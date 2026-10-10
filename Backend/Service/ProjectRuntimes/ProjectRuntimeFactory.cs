@@ -186,9 +186,17 @@ public sealed class ProjectRuntime : IAsyncDisposable
     /// </summary>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        await Runtime.ActivateProjectAsync(_project, cancellationToken).ConfigureAwait(false);
         _whistle.Activate(_project);
+        await Runtime.ActivateProjectAsync(_project, cancellationToken).ConfigureAwait(false);
         await Runtime.StartAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Refreshes the project's saved definitions while keeping running commands.</summary>
+    public async Task UpdateAsync(Project project, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _whistle.UpdateDefinitions(project);
+        await Runtime.UpdateProjectAsync(project, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

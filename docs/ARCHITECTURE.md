@@ -260,8 +260,10 @@ IZ21 / JourneyManager / WorkflowService
   conflict and never connects (`Z21AssignmentDiagnostics` shows it in the project
   diagnostics). MOBAflow never searches the network for a Z21 on its own
   (`ProjectZ21EndpointSource`); MOBAsmart keeps `SettingsZ21EndpointSource`.
-- Each connection has its own `ForwardingEventBus`. Runtime handlers subscribe to
-  it; only the bus of the selected project also publishes to the application bus,
+- Each connection has its own `ForwardingEventBus`. Runtime handlers run on the
+  publishing thread without waiting for the UI dispatcher. Only application
+  delivery is dispatched to the UI thread and checks the current selection there;
+  only the selected project's bus publishes to the application bus,
   so UI subscribers keep their contract and show the selected project.
   `SelectedProjectRuntime` and `SelectedProjectInterlocking` give pages and host
   services the selected project's runtime and interlocking; project updates are
