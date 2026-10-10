@@ -61,7 +61,7 @@ public sealed class FrameLoopScheduler
 
         var runCts = _runCts;
         var runTask = _runTask;
-        runCts.Cancel();
+        await runCts.CancelAsync().ConfigureAwait(false);
         try
         {
             await runTask.ConfigureAwait(false);
