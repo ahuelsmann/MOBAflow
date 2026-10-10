@@ -23,8 +23,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    # Deployments took under 2 minutes on main; the bound stops a hung deployment.
-    timeout-minutes: 10
+    # Deployments took under 2 minutes on main. The bound stays above deploy-pages' own
+    # 10-minute timeout so that step can still cancel a stalled deployment itself.
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
