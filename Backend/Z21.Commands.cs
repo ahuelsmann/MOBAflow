@@ -34,7 +34,7 @@ public partial class Z21
                     $"Length: {data.Length} bytes"
                 );
 
-            await _udp.SendAsync(data).ConfigureAwait(false);
+            await _udp.SendAsync(data, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
