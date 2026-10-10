@@ -372,9 +372,11 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-android-
 
-      - name: Restore MAUI Android workload
+      # workload restore always moves to the newest workload set, even with --skip-manifest-update.
+      # Installing the workload with an explicit set version keeps the Android toolchain reproducible.
+      - name: Install pinned MAUI Android workload
         shell: pwsh
-        run: dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+        run: dotnet workload install maui-android --version 10.0.401.1
 
       - name: Restore Android dependency graph
         shell: pwsh
