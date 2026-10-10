@@ -136,8 +136,11 @@ public sealed class SelectedProjectRuntime : IMobaRuntime
     /// <inheritdoc />
     public void ClearTrafficMonitor() => Selected?.ClearTrafficMonitor();
 
-    private void OnSelectedRuntimeChanged(object? sender, EventArgs e) =>
+    private void OnSelectedRuntimeChanged(object? sender, EventArgs e)
+    {
+        _applicationBus.Publish(new SelectedRuntimeChangedEvent());
         _applicationBus.Publish(new RuntimeSnapshotChangedEvent(Current));
+    }
 }
 
 /// <summary>

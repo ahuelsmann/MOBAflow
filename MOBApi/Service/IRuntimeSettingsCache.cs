@@ -15,4 +15,9 @@ public interface IRuntimeSettingsCache
     /// Stores the Z21 endpoint from MOBAflow settings.
     /// </summary>
     void SetZ21Endpoint(string ipAddress, int port);
+
+    /// <summary>
+    /// Forgets the Z21 endpoint, for example when the selected MOBAflow project has no Z21 assigned.
+    /// </summary>
+    void ClearZ21Endpoint();
 }
