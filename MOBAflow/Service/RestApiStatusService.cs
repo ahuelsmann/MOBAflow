@@ -326,7 +326,7 @@ public sealed class RestApiStatusService : IAsyncDisposable
         _photoHubClient.PhotoUploaded -= OnPhotoUploadedAsync;
         _timer.Stop();
         _timer.Dispose();
-        try { _disposeCts.Cancel(); } catch (ObjectDisposedException) { /* already disposed */ }
+        try { await _disposeCts.CancelAsync().ConfigureAwait(false); } catch (ObjectDisposedException) { /* already disposed */ }
 
         Task[] refreshTasks;
         lock (_refreshTasksLock)
@@ -375,7 +375,7 @@ public sealed class RestApiStatusService : IAsyncDisposable
         try
         {
             var disconnectTask = _photoHubClient.DisconnectAsync();
-            var completedTask = await Task.WhenAny(disconnectTask, Task.Delay(TimeSpan.FromSeconds(3))).ConfigureAwait(false);
+            var completedTask = await Task.WhenAny(disconnectTask, Task.Delay(TimeSpan.FromSeconds(3), CancellationToken.None)).ConfigureAwait(false);
 
             if (completedTask != disconnectTask)
             {

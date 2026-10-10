@@ -278,7 +278,7 @@ public class UdpWrapper : IUdpClientWrapper
             return;
         }
 
-        var completedTask = await Task.WhenAny(_receiverTask, Task.Delay(2000)).ConfigureAwait(false);
+        var completedTask = await Task.WhenAny(_receiverTask, Task.Delay(2000, CancellationToken.None)).ConfigureAwait(false);
         if (completedTask != _receiverTask)
         {
             _logger?.LogWarning("Receiver task did not complete within timeout");
