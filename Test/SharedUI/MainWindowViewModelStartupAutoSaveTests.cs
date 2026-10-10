@@ -155,7 +155,7 @@ internal partial class MainWindowViewModelShutdownTests
 
         // Act
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => viewModel.SaveSolutionInternalAsync());
+            () => viewModel.SaveSolutionInternalAsync()).ConfigureAwait(false);
 
         // Assert
         using (Assert.EnterMultipleScope())

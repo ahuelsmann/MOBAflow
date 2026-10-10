@@ -25,7 +25,7 @@ internal sealed class UdpWrapperTests
         using var wrapper = new UdpWrapper(NullLogger<UdpWrapper>.Instance);
 
         await Assert.ThrowsAsync<UdpNotConnectedException>(() =>
-            wrapper.SendAsync([0x04, 0x00, 0x85, 0x00]));
+            wrapper.SendAsync([0x04, 0x00, 0x85, 0x00])).ConfigureAwait(false);
     }
 
     [Test]
@@ -56,6 +56,6 @@ internal sealed class UdpWrapperTests
         wrapper.Dispose();
 
         await Assert.ThrowsAsync<ObjectDisposedException>(() =>
-            wrapper.ConnectAsync(System.Net.IPAddress.Loopback));
+            wrapper.ConnectAsync(System.Net.IPAddress.Loopback)).ConfigureAwait(false);
     }
 }

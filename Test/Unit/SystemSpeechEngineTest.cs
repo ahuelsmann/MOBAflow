@@ -33,7 +33,7 @@ internal class SystemSpeechEngineTest
         try
         {
             await Assert.DoesNotThrowAsync(async () =>
-                await _speakerEngine.AnnouncementAsync("Test Nachricht.", null));
+                await _speakerEngine.AnnouncementAsync("Test Nachricht.", null)).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex.Message.Contains("Audio device error", StringComparison.OrdinalIgnoreCase))
         {

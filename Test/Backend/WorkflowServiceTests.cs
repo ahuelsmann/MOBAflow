@@ -47,7 +47,7 @@ internal sealed class WorkflowServiceTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(
             workflow,
-            new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), CurrentProject = project }));
+            new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), CurrentProject = project })).ConfigureAwait(false);
         executor.VerifyNoOtherCalls();
     }
 
@@ -59,13 +59,13 @@ internal sealed class WorkflowServiceTests
         var workflow = CreateWorkflow();
         var project = new Project { Workflows = [workflow] };
         using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
+        await cancellation.CancelAsync().ConfigureAwait(false);
 
         await Assert.CatchAsync<OperationCanceledException>(() => service.ExecuteAsync(
             workflow,
             new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), CurrentProject = project },
             default,
-            cancellation.Token));
+            cancellation.Token)).ConfigureAwait(false);
         executor.VerifyNoOtherCalls();
     }
 

@@ -71,7 +71,7 @@ internal sealed partial class SolutionSessionTests
         var session = CreateSession(new Solution(), out var io, out _);
         io.Setup(value => value.LoadFromPathAsync("broken.json")).ReturnsAsync(((Solution?)null, (string?)null, "bad file"));
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => session.LoadSolutionFromPathAsync("broken.json"));
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => session.LoadSolutionFromPathAsync("broken.json")).ConfigureAwait(false);
 
         Assert.That(exception!.Message, Does.Contain("bad file"));
     }

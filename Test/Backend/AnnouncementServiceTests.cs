@@ -243,7 +243,7 @@ internal class AnnouncementServiceTests
             "Next stop {StationName}",
             new Station { Name = "Minden" },
             1,
-            cancellation.Token));
+            cancellation.Token)).ConfigureAwait(false);
         speaker.Verify(engine => engine.AnnouncementAsync(
             It.IsAny<string>(),
             null,

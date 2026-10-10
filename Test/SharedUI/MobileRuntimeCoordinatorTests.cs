@@ -68,9 +68,9 @@ internal sealed class MobileRuntimeCoordinatorTests
         var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
         var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
         using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
+        await cancellation.CancelAsync().ConfigureAwait(false);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(async () => await coordinator.ResetInPortCountersAsync(cancellation.Token));
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await coordinator.ResetInPortCountersAsync(cancellation.Token)).ConfigureAwait(false);
 
         runtime.VerifyNoOtherCalls();
         remote.VerifyNoOtherCalls();
