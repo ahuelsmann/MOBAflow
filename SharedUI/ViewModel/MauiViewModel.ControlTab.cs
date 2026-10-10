@@ -24,12 +24,14 @@ public sealed partial class MauiViewModel
 
     private void WireProjectContextForControlTab()
     {
+        RefreshProjectPicker();
         if (_projectContext == null)
         {
             return;
         }
 
         _projectContext.PropertyChanged += OnProjectContextPropertyChangedForControlTab;
+        Z21IpAddress = _projectContext.SelectedProject?.Model.Z21.IpAddress.Trim() ?? string.Empty;
     }
 
     /// <summary>
@@ -328,7 +330,9 @@ public sealed partial class MauiViewModel
         }
 
         _uiDispatcher.InvokeOnUi(ApplyBestAvailableLocomotiveFleet);
+        _uiDispatcher.InvokeOnUi(RefreshProjectPicker);
         RunInBackground(SelectRemoteProjectAsync(), "Select remote project");
+        RunInBackground(ApplySelectedProjectZ21Async(), "Connect to the selected project's Z21");
     }
 
     /// <summary>

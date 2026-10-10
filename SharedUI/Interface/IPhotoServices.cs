@@ -72,17 +72,6 @@ public interface IPhotoCaptureService
 }
 
 /// <summary>
-/// Reads runtime settings (e.g. Z21 endpoint) that MOBAflow pushed to MOBApi.
-/// </summary>
-public interface IRuntimeSettingsClient
-{
-    /// <summary>
-    /// Fetches the Z21 endpoint configured in MOBAflow when MOBApi has received a push from WinUI.
-    /// </summary>
-    Task<(string? ip, int? port)> GetZ21EndpointAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default);
-}
-
-/// <summary>
 /// Registers the current client (e.g. MOBAsmart) with the REST API so it appears in the Overview "Connected clients" list.
 /// </summary>
 public interface IRestApiClientRegistration
@@ -99,16 +88,6 @@ public interface IRestApiClientRegistration
     /// <param name="serverPort">REST API server port.</param>
     /// <returns>True if registration succeeded.</returns>
     Task<bool> RegisterAsync(string serverIp, int serverPort);
-}
-
-/// <summary>
-/// Null-object implementation of <see cref="IRuntimeSettingsClient"/> used when runtime settings are unavailable.
-/// </summary>
-public sealed class NullRuntimeSettingsClient : IRuntimeSettingsClient
-{
-    /// <inheritdoc />
-    public Task<(string? ip, int? port)> GetZ21EndpointAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default)
-        => Task.FromResult<(string?, int?)>((null, null));
 }
 
 /// <summary>

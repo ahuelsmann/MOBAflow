@@ -268,7 +268,6 @@ MOBApi maps controllers plus two SignalR hubs.
 | `GET /api/status` | API/runtime host status and clients |
 | `GET/PUT /api/solution` | Current solution cache |
 | `GET /api/solution/meta` | Solution metadata |
-| `GET/PUT /api/runtime-settings` | Z21/runtime settings shared by the desktop host |
 | `GET /api/runtime/meta` | Runtime cache metadata |
 | `GET/PUT /api/runtime/snapshot` | Current runtime snapshot |
 | `POST /api/runtime/commands/signal-aspect` | Queue/forward a signal command |

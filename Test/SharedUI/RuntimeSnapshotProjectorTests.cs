@@ -60,10 +60,9 @@ internal sealed class RuntimeSnapshotProjectorTests
             StatusText = statusText
         };
 
-        var projection = RuntimeSnapshotProjector.ProjectMaui(snapshot, wasConnected: false);
+        var projection = RuntimeSnapshotProjector.ProjectMaui(snapshot);
 
         Assert.That(projection.Z21ConnectionStatus, Is.EqualTo(expectedStatus));
-        Assert.That(projection.ShouldPersistCurrentIpAddress, Is.EqualTo(isConnected));
     }
 
     [Test]
@@ -85,22 +84,6 @@ internal sealed class RuntimeSnapshotProjectorTests
         Assert.That(projection.Temperature, Is.Zero);
         Assert.That(projection.SupplyVoltage, Is.Zero);
         Assert.That(projection.VccVoltage, Is.Zero);
-    }
-
-    [Test]
-    public void ProjectMaui_ShouldPersistCurrentIpAddressOnlyOnNewConnection()
-    {
-        var snapshot = new MobaRuntimeSnapshot
-        {
-            IsConnected = true,
-            StatusText = "Connected"
-        };
-
-        var alreadyConnected = RuntimeSnapshotProjector.ProjectMaui(snapshot, wasConnected: true);
-        var newlyConnected = RuntimeSnapshotProjector.ProjectMaui(snapshot, wasConnected: false);
-
-        Assert.That(alreadyConnected.ShouldPersistCurrentIpAddress, Is.False);
-        Assert.That(newlyConnected.ShouldPersistCurrentIpAddress, Is.True);
     }
 
     [Test]

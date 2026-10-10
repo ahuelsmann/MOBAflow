@@ -63,16 +63,12 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
     }
 
     [Test]
-    public void Constructor_DoesNotStartZ21AutoConnect()
+    public async Task Constructor_DoesNotStartZ21AutoConnect()
     {
         var z21Mock = CreateZ21Mock();
 
-        using var runtime = CreateRuntime(
-            z21Mock.Object,
-            new AppSettings
-            {
-                Z21 = new Z21Settings { CurrentIpAddress = "192.168.0.111" }
-            });
+        using var runtime = CreateRuntime(z21Mock.Object, new AppSettings());
+        await runtime.ActivateProjectAsync(LayoutWithZ21()).ConfigureAwait(false);
 
         z21Mock.Verify(
             z => z.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
@@ -93,12 +89,9 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
             z21Mock.Object,
             new AppSettings
             {
-                Z21 = new Z21Settings
-                {
-                    CurrentIpAddress = "192.168.0.111",
-                    AutoConnectRetryIntervalSeconds = 60
-                }
+                Z21 = new Z21Settings { AutoConnectRetryIntervalSeconds = 60 }
             });
+        await runtime.ActivateProjectAsync(LayoutWithZ21()).ConfigureAwait(false);
 
         var startTask = runtime.StartAsync();
 
@@ -115,6 +108,8 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
 
         connectRelease.SetResult();
     }
+
+    private static Project LayoutWithZ21() => new() { Name = "Layout", Z21 = { IpAddress = "192.168.0.111" } };
 
     private static Mock<IZ21> CreateZ21Mock()
     {
@@ -138,11 +133,8 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
             z21,
             workflowServiceMock.Object,
             new ActionExecutionContext { Z21 = z21 },
-            settings ?? new AppSettings
-            {
-                // Disable auto-connect during tests to keep behavior deterministic.
-                Z21 = new Z21Settings { CurrentIpAddress = string.Empty }
-            },
+            // Without an active project the runtime has no Z21 to connect to.
+            settings ?? new AppSettings(),
             loggerMock.Object);
     }
 }

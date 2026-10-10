@@ -339,7 +339,6 @@ internal sealed class PersistentInPortCounterTests
         var z21 = new Mock<IZ21>();
         z21.SetupGet(value => value.TrafficMonitor).Returns((Z21Monitor?)null);
         var settings = Settings(1);
-        settings.Z21.CurrentIpAddress = string.Empty;
         using var counters = new InPortCounterService(z21.Object, settings, store: store.Object);
         using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
             new ActionExecutionContext { Z21 = z21.Object }, settings, Mock.Of<ILogger<MobaRuntimeService>>(),

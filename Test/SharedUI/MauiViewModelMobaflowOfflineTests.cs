@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
 using Moba.Common.Configuration;
-using Moba.Common.Discovery;
 using Moba.Common.Events;
 
 using Moba.Common.Runtime;
@@ -742,7 +741,6 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             settings ?? new AppSettings(),
             CreateSettingsServiceMock().Object,
             restDiscoveryService ?? new Mock<IRestDiscoveryService>().Object,
-            new Mock<IZ21DiscoveryService>().Object,
             photoUploadService ?? new Mock<IPhotoUploadService>().Object,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,
@@ -874,6 +872,43 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         projectContext.SelectedProject = projectContext.SolutionViewModel!.Projects.Single(project => project.Model.Id == yard.Id);
 
         hubMock.Verify(hub => hub.SelectProjectAsync(yard.Id, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    private static readonly string[] StationAndYard = ["Station", "Yard"];
+
+    [Test]
+    public async Task ProjectPicker_SelectingAnotherProject_ConnectsToItsZ21()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var connected = false;
+        var runtimeMock = new Mock<IMobaRuntime>();
+        runtimeMock.Setup(runtime => runtime.ConnectAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => connected = true)
+            .Returns(Task.CompletedTask);
+        runtimeMock.Setup(runtime => runtime.DisconnectAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => connected = false)
+            .Returns(Task.CompletedTask);
+        var station = new Project { Name = "Station", Z21 = { IpAddress = "192.168.0.111" } };
+        var yard = new Project { Name = "Yard", Z21 = { IpAddress = "192.168.0.112" } };
+        var projectContext = CreateProjectContext(new Solution { Name = "Layout", Projects = [station, yard] });
+        var viewModel = CreateViewModel(eventBus, runtimeMock: runtimeMock, projectContext: projectContext);
+        // Connected to the Z21 of the project selected first.
+        runtimeMock.SetupGet(runtime => runtime.Current).Returns(() => new MobaRuntimeSnapshot { IsConnected = connected });
+        connected = true;
+
+        viewModel.SelectedProjectIndex = 1;
+        await Task.Delay(200).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.ProjectNames, Is.EqualTo(StationAndYard));
+            Assert.That(projectContext.SelectedProject?.Model.Id, Is.EqualTo(yard.Id));
+            Assert.That(viewModel.Z21IpAddress, Is.EqualTo("192.168.0.112"));
+        }
+
+        runtimeMock.Verify(runtime => runtime.ActivateProjectAsync(yard, It.IsAny<CancellationToken>()), Times.Once);
+        runtimeMock.Verify(runtime => runtime.DisconnectAsync(It.IsAny<CancellationToken>()), Times.Once);
+        runtimeMock.Verify(runtime => runtime.ConnectAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]

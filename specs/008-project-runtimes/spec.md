@@ -31,7 +31,8 @@ protocol features; more than one Z21 per project; operating one project from sev
 
 **Data and API Effects**: Each project stores its Z21 address and port in the solution file; the Z21 address,
 port and recent-address list leave the app settings. Persisted feedback counters are stored per project. MOBApi
-commands, runtime snapshots and runtime settings carry a project identifier. There is no migration: an existing
+commands and runtime snapshots carry a project identifier; MOBAsmart reads the Z21 address from the synchronized
+project, so MOBApi keeps no runtime settings. There is no migration: an existing
 solution starts with projects that have no Z21 address, and removed setting fields are ignored on load
 (`Solution.CurrentSchemaVersion` is bumped only if the plan shows that loading requires it). Safe locomotive
 startup (speed zero, no restored movement) is unchanged.
@@ -210,8 +211,8 @@ and the switch warning; no page still says to enter the Z21 address in the app s
 - **FR-008**: Editor changes to master data MUST take effect without re-activating the project and without cancelling
   running workflows or resetting journey progress.
 - **FR-009**: MOBAflow runtime pages and the status bar MUST show the runtime of the selected project.
-- **FR-010**: MOBApi commands, runtime snapshots and runtime settings MUST carry a project identifier; MOBAflow MUST
-  apply a remote command only to the named project's runtime.
+- **FR-010**: MOBApi commands and runtime snapshots MUST carry a project identifier; MOBAflow MUST apply a remote
+  command only to the named project's runtime.
 - **FR-011**: MOBAsmart MUST let the user select one project of the synchronized solution and use that project's Z21
   address for its direct connection.
 - **FR-012**: Persisted feedback counters MUST be stored per project.

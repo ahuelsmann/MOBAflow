@@ -52,14 +52,14 @@ internal sealed class Z21AssignmentDiagnosticsTests
     }
 
     [Test]
-    public async Task ProjectEndpointSource_ResolvesTheAssignedZ21AndNeverSearches()
+    public async Task ProjectEndpointSource_ResolvesTheAssignedZ21()
     {
         var resolved = await new ProjectZ21EndpointSource(Project("Station", "192.168.0.111", port: 21106))
-            .ResolveAsync(rediscover: true).ConfigureAwait(false);
+            .ResolveAsync().ConfigureAwait(false);
         var missing = await new ProjectZ21EndpointSource(Project("Yard", string.Empty))
-            .ResolveAsync(rediscover: true).ConfigureAwait(false);
+            .ResolveAsync().ConfigureAwait(false);
         var blocked = await new ProjectZ21EndpointSource(Project("Yard", "192.168.0.111"), "Z21 is used by 'Station'")
-            .ResolveAsync(rediscover: false).ConfigureAwait(false);
+            .ResolveAsync().ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
