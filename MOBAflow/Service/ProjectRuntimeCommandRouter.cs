@@ -22,7 +22,7 @@ public sealed class ProjectRuntimeCommandRouter(ProjectRuntimeHost host, IRecord
     /// <summary>
     /// Gets the current snapshot of every project's runtime.
     /// </summary>
-    public IReadOnlyList<MobaRuntimeSnapshot> Snapshots => [.. _host.Runtimes.Select(runtime => runtime.Runtime.Current)];
+    public IReadOnlyList<MobaRuntimeSnapshot> Snapshots => _host.Snapshots;
 
     /// <summary>
     /// Gets the command gateway of a project's runtime; null when the loaded solution has no such project.

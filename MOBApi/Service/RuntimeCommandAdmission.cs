@@ -46,6 +46,7 @@ public sealed class RuntimeCommandAdmission(IRuntimeCommandQueue commandQueue, I
 {
     public RuntimeCommandAdmissionResult Validate(RuntimeCommandEnvelope command)
     {
+        ArgumentNullException.ThrowIfNull(command);
         if (!RuntimeCommandValidator.TryValidate(command, out var error))
         {
             return new RuntimeCommandAdmissionResult(RuntimeCommandAdmissionStatus.Invalid, error);

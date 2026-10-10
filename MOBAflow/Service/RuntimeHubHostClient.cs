@@ -3,7 +3,6 @@
 namespace Moba.WinUI.Service;
 
 using Common.Discovery;
-using Backend.Interface;
 
 using Common.Runtime;
 

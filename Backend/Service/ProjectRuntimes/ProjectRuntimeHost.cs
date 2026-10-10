@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 /// only decides which runtime the UI shows. Runtimes live as long as their solution.
 /// </summary>
 public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<ProjectRuntimeHost> logger)
-    : IProjectRuntimeHost, IAsyncDisposable
+    : IProjectRuntimeHost, IProjectRuntimeSnapshots, IAsyncDisposable
 {
     private static readonly Action<ILogger, Guid, Exception?> LogStopLocomotivesFailed =
         LoggerMessage.Define<Guid>(
@@ -39,8 +39,11 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
     private Guid? _selectedId;
     private Guid? _requestedSelection;
 
-    /// <summary>Raised with each snapshot of any project's runtime; the snapshot names its project.</summary>
-    public event EventHandler<MobaRuntimeSnapshot>? RuntimeSnapshotChanged;
+    /// <inheritdoc />
+    public event EventHandler<ProjectRuntimeSnapshotEventArgs>? RuntimeSnapshotChanged;
+
+    /// <inheritdoc />
+    public IReadOnlyList<MobaRuntimeSnapshot> Snapshots => [.. Runtimes.Select(runtime => runtime.Runtime.Current)];
 
     /// <summary>Raised after the selected runtime changed.</summary>
     public event EventHandler? SelectedRuntimeChanged;
@@ -315,7 +318,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         }
     }
 
-    private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e) => RuntimeSnapshotChanged?.Invoke(this, e.Snapshot);
+    private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e) => RuntimeSnapshotChanged?.Invoke(this, new ProjectRuntimeSnapshotEventArgs(e.Snapshot));
 
     private void SelectCore(Guid? projectId)
     {

@@ -2420,13 +2420,6 @@
       "project": "MOBApi",
       "targetFramework": "net10.0",
       "ruleId": "IDE0330",
-      "path": "MOBApi/Service/RuntimeSnapshotCache.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0330",
       "path": "MOBApi/Service/SolutionCache.cs",
       "count": 1
     },

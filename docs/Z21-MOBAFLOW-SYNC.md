@@ -64,12 +64,20 @@ this domain model.
 `SetSignalAspect`, `SetLocomotiveDrive`, and `SetLocomotiveFunction` to MOBAflow when a
 MOBApi session is active. MOBAflow performs multiplexer resolution and Z21 I/O.
 
+MOBAflow runs one runtime per project, so every command carries the id of the project
+selected in MOBAsmart. MOBApi rejects a command for a project that the synchronized
+solution does not contain; MOBAflow runs it in that project's runtime only.
+
 ### 3. Runtime snapshot sync (slim profile)
 
 [`RuntimeSnapshotRemoteFilter`](../Common/Runtime/RuntimeSnapshotRemoteFilter.cs) strips
 `LocomotiveStates` before MOBApi / SignalR transport. Mobile clients read locomotive feedback
 from their **local Z21 connection** when connected
 ([`TrainControlViewModel`](../SharedUI/ViewModel/TrainControlViewModel.cs), hybrid mode).
+
+Each snapshot names its project (`ProjectId`). MOBApi keeps the latest snapshot of every
+project and sends a remote only the snapshots of the project it registered for
+(`RegisterRemote(clientId, projectId)`, `GET api/runtime/snapshot?projectId=...`).
 
 Snapshots still carry:
 
@@ -94,7 +102,7 @@ Snapshots still carry:
 - `lastSnapshotPayloadBytes`
 - `totalSnapshotBroadcastCount`
 - `lastSnapshotBroadcastAt`
-- snapshot cache element counts
+- snapshot cache element counts (of the most recently updated project)
 
 Use these fields as a baseline before further payload optimisation.
 

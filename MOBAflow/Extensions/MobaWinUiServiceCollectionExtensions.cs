@@ -159,6 +159,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<ProjectRuntimeFactory>();
         services.AddSingleton<ProjectRuntimeHost>();
         services.AddSingleton<IProjectRuntimeHost>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
+        services.AddSingleton<IProjectRuntimeSnapshots>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
         services.AddSingleton<IMobaRuntime, SelectedProjectRuntime>();
         services.AddSingleton<IInterlockingRuntime, SelectedProjectInterlocking>();
     }

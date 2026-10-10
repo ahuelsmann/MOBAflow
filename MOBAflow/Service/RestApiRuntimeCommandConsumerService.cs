@@ -2,21 +2,21 @@
 
 namespace Moba.WinUI.Service;
 
-using Backend.Interface;
-
 using Common.Runtime;
 
-using Domain;
-
 using Microsoft.Extensions.Logging;
-
-using SharedUI.Interface;
 
 /// <summary>
 /// Polls MOBApi for queued runtime commands when SignalR host forwarding is unavailable.
 /// </summary>
 public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 {
+    private static readonly Action<ILogger, RuntimeCommandType, Guid, Exception?> LogUnknownProject =
+        LoggerMessage.Define<RuntimeCommandType, Guid>(
+            LogLevel.Debug,
+            new EventId(1, nameof(LogUnknownProject)),
+            "Skipping runtime command {Type} for unknown project {ProjectId}");
+
     private readonly ProjectRuntimeCommandRouter _router;
     private readonly ILogger<RestApiRuntimeCommandConsumerService> _logger;
     private readonly LocalMobApiClient _mobApiClient;
@@ -89,7 +89,7 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
         var gateway = _router.ForProject(command.ProjectId);
         if (gateway is null)
         {
-            _logger.LogDebug("Skipping runtime command {Type} for unknown project {ProjectId}", command.Type, command.ProjectId);
+            LogUnknownProject(_logger, command.Type, command.ProjectId, null);
             return;
         }
 

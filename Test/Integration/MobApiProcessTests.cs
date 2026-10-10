@@ -203,10 +203,11 @@ internal sealed class MobApiProcessTests
             var solutionJson =
                 $$"""{"name":"Test","schemaVersion":{{Moba.Domain.Solution.CurrentSchemaVersion}},"projects":[{"id":"{{ProjectId}}","name":"Layout"}]}""";
             using var response = await SendAsync(
-                HttpMethod.Put,
-                "api/solution",
-                new StringContent(solutionJson, Encoding.UTF8, "application/json"));
-            await EnsureSuccessAsync(response);
+                    HttpMethod.Put,
+                    "api/solution",
+                    new StringContent(solutionJson, Encoding.UTF8, "application/json"))
+                .ConfigureAwait(false);
+            await EnsureSuccessAsync(response).ConfigureAwait(false);
         }
 
         public async Task<string> ReadSnapshotAsync()

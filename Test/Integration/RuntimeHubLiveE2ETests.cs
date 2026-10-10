@@ -192,7 +192,7 @@ internal sealed class RuntimeHubLiveE2ETests
         var solutionJson =
             $$"""{"name":"E2E","schemaVersion":{{Solution.CurrentSchemaVersion}},"projects":[{"id":"{{ProjectId}}","name":"E2E"}]}""";
         using var content = new StringContent(solutionJson, Encoding.UTF8, "application/json");
-        using var response = await http.PutAsync("/api/solution", content).ConfigureAwait(false);
+        using var response = await http.PutAsync(new Uri("/api/solution", UriKind.Relative), content).ConfigureAwait(false);
         Assert.That(response.IsSuccessStatusCode, Is.True, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
     }
 

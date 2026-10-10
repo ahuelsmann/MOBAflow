@@ -276,8 +276,16 @@ IZ21 / JourneyManager / WorkflowService
   shell asks first ("Stop all trains?") before a new or opened solution, a project
   deletion or closing MOBAflow when an affected runtime is connected; cancelling keeps
   everything running.
-- Covered by `Test/Backend/ProjectRuntimeHostTests.cs` and
-  `Test/SharedUI/MainWindowViewModelShutdownTests.cs`.
+- Remote control per project: every runtime snapshot names its project
+  (`MobaRuntimeSnapshot.ProjectId`). MOBAflow pushes the snapshots of all project
+  runtimes; MOBApi caches one snapshot per project. A MOBAsmart remote registers for
+  one project and receives only that project's snapshots, and every remote command
+  names its project. MOBApi rejects commands for a project the synchronized solution
+  does not contain; MOBAflow's `ProjectRuntimeCommandRouter` runs a command in that
+  project's runtime only.
+- Covered by `Test/Backend/ProjectRuntimeHostTests.cs`,
+  `Test/SharedUI/MainWindowViewModelShutdownTests.cs` and the project routing tests in
+  `Test/MOBApi/` and `Test/MOBAflow/ProjectRuntimeCommandRouterTests.cs`.
 
 **Editor vs runtime state (done):**
 

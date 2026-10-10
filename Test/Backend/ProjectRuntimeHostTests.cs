@@ -1,12 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
-using Microsoft.Extensions.Logging.Abstractions;
-
 using Moba.Backend.Interface;
-using Moba.Backend.Service;
 using Moba.Backend.Service.ProjectRuntimes;
-using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
 using Moba.Test.Helpers;
@@ -184,7 +180,7 @@ internal sealed class ProjectRuntimeHostTests
         await _host.LoadAsync([station, yard]).ConfigureAwait(false);
         _host.SelectProject(station.Id);
         var received = new List<Guid>();
-        _host.RuntimeSnapshotChanged += (_, snapshot) => received.Add(snapshot.ProjectId);
+        _host.RuntimeSnapshotChanged += (_, e) => received.Add(e.Snapshot.ProjectId);
 
         InPortCounterServiceTests.Raise(_createdZ21s[1], 1);
         var reportedForYard = received.Count;

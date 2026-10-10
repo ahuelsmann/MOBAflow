@@ -21,7 +21,8 @@ internal sealed class RestApiRuntimeHubServiceTests
     public async Task DisposeAsync_ShouldCancelPendingPushAndDisconnectOnlyOnce()
     {
         // Arrange
-        await using var projectRuntimes = new TestProjectRuntimeHost();
+        var projectRuntimes = new TestProjectRuntimeHost();
+        await using var lifetime = projectRuntimes.ConfigureAwait(false);
         var station = TestProjectRuntimeHost.Project("Station", "192.168.0.111");
         await projectRuntimes.Host.LoadAsync([station]).ConfigureAwait(false);
         var runtimeHubHostClient = ConnectedHostClient();
@@ -35,8 +36,8 @@ internal sealed class RestApiRuntimeHubServiceTests
         PublishSnapshot(projectRuntimes, station);
 
         // Act
-        await service.DisposeAsync();
-        await service.DisposeAsync();
+        await service.DisposeAsync().ConfigureAwait(false);
+        await service.DisposeAsync().ConfigureAwait(false);
         PublishSnapshot(projectRuntimes, station);
 
         // Assert
@@ -51,7 +52,8 @@ internal sealed class RestApiRuntimeHubServiceTests
     public async Task SnapshotChanges_ShouldPushTheLatestSnapshotOfEveryProject()
     {
         // Arrange
-        await using var projectRuntimes = new TestProjectRuntimeHost();
+        var projectRuntimes = new TestProjectRuntimeHost();
+        await using var lifetime = projectRuntimes.ConfigureAwait(false);
         var station = TestProjectRuntimeHost.Project("Station", "192.168.0.111");
         var yard = TestProjectRuntimeHost.Project("Yard", "192.168.0.112");
         await projectRuntimes.Host.LoadAsync([station, yard]).ConfigureAwait(false);
@@ -73,11 +75,12 @@ internal sealed class RestApiRuntimeHubServiceTests
             })
             .Returns(Task.CompletedTask);
         using var mobApiClient = new LocalMobApiClient(new AppSettings());
-        await using var service = new RestApiRuntimeHubService(
+        var service = new RestApiRuntimeHubService(
             runtimeHubHostClient.Object,
             projectRuntimes.Host,
             NullLogger<RestApiRuntimeHubService>.Instance,
             mobApiClient);
+        await using var serviceLifetime = service.ConfigureAwait(false);
 
         // Act
         PublishSnapshot(projectRuntimes, station, statusText: "old");

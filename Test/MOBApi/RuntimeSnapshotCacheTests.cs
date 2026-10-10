@@ -20,7 +20,7 @@ internal sealed class RuntimeSnapshotCacheTests
         cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = ProjectA, IsConnected = true, MainCurrent = 1 }));
         cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = ProjectB, IsConnected = false, MainCurrent = 2 }));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(cache.TryGet(ProjectA, out var a), Is.True);
             Assert.That(a.IsConnected, Is.True);
@@ -29,7 +29,7 @@ internal sealed class RuntimeSnapshotCacheTests
             Assert.That(b.IsConnected, Is.False);
             Assert.That(RuntimeJsonSerializer.Deserialize(b.Json)!.MainCurrent, Is.EqualTo(2));
             Assert.That(cache.GetAll().Select(entry => entry.ProjectId), Is.EquivalentTo(new[] { ProjectA, ProjectB }));
-        });
+        }
     }
 
     [Test]

@@ -3,9 +3,7 @@
 namespace Moba.WinUI.Service;
 
 using Backend.Interface;
-using Backend.Service.ProjectRuntimes;
 
-using Common.Events;
 using Common.Runtime;
 
 using Microsoft.Extensions.Logging;
@@ -13,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
 
 using System.Text;
-using System.Text.Json;
 
 /// <summary>
 /// Connects the MOBAflow runtime host to MOBApi RuntimeHub and pushes snapshot updates.
@@ -22,8 +19,14 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
 {
     private const int PushDebounceMilliseconds = 75;
 
+    private static readonly Action<ILogger, Guid, Exception?> LogProjectPushFailed =
+        LoggerMessage.Define<Guid>(
+            LogLevel.Debug,
+            new EventId(1, nameof(LogProjectPushFailed)),
+            "Runtime snapshot push of project {ProjectId} failed");
+
     private readonly IRuntimeHubHostClient _runtimeHubHostClient;
-    private readonly ProjectRuntimeHost _host;
+    private readonly IProjectRuntimeSnapshots _host;
     private readonly ILogger<RestApiRuntimeHubService> _logger;
     private readonly LocalMobApiClient _mobApiClient;
     private readonly object _debounceLock = new();
@@ -84,7 +87,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
 
     public RestApiRuntimeHubService(
         IRuntimeHubHostClient runtimeHubHostClient,
-        ProjectRuntimeHost host,
+        IProjectRuntimeSnapshots host,
         ILogger<RestApiRuntimeHubService> logger,
         LocalMobApiClient mobApiClient)
     {
@@ -102,9 +105,9 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
             await _runtimeHubHostClient.ConnectAsync("127.0.0.1", port, cancellationToken).ConfigureAwait(false);
         }
 
-        foreach (var runtime in _host.Runtimes)
+        foreach (var snapshot in _host.Snapshots)
         {
-            await PushSnapshotImmediateAsync(runtime.Runtime.Current, cancellationToken).ConfigureAwait(false);
+            await PushSnapshotImmediateAsync(snapshot, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -140,9 +143,9 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
         GC.SuppressFinalize(this);
     }
 
-    private void OnRuntimeSnapshotChanged(object? sender, MobaRuntimeSnapshot snapshot)
+    private void OnRuntimeSnapshotChanged(object? sender, ProjectRuntimeSnapshotEventArgs e)
     {
-        QueuePush(snapshot);
+        QueuePush(e.Snapshot);
     }
 
     private void QueuePush(MobaRuntimeSnapshot snapshot)
@@ -200,7 +203,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Runtime snapshot push of project {ProjectId} failed", snapshot.ProjectId);
+                LogProjectPushFailed(_logger, snapshot.ProjectId, ex);
             }
         }
     }
