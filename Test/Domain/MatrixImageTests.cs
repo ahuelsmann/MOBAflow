@@ -46,6 +46,33 @@ public sealed class MatrixImageTests
         Assert.That(project.Matrices, Is.Empty);
     }
 
+    [TestCase(25)]
+    [TestCase(26)]
+    [TestCase(40)]
+    public void NormalizeCells_PreservesFirstTwentyFiveColors(int count)
+    {
+        var cells = Enumerable.Range(1, count).Select(value => (uint)value).ToList();
+        var expected = cells.Take(MatrixImage.CellCount).ToArray();
+        var image = new MatrixImage { Cells = cells };
+
+        image.NormalizeCells();
+        image.NormalizeCells();
+
+        Assert.That(image.Cells, Is.EqualTo(expected));
+        Assert.That(image.Cells, Is.SameAs(cells));
+    }
+
+    [Test]
+    public void NormalizeCells_NullCells_RestoresBlankImage()
+    {
+        var image = new MatrixImage { Cells = null! };
+
+        image.NormalizeCells();
+
+        Assert.That(image.Cells, Has.Count.EqualTo(MatrixImage.CellCount));
+        Assert.That(image.Cells, Is.All.EqualTo(MatrixImage.OffColorArgb));
+    }
+
     [Test]
     public void SolutionJson_Should_Roundtrip_ProjectMatrices()
     {

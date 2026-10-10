@@ -8,6 +8,46 @@ using System.Text.Json;
 [TestFixture]
 internal sealed class WorkflowActionJsonConverterTests
 {
+    [TestCase("announcement", "{\"message\":\"Arrival\"}")]
+    [TestCase("powerShell", "{\"scriptPath\":\"scripts/test.ps1\"}")]
+    [TestCase("selectSignalAspect", "{\"baseAddress\":201}")]
+    [TestCase("trainDestinationDisplay", "{\"clearBeforeRender\":false}")]
+    [TestCase("changeJourneyStop", "{\"moveToNextStop\":false}")]
+    public void RoundTripPayload_PreservesCanonicalPropertyNameAndConfiguredValues(string propertyName, string payload)
+    {
+        var json = "{\"type\":2,\"" + propertyName + "\":" + payload + "}";
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json)!;
+
+        using var document = JsonDocument.Parse(JsonSerializer.Serialize(action));
+        using var expected = JsonDocument.Parse(payload);
+        var actual = document.RootElement.GetProperty(propertyName);
+
+        foreach (var property in expected.RootElement.EnumerateObject())
+            Assert.That(actual.GetProperty(property.Name).GetRawText(), Is.EqualTo(property.Value.GetRawText()));
+    }
+
+    [TestCase("{}")]
+    [TestCase("{\"number\":\"invalid\"}")]
+    [TestCase("{\"number\":null}")]
+    public void DeserializeMissingTypeAndInvalidNumber_PreservesInvalidTypeAndZeroNumber(string json)
+    {
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json)!;
+
+        Assert.That(action.Type, Is.EqualTo((ActionType)(-1)));
+        Assert.That(action.Number, Is.Zero);
+    }
+
+    [Test]
+    public void DeserializeUnknownProperty_DoesNotOverwriteKnownMetadata()
+    {
+        const string json = """{"other":"Wrong","name":"Expected","number":42,"type":2}""";
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json)!;
+
+        Assert.That(action.Name, Is.EqualTo("Expected"));
+        Assert.That(action.Number, Is.EqualTo(42));
+    }
+
     [Test]
     public void Deserialize_NullToken_ReturnsNull()
     {
