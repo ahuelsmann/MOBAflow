@@ -1,3 +1,8 @@
+---
+description: 'Optional editor setup and links to current build requirements.'
+applyTo: '.github/instructions/vs-setup.instructions.md'
+---
+
 # Visual Studio setup for MOBAflow
 
 This is optional environment guidance. The repository workflow and validation

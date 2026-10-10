@@ -1,3 +1,8 @@
+---
+description: 'Historical proposals, separate from the active GitHub backlog.'
+applyTo: '.github/instructions/future-enhancements.instructions.md'
+---
+
 # Historical quality improvement proposals
 
 > Reference material, not an active backlog or authorization to install tools,

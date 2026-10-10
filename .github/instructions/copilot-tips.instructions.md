@@ -1,3 +1,8 @@
+---
+description: 'Optional prompt examples; not additional repository requirements.'
+applyTo: '.github/instructions/copilot-tips.instructions.md'
+---
+
 # Copilot prompt examples for MOBAflow
 
 > Reference examples, not an additional set of agent requirements.
