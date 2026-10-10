@@ -152,7 +152,7 @@ dependencies.
 | RF-21 | [#185](https://github.com/ahuelsmann/MOBAflow/issues/185) | Unused and misplaced types are removed or moved to the project that owns them. |
 | RF-22 | [#187](https://github.com/ahuelsmann/MOBAflow/issues/187) | ViewModels send runtime commands through one port without compatibility facades or local fallbacks. |
 | RF-23 | [#191](https://github.com/ahuelsmann/MOBAflow/issues/191) | A dedicated solution session owns the loaded solution, selection, dirty state and auto-save. |
-| RF-24 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | `MainWindowViewModel` is a shell; each page area has its own focused ViewModel. |
+| RF-24 | [#219](https://github.com/ahuelsmann/MOBAflow/issues/219) | `MainWindowViewModel` is a shell; each page area has its own focused ViewModel. |
 | RF-25 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Constructors declare real dependencies; no hidden optional services, fallbacks or mutable static hooks. |
 | RF-26 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | `Common` is split by responsibility: shared contracts, host-owned UI settings and presentation helpers. |
 | RF-27 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Domain classes own the rules and state transitions that need only domain data. |
@@ -401,18 +401,11 @@ Acceptance anchor: no ViewModel, page or service except the shell depends on
 
 ### RF-24: Decompose `MainWindowViewModel`
 
-After RF-23, extract in this order:
-
-1. settings page (`MainWindowViewModel.Settings.cs`);
-2. rolling stock: locomotives, wagons and trains;
-3. stations and journeys;
-4. workflows;
-5. counter, diagnostics, health and synchronization status;
-6. layout panel persistence as a service instead of per-page code.
-
-Acceptance anchor: `MainWindowViewModel` keeps only shell responsibilities; each
-extracted ViewModel has its own tests and is registered through DI; the removed
-partial files are deleted rather than moved.
+The extraction order, source inventory, design and validation now belong to
+[the RF-24 child plan](219-main-window-viewmodel.md), owned by
+[issue #219](https://github.com/ahuelsmann/MOBAflow/issues/219).
+The hard RF-23 prerequisite remains; independent planning does not authorize
+implementation before its completion and acceptance reconciliation.
 
 ### RF-25: Explicit dependencies
 
