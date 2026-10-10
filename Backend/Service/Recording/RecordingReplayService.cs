@@ -522,7 +522,7 @@ public sealed class RecordingReplayService : IRecordingReplayService
     {
         if (_isDisposed) return;
         _isDisposed = true;
-        await CancelAsync().ConfigureAwait(false);
+        await CancelAsync(CancellationToken.None).ConfigureAwait(false);
         lock (_gate)
         {
             _playbackCancellation?.Dispose();
