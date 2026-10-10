@@ -51,10 +51,15 @@ Owners decided on 2026-10-09: CI-02 to CI-04 move to #209, CI-05 and CI-06 to #1
   Done: both jobs have bounded runtime and normal runs pass. Pages has timeout-minutes: 20, above
   deploy-pages' own 10-minute timeout, and stale has timeout-minutes: 10; observed runtimes on main
   were under 2 minutes for Pages and under 15 seconds for the weekly stale run.
-- [ ] CI-04 (medium, #209): decide reproducible SDK/workload pins. global.json specifies SDK10.0.302 with
+- [x] CI-04 (medium, #209): decide reproducible SDK/workload pins. global.json specifies SDK10.0.302 with
   rollForward latestFeature; actual PR154 used SDK/workload10.0.401, no workloadVersion.
   --skip-manifest-update is not a workload pin. Done: clean runner uses the agreed versions and
   Windows/Android Release tests, analyzers and bundle checks pass.
+  Owner decided on 2026-10-10: pin the feature band. global.json names SDK 10.0.401 with rollForward
+  latestPatch, so patches of the 10.0.4xx band apply and a new band is a reviewed change. The Android job
+  installs workload set 10.0.401.1 with `dotnet workload install maui-android --version`; a workloadVersion
+  in global.json would fail every build on machines without that set. The Windows and Linux jobs run on the
+  pinned band. The Android job is disabled since #195, so its pin is first exercised when it is re-enabled.
 - [ ] CI-05 (medium, #197 CI-3): evaluate scoped docs-only CI. Preserve required-check names/results;
   do not introduce permanently pending filtered checks. Done: docs, shared code, WinUI and Android
   sample diffs receive the intended jobs without bypassing product gates.
