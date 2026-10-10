@@ -5129,6 +5129,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/SessionLossObserverTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/SkiaFrameRendererTests.cs",
       "count": 1
     },
