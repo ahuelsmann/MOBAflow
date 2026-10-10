@@ -69,6 +69,29 @@ internal sealed class MobApiProcessTests
     }
 
     [Test]
+    [CancelAfter(45_000)]
+    public async Task RemoteCommand_WithoutProject_IsRejected()
+    {
+        var server = await MobaApiProcess.StartAsync(GetAvailablePort()).ConfigureAwait(false);
+        await using var serverLifetime = server.ConfigureAwait(false);
+        await server.PublishSolutionAsync().ConfigureAwait(false);
+
+        using var rejected = await server
+            .SendAsync(
+                HttpMethod.Post,
+                "api/runtime/commands/locomotive/drive",
+                JsonContent.Create(new { address = 3, speed = 40, forward = true }))
+            .ConfigureAwait(false);
+        using var pending = await server.SendAsync(HttpMethod.Get, "api/runtime/commands/pending").ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(rejected.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            Assert.That(pending.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        }
+    }
+
+    [Test]
     [CancelAfter(120_000)]
     public async Task Reads_ShouldRemainEquivalent_AfterReconnectAndServerRestart()
     {
