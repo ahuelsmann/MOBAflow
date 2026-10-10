@@ -213,32 +213,14 @@ public class RestApiDiscoveryService : IRestDiscoveryService
             return (null, null);
         }
 
-        var candidates = new List<IPAddress>();
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-
-        void AddIp(IPAddress ip)
-        {
-            var key = ip.ToString();
-            if (seen.Add(key))
-            {
-                candidates.Add(ip);
-            }
-        }
-
-        foreach (var recent in _appSettings.RestApi.RecentIpAddresses ?? [])
-        {
-            if (string.IsNullOrWhiteSpace(recent) || !IPAddress.TryParse(recent.Trim(), out var recentIp))
-            {
-                continue;
-            }
-
-            AddIp(recentIp);
-        }
-
-        foreach (var nearby in RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(localAddresses))
-        {
-            AddIp(nearby);
-        }
+        // Recently used addresses first, then the addresses near this device; each address once.
+        var recentIps = (_appSettings.RestApi.RecentIpAddresses ?? [])
+            .Select(recent => IPAddress.TryParse(recent?.Trim(), out var recentIp) ? recentIp : null)
+            .OfType<IPAddress>();
+        var candidates = recentIps
+            .Concat(RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(localAddresses))
+            .DistinctBy(ip => ip.ToString(), StringComparer.Ordinal)
+            .ToList();
 
         if (candidates.Count == 0)
         {
