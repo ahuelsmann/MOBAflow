@@ -57,7 +57,7 @@ public sealed partial class MauiViewModel
 
         if (!HasAnyLocomotiveFleetAvailable())
         {
-            RunInBackground(RequestSolutionSyncAsync(), "Solution sync fallback for Control tab fleet");
+            RunInBackground(RequestSolutionSyncAsync(_applicationLifetimeCts.Token), "Solution sync fallback for Control tab fleet");
         }
     }
 
