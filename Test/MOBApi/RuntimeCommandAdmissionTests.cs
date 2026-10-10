@@ -18,6 +18,8 @@ using System.Globalization;
 [TestFixture]
 internal sealed class RuntimeCommandAdmissionTests
 {
+    private static readonly Guid Project = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
     [Test]
     public void Queue_RejectsCommands_WhenCapacityIsReached()
     {
@@ -52,7 +54,7 @@ internal sealed class RuntimeCommandAdmissionTests
     public void Enqueue_InvalidCommand_IsRejectedAndNotQueued()
     {
         var queue = new RuntimeCommandQueue(capacity: 4);
-        var admission = new RuntimeCommandAdmission(queue);
+        var admission = new RuntimeCommandAdmission(queue, KnownProject());
 
         var result = admission.Enqueue(ValidDrive(0));
 
@@ -67,7 +69,7 @@ internal sealed class RuntimeCommandAdmissionTests
     [Test]
     public void Enqueue_WhenQueueIsFull_ReturnsQueueFull()
     {
-        var admission = new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 1));
+        var admission = new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 1), KnownProject());
         admission.Enqueue(ValidDrive(1));
 
         var result = admission.Enqueue(ValidDrive(2));
@@ -155,15 +157,63 @@ internal sealed class RuntimeCommandAdmissionTests
         var fixture = new HubFixture(hostConnectionId: "host-1");
         var signalId = Guid.NewGuid();
 
-        await fixture.Hub.SetSignalAspect(signalId.ToString("N"), ((int)SignalAspect.Zs1).ToString(CultureInfo.InvariantCulture))
+        await fixture.Hub.SetSignalAspect(Project.ToString(), signalId.ToString("N"), ((int)SignalAspect.Zs1).ToString(CultureInfo.InvariantCulture))
             .ConfigureAwait(false);
 
         fixture.HostProxy.Verify(
             proxy => proxy.SendCoreAsync(
                 RuntimeHubMethods.ExecuteSetSignalAspect,
-                It.Is<object?[]>(args => (string?)args[0] == signalId.ToString() && (string?)args[1] == nameof(SignalAspect.Zs1)),
+                It.Is<object?[]>(args =>
+                    (string?)args[0] == Project.ToString()
+                    && (string?)args[1] == signalId.ToString()
+                    && (string?)args[2] == nameof(SignalAspect.Zs1)),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Test]
+    public void Enqueue_CommandForUnknownProject_IsRejectedAndNotQueued()
+    {
+        var queue = new RuntimeCommandQueue(capacity: 4);
+        var admission = new RuntimeCommandAdmission(queue, KnownProject());
+
+        var result = admission.Enqueue(ValidDrive(3) with { ProjectId = Guid.NewGuid() });
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Status, Is.EqualTo(RuntimeCommandAdmissionStatus.Invalid));
+            Assert.That(result.Error, Is.EqualTo("Unknown project."));
+            Assert.That(queue.TryDequeue(out _), Is.False);
+        }
+    }
+
+    [Test]
+    public void Enqueue_CommandWithoutProject_IsRejected()
+    {
+        var admission = new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 4), KnownProject());
+
+        var result = admission.Enqueue(ValidDrive(3) with { ProjectId = Guid.Empty });
+
+        Assert.That(result.Error, Is.EqualTo("ProjectId is required."));
+    }
+
+    [Test]
+    public void HubCommand_WithoutProject_IsRejected()
+    {
+        var fixture = new HubFixture(hostConnectionId: "host-1");
+
+        Assert.ThrowsAsync<HubException>(() => fixture.Hub.SetLocomotiveDrive(string.Empty, 3, 40, forward: true));
+        fixture.HostProxy.Verify(
+            proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    /// <summary>A synchronized solution that contains only <see cref="Project"/>.</summary>
+    private static ISolutionCache KnownProject()
+    {
+        var solutionCache = new Mock<ISolutionCache>();
+        solutionCache.Setup(cache => cache.ContainsProject(Project)).Returns(true);
+        return solutionCache.Object;
     }
 
     /// <summary>Clears the generated command id and timestamp so only the command payload is compared.</summary>
@@ -172,6 +222,7 @@ internal sealed class RuntimeCommandAdmissionTests
 
     private static RuntimeCommandEnvelope ValidDrive(int address) => new()
     {
+        ProjectId = Project,
         Type = RuntimeCommandType.SetLocomotiveDrive,
         LocomotiveAddress = address,
         Speed = 10,
@@ -203,7 +254,7 @@ internal sealed class RuntimeCommandAdmissionTests
                 new Mock<ISolutionCache>().Object,
                 hostRegistry.Object,
                 new Mock<IRuntimeBroadcastMetrics>().Object,
-                new RuntimeCommandAdmission(Queue),
+                new RuntimeCommandAdmission(Queue, KnownProject()),
                 new Mock<IRuntimeRemoteRegistry>().Object)
             {
                 Clients = clients.Object
@@ -219,6 +270,7 @@ internal sealed class RuntimeCommandAdmissionTests
         {
             HubCommand.Drive => new RuntimeCommandEnvelope
             {
+                ProjectId = Project,
                 Type = RuntimeCommandType.SetLocomotiveDrive,
                 LocomotiveAddress = 3 + variant,
                 Speed = 40 + variant,
@@ -226,6 +278,7 @@ internal sealed class RuntimeCommandAdmissionTests
             },
             HubCommand.Function => new RuntimeCommandEnvelope
             {
+                ProjectId = Project,
                 Type = RuntimeCommandType.SetLocomotiveFunction,
                 LocomotiveAddress = 3 + variant,
                 FunctionIndex = 5 + variant,
@@ -233,6 +286,7 @@ internal sealed class RuntimeCommandAdmissionTests
             },
             _ => new RuntimeCommandEnvelope
             {
+                ProjectId = Project,
                 Type = RuntimeCommandType.SetSignalAspect,
                 SignalId = new Guid(variant + 1, 0, 0, new byte[8]),
                 SignalAspect = variant == 0 ? SignalAspect.Hp0 : SignalAspect.Ks1
@@ -245,22 +299,27 @@ internal sealed class RuntimeCommandAdmissionTests
             return command switch
             {
                 HubCommand.Drive => Hub.SetLocomotiveDrive(
+                    Project.ToString(),
                     expected.LocomotiveAddress!.Value,
                     expected.Speed!.Value,
                     expected.Forward!.Value),
                 HubCommand.Function => Hub.SetLocomotiveFunction(
+                    Project.ToString(),
                     expected.LocomotiveAddress!.Value,
                     expected.FunctionIndex!.Value,
                     expected.FunctionIsOn!.Value),
-                _ => Hub.SetSignalAspect(expected.SignalId!.Value.ToString(), expected.SignalAspect!.Value.ToString())
+                _ => Hub.SetSignalAspect(
+                    Project.ToString(),
+                    expected.SignalId!.Value.ToString(),
+                    expected.SignalAspect!.Value.ToString())
             };
         }
 
         public Task InvokeInvalidAsync(HubCommand command) => command switch
         {
-            HubCommand.Drive => Hub.SetLocomotiveDrive(3, 500, forward: true),
-            HubCommand.Function => Hub.SetLocomotiveFunction(3, 32, isOn: true),
-            _ => Hub.SetSignalAspect(Guid.NewGuid().ToString(), "999")
+            HubCommand.Drive => Hub.SetLocomotiveDrive(Project.ToString(), 3, 500, forward: true),
+            HubCommand.Function => Hub.SetLocomotiveFunction(Project.ToString(), 3, 32, isOn: true),
+            _ => Hub.SetSignalAspect(Project.ToString(), Guid.NewGuid().ToString(), "999")
         };
 
         public RuntimeCommandQueue Queue { get; }

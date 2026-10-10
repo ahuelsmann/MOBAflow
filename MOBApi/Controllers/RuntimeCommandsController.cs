@@ -34,6 +34,7 @@ public class RuntimeCommandsController : ControllerBase
 
         return _commandAdmission.Enqueue(new RuntimeCommandEnvelope
         {
+            ProjectId = request.ProjectId,
             Type = RuntimeCommandType.SetSignalAspect,
             SignalId = request.SignalId,
             SignalAspect = request.Aspect
@@ -50,6 +51,7 @@ public class RuntimeCommandsController : ControllerBase
 
         return _commandAdmission.Enqueue(new RuntimeCommandEnvelope
         {
+            ProjectId = request.ProjectId,
             Type = RuntimeCommandType.SetLocomotiveDrive,
             LocomotiveAddress = request.Address,
             Speed = request.Speed,
@@ -67,6 +69,7 @@ public class RuntimeCommandsController : ControllerBase
 
         return _commandAdmission.Enqueue(new RuntimeCommandEnvelope
         {
+            ProjectId = request.ProjectId,
             Type = RuntimeCommandType.SetLocomotiveFunction,
             LocomotiveAddress = request.Address,
             FunctionIndex = request.FunctionIndex,
@@ -87,9 +90,9 @@ public class RuntimeCommandsController : ControllerBase
         return Ok(command);
     }
 
-    public sealed record SetSignalAspectRequest(Guid SignalId, SignalAspect Aspect);
+    public sealed record SetSignalAspectRequest(Guid ProjectId, Guid SignalId, SignalAspect Aspect);
 
-    public sealed record SetLocomotiveDriveRequest(int Address, int Speed, bool Forward);
+    public sealed record SetLocomotiveDriveRequest(Guid ProjectId, int Address, int Speed, bool Forward);
 
-    public sealed record SetLocomotiveFunctionRequest(int Address, int FunctionIndex, bool IsOn);
+    public sealed record SetLocomotiveFunctionRequest(Guid ProjectId, int Address, int FunctionIndex, bool IsOn);
 }

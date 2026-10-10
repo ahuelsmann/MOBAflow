@@ -15,6 +15,11 @@ public sealed class MobaRuntimeSnapshot
     public static MobaRuntimeSnapshot Empty { get; } = new();
 
     /// <summary>
+    /// Gets the project whose runtime produced this snapshot; empty when no project is active.
+    /// </summary>
+    public Guid ProjectId { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether the Z21 is currently connected and responding.
     /// </summary>
     public bool IsConnected { get; init; }

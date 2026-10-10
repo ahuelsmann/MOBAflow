@@ -134,10 +134,10 @@ internal sealed partial class RestApiStatusServiceTests
             NullLogger<RestApiProcessService>.Instance,
             NullLogger<UdpDiscoveryResponder>.Instance);
         using var mobApiClient = new LocalMobApiClient(appSettings);
+        var projectRuntimes = new TestProjectRuntimeHost();
         var runtimeHubService = new RestApiRuntimeHubService(
             runtimeHubHostClient.Object,
-            mobaRuntime.Object,
-            eventBus,
+            projectRuntimes.Host,
             NullLogger<RestApiRuntimeHubService>.Instance,
             mobApiClient);
 
@@ -171,7 +171,8 @@ internal sealed partial class RestApiStatusServiceTests
             statusHttpClient,
             eventBus,
             photoHubClient,
-            runtimeHubHostClient);
+            runtimeHubHostClient,
+            projectRuntimes);
     }
 
     private static MainWindowViewModel CreateMainWindowViewModel(
@@ -246,7 +247,8 @@ internal sealed partial class RestApiStatusServiceTests
         HttpClient StatusHttpClient,
         IEventBus EventBus,
         Mock<IPhotoHubClient> PhotoHubClient,
-        Mock<IRuntimeHubHostClient> RuntimeHubHostClient) : IAsyncDisposable
+        Mock<IRuntimeHubHostClient> RuntimeHubHostClient,
+        TestProjectRuntimeHost ProjectRuntimes) : IAsyncDisposable
     {
         public async ValueTask DisposeAsync()
         {
@@ -255,6 +257,7 @@ internal sealed partial class RestApiStatusServiceTests
             SolutionSyncService.Dispose();
             RestApiProcessService.Dispose();
             StatusHttpClient.Dispose();
+            await ProjectRuntimes.DisposeAsync().ConfigureAwait(false);
         }
     }
 }

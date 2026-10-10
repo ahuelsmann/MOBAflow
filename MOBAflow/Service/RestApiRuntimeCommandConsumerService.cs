@@ -17,7 +17,7 @@ using SharedUI.Interface;
 /// </summary>
 public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 {
-    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
+    private readonly ProjectRuntimeCommandRouter _router;
     private readonly ILogger<RestApiRuntimeCommandConsumerService> _logger;
     private readonly LocalMobApiClient _mobApiClient;
     private readonly PeriodicTimer _timer;
@@ -25,11 +25,11 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
     private bool _disposed;
 
     public RestApiRuntimeCommandConsumerService(
-        IRuntimeCommandGateway runtimeCommandGateway,
+        ProjectRuntimeCommandRouter router,
         ILogger<RestApiRuntimeCommandConsumerService> logger,
         LocalMobApiClient mobApiClient)
     {
-        _runtimeCommandGateway = runtimeCommandGateway;
+        _router = router ?? throw new ArgumentNullException(nameof(router));
         _logger = logger;
         _mobApiClient = mobApiClient ?? throw new ArgumentNullException(nameof(mobApiClient));
         _timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
@@ -85,18 +85,26 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 
     private async Task ExecuteAsync(RuntimeCommandEnvelope command, CancellationToken cancellationToken)
     {
+        // Every project has its own runtime; a command for a project that is no longer loaded is dropped.
+        var gateway = _router.ForProject(command.ProjectId);
+        if (gateway is null)
+        {
+            _logger.LogDebug("Skipping runtime command {Type} for unknown project {ProjectId}", command.Type, command.ProjectId);
+            return;
+        }
+
         switch (command.Type)
         {
             case RuntimeCommandType.SetSignalAspect
                 when command.SignalId.HasValue && command.SignalAspect.HasValue:
-                await _runtimeCommandGateway
+                await gateway
                     .SetSignalAspectAsync(command.SignalId.Value, command.SignalAspect.Value, cancellationToken)
                     .ConfigureAwait(false);
                 break;
 
             case RuntimeCommandType.SetLocomotiveDrive
                 when command.LocomotiveAddress.HasValue && command.Speed.HasValue && command.Forward.HasValue:
-                await _runtimeCommandGateway
+                await gateway
                     .SetLocomotiveDriveAsync(
                         command.LocomotiveAddress.Value,
                         command.Speed.Value,
@@ -107,7 +115,7 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 
             case RuntimeCommandType.SetLocomotiveFunction
                 when command.LocomotiveAddress.HasValue && command.FunctionIndex.HasValue && command.FunctionIsOn.HasValue:
-                await _runtimeCommandGateway
+                await gateway
                     .SetLocomotiveFunctionAsync(
                         command.LocomotiveAddress.Value,
                         command.FunctionIndex.Value,
@@ -117,7 +125,7 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
                 break;
 
             case RuntimeCommandType.ResetJourney when command.JourneyId.HasValue:
-                await _runtimeCommandGateway.ResetJourneyAsync(command.JourneyId.Value, cancellationToken).ConfigureAwait(false);
+                await gateway.ResetJourneyAsync(command.JourneyId.Value, cancellationToken).ConfigureAwait(false);
                 break;
 
             default:

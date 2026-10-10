@@ -9,6 +9,7 @@ using Moba.Backend.Service.ProjectRuntimes;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
+using Moba.Test.Helpers;
 
 using Moq;
 
@@ -21,34 +22,24 @@ internal sealed class ProjectRuntimeHostTests
 {
     private static readonly string[] YardOnly = ["yard"];
 
+    private TestProjectRuntimeHost _fixture = null!;
+    private ProjectRuntimeHost _host = null!;
     private EventBus _applicationBus = null!;
     private List<Mock<IZ21>> _createdZ21s = null!;
-    private Z21ConnectionRegistry _registry = null!;
-    private ProjectRuntimeHost _host = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _applicationBus = new EventBus(NullLogger<EventBus>.Instance);
-        _createdZ21s = [];
-        _registry = new Z21ConnectionRegistry(
-            () => new ForwardingEventBus(new EventBus(NullLogger<EventBus>.Instance), _applicationBus),
-            _ =>
-            {
-                var z21 = new Mock<IZ21>();
-                _createdZ21s.Add(z21);
-                return z21.Object;
-            });
-        _host = new ProjectRuntimeHost(
-            new ProjectRuntimeFactory(_registry, CreateServices()),
-            NullLogger<ProjectRuntimeHost>.Instance);
+        _fixture = new TestProjectRuntimeHost();
+        _host = _fixture.Host;
+        _applicationBus = _fixture.ApplicationBus;
+        _createdZ21s = _fixture.Z21s;
     }
 
     [TearDown]
     public async Task TearDownAsync()
     {
-        await _host.DisposeAsync().ConfigureAwait(false);
-        await _registry.DisposeAsync().ConfigureAwait(false);
+        await _fixture.DisposeAsync().ConfigureAwait(false);
     }
 
     [Test]
@@ -186,6 +177,29 @@ internal sealed class ProjectRuntimeHostTests
     }
 
     [Test]
+    public async Task RuntimeSnapshotChanged_ReportsEveryProjectWithItsId_UntilTheProjectIsRemoved()
+    {
+        var station = Project("Station", "192.168.0.111");
+        var yard = Project("Yard", "192.168.0.112");
+        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        _host.SelectProject(station.Id);
+        var received = new List<Guid>();
+        _host.RuntimeSnapshotChanged += (_, snapshot) => received.Add(snapshot.ProjectId);
+
+        InPortCounterServiceTests.Raise(_createdZ21s[1], 1);
+        var reportedForYard = received.Count;
+        await _host.RemoveAsync(yard.Id).ConfigureAwait(false);
+        received.Clear();
+        InPortCounterServiceTests.Raise(_createdZ21s[1], 1);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(reportedForYard, Is.GreaterThan(0), "A project that is not selected still reports its snapshots.");
+            Assert.That(received, Is.Empty, "A removed project reports nothing.");
+        }
+    }
+
+    [Test]
     public async Task SelectionRequestedBeforeTheRuntimeExists_AppliesOnceItIsCreated()
     {
         var station = Project("Station", "192.168.0.111");
@@ -199,26 +213,7 @@ internal sealed class ProjectRuntimeHostTests
     private ulong Count(Project project, uint inPort) =>
         _host.Get(project.Id)!.Runtime.Current.InPortCounters.Single(counter => counter.InPort == inPort).Count;
 
-    private static Project Project(string name, string z21Address) =>
-        new() { Name = name, Z21 = { IpAddress = z21Address } };
-
-    private static ProjectRuntimeServices CreateServices() => new()
-    {
-        Settings = new AppSettings { Counter = { CountOfFeedbackPoints = 2, UseTimerFilter = false } },
-        ActionExecutor = new Mock<IActionExecutor>().Object,
-        WorkflowDependencies = new WorkflowServiceDependencies
-        {
-            Validator = new Mock<IWorkflowValidator>().Object,
-            EffectPlanner = new Mock<IWorkflowEffectPlanner>().Object,
-            TraceStore = new Mock<IWorkflowTraceStore>().Object,
-            TimeProvider = TimeProvider.System
-        },
-        SharedExecutionContext = new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
-        StopTransitionService = new JourneyStopTransitionService(),
-        RuntimeStateStore = new Mock<IJourneyRuntimeStateStore>().Object,
-        TimeProvider = TimeProvider.System,
-        LoggerFactory = NullLoggerFactory.Instance
-    };
+    private static Project Project(string name, string z21Address) => TestProjectRuntimeHost.Project(name, z21Address);
 
     private sealed record TestEvent(string Name) : EventBase;
 }

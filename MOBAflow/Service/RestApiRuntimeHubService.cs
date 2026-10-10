@@ -3,6 +3,7 @@
 namespace Moba.WinUI.Service;
 
 using Backend.Interface;
+using Backend.Service.ProjectRuntimes;
 
 using Common.Events;
 using Common.Runtime;
@@ -22,15 +23,14 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
     private const int PushDebounceMilliseconds = 75;
 
     private readonly IRuntimeHubHostClient _runtimeHubHostClient;
-    private readonly IMobaRuntime _mobaRuntime;
-    private readonly IEventBus _eventBus;
+    private readonly ProjectRuntimeHost _host;
     private readonly ILogger<RestApiRuntimeHubService> _logger;
     private readonly LocalMobApiClient _mobApiClient;
     private readonly object _debounceLock = new();
-    private readonly Guid _subscriptionId;
     private CancellationTokenSource? _debounceCts;
     private Task _debounceTask = Task.CompletedTask;
-    private MobaRuntimeSnapshot? _pendingSnapshot;
+    // Every project has its own runtime; the latest snapshot of each project waits for the next push.
+    private readonly Dictionary<Guid, MobaRuntimeSnapshot> _pendingSnapshots = [];
     private int _disposeState;
     private readonly object _metricsLock = new();
     private DateTimeOffset? _lastHubPushAt;
@@ -84,17 +84,15 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
 
     public RestApiRuntimeHubService(
         IRuntimeHubHostClient runtimeHubHostClient,
-        IMobaRuntime mobaRuntime,
-        IEventBus eventBus,
+        ProjectRuntimeHost host,
         ILogger<RestApiRuntimeHubService> logger,
         LocalMobApiClient mobApiClient)
     {
         _runtimeHubHostClient = runtimeHubHostClient;
-        _mobaRuntime = mobaRuntime;
-        _eventBus = eventBus;
+        _host = host ?? throw new ArgumentNullException(nameof(host));
         _logger = logger;
         _mobApiClient = mobApiClient ?? throw new ArgumentNullException(nameof(mobApiClient));
-        _subscriptionId = _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
+        _host.RuntimeSnapshotChanged += OnRuntimeSnapshotChanged;
     }
 
     public async Task ConnectHostAsync(int port, CancellationToken cancellationToken = default)
@@ -104,7 +102,10 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
             await _runtimeHubHostClient.ConnectAsync("127.0.0.1", port, cancellationToken).ConfigureAwait(false);
         }
 
-        await PushSnapshotImmediateAsync(_mobaRuntime.Current, cancellationToken).ConfigureAwait(false);
+        foreach (var runtime in _host.Runtimes)
+        {
+            await PushSnapshotImmediateAsync(runtime.Runtime.Current, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public async Task DisconnectHostAsync()
@@ -120,7 +121,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
             return;
         }
 
-        _eventBus.Unsubscribe(_subscriptionId);
+        _host.RuntimeSnapshotChanged -= OnRuntimeSnapshotChanged;
         CancellationTokenSource? debounceCts;
         Task debounceTask;
         lock (_debounceLock)
@@ -128,7 +129,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
             debounceCts = _debounceCts;
             _debounceCts = null;
             debounceTask = _debounceTask;
-            _pendingSnapshot = null;
+            _pendingSnapshots.Clear();
         }
 
         debounceCts?.Cancel();
@@ -139,9 +140,9 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
         GC.SuppressFinalize(this);
     }
 
-    private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
+    private void OnRuntimeSnapshotChanged(object? sender, MobaRuntimeSnapshot snapshot)
     {
-        QueuePush(e.Snapshot);
+        QueuePush(snapshot);
     }
 
     private void QueuePush(MobaRuntimeSnapshot snapshot)
@@ -159,7 +160,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
                 return;
             }
 
-            _pendingSnapshot = snapshot;
+            _pendingSnapshots[snapshot.ProjectId] = snapshot;
             _debounceCts?.Cancel();
             _debounceCts?.Dispose();
             _debounceCts = new CancellationTokenSource();
@@ -173,26 +174,34 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
         try
         {
             await Task.Delay(PushDebounceMilliseconds, cancellationToken).ConfigureAwait(false);
-            MobaRuntimeSnapshot? snapshot;
-            lock (_debounceLock)
-            {
-                snapshot = _pendingSnapshot;
-                _pendingSnapshot = null;
-            }
-
-            if (snapshot == null)
-            {
-                return;
-            }
-
-            await PushSnapshotImmediateAsync(snapshot, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            return;
         }
-        catch (Exception ex)
+
+        List<MobaRuntimeSnapshot> snapshots;
+        lock (_debounceLock)
         {
-            _logger.LogDebug(ex, "Runtime snapshot push failed");
+            snapshots = [.. _pendingSnapshots.Values];
+            _pendingSnapshots.Clear();
+        }
+
+        // A failed push of one project must not hold back the snapshots of the other projects.
+        foreach (var snapshot in snapshots)
+        {
+            try
+            {
+                await PushSnapshotImmediateAsync(snapshot, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Runtime snapshot push of project {ProjectId} failed", snapshot.ProjectId);
+            }
         }
     }
 

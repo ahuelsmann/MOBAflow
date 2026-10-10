@@ -93,7 +93,7 @@ public class SolutionController : ControllerBase
         }
 
         await _hubContext.Clients
-            .Group("runtime-remote")
+            .Group(RuntimeHub.RuntimeRemoteGroup)
             .SendAsync(RuntimeHubMethods.SolutionUpdated, entry.UpdatedAt.ToString("O"), cancellationToken)
             .ConfigureAwait(false);
 

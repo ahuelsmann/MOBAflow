@@ -41,13 +41,20 @@ public interface IRuntimeCommandAdmission
 }
 
 /// <inheritdoc />
-public sealed class RuntimeCommandAdmission(IRuntimeCommandQueue commandQueue) : IRuntimeCommandAdmission
+public sealed class RuntimeCommandAdmission(IRuntimeCommandQueue commandQueue, ISolutionCache solutionCache)
+    : IRuntimeCommandAdmission
 {
     public RuntimeCommandAdmissionResult Validate(RuntimeCommandEnvelope command)
     {
-        return RuntimeCommandValidator.TryValidate(command, out var error)
+        if (!RuntimeCommandValidator.TryValidate(command, out var error))
+        {
+            return new RuntimeCommandAdmissionResult(RuntimeCommandAdmissionStatus.Invalid, error);
+        }
+
+        // A command for a project the synchronized solution does not contain has no runtime to run in.
+        return solutionCache.ContainsProject(command.ProjectId)
             ? RuntimeCommandAdmissionResult.Accepted
-            : new RuntimeCommandAdmissionResult(RuntimeCommandAdmissionStatus.Invalid, error);
+            : new RuntimeCommandAdmissionResult(RuntimeCommandAdmissionStatus.Invalid, "Unknown project.");
     }
 
     public RuntimeCommandAdmissionResult Enqueue(RuntimeCommandEnvelope command)

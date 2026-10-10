@@ -957,6 +957,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
             try
             {
+                await SelectRemoteProjectAsync().ConfigureAwait(false);
                 await _runtimeHubRemoteClient
                     .ConnectAsync(
                         serverIp,

@@ -52,7 +52,9 @@ public static class RuntimeStatusBuilder
 
     private static SnapshotCacheStatus BuildSnapshotCacheInfo(IRuntimeSnapshotCache snapshotCache)
     {
-        if (!snapshotCache.TryGet(out var entry))
+        // Every project has its own runtime; the status shows the most recently updated one.
+        var entry = snapshotCache.GetAll().MaxBy(cached => cached.UpdatedAt);
+        if (entry is null)
         {
             return new SnapshotCacheStatus(false, null, false, 0, 0);
         }

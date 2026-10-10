@@ -20,8 +20,8 @@ internal sealed class RuntimeRemoteRegistryTests
     {
         var registry = new RuntimeRemoteRegistry();
 
-        registry.Register("conn-1", "mobasmart-1");
-        registry.Register("conn-2", "mobasmart-2");
+        registry.Register("conn-1", "mobasmart-1", Guid.NewGuid());
+        registry.Register("conn-2", "mobasmart-2", Guid.NewGuid());
 
         Assert.That(registry.Count, Is.EqualTo(2));
 
@@ -46,6 +46,7 @@ internal sealed class StatusControllerTests
         snapshotCache.Set(
             RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
             {
+                ProjectId = Guid.NewGuid(),
                 IsConnected = true,
                 SignalBoxElements =
                 [
@@ -65,8 +66,7 @@ internal sealed class StatusControllerTests
                         DigitalAddress = 3
                     }
                 ]
-            }),
-            isConnected: true);
+            }));
 
         var solutionCache = new SolutionCache();
         solutionCache.Set("{\"name\":\"Test\",\"schemaVersion\":4,\"projects\":[]}", "test.json", "myMOBA");
@@ -75,7 +75,7 @@ internal sealed class StatusControllerTests
         hostRegistry.SetHost("host-conn");
 
         var remoteRegistry = new RuntimeRemoteRegistry();
-        remoteRegistry.Register("remote-conn", "mobasmart");
+        remoteRegistry.Register("remote-conn", "mobasmart", Guid.NewGuid());
 
         var broadcastMetrics = new RuntimeBroadcastMetrics();
         broadcastMetrics.RecordSnapshotBroadcast(842);

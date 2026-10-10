@@ -27,6 +27,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
     private string _serverIp = string.Empty;
     private int _serverPort;
     private string _clientId = string.Empty;
+    private Guid _projectId;
 
     public RuntimeHubRemoteClient(
         IHttpClientFactory httpClientFactory,
@@ -124,6 +125,18 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         }
     }
 
+    public async Task SelectProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        if (projectId == _projectId)
+        {
+            return;
+        }
+
+        _projectId = projectId;
+        await RegisterRemoteAsync(cancellationToken).ConfigureAwait(false);
+        await TryFetchInitialSnapshotAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public Task RequestLatestSnapshotAsync(CancellationToken cancellationToken = default) =>
         TryFetchInitialSnapshotAsync(cancellationToken);
 
@@ -134,7 +147,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             try
             {
                 await _hubConnection
-                    .InvokeAsync(RuntimeHubMethods.SetSignalAspect, signalId.ToString(), aspect.ToString(), cancellationToken)
+                    .InvokeAsync(RuntimeHubMethods.SetSignalAspect, RequireProject().ToString(), signalId.ToString(), aspect.ToString(), cancellationToken)
                     .ConfigureAwait(false);
                 return;
             }
@@ -146,7 +159,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
         await PostRestFallbackAsync(
             "signal-aspect",
-            new { signalId, aspect },
+            new { projectId = RequireProject(), signalId, aspect },
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -157,7 +170,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             try
             {
                 await _hubConnection
-                    .InvokeAsync(RuntimeHubMethods.SetLocomotiveDrive, address, speed, forward, cancellationToken)
+                    .InvokeAsync(RuntimeHubMethods.SetLocomotiveDrive, RequireProject().ToString(), address, speed, forward, cancellationToken)
                     .ConfigureAwait(false);
                 return;
             }
@@ -169,7 +182,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
         await PostRestFallbackAsync(
             "locomotive/drive",
-            new { address, speed, forward },
+            new { projectId = RequireProject(), address, speed, forward },
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -180,7 +193,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             try
             {
                 await _hubConnection
-                    .InvokeAsync(RuntimeHubMethods.SetLocomotiveFunction, address, functionIndex, isOn, cancellationToken)
+                    .InvokeAsync(RuntimeHubMethods.SetLocomotiveFunction, RequireProject().ToString(), address, functionIndex, isOn, cancellationToken)
                     .ConfigureAwait(false);
                 return;
             }
@@ -192,7 +205,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
         await PostRestFallbackAsync(
             "locomotive/function",
-            new { address, functionIndex, isOn },
+            new { projectId = RequireProject(), address, functionIndex, isOn },
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -222,7 +235,8 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
     private async Task OnSnapshotUpdatedAsync(string snapshotJson)
     {
         var snapshot = RuntimeJsonSerializer.Deserialize(snapshotJson);
-        if (snapshot == null)
+        // A snapshot of the project shown before a project switch can still arrive; it is not this project.
+        if (snapshot == null || snapshot.ProjectId != _projectId)
         {
             return;
         }
@@ -257,13 +271,13 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
     private async Task RegisterRemoteAsync(CancellationToken cancellationToken)
     {
-        if (_hubConnection == null || !IsConnected || string.IsNullOrWhiteSpace(_clientId))
+        if (_hubConnection == null || !IsConnected || string.IsNullOrWhiteSpace(_clientId) || _projectId == Guid.Empty)
         {
             return;
         }
 
         await _hubConnection
-            .InvokeAsync(RuntimeHubMethods.RegisterRemote, _clientId, cancellationToken)
+            .InvokeAsync(RuntimeHubMethods.RegisterRemote, _clientId, _projectId.ToString(), cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -297,7 +311,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
     private async Task TryFetchInitialSnapshotAsync(CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_serverIp) || _serverPort <= 0)
+        if (string.IsNullOrWhiteSpace(_serverIp) || _serverPort <= 0 || _projectId == Guid.Empty)
         {
             return;
         }
@@ -305,7 +319,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         try
         {
             using var response = await _httpClient
-                .GetAsync(BuildApiUri("api/runtime/snapshot"), cancellationToken)
+                .GetAsync(BuildApiUri($"api/runtime/snapshot?projectId={_projectId}"), cancellationToken)
                 .ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
@@ -329,6 +343,10 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             _logger?.LogDebug(ex, "Runtime REST snapshot fetch failed");
         }
     }
+
+    private Guid RequireProject() => _projectId != Guid.Empty
+        ? _projectId
+        : throw new InvalidOperationException("No project is selected for remote control.");
 
     private Uri BuildApiUri(string relativePath) => new MobApiEndpoint(_serverIp, _serverPort).Resolve(relativePath);
 }

@@ -15,6 +15,11 @@ public interface ISolutionCache
     /// Stores validated solution JSON in the cache.
     /// </summary>
     void Set(string json, string? sourcePath = null, string? activeProjectName = null);
+
+    /// <summary>
+    /// Gets a value indicating whether the cached solution contains a project with this id.
+    /// </summary>
+    bool ContainsProject(Guid projectId);
 }
 
 /// <summary>

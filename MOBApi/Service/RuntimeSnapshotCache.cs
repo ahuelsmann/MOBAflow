@@ -4,55 +4,76 @@ namespace Moba.MOBApi.Service;
 
 using Common.Runtime;
 
-public sealed record RuntimeSnapshotCacheEntry(string Json, DateTimeOffset UpdatedAt, bool IsConnected);
+public sealed record RuntimeSnapshotCacheEntry(Guid ProjectId, string Json, DateTimeOffset UpdatedAt, bool IsConnected);
 
 /// <summary>
-/// Thread-safe cache for the latest MOBAflow runtime snapshot.
+/// Thread-safe cache for the latest MOBAflow runtime snapshot of each project. Every project has its own runtime.
 /// </summary>
 public interface IRuntimeSnapshotCache
 {
-    bool TryGet(out RuntimeSnapshotCacheEntry entry);
+    /// <summary>
+    /// Gets the latest snapshot of a project's runtime.
+    /// </summary>
+    bool TryGet(Guid projectId, out RuntimeSnapshotCacheEntry entry);
 
-    void Set(string json, bool isConnected);
+    /// <summary>
+    /// Gets the latest snapshot of every project's runtime.
+    /// </summary>
+    IReadOnlyList<RuntimeSnapshotCacheEntry> GetAll();
+
+    /// <summary>
+    /// Stores a snapshot for the project it names.
+    /// </summary>
+    /// <returns>The cached entry.</returns>
+    RuntimeSnapshotCacheEntry Set(string json);
 }
 
 public sealed class RuntimeSnapshotCache : IRuntimeSnapshotCache
 {
-    private readonly object _lock = new();
-    private RuntimeSnapshotCacheEntry? _entry;
+    private readonly Lock _lock = new();
+    private readonly Dictionary<Guid, RuntimeSnapshotCacheEntry> _entries = [];
 
-    public bool TryGet(out RuntimeSnapshotCacheEntry entry)
+    /// <inheritdoc />
+    public bool TryGet(Guid projectId, out RuntimeSnapshotCacheEntry entry)
     {
         lock (_lock)
         {
-            if (_entry == null)
-            {
-                entry = null!;
-                return false;
-            }
-
-            entry = _entry;
-            return true;
+            return _entries.TryGetValue(projectId, out entry!);
         }
     }
 
-    public void Set(string json, bool isConnected)
+    /// <inheritdoc />
+    public IReadOnlyList<RuntimeSnapshotCacheEntry> GetAll()
+    {
+        lock (_lock)
+        {
+            return [.. _entries.Values];
+        }
+    }
+
+    /// <inheritdoc />
+    public RuntimeSnapshotCacheEntry Set(string json)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(json);
-
         var snapshot = RuntimeJsonSerializer.Deserialize(json)
             ?? throw new ArgumentException("Invalid runtime snapshot JSON.", nameof(json));
+        if (snapshot.ProjectId == Guid.Empty)
+        {
+            throw new ArgumentException("The runtime snapshot names no project.", nameof(json));
+        }
 
         lock (_lock)
         {
-            if (_entry != null)
+            if (_entries.TryGetValue(snapshot.ProjectId, out var previousEntry))
             {
-                var previous = RuntimeJsonSerializer.Deserialize(_entry.Json);
+                var previous = RuntimeJsonSerializer.Deserialize(previousEntry.Json);
                 snapshot = RuntimeSnapshotPreservation.PreserveProjectElementsFrom(snapshot, previous);
                 json = RuntimeJsonSerializer.Serialize(snapshot);
             }
 
-            _entry = new RuntimeSnapshotCacheEntry(json, DateTimeOffset.UtcNow, isConnected);
+            var entry = new RuntimeSnapshotCacheEntry(snapshot.ProjectId, json, DateTimeOffset.UtcNow, snapshot.IsConnected);
+            _entries[snapshot.ProjectId] = entry;
+            return entry;
         }
     }
 }

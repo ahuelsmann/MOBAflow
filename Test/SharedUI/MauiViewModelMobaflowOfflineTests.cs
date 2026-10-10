@@ -833,6 +833,46 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     }
 
     [Test]
+    public async Task RemoteControl_FollowsTheSelectedProject()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var settings = new AppSettings
+        {
+            RestApi =
+            {
+                CurrentIpAddress = "192.168.0.42",
+                Port = 5001,
+                IsConnectionEnabled = true
+            }
+        };
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        hubMock.SetupGet(hub => hub.IsConnected).Returns(true);
+        var photoUploadMock = new Mock<IPhotoUploadService>();
+        photoUploadMock
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
+            .ReturnsAsync(true);
+        var station = new Project { Name = "Station" };
+        var yard = new Project { Name = "Yard" };
+        var projectContext = new MobileSolutionContext();
+        projectContext.ApplySolution(new Solution { Name = "Layout", Projects = [station, yard] });
+
+        var viewModel = CreateViewModel(
+            eventBus,
+            runtimeHubRemoteClient: hubMock.Object,
+            projectContext: projectContext,
+            settings: settings,
+            photoUploadService: photoUploadMock.Object);
+
+        await viewModel.InitializeAsync();
+        await Task.Delay(300);
+        hubMock.Verify(hub => hub.SelectProjectAsync(station.Id, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+
+        projectContext.SelectedProject = projectContext.SolutionViewModel!.Projects.Single(project => project.Model.Id == yard.Id);
+
+        hubMock.Verify(hub => hub.SelectProjectAsync(yard.Id, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
     public async Task MobaflowConnectionEnabled_WhenUnreachable_KeepsToggleAndRetriesDiscovery()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);

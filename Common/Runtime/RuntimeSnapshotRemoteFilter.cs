@@ -17,6 +17,7 @@ public static class RuntimeSnapshotRemoteFilter
 
         return new MobaRuntimeSnapshot
         {
+            ProjectId = snapshot.ProjectId,
             IsConnected = snapshot.IsConnected,
             IsTrackPowerOn = snapshot.IsTrackPowerOn,
             StatusText = snapshot.StatusText,

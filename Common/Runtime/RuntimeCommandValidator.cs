@@ -32,7 +32,7 @@ public static class RuntimeCommandValidator
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        error = command.Type switch
+        error = ValidateProject(command.ProjectId) ?? command.Type switch
         {
             RuntimeCommandType.SetLocomotiveDrive => ValidateAddress(command.LocomotiveAddress)
                 ?? ValidateRange(command.Speed, 0, MaxSpeed, "Speed")
@@ -58,6 +58,9 @@ public static class RuntimeCommandValidator
         _ when value < minimum || value > maximum => $"{name} must be between {minimum} and {maximum}.",
         _ => null
     };
+
+    private static string? ValidateProject(Guid projectId) =>
+        projectId == Guid.Empty ? "ProjectId is required." : null;
 
     private static string? ValidateIdentifier(Guid? identifier, string name) =>
         identifier is null || identifier == Guid.Empty ? $"{name} is required." : null;
