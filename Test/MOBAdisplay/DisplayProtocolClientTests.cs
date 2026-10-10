@@ -449,7 +449,7 @@ internal sealed class DisplayProtocolClientTests
 
         // Act and assert
         await Assert.ThrowsAsync<ArgumentException>(async () =>
-            await client.SendRequestAsync(CreateHello(), sessionId: endpoint.SessionId));
+            await client.SendRequestAsync(CreateHello(), sessionId: endpoint.SessionId)).ConfigureAwait(false);
     }
 
     private static HelloRequestPayload CreateHello() =>

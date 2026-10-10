@@ -225,7 +225,7 @@ internal class Z21UnitTests
         using var z21 = new Z21(fakeUdp, eventBus);
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => z21.SetLocoFunctionAsync(address: 3, functionIndex: 32, on: true));
+            () => z21.SetLocoFunctionAsync(address: 3, functionIndex: 32, on: true)).ConfigureAwait(false);
     }
 
     [Test]
@@ -258,7 +258,7 @@ internal class Z21UnitTests
         using var z21 = new Z21(fakeUdp, eventBus);
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => z21.SetAllLocoFunctionsOffAsync(address: 0));
+            () => z21.SetAllLocoFunctionsOffAsync(address: 0)).ConfigureAwait(false);
     }
 
     private static byte[] CreateRBusPacket(byte firstStateByte) =>

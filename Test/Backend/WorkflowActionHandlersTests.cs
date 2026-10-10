@@ -125,7 +125,7 @@ internal sealed class WorkflowActionHandlersTests
             SoundPlayer = new NullSoundPlayer()
         };
 
-        await Assert.ThrowsAsync<FileNotFoundException>(() => handler.ExecuteAsync(action, context));
+        await Assert.ThrowsAsync<FileNotFoundException>(() => handler.ExecuteAsync(action, context)).ConfigureAwait(false);
     }
 
     [Test]
@@ -211,7 +211,7 @@ internal sealed class WorkflowActionHandlersTests
         };
 
         await Assert.ThrowsAsync<FileNotFoundException>(() =>
-            handler.ExecuteAsync(action, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }));
+            handler.ExecuteAsync(action, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() })).ConfigureAwait(false);
     }
 
     [Test]
@@ -280,7 +280,7 @@ internal sealed class WorkflowActionHandlersTests
     public async Task MutatingHandlers_PreCancelledToken_DoesNotStartEffect()
     {
         using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
+        await cancellation.CancelAsync().ConfigureAwait(false);
         var state = new JourneySessionState { CurrentPos = 0 };
         var first = new Station { Name = "First" };
         var second = new Station { Name = "Second" };
@@ -299,7 +299,7 @@ internal sealed class WorkflowActionHandlersTests
         };
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, context, cancellation.Token));
+            new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, context, cancellation.Token)).ConfigureAwait(false);
         Assert.That(state.CurrentStationId, Is.EqualTo(first.Id));
     }
 
@@ -308,7 +308,7 @@ internal sealed class WorkflowActionHandlersTests
     {
         const string path = "existing.ps1";
         using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
+        await cancellation.CancelAsync().ConfigureAwait(false);
         var action = new WorkflowAction
         {
             Type = ActionType.ExecuteScript,
@@ -319,7 +319,7 @@ internal sealed class WorkflowActionHandlersTests
             new ExecuteScriptWorkflowActionHandler(fileSystem: new FakeFileSystem(path)).ExecuteAsync(
                 action,
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
-                cancellation.Token));
+                cancellation.Token)).ConfigureAwait(false);
     }
 
     private sealed class FakeFileSystem : IFileSystem

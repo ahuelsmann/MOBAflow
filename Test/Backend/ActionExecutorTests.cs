@@ -87,7 +87,7 @@ internal class ActionExecutorTests
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context)).ConfigureAwait(false);
     }
 
     [Test]
@@ -104,7 +104,7 @@ internal class ActionExecutorTests
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context)).ConfigureAwait(false);
     }
 
     [Test]
@@ -120,7 +120,7 @@ internal class ActionExecutorTests
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
+        await Assert.ThrowsAsync<NotSupportedException>(async () => await _actionExecutor.ExecuteAsync(action, _context)).ConfigureAwait(false);
     }
 
     [Test]
@@ -135,7 +135,7 @@ internal class ActionExecutorTests
             PowerShell = new PowerShellActionPayload()
         };
 
-        await Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context)).ConfigureAwait(false);
     }
 
     [Test]
@@ -153,7 +153,7 @@ internal class ActionExecutorTests
             }
         };
 
-        await Assert.DoesNotThrowAsync(() => _actionExecutor.ExecuteAsync(action, _context));
+        await Assert.DoesNotThrowAsync(() => _actionExecutor.ExecuteAsync(action, _context)).ConfigureAwait(false);
     }
     public async Task ExecuteAsync_WithSelectSignalAspectAction_ShouldSendTurnoutCommand()
     {

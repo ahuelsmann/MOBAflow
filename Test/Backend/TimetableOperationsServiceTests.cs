@@ -62,7 +62,7 @@ internal sealed class TimetableOperationsServiceTests
 
         // Assert
         Assert.That(second.Status, Is.EqualTo(TimetableServiceStatus.Completed));
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CancelAsync(projectId, serviceId));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CancelAsync(projectId, serviceId)).ConfigureAwait(false);
     }
 
     [Test]
@@ -74,7 +74,7 @@ internal sealed class TimetableOperationsServiceTests
 
         // Act + Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
-            await service.HoldAsync(Guid.NewGuid(), Guid.NewGuid(), now, "Wait for connection"));
+            await service.HoldAsync(Guid.NewGuid(), Guid.NewGuid(), now, "Wait for connection")).ConfigureAwait(false);
     }
 
     [Test]
@@ -115,7 +115,7 @@ internal sealed class TimetableOperationsServiceTests
 
         // Act + Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await service.RecordDepartureAsync(projectId, serviceId, callId));
+            await service.RecordDepartureAsync(projectId, serviceId, callId)).ConfigureAwait(false);
 
         await service.RecordArrivalAsync(projectId, serviceId, callId);
         var state = await service.RecordDepartureAsync(projectId, serviceId, callId, now.AddMinutes(1));
@@ -220,7 +220,7 @@ internal sealed class TimetableOperationsServiceTests
         // Act + Assert
         await Assert.DoesNotThrowAsync(async () => await Task.WhenAll(
             service.GetStatesAsync(projectId),
-            service.CancelAsync(projectId, Guid.NewGuid())));
+            service.CancelAsync(projectId, Guid.NewGuid()))).ConfigureAwait(false);
     }
 
     private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider

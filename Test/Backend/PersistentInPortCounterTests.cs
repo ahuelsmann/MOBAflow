@@ -214,7 +214,7 @@ internal sealed class PersistentInPortCounterTests
         using var counters = new InPortCounterService(Mock.Of<IZ21>(), Settings(1), store: store);
         await counters.InitializeAsync();
         counters.Set(1, 12);
-        await Assert.ThrowsAsync<IOException>(async () => await counters.FlushAsync());
+        await Assert.ThrowsAsync<IOException>(async () => await counters.FlushAsync()).ConfigureAwait(false);
         Assert.That(counters.PersistenceError, Does.Contain("Could not save"));
         store.FailWrites = false;
         counters.Set(1, 13);
@@ -282,7 +282,7 @@ internal sealed class PersistentInPortCounterTests
         try
         {
             using var counters = new InPortCounterService(Mock.Of<IZ21>(), Settings(1), store: new FileInPortCounterStore(path));
-            await Assert.CatchAsync<Exception>(async () => await counters.InitializeAsync());
+            await Assert.CatchAsync<Exception>(async () => await counters.InitializeAsync()).ConfigureAwait(false);
             Assert.Throws<InvalidOperationException>(() => counters.Set(1, 0));
             var content = await File.ReadAllTextAsync(path);
             using (Assert.EnterMultipleScope())

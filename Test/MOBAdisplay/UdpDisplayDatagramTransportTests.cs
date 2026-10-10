@@ -117,7 +117,7 @@ internal sealed partial class UdpDisplayDatagramTransportTests
 
         // Act
         var exception = await Assert.CatchAsync<ArgumentException>(
-            async () => await sender.SendFrameAsync(ExpectedDatagram, options).ConfigureAwait(false));
+            async () => await sender.SendFrameAsync(ExpectedDatagram, options).ConfigureAwait(false)).ConfigureAwait(false);
 
         // Assert
         using (Assert.EnterMultipleScope())
@@ -139,7 +139,7 @@ internal sealed partial class UdpDisplayDatagramTransportTests
         // Act
         sender.Dispose();
         var exception = await Assert.ThrowsAsync<ObjectDisposedException>(
-            async () => await sender.SendFrameAsync(ExpectedDatagram, options).ConfigureAwait(false));
+            async () => await sender.SendFrameAsync(ExpectedDatagram, options).ConfigureAwait(false)).ConfigureAwait(false);
 
         // Assert
         using (Assert.EnterMultipleScope())

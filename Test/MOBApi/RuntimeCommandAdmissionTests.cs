@@ -119,7 +119,7 @@ internal sealed class RuntimeCommandAdmissionTests
     {
         var fixture = new HubFixture(hostConnectionId);
 
-        await Assert.ThrowsAsync<HubException>(() => fixture.InvokeInvalidAsync(command));
+        await Assert.ThrowsAsync<HubException>(() => fixture.InvokeInvalidAsync(command)).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
@@ -138,7 +138,7 @@ internal sealed class RuntimeCommandAdmissionTests
         var fixture = new HubFixture(hostConnectionId: null, queueCapacity: 1);
         await fixture.InvokeValidAsync(command).ConfigureAwait(false);
 
-        var exception = await Assert.ThrowsAsync<HubException>(() => fixture.InvokeValidAsync(command, variant: 1));
+        var exception = await Assert.ThrowsAsync<HubException>(() => fixture.InvokeValidAsync(command, variant: 1)).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
