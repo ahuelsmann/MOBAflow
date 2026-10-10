@@ -59,6 +59,9 @@ public partial class MainWindowViewModel
         _ = UpdateSetting(currentValue, applyValue, newValue, settingPropertyName, availabilityPropertyName);
     }
 
+    // Seconds settings come from sliders; smaller differences are not a change.
+    private const double SecondsSettingTolerance = 0.0001;
+
     #region Settings Properties
     /// <summary>
     /// Application settings - exposed for direct binding.
@@ -262,7 +265,7 @@ public partial class MainWindowViewModel
         set
         {
             var clampedValue = Math.Clamp(value, 0, 2);
-            if (_settings.Speech.PiperSentenceSilenceSeconds != clampedValue)
+            if (Math.Abs(_settings.Speech.PiperSentenceSilenceSeconds - clampedValue) > SecondsSettingTolerance)
             {
                 _settings.Speech.PiperSentenceSilenceSeconds = clampedValue;
                 OnPropertyChanged();
