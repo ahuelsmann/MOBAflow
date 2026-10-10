@@ -140,11 +140,11 @@ internal sealed class RuntimeCommandValidatorTests
             _ => throw new ArgumentOutOfRangeException(nameof(field))
         };
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.False);
             Assert.That(error, Is.EqualTo(expectedError));
-        });
+        }
     }
 
     [TestCase(0)]
@@ -158,22 +158,22 @@ internal sealed class RuntimeCommandValidatorTests
             FunctionIndex = 0,
             FunctionIsOn = false
         };
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.False);
             Assert.That(error, Is.EqualTo("Address must be between 1 and 9999."));
-        });
+        }
     }
 
     [Test]
     public void Drive_ReverseDirectionAndZeroSpeed_AreValid()
     {
         var command = Drive(3, 0) with { Forward = false };
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.True);
             Assert.That(error, Is.Null);
-        });
+        }
     }
 
     [Test]
@@ -186,11 +186,11 @@ internal sealed class RuntimeCommandValidatorTests
             FunctionIndex = 0,
             FunctionIsOn = false
         };
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.True);
             Assert.That(error, Is.Null);
-        });
+        }
     }
 
     [Test]

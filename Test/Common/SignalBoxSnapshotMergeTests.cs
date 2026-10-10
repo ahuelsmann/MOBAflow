@@ -131,12 +131,12 @@ internal sealed class SignalBoxSnapshotMergeTests
 
         var merged = SignalBoxSnapshotMerge.MergeIncomingOverPrevious(incoming, previous);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(merged, Has.Count.EqualTo(2));
             Assert.That(merged.Single(element => element.ElementId == sharedId).SignalAspect, Is.EqualTo(SignalAspect.Ks2));
             Assert.That(merged.Single(element => element.ElementId == previousOnlyId).SignalAspect, Is.EqualTo(SignalAspect.Ks1));
-        });
+        }
     }
 
     [TestCase(true)]
@@ -205,14 +205,14 @@ internal sealed class SignalBoxSnapshotMergeTests
 
         var merged = Merge(useCache, incoming, history);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(merged, Is.EqualTo(incoming));
             Assert.That(incoming[0].SignalAspect, Is.EqualTo(SignalAspect.Hp0));
             Assert.That(incoming[1].SwitchPosition, Is.EqualTo(SwitchPosition.Straight));
             Assert.That(history[0].SwitchPosition, Is.EqualTo(SwitchPosition.DivergingRight));
             Assert.That(history[1].SignalAspect, Is.EqualTo(SignalAspect.Ks1));
-        });
+        }
     }
 
     [TestCase(true)]
@@ -239,14 +239,14 @@ internal sealed class SignalBoxSnapshotMergeTests
 
         var merged = Merge(useCache, incoming, history);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(merged, Is.EqualTo(expected));
             Assert.That(incoming[0].SwitchPosition, Is.Null);
             Assert.That(incoming[1].SignalAspect, Is.Null);
             Assert.That(history[0].Name, Is.EqualTo("Old signal"));
             Assert.That(history[1].Address, Is.Null);
-        });
+        }
     }
 
     [TestCase(true)]

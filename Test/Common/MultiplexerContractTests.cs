@@ -7,7 +7,15 @@ using Moba.Common.Multiplex;
 [TestFixture]
 internal sealed class MultiplexerContractTests
 {
-    private readonly IMultiplexerProvider _provider = new DefaultMultiplexerProvider();
+    private readonly DefaultMultiplexerProvider _provider = new();
+    private static readonly string[] SupportedDecoders = ["5229", "52292"];
+    private static readonly string[] MainSignalArticles = ["4046", "4042", "4043", "4045"];
+    private static readonly string[] MainSignalNames =
+    [
+        "4046 - Ks-Ausfahrsignal (Mehrbereich)", "4042 - Ks-Einfahrsignal",
+        "4043 - Ks-Ausfahrsignal", "4045 - Ks-Einfahrsignal (Mehrbereich)"
+    ];
+    private static readonly (string Article, string Name)[] DistantSignals = [("4040", "4040 - Ks-Vorsignal")];
 
     // Fixed expectations for the current software contract, not read from the production registry.
     private static IEnumerable<TestCaseData> SignalCommands()
@@ -50,17 +58,23 @@ internal sealed class MultiplexerContractTests
     {
         var found = _provider.TryGetTurnoutCommand(model, article, aspect, out var command);
 
-        Assert.That(found, Is.True);
-        Assert.That(command, Is.EqualTo(new MultiplexerTurnoutCommand(offset, output, activate)));
-        Assert.That(_provider.SupportsAspect(model, article, aspect), Is.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(found, Is.True);
+            Assert.That(command, Is.EqualTo(new MultiplexerTurnoutCommand(offset, output, activate)));
+            Assert.That(_provider.SupportsAspect(model, article, aspect), Is.True);
+        }
     }
 
     [Test]
     public void Provider_ListsRegisteredModels()
     {
-        Assert.That(_provider.GetSupportedArticles(), Is.EquivalentTo(new[] { "5229", "52292" }));
-        Assert.That(_provider.GetAllDefinitions().Select(definition => definition.ArticleNumber),
-            Is.EquivalentTo(new[] { "5229", "52292" }));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_provider.GetSupportedArticles(), Is.EquivalentTo(SupportedDecoders));
+            Assert.That(_provider.GetAllDefinitions().Select(definition => definition.ArticleNumber),
+                Is.EquivalentTo(SupportedDecoders));
+        }
     }
 
     [TestCase("5229", "5229 - Multiplexer for light signals", "4040")]
@@ -69,9 +83,12 @@ internal sealed class MultiplexerContractTests
     {
         var definition = _provider.GetDefinition(model);
 
-        Assert.That(definition.DisplayName, Is.EqualTo(name));
-        Assert.That(definition.MainSignalArticleNumber, Is.EqualTo("4046"));
-        Assert.That(definition.DistantSignalArticleNumber, Is.EqualTo(distantArticle));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(definition.DisplayName, Is.EqualTo(name));
+            Assert.That(definition.MainSignalArticleNumber, Is.EqualTo("4046"));
+            Assert.That(definition.DistantSignalArticleNumber, Is.EqualTo(distantArticle));
+        }
     }
 
     [Test]
@@ -95,11 +112,14 @@ internal sealed class MultiplexerContractTests
         [Values("5229", "52292")] string model,
         [Values(null, "", " \t")] string? article)
     {
-        Assert.That(_provider.TryGetTurnoutCommand(model, article, SignalAspect.Ks1, out var command), Is.True);
-        Assert.That(command, Is.EqualTo(new MultiplexerTurnoutCommand(0, 1, true)));
-        Assert.That(_provider.GetSupportedAspects(model, article), Does.Contain(SignalAspect.Dunkel));
-        Assert.That(_provider.TryGetMaxAddressOffset(model, article, out var offset), Is.True);
-        Assert.That(offset, Is.EqualTo(3));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_provider.TryGetTurnoutCommand(model, article, SignalAspect.Ks1, out var command), Is.True);
+            Assert.That(command, Is.EqualTo(new MultiplexerTurnoutCommand(0, 1, true)));
+            Assert.That(_provider.GetSupportedAspects(model, article), Does.Contain(SignalAspect.Dunkel));
+            Assert.That(_provider.TryGetMaxAddressOffset(model, article, out var offset), Is.True);
+            Assert.That(offset, Is.EqualTo(3));
+        }
     }
 
     [Test]
@@ -107,10 +127,13 @@ internal sealed class MultiplexerContractTests
         [Values("5229", "52292")] string model,
         [Values("unknown", "4042")] string article)
     {
-        Assert.That(_provider.TryGetTurnoutCommand(model, article, SignalAspect.Dunkel, out var command), Is.False);
-        Assert.That(command, Is.EqualTo(default(MultiplexerTurnoutCommand)));
-        Assert.That(_provider.SupportsAspect(model, article, SignalAspect.Dunkel), Is.False);
-        Assert.That(_provider.GetSupportedAspects(model, article), Does.Not.Contain(SignalAspect.Dunkel));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_provider.TryGetTurnoutCommand(model, article, SignalAspect.Dunkel, out var command), Is.False);
+            Assert.That(command, Is.Default);
+            Assert.That(_provider.SupportsAspect(model, article, SignalAspect.Dunkel), Is.False);
+            Assert.That(_provider.GetSupportedAspects(model, article), Does.Not.Contain(SignalAspect.Dunkel));
+        }
     }
 
     [Test]
@@ -120,8 +143,11 @@ internal sealed class MultiplexerContractTests
     {
         var expected = article switch { "4040" => 1, "4046" => 3, _ => 0 };
 
-        Assert.That(_provider.TryGetMaxAddressOffset(model, article, out var offset), Is.True);
-        Assert.That(offset, Is.EqualTo(expected));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_provider.TryGetMaxAddressOffset(model, article, out var offset), Is.True);
+            Assert.That(offset, Is.EqualTo(expected));
+        }
     }
 
     [TestCase("5229", "unknown")]
@@ -130,8 +156,11 @@ internal sealed class MultiplexerContractTests
     [TestCase(" \t", "4046")]
     public void Provider_MissingMappingHasNoAddressOffset(string model, string article)
     {
-        Assert.That(_provider.TryGetMaxAddressOffset(model, article, out var offset), Is.False);
-        Assert.That(offset, Is.Zero);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_provider.TryGetMaxAddressOffset(model, article, out var offset), Is.False);
+            Assert.That(offset, Is.Zero);
+        }
     }
 
     [TestCase(null)]
@@ -142,9 +171,12 @@ internal sealed class MultiplexerContractTests
     {
         var definition = new MultiplexerDefinition { MainSignalArticleNumber = defaultArticle! };
 
-        Assert.That(definition.TryGetTurnoutCommand(null, SignalAspect.Hp0, out var command), Is.False);
-        Assert.That(command, Is.EqualTo(default(MultiplexerTurnoutCommand)));
-        Assert.That(definition.GetSupportedAspects(null), Is.Empty);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(definition.TryGetTurnoutCommand(null, SignalAspect.Hp0, out var command), Is.False);
+            Assert.That(command, Is.Default);
+            Assert.That(definition.GetSupportedAspects(null), Is.Empty);
+        }
     }
 
     [TestCase(null)]
@@ -154,8 +186,11 @@ internal sealed class MultiplexerContractTests
     {
         var exception = Assert.Throws<ArgumentException>(() => _provider.GetDefinition(article!));
 
-        Assert.That(exception!.ParamName, Is.EqualTo("articleNumber"));
-        Assert.That(_provider.SupportsAspect(article!, "4046", SignalAspect.Hp0), Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(exception!.ParamName, Is.EqualTo("articleNumber"));
+            Assert.That(_provider.SupportsAspect(article!, "4046", SignalAspect.Hp0), Is.False);
+        }
     }
 
     [Test]
@@ -163,20 +198,19 @@ internal sealed class MultiplexerContractTests
     {
         var options = MultiplexerHelper.GetMainSignalOptions(model);
 
-        Assert.That(options.Select(option => option.ArticleNumber),
-            Is.EqualTo(new[] { "4046", "4042", "4043", "4045" }));
-        Assert.That(options.Select(option => option.DisplayName), Is.EqualTo(new[]
+        using (Assert.EnterMultipleScope())
         {
-            "4046 - Ks-Ausfahrsignal (Mehrbereich)", "4042 - Ks-Einfahrsignal",
-            "4043 - Ks-Ausfahrsignal", "4045 - Ks-Einfahrsignal (Mehrbereich)"
-        }));
+            Assert.That(options.Select(option => option.ArticleNumber),
+                    Is.EqualTo(MainSignalArticles));
+            Assert.That(options.Select(option => option.DisplayName), Is.EqualTo(MainSignalNames));
+        }
     }
 
     [Test]
     public void DistantSignalOptions_5229OffersOnlyDistantSignal()
     {
         Assert.That(MultiplexerHelper.GetDistantSignalOptions("5229"),
-            Is.EqualTo(new[] { ("4040", "4040 - Ks-Vorsignal") }));
+            Is.EqualTo(DistantSignals));
     }
 
     [Test]

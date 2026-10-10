@@ -7,7 +7,7 @@ using global::Serilog.Parsing;
 
 [TestFixture]
 [NonParallelizable]
-public class InMemorySinkTests
+internal sealed class InMemorySinkTests
 {
     [SetUp]
     public void SetUp() => InMemorySink.ClearLogs();
@@ -22,7 +22,7 @@ public class InMemorySinkTests
     [TestCase(LogEventLevel.Error, LogSeverity.Error)]
     [TestCase(LogEventLevel.Fatal, LogSeverity.Error)]
     [TestCase((LogEventLevel)99, LogSeverity.Info)]
-    public void Emit_MapsSeverityAndPreservesDisplayedContent(LogEventLevel level, LogSeverity expected)
+    public void EmitMapsSeverityAndPreservesDisplayedContent(LogEventLevel level, LogSeverity expected)
     {
         var timestamp = new DateTimeOffset(2026, 10, 9, 12, 34, 56, TimeSpan.Zero).AddMilliseconds(123);
         var logEvent = new LogEvent(timestamp, level, null,
@@ -33,25 +33,25 @@ public class InMemorySinkTests
         new InMemorySink().Emit(logEvent);
 
         var entry = InMemorySink.GetLogEntries().Single();
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(entry.Severity, Is.EqualTo(expected));
             Assert.That(entry.Timestamp, Is.EqualTo(timestamp.DateTime));
             Assert.That(entry.TimestampFormatted, Is.EqualTo("12:34:56.123"));
             Assert.That(entry.Source, Is.EqualTo("JourneyManager"));
             Assert.That(entry.Message, Is.EqualTo("Train 42 stopped"));
-        });
+        }
     }
 
     [Test]
-    public void Emit_WithoutSourceContext_UsesUnknownSource()
+    public void EmitWithoutSourceContextUsesUnknownSource()
     {
         new InMemorySink().Emit(CreateEvent("No source"));
         Assert.That(InMemorySink.GetLogEntries().Single().Source, Is.EqualTo("Unknown"));
     }
 
     [Test]
-    public void Emit_NotifiesSubscriberAfterEntryIsAvailable()
+    public void EmitNotifiesSubscriberAfterEntryIsAvailable()
     {
         LogEntry? received = null;
         var wasAvailable = false;
@@ -65,11 +65,11 @@ public class InMemorySinkTests
         try
         {
             new InMemorySink().Emit(CreateEvent("Notification"));
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(received, Is.SameAs(InMemorySink.GetLogEntries().Single()));
                 Assert.That(wasAvailable, Is.True);
-            });
+            }
         }
         finally
         {
@@ -78,7 +78,7 @@ public class InMemorySinkTests
     }
 
     [Test]
-    public void Emit_KeepsExactlyLatestFiveHundredEntriesNewestFirst()
+    public void EmitKeepsExactlyLatestFiveHundredEntriesNewestFirst()
     {
         var sink = new InMemorySink();
         for (var index = 0; index < 502; index++)
@@ -91,7 +91,7 @@ public class InMemorySinkTests
     }
 
     [Test]
-    public void ClearLogs_EmptiesBufferAndAllowsNewEntries()
+    public void ClearLogsEmptiesBufferAndAllowsNewEntries()
     {
         var sink = new InMemorySink();
         sink.Emit(CreateEvent("Old"));
@@ -106,7 +106,7 @@ public class InMemorySinkTests
     [TestCase(LogSeverity.Warning, "⚠️")]
     [TestCase(LogSeverity.Error, "❌")]
     [TestCase((LogSeverity)99, "📝")]
-    public void SeverityIcon_IdentifiesDisplayedSeverity(LogSeverity severity, string expected)
+    public void SeverityIconIdentifiesDisplayedSeverity(LogSeverity severity, string expected)
     {
         Assert.That(new LogEntry { Severity = severity }.SeverityIcon, Is.EqualTo(expected));
     }

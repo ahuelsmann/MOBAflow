@@ -41,8 +41,11 @@ internal sealed class PhotoPathContractTests
     {
         var exception = Assert.Throws<ArgumentException>(() => PhotoPathHelper.NormalizeCategory(category!));
 
-        Assert.That(exception!.ParamName, Is.EqualTo("category"));
-        Assert.That(exception.Message, Does.Contain("category"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(exception!.ParamName, Is.EqualTo("category"));
+            Assert.That(exception.Message, Does.Contain("category"));
+        }
         if (category == "unknown")
         {
             Assert.That(exception.Message, Does.Contain("unknown"));
@@ -100,7 +103,7 @@ internal sealed class PhotoPathContractTests
     }
 
     [Test]
-    public void ToFullPath_RejectsNullArgumentWithParameterName([Values(true, false)] bool nullBase)
+    public void ToFullPath_RejectsNullArgumentWithParameterName([Values] bool nullBase)
     {
         var exception = Assert.Throws<ArgumentNullException>(() => PhotoPathHelper.ToFullPath(
             nullBase ? null! : _root.FullName, nullBase ? "photos/abc.jpg" : null!));
@@ -122,8 +125,11 @@ internal sealed class PhotoPathContractTests
             return;
         }
 
-        Assert.That(PhotoPathHelper.TryGetStorageRelativePath(_root.FullName, fullPath, out var relative), Is.False);
-        Assert.That(relative, Is.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryGetStorageRelativePath(_root.FullName, fullPath, out var relative), Is.False);
+            Assert.That(relative, Is.Null);
+        }
     }
 
     [Test]
@@ -140,8 +146,11 @@ internal sealed class PhotoPathContractTests
     {
         var storageRoot = Path.Combine(_root.FullName, "storage");
 
-        Assert.That(PhotoPathHelper.TryGetStorageRelativePath(storageRoot, _root.FullName, out var relative), Is.False);
-        Assert.That(relative, Is.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryGetStorageRelativePath(storageRoot, _root.FullName, out var relative), Is.False);
+            Assert.That(relative, Is.Null);
+        }
     }
 
     [Test]
@@ -149,9 +158,12 @@ internal sealed class PhotoPathContractTests
     {
         var fullPath = Path.Combine(_root.FullName, "locomotives", "..", "wagons", "abc.jpg");
 
-        Assert.That(PhotoPathHelper.TryGetStorageRelativePath(_root.FullName + Path.DirectorySeparatorChar,
-            fullPath, out var relative), Is.True);
-        Assert.That(relative, Is.EqualTo("photos/wagons/abc.jpg"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryGetStorageRelativePath(_root.FullName + Path.DirectorySeparatorChar,
+                    fullPath, out var relative), Is.True);
+            Assert.That(relative, Is.EqualTo("photos/wagons/abc.jpg"));
+        }
     }
 
     [TestCase("photos/locomotives/abc.jpg", false)]
@@ -165,8 +177,11 @@ internal sealed class PhotoPathContractTests
             : WritePhoto("storage", "locomotives", "abc.jpg");
         var baseDir = Path.Combine(_root.FullName, "storage");
 
-        Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(baseDir, relative, out var resolved), Is.True);
-        Assert.That(resolved, Is.EqualTo(file));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(baseDir, relative, out var resolved), Is.True);
+            Assert.That(resolved, Is.EqualTo(file));
+        }
     }
 
     [Test]
@@ -175,9 +190,12 @@ internal sealed class PhotoPathContractTests
         var direct = WritePhoto("storage", "locomotives", "abc.jpg");
         WritePhoto("storage", "photos", "locomotives", "abc.jpg");
 
-        Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(Path.Combine(_root.FullName, "storage"),
-            "photos/locomotives/abc.jpg", out var resolved), Is.True);
-        Assert.That(resolved, Is.EqualTo(direct));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(Path.Combine(_root.FullName, "storage"),
+                    "photos/locomotives/abc.jpg", out var resolved), Is.True);
+            Assert.That(resolved, Is.EqualTo(direct));
+        }
     }
 
     [TestCase("../outside/abc.jpg")]
@@ -190,8 +208,11 @@ internal sealed class PhotoPathContractTests
         var storageRoot = Path.Combine(_root.FullName, "storage");
         Directory.CreateDirectory(storageRoot);
 
-        Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(storageRoot, relative, out var resolved), Is.False);
-        Assert.That(resolved, Is.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(storageRoot, relative, out var resolved), Is.False);
+            Assert.That(resolved, Is.Null);
+        }
     }
 
     [Test]
@@ -199,9 +220,12 @@ internal sealed class PhotoPathContractTests
     {
         var outside = WritePhoto("outside", "abc.jpg");
 
-        Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(Path.Combine(_root.FullName, "storage"),
-            outside, out var resolved), Is.False);
-        Assert.That(resolved, Is.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(Path.Combine(_root.FullName, "storage"),
+                    outside, out var resolved), Is.False);
+            Assert.That(resolved, Is.Null);
+        }
     }
 
     [TestCase("")]
@@ -209,12 +233,15 @@ internal sealed class PhotoPathContractTests
     [TestCase("photos/locomotives/missing.jpg")]
     public void TryResolvePhotoFullPathUnderBase_MissingFileOrPathReturnsFalse(string relative)
     {
-        Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(_root.FullName, relative, out var resolved), Is.False);
-        Assert.That(resolved, Is.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryResolvePhotoFullPathUnderBase(_root.FullName, relative, out var resolved), Is.False);
+            Assert.That(resolved, Is.Null);
+        }
     }
 
     [Test]
-    public void TryResolvePhotoFullPathUnderBase_RejectsNullArguments([Values(true, false)] bool nullBase)
+    public void TryResolvePhotoFullPathUnderBase_RejectsNullArguments([Values] bool nullBase)
     {
         var exception = Assert.Throws<ArgumentNullException>(() =>
             PhotoPathHelper.TryResolvePhotoFullPathUnderBase(nullBase ? null! : _root.FullName,
@@ -229,20 +256,26 @@ internal sealed class PhotoPathContractTests
     public void TryBuildPhotoUploadFullPath_ReturnsPathWithoutCreatingFiles(
         string category, string extension, string folder, string suffix)
     {
-        Assert.That(PhotoPathHelper.TryBuildPhotoUploadFullPath(_root.FullName, category, EntityId, extension,
-            out var fullPath, out var relative), Is.True);
-        Assert.That(fullPath, Is.EqualTo(Path.Combine(_root.FullName, folder, $"{EntityId}{suffix}")));
-        Assert.That(relative, Is.EqualTo($"photos/{folder}/{EntityId}{suffix}"));
-        Assert.That(Directory.GetFileSystemEntries(_root.FullName), Is.Empty);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryBuildPhotoUploadFullPath(_root.FullName, category, EntityId, extension,
+                    out var fullPath, out var relative), Is.True);
+            Assert.That(fullPath, Is.EqualTo(Path.Combine(_root.FullName, folder, $"{EntityId}{suffix}")));
+            Assert.That(relative, Is.EqualTo($"photos/{folder}/{EntityId}{suffix}"));
+            Assert.That(Directory.GetFileSystemEntries(_root.FullName), Is.Empty);
+        }
     }
 
     [Test]
     public void TryBuildPhotoUploadFullPath_RejectsExtensionEscapingStorageRoot()
     {
-        Assert.That(PhotoPathHelper.TryBuildPhotoUploadFullPath(_root.FullName, "locomotives", EntityId,
-            ".jpg/../../../outside.jpg", out var fullPath, out var relative), Is.False);
-        Assert.That(fullPath, Is.Null);
-        Assert.That(relative, Is.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryBuildPhotoUploadFullPath(_root.FullName, "locomotives", EntityId,
+                    ".jpg/../../../outside.jpg", out var fullPath, out var relative), Is.False);
+            Assert.That(fullPath, Is.Null);
+            Assert.That(relative, Is.Null);
+        }
     }
 
     [Test]
@@ -335,9 +368,12 @@ internal sealed class PhotoPathContractTests
             File.WriteAllText(file, "test photo");
             var relative = $"photos/{Path.GetFileName(ownedFolder)}/abc.jpg";
 
-            Assert.That(PhotoPathHelper.ResolvePhotoBaseDirectory(null), Is.EqualTo(appBase));
-            Assert.That(PhotoPathHelper.TryResolveExistingPhotoFullPath(
-                Path.Combine(_root.FullName, "missing"), relative), Is.EqualTo(file));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(PhotoPathHelper.ResolvePhotoBaseDirectory(null), Is.EqualTo(appBase));
+                Assert.That(PhotoPathHelper.TryResolveExistingPhotoFullPath(
+                    Path.Combine(_root.FullName, "missing"), relative), Is.EqualTo(file));
+            }
         }
         finally
         {

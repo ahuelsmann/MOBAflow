@@ -20,14 +20,14 @@ internal sealed class PersistedDomainDefaultsTests
 
         var definition = JsonSerializer.Deserialize<InterlockingDefinition>(json, JsonOptions.Default)!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(definition.Turnouts.Single().Name, Is.Empty);
             Assert.That(definition.Signals.Single().Name, Is.Empty);
             Assert.That(definition.Blocks.Single().Name, Is.Empty);
             Assert.That(definition.Blocks.Single().FeedbackInputs.Single().ActiveState, Is.True);
             Assert.That(definition.Connections.Single().IsBidirectional, Is.True);
-        });
+        }
     }
 
     [Test]
@@ -36,8 +36,11 @@ internal sealed class PersistedDomainDefaultsTests
         var omitted = JsonSerializer.Deserialize<TurnoutAccessoryCommand>("{}", JsonOptions.Default)!;
         var configured = JsonSerializer.Deserialize<TurnoutAccessoryCommand>("""{"activate":false}""", JsonOptions.Default)!;
 
-        Assert.That(omitted.Activate, Is.True);
-        Assert.That(configured.Activate, Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(omitted.Activate, Is.True);
+            Assert.That(configured.Activate, Is.False);
+        }
     }
 
     [Test]
@@ -45,9 +48,12 @@ internal sealed class PersistedDomainDefaultsTests
     {
         var payload = JsonSerializer.Deserialize<SelectSignalAspectActionPayload>("{}", JsonOptions.Default)!;
 
-        Assert.That(payload.MultiplexerArticleNumber, Is.EqualTo("5229"));
-        Assert.That(payload.SignalArticleNumber, Is.EqualTo("4046"));
-        Assert.That(payload.SignalAspect, Is.EqualTo(SignalAspect.Hp0));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(payload.MultiplexerArticleNumber, Is.EqualTo("5229"));
+            Assert.That(payload.SignalArticleNumber, Is.EqualTo("4046"));
+            Assert.That(payload.SignalAspect, Is.EqualTo(SignalAspect.Hp0));
+        }
     }
 
     [Test]
@@ -56,9 +62,12 @@ internal sealed class PersistedDomainDefaultsTests
         var display = JsonSerializer.Deserialize<TrainDestinationDisplayActionPayload>("{}", JsonOptions.Default)!;
         var transition = JsonSerializer.Deserialize<ChangeJourneyStopActionPayload>("{}", JsonOptions.Default)!;
 
-        Assert.That(display.ClearBeforeRender, Is.True);
-        Assert.That(transition.MoveToNextStop, Is.True);
-        Assert.That(transition.TargetStationId, Is.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(display.ClearBeforeRender, Is.True);
+            Assert.That(transition.MoveToNextStop, Is.True);
+            Assert.That(transition.TargetStationId, Is.Null);
+        }
     }
 
     [Test]
@@ -68,7 +77,7 @@ internal sealed class PersistedDomainDefaultsTests
         var snapshot = JsonSerializer.Deserialize<DecoderCvSnapshot>("{}", JsonOptions.Default)!;
         var rule = JsonSerializer.Deserialize<LocomotiveWhistleRule>("{}", JsonOptions.Default)!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(series.Name, Is.Empty);
             Assert.That(series.Type, Is.Empty);
@@ -77,7 +86,7 @@ internal sealed class PersistedDomainDefaultsTests
             Assert.That(snapshot.Name, Is.Empty);
             Assert.That(rule.Name, Is.Empty);
             Assert.That(rule.Enabled, Is.True);
-        });
+        }
     }
 
     [Test]
@@ -87,13 +96,13 @@ internal sealed class PersistedDomainDefaultsTests
         var voice = JsonSerializer.Deserialize<Voice>("{}", JsonOptions.Default)!;
         var connection = JsonSerializer.Deserialize<ConnectingService>("{}", JsonOptions.Default)!;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(engine.Name, Is.EqualTo("PiperTts"));
             Assert.That(engine.Type, Is.EqualTo("Moba.Sound.PiperSpeechEngine"));
             Assert.That(engine.Settings, Is.Empty);
             Assert.That(voice.Name, Is.EqualTo("ElkeNeural"));
             Assert.That(connection.Name, Is.EqualTo("New Connecting Service"));
-        });
+        }
     }
 }

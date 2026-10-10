@@ -9,6 +9,8 @@ using System.Net;
 [TestFixture]
 internal sealed class DiscoveryCandidateContractTests
 {
+    private static readonly string[] LowestHostNeighbors = new[] { "192.168.10.2", "192.168.10.3", "192.168.10.4" };
+
     [Test]
     public void QuickWindow_NearLowestHostDoesNotWrapToHighestHosts()
     {
@@ -16,8 +18,10 @@ internal sealed class DiscoveryCandidateContractTests
             [IPAddress.Parse("192.168.10.1")], radius: 3);
 
         Assert.That(candidates.Select(address => address.ToString()),
-            Is.EqualTo(new[] { "192.168.10.2", "192.168.10.3", "192.168.10.4" }));
+            Is.EqualTo(LowestHostNeighbors));
     }
+
+    private static readonly string[] HighestHostNeighbors = new[] { "192.168.10.253", "192.168.10.252", "192.168.10.251" };
 
     [Test]
     public void QuickWindow_NearHighestHostDoesNotWrapToLowestHosts()
@@ -26,8 +30,10 @@ internal sealed class DiscoveryCandidateContractTests
             [IPAddress.Parse("192.168.10.254")], radius: 3);
 
         Assert.That(candidates.Select(address => address.ToString()),
-            Is.EqualTo(new[] { "192.168.10.253", "192.168.10.252", "192.168.10.251" }));
+            Is.EqualTo(HighestHostNeighbors));
     }
+
+    private static readonly string[] MinimumRadiusNeighbors = new[] { "10.20.30.129", "10.20.30.127" };
 
     [TestCase(int.MinValue)]
     [TestCase(-1)]
@@ -38,7 +44,7 @@ internal sealed class DiscoveryCandidateContractTests
             [IPAddress.Parse("10.20.30.128")], radius);
 
         Assert.That(candidates.Select(address => address.ToString()),
-            Is.EqualTo(new[] { "10.20.30.129", "10.20.30.127" }));
+            Is.EqualTo(MinimumRadiusNeighbors));
     }
 
     [TestCase(127)]
@@ -50,13 +56,22 @@ internal sealed class DiscoveryCandidateContractTests
             [IPAddress.Parse("10.20.30.128")], radius);
 
         Assert.That(candidates, Has.Count.EqualTo(253));
-        Assert.That(candidates.Distinct().Count(), Is.EqualTo(253));
-        Assert.That(candidates[0], Is.EqualTo(IPAddress.Parse("10.20.30.129")));
-        Assert.That(candidates[^1], Is.EqualTo(IPAddress.Parse("10.20.30.1")));
-        Assert.That(candidates, Does.Not.Contain(IPAddress.Parse("10.20.30.0")));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(candidates.Distinct().Count(), Is.EqualTo(253));
+            Assert.That(candidates[0], Is.EqualTo(IPAddress.Parse("10.20.30.129")));
+            Assert.That(candidates[^1], Is.EqualTo(IPAddress.Parse("10.20.30.1")));
+            Assert.That(candidates, Does.Not.Contain(IPAddress.Parse("10.20.30.0")));
+        }
         Assert.That(candidates, Does.Not.Contain(IPAddress.Parse("10.20.30.255")));
         Assert.That(candidates, Does.Not.Contain(IPAddress.Parse("10.20.30.128")));
     }
+
+    private static readonly string[] DistinctSubnetNeighbors = new[]
+        {
+            "10.168.30.51", "10.168.30.49", "192.168.30.51", "192.168.30.49",
+            "10.169.30.51", "10.169.30.49", "10.168.31.51", "10.168.31.49"
+        };
 
     [Test]
     public void QuickWindow_DeduplicatesHostsWithoutCollapsingDifferentSubnets()
@@ -66,11 +81,7 @@ internal sealed class DiscoveryCandidateContractTests
                 IPAddress.Parse("10.169.30.50"), IPAddress.Parse("10.168.31.50"),
                 IPAddress.Parse("10.168.30.50")], radius: 1);
 
-        Assert.That(candidates.Select(address => address.ToString()), Is.EqualTo(new[]
-        {
-            "10.168.30.51", "10.168.30.49", "192.168.30.51", "192.168.30.49",
-            "10.169.30.51", "10.169.30.49", "10.168.31.51", "10.168.31.49"
-        }));
+        Assert.That(candidates.Select(address => address.ToString()), Is.EqualTo(DistinctSubnetNeighbors));
     }
 
     [TestCase("::1")]
@@ -96,10 +107,13 @@ internal sealed class DiscoveryCandidateContractTests
         var candidates = RestApiDiscoveryCandidateBuilder.BuildSubnetFromAnchor(IPAddress.Parse(anchor));
 
         Assert.That(candidates, Has.Count.EqualTo(253));
-        Assert.That(candidates.Distinct().Count(), Is.EqualTo(253));
-        Assert.That(candidates[0], Is.EqualTo(IPAddress.Parse(first)));
-        Assert.That(candidates[^1], Is.EqualTo(IPAddress.Parse(last)));
-        Assert.That(candidates, Does.Not.Contain(IPAddress.Parse(anchor)));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(candidates.Distinct().Count(), Is.EqualTo(253));
+            Assert.That(candidates[0], Is.EqualTo(IPAddress.Parse(first)));
+            Assert.That(candidates[^1], Is.EqualTo(IPAddress.Parse(last)));
+            Assert.That(candidates, Does.Not.Contain(IPAddress.Parse(anchor)));
+        }
         Assert.That(candidates, Does.Not.Contain(IPAddress.Parse("10.1.2.0")));
         Assert.That(candidates, Does.Not.Contain(IPAddress.Parse("10.1.2.255")));
     }
@@ -137,6 +151,11 @@ internal sealed class DiscoveryCandidateContractTests
         Assert.That(RestApiDiscoveryCandidateBuilder.ShouldProbeSavedIp(saved), Is.True);
     }
 
+    private static readonly string[] OrderedFullProbeHosts = new[]
+        {
+            "10.20.30.90", "10.20.30.51", "10.20.30.40", "10.20.30.60", "10.20.30.200"
+        };
+
     [Test]
     public void FullProbeOrder_RecentThenNearbyThenSavedWithFilteringAndDeduplication()
     {
@@ -152,10 +171,7 @@ internal sealed class DiscoveryCandidateContractTests
                 IPAddress.Parse("10.20.30.51"), IPAddress.Parse("10.20.30.90"),
                 IPAddress.Parse("10.20.30.40"), IPAddress.IPv6Loopback, IPAddress.Parse("203.0.113.5")]);
 
-        Assert.That(candidates.Select(address => address.ToString()), Is.EqualTo(new[]
-        {
-            "10.20.30.90", "10.20.30.51", "10.20.30.40", "10.20.30.60", "10.20.30.200"
-        }));
+        Assert.That(candidates.Select(address => address.ToString()), Is.EqualTo(OrderedFullProbeHosts));
     }
 
     [Test]
@@ -179,6 +195,8 @@ internal sealed class DiscoveryCandidateContractTests
         Assert.That(candidates.Select(address => address.ToString()), Is.EqualTo(new[] { near, otherSubnet }));
     }
 
+    private static readonly string[] ClosestLocalHosts = new[] { "10.20.30.51", "10.20.30.198", "10.20.30.60" };
+
     [Test]
     public void FullProbeOrder_UsesClosestOfMultipleLocalAddresses()
     {
@@ -187,8 +205,10 @@ internal sealed class DiscoveryCandidateContractTests
             [IPAddress.Parse("10.20.30.60"), IPAddress.Parse("10.20.30.198"), IPAddress.Parse("10.20.30.51")]);
 
         Assert.That(candidates.Select(address => address.ToString()),
-            Is.EqualTo(new[] { "10.20.30.51", "10.20.30.198", "10.20.30.60" }));
+            Is.EqualTo(ClosestLocalHosts));
     }
+
+    private static readonly string[] AscendingFallbackHosts = new[] { "10.20.30.40", "10.20.30.60" };
 
     [Test]
     public void FullProbeOrder_NoLocalIpv4UsesAscendingHostNumber()
@@ -197,16 +217,20 @@ internal sealed class DiscoveryCandidateContractTests
             [IPAddress.IPv6Loopback], [IPAddress.Parse("10.20.30.60"), IPAddress.Parse("10.20.30.40")]);
 
         Assert.That(candidates.Select(address => address.ToString()),
-            Is.EqualTo(new[] { "10.20.30.40", "10.20.30.60" }));
+            Is.EqualTo(AscendingFallbackHosts));
     }
+
+    private static readonly string[] FullProbeArgumentNames = new[] { "settings", "localAddresses", "subnetCandidates" };
 
     [Test]
     public void FullProbeOrder_RejectsNullArguments([Values(0, 1, 2)] int argument)
     {
         var exception = Assert.Throws<ArgumentNullException>(() => RestApiDiscoveryCandidateBuilder.BuildFullProbeOrder(
             argument == 0 ? null! : new RestApiSettings(), argument == 1 ? null! : [], argument == 2 ? null! : []));
-        Assert.That(exception!.ParamName, Is.EqualTo(new[] { "settings", "localAddresses", "subnetCandidates" }[argument]));
+        Assert.That(exception!.ParamName, Is.EqualTo(FullProbeArgumentNames[argument]));
     }
+
+    private static readonly string[] RecentAndSavedHosts = new[] { "10.20.30.9", "10.20.30.8" };
 
     [Test]
     public void LocalSubnetProbeOrder_FiltersPublicAndIpv6InputsButPreservesRecentAndSaved()
@@ -217,11 +241,11 @@ internal sealed class DiscoveryCandidateContractTests
             [IPAddress.IPv6Loopback, IPAddress.Parse("203.0.113.50")]);
 
         Assert.That(candidates.Select(address => address.ToString()),
-            Is.EqualTo(new[] { "10.20.30.9", "10.20.30.8" }));
+            Is.EqualTo(RecentAndSavedHosts));
     }
 
     [Test]
-    public void LocalSubnetProbeOrder_RejectsNullArguments([Values(true, false)] bool nullSettings)
+    public void LocalSubnetProbeOrder_RejectsNullArguments([Values] bool nullSettings)
     {
         var exception = Assert.Throws<ArgumentNullException>(() => RestApiDiscoveryCandidateBuilder.BuildLocalSubnetProbeOrder(
             nullSettings ? null! : new RestApiSettings(), nullSettings ? [] : null!));
@@ -237,13 +261,16 @@ internal sealed class DiscoveryCandidateContractTests
             [IPAddress.Parse(first), IPAddress.Parse(second), IPAddress.Parse(first)]);
 
         Assert.That(candidates, Has.Count.EqualTo(506));
-        Assert.That(candidates.Distinct().Count(), Is.EqualTo(506));
-        Assert.That(candidates, Does.Not.Contain(IPAddress.Parse(first)));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(candidates.Distinct().Count(), Is.EqualTo(506));
+            Assert.That(candidates, Does.Not.Contain(IPAddress.Parse(first)));
+        }
         Assert.That(candidates, Does.Not.Contain(IPAddress.Parse(second)));
     }
 
     [Test]
-    public void Subnets_EmptyAndIpv6OnlyInputsProduceNoCandidates([Values(true, false)] bool ipv6Only)
+    public void Subnets_EmptyAndIpv6OnlyInputsProduceNoCandidates([Values] bool ipv6Only)
     {
         Assert.That(SubnetCandidateBuilder.BuildCandidates(ipv6Only ? [IPAddress.IPv6Loopback] : []), Is.Empty);
     }
@@ -268,9 +295,9 @@ internal sealed class DiscoveryCandidateContractTests
     [TestCase("11.168.1.1", false)]
     [TestCase("127.0.0.1", false)]
     [TestCase("::ffff:10.20.30.50", false)]
-    public void PrivateIpv4_ChecksRangeBoundariesAndAddressFamily(string address, bool expected)
+    public void PrivateIpv4_ChecksRangeBoundariesAndAddressFamily(string address, bool RecentAndSavedHosts)
     {
-        Assert.That(SubnetCandidateBuilder.IsPrivateIPv4(IPAddress.Parse(address)), Is.EqualTo(expected));
+        Assert.That(SubnetCandidateBuilder.IsPrivateIPv4(IPAddress.Parse(address)), Is.EqualTo(RecentAndSavedHosts));
     }
 
     [Test]

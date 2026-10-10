@@ -19,17 +19,17 @@ internal sealed class SolutionLoadFailureTests
 
         try
         {
-            await File.WriteAllTextAsync(path, json);
+            await File.WriteAllTextAsync(path, json).ConfigureAwait(false);
 
-            Assert.ThrowsAsync(exceptionType, async () => await solution.LoadAsync(path));
+            Assert.ThrowsAsync(exceptionType, async () => await solution.LoadAsync(path).ConfigureAwait(false));
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(solution.Name, Is.EqualTo("Existing solution"));
                 Assert.That(solution.Projects, Is.SameAs(projects));
                 Assert.That(solution.Projects.Single(), Is.SameAs(project));
                 Assert.That(solution.SchemaVersion, Is.EqualTo(Solution.CurrentSchemaVersion));
-            });
+            }
         }
         finally
         {
