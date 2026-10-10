@@ -14,15 +14,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Documentation-only pull requests skip the build, test and firmware jobs. GitHub reports a job skipped
-  # by its condition as successful, so the required checks stay satisfied. Any detection failure or
-  # non-PR event keeps the full workflow.
+  # Documentation-only pull requests skip the build, test and firmware jobs. Pull requests that touch neither
+  # the ESP32 firmware nor the Domain mutation graph skip those parts; scripts/Get-QualityChangeScope.ps1
+  # owns the path rules. GitHub reports a job skipped by its condition as successful, so the required checks
+  # stay satisfied. Any detection failure, unknown path or non-PR event keeps the full workflow.
   changes:
     name: Detect code changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       code: ${{ steps.scope.outputs.code }}
+      firmware: ${{ steps.scope.outputs.firmware }}
+      mutation: ${{ steps.scope.outputs.mutation }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -34,7 +37,7 @@ jobs:
         shell: pwsh
         run: |
           if ('${{ github.event_name }}' -ne 'pull_request') {
-            Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value 'code=true' -Encoding utf8NoBOM
+            Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value 'code=true', 'firmware=true', 'mutation=true' -Encoding utf8NoBOM
             exit 0
           }
 
@@ -335,20 +338,24 @@ jobs:
             --filter $filter
 
       - name: Install pinned PlatformIO
+        if: ${{ needs.changes.outputs.firmware != 'false' }}
         shell: bash
         run: |
           python3 -m pip install --user --only-binary :all: platformio==6.1.19
 
       - name: Run native firmware parser and protocol tests
+        if: ${{ needs.changes.outputs.firmware != 'false' }}
         shell: bash
         run: python3 -m platformio test -d MOBAdisplay/esp32 -e native
 
       - name: Build ESP32-S3 firmware
+        if: ${{ needs.changes.outputs.firmware != 'false' }}
         shell: bash
         run: python3 -m platformio run -d MOBAdisplay/esp32 -e esp32s3
 
       # The custom partition table is flashed separately; archive the complete bundle with its offsets.
       - name: Record ESP32-S3 flash bundle
+        if: ${{ needs.changes.outputs.firmware != 'false' }}
         shell: bash
         working-directory: MOBAdisplay/esp32/.pio/build/esp32s3
         run: |
@@ -356,6 +363,7 @@ jobs:
           sha256sum bootloader.bin partitions.bin firmware.bin | tee flash-bundle.sha256
 
       - name: Archive ESP32-S3 flash bundle
+        if: ${{ needs.changes.outputs.firmware != 'false' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: MOBAdisplay-esp32s3-${{ github.run_number }}
@@ -495,7 +503,7 @@ jobs:
   mutation-domain:
     name: Domain mutation testing
     needs: changes
-    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
+    if: ${{ !cancelled() && needs.changes.outputs.mutation != 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
