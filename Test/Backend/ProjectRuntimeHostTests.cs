@@ -186,6 +186,42 @@ internal sealed class ProjectRuntimeHostTests
     }
 
     [Test]
+    public async Task AssigningTheZ21OfALaterProject_GivesItToTheEarlierProject()
+    {
+        var station = Project("Station", string.Empty);
+        var yard = Project("Yard", "192.168.0.112");
+        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+
+        station.Z21.IpAddress = "192.168.0.112";
+        await _host.ReplaceAsync(station).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_host.Get(station.Id)!.Connection.ConflictProjectName, Is.Null);
+            Assert.That(_host.Get(yard.Id)!.Connection.ConflictProjectName, Is.EqualTo("Station"));
+            Assert.That(_host.Get(station.Id)!.Connection.Z21, Is.SameAs(_createdZ21s[1].Object), "The open connection is taken over.");
+        }
+    }
+
+    [Test]
+    public async Task RemovingTheOwnerOfAZ21_LetsTheNextProjectConnect()
+    {
+        var station = Project("Station", "192.168.0.111");
+        var yard = Project("Yard", "192.168.0.111");
+        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+
+        await _host.RemoveAsync(station.Id).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_host.Get(yard.Id)!.Connection.ConflictProjectName, Is.Null);
+            Assert.That(_host.Get(yard.Id)!.Connection.Z21, Is.SameAs(_createdZ21s[0].Object));
+        }
+
+        _createdZ21s[0].Verify(z21 => z21.DisconnectAsync(), Times.Never);
+    }
+
+    [Test]
     public async Task SelectionRequestedBeforeTheRuntimeExists_AppliesOnceItIsCreated()
     {
         var station = Project("Station", "192.168.0.111");

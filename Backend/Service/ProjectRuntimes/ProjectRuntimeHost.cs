@@ -29,6 +29,8 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
     private readonly ProjectRuntimeFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
     private readonly ILogger<ProjectRuntimeHost> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly Dictionary<Guid, ProjectRuntime> _runtimes = [];
+    // The order of the projects in the solution; the earliest project of a Z21 owns its connection.
+    private readonly List<Guid> _order = [];
     private readonly SemaphoreSlim _gate = new(1, 1);
     private Guid? _selectedId;
     private Guid? _requestedSelection;
@@ -72,6 +74,12 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         try
         {
             await DisposeAllAsync().ConfigureAwait(false);
+            lock (_runtimes)
+            {
+                _order.Clear();
+                _order.AddRange(projects.Select(project => project.Id));
+            }
+
             foreach (var project in projects)
             {
                 await AddCoreAsync(project, cancellationToken).ConfigureAwait(false);
@@ -93,7 +101,16 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            lock (_runtimes)
+            {
+                if (!_order.Contains(project.Id))
+                {
+                    _order.Add(project.Id);
+                }
+            }
+
             await AddCoreAsync(project, cancellationToken).ConfigureAwait(false);
+            await ReconcileZ21OwnersAsync([Get(project.Id)?.Z21Key], cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -107,7 +124,14 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            var removedKey = Get(projectId)?.Z21Key;
+            lock (_runtimes)
+            {
+                _order.Remove(projectId);
+            }
+
             await RemoveCoreAsync(projectId).ConfigureAwait(false);
+            await ReconcileZ21OwnersAsync([removedKey], cancellationToken).ConfigureAwait(false);
             await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
         }
         finally
@@ -123,8 +147,18 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            var previousKey = Get(project.Id)?.Z21Key;
+            lock (_runtimes)
+            {
+                if (!_order.Contains(project.Id))
+                {
+                    _order.Add(project.Id);
+                }
+            }
+
             await RemoveCoreAsync(project.Id).ConfigureAwait(false);
             await AddCoreAsync(project, cancellationToken).ConfigureAwait(false);
+            await ReconcileZ21OwnersAsync([previousKey, Get(project.Id)?.Z21Key], cancellationToken).ConfigureAwait(false);
             await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
         }
         finally
@@ -176,6 +210,41 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         {
             // A runtime that cannot start shows its state; the other projects keep running.
             LogRuntimeStartFailed(_logger, project.Name, ex);
+        }
+    }
+
+    /// <summary>
+    /// The earliest project of a Z21 in the solution owns its connection. When a later project holds it, for
+    /// example after an assignment changed or the owner was removed, the runtimes of that Z21 are created again
+    /// in solution order.
+    /// </summary>
+    private async Task ReconcileZ21OwnersAsync(IEnumerable<string?> keys, CancellationToken cancellationToken)
+    {
+        foreach (var key in keys.OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            List<ProjectRuntime> sharing;
+            lock (_runtimes)
+            {
+                sharing = [.. _order
+                    .Select(projectId => _runtimes.GetValueOrDefault(projectId))
+                    .OfType<ProjectRuntime>()
+                    .Where(runtime => string.Equals(runtime.Z21Key, key, StringComparison.OrdinalIgnoreCase))];
+            }
+
+            if (sharing.Count == 0 || sharing[0].Connection.ConflictProjectName is null)
+            {
+                continue;
+            }
+
+            foreach (var runtime in sharing)
+            {
+                await RemoveCoreAsync(runtime.ProjectId).ConfigureAwait(false);
+            }
+
+            foreach (var runtime in sharing)
+            {
+                await AddCoreAsync(runtime.Project, cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 

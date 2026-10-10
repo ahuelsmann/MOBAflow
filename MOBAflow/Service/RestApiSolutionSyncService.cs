@@ -379,21 +379,16 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     {
 
-        // MOBAsmart connects to the Z21 of the project selected in MOBAflow.
+        // MOBAsmart connects to the Z21 of the project selected in MOBAflow. Without a Z21 the endpoint is
+        // cleared, so a phone never connects to the Z21 of a previously selected project.
 
-        if (_solutionSession.SelectedProject?.Model.Z21 is not { } z21 || string.IsNullOrWhiteSpace(z21.IpAddress))
+        var z21 = _solutionSession.SelectedProject?.Model.Z21;
 
-        {
+        var z21Ip = z21?.IpAddress.Trim() ?? string.Empty;
 
-            return;
+        var z21Port = z21 is { Port: > 0 } ? z21.Port : Z21Endpoint.DefaultPort;
 
-        }
-
-        var z21Ip = z21.IpAddress.Trim();
-
-        var z21Port = z21.Port > 0 ? z21.Port : Z21Endpoint.DefaultPort;
-
-        var endpointKey = $"{z21Ip}:{z21Port}";
+        var endpointKey = z21Ip.Length == 0 ? string.Empty : $"{z21Ip}:{z21Port}";
 
         if (string.Equals(_lastPushedZ21Endpoint, endpointKey, StringComparison.Ordinal))
 
@@ -403,17 +398,14 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         }
 
-        var body = JsonSerializer.Serialize(new { z21IpAddress = z21Ip, z21Port });
+        using var content = new StringContent(
+            JsonSerializer.Serialize(new { z21IpAddress = z21Ip, z21Port }),
+            Encoding.UTF8,
+            "application/json");
 
-        using var content = new StringContent(body, Encoding.UTF8, "application/json");
-
-        using var request = new HttpRequestMessage(HttpMethod.Put, "api/runtime-settings")
-
-        {
-
-            Content = content
-
-        };
+        using var request = endpointKey.Length == 0
+            ? new HttpRequestMessage(HttpMethod.Delete, "api/runtime-settings")
+            : new HttpRequestMessage(HttpMethod.Put, "api/runtime-settings") { Content = content };
 
         try
 

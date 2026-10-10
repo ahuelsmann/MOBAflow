@@ -158,6 +158,7 @@ public sealed class ProjectRuntime : IAsyncDisposable
     {
         _project = project;
         _service = runtime;
+        Z21Key = Z21ConnectionRegistry.ToKey(project.Z21);
         Runtime = runtime;
         Connection = connection;
         _counters = counters;
@@ -167,6 +168,11 @@ public sealed class ProjectRuntime : IAsyncDisposable
 
     /// <summary>Gets the project this runtime executes.</summary>
     public Guid ProjectId => _project.Id;
+
+    /// <summary>Gets the Z21 the project was assigned when the runtime was created; null when none.</summary>
+    public string? Z21Key { get; }
+
+    internal Project Project => _project;
 
     /// <summary>Gets the runtime service.</summary>
     public IMobaRuntime Runtime { get; }
