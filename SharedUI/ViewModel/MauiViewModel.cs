@@ -253,7 +253,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         try
         {
             // Short delay for network stack (especially on Android)
-            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(500), _applicationLifetimeCts.Token).ConfigureAwait(false);
 
             Task? restDiscoveryTask = null;
             if (IsMobaflowConnectionEnabled && !HasStoredMobaflowEndpoint())
@@ -271,7 +271,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             }
 
             // Let runtime auto-connect try the saved IP before running multicast discovery.
-            await Task.Delay(TimeSpan.FromMilliseconds(1500)).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(1500), _applicationLifetimeCts.Token).ConfigureAwait(false);
 
             if (!_runtimeSnapshots.Current.IsConnected && IsMobaflowConnectionEnabled)
             {
@@ -319,7 +319,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             }
 
             // First reachability update after startup discovery (avoids ctor-time check against obsolete REST IP)
-            await RefreshRestApiReachableAsync().ConfigureAwait(false);
+            await RefreshRestApiReachableAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -336,7 +336,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         foreach (var delayMs in restDelaysMs)
         {
             if (delayMs > 0)
-                await Task.Delay(delayMs).ConfigureAwait(false);
+                await Task.Delay(delayMs, _applicationLifetimeCts.Token).ConfigureAwait(false);
 
             var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
             var (ip, port) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
@@ -382,7 +382,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             return;
         }
 
-        await RefreshRestApiReachableAsync().ConfigureAwait(false);
+        await RefreshRestApiReachableAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
     }
 
     private void OnNetworkProfilePossiblyChanged(object? sender, EventArgs e)
@@ -416,11 +416,11 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         {
             if (!IsMobaflowConnectionEnabled)
             {
-                await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                await RefreshRestApiReachableAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }
 
-            await RefreshRestApiReachableAsync().ConfigureAwait(false);
+            await RefreshRestApiReachableAsync(cancellationToken).ConfigureAwait(false);
             await MaybeDisableMobaflowConnectionWhenSessionLostAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -447,7 +447,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _lastRestApiDiscoverTime = DateTime.MinValue;
         var anchor = !string.IsNullOrWhiteSpace(Z21IpAddress) ? Z21IpAddress.Trim() : null;
         await DiscoverMobaflowEndpointAsync(fullScan: true, anchor, _applicationLifetimeCts.Token).ConfigureAwait(false);
-        await RefreshRestApiReachableAsync(useConnectTimeout: false).ConfigureAwait(false);
+        await RefreshRestApiReachableAsync(_applicationLifetimeCts.Token, useConnectTimeout: false).ConfigureAwait(false);
         if (IsRestApiReachable)
         {
             await EnsureRuntimeHubConnectionAsync(true, forceReconnect: true).ConfigureAwait(false);
@@ -458,7 +458,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         try
         {
-            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync(subnetAnchorIp).ConfigureAwait(false);
+            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync(subnetAnchorIp, _applicationLifetimeCts.Token).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(ip) && port.HasValue)
             {
                 await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
@@ -470,7 +470,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _logger.LogWarning(ex, "REST discovery with anchor {Anchor} failed", subnetAnchorIp ?? "(none)");
         }
 
-        await RefreshRestApiReachableAsync().ConfigureAwait(false);
+        await RefreshRestApiReachableAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -557,13 +557,13 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     partial void OnRestApiIpAddressChanged(string value)
     {
         _ = value;
-        RunInBackground(RefreshRestApiReachableAsync(), "Refresh REST reachability (IP changed)");
+        RunInBackground(RefreshRestApiReachableAsync(_applicationLifetimeCts.Token), "Refresh REST reachability (IP changed)");
     }
 
     partial void OnRestApiPortChanged(int value)
     {
         _ = value;
-        RunInBackground(RefreshRestApiReachableAsync(), "Refresh REST reachability (port changed)");
+        RunInBackground(RefreshRestApiReachableAsync(_applicationLifetimeCts.Token), "Refresh REST reachability (port changed)");
     }
 
     /// <summary>
@@ -647,7 +647,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                         await TryPeriodicRestDiscoveryIfNeededAsync().ConfigureAwait(false);
                     }
 
-                    await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                    await RefreshRestApiReachableAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
                     await MaybeDisableMobaflowConnectionWhenSessionLostAsync().ConfigureAwait(false);
                 }
 
@@ -734,9 +734,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <summary>
     /// Checks REST API reachability and updates IsRestApiReachable on the UI thread.
     /// </summary>
-    private Task<bool> RefreshRestApiReachableAsync(bool useConnectTimeout = true) =>
-        RefreshRestApiReachableAsync(_applicationLifetimeCts.Token, useConnectTimeout);
-
     private async Task<bool> RefreshRestApiReachableAsync(
         CancellationToken cancellationToken,
         bool useConnectTimeout = true)
@@ -1117,7 +1114,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _hideZ21TelemetryUntilTrackPowerOff = false;
         }
 
-        await _runtimeCommandGateway.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        await _runtimeCommandGateway.SetTrackPowerAsync(turnOn, CancellationToken.None).ConfigureAwait(false);
     }
 
     private void ClearZ21TelemetryValues()
@@ -1358,7 +1355,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 ApplyBestAvailableLocomotiveFleet();
                 if (!HasAnyLocomotiveFleetAvailable())
                 {
-                    RunInBackground(RequestSolutionSyncAsync(), "Solution sync after hub session restored");
+                    RunInBackground(RequestSolutionSyncAsync(_applicationLifetimeCts.Token), "Solution sync after hub session restored");
                 }
             }
         });
@@ -1484,7 +1481,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             && _controlTabActive)
         {
             RunInBackground(
-                RequestSolutionSyncAsync(),
+                RequestSolutionSyncAsync(_applicationLifetimeCts.Token),
                 "Solution sync when snapshot has signals but no locomotive fleet");
         }
     }
