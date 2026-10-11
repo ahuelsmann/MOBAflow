@@ -3,6 +3,8 @@
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
+using Moba.Backend.Service.Recording;
+using Moba.Common.Recording;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 
@@ -678,6 +680,58 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         runtimeMock.Verify(
             runtime => runtime.SetLocomotiveFunctionAsync(3, 1, true, It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task MobileSignalAspect_RecordsCommandWhilePreservingLocalOrRemoteRouting(bool remoteSession)
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var runtime = new Mock<IMobaRuntime>();
+        runtime.Setup(value => value.SetSignalAspectAsync(It.IsAny<Guid>(), It.IsAny<SignalAspect>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var hub = new Mock<IRuntimeHubRemoteClient>();
+        hub.Setup(value => value.SetSignalAspectAsync(It.IsAny<Guid>(), It.IsAny<SignalAspect>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var coordinator = new MobileRuntimeCoordinator(runtime.Object, hub.Object);
+        var session = new RecordingSessionService(TimeProvider.System);
+        await using var sessionLifetime = session.ConfigureAwait(false);
+        session.Start(new RecordingSessionStartRequest("Mobile signal", "1.0"));
+        var gateway = new RecordingRuntimeCommandGateway(coordinator, session);
+        var viewModel = CreateViewModel(eventBus, hub.Object, runtimeMock: runtime,
+            mobileRuntimeCoordinator: coordinator, runtimeCommandGateway: gateway);
+        viewModel.IsMobaflowConnectionEnabled = remoteSession;
+        viewModel.IsRestApiReachable = remoteSession;
+        viewModel.SetRuntimeHubConnected(remoteSession);
+        viewModel.SetRemoteZ21Connected(remoteSession);
+        viewModel.SetSignalBoxTabActive(true);
+        var signalId = Guid.NewGuid();
+        PublishRemoteSignalBoxSnapshot(eventBus, signalId, "Signal");
+        if (!remoteSession)
+        {
+            eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+            {
+                IsConnected = true,
+                StatusText = "Connected"
+            }));
+        }
+
+        viewModel.SignalBoxElements[0].SelectSignalAspectCommand.Execute(SignalAspect.Ks2);
+        await viewModel.SetSignalBoxAspectCommand.ExecutionTask!.ConfigureAwait(false);
+        var entries = (await session.StopAsync().ConfigureAwait(false)).Artifact!.Entries
+            .Where(entry => entry.Source == "runtime-command-gateway").ToArray();
+        Assert.That(entries, Has.Length.EqualTo(2));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(entries[0].TypeKey, Is.EqualTo("command.signal-aspect.request"));
+            Assert.That(entries[0].Payload.GetProperty("signalId").GetGuid(), Is.EqualTo(signalId));
+            Assert.That(entries[1].TypeKey, Is.EqualTo("command.signal-aspect.result"));
+        }
+        runtime.Verify(value => value.SetSignalAspectAsync(signalId, SignalAspect.Ks2, It.IsAny<CancellationToken>()),
+            remoteSession ? Times.Never() : Times.Once());
+        hub.Verify(value => value.SetSignalAspectAsync(signalId, SignalAspect.Ks2, It.IsAny<CancellationToken>()),
+            remoteSession ? Times.Once() : Times.Never());
     }
 
     [Test]

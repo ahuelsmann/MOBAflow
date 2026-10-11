@@ -8,8 +8,6 @@ using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 
-using Interface;
-
 using Service;
 
 using System.Collections.ObjectModel;
@@ -144,16 +142,13 @@ public sealed partial class MauiViewModel
 
         await SignalBoxAspectCommandDispatcher
             .DispatchAsync(
-                ResolveRuntimeCommandGateway(),
+                _runtimeCommandGateway,
                 item.ElementId,
                 aspect,
                 _pendingSignalAspects,
                 _applicationLifetimeCts.Token)
             .ConfigureAwait(false);
     }
-
-    private IRuntimeCommandGateway ResolveRuntimeCommandGateway() =>
-        _mobileRuntimeCoordinator ?? _runtimeCommandGateway;
 
     private SignalBoxElementRuntimeSnapshot ApplyPendingSignalAspect(SignalBoxElementRuntimeSnapshot snapshot)
     {
