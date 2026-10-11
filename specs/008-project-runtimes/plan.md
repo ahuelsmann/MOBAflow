@@ -91,6 +91,8 @@ Each slice is one reviewable PR on its own branch from `main`; this branch carri
 
 ## Validation Strategy
 
+Completed implementation evidence and the manual-check boundary are recorded in [acceptance.md](acceptance.md).
+
 - **Automated tests**: characterization of load/save/auto-save/selection (slice 1); runtime values kept across editor
   changes without cancelling workflows (slice 2); two projects with two fake Z21 endpoints, conflict, takeover and
   switch sequence (slice 3); MOBApi project routing and MOBAsmart selection (slice 4).
