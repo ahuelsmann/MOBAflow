@@ -176,30 +176,19 @@ public interface IWorkflowService
 - MVVM Commands & Converters
 - Observable Property Definitions
 
-**Key Pattern:**
+**Runtime access pattern:**
 
-```csharp
-// Shared ViewModel consuming runtime snapshots
-public partial class MainWindowViewModel : ObservableObject
-{
-    private readonly IMobaRuntime _mobaRuntime;
-    private readonly Solution _solution;
+| ViewModel responsibility | Required dependency |
+| --- | --- |
+| Read current operating state | `IRuntimeSnapshotProvider` |
+| Start, activate a project, connect or disconnect | `IConnectionRuntime` |
+| Inspect traffic | `ITrafficMonitor` |
+| Send an operator command | `IRuntimeCommandGateway` |
 
-    [ObservableProperty]
-    private bool isConnected;
-
-    [RelayCommand]
-    private async Task ConnectAsync()
-    {
-        await _mobaRuntime.ConnectAsync();
-    }
-
-    private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
-    {
-        IsConnected = snapshot.IsConnected;
-    }
-}
-```
+See the actual [runtime roles](../Backend/Interface/IMobaRuntime.cs),
+[command gateway](../SharedUI/Interface/IRuntimeCommandGateway.cs), and
+[MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs).
+ViewModels do not receive the complete `IMobaRuntime` or create their own gateway.
 
 **Characteristics:**
 
@@ -217,6 +206,8 @@ Z21-driven shared ViewModels:
 
 ```text
 MainWindowViewModel / TrainControlViewModel / MauiViewModel
+    ↓ read/lifecycle roles + IRuntimeCommandGateway
+Host-provided runtime adapters and command gateway
     ↓
 IMobaRuntime (MobaRuntimeService)
     ↓
@@ -230,8 +221,8 @@ IZ21 / JourneyManager / WorkflowService
   `JourneyManager` when a project is activated
 - Surfaces traffic monitor access, locomotive commands, multiplex signals,
   journey reset, and fail-safe / operator-ack state
-- Publishes immutable runtime projections via `MobaRuntimeSnapshot`
-  (system, journeys, locomotives) and raises `FeedbackReceived` for UI consumers
+- Publishes runtime projections via `MobaRuntimeSnapshot`
+  (system, journeys, counters, locomotives and signal-box state)
 - Implementation is split into partial files under `Backend/Service/`
   (`RuntimeApi`, `Z21Handlers`, `AutoConnect`, and the core snapshot/constructor file)
 
@@ -322,59 +313,25 @@ See [issue #132](https://github.com/ahuelsmann/MOBAflow/issues/132) and the
 
 ---
 
-#### Threading und UI-Thread-Grenze
+#### Threading and the UI-thread boundary
 
-**Warum gibt es überhaupt einen Dispatcher?**
+Z21, file I/O, timers and post-startup work can run on background threads.
+The undecorated EventBus invokes subscribers synchronously on the publishing
+thread. Updating WinUI-bound state from that thread can cause UI-thread violations.
 
-- Backend und Dienste (Z21, Datei-I/O, Timer, Post-Startup) laufen auf **Hintergrund-Threads**.
-- Das **EventBus** ruft Handler **auf dem Thread des Aufrufers** auf:
-  `Publish` führt alle Subscriber synchron aus. Ruft also z. B. Z21
-  aus einem Thread-Pool-Thread `Publish` auf, laufen die
-  ViewModel-Handler auf diesem Hintergrund-Thread und ändern
-  Observable-Properties → Verstöße gegen „UI-Updates nur auf dem
-  UI-Thread“ und potenzielle COMException in WinUI.
+Both UI hosts register `AddEventBusWithUiDispatch()`. Its
+[UiThreadEventBusDecorator](../SharedUI/Service/UiThreadEventBusDecorator.cs)
+forwards publication through `IUiDispatcher.InvokeOnUiLowPriority`: publication
+on the UI thread invokes handlers immediately; background publication queues
+them and returns. Handlers using this decorated bus update UI state directly
+and must not dispatch again.
 
-**Saubere Architektur-Lösung:**
-
-- **Eine zentrale Marshalling-Stelle:** Statt in jedem ViewModel
-  `IUiDispatcher.InvokeOnUi` um jeden Event-Handler zu wickeln,
-  marshalieren wir an der **EventBus-Grenze**. Ein
-  `UiThreadEventBusDecorator` implementiert `IEventBus` und leitet
-  `Publish` so weiter, dass alle Handler auf dem UI-Thread ausgeführt
-  werden (über `IUiDispatcher.InvokeOnUi`). Dann müssen ViewModels für
-  **EventBus-Subscriptions** den Dispatcher nicht mehr kennen.
-- **Verbleibende Dispatcher-Nutzung:** Direkte Event-Quellen, die
-  **nicht** über das EventBus laufen (z. B. `IZ21.Received`,
-  `IZ21.OnConnectionLost`, async Datei-Lade-Completion,
-  Post-Startup-Status), müssen weiterhin an einer Stelle auf den
-  UI-Thread marshalieren – entweder in einem dünnen Adapter/Bridge,
-  der nur dispatcht und dann das ViewModel aufruft, oder (derzeit) im
-  ViewModel mit `IUiDispatcher`. Ziel ist, diese Fälle langfristig
-  entweder über das EventBus zu führen (dann deckt der Decorator sie
-  ab) oder in einem einzigen „UI-Bridge“-Service zu bündeln.
-
-**MVVM-Konsequenz:**
-
-- ViewModels sollen keine Thread-Logik enthalten; die Grenze
-  „Hintergrund → UI“ gehört in eine **einzige** Schicht
-  (EventBus-Decorator bzw. UI-Bridge). Dann bleibt der
-  Dispatcher-Service eine technische Plattform-Detail-Implementierung,
-  die an genau dieser Grenze verwendet wird, nicht in jedem ViewModel.
-
-**Umsetzung (Stand):**
-
-- **WinUI:** `AddEventBusWithUiDispatch()` bleibt fuer klassische
-  UI-Events aktiv. `MainWindowViewModel` nutzt weiterhin EventBus-
-  und View-basierte Statuspfade; `TrainControlViewModel` bezieht
-  Z21-nahe Laufzeitdaten jetzt ueber `IMobaRuntime`-Snapshots und
-  Runtime-Events statt direkt ueber EventBus-Subscriptions.
-- **Verbleibende Dispatcher-Nutzung:** Dort, wo Snapshot-/Runtime-
-  Events oder View-Callbacks außerhalb des UI-Threads ankommen:
-  z. B. Datei-Lade-Callbacks (Solution laden),
-  Health-Status-Updates aus der View (`MainWindow.xaml.cs`) und
-  Runtime-Projection in `TrainControlViewModel`/`MauiViewModel`.
-  Diese Fälle können später weiter in dedizierte UI-Bridges
-  verschoben werden.
+Callbacks outside the decorated bus are separate threading boundaries. Inspect
+their actual execution context before changing UI-bound state; use the existing
+dispatcher adapter or platform bridge where needed. Examples include raw Z21
+callbacks, timers, file-load completions and health-status callbacks from
+`MOBAflow/View/MainWindow.xaml.cs`. Do not assume every asynchronous continuation
+is a background callback, or introduce platform UI types into shared logic.
 
 ---
 
@@ -620,9 +577,9 @@ ViewModel ──► IRuntimeCommandGateway
   aspect never overtakes a configuration update.
 - `Test/Architecture/RuntimeCommandPathArchitectureTests.cs` fails when a
   ViewModel uses a command role or creates a gateway.
-- Not yet recorded: fail-safe acknowledgement, all functions off, locomotive
-  info and the MOBAsmart throttle and signal box, which use the coordinator
-  directly (issue #188).
+- Not yet recorded: fail-safe acknowledgement, all functions off and locomotive
+  info (issue #188). MOBAsmart injects the recording gateway for throttle and
+  signal commands; the coordinator selects their local or remote route.
 
 ### Notification mechanisms
 
