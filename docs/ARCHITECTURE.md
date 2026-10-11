@@ -169,7 +169,8 @@ public interface IWorkflowService
 
 **Content:**
 
-- MainWindowViewModel (App State Management)
+- `SolutionSession` (solution ownership, selection, dirty state and auto-save)
+- MainWindowViewModel (navigation and shell state, with page extraction reserved for RF-24)
 - Page-specific ViewModels (JourneyViewModel, WorkflowViewModel, etc.)
 - ViewModels read runtime state through narrow runtime roles and send commands through
   `IRuntimeCommandGateway` (see [Runtime command path](#runtime-command-path))
@@ -235,6 +236,22 @@ IZ21 / JourneyManager / WorkflowService
   selected project's runtime (see below)
 - Journey-related UI still receives state from snapshots rather than owning
   `JourneyManager` directly
+
+**Solution ownership and the RF-24 boundary:**
+
+- `SolutionSession` is the single owner of the loaded solution, selected project
+  and journey, dirty state and auto-save. Hosts register the same instance as
+  `ISolutionSession`, `IProjectContext` and `IJourneySelectionContext`.
+- Shared ViewModels and host services reach solution ownership through those
+  contracts. The existing shell/composition, WinUI page bindings, column-width
+  behavior, MonitorPageViewModel, EventManagerViewModel and Android shutdown
+  lookup remain explicitly named in
+  [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs).
+  RF-24 removes the page, layout and shell-state dependencies; RF-23 adds no new
+  exception and does not claim that decomposition is already complete.
+- The [RF-23 acceptance record](../specs/008-project-runtimes/acceptance.md)
+  maps the feature criteria to tests and distinguishes automated evidence from
+  app/device and live-hardware checks.
 
 **One runtime per project (MOBAflow):**
 
@@ -477,28 +494,25 @@ heart of the architecture:
 
 ### Registration Structure
 
+Selected registrations from
+[MobaWinUiServiceCollectionExtensions](../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs);
+its host composition also supplies the required factories and platform services:
+
 ```csharp
-// App.xaml.cs / Program.cs
-var services = new ServiceCollection();
+// Per-project runtime ownership and selected-project adapters
+services.AddSingleton<IProjectRuntimeHost>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
+services.AddSingleton<IProjectRuntimeSnapshots>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
+services.AddSingleton<IMobaRuntime, SelectedProjectRuntime>();
+services.AddSingleton<IInterlockingRuntime, SelectedProjectInterlocking>();
 
-// Domain/Backend Services
-services.AddSingleton<Solution>();           // Domain
-services.AddSingleton<MasterDataStore>();    // Master data (data.json)
-services.AddSingleton<IZ21>(/* z21 impl */); // Backend Service
-services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
-services.AddSingleton<IWorkflowService, WorkflowService>();
-services.AddSingleton<IWorkflowExecutionCoordinator, WorkflowExecutionCoordinator>();
-services.AddSingleton<IWorkflowTraceStore, WorkflowTraceStore>();
+// One solution session shared by all presentation contracts
+services.AddSingleton<ISolutionSession>(sp => sp.GetRequiredService<SolutionSession>());
+services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<SolutionSession>());
+services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<SolutionSession>());
 
-// Presentation Layer
-services.AddSingleton<MainWindowViewModel>(); // Shared ViewModel
-services.AddTransient<JourneyPage>();        // Platform-specific Pages
-
-// Platform Services
-services.AddSingleton<NavigationService>();  // WinUI Navigation
-services.AddSingleton<IIoService, IoService>(); // File Operations
-
-var provider = services.BuildServiceProvider();
+// Operator commands use the host-owned recording gateway
+services.AddSingleton<IRuntimeCommandGateway>(sp =>
+    sp.GetRequiredService<RecordingRuntimeCommandGateway>());
 ```
 
 Desktop pages are registered in
@@ -509,18 +523,12 @@ status messages only; it does not load or initialize external plugins.
 
 ### Resolution Example
 
-```csharp
-// Request: MainWindowViewModel
-provider.GetRequiredService<MainWindowViewModel>()
-
-// DI Container resolves:
-MainWindowViewModel(
-    IMobaRuntime mobaRuntime,    // → Singleton MobaRuntimeService
-    IEventBus eventBus,          // → Singleton instance
-    Solution solution,           // → Singleton instance
-    ...
-)
-```
+The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
+receives `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+`ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
+platform services. It does not receive the mutable `Solution` or a complete
+`IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;
+MOBAsmart composes one local runtime and its local/remote command coordinator.
 
 ---
 
