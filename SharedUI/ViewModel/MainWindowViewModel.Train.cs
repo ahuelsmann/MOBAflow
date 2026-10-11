@@ -75,16 +75,6 @@ public partial class MainWindowViewModel
         }
     }
 
-    private async Task RefreshActiveProjectRuntimeAsync()
-    {
-        if (SelectedProject == null)
-        {
-            return;
-        }
-
-        await _runtimeConnection.ActivateProjectAsync(SelectedProject.Model).ConfigureAwait(false);
-    }
-
     partial void OnTrainSearchTextChanged(string value)
     {
         _ = value;

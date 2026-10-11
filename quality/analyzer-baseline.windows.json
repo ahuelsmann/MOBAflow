@@ -2315,6 +2315,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1001",
+      "path": "Test/Backend/ProjectRuntimeHostTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1001",
       "path": "Test/Backend/UdpClientWrapperTests.cs",
       "count": 1
     },
@@ -2707,6 +2714,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/ProjectRuntimeHostTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/ProjectValidatorTests.cs",
       "count": 1
     },
@@ -2861,6 +2875,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/Z21AssignmentDiagnosticsTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/Z21BroadcastProtocolTests.cs",
       "count": 1
     },
@@ -2974,6 +2995,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Common/FeatureToggleRegistryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/Common/ForwardingEventBusTests.cs",
       "count": 1
     },
     {
@@ -3485,6 +3513,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAflow/RestApiStatusServicePhotoHubTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAflow/SettingsServiceTests.cs",
       "count": 1
     },
     {

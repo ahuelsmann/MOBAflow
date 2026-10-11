@@ -2,7 +2,6 @@
 
 namespace Moba.WinUI.Service;
 
-using Backend.Interface;
 using Backend.Service.TrackPlan;
 
 using Common.Extension;
@@ -186,8 +185,8 @@ internal sealed class WinUiAppStartupService
             var timer = Stopwatch.StartNew();
             LogStartupCheckpoint("Post-startup initialization queued");
 
-            var runtime = services.GetRequiredService<IMobaRuntime>();
-            await runtime.StartAsync().ConfigureAwait(false);
+            // One runtime per project of the current solution; loading a solution replaces them.
+            await services.GetRequiredService<ISolutionSession>().StartRuntimesAsync().ConfigureAwait(false);
 
             services.GetRequiredService<TrackPlanSolutionBinder>().Activate();
             services.GetRequiredService<TrackPlanFeedbackHighlighter>().Activate();

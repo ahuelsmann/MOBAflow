@@ -23,7 +23,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private readonly AppSettings _settings;
     private readonly ILogger<MobaRuntimeService> _logger;
     private readonly IEventBus? _eventBus;
-    private readonly IZ21DiscoveryService _z21Discovery;
+    private readonly IZ21EndpointSource _endpointSource;
     private readonly IInterlockingRuntime? _interlockingRuntime;
     private readonly InPortCounterService _inPortCounters;
     private readonly bool _ownsInPortCounters;
@@ -99,7 +99,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         IZ21DiscoveryService? z21Discovery = null,
         TimeProvider? timeProvider = null,
         IInterlockingRuntime? interlockingRuntime = null,
-        InPortCounterService? inPortCounterService = null)
+        InPortCounterService? inPortCounterService = null,
+        IZ21EndpointSource? endpointSource = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(workflowService);
@@ -116,7 +117,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _settings = settings;
         _logger = logger;
         _eventBus = eventBus;
-        _z21Discovery = z21Discovery ?? new NullZ21DiscoveryService();
+        _endpointSource = endpointSource ?? new SettingsZ21EndpointSource(settings, z21Discovery);
         _interlockingRuntime = interlockingRuntime;
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
         _inPortCounters.SnapshotChanged += OnJourneyRuntimeChanged;
@@ -149,8 +150,17 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             cancellationToken.ThrowIfCancellationRequested();
             // An unreadable counter file is reported in the snapshot and must not block startup.
             await _inPortCounters.TryInitializeAsync(cancellationToken).ConfigureAwait(false);
-            PublishSnapshot();
-            BeginAutoConnectToZ21();
+            if (_z21.IsConnected)
+            {
+                // A runtime created again for the same Z21 takes over the open connection.
+                OnZ21ConnectedChanged(true);
+                StartAutoConnectTimer();
+            }
+            else
+            {
+                PublishSnapshot();
+                BeginAutoConnectToZ21();
+            }
             _started = true;
         }
         finally

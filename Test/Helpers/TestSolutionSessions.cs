@@ -14,6 +14,10 @@ using Moba.SharedUI.Service;
 /// </summary>
 internal static class TestSolutionSessions
 {
+    /// <summary>
+    /// Creates a session whose project runtime updates reach <paramref name="runtimeConnection"/>, the runtime the
+    /// ViewModel under test also uses.
+    /// </summary>
     public static SolutionSession Create(
         Solution solution,
         IUiDispatcher uiDispatcher,
@@ -23,6 +27,30 @@ internal static class TestSolutionSessions
             solution,
             ioService ?? new NullIoService(),
             uiDispatcher,
-            runtimeConnection,
+            new SingleRuntimeProjectHost(runtimeConnection),
             NullLogger<SolutionSession>.Instance);
+
+    /// <summary>
+    /// A project runtime host for ViewModel tests that routes snapshot updates to one runtime.
+    /// </summary>
+    private sealed class SingleRuntimeProjectHost(IConnectionRuntime runtime) : IProjectRuntimeHost
+    {
+        public Task LoadAsync(IReadOnlyList<Project> projects, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task AddAsync(Project project, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task RemoveAsync(Guid projectId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task ReplaceAsync(Project project, CancellationToken cancellationToken = default) =>
+            runtime.UpdateProjectAsync(project, cancellationToken);
+
+        public Task UpdateAsync(Project project, CancellationToken cancellationToken = default) =>
+            runtime.UpdateProjectAsync(project, cancellationToken);
+
+        public void SelectProject(Guid? projectId)
+        {
+            // The ViewModel tests use one runtime for every project.
+        }
+    }
 }

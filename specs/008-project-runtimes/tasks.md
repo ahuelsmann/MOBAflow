@@ -31,15 +31,15 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 
 - [x] T014 Add the Z21 endpoint to `Project` with Z21 fields in the project properties; network search for every Z21 with IP address and serial number; Z21 finder column on the solution page to drag an unassigned Z21 onto a project
 - [x] T014a Tests for discovery responses, the endpoint JSON and the finder (unassigned list, one project per Z21, removal); run suites and analyzer gates for validation
-- [ ] T014b Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
+- [x] T014b Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ### 3b - One runtime per project
 
-- [ ] T014c Connect each runtime to its project's Z21; remove the Z21 address, port and recent list from the MOBAflow settings and settings UI and the runtime's own Z21 search; MOBAflow sends the selected project's Z21 to MOBAsmart until slice 4
-- [ ] T015 Add `Z21ConnectionRegistry` (connections keyed by endpoint, takeover) with tests
-- [ ] T016 Add `ProjectRuntimeFactory`: one DI scope per project with its `IZ21`, runtime, counters, interlocking and workflow context
-- [ ] T017 Session creates and discards project runtimes; selected-project event forwarding to the UI bus; fixes #190
-- [ ] T018 Per-project counter store and duplicate-Z21 diagnostics (later runtime does not connect)
+- [x] T014c Connect each runtime to its project's Z21; remove the Z21 address, port and recent list from the MOBAflow settings and settings UI and the runtime's own Z21 search; MOBAflow sends the selected project's Z21 to MOBAsmart until slice 4
+- [x] T015 Add `Z21ConnectionRegistry` (connections keyed by endpoint, takeover) with tests
+- [x] T016 Add `ProjectRuntimeFactory`: one runtime graph per project with its `IZ21`, runtime, counters, interlocking, workflow context and whistle automation
+- [x] T017 Session creates and discards project runtimes; selected-project event forwarding to the UI bus; fixes #190
+- [x] T018 Per-project counter store and duplicate-Z21 diagnostics (later runtime does not connect)
 - [ ] T018a Tests with two fake Z21 endpoints (independence, conflict, takeover); slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ### 3c - Safe switch

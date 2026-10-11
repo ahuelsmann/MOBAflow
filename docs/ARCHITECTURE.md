@@ -230,10 +230,40 @@ IZ21 / JourneyManager / WorkflowService
 
 - `MainWindowViewModel`, `TrainControlViewModel`, and `MauiViewModel` take the
   runtime roles they read (`IRuntimeSnapshotProvider`, `IConnectionRuntime`,
-  `ITrafficMonitor`) and a required `IRuntimeCommandGateway` from DI; the hosts
-  register `MobaRuntimeService` as the singleton behind every role
+  `ITrafficMonitor`) and a required `IRuntimeCommandGateway` from DI. MOBAsmart
+  registers one `MobaRuntimeService` behind every role; MOBAflow registers the
+  selected project's runtime (see below)
 - Journey-related UI still receives state from snapshots rather than owning
   `JourneyManager` directly
+
+**One runtime per project (MOBAflow):**
+
+- `ProjectRuntimeHost` (`Backend/Service/ProjectRuntimes/`) holds one runtime per
+  project of the loaded solution; all run at the same time. `ProjectRuntimeFactory`
+  builds each runtime graph (runtime service, journey and workflow execution,
+  feedback counters with a per-project file, interlocking, whistle automation) on
+  the connection of the project's Z21. Stateless workflow handlers, stores and
+  audio are shared.
+- `Z21ConnectionRegistry` owns one connection per Z21 address for the app lifetime.
+  A runtime created again for the same Z21 (reloading the solution) takes over the
+  open connection. When two projects use the same Z21, the earlier project in the
+  solution connects; the later runtime gets a detached connection, reports the
+  conflict and never connects (`Z21AssignmentDiagnostics` shows it in the project
+  diagnostics). MOBAflow never searches the network for a Z21 on its own
+  (`ProjectZ21EndpointSource`); MOBAsmart keeps `SettingsZ21EndpointSource`.
+- Each connection has its own `ForwardingEventBus`. Runtime handlers run on the
+  publishing thread without waiting for the UI dispatcher. Only application
+  delivery is dispatched to the UI thread and checks the current selection there;
+  only the selected project's bus publishes to the application bus,
+  so UI subscribers keep their contract and show the selected project.
+  `SelectedProjectRuntime` and `SelectedProjectInterlocking` give pages and host
+  services the selected project's runtime and interlocking; project updates are
+  routed by project id.
+- `SolutionSession` creates and discards the runtimes through `IProjectRuntimeHost`
+  on solution load and new, project add and remove, and recreates a runtime when
+  its project's Z21 changes. Selecting a project only selects its runtime; it never
+  activates or restarts one.
+- Covered by `Test/Backend/ProjectRuntimeHostTests.cs`.
 
 **Editor vs runtime state (done):**
 
@@ -246,8 +276,8 @@ IZ21 / JourneyManager / WorkflowService
   (`JourneySessionState`, kept by stop id), running workflows and signal aspects are
   kept; a running workflow finishes with the snapshot it started with. Adding or
   removing journeys, stations or trains no longer restarts the project; only
-  selecting another project or loading a solution activates one. The interlocking
-  definition still changes only on activation.
+  creating the project's runtime activates it. The interlocking definition still
+  changes only on activation.
 - Entity Ids are preserved by the round-trip, so snapshots and journey reset keep
   resolving against the Ids the editor exposes.
 - Covered by `Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs` and

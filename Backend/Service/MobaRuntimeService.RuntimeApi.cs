@@ -91,13 +91,16 @@ public sealed partial class MobaRuntimeService
     {
         // An unreadable counter file is reported in the snapshot and must not prevent Z21 control.
         await _inPortCounters.TryInitializeAsync(cancellationToken).ConfigureAwait(false);
-        if (!TryGetConfiguredEndpoint(out var address, out var port, out var errorMessage))
+        var endpoint = await _endpointSource.ResolveAsync(rediscover: false, cancellationToken).ConfigureAwait(false);
+        if (endpoint.Address is not { } address)
         {
             _isZ21Connecting = false;
-            _statusText = errorMessage;
+            _statusText = endpoint.Error ?? "No Z21 address";
             PublishSnapshot();
             return;
         }
+
+        var port = endpoint.Port;
 
         try
         {
@@ -107,11 +110,11 @@ public sealed partial class MobaRuntimeService
             PublishSnapshot();
 
             _z21.SetSystemStatePollingInterval(_settings.Z21.SystemStatePollingIntervalSeconds);
-            await _z21.ConnectAsync(address!, port, cancellationToken).ConfigureAwait(false);
+            await _z21.ConnectAsync(address, port, cancellationToken).ConfigureAwait(false);
 
             if (!_isConnected)
             {
-                _statusText = $"Waiting for Z21 at {_settings.Z21.CurrentIpAddress}:{port}...";
+                _statusText = $"Waiting for Z21 at {address}:{port}...";
             }
 
             PublishSnapshot();
