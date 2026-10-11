@@ -352,6 +352,167 @@ internal sealed class PersistentInPortCounterTests
 
     private static AppSettings Settings(int count) => new() { Counter = { CountOfFeedbackPoints = count, UseTimerFilter = false } };
 
+    [Test]
+    public async Task MobileProjectStores_KeepIndependentCountsAcrossSwitchesAndRestart()
+    {
+        var station = Guid.NewGuid();
+        var yard = Guid.NewGuid();
+        var stores = new Dictionary<Guid, MemoryStore> { [station] = new(), [yard] = new() };
+        var z21 = new Mock<IZ21>();
+        var counters = new InPortCounterService(z21.Object, Settings(1), projectStoreFactory: id => stores[id]);
+        await using (counters.ConfigureAwait(false))
+        {
+            await counters.SelectProjectAsync(station).ConfigureAwait(false);
+            counters.Set(1, 42);
+            await counters.SelectProjectAsync(yard).ConfigureAwait(false);
+            Assert.That(counters.GetSnapshot()[0].Count, Is.Zero);
+            counters.Set(1, 7);
+            await counters.SelectProjectAsync(station).ConfigureAwait(false);
+            Assert.That(counters.GetSnapshot()[0].Count, Is.EqualTo(42UL));
+            await counters.SelectProjectAsync(yard).ConfigureAwait(false);
+            Assert.That(counters.GetSnapshot()[0].Count, Is.EqualTo(7UL));
+        }
+        var restarted = new InPortCounterService(z21.Object, Settings(1), projectStoreFactory: id => stores[id]);
+        await using var restartedScope = restarted.ConfigureAwait(false);
+        await restarted.SelectProjectAsync(station).ConfigureAwait(false);
+        Assert.That(restarted.GetSnapshot()[0].Count, Is.EqualTo(42UL));
+        await restarted.SelectProjectAsync(yard).ConfigureAwait(false);
+        Assert.That(restarted.GetSnapshot()[0].Count, Is.EqualTo(7UL));
+    }
+
+    [Test]
+    public async Task MobileCounterStore_FlushFailurePreservesPreviousProjectCounts()
+    {
+        var station = Guid.NewGuid();
+        var store = new MemoryStore { FailWrites = true };
+        var counters = new InPortCounterService(new Mock<IZ21>().Object, Settings(1), projectStoreFactory: _ => store);
+        await using var countersScope = counters.ConfigureAwait(false);
+        await counters.SelectProjectAsync(station).ConfigureAwait(false);
+        counters.Set(1, 42);
+
+        await Assert.ThrowsAsync<IOException>(() => counters.SelectProjectAsync(Guid.NewGuid())).ConfigureAwait(false);
+
+        Assert.That(counters.GetSnapshot()[0].Count, Is.EqualTo(42UL));
+    }
+
+    [Test]
+    public async Task RuntimeActivation_SelectsTheNewProjectsCounterStore()
+    {
+        var station = new Moba.Domain.Project();
+        var yard = new Moba.Domain.Project();
+        var stores = new Dictionary<Guid, MemoryStore> { [station.Id] = new(), [yard.Id] = new() };
+        var z21 = new Mock<IZ21>();
+        var settings = Settings(1);
+        var counters = new InPortCounterService(z21.Object, settings, projectStoreFactory: id => stores[id]);
+        await using var countersScope = counters.ConfigureAwait(false);
+        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
+            new ActionExecutionContext { Z21 = z21.Object }, settings, Mock.Of<ILogger<MobaRuntimeService>>(), inPortCounterService: counters);
+        await runtime.ActivateProjectAsync(station).ConfigureAwait(false);
+        counters.Set(1, 42);
+
+        await runtime.ActivateProjectAsync(yard).ConfigureAwait(false);
+        Assert.That(runtime.Current.InPortCounters[0].Count, Is.Zero);
+        await runtime.ActivateProjectAsync(station).ConfigureAwait(false);
+        Assert.That(runtime.Current.InPortCounters[0].Count, Is.EqualTo(42UL));
+    }
+
+    [Test]
+    public async Task MobileCounterStore_UnreadableProjectDoesNotBlockSelectingAnotherProject()
+    {
+        var badProject = Guid.NewGuid();
+        var broken = new Mock<IInPortCounterStore>();
+        broken.Setup(value => value.LoadAsync(default)).ThrowsAsync(new InvalidDataException("Unreadable project counts"));
+        var good = new MemoryStore();
+        var counters = new InPortCounterService(new Mock<IZ21>().Object, Settings(1),
+            projectStoreFactory: id => id == badProject ? broken.Object : good);
+        await using var scope = counters.ConfigureAwait(false);
+        await counters.SelectProjectAsync(badProject).ConfigureAwait(false);
+        Assert.That(counters.PersistenceError, Is.Not.Null);
+
+        await counters.SelectProjectAsync(Guid.NewGuid()).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(counters.PersistenceError, Is.Null);
+            Assert.That(counters.GetSnapshot()[0].Count, Is.Zero);
+        }
+        broken.Verify(value => value.SaveAsync(It.IsAny<IReadOnlyDictionary<uint, ulong>>(), default), Times.Never);
+    }
+
+    [Test]
+    public async Task RuntimeActivation_CancellationDuringCommittedCounterLoadKeepsProjectAndCountsTogether()
+    {
+        var station = new Moba.Domain.Project();
+        var yard = new Moba.Domain.Project();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var loaded = new TaskCompletionSource<IReadOnlyDictionary<uint, ulong>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var yardStore = new Mock<IInPortCounterStore>();
+        yardStore.Setup(value => value.LoadAsync(default)).Returns(() => { entered.TrySetResult(); return loaded.Task; });
+        var stationStore = new MemoryStore();
+        var z21 = new Mock<IZ21>();
+        var settings = Settings(1);
+        var counters = new InPortCounterService(z21.Object, settings,
+            projectStoreFactory: id => id == station.Id ? stationStore : yardStore.Object);
+        await using var countersScope = counters.ConfigureAwait(false);
+        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
+            new ActionExecutionContext { Z21 = z21.Object }, settings, Mock.Of<ILogger<MobaRuntimeService>>(), inPortCounterService: counters);
+        await runtime.ActivateProjectAsync(station).ConfigureAwait(false);
+        counters.Set(1, 42);
+        using var cancellation = new CancellationTokenSource();
+
+        var activation = runtime.ActivateProjectAsync(yard, cancellation.Token);
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await cancellation.CancelAsync().ConfigureAwait(false);
+        loaded.TrySetResult(new Dictionary<uint, ulong> { [1] = 7 });
+        await activation.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(runtime.Current.ProjectId, Is.EqualTo(yard.Id));
+            Assert.That(runtime.Current.InPortCounters[0].Count, Is.EqualTo(7UL));
+            Assert.That(stationStore.Counts[1], Is.EqualTo(42UL));
+        }
+    }
+
+    [Test]
+    public async Task MobileCounterStore_HandoffDrainsOldWritesBeforeAcceptingNewCounts()
+    {
+        var station = Guid.NewGuid();
+        var writeStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseWrite = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var oldStore = new Mock<IInPortCounterStore>();
+        oldStore.Setup(value => value.LoadAsync(default))
+            .ReturnsAsync(new Dictionary<uint, ulong>());
+        oldStore.Setup(value => value.SaveAsync(It.IsAny<IReadOnlyDictionary<uint, ulong>>(), default))
+            .Returns((IReadOnlyDictionary<uint, ulong> counts, CancellationToken _) =>
+            {
+                if (counts[1] != 42) return Task.CompletedTask;
+                writeStarted.TrySetResult();
+                return releaseWrite.Task;
+            });
+        var newStore = new MemoryStore();
+        var counters = new InPortCounterService(new Mock<IZ21>().Object, Settings(1),
+            projectStoreFactory: id => id == station ? oldStore.Object : newStore);
+        await using var scope = counters.ConfigureAwait(false);
+        await counters.SelectProjectAsync(station).ConfigureAwait(false);
+        counters.Set(1, 42);
+        await writeStarted.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var handoff = counters.SelectProjectAsync(Guid.NewGuid());
+        try
+        {
+            Assert.That(handoff.IsCompleted, Is.False);
+            Assert.Throws<InvalidOperationException>(() => counters.Set(1, 99));
+            Assert.Throws<InvalidOperationException>(counters.ResetAll);
+        }
+        finally
+        {
+            releaseWrite.TrySetResult();
+        }
+        await handoff.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await counters.FlushAsync().ConfigureAwait(false);
+        Assert.That(newStore.Counts[1], Is.Zero);
+    }
+
     private sealed class CounterClock : TimeProvider
     {
         public DateTimeOffset Now { get; set; } = new(2026, 9, 25, 10, 0, 0, TimeSpan.Zero);

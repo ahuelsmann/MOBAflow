@@ -65,6 +65,10 @@ public sealed class SelectedProjectRuntime : IMobaRuntime
         Selected?.DisconnectAsync(cancellationToken) ?? Task.CompletedTask;
 
     /// <inheritdoc />
+    public Task DisconnectForProjectSwitchAsync(CancellationToken cancellationToken = default) =>
+        Selected?.DisconnectForProjectSwitchAsync(cancellationToken) ?? Task.CompletedTask;
+
+    /// <inheritdoc />
     public Task RequestSystemStateAsync(CancellationToken cancellationToken = default) =>
         Selected?.RequestSystemStateAsync(cancellationToken) ?? Task.CompletedTask;
 

@@ -57,10 +57,6 @@ foreach ($fileSpec in $jsonFilesAndSchemas) {
                             Write-Host "[WARN] Speech.PiperModelPath is empty" -ForegroundColor Yellow
                             $hasWarnings = $true
                         }
-                        if (-not $json.z21 -or [string]::IsNullOrWhiteSpace($json.z21.currentIpAddress)) {
-                            Write-Host "[WARN] Z21.CurrentIpAddress is empty" -ForegroundColor Yellow
-                            $hasWarnings = $true
-                        }
                     }
                 }
                 'Solution' {
