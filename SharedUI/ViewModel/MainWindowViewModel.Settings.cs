@@ -69,46 +69,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public AppSettings Settings => _settings;
 
-    /// <summary>
-    /// Available IP addresses for Z21 connection (from recent connections).
-    /// </summary>
-    public ObservableCollection<string> AvailableIpAddresses => new(_settings.Z21.RecentIpAddresses);
-
     // Wrapper properties for Settings page bindings
-    /// <summary>
-    /// Gets or sets the currently selected IP address for the Z21 command station.
-    /// </summary>
-    public string IpAddress
-    {
-        get => _settings.Z21.CurrentIpAddress;
-        set
-        {
-            if (_settings.Z21.CurrentIpAddress != value)
-            {
-                _settings.Z21.CurrentIpAddress = value;
-                OnPropertyChanged();
-                PersistSettings();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets or sets the default UDP port used to connect to the Z21 command station.
-    /// </summary>
-    public string Port
-    {
-        get => _settings.Z21.DefaultPort;
-        set
-        {
-            if (_settings.Z21.DefaultPort != value)
-            {
-                _settings.Z21.DefaultPort = value;
-                OnPropertyChanged();
-                PersistSettings();
-            }
-        }
-    }
-
     /// <summary>
     /// Gets or sets the explicitly configured ESP32 display address.
     /// </summary>
@@ -1110,8 +1071,6 @@ public partial class MainWindowViewModel
             await _settingsService.ResetToDefaultsAsync().ConfigureAwait(false);
 
             // Notify all settings properties changed
-            OnPropertyChanged(nameof(IpAddress));
-            OnPropertyChanged(nameof(Port));
             OnPropertyChanged(nameof(DisplayIpAddress));
             OnPropertyChanged(nameof(DisplayPort));
             OnPropertyChanged(nameof(Z21AutoConnectRetryInterval));

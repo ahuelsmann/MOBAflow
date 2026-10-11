@@ -154,7 +154,6 @@ public partial class MainWindowViewModel
     private void HandleSelectedProjectChanged(ProjectViewModel? oldValue, ProjectViewModel? newValue)
     {
         ObserveRollingStockProject(oldValue, newValue);
-        _locomotiveWhistleAutomation?.Activate(newValue?.Model);
         RefreshProjectDiagnostics();
 
         // Statistics are replaced (new ObservableCollection), not mutated in place,
@@ -180,8 +179,6 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(FilteredLocomotiveLibrary));
             OnPropertyChanged(nameof(FilteredPassengerWagonLibrary));
             OnPropertyChanged(nameof(FilteredGoodsWagonLibrary));
-
-            ObserveBackgroundTask(RefreshActiveProjectRuntimeAsync(), "Activate project runtime");
         }
         else
         {

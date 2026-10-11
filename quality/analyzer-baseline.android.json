@@ -643,7 +643,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Service/MobaRuntimeService.AutoConnect.cs",
-      "count": 5
+      "count": 4
     },
     {
       "project": "Backend",
@@ -825,7 +825,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
       "path": "Backend/Service/MobaRuntimeService.AutoConnect.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Backend",
@@ -958,13 +958,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Backend/Model/Z21Models.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "Backend/Service/MobaRuntimeService.AutoConnect.cs",
       "count": 1
     },
     {
@@ -1224,7 +1217,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
       "path": "Common/Configuration/AppSettings.Sections.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Common",
@@ -1413,7 +1406,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Common/Configuration/AppSettings.Sections.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "Common",

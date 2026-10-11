@@ -24,7 +24,14 @@ public partial class MainWindowViewModel
     private void InitializeTrafficMonitor()
     {
         _eventBusSubscriptions.Add(_eventBus.Subscribe<Z21TrafficPacketLoggedEvent>(OnTrafficPacketLogged));
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<SelectedRuntimeChangedEvent>(_ => ReloadTrafficPackets()));
+        ReloadTrafficPackets();
+    }
 
+    /// <summary>Shows the traffic the runtime of the selected project has recorded.</summary>
+    private void ReloadTrafficPackets()
+    {
+        TrafficPackets.Clear();
         foreach (var packet in _trafficMonitor.GetTrafficPackets())
         {
             TrafficPackets.Add(packet);

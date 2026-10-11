@@ -77,6 +77,10 @@ public sealed partial class MainWindowViewModel
                 ProjectDiagnostics.Add(diagnostic);
         }
 
+        // The Z21 assignment depends on the other projects of the solution.
+        foreach (var diagnostic in Z21AssignmentDiagnostics.Analyze(SelectedProject?.Model, Solution.Projects))
+            ProjectDiagnostics.Add(diagnostic);
+
         OnPropertyChanged(nameof(DiagnosticErrorCount));
         OnPropertyChanged(nameof(DiagnosticWarningCount));
         OnPropertyChanged(nameof(DiagnosticInformationCount));

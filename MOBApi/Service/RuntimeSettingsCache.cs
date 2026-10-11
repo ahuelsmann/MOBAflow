@@ -43,4 +43,14 @@ public sealed class RuntimeSettingsCache : IRuntimeSettingsCache
             _z21Port = port;
         }
     }
+
+    /// <inheritdoc />
+    public void ClearZ21Endpoint()
+    {
+        lock (_lock)
+        {
+            _z21IpAddress = null;
+            _z21Port = 0;
+        }
+    }
 }
