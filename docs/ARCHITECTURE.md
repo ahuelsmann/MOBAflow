@@ -273,8 +273,16 @@ IZ21 / JourneyManager / WorkflowService
   DCC addresses 1–9999 and continue after individual send failures. Failed manual stops
   keep the connection available for retry; host shutdown passes its cancellation token
   through the stop loop and disposes a runtime when its stop is cancelled.
-- Covered by `Test/Backend/ProjectRuntimeHostTests.cs` and
-  `Test/SharedUI/MainWindowViewModelShutdownTests.cs`.
+- Remote control per project: every runtime snapshot names its project
+  (`MobaRuntimeSnapshot.ProjectId`). MOBAflow pushes the snapshots of all project
+  runtimes; MOBApi caches one snapshot per project. A MOBAsmart remote registers for
+  one project and receives only that project's snapshots, and every remote command
+  names its project. MOBApi rejects commands for a project the synchronized solution
+  does not contain; MOBAflow's `ProjectRuntimeCommandRouter` runs a command in that
+  project's runtime only.
+- Covered by `Test/Backend/ProjectRuntimeHostTests.cs`,
+  `Test/SharedUI/MainWindowViewModelShutdownTests.cs` and the project routing tests in
+  `Test/MOBApi/` and `Test/MOBAflow/ProjectRuntimeCommandRouterTests.cs`.
 
 **Editor vs runtime state (done):**
 

@@ -9,6 +9,7 @@ using Domain;
 using Microsoft.AspNetCore.Mvc;
 
 using Moba.MOBApi.Service;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// REST fallback for remote runtime commands when SignalR forwarding is unavailable.
@@ -34,6 +35,7 @@ public class RuntimeCommandsController : ControllerBase
 
         return _commandAdmission.Enqueue(new RuntimeCommandEnvelope
         {
+            ProjectId = request.ProjectId,
             Type = RuntimeCommandType.SetSignalAspect,
             SignalId = request.SignalId,
             SignalAspect = request.Aspect
@@ -50,6 +52,7 @@ public class RuntimeCommandsController : ControllerBase
 
         return _commandAdmission.Enqueue(new RuntimeCommandEnvelope
         {
+            ProjectId = request.ProjectId,
             Type = RuntimeCommandType.SetLocomotiveDrive,
             LocomotiveAddress = request.Address,
             Speed = request.Speed,
@@ -67,6 +70,7 @@ public class RuntimeCommandsController : ControllerBase
 
         return _commandAdmission.Enqueue(new RuntimeCommandEnvelope
         {
+            ProjectId = request.ProjectId,
             Type = RuntimeCommandType.SetLocomotiveFunction,
             LocomotiveAddress = request.Address,
             FunctionIndex = request.FunctionIndex,
@@ -87,9 +91,21 @@ public class RuntimeCommandsController : ControllerBase
         return Ok(command);
     }
 
-    public sealed record SetSignalAspectRequest(Guid SignalId, SignalAspect Aspect);
+    // Every field is required: a value left out of the request must not silently become 0, false or an empty id.
+    public sealed record SetSignalAspectRequest(
+        [property: JsonRequired] Guid ProjectId,
+        [property: JsonRequired] Guid SignalId,
+        [property: JsonRequired] SignalAspect Aspect);
 
-    public sealed record SetLocomotiveDriveRequest(int Address, int Speed, bool Forward);
+    public sealed record SetLocomotiveDriveRequest(
+        [property: JsonRequired] Guid ProjectId,
+        [property: JsonRequired] int Address,
+        [property: JsonRequired] int Speed,
+        [property: JsonRequired] bool Forward);
 
-    public sealed record SetLocomotiveFunctionRequest(int Address, int FunctionIndex, bool IsOn);
+    public sealed record SetLocomotiveFunctionRequest(
+        [property: JsonRequired] Guid ProjectId,
+        [property: JsonRequired] int Address,
+        [property: JsonRequired] int FunctionIndex,
+        [property: JsonRequired] bool IsOn);
 }
