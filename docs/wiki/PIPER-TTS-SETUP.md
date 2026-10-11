@@ -39,18 +39,19 @@ or virtual environment, for example `.venv\Scripts\piper.exe`.
     "PiperConfigPath": "",
     "Rate": -1,
     "Volume": 90,
-    "SpeakerEngineName": "Piper TTS",
+    "SpeakerEngineName": "PiperTts",
     "VoiceName": "",
     "TestMessage": "Dies ist ein Test der Sprachsynthese. Nächster Halt: Hauptbahnhof."
   }
 }
 ```
 
-## Fallback
+## Using Windows speech instead
 
-If Piper is selected but the executable or model path is missing, MOBAflow falls
-back to **System Speech (Windows SAPI)** and logs a warning. You can also select
-Windows SAPI directly in **Settings → Speech Synthesis**.
+Selecting Piper requires a valid executable and model file. Missing files or a
+failed synthesis produce an error; they do not automatically switch the
+announcement to Windows speech. To use Windows speech instead, select
+**System Speech (Windows SAPI)** explicitly in **Settings → Speech Synthesis**.
 
 ## Troubleshooting
 
