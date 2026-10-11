@@ -13,6 +13,7 @@ using Microsoft.Maui.Storage;
 using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
+using SharedUI.Mobile;
 using SharedUI.Service;
 using SharedUI.ViewModel;
 using Sound;
@@ -66,6 +67,7 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddMobiHttpClients();
         services.AddSingleton<RestApiDiscoveryService>();
         services.AddSingleton<IRestDiscoveryService>(sp => sp.GetRequiredService<RestApiDiscoveryService>());
+        services.AddSingleton<MobaflowEndpointLocator>();
         services.AddSingleton<IPhotoUploadService, PhotoUploadService>();
         services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
         services.AddSingleton<IPhotoUriResolver, MauiPhotoUriResolver>();
@@ -129,7 +131,7 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<IRestDiscoveryService>(),
+            sp.GetRequiredService<MobaflowEndpointLocator>(),
             sp.GetRequiredService<IPhotoUploadService>(),
             sp.GetRequiredService<IPhotoCaptureService>(),
             sp.GetRequiredService<INetworkProfileChangeNotifier>(),

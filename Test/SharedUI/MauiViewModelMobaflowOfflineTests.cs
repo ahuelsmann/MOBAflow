@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
@@ -787,15 +788,17 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             .Setup(dispatcher => dispatcher.InvokeOnUiAsync(It.IsAny<Func<Task>>()))
             .Returns<Func<Task>>(asyncAction => asyncAction());
 
+        var appSettings = settings ?? new AppSettings();
+        var settingsService = CreateSettingsServiceMock().Object;
         var viewModel = new MauiViewModel(
             runtimeMock.Object,
             runtimeMock.Object,
             runtimeMock.Object,
             runtimeCommandGateway ?? mobileRuntimeCoordinator ?? (IRuntimeCommandGateway)new LocalRuntimeCommandGateway(runtimeMock.Object),
             uiDispatcherMock.Object,
-            settings ?? new AppSettings(),
-            CreateSettingsServiceMock().Object,
-            restDiscoveryService ?? new Mock<IRestDiscoveryService>().Object,
+            appSettings,
+            settingsService,
+            TestEndpointLocators.Create(appSettings, settingsService, restDiscoveryService),
             photoUploadService ?? new Mock<IPhotoUploadService>().Object,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,
