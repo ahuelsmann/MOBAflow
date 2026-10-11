@@ -6,11 +6,16 @@
 
 ## Baseline and ownership
 
-Refreshed on 2026-10-11 against `github/main` at `9b03676a9865275711d4031815f26a2d35e2474b`.
+Prerequisites and current action/event models rechecked on 2026-10-11 against `github/main` at
+`38546d6dc2303dc3639254b5410ff543d64efe36`. The detailed execution inventory below remains the preparation audit
+from `9b03676a`; refresh it against the integrated RF-23 factory before technical planning.
 Issue #35 is open. Its 2026-10-09 comment confirms that the early RF-01 through RF-05 gates are resolved
 and recommends the RF-23 project-runtime factory as the basis. RF-23 [#191](https://github.com/ahuelsmann/MOBAflow/issues/191)
-remains open; PRs #207, #211 and #217 are drafts and not merged. `Backend/Service/ProjectRuntimes/` is absent from this main.
-The existing `specs/008-project-runtimes/` belongs to RF-23; no automation-testbench feature specification exists yet.
+remains open; PRs #207, #211 and #217 are ready for review but not merged. `Backend/Service/ProjectRuntimes/` is absent from this main.
+The existing `specs/008-project-runtimes/` belongs to RF-23. Draft requirements and their quality checklist now exist in
+[specs/010-automation-testbench/spec.md](../specs/010-automation-testbench/spec.md) and
+[checklists/requirements.md](../specs/010-automation-testbench/checklists/requirements.md).
+They are preparation, not an approved implementation specification; the technical plan, tasks and consistency analysis remain pending.
 
 This replaces the July execution inventory with the current ordered-action and event-plan baseline.
 Workflow 2.0 #32 was delivered, but #132 subsequently replaced workflow graphs with ordered actions;
@@ -44,8 +49,8 @@ for roundtrip validation rather than changing the operator's or shipped sample s
 | G4 | `Solution.CurrentSchemaVersion` is 4; scenario data is directly added to the current project/schema. No legacy paths or migrations. Recheck the final model before persistence. | Persistence slice |
 | G5 | Mandatory secrets scans and a clean dedicated task worktree on the verified integration base. | Every implementation slice |
 | G6 | Issue #35 links this plan and the final feature artifacts; GitHub tracks the remaining work. A historical label alone is not implementation evidence. | Implementation start |
-| G7 | Specification, clarification, plan, tasks and analysis exist under `specs/NNN-automation-testbench/`, agree with this plan and are linked from #35. | Implementation start; currently missing |
-| G8 | RF-23 slice 3 is integrated, including project-runtime construction, per-project persistent counters and safe disposal. #207 and #211 were unmerged drafts at inspection time. | Production-code and characterization-test implementation |
+| G7 | Draft requirements exist under `specs/010-automation-testbench/`. Requirements review/clarification, technical plan, tasks, analysis and the issue's final feature link remain pending; reconcile them with the integrated base. | Implementation start; not satisfied |
+| G8 | RF-23 slice 3 is integrated, including project-runtime construction, per-project persistent counters and safe disposal. #207 and #211 are review-ready but unmerged at this recheck. | Production-code and characterization-test implementation |
 
 Research and plan refinement can proceed now. No runtime/model/UI implementation starts until the applicable gates pass.
 #35 does not acquire RF-24 or #141 as an additional hard dependency; use their final contracts if they are integrated by then.
