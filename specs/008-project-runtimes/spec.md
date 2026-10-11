@@ -237,8 +237,10 @@ and the switch warning; no page still says to enter the Z21 address in the app s
 - **SC-002**: Confirming a switch sends speed 0 to 100% of known locomotives before any runtime is discarded;
   cancelling changes nothing.
 - **SC-003**: Editing master data while a workflow runs cancels 0 workflows and resets 0 journeys.
-- **SC-004**: No service or ViewModel depends on `MainWindowViewModel`, checked by an architecture test; the remaining
-  WinUI page dependencies are listed in the test and removed by RF-24.
+- **SC-004**: Services and ViewModels access solution and runtime state through the session and focused contracts.
+  Dependencies on `MainWindowViewModel` are restricted to the existing entries in
+  `SolutionSessionArchitectureTests.AllowedDependents`, as permitted by FR-001. The shell and its composition remain;
+  the named page, layout and shell-state consumers are removed by RF-24. No new exception is introduced by RF-23.
 - **SC-005**: The wiki pages describe the rule; no page tells the user to enter the Z21 address in the app settings.
 
 ## Assumptions
