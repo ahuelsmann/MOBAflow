@@ -60,12 +60,51 @@ Owners decided on 2026-10-09: CI-02 to CI-04 move to #209, CI-05 and CI-06 to #1
   installs workload set 10.0.401.1 with `dotnet workload install maui-android --version`; a workloadVersion
   in global.json would fail every build on machines without that set. The Windows and Linux jobs run on the
   pinned band. The Android job is disabled since #195, so its pin is first exercised when it is re-enabled.
-- [ ] CI-05 (medium, #197 CI-3): evaluate scoped docs-only CI. Preserve required-check names/results;
+- [x] CI-05 (medium, #197 CI-3): evaluate scoped docs-only CI. Preserve required-check names/results;
   do not introduce permanently pending filtered checks. Done: docs, shared code, WinUI and Android
   sample diffs receive the intended jobs without bypassing product gates.
-- [ ] CI-06 (existing main, #197 CI-1): triage the two failed Sonar rating conditions against current main findings.
+  Completed in #197: #202 added dependency-aware selection and 35 passing regression checks;
+  documentation-only #221 reported skipped jobs without leaving required checks pending.
+- [x] CI-06 (existing main, #197 CI-1): triage the two failed Sonar rating conditions against current main findings.
   Keep product fixes out of repository-setup scope unless they block the current PR gate.
   Done: current main Sonar passes with evidence and no suppressed valid findings.
+  Completed in #197: main 934c9dcc has a green Sonar gate, Reliability/Security A,
+  zero new bugs and zero new vulnerabilities; the analysis revision matches that commit.
+
+## Follow-up verification after #197 (2026-10-11, #209)
+
+The [active main ruleset](https://github.com/ahuelsmann/MOBAflow/rules/24007434)
+still requires these six checks. The API comparison on main
+934c9dcc8839e0789085b45dbc0dd84a206733d5 matched both the exact names and
+GitHub App IDs against the reported check runs:
+
+| Required context | App ID | Main result |
+| --- | --- | --- |
+| Repository instruction consistency | 15368 | success |
+| Windows desktop build, tests, and coverage | 15368 | success |
+| Display protocol host, parser, and firmware | 15368 | success |
+| Android Release AAB | 15368 | skipped by the existing distribution policy |
+| Domain mutation testing | 15368 | success |
+| SonarCloud Code Analysis | 12526 | success |
+
+Evidence: [main Quality](https://github.com/ahuelsmann/MOBAflow/actions/runs/38150639327)
+and the Sonar check on the same commit. No check was missing or pending, and no
+ruleset change was needed. Common mutation testing and CodeQL also passed; they
+are not additional contexts in this ruleset.
+
+CI-02 is implemented by #198 and CI-03 by #216. The bounded Pages workflow
+passed on this main revision in
+[run 38150639287](https://github.com/ahuelsmann/MOBAflow/actions/runs/38150639287).
+The next scheduled stale run remains the runtime confirmation of its new bound;
+the earlier successful runs predate #216. It was not triggered manually because
+it can label and comment on unrelated issues and pull requests.
+
+CI-04 retains the owner's #218 feature-band decision and workload set 10.0.401.1.
+Quality now offers manual `validate_android=true` validation on a clean Windows
+runner, including a workload-version check, Release AAB publish, analyzer baseline
+and bundle validation. Regular PR/main runs keep Android skipped. Until that
+manual run succeeds, the Android pin is configured but its execution is not
+claimed as verified.
 
 ## Positive controls and limits
 Actions in repository YAML are pinned to full commit SHAs; Dependabot checks them weekly.

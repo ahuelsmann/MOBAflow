@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      validate_android:
+        description: 'Validate the pinned Android toolchain and Release AAB'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -405,9 +411,9 @@ jobs:
   android-release:
     name: Android Release AAB
     needs: changes
-    # Disabled while MOBAsmart is not distributed; retain the required check name.
-    # Re-enable the code-change condition when Android release distribution starts.
-    if: ${{ false }}
+    # Regular PR/main runs stay skipped while MOBAsmart is not distributed.
+    # Manual validation exercises the pinned toolchain without publishing a release.
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.validate_android }}
     runs-on: windows-latest
     timeout-minutes: 60
 
@@ -434,11 +440,19 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-android-
 
-      # workload restore always moves to the newest workload set, even with --skip-manifest-update.
-      # Installing the workload with an explicit set version keeps the Android toolchain reproducible.
+      # Install and verify the agreed set; --skip-manifest-update alone does not pin workloads.
       - name: Install pinned MAUI Android workload
         shell: pwsh
-        run: dotnet workload install maui-android --version 10.0.401.1
+        run: |
+          $expectedWorkloadVersion = '10.0.401.1'
+          dotnet workload install maui-android --version $expectedWorkloadVersion
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $actualWorkloadVersion = dotnet workload --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($actualWorkloadVersion.Trim() -ne $expectedWorkloadVersion) {
+            throw "Expected workload set $expectedWorkloadVersion; found $actualWorkloadVersion."
+          }
+          dotnet --info
 
       - name: Restore Android dependency graph
         shell: pwsh
