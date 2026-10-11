@@ -24,6 +24,7 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         var signalId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 
         await gateway.SetTrackPowerAsync(true);
+        await gateway.AcknowledgeFailSafeAsync().ConfigureAwait(false);
         await gateway.SimulateFeedbackAsync(12);
         await gateway.ResetJourneyAsync(journeyId);
         await gateway.ResetInPortCountersAsync();
@@ -32,6 +33,7 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         await gateway.SetSignalAspectAsync(signalId, Enum.GetValues<SignalAspect>()[0]);
         await gateway.SetLocomotiveDriveAsync(3, 42, true);
         await gateway.SetLocomotiveFunctionAsync(3, 5, true);
+        await gateway.SetAllLocomotiveFunctionsOffAsync(3).ConfigureAwait(false);
         await gateway.SendTurnoutCommandAsync(17, 2, true, queue: true);
         var artifact = (await session.StopAsync()).Artifact!;
         var recordedCommands = artifact.Entries
@@ -41,6 +43,7 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         var expectedCommandKeys = new[]
         {
             "command.track-power",
+            "command.fail-safe-acknowledge",
             "command.simulate-feedback",
             "command.journey-reset",
             "command.inport-counters-reset",
@@ -49,6 +52,7 @@ internal sealed class RecordingRuntimeCommandGatewayTests
             "command.signal-aspect",
             "command.locomotive-drive",
             "command.locomotive-function",
+            "command.locomotive-functions-off",
             "command.turnout"
         };
         Assert.Multiple(() =>
@@ -65,7 +69,7 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         foreach (var commandKey in expectedCommandKeys)
         {
             var commandEntries = recordedCommands
-                .Where(entry => entry.TypeKey.StartsWith(commandKey, StringComparison.Ordinal))
+                .Where(entry => entry.TypeKey.StartsWith(commandKey + ".", StringComparison.Ordinal))
                 .ToArray();
             Assert.Multiple(() =>
             {
@@ -92,6 +96,85 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         foreach (var request in importedRequests)
         {
             Assert.That(isolatedRuntime.Apply(request).Succeeded, Is.True, request.TypeKey);
+        }
+    }
+
+    [Test]
+    public async Task LocomotiveInfoQuery_RecordsCorrelatedDisplayOnlyEntriesThatSurviveImport()
+    {
+        var session = new RecordingSessionService(TimeProvider.System);
+        await using var sessionLifetime = session.ConfigureAwait(false);
+        session.Start(new RecordingSessionStartRequest("Query", "1.0"));
+        var inner = new StubRuntimeCommandGateway();
+        var gateway = new RecordingRuntimeCommandGateway(inner, session);
+
+        await gateway.RequestLocomotiveInfoAsync(7).ConfigureAwait(false);
+        var artifact = (await session.StopAsync().ConfigureAwait(false)).Artifact!;
+        var services = new ServiceCollection();
+        services.AddMobaBackendServices();
+        using var provider = services.BuildServiceProvider();
+        var serializer = provider.GetRequiredService<RecordingArtifactSerializer>();
+        var imported = serializer.Import(serializer.SerializeToUtf8(artifact));
+
+        Assert.That(imported.IsValid, Is.True);
+        var entries = imported.Artifact!.Entries.Where(entry => entry.Source == "runtime-command-gateway").ToArray();
+        Assert.That(entries, Has.Length.EqualTo(2));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(inner.ExecutionCount, Is.EqualTo(1));
+            Assert.That(entries[0].TypeKey, Is.EqualTo("command.locomotive-info.request"));
+            Assert.That(entries[0].Payload.GetProperty("address").GetInt32(), Is.EqualTo(7));
+            Assert.That(entries[1].TypeKey, Is.EqualTo("command.locomotive-info.result"));
+            Assert.That(entries[0].CorrelationId, Is.EqualTo(entries[1].CorrelationId));
+            Assert.That(entries, Has.All.Property(nameof(RecordingEntry.ReplayApplicability))
+                .EqualTo(RecordingReplayApplicability.DisplayOnly));
+            Assert.That(new IsolatedReplayRuntime().Apply(entries[0]).Succeeded, Is.False);
+        }
+    }
+
+    [TestCase("command.fail-safe-acknowledge", false)]
+    [TestCase("command.locomotive-functions-off", false)]
+    [TestCase("command.locomotive-info", false)]
+    [TestCase("command.fail-safe-acknowledge", true)]
+    [TestCase("command.locomotive-functions-off", true)]
+    [TestCase("command.locomotive-info", true)]
+    public async Task PreviouslyMissingCommand_RecordsSanitizedFailureOrCancellation(string commandKey, bool cancelled)
+    {
+        const string privateDetail = "private command failure detail";
+        using var cancellation = new CancellationTokenSource();
+        if (cancelled)
+        {
+            await cancellation.CancelAsync().ConfigureAwait(false);
+        }
+
+        var session = new RecordingSessionService(TimeProvider.System);
+        await using var sessionLifetime = session.ConfigureAwait(false);
+        session.Start(new RecordingSessionStartRequest("Outcome", "1.0"));
+        var inner = new StubRuntimeCommandGateway
+        {
+            Failure = cancelled ? new OperationCanceledException(cancellation.Token) : new InvalidOperationException(privateDetail)
+        };
+        var gateway = new RecordingRuntimeCommandGateway(inner, session);
+        var exception = await Assert.CatchAsync<Exception>(() => commandKey switch
+        {
+            "command.fail-safe-acknowledge" => gateway.AcknowledgeFailSafeAsync(cancellation.Token),
+            "command.locomotive-functions-off" => gateway.SetAllLocomotiveFunctionsOffAsync(7, cancellation.Token),
+            _ => gateway.RequestLocomotiveInfoAsync(7, cancellation.Token)
+        }).ConfigureAwait(false);
+        var entries = (await session.StopAsync().ConfigureAwait(false)).Artifact!.Entries
+            .Where(entry => entry.Source == "runtime-command-gateway").ToArray();
+        Assert.That(entries, Has.Length.EqualTo(2));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(exception, Is.SameAs(inner.Failure));
+            Assert.That(inner.LastCancellationToken, Is.EqualTo(cancellation.Token));
+            Assert.That(entries[0].TypeKey, Is.EqualTo(commandKey + ".request"));
+            Assert.That(entries[1].TypeKey, Is.EqualTo(commandKey + ".failure"));
+            Assert.That(entries[0].CorrelationId, Is.EqualTo(entries[1].CorrelationId));
+            Assert.That(entries[1].Payload.GetProperty("outcome").GetString(), Is.EqualTo(cancelled ? "cancelled" : "failed"));
+            Assert.That(entries[1].Payload.GetRawText(), Does.Not.Contain(privateDetail));
+            Assert.That(entries[1].ReplayApplicability, Is.EqualTo(RecordingReplayApplicability.DisplayOnly));
         }
     }
 
@@ -144,10 +227,13 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         var gateway = new RecordingRuntimeCommandGateway(inner, session);
 
         await gateway.SetTrackPowerAsync(false);
+        await gateway.AcknowledgeFailSafeAsync().ConfigureAwait(false);
+        await gateway.SetAllLocomotiveFunctionsOffAsync(7).ConfigureAwait(false);
+        await gateway.RequestLocomotiveInfoAsync(7).ConfigureAwait(false);
 
         Assert.Multiple(() =>
         {
-            Assert.That(inner.ExecutionCount, Is.EqualTo(1));
+            Assert.That(inner.ExecutionCount, Is.EqualTo(4));
             Assert.That(session.ReadEntries(0, 10), Is.Empty);
         });
     }
@@ -158,9 +244,11 @@ internal sealed class RecordingRuntimeCommandGatewayTests
 
         public Exception? Failure { get; init; }
 
+        public CancellationToken LastCancellationToken { get; private set; }
+
         public Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default) => ExecuteAsync();
 
-        public Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default) => ExecuteAsync();
+        public Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default) => ExecuteWithCancellationAsync(cancellationToken);
 
         public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) => ExecuteAsync();
 
@@ -190,9 +278,9 @@ internal sealed class RecordingRuntimeCommandGatewayTests
             CancellationToken cancellationToken = default) => ExecuteAsync();
 
         public Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default) =>
-            ExecuteAsync();
+            ExecuteWithCancellationAsync(cancellationToken);
 
-        public Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default) => ExecuteAsync();
+        public Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default) => ExecuteWithCancellationAsync(cancellationToken);
 
         public Task SendTurnoutCommandAsync(
             int decoderAddress,
@@ -200,6 +288,12 @@ internal sealed class RecordingRuntimeCommandGatewayTests
             bool activate,
             bool queue = false,
             CancellationToken cancellationToken = default) => ExecuteAsync();
+
+        private Task ExecuteWithCancellationAsync(CancellationToken cancellationToken)
+        {
+            LastCancellationToken = cancellationToken;
+            return ExecuteAsync();
+        }
 
         private Task ExecuteAsync()
         {

@@ -150,10 +150,9 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingleton<TrainControlViewModel>(sp =>
         {
             var coordinator = sp.GetRequiredService<IMobileRuntimeCoordinator>();
-            // Locomotive commands use the coordinator directly and are not recorded yet (issue #188).
             return new TrainControlViewModel(
                 sp.GetRequiredService<IRuntimeSnapshotProvider>(),
-                coordinator,
+                sp.GetRequiredService<IRuntimeCommandGateway>(),
                 sp.GetRequiredService<ISettingsService>(),
                 sp.GetRequiredService<IProjectContext>(),
                 sp.GetRequiredService<ILogger<TrainControlViewModel>>(),

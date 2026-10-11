@@ -77,6 +77,7 @@ internal static class CoreRecordingPayloadValidators
             ("elapsedTicks", IsNullableNonNegativeInt64),
             ("result", IsNullableWorkflowResult)),
         Schema("command.track-power.request", ("isOn", IsBoolean)),
+        Schema("command.fail-safe-acknowledge.request"),
         Schema("command.simulate-feedback.request", (InPortProperty, IsPositiveInt32)),
         Schema("command.journey-reset.request", (JourneyIdProperty, IsGuid)),
         Schema("command.inport-counters-reset.request"),
@@ -93,6 +94,8 @@ internal static class CoreRecordingPayloadValidators
             ("address", IsPositiveInt32),
             ("functionIndex", IsNonNegativeInt32),
             ("isOn", IsBoolean)),
+        Schema("command.locomotive-functions-off.request", ("address", IsPositiveInt32)),
+        DisplaySchema("command.locomotive-info.request", ("address", IsPositiveInt32)),
         Schema(
             "command.turnout.request",
             ("decoderAddress", IsPositiveInt32),
@@ -101,6 +104,7 @@ internal static class CoreRecordingPayloadValidators
             ("queue", IsBoolean)),
         ..CommandOutcomeSchemas(
             "command.track-power",
+            "command.fail-safe-acknowledge",
             "command.simulate-feedback",
             "command.journey-reset",
             "command.inport-counters-reset",
@@ -109,6 +113,8 @@ internal static class CoreRecordingPayloadValidators
             "command.signal-aspect",
             "command.locomotive-drive",
             "command.locomotive-function",
+            "command.locomotive-functions-off",
+            "command.locomotive-info",
             "command.turnout")
     ];
 

@@ -28,6 +28,7 @@ public sealed class IsolatedReplayRuntime : IIsolatedReplayRuntime
         "journey.transition",
         "workflow.lifecycle",
         "command.track-power.request",
+        "command.fail-safe-acknowledge.request",
         "command.simulate-feedback.request",
         "command.journey-reset.request",
         "command.inport-counters-reset.request",
@@ -36,6 +37,7 @@ public sealed class IsolatedReplayRuntime : IIsolatedReplayRuntime
         "command.signal-aspect.request",
         "command.locomotive-drive.request",
         "command.locomotive-function.request",
+        "command.locomotive-functions-off.request",
         "command.turnout.request"
     }.ToFrozenSet(StringComparer.Ordinal);
 
