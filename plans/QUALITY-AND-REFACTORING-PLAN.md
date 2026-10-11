@@ -392,12 +392,18 @@ Sequence:
    journey selection;
 2. move this state into a solution session service that implements
    `IProjectContext` and `IJourneySelectionContext`;
-3. inject that service instead of `MainWindowViewModel` into page ViewModels,
-   WinUI pages and host services;
-4. make the registered `Solution` accessible only through the session.
+3. inject that service into consumers of solution ownership and selection;
+4. make the registered `Solution` accessible only through the session;
+5. create one runtime and one Z21 connection per project, preserve safe switching
+   and project-addressed mobile control.
 
-Acceptance anchor: no ViewModel, page or service except the shell depends on
-`MainWindowViewModel`; save, auto-save and selection behavior is unchanged.
+Acceptance anchor: session ownership, per-project runtime isolation, safe stop,
+Windows/Android builds and fake-based tests satisfy
+[RF-23's specification](../specs/008-project-runtimes/spec.md). Dependencies on
+`MainWindowViewModel` remain only in the existing named entries of
+`SolutionSessionArchitectureTests.AllowedDependents`; the page, layout and
+shell-state consumers belong to RF-24. No new exception is introduced. Save,
+auto-save and selection behavior is preserved.
 
 ### RF-24: Decompose `MainWindowViewModel`
 
