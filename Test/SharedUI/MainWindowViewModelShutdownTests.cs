@@ -172,7 +172,7 @@ internal partial class MainWindowViewModelShutdownTests
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             eventBus ?? new Mock<IEventBus>().Object,
             uiDispatcherMock.Object,
-            new AppSettings(),
+            TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
             host is null
                 ? TestSolutionSessions.Create(solution ?? new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object)
                 : new SolutionSession(

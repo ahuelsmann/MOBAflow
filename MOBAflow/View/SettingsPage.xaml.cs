@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 using Converter;
 using Microsoft.Extensions.Logging;
@@ -16,26 +15,20 @@ using SharedUI.ViewModel;
 
 /// <summary>
 /// Settings page for application-wide configuration.
-/// Uses MainWindowViewModel.Settings for data binding.
+/// Uses the shared SettingsPageViewModel for data binding.
 /// Settings are auto-saved immediately after changes.
 /// </summary>
 internal sealed partial class SettingsPage
 {
-    public MainWindowViewModel ViewModel { get; }
-    private readonly ISettingsService? _settingsService;
-    private readonly AppSettings? _settings;
+    public SettingsPageViewModel ViewModel { get; }
     private readonly ILogger<SettingsPage>? _logger;
     private readonly INavigationService? _navigationService;
     public SettingsPage(
-        MainWindowViewModel viewModel,
-        ISettingsService? settingsService = null,
-        AppSettings? settings = null,
+        SettingsPageViewModel viewModel,
         ILogger<SettingsPage>? logger = null,
         INavigationService? navigationService = null)
     {
         ViewModel = viewModel;
-        _settingsService = settingsService;
-        _settings = settings;
         _logger = logger;
         _navigationService = navigationService;
         InitializeComponent();
@@ -81,26 +74,13 @@ internal sealed partial class SettingsPage
 
     private async Task HandleResetLayoutButtonAsync()
     {
-        var settingsService = _settingsService;
-        var settings = _settings ?? settingsService?.GetSettings();
-        if (settingsService == null || settings == null)
+        await ViewModel.ResetLayoutsCommand.ExecuteAsync(null);
+        if (ViewModel.IsLayoutResetSuccessful)
         {
-            ShowLayoutResetStatus("Layout reset unavailable", "The settings service is not available.", InfoBarSeverity.Error);
-            return;
-        }
-
-        try
-        {
-            ResetPersistedLayouts(settings);
-            await settingsService.SaveSettingsAsync(settings);
             ResetSectionLayoutToDefaults();
-            ShowLayoutResetStatus("Layouts reset", "Saved layouts were reset. Reopen pages to apply their default layout.", InfoBarSeverity.Success);
         }
-
-        catch (Exception ex)
-        {
-            ShowLayoutResetStatus("Layout reset failed", ex.Message, InfoBarSeverity.Error);
-        }
+        ShowLayoutResetStatus(ViewModel.LayoutResetTitle, ViewModel.LayoutResetMessage,
+            ViewModel.IsLayoutResetSuccessful ? InfoBarSeverity.Success : InfoBarSeverity.Error);
     }
 
     private void BrowsePiperExecutable_Click(object sender, RoutedEventArgs e)
@@ -136,14 +116,6 @@ internal sealed partial class SettingsPage
         var file = await picker.PickSingleFileAsync();
         if (file == null) return;
         applyPath(file.Path);
-    }
-
-    private static void ResetPersistedLayouts(AppSettings settings)
-    {
-        settings.Layout = new LayoutSettings
-        {
-            TabVisibility = settings.Layout.TabVisibility
-        };
     }
 
     private void ShowLayoutResetStatus(string title, string message, InfoBarSeverity severity)

@@ -118,7 +118,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             eventBusMock.Object,
             uiDispatcherMock.Object,
-            new AppSettings(),
+            TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
             TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object),
             new ActionExecutionContext
             {
@@ -379,7 +379,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
         var viewModel = new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(), runtime.Object, runtime.Object, runtime.Object, new LocalRuntimeCommandGateway(runtime.Object), new Mock<IEventBus>().Object,
-            dispatcher.Object, new AppSettings(), TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object, io.Object),
+            dispatcher.Object, TestSettingsPages.Create(new AppSettings(), dispatcher.Object), TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object, io.Object),
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             NullLogger<MainWindowViewModel>.Instance, io.Object)
         {

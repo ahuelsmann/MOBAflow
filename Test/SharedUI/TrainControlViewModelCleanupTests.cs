@@ -101,7 +101,7 @@ internal sealed class TrainControlViewModelCleanupTests
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             new EventBus(NullLogger<EventBus>.Instance),
             uiDispatcherMock.Object,
-            new AppSettings(),
+            TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
             TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, runtimeMock.Object),
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object);

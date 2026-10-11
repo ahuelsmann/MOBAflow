@@ -57,7 +57,7 @@ internal class JourneyMapViewModelTests
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             eventBusMock.Object,
             dispatcherMock.Object,
-            new AppSettings(),
+            TestSettingsPages.Create(new AppSettings(), dispatcherMock.Object),
             TestSolutionSessions.Create(new Solution(), dispatcherMock.Object, runtimeMock.Object),
             new ActionExecutionContext
             {

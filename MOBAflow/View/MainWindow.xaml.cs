@@ -105,7 +105,7 @@ public sealed partial class MainWindow
             ConfigureWindowIconAndSizing();
             InitializeIoService(ioService);
             SubscribeWindowEvents();
-            ApplyTheme(ViewModel.IsDarkMode);
+            ApplyTheme(ViewModel.SettingsPage.IsDarkMode);
             ApplyZ21TrackPowerIconConnectedState();
             _logger.LogInformation("[Startup] MainWindow constructor completed in {ElapsedMs}ms", timer.ElapsedMilliseconds);
         }
@@ -220,6 +220,7 @@ public sealed partial class MainWindow
         ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
         ViewModel.NavigationRequested += OnNavigationRequested;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        ViewModel.SettingsPage.PropertyChanged += SettingsPage_PropertyChanged;
         _navigationService.Navigated += OnNavigationServiceNavigated;
 
         if (AppWindow is not null)
@@ -307,9 +308,13 @@ public sealed partial class MainWindow
         {
             ApplyZ21TrackPowerIconConnectedState();
         }
-        else if (e.PropertyName == nameof(MainWindowViewModel.IsDarkMode))
+    }
+
+    private void SettingsPage_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!_isClosing && e.PropertyName == nameof(SharedUI.ViewModel.SettingsPageViewModel.IsDarkMode))
         {
-            ApplyTheme(ViewModel.IsDarkMode);
+            ApplyTheme(ViewModel.SettingsPage.IsDarkMode);
         }
     }
 
@@ -389,6 +394,7 @@ public sealed partial class MainWindow
         ViewModel.ExitApplicationRequested -= OnExitApplicationRequested;
         ViewModel.NavigationRequested -= OnNavigationRequested;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.SettingsPage.PropertyChanged -= SettingsPage_PropertyChanged;
         _navigationService.Navigated -= OnNavigationServiceNavigated;
 
         if (AppWindow is not null)
@@ -500,7 +506,7 @@ public sealed partial class MainWindow
     {
         _ = sender;
         _ = e;
-        ApplyTheme(ViewModel.IsDarkMode);
+        ApplyTheme(ViewModel.SettingsPage.IsDarkMode);
     }
 
     private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)

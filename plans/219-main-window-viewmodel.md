@@ -2,15 +2,15 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Planning only; implementation blocked by RF-23/#191
-**Evidence**: main commit `9b03676a9865275711d4031815f26a2d35e2474b`, inspected on 2026-10-11
+**Status**: Active; slice 1 (Settings) in implementation, later slices remain planned
+**Evidence**: implementation base `e7cc6f3232ffc6b22fe890dba054371642e901ec`, inspected on 2026-10-11
 
 ## Purpose and scope
 
 [Issue #219](https://github.com/ahuelsmann/MOBAflow/issues/219) owns acceptance and live status.
 The [umbrella plan](QUALITY-AND-REFACTORING-PLAN.md) owns programme dependencies.
 This is the single RF-24 child plan, transferring the umbrella's extraction order and acceptance anchor.
-It permits independent preparation while RF-23 is open; it does not permit implementation yet.
+RF-23 is integrated; the maintainer authorized implementation on 2026-10-11, starting with Settings.
 
 The outcome is a shell responsible for navigation and shell state, with focused page ViewModels
 and one layout persistence service. Preserve commands, bindings, defaults, model-wrapper notifications,
@@ -22,53 +22,43 @@ a persisted-format change requires reclassification and Spec Kit before implemen
 
 ## Start gate and dependency evidence
 
-On the inspection date, RF-23/#191 was open and its PRs
-[#207](https://github.com/ahuelsmann/MOBAflow/pull/207),
-[#211](https://github.com/ahuelsmann/MOBAflow/pull/211) and
-[#217](https://github.com/ahuelsmann/MOBAflow/pull/217) were drafts.
-PR #217 targeted the safe-switch branch, not main. Green checks on an individual slice do not
-complete #191. Do not adopt these unmerged branches as the RF-24 base or modify their worktrees.
+RF-23/#191 closed after #239 was integrated at `eb4ebecd414c978324e3b7005b8691fcc2c802b4`.
+The [acceptance record](../specs/008-project-runtimes/acceptance.md) maps integrated slices,
+fake-based tests and Windows/Android evidence; app/device/hardware checks are recorded separately.
+The maintainer authorized the Settings slice on 2026-10-11. It starts from integrated main.
 
-Before the first implementation slice:
+### Resolved acceptance boundary
 
-1. Verify #191 is completed, its required slices are integrated, and its Windows/Android/test
-   acceptance evidence applies to the integrated commit. Refresh GitHub state and main.
-2. Resolve the acceptance mismatch described below in the owning issue, with an explicit
-   approved boundary for residual RF-24 consumers. Do not silently waive the RF-23 criterion.
-3. Re-scan and refresh this inventory against that commit, including selected-project runtime
-   access, shutdown, settings and command state. Record the base and any changed boundaries.
-4. Confirm this child plan is linked and reviewed with no unresolved design question.
-5. Create a dedicated worktree and task branch for the first responsibility; preserve other sessions.
-
-### Acceptance mismatch to resolve
-
-#191 currently says no ViewModel, page or service except the shell depends on MainWindowViewModel.
-However, [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs)
-lines 23-33 explicitly allow WinUI pages, GridColumnResizeBehavior, PostStartupInitializationService,
-MonitorPageViewModel and EventManagerViewModel until RF-24; composition and Android cleanup also
-have exceptions. These are source-backed residual dependencies, not proof that RF-23 is complete.
-The RF-23 owner must reconcile its acceptance statement and these approved residuals before this
-plan becomes executable. RF-24 must remove page/service shell dependencies and narrow the guard;
-the final guard must retain only justified shell/composition consumers.
+#191 and FR-001/SC-004 now agree with
+[SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs):
+existing shell/composition, WinUI page bindings/navigation, grid-column persistence,
+MonitorPageViewModel, EventManagerViewModel and Android shutdown lookup are named residuals.
+PostStartupInitializationService already uses the session and is not a shell exception.
+This slice rejects shell dependencies in SettingsPage even while other pages remain allowed.
+The remaining core retains selected-project projections, operating state and shutdown;
+ISolutionSession owns the solution and canonical selection, and operator commands stay on
+IRuntimeCommandGateway. Settings extraction changes neither boundary.
+#136 was refreshed before extraction; this slice retains its existing SAPI/Piper integration
+without provider implementation or project changes.
 
 ## Source inventory and proposed owners
 
-Paths below refer to the evidence commit, not unmerged RF-23 work. Line counts are file-size
-observations, not coverage or quality metrics. The shell spans 21 source files at this commit.
+The source links below reflect the refreshed integrated slice; counts describe the original inventory. Line counts are file-size
+observations, not coverage or quality metrics. The Settings slice removes two shell partials; nineteen shell source files remain.
 
 | Responsibility and evidence | Proposed boundary | Existing behavior to preserve |
 | --- | --- | --- |
-| [Settings partial](../SharedUI/ViewModel/MainWindowViewModel.Settings.cs), 1,256 lines; [SettingsPage](../MOBAflow/View/SettingsPage.xaml.cs):24-36 and its layout partial | Focused SettingsPageViewModel using AppSettings, ISettingsService and existing speech-test integration | Setter equality checks, notifications, immediate persistence, reset, feature availability, Piper voices, speech success/failure |
+| [SettingsPageViewModel](../SharedUI/ViewModel/SettingsPageViewModel.cs), extracted from the settings partial; [SettingsPage](../MOBAflow/View/SettingsPage.xaml.cs):24-36 and its layout partial | Focused SettingsPageViewModel using AppSettings, ISettingsService and existing speech-test integration | Setter equality checks, notifications, immediate persistence, reset, feature availability, Piper voices, speech success/failure |
 | [Wagons partial](../SharedUI/ViewModel/MainWindowViewModel.Wagons.cs), 482 lines, and [Train partial](../SharedUI/ViewModel/MainWindowViewModel.Train.cs), 264 lines | Focused locomotive, passenger/goods wagon and train page state; reuse LocomotiveManagementViewModel | CRUD, filtered lists, rename selection identity, composition ordering and photo assignment to the initiating context |
 | [Stations partial](../SharedUI/ViewModel/MainWindowViewModel.Stations.cs), 127 lines; [Journey partial](../SharedUI/ViewModel/MainWindowViewModel.Journey.cs), 223 lines; city commands in the core file | Stations and journey page ViewModels reading IProjectContext/IJourneySelectionContext | Shared journey selection, stations/platforms, city library, command availability, nested model change tracking |
 | [Workflow partial](../SharedUI/ViewModel/MainWindowViewModel.Workflow.cs), 187 lines; [WorkflowsPage](../MOBAflow/View/WorkflowsPage.xaml):32 onwards | Register and inject the existing WorkflowLibraryViewModel; add only page presentation state that it lacks | Selection, action editing/order, validation, dry-run cancellation, trace and editor state; no second workflow engine |
 | Counter, Diagnostics, HealthStatus, RestApiStatus and SyncDiagnostics partials | Focused counter/diagnostic/status projections using existing runtime query contracts and EventBus | Counter errors and reset result, filters, health/API status, sync state and project isolation |
-| [LayoutPanels](../SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs), 337 lines; [SettingsPageLayout](../SharedUI/ViewModel/MainWindowViewModel.SettingsPageLayout.cs), 126 lines; [GridColumnResizeBehavior](../MOBAflow/Behavior/GridColumnResizeBehavior.cs):474 onwards | One layout persistence service; reuse LayoutColumnWidthsViewModel | Panel expansion, section usage/order, setting keys, star-column values and intentionally fixed pixels |
+| [LayoutPanels](../SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs), 337 lines; [SettingsPageViewModel.Layout](../SharedUI/ViewModel/SettingsPageViewModel.Layout.cs), extracted from the settings layout partial; [GridColumnResizeBehavior](../MOBAflow/Behavior/GridColumnResizeBehavior.cs):474 onwards | One layout persistence service; reuse LayoutColumnWidthsViewModel | Panel expansion, section usage/order, setting keys, star-column values and intentionally fixed pixels |
 
-[MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs):107-236 constructs
+[MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs) constructs
 WorkflowLibraryViewModel and subscribes to session/runtime/status/photo events. It also owns project
 CRUD, city operations and shutdown coordination outside the named extraction partials.
-[MobaWinUiServiceCollectionExtensions](../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs):249-292
+[MobaWinUiServiceCollectionExtensions](../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs)
 registers session/context aliases and constructs the shell. The extraction must update this actual
 composition root rather than introducing another registration path.
 
@@ -114,9 +104,12 @@ not RF-24, owns settings relocation and feature-toggle representation changes.
 Each code slice starts only after the start gate and is delivered as its own draft PR.
 Refresh the base and update this plan from evidence after each integrated slice.
 
-1. **Settings:** characterize settings setters/reset and failure messages; move settings and the
-   required settings-section state; update SettingsPage and shell speech/theme consumers. Delete
-   Settings.cs when no consumer remains. Keep speech behavior behind its current integration.
+1. **Settings (implemented, awaiting PR checks/review):** SettingsPageViewModel owns setters/reset,
+   speech testing, feature toggles and settings-section state. SettingsPage, shell speech/theme and
+   the overview startup indicator share this DI instance. Both superseded settings partials are
+   removed. Regression tests cover persistence, reset/error paths, Piper selection, shared identity
+   and shutdown unsubscription. Speech behavior remains behind its current integration; #244
+   characterizes the current first-resolved settings-test engine and is preserved here.
 2. **Rolling stock:** extract locomotives, then wagons, then train composition in separable PRs.
    Reuse management state; move photo commands and their context checks together. Delete Wagons.cs
    and Train.cs after their consumers move, including relevant selection handlers in core.
@@ -128,11 +121,11 @@ Refresh the base and update this plan from evidence after each integrated slice.
    update workflow and EventManager bindings, and remove shell construction/forwarding.
    Preserve one library instance shared by existing workflow surfaces.
 5. **Counter and status:** extract counter, diagnostics, health, API/sync and traffic projections;
-   replace Monitor/PostStartup and shell status consumers. Move operating-state computation to a
+   replace Monitor and shell status consumers; PostStartup already uses the session. Move operating-state computation to a
    focused collaborator if it combines non-shell behavior. Remove relevant event handling/partials.
 6. **Layout and final shell audit:** centralize panel/section/column persistence and replace the
    visual-tree search for MainWindowViewModel. Reuse any narrow settings-layout boundary established
-   in slice 1. Remove LayoutPanels.cs/SettingsPageLayout.cs and all superseded page glue.
+   in slice 1. Remove LayoutPanels.cs, move SettingsPageViewModel.Layout persistence into the shared boundary, and remove superseded page glue.
    Narrow architecture exceptions and review every remaining shell member and dependency.
 
 For every slice, the implementing PR owns the exact test count, build result, manual acceptance
@@ -141,8 +134,9 @@ Rollback is a revert to the preceding validated slice; do not retain a parallel 
 
 ## Validation strategy
 
-This planning-only change requires secrets scans, line endings, plan governance, link/path review
-and a clean diff. No .NET build, test result or manual UI acceptance is claimed for preparation.
+Each implementation PR records actual validation. Slice 1 adds settings behavior, shared-instance,
+shutdown-unsubscription and architecture tests, compiles active WinUI bindings, and runs full suites
+and Release analyzer gates. Manual UI acceptance requires separate app launch authorization.
 
 For implementation, choose fixtures from the refreshed inventory and add meaningful tests for
 uncovered behavior before extraction. Existing anchors include:
