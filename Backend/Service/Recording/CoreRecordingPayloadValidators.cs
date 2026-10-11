@@ -10,6 +10,7 @@ internal static class CoreRecordingPayloadValidators
     private const string OutcomeProperty = "outcome";
     private const string JourneyIdProperty = "journeyId";
     private const string InPortProperty = "inPort";
+    private const string AddressProperty = "address";
 
     public static IReadOnlyList<IRecordingPayloadValidator> Create() =>
     [
@@ -86,16 +87,16 @@ internal static class CoreRecordingPayloadValidators
         Schema("command.signal-aspect.request", ("signalId", IsGuid), ("aspect", IsBoundedString)),
         Schema(
             "command.locomotive-drive.request",
-            ("address", IsPositiveInt32),
+            (AddressProperty, IsPositiveInt32),
             ("speed", IsNonNegativeInt32),
             ("forward", IsBoolean)),
         Schema(
             "command.locomotive-function.request",
-            ("address", IsPositiveInt32),
+            (AddressProperty, IsPositiveInt32),
             ("functionIndex", IsNonNegativeInt32),
             ("isOn", IsBoolean)),
-        Schema("command.locomotive-functions-off.request", ("address", IsPositiveInt32)),
-        DisplaySchema("command.locomotive-info.request", ("address", IsPositiveInt32)),
+        Schema("command.locomotive-functions-off.request", (AddressProperty, IsPositiveInt32)),
+        DisplaySchema("command.locomotive-info.request", (AddressProperty, IsPositiveInt32)),
         Schema(
             "command.turnout.request",
             ("decoderAddress", IsPositiveInt32),
