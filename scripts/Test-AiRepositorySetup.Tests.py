@@ -36,7 +36,7 @@ def run(args, cwd, env=None, input_text=None):
         clean.pop(key, None)
     if env:
         clean.update(env)
-    return subprocess.run(args, cwd=cwd, env=clean, input=input_text, text=True,
+    return subprocess.run(args, cwd=cwd, env=clean, input=input_text, text=True, encoding="utf-8",
                           capture_output=True, timeout=30, check=False, shell=isinstance(args, str))
 
 
@@ -310,6 +310,32 @@ class GitTests(unittest.TestCase):
         result = run([shell, "-c", command], elsewhere, env, "{}")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("hook claude-prompt-submit", result.stdout)
+
+    def test_specify_unicode_feature_names_respect_utf8_limit_without_writes(self):
+        folder = self.root / ".specify/scripts/powershell"
+        shutil.copytree(ROOT / ".specify/scripts/powershell", folder)
+        pointer = self.root / ".specify/feature.json"
+        original = '{"feature_directory":"specs/original"}'
+        pointer.write_text(original)
+        cases = (
+            ("USER Auth", "001-user-auth"),
+            ("\u8def\u7ebf \u8c03\u5ea6", "001-\u8def\u7ebf-\u8c03\u5ea6"),
+            ("\u8def" * 100, "001-" + "\u8def" * 80),
+            ("\U00010400" * 100, "001-" + "\U00010400" * 60),
+        )
+        for short_name, expected in cases:
+            with self.subTest(short_name=short_name):
+                result = run(
+                    [PWSH, "-NoProfile", "-File", str(folder / "create-new-feature.ps1"),
+                     "-Json", "-DryRun", "-Number", "1", "-ShortName", short_name, "fixture"],
+                    self.root, {"SPECIFY_INIT_DIR": str(self.root)})
+                self.assertEqual(0, result.returncode, result.stderr)
+                data = json.loads(result.stdout)
+                self.assertEqual(expected, data["BRANCH_NAME"])
+                self.assertLessEqual(len(data["BRANCH_NAME"].encode("utf-8")), 244)
+                self.assertTrue(data["DRY_RUN"])
+                self.assertFalse(Path(data["SPEC_FILE"]).exists())
+                self.assertEqual(original, pointer.read_text())
 
     def test_specify_feature_pointer_and_template_override(self):
         folder = self.root / ".specify/scripts/powershell"
