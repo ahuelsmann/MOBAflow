@@ -4,7 +4,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Slice 1 locally validated; draft PR and CI/Sonar gate pending. #207 merged as `39312ca9` on 2026-10-11 before implementation started.
+**Status**: Slice 1 implemented in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244); later slices pending. #207 merged as `39312ca9` on 2026-10-11 before implementation started.
 
 Input: [spec.md](spec.md), [plan.md](plan.md).
 
@@ -14,9 +14,9 @@ Implementation starts only after [PR #207](https://github.com/ahuelsmann/MOBAflo
 
 - [X] T001 Add characterization tests for announcements through the current engines: engine selection, voice, rate and volume forwarding, overlapping announcements, cancellation and failure handling; distinguish per-call factory resolution in `AnnouncementService` from the singleton used by the Settings test callback
 - [X] T002 Run the portable and Windows test suites for validation; secrets scan and line endings
-- [ ] T003 Open the slice PR as draft; Sonar quality gate (SonarCloud) green with zero open issues before review
+- [X] T003 Open the slice PR as draft; Sonar quality gate (SonarCloud) green with zero open issues before review
 
-Validation on merged `main` at `31d2d3a6`: portable Release suite 2,224 passed, 1 skipped; Windows Release suite 2,283 passed, 0 skipped. Both test graphs compile. No production speech behavior changes.
+Validation on merged `main` at `31d2d3a6`: portable Release suite 2,224 passed, 1 skipped; Windows Release suite 2,283 passed, 0 skipped. Both test graphs compile and their analyzer baselines match unchanged. No production speech behavior changes. CI/Sonar evidence is tracked in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244); its current commit must pass the Sonar gate with zero OPEN/CONFIRMED findings before review.
 
 ### Characterization baseline
 
