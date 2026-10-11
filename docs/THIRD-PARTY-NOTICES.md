@@ -55,7 +55,7 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 ### Roco Z21
 
 - **Manufacturer:** Roco / Fleischmann
-- **Website:** [roco.cc](https://www.roco.cc)
+- **Website:** [Z21](https://www.z21.eu/en)
 - **License:** Proprietary hardware platform
 - **Usage:** Direct UDP communication with the Z21 digital command station
 - **Legal Notice:** MOBAflow is an independent control application and is not affiliated with Roco or Fleischmann.

@@ -85,6 +85,62 @@ try {
     }
     $checks++
 
+    # Inject HTTP responses and retry delays into the helper; never shadow built-in commands.
+    function Assert-ExternalResult([object[]] $Responses, [bool] $ShouldFail, [int] $Attempts, [string] $Scenario) {
+        Initialize-Fixture @{ 'README.md' = '[external](https://example.invalid/)' }
+        # Load the helper without requesting external URLs.
+        . $scriptPath -Root $fixture 6> $null | Out-Null
+        $httpTestState = [pscustomobject] @{
+            Responses = [Collections.Generic.Queue[object]]::new()
+            RequestCount = 0
+            RetryDelays = [Collections.Generic.List[int]]::new()
+        }
+        foreach ($response in $Responses) { $httpTestState.Responses.Enqueue($response) }
+        $request = {
+            param([string] $TargetUrl)
+            if ($TargetUrl -ne 'https://example.invalid/') { throw 'Unexpected request URL.' }
+            $httpTestState.RequestCount++
+            if ($httpTestState.Responses.Count -eq 0) { throw 'Unexpected additional HTTP request.' }
+            $response = $httpTestState.Responses.Dequeue()
+            if ($response -eq 'network-error') {
+                throw [Net.Http.HttpRequestException]::new('Simulated network failure.')
+            }
+            return [pscustomobject] @{ StatusCode = $response }
+        }.GetNewClosure()
+        $delay = {
+            param([int] $Seconds)
+            $httpTestState.RetryDelays.Add($Seconds)
+        }.GetNewClosure()
+        $failureMessage = Get-ExternalLinkError -Url 'https://example.invalid/' -Request $request -Delay $delay
+        $failed = -not [string]::IsNullOrEmpty($failureMessage)
+        if ($failed -ne $ShouldFail -or $httpTestState.RequestCount -ne $Attempts) {
+            throw "Unexpected result for '$Scenario': failed=$failed, requests=$($httpTestState.RequestCount). $failureMessage"
+        }
+
+        if ($ShouldFail) {
+            $expectedFailure = if ($Responses[-1] -eq 'network-error') { 'Simulated network failure.' } else { "returned $($Responses[-1])" }
+            if ($failureMessage -notlike "*$expectedFailure*") {
+                throw "Unexpected failure for '$Scenario': $failureMessage"
+            }
+        }
+
+        $expectedDelays = @(1..($Attempts - 1) | Where-Object { $Attempts -gt 1 })
+        if (Compare-Object $expectedDelays $httpTestState.RetryDelays.ToArray()) {
+            throw "Unexpected retry delays for '$Scenario': $($httpTestState.RetryDelays -join ', ')."
+        }
+        $script:checks++
+    }
+
+    Assert-ExternalResult @(200) $false 1 'reachable page'
+    Assert-ExternalResult @(404) $true 1 'missing page is not retried or ignored'
+    Assert-ExternalResult @(403) $true 1 'denied request is not retried or ignored'
+    Assert-ExternalResult @(429) $false 1 'existing rate-limit policy'
+    Assert-ExternalResult @(503, 200) $false 2 'temporary service failure recovers'
+    Assert-ExternalResult @(500, 502, 200) $false 3 'temporary server failures recover'
+    Assert-ExternalResult @(503, 503, 503) $true 3 'persistent service failure still fails'
+    Assert-ExternalResult @('network-error', 200) $false 2 'temporary network failure recovers'
+    Assert-ExternalResult @('network-error', 'network-error', 'network-error') $true 3 'persistent network failure still fails'
+
     Write-Host "Documentation link self-tests passed ($checks checks)."
 }
 finally {
