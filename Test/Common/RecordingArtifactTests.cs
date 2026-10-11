@@ -64,6 +64,148 @@ internal sealed class RecordingArtifactTests
         });
     }
 
+    [Test]
+    public void RecorderOptions_DefaultsProvideBoundedIngestionAndDrain()
+    {
+        var options = new RecorderOptions();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(options.PendingCapacity, Is.EqualTo(10_000));
+            Assert.That(options.EntryLimit, Is.EqualTo(250_000));
+            Assert.That(options.EstimatedPayloadByteLimit, Is.EqualTo(67_108_864L));
+            Assert.That(options.StopDrainTimeout, Is.EqualTo(TimeSpan.FromSeconds(5)));
+        }
+    }
+
+    [TestCase(1)]
+    [TestCase(RecorderOptions.MaximumPendingCapacity)]
+    public void RecorderOptions_AcceptsPendingCapacityBoundaries(int capacity)
+    {
+        var options = new RecorderOptions(pendingCapacity: capacity);
+
+        Assert.That(options.PendingCapacity, Is.EqualTo(capacity));
+    }
+
+    [TestCase(-1)]
+    [TestCase(0)]
+    [TestCase(RecorderOptions.MaximumPendingCapacity + 1)]
+    public void RecorderOptions_RejectsPendingCapacityOutsideBounds(int capacity)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new RecorderOptions(pendingCapacity: capacity));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("pendingCapacity"));
+    }
+
+    [TestCase(4)]
+    [TestCase(RecordingFormat.DefaultMaxEntries)]
+    public void RecorderOptions_AcceptsEntryLimitBoundaries(int limit)
+    {
+        // Four entries leave room for the start record and the three reserved terminal records.
+        var options = new RecorderOptions(entryLimit: limit);
+
+        Assert.That(options.EntryLimit, Is.EqualTo(limit));
+    }
+
+    [TestCase(-1)]
+    [TestCase(3)]
+    [TestCase(RecordingFormat.DefaultMaxEntries + 1)]
+    public void RecorderOptions_RejectsEntryLimitOutsideBounds(int limit)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new RecorderOptions(entryLimit: limit));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("entryLimit"));
+    }
+
+    [TestCase(1L)]
+    [TestCase(RecordingFormat.DefaultMaxArtifactBytes)]
+    public void RecorderOptions_AcceptsPayloadByteLimitBoundaries(long limit)
+    {
+        var options = new RecorderOptions(estimatedPayloadByteLimit: limit);
+
+        Assert.That(options.EstimatedPayloadByteLimit, Is.EqualTo(limit));
+    }
+
+    [TestCase(-1L)]
+    [TestCase(0L)]
+    [TestCase(RecordingFormat.DefaultMaxArtifactBytes + 1)]
+    public void RecorderOptions_RejectsPayloadByteLimitOutsideBounds(long limit)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new RecorderOptions(estimatedPayloadByteLimit: limit));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("estimatedPayloadByteLimit"));
+    }
+
+    [TestCase(0L)]
+    [TestCase(1L)]
+    [TestCase(60 * TimeSpan.TicksPerSecond)]
+    public void RecorderOptions_AcceptsDrainTimeoutIncludingBothBoundaries(long ticks)
+    {
+        var timeout = TimeSpan.FromTicks(ticks);
+
+        var options = new RecorderOptions(stopDrainTimeout: timeout);
+
+        Assert.That(options.StopDrainTimeout, Is.EqualTo(timeout));
+    }
+
+    [TestCase(-1L)]
+    [TestCase(60 * TimeSpan.TicksPerSecond + 1)]
+    public void RecorderOptions_RejectsDrainTimeoutOutsideBounds(long ticks)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new RecorderOptions(stopDrainTimeout: TimeSpan.FromTicks(ticks)));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("stopDrainTimeout"));
+    }
+
+    [Test]
+    public void OperationResult_DefaultSuccessIsNotIdempotent()
+    {
+        var result = RecordingOperationResult.Success();
+
+        AssertSuccess(result, expectedIdempotent: false);
+    }
+
+    [Test]
+    public void OperationResult_SuccessPreservesIdempotence([Values] bool idempotent)
+    {
+        var result = RecordingOperationResult.Success(isIdempotent: idempotent);
+
+        AssertSuccess(result, idempotent);
+    }
+
+    [TestCase(RecordingFailureCode.InvalidState)]
+    [TestCase(RecordingFailureCode.InvalidRequest)]
+    [TestCase(RecordingFailureCode.LimitReached)]
+    [TestCase(RecordingFailureCode.Cancelled)]
+    [TestCase(RecordingFailureCode.DrainTimeout)]
+    [TestCase(RecordingFailureCode.InternalError)]
+    public void OperationResult_FailureRemainsUnsuccessfulAndPreservesDiagnostics(RecordingFailureCode code)
+    {
+        const string message = "The requested recording operation could not be completed.";
+
+        var result = RecordingOperationResult.Failure(code, message);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Succeeded, Is.False);
+            Assert.That(result.IsIdempotent, Is.False);
+            Assert.That(result.FailureCode, Is.EqualTo(code));
+            Assert.That(result.Message, Is.EqualTo(message));
+        }
+    }
+
+    private static void AssertSuccess(RecordingOperationResult result, bool expectedIdempotent)
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Succeeded, Is.True);
+            Assert.That(result.IsIdempotent, Is.EqualTo(expectedIdempotent));
+            Assert.That(result.FailureCode, Is.EqualTo(RecordingFailureCode.None));
+            Assert.That(result.Message, Is.Empty);
+        }
+    }
+
     private static RecordingArtifact CreateArtifact(IEnumerable<RecordingEntry> entries)
     {
         return new RecordingArtifact(
