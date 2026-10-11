@@ -74,6 +74,10 @@ Do not alter another session's RF-23 branches or turn their proposed factory int
 Production counters resume stored values across restarts. A test scenario explicitly seeds its own independent counts;
 it does not reset live counts or adopt a zero-on-restart production model. Manual seed/correction emits no counted feedback.
 Initial journey state is limited to activation and the current stop/position supported by `JourneySessionState`.
+Require explicit state for every captured journey, including unselected journeys; selection is a test focus, not a reduced
+runtime graph. Persist a zero-based stop index consistent with its stable identity; derive the action context's one-based
+position as index + 1. Only an empty journey uses null identity/index, internal position 0 and the production context's
+fallback index 1 with no current station. Do not invent a no-stop-reached state for a nonempty journey or emit arrival actions on seeding.
 Train assignments and locomotive addresses are captured project definitions; no separate train runtime state is invented.
 Runnable workflow selection requires an enabled assignment in a selected, initially active journey. Feedback supplies
 the production invocation context; selection neither invokes directly nor filters other matching workflow invocations.
@@ -133,8 +137,9 @@ Trace includes virtual time, stable sequence, input/workflow/action correlation,
 Assertions may match a subset of fields, ordered occurrences, absence/forbidden effects and virtual-time bounds.
 Positive invocation/effect predicates default to exactly one match; explicit exact counts or inclusive ranges replace that
 default. Absence requires zero. Count across the entire predicate/time window; ignore unrelated effects without claiming
-they were verified. Ordered slots bind distinct entries in increasing logical order, with unrelated entries allowed between
-them and each slot's count constraint still enforced. State assertions target named initial/final state or a correlated transition.
+they were verified. Ordered slots bind disjoint sets of all matches in their predicate/time window and enforce each count.
+All matches of an earlier nonempty slot precede all matches of the next; unrelated entries may appear between them.
+Valid zero-match slots contribute no ordering position. State assertions target named initial/final state or a correlated transition.
 Distinguish invalid scenario/assertion, execution failure, comparison mismatch, cancellation and runner error.
 Report the first mismatch while preserving the complete trace and comparison results.
 
@@ -182,6 +187,7 @@ and final RF-23 runtime-host tests. Refresh fixture names at each implementation
 - Test missing audio/script files without probes versus malformed payload failures; filtered raw feedback still reaches whistle rules.
 - Test reachable workflow selection and reject unassigned runnable targets; never suppress other matching production invocations.
 - Test one expected occurrence plus unrelated effects, duplicate matches, inclusive count ranges and distinct ordered slots.
+- Test explicit state for unselected journeys, zero-based stop roundtrip/context mapping and multi-occurrence ordered blocks.
 - Test project/session switches and persistence/schema roundtrip without editing any real or example solution.
 - Run affected portable tests and consumers plus broader suites for runtime/DI/persistence changes. Compile the desktop app.
 - With explicit launch authorization, inspect Light/Dark/High Contrast, keyboard, focus, Narrator, scaling and drag/drop.

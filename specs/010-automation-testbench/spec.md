@@ -75,6 +75,12 @@ Seed that input at 10, submit two accepted feedbacks and inspect the recorded wo
 9. **Given** an explicit journey current-stop identity and index, **When** the scenario is initialized, **Then** they resolve
    consistently against captured journey definitions without emitting feedback or an arrival workflow; an inconsistent
    stop/index is rejected before effects. Train assignment and locomotive address remain the captured project values.
+10. **Given** the captured project has a journey outside the operator's target selection, **When** initialization runs,
+    **Then** that journey uses its explicit scenario activation/stop state, never its implicit captured activation.
+    An omitted journey state fails validation; an explicitly active unselected journey reacts normally to matching feedback.
+11. **Given** the second stop is the initial stop, **When** the scenario is saved and reopened, **Then** its stored index
+    is 1, isolated journey position is 1 and workflow announcement position is 2. An empty journey stores both stop identity
+    and index as null; its action context retains production's fallback index 1 with no current station.
 
 ---
 
@@ -130,6 +136,8 @@ absence expectation. Verify mismatch reporting and its correlation with the reta
    are unrelated; no matching occurrence passes.
 7. **Given** ordered expectations for effects A then B, **When** an unrelated effect appears between A and B, **Then**
    order passes; B then A fails. One trace entry cannot satisfy two slots in the same ordered group.
+8. **Given** an ordered group A(count=2) then B(count=1), **When** the trace is A, B, A, **Then** it fails because the
+   last A follows B; A, A, B passes. A zero-match slot whose count allows zero contributes no ordering position.
 
 ---
 
@@ -183,6 +191,8 @@ use or generate the maintainer's example solution.
   event-plan matching supply its invocation context. All matching enabled entries of the isolated active journeys execute,
   including other workflows; selection MUST NOT suppress them. Known workflows may be referenced by absence expectations
   even when they are not runnable targets. Unassigned workflows require a project assignment before selection as a target.
+  Journey selection identifies test targets, not a reduced project graph. Initial state MUST explicitly cover every journey
+  in the captured project, including unselected journeys; omission is invalid and captured activation MUST NOT be inferred.
 - **FR-003**: Execution MUST validate identifiers, references, input ordering, times, playback settings and expectations
   before effects. Duplicate `(virtual time, explicit order)` input pairs MUST be rejected.
 - **FR-004**: A run MUST use isolated project definitions captured at its start. No mutable runtime or edited project data
@@ -227,9 +237,11 @@ use or generate the maintainer's example solution.
   or inclusive minimum/maximum MAY replace that default. Absence means exactly zero and MUST reject a nonzero count setting.
   Counts MUST be nonnegative integers with minimum no greater than maximum. Counts cover the entire applicable trace/time
   window; additional matching occurrences MUST fail an exceeded maximum, while unrelated occurrences and unspecified fields
-  remain unverified. Independent expectations may match the same entry. Ordered groups MUST bind each slot to a distinct
-  entry in increasing logical sequence, allowing unrelated entries between slots; each slot's occurrence constraint also
-  applies to its predicate. State-value expectations compare the named initial/final state or correlated transition rather
+  remain unverified. Independent expectations may match the same entry. In an ordered group, each slot binds all occurrences
+  matching its predicate/window and checks its count constraint. Sets for different slots MUST be disjoint. Every occurrence
+  of an earlier nonempty slot MUST precede every occurrence of the next nonempty slot in logical sequence; unrelated entries
+  may appear between them. A zero-match slot that satisfies its count constraint contributes no ordering position.
+  State-value expectations compare the named initial/final state or correlated transition rather
   than counting repeated state snapshots.
 - **FR-018**: Results MUST distinguish invalid scenario/expectation, completed without expectations, Passed,
   comparison mismatch, execution failure, cancellation and testbench error. A first mismatch MUST identify its
@@ -244,8 +256,13 @@ use or generate the maintainer's example solution.
 
 - **Scenario**: Named, stable project-owned definition containing reference selections, initial state, ordered synthetic
   inputs, partial expectations and playback settings; separate from executions and their results.
-- **Initial State**: Explicit isolated input counts, each selected journey's activation and current stop (stable stop identity
-  and corresponding index; no reached stop is also valid). Stop name/index MUST agree with captured definitions.
+- **Initial State**: Explicit isolated input counts and every captured journey's activation and current stop. Stop identity
+  and stored index MUST identify the same stop for a nonempty journey; both MUST be null for an empty journey. The stored index
+  is zero-based: the first stop is 0, the second is 1. It maps directly to `JourneySessionState.CurrentPos`; the action context's
+  one-based `CurrentStationIndex` is derived as index + 1. For an empty journey, the isolated session has empty name/null stop
+  identity and internal position 0; the action context has no current station and retains production's fallback index 1.
+  A separate no-stop-reached state for a nonempty journey is unsupported by current production and MUST NOT be introduced here.
+  No implicit arrival action is emitted. Stop name is derived from the referenced definition rather than persisted as state.
   Train assignments and locomotive addresses remain captured project data, not mutable train runtime state.
   Runtime run/correlation identities and feedback timestamps are derived by the isolated executor, not seeded operator fields.
   Initial state is never borrowed from or written into production runtime state implicitly.
