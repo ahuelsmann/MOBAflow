@@ -34,9 +34,7 @@ public sealed partial class MauiViewModel
 
     private readonly SemaphoreSlim _mobaflowCatalogSyncLock = new(1, 1);
 
-    private bool HasStoredMobaflowEndpoint() =>
-        !string.IsNullOrWhiteSpace(_settings.RestApi.CurrentIpAddress)
-        && _settings.RestApi.Port > 0;
+    private bool HasStoredMobaflowEndpoint() => _endpointLocator.StoredEndpoint is not null;
 
     /// <summary>
     /// Gets or sets whether MOBAsmart should discover and connect to MOBAflow.
@@ -250,34 +248,10 @@ public sealed partial class MauiViewModel
         string? anchor,
         CancellationToken cancellationToken)
     {
-        try
+        var found = await _endpointLocator.DiscoverAsync(anchor, fullScan, cancellationToken).ConfigureAwait(false);
+        if (found is not null)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            _lastRestApiDiscoverTime = DateTime.UtcNow;
-
-            var (ip, port) = await _restDiscoveryService
-                .DiscoverServerFastAsync(anchor, cancellationToken)
-                .ConfigureAwait(false);
-
-            if ((string.IsNullOrEmpty(ip) || !port.HasValue) && fullScan)
-            {
-                (ip, port) = await _restDiscoveryService
-                    .DiscoverServerAsync(anchor, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            if (!string.IsNullOrEmpty(ip) && port.HasValue)
-            {
-                await ApplyDiscoveredRestEndpointAsync(ip, port.Value, skipHealthCheck: false).ConfigureAwait(false);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(ex, "MOBAflow LAN discovery failed (fullScan={FullScan})", fullScan);
+            await ApplyDiscoveredRestEndpointAsync(found).ConfigureAwait(false);
         }
     }
 
