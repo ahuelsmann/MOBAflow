@@ -84,9 +84,6 @@ internal class SettingsService : ISettingsService
         _settings.Application.IsDarkMode = source.Application.IsDarkMode;
         _settings.Application.UseSystemTheme = source.Application.UseSystemTheme;
 
-        _settings.Z21.CurrentIpAddress = source.Z21.CurrentIpAddress;
-        _settings.Z21.DefaultPort = source.Z21.DefaultPort;
-
         _settings.Counter.CountOfFeedbackPoints = source.Counter.CountOfFeedbackPoints;
         _settings.Counter.TargetLapCount = source.Counter.TargetLapCount;
         _settings.Counter.UseTimerFilter = source.Counter.UseTimerFilter;

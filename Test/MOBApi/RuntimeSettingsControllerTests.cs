@@ -46,6 +46,21 @@ internal sealed class RuntimeSettingsControllerTests
     }
 
     [Test]
+    public void DeleteRuntimeSettings_ForgetsTheEndpoint()
+    {
+        _cache.SetZ21Endpoint("192.168.0.111", 21105);
+        var controller = CreateController(_cache, IPAddress.Loopback);
+
+        var result = controller.DeleteRuntimeSettings();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
+            Assert.That(_cache.TryGetZ21Endpoint(out _, out _), Is.False);
+        }
+    }
+
+    [Test]
     public void PutRuntimeSettings_StoresEndpoint_WhenCalledFromLocalhost()
     {
         var controller = CreateController(_cache, IPAddress.Loopback);

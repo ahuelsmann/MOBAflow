@@ -53,7 +53,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
     private readonly IIoService _ioService;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly IConnectionRuntime _runtimeConnection;
+    private readonly IProjectRuntimeHost _projectRuntimes;
     private readonly ISoundPlayer? _soundPlayer;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly ILogger<SolutionSession> _logger;
@@ -72,7 +72,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     /// <param name="solution">The application's solution instance; it is replaced in place on load.</param>
     /// <param name="ioService">File access for solutions; <see cref="NullIoService"/> on hosts without files.</param>
     /// <param name="uiDispatcher">Dispatcher for state bound to the UI.</param>
-    /// <param name="runtimeConnection">Runtime lifecycle used to activate a loaded or new project.</param>
+    /// <param name="projectRuntimes">Creates and discards one runtime per project of the solution.</param>
     /// <param name="logger">Logger for background failures.</param>
     /// <param name="soundPlayer">Optional sound player passed to project view models.</param>
     /// <param name="loggerFactory">Optional logger factory passed to project view models.</param>
@@ -80,7 +80,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         Solution solution,
         IIoService ioService,
         IUiDispatcher uiDispatcher,
-        IConnectionRuntime runtimeConnection,
+        IProjectRuntimeHost projectRuntimes,
         ILogger<SolutionSession> logger,
         ISoundPlayer? soundPlayer = null,
         ILoggerFactory? loggerFactory = null)
@@ -88,12 +88,12 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         ArgumentNullException.ThrowIfNull(solution);
         ArgumentNullException.ThrowIfNull(ioService);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
-        ArgumentNullException.ThrowIfNull(runtimeConnection);
+        ArgumentNullException.ThrowIfNull(projectRuntimes);
         ArgumentNullException.ThrowIfNull(logger);
 
         _ioService = ioService;
         _uiDispatcher = uiDispatcher;
-        _runtimeConnection = runtimeConnection;
+        _projectRuntimes = projectRuntimes;
         _logger = logger;
         _soundPlayer = soundPlayer;
         _loggerFactory = loggerFactory;
@@ -245,7 +245,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
             ClearSelection();
 
-            await _runtimeConnection.ActivateProjectAsync(newProject).ConfigureAwait(false);
+            await _projectRuntimes.LoadAsync([.. Solution.Projects]).ConfigureAwait(false);
 
             SolutionLoaded?.Invoke(this, EventArgs.Empty);
         }
@@ -272,10 +272,30 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     }
 
     /// <inheritdoc />
+    public Task StartRuntimesAsync() => _projectRuntimes.LoadAsync([.. Solution.Projects]);
+
+    /// <inheritdoc />
+    public IReadOnlyList<string> GetConnectedProjectNames(IReadOnlyCollection<Guid>? projectIds = null)
+    {
+        var connected = _projectRuntimes.ConnectedProjectIds;
+        return
+        [
+            .. Solution.Projects
+                .Where(project => connected.Contains(project.Id) && (projectIds is null || projectIds.Contains(project.Id)))
+                .Select(project => project.Name)
+        ];
+    }
+
+    /// <inheritdoc />
+    public Task StopRuntimesAsync(CancellationToken cancellationToken = default) =>
+        _projectRuntimes.LoadAsync([], cancellationToken);
+
+    /// <inheritdoc />
     public ProjectViewModel AddProject(Project project)
     {
         ArgumentNullException.ThrowIfNull(project);
         Solution.Projects.Add(project);
+        _projectRuntimes.AddAsync(project).Observe(ex => LogProjectActivationFailed(_logger, ex));
 
         var projectViewModel = new ProjectViewModel(project, _uiDispatcher, _ioService, _soundPlayer, _loggerFactory);
         SolutionViewModel!.Projects.Add(projectViewModel);
@@ -291,6 +311,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         ArgumentNullException.ThrowIfNull(project);
         Solution.Projects.Remove(project.Model);
         SolutionViewModel!.Projects.Remove(project);
+        _projectRuntimes.RemoveAsync(project.Model.Id).Observe(ex => LogProjectActivationFailed(_logger, ex));
 
         SelectedProject = SolutionViewModel.Projects.FirstOrDefault();
         if (SelectedProject == null)
@@ -347,6 +368,8 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
     partial void OnSelectedProjectChanged(ProjectViewModel? oldValue, ProjectViewModel? newValue)
     {
+        // Selecting a project only decides which runtime the UI shows; every project keeps running.
+        _projectRuntimes.SelectProject(newValue?.Model.Id);
         if (oldValue != null)
         {
             UntrackChanges(oldValue);
@@ -390,9 +413,14 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         }
 
         // The runtime reads a snapshot of the project; refresh it so the change takes effect immediately.
+        // A new Z21 assignment needs a new runtime on the new connection.
         if (SelectedProject is { } project)
         {
-            _runtimeConnection.UpdateProjectAsync(project.Model).Observe(ex => LogRuntimeUpdateFailed(_logger, ex));
+            var update = sender is ProjectViewModel
+                && e.PropertyName is nameof(ProjectViewModel.Z21IpAddress) or nameof(ProjectViewModel.Z21Port)
+                ? _projectRuntimes.ReplaceAsync(project.Model)
+                : _projectRuntimes.UpdateAsync(project.Model);
+            update.Observe(ex => LogRuntimeUpdateFailed(_logger, ex));
         }
 
         ModelChanged?.Invoke(sender, e);
@@ -434,11 +462,12 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
             SolutionSaveStatusText = "Saved";
             HasSolution = Solution.Projects.Count > 0;
 
+            // One runtime per project; the runtimes of the previous solution are discarded.
+            _projectRuntimes.LoadAsync([.. Solution.Projects])
+                .Observe(ex => LogProjectActivationFailed(_logger, ex));
             if (Solution.Projects.Count > 0)
             {
                 SelectedProject = SolutionViewModel?.Projects.FirstOrDefault();
-                _runtimeConnection.ActivateProjectAsync(Solution.Projects[0])
-                    .Observe(ex => LogProjectActivationFailed(_logger, ex));
             }
 
             OnPropertyChanged(nameof(Solution));

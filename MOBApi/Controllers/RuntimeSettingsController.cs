@@ -63,4 +63,14 @@ public class RuntimeSettingsController : ControllerBase
         _runtimeSettingsCache.SetZ21Endpoint(request.Z21IpAddress, port);
         return Ok(new { z21IpAddress = request.Z21IpAddress.Trim(), z21Port = port });
     }
+
+    /// <summary>
+    /// Forgets the Z21 endpoint when the project selected in MOBAflow has no Z21 (localhost only).
+    /// </summary>
+    [HttpDelete]
+    public IActionResult DeleteRuntimeSettings()
+    {
+        _runtimeSettingsCache.ClearZ21Endpoint();
+        return NoContent();
+    }
 }

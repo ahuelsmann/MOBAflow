@@ -2,14 +2,12 @@
 
 namespace Moba.Backend.Service;
 
-using Common.Discovery;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
 
 using Protocol;
 
-using System.Net;
 using System.Threading;
 
 /// <summary>
@@ -24,9 +22,9 @@ public sealed partial class MobaRuntimeService
     private void BeginAutoConnectToZ21()
     {
         _isZ21Connecting = true;
-        _statusText = string.IsNullOrEmpty(_settings.Z21.CurrentIpAddress)
-            ? "Discovering Z21 on LAN..."
-            : $"Connecting to {_settings.Z21.CurrentIpAddress}...";
+        _statusText = string.IsNullOrEmpty(_endpointSource.DisplayAddress)
+            ? "Looking for the Z21..."
+            : $"Connecting to {_endpointSource.DisplayAddress}...";
         PublishSnapshot();
 
         StartAutoConnectTimer();
@@ -77,20 +75,22 @@ public sealed partial class MobaRuntimeService
                 return;
             }
 
-            if (ShouldRunZ21Discovery())
+            var rediscover = _z21ConnectionFailureCount >= ConnectionFailuresBeforeRescan;
+            var endpoint = await _endpointSource.ResolveAsync(rediscover).ConfigureAwait(false);
+            if (rediscover)
             {
-                await TryDiscoverAndApplyZ21EndpointAsync().ConfigureAwait(false);
+                _z21ConnectionFailureCount = 0;
             }
 
-            if (!TryGetConfiguredEndpoint(out var address, out var primaryPort, out var errorMessage))
+            if (endpoint.Address is not { } address)
             {
                 _isZ21Connecting = false;
-                _statusText = errorMessage;
+                _statusText = endpoint.Error ?? "No Z21 address";
                 PublishSnapshot();
                 return;
             }
 
-            var portsToTry = BuildConnectionPorts(primaryPort);
+            var portsToTry = BuildConnectionPorts(endpoint.Port);
             Exception? lastException = null;
 
             foreach (var port in portsToTry)
@@ -102,7 +102,7 @@ public sealed partial class MobaRuntimeService
                     PublishSnapshot();
 
                     _z21.SetSystemStatePollingInterval(_settings.Z21.SystemStatePollingIntervalSeconds);
-                    await _z21.ConnectAsync(address!, port).ConfigureAwait(false);
+                    await _z21.ConnectAsync(address, port).ConfigureAwait(false);
                     _z21ConnectionFailureCount = 0;
                     return;
                 }
@@ -124,27 +124,6 @@ public sealed partial class MobaRuntimeService
         }
     }
 
-    private bool ShouldRunZ21Discovery()
-        => string.IsNullOrWhiteSpace(_settings.Z21.CurrentIpAddress)
-           || _z21ConnectionFailureCount >= ConnectionFailuresBeforeRescan;
-
-    private async Task TryDiscoverAndApplyZ21EndpointAsync()
-    {
-        var preferred = string.IsNullOrWhiteSpace(_settings.Z21.CurrentIpAddress)
-            ? null
-            : _settings.Z21.CurrentIpAddress.Trim();
-
-        var discovered = await _z21Discovery.DiscoverZ21Async(preferred).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(discovered))
-        {
-            return;
-        }
-
-        _settings.Z21.CurrentIpAddress = discovered.Trim();
-        _z21ConnectionFailureCount = 0;
-        _logger.LogInformation("Discovered Z21 at {Ip}", discovered);
-    }
-
     private static IReadOnlyList<int> BuildConnectionPorts(int configuredPort)
     {
         if (configuredPort == Z21Protocol.DefaultPort)
@@ -158,32 +137,5 @@ public sealed partial class MobaRuntimeService
         }
 
         return [configuredPort];
-    }
-
-    private bool TryGetConfiguredEndpoint(out IPAddress? address, out int port, out string errorMessage)
-    {
-        address = null;
-        port = Z21Protocol.DefaultPort;
-        errorMessage = string.Empty;
-
-        if (string.IsNullOrWhiteSpace(_settings.Z21.CurrentIpAddress))
-        {
-            errorMessage = "No Z21 found on LAN";
-            return false;
-        }
-
-        if (!IPAddress.TryParse(_settings.Z21.CurrentIpAddress, out address))
-        {
-            errorMessage = $"Invalid Z21 IP address '{_settings.Z21.CurrentIpAddress}'";
-            return false;
-        }
-
-        if (!string.IsNullOrWhiteSpace(_settings.Z21.DefaultPort)
-            && int.TryParse(_settings.Z21.DefaultPort, out var parsedPort))
-        {
-            port = parsedPort;
-        }
-
-        return true;
     }
 }

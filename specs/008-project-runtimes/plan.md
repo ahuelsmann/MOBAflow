@@ -56,7 +56,7 @@ specs/008-project-runtimes/
 ```text
 SharedUI/Service/SolutionSession.cs          # owns solution, selection, dirty state, auto-save, runtimes (new)
 SharedUI/Interface/ISolutionSession.cs       # session contract incl. IProjectContext (new)
-Backend/Service/ProjectRuntimeFactory.cs     # creates one DI scope per project (new)
+Backend/Service/ProjectRuntimes/*.cs         # factory, host, Z21 registry, selected-project proxies (new)
 Backend/Service/Z21ConnectionRegistry.cs     # app-lifetime connections keyed by endpoint (new)
 Backend/Service/MobaRuntimeService*.cs       # no project copy; runtime values only
 Domain/Project.cs                            # Z21 endpoint per project
@@ -81,7 +81,7 @@ Each slice is one reviewable PR on its own branch from `main`; this branch carri
 3. **Runtime and Z21 per project**, in three PRs:
    - 3a: Z21 endpoint in `Project`, network search for every Z21 (IP address and serial number) and the Z21 finder
      column on the solution page (drag a Z21 onto a project). Additive; the runtime still connects as before.
-   - 3b: `Z21ConnectionRegistry`, `ProjectRuntimeFactory`, one runtime scope per project connecting to its
+   - 3b: `Z21ConnectionRegistry`, `ProjectRuntimeFactory`, one runtime graph per project connecting to its
      project's Z21, per-project counters, conflict diagnostics, selected-project event forwarding; the Z21 address
      leaves the MOBAflow settings and the runtime no longer searches by itself. Fixes #190.
    - 3c: switch/close warning with speed 0, also before a project's Z21 address changes.
@@ -105,5 +105,5 @@ Each slice is one reviewable PR on its own branch from `main`; this branch carri
 
 | Item | Why needed | Simpler alternative rejected because |
 | --- | --- | --- |
-| DI scope per project runtime | Runtime, Z21, counters, interlocking and workflow context form one object graph per layout | Keyed singletons would need a manual lifetime for every type |
+| Runtime graph per project | Runtime, Z21, counters, interlocking and workflow context form one object graph per layout | A DI scope would force shared singletons to become scoped; keyed singletons would need a manual lifetime for every type |
 | Event forwarding of the selected runtime | UI subscribers keep their contract and show the selected project | A project identifier on every event touches every event type and subscriber |

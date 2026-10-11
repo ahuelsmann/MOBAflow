@@ -62,7 +62,7 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
     /// Connection status text.
     /// </summary>
     public string ConnectionStatus => _mainWindowViewModel.IsConnected
-        ? $"✅ Connected to {_mainWindowViewModel.IpAddress}"
+        ? $"✅ Connected to {_mainWindowViewModel.SelectedProject?.Z21IpAddress}"
         : "❌ Not connected";
 
     /// <summary>
@@ -88,10 +88,10 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         // Subscribe to TrafficPackets changes to update count
         TrafficPackets.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TrafficCount));
 
-        // Subscribe to connection status changes
+        // The status names the Z21 of the selected project, so it follows the selection as well.
         _mainWindowViewModel.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.IsConnected))
+            if (e.PropertyName is nameof(MainWindowViewModel.IsConnected) or nameof(MainWindowViewModel.SelectedProject))
             {
                 OnPropertyChanged(nameof(ConnectionStatus));
             }

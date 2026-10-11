@@ -165,7 +165,7 @@ internal sealed class Z21AssignmentViewModelTests
             solution,
             new Mock<IIoService>().Object,
             dispatcher.Object,
-            new Mock<IConnectionRuntime>().Object,
+            new Mock<IProjectRuntimeHost>().Object,
             NullLogger<SolutionSession>.Instance);
     }
 }
