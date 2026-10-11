@@ -311,6 +311,43 @@ class GitTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("hook claude-prompt-submit", result.stdout)
 
+    def test_specify_python_override_selection_and_fallback(self):
+        common = ROOT / ".specify/scripts/powershell/common.ps1"
+        command = ". '" + str(common).replace("'", "''") + "'; " + r"""
+function python3 { throw 'Fallback discovery must not execute python3' }
+function fixture_python {
+    if ($args[0] -eq '--version') { 'Interpreter startup notice'; 'Python 3.14'; return }
+    $global:LASTEXITCODE = 0
+}
+function fixture_legacy {
+    if ($args[0] -eq '--version') { 'Python 3.13'; return }
+    $global:LASTEXITCODE = 0
+}
+function fixture_old {
+    if ($args[0] -eq '--version') { 'Python 2.7'; return }
+    throw 'Python 2 must not be used to import yaml'
+}
+function fixture_no_yaml {
+    if ($args[0] -eq '--version') { 'Python 3.14'; return }
+    $global:LASTEXITCODE = 1
+}
+ConvertTo-Json -InputObject @(Get-Python3Command) -Compress
+"""
+        cases = (
+            ("fixture_python", "fixture_legacy", "fixture_python"),
+            ("", "fixture_legacy", "fixture_legacy"),
+            ("", "", "python3"),
+            ("fixture_missing_python", "fixture_legacy", "python3"),
+            ("fixture_old", "fixture_legacy", "python3"),
+            ("fixture_no_yaml", "fixture_legacy", "python3"),
+        )
+        for preferred, legacy, expected in cases:
+            with self.subTest(preferred=preferred, legacy=legacy):
+                result = run([PWSH, "-NoProfile", "-Command", command], self.root,
+                             {"SPECKIT_PYTHON_EXECUTABLE": preferred, "SPECKIT_PYTHON": legacy})
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual([expected], json.loads(result.stdout))
+
     def test_specify_unicode_feature_names_respect_utf8_limit_without_writes(self):
         folder = self.root / ".specify/scripts/powershell"
         shutil.copytree(ROOT / ".specify/scripts/powershell", folder)

@@ -324,19 +324,23 @@ function Format-SpecKitCommand {
     return "`$speckit$separator$name"
 }
 
+function Test-Python3WithYaml {
+    param([string]$Command)
+
+    if (-not $Command -or -not (Get-Command $Command -ErrorAction SilentlyContinue)) { return $false }
+    $ver = & $Command --version 2>&1
+    if (-not ($ver -match 'Python 3')) { return $false }
+    & $Command -c 'import yaml' *> $null
+    return $LASTEXITCODE -eq 0
+}
+
 # Find a usable Python 3 executable (python3, python, or py -3).
 # Returns the command/arguments as an array, or $null if none found.
 function Get-Python3Command {
     # SPECKIT_PYTHON_EXECUTABLE is the canonical override; SPECKIT_PYTHON is
     # kept as a deprecated fallback (still used by update-agent-context.sh).
     $override = if ($env:SPECKIT_PYTHON_EXECUTABLE) { $env:SPECKIT_PYTHON_EXECUTABLE } else { $env:SPECKIT_PYTHON }
-    if ($override -and (Get-Command $override -ErrorAction SilentlyContinue)) {
-        $ver = & $override --version 2>&1
-        if ($ver -match 'Python 3') {
-            & $override -c 'import yaml' *> $null
-            if ($LASTEXITCODE -eq 0) { return @($override) }
-        }
-    }
+    if (Test-Python3WithYaml -Command $override) { return @($override) }
     if (Get-Command python3 -ErrorAction SilentlyContinue) { return @('python3') }
     if (Get-Command python -ErrorAction SilentlyContinue) {
         $ver = & python --version 2>&1

@@ -124,6 +124,7 @@ Do not force an update over unreviewed local changes. Preserve the constitution 
 After an upgrade, reapply and test these two local adaptations:
 
 - `common.ps1`: extension registry validation and shared preset registry helpers from the prior integration.
+  Keep the Python override capability check in `Test-Python3WithYaml` to satisfy the Sonar complexity limit.
   Preserve new upstream feature-resolution behavior, including `SPECIFY_FEATURE_NO_PERSIST`.
 - `speckit-taskstoissues/SKILL.md`: use `scripts/Resolve-GitHubRepository.ps1`, not a fixed `origin` URL.
 
