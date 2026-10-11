@@ -74,6 +74,7 @@ public sealed partial class MobaRuntimeService
             }
 
             var endpoint = await _endpointSource.ResolveAsync().ConfigureAwait(false);
+            if (_isManualDisconnectRequested || !EndpointMatchesActiveProject(endpoint)) return;
 
             if (endpoint.Address is not { } address)
             {

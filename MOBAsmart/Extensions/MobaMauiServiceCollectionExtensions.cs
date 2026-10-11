@@ -45,8 +45,11 @@ public static class MobaMauiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<AppSettings>();
-        services.AddSingleton<IInPortCounterStore>(_ => new FileInPortCounterStore(
-            Path.Combine(FileSystem.AppDataDirectory, "inport-counters.json")));
+        services.AddSingleton<InPortCounterService>(sp => new InPortCounterService(
+            sp.GetRequiredService<IZ21>(), sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<InPortCounterService>>(),
+            projectStoreFactory: projectId => new FileInPortCounterStore(
+                Path.Combine(FileSystem.AppDataDirectory, "inport-counters", projectId.ToString("N") + ".json"))));
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddLogging();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
@@ -85,7 +88,8 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingletonWithInterface<MobileSolutionContext, IProjectContext>();
         // The phone controls the Z21 of the project selected on it; it never searches the network for one.
         services.AddSingleton<IZ21EndpointSource>(sp => new ProjectZ21EndpointSource(
-            () => sp.GetRequiredService<IProjectContext>().SelectedProject?.Model));
+            () => sp.GetRequiredService<IProjectContext>().SelectedProject?.Model,
+            solution: () => sp.GetRequiredService<IProjectContext>().SolutionViewModel?.Model));
         services.AddSingleton<IMobileSolutionStore>(sp => new MobileSolutionStore(
             Path.Combine(FileSystem.AppDataDirectory, "mobile-cache"),
             sp.GetRequiredService<ILogger<MobileSolutionStore>>()));

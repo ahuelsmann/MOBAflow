@@ -24,8 +24,8 @@ public sealed class InPortCountedEventArgs(InPortCounterSnapshot snapshot, Guid 
 }
 
 /// <summary>
-/// Owns application-lifetime input counts independently of projects, journeys, and UI pages.
-/// Only an explicit reset clears counts.
+/// Owns input counts independently of journeys and UI pages. Mobile hosts can select a separate persisted
+/// store per project; desktop project runtimes each own their counter service.
 /// </summary>
 public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
 {
@@ -48,7 +48,8 @@ public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
         AppSettings settings,
         TimeProvider? timeProvider = null,
         ILogger<InPortCounterService>? logger = null,
-        IInPortCounterStore? store = null)
+        IInPortCounterStore? store = null,
+        Func<Guid, IInPortCounterStore>? projectStoreFactory = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(settings);
@@ -57,6 +58,7 @@ public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
         _timeProvider = timeProvider ?? TimeProvider.System;
         _logger = logger ?? NullLogger<InPortCounterService>.Instance;
         _store = store;
+        _projectStoreFactory = projectStoreFactory;
         _initialized = store is null;
         for (uint inPort = 1; inPort <= settings.Counter.CountOfFeedbackPoints; inPort++)
         {
@@ -158,6 +160,7 @@ public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
         lock (_sync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_switchingProject) throw new InvalidOperationException("InPort counters are switching projects.");
             if (!_initialized && _loadFailed)
             {
                 // The explicit reset is the operator's recovery from an unreadable counter file.
@@ -186,7 +189,8 @@ public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
         bool startPublishing;
         lock (_sync)
         {
-            if (_disposed || feedback.InPort <= 0)
+            if (_disposed || feedback.InPort <= 0 || _switchingProject
+                || (_projectStoreFactory is not null && _counterProjectId is null))
             {
                 return;
             }

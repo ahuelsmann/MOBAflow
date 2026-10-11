@@ -37,6 +37,7 @@ public sealed partial class MauiViewModel
             ? _projectContext.SelectedProject.Model.Z21.Port
             : Backend.Protocol.Z21Protocol.DefaultPort;
         _shownProjectId = _projectContext.SelectedProject?.Model.Id;
+        _localProjectId = _runtimeSnapshots.Current.ProjectId == Guid.Empty ? null : _runtimeSnapshots.Current.ProjectId;
     }
 
     /// <summary>
@@ -351,18 +352,13 @@ public sealed partial class MauiViewModel
             _uiDispatcher.InvokeOnUi(ApplyBestAvailableLocomotiveFleet);
         }
 
-        var activateProject = projectId != _shownProjectId;
         _shownProjectId = projectId;
         _uiDispatcher.InvokeOnUi(RefreshProjectPicker);
-        RunInBackground(SelectRemoteProjectAsync(), "Select remote project");
-        RunInBackground(ApplySelectedProjectZ21Async(activateProject), "Connect to the selected project's Z21");
+        RunInBackground(SelectRemoteProjectAsync(), "Select project and its Z21");
     }
 
     /// <summary>
     /// MOBAflow runs one runtime per project; remote control shows and commands the project selected here.
     /// </summary>
-    private Task SelectRemoteProjectAsync() =>
-        _runtimeHubRemoteClient is not null && _projectContext?.SelectedProject?.Model.Id is { } projectId
-            ? _runtimeHubRemoteClient.SelectProjectAsync(projectId, _applicationLifetimeCts.Token)
-            : Task.CompletedTask;
+    private Task SelectRemoteProjectAsync() => QueueProjectSelection();
 }

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Model;
 
 using System.Text.Json;
+using System.Net;
 
 /// <summary>
 /// Public <see cref="IMobaRuntime"/> command and query surface for <see cref="MobaRuntimeService"/>.
@@ -32,8 +33,29 @@ public sealed partial class MobaRuntimeService
     /// <inheritdoc />
     public async Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
+        await _projectActivationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await ActivateProjectCoreAsync(editableProject, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _projectActivationLock.Release();
+        }
+    }
+
+    private async Task ActivateProjectCoreAsync(Project editableProject, CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(editableProject);
+
+        if (_activeProjectContext?.ActiveProject.Id != editableProject.Id)
+        {
+            await _inPortCounters.SelectProjectAsync(editableProject.Id, cancellationToken).ConfigureAwait(false);
+            _locomotiveStates.Clear();
+            _lastLocomotiveDriveCommandAt.Clear();
+            _lastLocomotiveFunctionCommandAt.Clear();
+        }
 
         // Runtime executes against an isolated deep copy of the editor project. This keeps editor
         // and execution state fully separated: edits made in the UI after activation do not leak
@@ -104,6 +126,7 @@ public sealed partial class MobaRuntimeService
         // An unreadable counter file is reported in the snapshot and must not prevent Z21 control.
         await _inPortCounters.TryInitializeAsync(cancellationToken).ConfigureAwait(false);
         var endpoint = await _endpointSource.ResolveAsync(cancellationToken).ConfigureAwait(false);
+        if (!EndpointMatchesActiveProject(endpoint)) return;
         if (endpoint.Address is not { } address)
         {
             _isZ21Connecting = false;
@@ -141,6 +164,13 @@ public sealed partial class MobaRuntimeService
 
     /// <inheritdoc />
     public async Task DisconnectAsync(CancellationToken cancellationToken = default)
+        => await DisconnectCoreAsync(stopLocomotives: true, cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public async Task DisconnectForProjectSwitchAsync(CancellationToken cancellationToken = default)
+        => await DisconnectCoreAsync(stopLocomotives: false, cancellationToken).ConfigureAwait(false);
+
+    private async Task DisconnectCoreAsync(bool stopLocomotives, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -154,8 +184,16 @@ public sealed partial class MobaRuntimeService
             PublishSnapshot();
 
             // Trains keep their last speed after logging off; a failed stop leaves the connection open for retry.
-            await StopAllLocomotivesAsync(cancellationToken).ConfigureAwait(false);
+            if (stopLocomotives)
+                await StopAllLocomotivesAsync(cancellationToken).ConfigureAwait(false);
             await _z21.DisconnectAsync().ConfigureAwait(false);
+
+            if (!stopLocomotives)
+            {
+                _locomotiveStates.Clear();
+                _lastLocomotiveDriveCommandAt.Clear();
+                _lastLocomotiveFunctionCommandAt.Clear();
+            }
 
             _isConnected = false;
             _isTrackPowerOn = false;
@@ -166,7 +204,22 @@ public sealed partial class MobaRuntimeService
         {
             _statusText = $"Error: {ex.Message}";
             PublishSnapshot();
+            if (!stopLocomotives) throw;
         }
+    }
+
+    private bool EndpointMatchesActiveProject(Z21EndpointResolution endpoint)
+    {
+        var activeContext = _activeProjectContext;
+        if (endpoint.Address is null || endpoint.ProjectId is null || activeContext is null) return true;
+        var project = activeContext.ActiveProject;
+        var port = project.Z21.Port > 0 ? project.Z21.Port : Moba.Backend.Protocol.Z21Protocol.DefaultPort;
+        if (project.Id == endpoint.ProjectId && port == endpoint.Port
+            && IPAddress.TryParse(project.Z21.IpAddress.Trim(), out var address) && address.Equals(endpoint.Address)) return true;
+        _isZ21Connecting = false;
+        _statusText = "Waiting for the selected project's runtime";
+        PublishSnapshot();
+        return false;
     }
 
     /// <inheritdoc />
@@ -227,7 +280,7 @@ public sealed partial class MobaRuntimeService
             return;
         }
 
-        var directions = _locomotiveStates
+        var directions = _locomotiveStates.ToArray()
             .Where(pair => pair.Key is > 0 and <= 9999)
             .ToDictionary(pair => pair.Key, pair => pair.Value.IsForward);
         foreach (var locomotive in _activeProjectContext?.ActiveProject.Locomotives ?? [])

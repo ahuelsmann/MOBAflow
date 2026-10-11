@@ -20,6 +20,51 @@ using Moq;
 [TestFixture]
 internal sealed class MobaRuntimeServiceProjectIsolationTests
 {
+    [TestCase(21105, 21105, true)]
+    [TestCase(21105, 21106, true)]
+    [TestCase(21106, 21105, true)]
+    [TestCase(31000, 31000, true)]
+    [TestCase(31000, 31001, false)]
+    public async Task MobileEndpoint_UsesSameSolutionOrderConflictRuleAsDesktop(int ownerPort, int selectedPort, bool conflict)
+    {
+        var owner = new Project { Name = "Owner", Z21 = { IpAddress = "192.168.0.111", Port = ownerPort } };
+        var selected = new Project { Name = "Selected", Z21 = { IpAddress = "192.168.0.111", Port = selectedPort } };
+        var solution = new Solution { Projects = [owner, selected] };
+        var endpoint = new ProjectZ21EndpointSource(() => selected, solution: () => solution);
+
+        var resolution = await endpoint.ResolveAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(resolution.Address is null, Is.EqualTo(conflict));
+            if (conflict) Assert.That(resolution.Error, Does.Contain("Owner"));
+        }
+        var first = await new ProjectZ21EndpointSource(() => owner, solution: () => solution).ResolveAsync().ConfigureAwait(false);
+        Assert.That(first.Address, Is.Not.Null);
+    }
+
+    [TestCase(false, false)]
+    [TestCase(false, true)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public async Task LateConnectionAttempt_CannotUseAnotherProjectsEndpoint(bool sameProjectId, bool automatic)
+    {
+        var active = new Project { Z21 = { IpAddress = "192.168.0.111" } };
+        var selected = new Project { Z21 = { IpAddress = "192.168.0.112" } };
+        if (sameProjectId) selected.Id = active.Id;
+        var z21 = CreateZ21Mock();
+        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
+            new ActionExecutionContextFactory(new ActionExecutionContext { Z21 = z21.Object }), new AppSettings(), Mock.Of<ILogger<MobaRuntimeService>>(),
+            endpointSource: new ProjectZ21EndpointSource(() => selected));
+        await runtime.ActivateProjectAsync(active).ConfigureAwait(false);
+
+        if (automatic) await runtime.StartAsync().ConfigureAwait(false);
+        else await runtime.ConnectAsync().ConfigureAwait(false);
+
+        z21.Verify(value => value.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(runtime.Current.StatusText, Does.Contain("selected project's runtime"));
+    }
+
     [Test]
     public async Task ActivateProjectAsync_ClonesProject_PreservingJourneyIds()
     {

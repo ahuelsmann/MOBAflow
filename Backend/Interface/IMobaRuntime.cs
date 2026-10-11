@@ -37,6 +37,9 @@ public interface IConnectionRuntime
 
     Task DisconnectAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>Logs off a phone connection during project selection without stopping the layout's trains.</summary>
+    Task DisconnectForProjectSwitchAsync(CancellationToken cancellationToken = default);
+
     Task RequestSystemStateAsync(CancellationToken cancellationToken = default);
 }
 

@@ -5,6 +5,10 @@ using Backend.Protocol;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using Domain;
+
+using Microsoft.Extensions.Logging;
+
 /// <summary>
 /// MOBAsmart project selection: the phone controls one project of the synchronized solution and connects to that
 /// project's Z21. In MOBAflow every project runs with its own Z21.
@@ -13,6 +17,10 @@ public sealed partial class MauiViewModel
 {
     private bool _isRefreshingProjectPicker;
     private int _z21Port = Z21Protocol.DefaultPort;
+    private readonly Lock _projectSelectionSync = new();
+    private Task _projectSelectionTask = Task.CompletedTask;
+    private long _projectSelectionVersion;
+    private Guid? _localProjectId;
 
     /// <summary>Gets the names of the projects of the synchronized solution, in solution order.</summary>
     [ObservableProperty]
@@ -57,39 +65,90 @@ public sealed partial class MauiViewModel
     /// <summary>
     /// Connects to the selected project's Z21; a connection to the Z21 of the previously selected project is closed.
     /// </summary>
-    private async Task ApplySelectedProjectZ21Async(bool activateProject)
+    private Task QueueProjectSelection()
     {
-        var project = _projectContext?.SelectedProject?.Model;
-        var address = project?.Z21.IpAddress.Trim() ?? string.Empty;
-        var port = project?.Z21.Port is > 0 ? project.Z21.Port : Z21Protocol.DefaultPort;
-        var endpointChanged = !string.Equals(address, Z21IpAddress, StringComparison.OrdinalIgnoreCase)
-            || port != _z21Port;
-        if (!endpointChanged && !activateProject)
+        lock (_projectSelectionSync)
         {
-            return;
-        }
-
-        if (endpointChanged && (_runtimeSnapshots.Current.IsConnected || _runtimeSnapshots.Current.IsZ21Connecting))
-        {
-            await _runtimeConnection.DisconnectAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
-        }
-
-        // The phone's local feedback runtime follows the project even while the UI projects MOBAflow's snapshots.
-        if (activateProject && project is not null)
-        {
-            await _runtimeConnection.ActivateProjectAsync(project, _applicationLifetimeCts.Token).ConfigureAwait(false);
-        }
-
-        await _uiDispatcher.InvokeOnUiAsync(() =>
-        {
-            Z21IpAddress = address;
-            _z21Port = port;
-            return Task.CompletedTask;
-        }).ConfigureAwait(false);
-
-        if (endpointChanged && address.Length > 0)
-        {
-            await _uiDispatcher.InvokeOnUiAsync(() => ConnectCommand.ExecuteAsync(null)).ConfigureAwait(false);
+            var version = ++_projectSelectionVersion;
+            _projectSelectionTask = ApplySelectedProjectAsync(
+                _projectSelectionTask, _projectContext?.SelectedProject?.Model, version);
+            return _projectSelectionTask;
         }
     }
+
+    private bool IsCurrentProjectSelection(long version) =>
+        !_isStopping && version == Volatile.Read(ref _projectSelectionVersion);
+
+    private async Task ApplySelectedProjectAsync(Task previous, Project? project, long version)
+    {
+        // Publish this request as the queue tail before callbacks can enqueue another selection.
+        await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
+        await previous.ConfigureAwait(false);
+        if (!IsCurrentProjectSelection(version)) return;
+        try
+        {
+            var cancellationToken = _applicationLifetimeCts.Token;
+            var address = project?.Z21.IpAddress.Trim() ?? string.Empty;
+            var port = project?.Z21.Port is > 0 ? project.Z21.Port : Z21Protocol.DefaultPort;
+            var endpointChanged = !string.Equals(address, Z21IpAddress, StringComparison.OrdinalIgnoreCase)
+                || port != _z21Port;
+            var projectChanged = project?.Id != _localProjectId;
+
+            // Always log off on a handoff, including an unconfirmed UDP session. Do not stop the old layout.
+            if (endpointChanged || projectChanged)
+            {
+                await _runtimeConnection.DisconnectForProjectSwitchAsync(cancellationToken).ConfigureAwait(false);
+                if (!IsCurrentProjectSelection(version)) return;
+            }
+
+            if (project is not null && _runtimeHubRemoteClient is not null)
+            {
+                await _runtimeHubRemoteClient.SelectProjectAsync(project.Id, cancellationToken).ConfigureAwait(false);
+                if (!IsCurrentProjectSelection(version)) return;
+            }
+
+            if (project is not null)
+            {
+                if (projectChanged)
+                    await _runtimeConnection.ActivateProjectAsync(project, cancellationToken).ConfigureAwait(false);
+                else
+                    await _runtimeConnection.UpdateProjectAsync(project, cancellationToken).ConfigureAwait(false);
+                _localProjectId = project.Id;
+                if (!IsCurrentProjectSelection(version)) return;
+            }
+            else
+            {
+                _localProjectId = null;
+            }
+
+            await _uiDispatcher.InvokeOnUiAsync(() =>
+            {
+                if (IsCurrentProjectSelection(version))
+                {
+                    Z21IpAddress = address;
+                    _z21Port = port;
+                }
+                return Task.CompletedTask;
+            }).ConfigureAwait(false);
+
+            if (IsCurrentProjectSelection(version) && (endpointChanged || projectChanged) && address.Length > 0)
+                await _runtimeConnection.ConnectAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException and not AccessViolationException)
+        {
+            // Each request completes so a later selection can recover after a failed handoff.
+            if (ex is not OperationCanceledException)
+            {
+                LogProjectSelectionFailed(_logger, ex);
+                await _uiDispatcher.InvokeOnUiAsync(() =>
+                {
+                    if (IsCurrentProjectSelection(version)) Z21ConnectionStatus = $"Project selection failed: {ex.Message}";
+                    return Task.CompletedTask;
+                }).ConfigureAwait(false);
+            }
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Project selection failed")]
+    private static partial void LogProjectSelectionFailed(ILogger logger, Exception exception);
 }
