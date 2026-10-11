@@ -740,13 +740,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1849",
-      "path": "Backend/Discovery/Z21DiscoveryService.cs",
-      "count": 2
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1849",
       "path": "Backend/Service/LocomotiveWhistleAutomationService.cs",
       "count": 1
     },
@@ -1985,13 +1978,6 @@
     {
       "project": "MOBAdisplay",
       "targetFramework": "net10.0",
-      "ruleId": "CA1849",
-      "path": "MOBAdisplay/Runtime/FrameLoopScheduler.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAdisplay",
-      "targetFramework": "net10.0",
       "ruleId": "CA2208",
       "path": "MOBAdisplay/Protocol/DisplayPayloadCodec.cs",
       "count": 1
@@ -3126,13 +3112,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1849",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1859",
       "path": "SharedUI/Extensions/UiDispatcherServiceCollectionExtensions.cs",
       "count": 1
@@ -4029,13 +4008,6 @@
     {
       "project": "Test",
       "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Test/Integration/RuntimeHubLiveE2ETests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
       "ruleId": "CA1068",
       "path": "Test/SharedUI/TimetablePageViewModelTests.cs",
       "count": 1
@@ -4716,6 +4688,48 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Common/DiscoveryCandidateContractTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Common/InMemorySinkTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Common/MultiplexerContractTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Common/PhotoPathContractTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Domain/PersistedDomainDefaultsTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Domain/SolutionLoadFailureTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Common/GaugeThemeAppearanceTests.cs",
       "count": 1
     },
@@ -5116,6 +5130,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/Rgb565ConverterTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/SessionLossObserverTests.cs",
       "count": 1
     },
     {
@@ -6172,13 +6193,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1861",
-      "path": "Test/Domain/WorkflowActionJsonConverterTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1861",
       "path": "Test/SharedUI/JourneyMapViewModelTests.cs",
       "count": 1
     },
@@ -6242,8 +6256,15 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2000",
+      "path": "Test/Integration/MobaApiProcess.cs",
+      "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2000",
       "path": "Test/Integration/MobApiProcessTests.cs",
-      "count": 4
+      "count": 1
     },
     {
       "project": "Test",
@@ -6530,14 +6551,14 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Integration/MobApiProcessTests.cs",
-      "count": 32
+      "count": 20
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Integration/RuntimeHubLiveE2ETests.cs",
-      "count": 8
+      "count": 5
     },
     {
       "project": "Test",
@@ -6746,7 +6767,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2234",
-      "path": "Test/Integration/MobApiProcessTests.cs",
+      "path": "Test/Integration/MobaApiProcess.cs",
       "count": 1
     },
     {
@@ -6754,7 +6775,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2234",
       "path": "Test/Integration/RuntimeHubLiveE2ETests.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "Test",
@@ -7012,13 +7033,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Backend/MultiplexerCommandResolverTests.cs",
-      "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
       "path": "Test/Backend/RecordingSessionServiceTests.cs",
       "count": 2
     },
@@ -7105,13 +7119,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/Common/EventBusTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Common/FunctionBacklightColorTests.cs",
-      "count": 4
     },
     {
       "project": "Test",
@@ -7210,13 +7217,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/Domain/TrainTests.cs",
       "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Domain/WorkflowActionJsonConverterTests.cs",
-      "count": 8
     },
     {
       "project": "Test",
@@ -7852,13 +7852,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/SignalBoxSnapshotMergeTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
       "path": "Test/Common/SubnetCandidateBuilderTests.cs",
       "count": 2
     },
@@ -7901,13 +7894,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Domain/MatrixImageTests.cs",
-      "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
       "path": "Test/Domain/SignalBoxPlanTests.cs",
       "count": 9
     },
@@ -7931,13 +7917,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Domain/TrainClassLibraryTests.cs",
       "count": 8
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/WorkflowActionJsonConverterTests.cs",
-      "count": 4
     },
     {
       "project": "Test",

@@ -47,6 +47,18 @@ such as invalid references or conflicting data.
 MOBAflow reports digital-address conflicts in project diagnostics. Resolve them
 before operating the affected locomotives.
 
+### Recorder
+
+**Recorder** captures supported runtime events and operator commands in a
+timeline. Use **Start**, **Pause**, **Resume** and **Stop**, add markers or notes,
+and export or import a `.mobarecording.json` file for later inspection.
+
+Replay uses separate in-memory state, not the live layout. Disconnect the Z21
+before using playback, single-step or seek. Replay does not send recorded
+commands to hardware or run audio, announcements, scripts or display actions.
+Only supported event and command types are captured; this is not a complete
+recording of every UI interaction.
+
 ### Stations, journeys and events
 
 **Stations** are reusable project entities with platforms and optional city
@@ -54,16 +66,19 @@ metadata. **Journeys** reference an ordered list of those stations.
 
 A journey is either **active** or inactive. When feedback arrives, MOBAflow
 evaluates the events of every active journey. Each event assigns a workflow to an
-InPort and a count. MOBAflow counts every InPort separately from application start
-until you reset the counters; an event runs when its InPort counter reaches the
-configured count. List order does not define the trigger sequence.
+InPort and a count. MOBAflow counts every InPort separately and saves its count
+locally, outside the solution file. Counts are restored after an app restart;
+loading a solution or activating a journey does not reset them. An event runs
+when an accepted feedback activation brings its InPort counter to the configured
+count. Restoring or manually setting a count does not trigger a workflow.
+List order does not define the trigger sequence.
 
 Use **Event Manager** to edit a journey's events. **Journey Map** visualizes the
 route and progress.
 
-Stops change only through the **Change journey stop** workflow action. At the last
-stop, a journey either stays there or continues at the first stop, depending on its
-configured behavior.
+Stops change only through the **Change journey stop** workflow action. Advancing
+past the last stop leaves the journey there. To return to the first stop, use
+an action that selects that stop explicitly; there is no automatic wrap-around.
 
 ### Workflows
 
@@ -109,6 +124,11 @@ setting is saved with the solution. Events remain editable while a journey is
 active, and changes take effect immediately. **Journey options** offers **Reset
 all InPort counters**, which starts counting from zero again. Stop changes are
 workflow actions; an event does not advance a stop implicitly. Workflow authoring and diagnostics remain on the **Workflows** page.
+
+In **Overview**, each counter row also offers **Set** and **Reset**. Use a
+non-negative whole number to correct one count. These commands update the saved
+count and clear that input's timing history, but do not simulate feedback or run
+journey events. A reset can let a later activation reach an event's count again.
 
 Choose **Validate** before operating a workflow. Validation checks identifiers,
 the action list, and action settings without running any actions. Invalid or
@@ -232,8 +252,11 @@ is focused. Other global shortcuts are not currently defined.
 
 - Confirm that the journey is active.
 - Compare incoming feedback in **Monitor** with the InPort and count configured in
-  **Event Manager**. Counts are measured since application start or the last explicit
-  counter reset, independently of when a journey was activated.
+  **Event Manager**. Counts continue from their saved values, independently of
+  when the app was started or a journey was activated.
+- If the counter load reports an error, counting stays disabled to avoid using
+  unknown values. Resolve the storage problem and retry, or deliberately use
+  **Reset all InPort counters** to replace the saved counts with zero.
 - Check project diagnostics for missing stations or invalid references.
 - Review timer filtering if legitimate events arrive very close together.
 

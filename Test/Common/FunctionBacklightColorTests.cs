@@ -14,9 +14,12 @@ internal sealed class FunctionBacklightColorTests
     {
         var appearance = FunctionBacklightColor.Resolve(false, "#FFD700", FunctionBacklightColor.AppearanceTheme.Dark);
 
-        Assert.That((appearance.BackgroundArgb >> 24) & 0xFF, Is.EqualTo(0xFF));
-        Assert.That(appearance.BackgroundArgb & 0xFFFFFF, Is.EqualTo(0x2C2C2C));
-        Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFFFFFFFF));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That((appearance.BackgroundArgb >> 24) & 0xFF, Is.EqualTo(0xFF));
+            Assert.That(appearance.BackgroundArgb & 0xFFFFFF, Is.EqualTo(0x2C2C2C));
+            Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFFFFFFFF));
+        }
     }
 
     [Test]
@@ -24,8 +27,11 @@ internal sealed class FunctionBacklightColorTests
     {
         var appearance = FunctionBacklightColor.Resolve(false, "#FFD700", FunctionBacklightColor.AppearanceTheme.Light);
 
-        Assert.That(appearance.BackgroundArgb & 0xFFFFFF, Is.EqualTo(0xEEEEEE));
-        Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFF212121));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(appearance.BackgroundArgb & 0xFFFFFF, Is.EqualTo(0xEEEEEE));
+            Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFF212121));
+        }
     }
 
     [Test]
@@ -44,8 +50,11 @@ internal sealed class FunctionBacklightColorTests
     {
         var appearance = FunctionBacklightColor.Resolve(true, "#888888", FunctionBacklightColor.AppearanceTheme.Dark);
 
-        Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFFFFFFFF));
-        Assert.That(appearance.SecondaryTextArgb, Is.EqualTo(0xFFE8E8E8));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFFFFFFFF));
+            Assert.That(appearance.SecondaryTextArgb, Is.EqualTo(0xFFE8E8E8));
+        }
     }
 
     [Test]
@@ -64,9 +73,48 @@ internal sealed class FunctionBacklightColorTests
         var g = (argb >> 8) & 0xFF;
         var b = argb & 0xFF;
 
-        Assert.That(r, Is.EqualTo(0x2C));
-        Assert.That(g, Is.EqualTo(0x2C));
-        Assert.That(b, Is.EqualTo(0x2C));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(r, Is.EqualTo(0x2C));
+            Assert.That(g, Is.EqualTo(0x2C));
+            Assert.That(b, Is.EqualTo(0x2C));
+        }
+    }
+
+    [TestCase("#FF0000", FunctionBacklightColor.AppearanceTheme.Dark, 0xFFA90B0Bu)]
+    [TestCase("#0000FF", FunctionBacklightColor.AppearanceTheme.Dark, 0xFF0B0BA9u)]
+    [TestCase("#FF0000", FunctionBacklightColor.AppearanceTheme.Light, 0xFFFF9393u)]
+    [TestCase("#0000FF", FunctionBacklightColor.AppearanceTheme.Light, 0xFF9393FFu)]
+    public void Resolve_WhenOn_PreservesAccentChannelsAndOpaqueBackground(
+        string accent, FunctionBacklightColor.AppearanceTheme theme, uint expectedBackground)
+    {
+        Assert.That(FunctionBacklightColor.Resolve(true, accent, theme).BackgroundArgb,
+            Is.EqualTo(expectedBackground));
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase(" ")]
+    [TestCase("12345")]
+    [TestCase("1234567")]
+    public void Resolve_WhenOn_MissingOrUnsupportedColorUsesGray(string? accent)
+    {
+        Assert.That(FunctionBacklightColor.Resolve(true, accent, FunctionBacklightColor.AppearanceTheme.Dark),
+            Is.EqualTo(FunctionBacklightColor.Resolve(true, "#808080", FunctionBacklightColor.AppearanceTheme.Dark)));
+    }
+
+    [TestCase(FunctionBacklightColor.AppearanceTheme.Dark)]
+    [TestCase(FunctionBacklightColor.AppearanceTheme.Light)]
+    public void Resolve_RgbAndArgbInputDescribeSameOpaqueAccent(FunctionBacklightColor.AppearanceTheme theme)
+    {
+        var expected = FunctionBacklightColor.Resolve(true, "#12AB34", theme);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(FunctionBacklightColor.Resolve(true, "12AB34", theme), Is.EqualTo(expected));
+            Assert.That(FunctionBacklightColor.Resolve(true, "#0012AB34", theme), Is.EqualTo(expected));
+            Assert.That(FunctionBacklightColor.Resolve(true, "#FF12AB34", theme), Is.EqualTo(expected));
+            Assert.That(FunctionBacklightColor.ToArgb(true, "#12AB34", theme), Is.EqualTo(expected.BackgroundArgb));
+        }
     }
 
     private static double GetLuminance(uint argb)

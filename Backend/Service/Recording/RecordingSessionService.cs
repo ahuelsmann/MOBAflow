@@ -157,7 +157,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
                 $"Recording started: {_sessionName}",
                 timestampUtc: _startedUtc));
 
-            _consumerTask = Task.Run(() => ConsumeAsync(channel.Reader, _consumerCancellation.Token));
+            _consumerTask = Task.Run(() => ConsumeAsync(channel.Reader, _consumerCancellation.Token), CancellationToken.None);
             snapshot = CreateStatusLocked();
         }
 
@@ -387,7 +387,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
 
         if (state is RecordingSessionState.Recording or RecordingSessionState.Paused or RecordingSessionState.Stopping)
         {
-            await StopAsync().ConfigureAwait(false);
+            await StopAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         lock (_gate)

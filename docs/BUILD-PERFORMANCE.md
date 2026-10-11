@@ -56,11 +56,15 @@ Use reliable deploy when fast deploy behaves inconsistently on a device.
 
 **Clean Release AAB:**
 
-The pinned .NET SDK and the MAUI Android workload are prerequisites. From a
-clean checkout, run the restore, publish, and bundle validation defined in the disabled CI job:
+The .NET SDK band from `global.json` (10.0.4xx, at least 10.0.401) and the MAUI Android workload are
+prerequisites. The workload set version is pinned in the install command, not in `global.json`: a
+`workloadVersion` there would fail every build, including desktop-only builds, on machines without that
+workload set. `dotnet workload restore` always moves to the newest workload set, so install the pinned
+set explicitly. From a clean checkout, run the install, restore, publish, and bundle validation defined
+in the disabled CI job:
 
 ```powershell
-dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+dotnet workload install maui-android --version 10.0.401.1
 dotnet restore MOBAsmart/MOBAsmart.csproj `
   --property:Configuration=Release `
   --force-evaluate
@@ -129,11 +133,31 @@ but the job is skipped without allocating a runner. Re-enable its code-change
 condition when Android release distribution starts. Mobile tests remain an
 explicit opt-in graph with `IncludeMobaSmartTests=true`.
 
+The Linux display job also runs the MOBApi process integration tests
+(`MobApiProcessTests`, `RuntimeHubLiveE2ETests`) in the `net10.0` target. Each
+fixture starts the built MOBApi as an isolated process on a free local port, so
+no running server or hardware is needed. `scripts/Test-TestRunResults.ps1`
+fails the step when a selected test is skipped or too few tests run. Locally:
+
+```powershell
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~Moba.Test.Integration.MobApiProcessTests|FullyQualifiedName~Moba.Test.Integration.RuntimeHubLiveE2ETests"
+```
+
 Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 `.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main`, manual runs and every other change run all enabled jobs.
+
+Code changes also select two expensive parts by the paths they read. The
+ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
+only when `MOBAdisplay/esp32/` changes. Domain mutation testing runs only when
+`Domain/`, its linked tests and fixture data (`Test/TestFile/`), `MutationTest/`
+or the .NET build configuration change. A path outside the known .NET areas,
+such as a workflow, a script or a new top-level folder, runs both. The jobs keep their required check names;
+skipped steps and a skipped job count as successful.
+`scripts/Get-QualityChangeScope.Tests.ps1` checks these rules, including every
+source and copied fixture input of the mutation project.
 
 The repository consistency job also lints every workflow with a pinned,
 checksum-verified actionlint release and checks internal documentation links

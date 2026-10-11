@@ -198,11 +198,12 @@ internal sealed class RuntimeCommandAdmissionTests
     }
 
     [Test]
-    public void HubCommand_WithoutProject_IsRejected()
+    public async Task HubCommand_WithoutProject_IsRejected()
     {
         var fixture = new HubFixture(hostConnectionId: "host-1");
 
-        Assert.ThrowsAsync<HubException>(() => fixture.Hub.SetLocomotiveDrive(string.Empty, 3, 40, forward: true));
+        await Assert.ThatAsync(() => fixture.Hub.SetLocomotiveDrive(string.Empty, 3, 40, forward: true),
+            Throws.TypeOf<HubException>()).ConfigureAwait(false);
         fixture.HostProxy.Verify(
             proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
             Times.Never);

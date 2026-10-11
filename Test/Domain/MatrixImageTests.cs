@@ -13,13 +13,13 @@ public sealed class MatrixImageTests
     {
         var image = new MatrixImage();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(image.Id, Is.Not.EqualTo(Guid.Empty));
             Assert.That(image.Name, Is.Empty);
             Assert.That(image.Cells, Has.Count.EqualTo(MatrixImage.CellCount));
             Assert.That(image.Cells, Is.All.EqualTo(MatrixImage.OffColorArgb));
-        });
+        }
     }
 
     [Test]
@@ -29,12 +29,12 @@ public sealed class MatrixImageTests
 
         image.NormalizeCells();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(image.Cells, Has.Count.EqualTo(MatrixImage.CellCount));
             Assert.That(image.Cells[0], Is.EqualTo(0xFFFF0000));
             Assert.That(image.Cells[1], Is.EqualTo(MatrixImage.OffColorArgb));
-        });
+        }
     }
 
     [Test]
@@ -44,6 +44,33 @@ public sealed class MatrixImageTests
 
         Assert.That(project.Matrices, Is.Not.Null);
         Assert.That(project.Matrices, Is.Empty);
+    }
+
+    [TestCase(25)]
+    [TestCase(26)]
+    [TestCase(40)]
+    public void NormalizeCellsPreservesFirstTwentyFiveColors(int count)
+    {
+        var cells = Enumerable.Range(1, count).Select(value => (uint)value).ToList();
+        var expected = cells.Take(MatrixImage.CellCount).ToArray();
+        var image = new MatrixImage { Cells = cells };
+
+        image.NormalizeCells();
+        image.NormalizeCells();
+
+        Assert.That(image.Cells, Is.EqualTo(expected));
+        Assert.That(image.Cells, Is.SameAs(cells));
+    }
+
+    [Test]
+    public void NormalizeCellsNullCellsRestoresBlankImage()
+    {
+        var image = new MatrixImage { Cells = null! };
+
+        image.NormalizeCells();
+
+        Assert.That(image.Cells, Has.Count.EqualTo(MatrixImage.CellCount));
+        Assert.That(image.Cells, Is.All.EqualTo(MatrixImage.OffColorArgb));
     }
 
     [Test]
@@ -61,11 +88,11 @@ public sealed class MatrixImageTests
 
         Assert.That(reloaded, Is.Not.Null);
         var reloadedMatrix = reloaded!.Projects.Single().Matrices.Single();
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(reloadedMatrix.Name, Is.EqualTo("Signal"));
             Assert.That(reloadedMatrix.Cells, Has.Count.EqualTo(MatrixImage.CellCount));
             Assert.That(reloadedMatrix.Cells[0], Is.EqualTo(0xFFFF0000));
-        });
+        }
     }
 }
