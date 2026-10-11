@@ -156,7 +156,7 @@ public sealed class WorkflowLibraryViewModelTests
         library.ValidateCommand.Execute(null);
 
         Assert.That(library.ValidationIssues, Has.Some.Matches<WorkflowValidationIssue>(
-            issue => issue.Code == WorkflowValidationCodes.EmptyWorkflow
+            issue => issue is not null && issue.Code == WorkflowValidationCodes.EmptyWorkflow
                 && issue.WorkflowId == workflow.Id));
     }
 

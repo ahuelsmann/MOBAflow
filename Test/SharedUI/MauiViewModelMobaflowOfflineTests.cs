@@ -912,6 +912,24 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     }
 
     [Test]
+    public void SwitchingProjects_DropsTheLocomotivesOfThePreviousProject()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var station = new Project { Name = "Station" };
+        var yard = new Project { Name = "Yard" };
+        var projectContext = CreateProjectContext(new Solution { Name = "Layout", Projects = [station, yard] });
+        var viewModel = CreateViewModel(eventBus, projectContext: projectContext);
+        viewModel.RestoreCachedLocomotiveFleet(
+        [
+            new LocomotiveFleetSnapshot { LocomotiveId = Guid.NewGuid(), Name = "BR 110 of Station", DigitalAddress = 3 }
+        ]);
+
+        projectContext.SelectedProject = projectContext.SolutionViewModel!.Projects.Single(project => project.Model.Id == yard.Id);
+
+        Assert.That(viewModel.GetStartupLocomotiveFleet(), Is.Empty);
+    }
+
+    [Test]
     public async Task MobaflowConnectionEnabled_WhenUnreachable_KeepsToggleAndRetriesDiscovery()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);

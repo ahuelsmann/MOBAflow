@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-08
 
-**Status**: Draft (clarified 2026-10-09; awaiting plan approval)
+**Status**: Approved; implementation waits for the merge of #207 (maintainer instruction, 2026-10-11)
 
 **Spec Kit**: Required
 
@@ -43,7 +43,7 @@ lives in the MOBAflow application data folder. No migration: a settings file wit
 default provider `system-speech`; the shipped `MOBAflow/appsettings.json` selects `piper` as today. `solution.json`
 is unchanged.
 
-## Current State (main at `d45e14c5`)
+## Current State (verified on main at `38546d6d`, 2026-10-11)
 
 - `Sound/ISpeakerEngine.cs` is already a provider-neutral contract (`Name`, `AnnouncementAsync(message, voice,
   cancellationToken)`).
@@ -51,8 +51,11 @@ is unchanged.
   `SystemSpeechEngine`) by `AppSettings.Speech.SpeakerEngineName`; unknown names fall back silently.
 - Both engines live in `Sound`, which also targets Android. `Sound.csproj` therefore references
   `System.Speech` and `System.Windows.Extensions` for every platform.
-- MOBAflow creates one `ISpeakerEngine` singleton at startup (`MobaWinUiServiceCollectionExtensions`), so a
-  changed selection takes effect only after a restart. MOBAsmart registers `NullSpeakerEngine`.
+- `AnnouncementService` calls `SpeakerEngineFactory.CreateEngineFromOptions()` for every announcement, so these
+  announcements already use the current selection and settings without a restart.
+- MOBAflow also registers one `ISpeakerEngine` singleton (`MobaWinUiServiceCollectionExtensions`). The Settings
+  test callback resolves that singleton, so it keeps the selection and options from its first resolution. Both
+  paths must use the new shared output service per call. MOBAsmart registers `NullSpeakerEngine`.
 - Piper writes a WAV file and plays it; System Speech speaks directly to the default audio device. Nothing is
   cached.
 
@@ -139,6 +142,13 @@ call.
    once.
 5. **Given** the operator presses "Clear cache", **When** the next announcement runs, **Then** it is synthesised
    again.
+6. **Given** two announcements share an in-progress synthesis, **When** one caller cancels, **Then** that caller
+   stops waiting and does not play audio, while the other caller completes using the single synthesis.
+7. **Given** all callers waiting for an in-progress synthesis cancel, **When** no caller remains, **Then** the
+   provider synthesis is cancelled, no fallback or deferred synthesis is started for those cancelled calls, and a
+   later request can start a new synthesis.
+8. **Given** synthesis or playback is active, **When** the application shuts down, **Then** the shared work and
+   playback stop.
 
 ---
 
@@ -159,7 +169,9 @@ without playback.
    fallback speaks it immediately and the diagnostics show the reason.
 2. **Given** pending texts exist, **When** Azure is reachable again, **Then** their audio is synthesised and
    cached, and nothing is played.
-3. **Given** an announcement is running, **When** the workflow is cancelled, **Then** synthesis and playback stop.
+3. **Given** an announcement is running, **When** its workflow is cancelled, **Then** that caller stops waiting
+   and its playback stops; a synthesis shared with another active caller continues until that caller finishes or
+   cancels.
 
 ### Edge Cases
 
@@ -187,13 +199,16 @@ without playback.
 - **FR-005**: Providers MUST return synthesised audio to the shared layer, which plays it; this makes caching and
   fallback provider-independent.
 - **FR-006**: The shared layer MUST cache audio keyed by provider id, a provider options fingerprint, voice,
-  language, rate, volume and text, MUST synthesise concurrent identical misses once, MUST enforce a size limit by
+  language, rate, volume and text, MUST synthesise concurrent identical misses once without one caller's
+  cancellation cancelling other active callers, MUST enforce a size limit by
   removing the least recently played entries first, and MUST expose the cache size and a clear command.
 - **FR-007**: On a cache miss with the selected provider unavailable, the shared layer MUST speak through an
   available local fallback provider other than the failed one, record the reason in the speech diagnostics, and
   synthesise and cache the text with the selected provider once it is available again, without playing it.
-- **FR-008**: Synthesis and playback MUST be asynchronous and cancellable; provider errors MUST be returned as
-  structured failures and MUST NOT stop the calling workflow.
+- **FR-008**: Synthesis and playback MUST be asynchronous and cancellable. Cancellation MUST stop that caller's
+  wait and playback; shared synthesis MUST stop when its last active caller cancels or the application shuts down.
+  Cancelled calls MUST NOT initiate fallback or deferred synthesis. Provider errors MUST be returned as structured
+  failures and MUST NOT stop the calling workflow.
 - **FR-009**: Credentials MUST stay in the Windows credential store and MUST NOT appear in logs, diagnostics or
   cache file names.
 - **FR-010**: Existing announcements MUST keep working through the new contract with the current default voice,
@@ -226,5 +241,6 @@ without playback.
 - The provider library naming follows the existing `TrackLibrary.Base` / `TrackLibrary.PikoA` pattern.
 - The default cache size limit is 500 MB; the plan may adjust it with a measured reason.
 - Pending syntheses are kept for the running session only; a restart discards them.
-- Implementation starts after RF-23 slice 3 is merged, because both change MOBAflow DI registration and the
-  Settings page.
+- Implementation starts only after PR #207 (RF-23 runtime per project, tracked by #191) is merged, because both
+  change MOBAflow DI registration and the Settings page. Spec, plan and task corrections are independent of that
+  merge. Check the current GitHub merge state before starting slice 1.

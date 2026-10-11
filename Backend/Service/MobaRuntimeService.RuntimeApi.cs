@@ -17,6 +17,18 @@ using System.Text.Json;
 /// </summary>
 public sealed partial class MobaRuntimeService
 {
+    /// <summary>Lowest DCC locomotive address the Z21 accepts.</summary>
+    private const uint MinLocomotiveAddress = 1;
+
+    /// <summary>Highest DCC locomotive address the Z21 accepts.</summary>
+    private const uint MaxLocomotiveAddress = 9999;
+
+    private static readonly Action<ILogger, int, Exception?> LogStopLocomotiveFailed =
+        LoggerMessage.Define<int>(
+            LogLevel.Error,
+            new EventId(3, nameof(LogStopLocomotiveFailed)),
+            "Setting locomotive {Address} to speed 0 failed");
+
     /// <inheritdoc />
     public async Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
@@ -132,6 +144,9 @@ public sealed partial class MobaRuntimeService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        // Trains keep their last speed on the Z21 after logging off; stop them while the connection still exists.
+        await StopAllLocomotivesAsync(cancellationToken).ConfigureAwait(false);
+
         try
         {
             _activeProjectContext?.JourneyManager.CancelPendingWork();
@@ -215,15 +230,23 @@ public sealed partial class MobaRuntimeService
         var directions = _locomotiveStates.ToDictionary(pair => pair.Key, pair => pair.Value.IsForward);
         foreach (var locomotive in _activeProjectContext?.ActiveProject.Locomotives ?? [])
         {
-            if (locomotive.DigitalAddress is { } address and > 0 and <= int.MaxValue)
+            if (locomotive.DigitalAddress is { } address and >= MinLocomotiveAddress and <= MaxLocomotiveAddress)
             {
                 directions.TryAdd((int)address, true);
             }
         }
 
+        // One failing locomotive must not keep the others moving.
         foreach (var (address, forward) in directions)
         {
-            await SetLocomotiveDriveAsync(address, 0, forward, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await SetLocomotiveDriveAsync(address, 0, forward, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                LogStopLocomotiveFailed(_logger, address, ex);
+            }
         }
     }
 

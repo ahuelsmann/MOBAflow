@@ -124,7 +124,7 @@ internal sealed class RecordingEventCaptureTests
         Assert.Multiple(() =>
         {
             Assert.That(session.CurrentStatus.DroppedEntryCount, Is.GreaterThan(0));
-            Assert.That(artifact.Entries, Has.Some.Matches<RecordingEntry>(entry => entry.TypeKey == "recorder.gap"));
+            Assert.That(artifact.Entries, Has.Some.Matches<RecordingEntry>(entry => entry is not null && entry.TypeKey == "recorder.gap"));
             Assert.That(artifact.Entries.Select(entry => entry.Sequence), Is.Ordered.And.Unique);
         });
     }
@@ -150,7 +150,7 @@ internal sealed class RecordingEventCaptureTests
         Assert.Multiple(() =>
         {
             Assert.That(delivered, Is.True);
-            Assert.That(artifact.Entries, Has.None.Matches<RecordingEntry>(entry => entry.TypeKey == "test.throw"));
+            Assert.That(artifact.Entries, Has.None.Matches<RecordingEntry>(entry => entry is not null && entry.TypeKey == "test.throw"));
         });
     }
 

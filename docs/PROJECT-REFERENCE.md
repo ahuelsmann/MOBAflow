@@ -273,9 +273,10 @@ MOBApi maps controllers plus two SignalR hubs.
 | `GET /api/status` | API/runtime host status and clients |
 | `GET/PUT /api/solution` | Current solution cache |
 | `GET /api/solution/meta` | Solution metadata |
-| `GET /api/runtime/meta` | Runtime cache metadata |
-| `GET/PUT /api/runtime/snapshot` | Current runtime snapshot |
-| `POST /api/runtime/commands/signal-aspect` | Queue/forward a signal command |
+| `GET /api/runtime/meta?projectId={id}` | Runtime cache metadata of one project |
+| `GET /api/runtime/snapshot?projectId={id}` | Current runtime snapshot of one project |
+| `PUT /api/runtime/snapshot` | Store a snapshot; the snapshot names its project (`projectId`) |
+| `POST /api/runtime/commands/signal-aspect` | Queue/forward a signal command (every command names its `projectId`) |
 | `POST /api/runtime/commands/locomotive/drive` | Queue/forward a drive command |
 | `POST /api/runtime/commands/locomotive/function` | Queue/forward a function command |
 | `GET /api/runtime/commands/pending` | Consume pending commands |

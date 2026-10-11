@@ -441,15 +441,15 @@ internal sealed class DisplayProtocolClientTests
     }
 
     [Test]
-    public void SendRequestAsync_Should_RejectEnvelopeIdentifiers_When_MessageScopeDoesNotMatch()
+    public async Task SendRequestAsync_Should_RejectEnvelopeIdentifiers_When_MessageScopeDoesNotMatch()
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         using var client = new DisplayProtocolClient(endpoint);
 
         // Act and assert
-        Assert.ThrowsAsync<ArgumentException>(async () =>
-            await client.SendRequestAsync(CreateHello(), sessionId: endpoint.SessionId));
+        await Assert.ThrowsAsync<ArgumentException>(async () =>
+            await client.SendRequestAsync(CreateHello(), sessionId: endpoint.SessionId)).ConfigureAwait(false);
     }
 
     private static HelloRequestPayload CreateHello() =>

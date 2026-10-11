@@ -21,6 +21,7 @@ public sealed partial class MauiViewModel
     private IReadOnlyList<LocomotiveFleetSnapshot>? _cachedRemoteLocomotiveFleet;
     private IReadOnlyList<LocomotiveFleetSnapshot>? _lastPublishedLocomotiveFleet;
     private bool _remoteLocomotiveFleetIsLive;
+    private Guid? _shownProjectId;
 
     private void WireProjectContextForControlTab()
     {
@@ -32,6 +33,7 @@ public sealed partial class MauiViewModel
         _projectContext.PropertyChanged += OnProjectContextPropertyChangedForControlTab;
         RefreshProjectPicker();
         Z21IpAddress = _projectContext.SelectedProject?.Model.Z21.IpAddress.Trim() ?? string.Empty;
+        _shownProjectId = _projectContext.SelectedProject?.Model.Id;
     }
 
     /// <summary>
@@ -95,9 +97,9 @@ public sealed partial class MauiViewModel
         PublishFleetUpdate(fleet);
     }
 
-    private void PublishFleetUpdate(IReadOnlyList<LocomotiveFleetSnapshot> fleet)
+    private void PublishFleetUpdate(IReadOnlyList<LocomotiveFleetSnapshot> fleet, bool publishEmpty = false)
     {
-        if (fleet.Count == 0)
+        if (fleet.Count == 0 && !publishEmpty)
         {
             return;
         }
@@ -329,7 +331,24 @@ public sealed partial class MauiViewModel
             return;
         }
 
-        _uiDispatcher.InvokeOnUi(ApplyBestAvailableLocomotiveFleet);
+        var projectId = _projectContext?.SelectedProject?.Model.Id;
+        if (_shownProjectId is { } previous && previous != projectId)
+        {
+            // Locomotives and signals of the previous project must not stay controllable under the new project id.
+            ClearCachedRemoteLocomotiveFleet();
+            ClearCachedRemoteSignalBoxElements();
+            _uiDispatcher.InvokeOnUi(() =>
+            {
+                ClearSignalBoxElements();
+                PublishFleetUpdate(GetBestAvailableLocomotiveFleet(), publishEmpty: true);
+            });
+        }
+        else
+        {
+            _uiDispatcher.InvokeOnUi(ApplyBestAvailableLocomotiveFleet);
+        }
+
+        _shownProjectId = projectId;
         _uiDispatcher.InvokeOnUi(RefreshProjectPicker);
         RunInBackground(SelectRemoteProjectAsync(), "Select remote project");
         RunInBackground(ApplySelectedProjectZ21Async(), "Connect to the selected project's Z21");

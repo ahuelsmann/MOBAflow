@@ -97,6 +97,47 @@ internal sealed class RestApiRuntimeHubServiceTests
         }
     }
 
+    [Test]
+    [CancelAfter(10_000)]
+    public async Task NoisyProject_DoesNotHoldBackTheSnapshotsOfAnotherProject()
+    {
+        var projectRuntimes = new TestProjectRuntimeHost();
+        await using var lifetime = projectRuntimes.ConfigureAwait(false);
+        var station = TestProjectRuntimeHost.Project("Station", "192.168.0.111");
+        var yard = TestProjectRuntimeHost.Project("Yard", "192.168.0.112");
+        await projectRuntimes.Host.LoadAsync([station, yard]).ConfigureAwait(false);
+        var yardPushed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var runtimeHubHostClient = ConnectedHostClient();
+        runtimeHubHostClient
+            .Setup(client => client.PushSnapshotAsync(It.IsAny<MobaRuntimeSnapshot>(), It.IsAny<CancellationToken>()))
+            .Callback<MobaRuntimeSnapshot, CancellationToken>((snapshot, _) =>
+            {
+                if (snapshot.ProjectId == yard.Id)
+                {
+                    yardPushed.TrySetResult();
+                }
+            })
+            .Returns(Task.CompletedTask);
+        using var mobApiClient = new LocalMobApiClient(new AppSettings());
+        var service = new RestApiRuntimeHubService(
+            runtimeHubHostClient.Object,
+            projectRuntimes.Host,
+            NullLogger<RestApiRuntimeHubService>.Instance,
+            mobApiClient);
+        await using var serviceLifetime = service.ConfigureAwait(false);
+
+        PublishSnapshot(projectRuntimes, yard, statusText: "yard");
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        while (!yardPushed.Task.IsCompleted && stopwatch.Elapsed < TimeSpan.FromSeconds(2))
+        {
+            // Station publishes faster than the push delay.
+            PublishSnapshot(projectRuntimes, station, statusText: "telemetry");
+            await Task.Delay(10).ConfigureAwait(false);
+        }
+
+        Assert.That(yardPushed.Task.IsCompleted, Is.True);
+    }
+
     private static Mock<IRuntimeHubHostClient> ConnectedHostClient()
     {
         var runtimeHubHostClient = new Mock<IRuntimeHubHostClient>();

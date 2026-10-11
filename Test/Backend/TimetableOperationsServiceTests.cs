@@ -62,7 +62,7 @@ internal sealed class TimetableOperationsServiceTests
 
         // Assert
         Assert.That(second.Status, Is.EqualTo(TimetableServiceStatus.Completed));
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CancelAsync(projectId, serviceId));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CancelAsync(projectId, serviceId)).ConfigureAwait(false);
     }
 
     [Test]
@@ -73,8 +73,8 @@ internal sealed class TimetableOperationsServiceTests
         using var service = new TimetableOperationsService(new MemoryStore(), new FixedTimeProvider(now));
 
         // Act + Assert
-        Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
-            await service.HoldAsync(Guid.NewGuid(), Guid.NewGuid(), now, "Wait for connection"));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
+            await service.HoldAsync(Guid.NewGuid(), Guid.NewGuid(), now, "Wait for connection")).ConfigureAwait(false);
     }
 
     [Test]
@@ -114,8 +114,8 @@ internal sealed class TimetableOperationsServiceTests
         var callId = Guid.NewGuid();
 
         // Act + Assert
-        Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await service.RecordDepartureAsync(projectId, serviceId, callId));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await service.RecordDepartureAsync(projectId, serviceId, callId)).ConfigureAwait(false);
 
         await service.RecordArrivalAsync(projectId, serviceId, callId);
         var state = await service.RecordDepartureAsync(projectId, serviceId, callId, now.AddMinutes(1));
@@ -218,9 +218,9 @@ internal sealed class TimetableOperationsServiceTests
         var projectId = Guid.NewGuid();
 
         // Act + Assert
-        Assert.DoesNotThrowAsync(async () => await Task.WhenAll(
+        await Assert.DoesNotThrowAsync(async () => await Task.WhenAll(
             service.GetStatesAsync(projectId),
-            service.CancelAsync(projectId, Guid.NewGuid())));
+            service.CancelAsync(projectId, Guid.NewGuid()))).ConfigureAwait(false);
     }
 
     private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider

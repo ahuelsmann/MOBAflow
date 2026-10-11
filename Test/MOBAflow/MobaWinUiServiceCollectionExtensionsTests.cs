@@ -34,7 +34,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(
                 provider.GetRequiredService<List<PageMetadata>>(),
                 Has.One.Matches<PageMetadata>(page =>
-                    page.Tag == "recorder"
+                    page is not null && page.Tag == "recorder"
                     && page.Title == "Recorder"
                     && page.Category == global::Moba.Common.Navigation.NavigationCategory.Monitoring
                     && page.Order == 20));

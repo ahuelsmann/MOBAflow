@@ -6,7 +6,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Draft (updated with the clarifications of 2026-10-09; awaiting maintainer approval)
+**Status**: Approved; implementation waits for the merge of #207 (maintainer instruction, 2026-10-11)
 
 **Input**: Feature specification from `/specs/009-tts-providers/spec.md`
 
@@ -111,14 +111,18 @@ Names follow the `TrackLibrary.Base` / `TrackLibrary.PikoA` pattern; final names
 2. **Cache hit**: play the cached WAV through `ISoundPlayer`; no provider call (FR-006, SC-003).
 3. **Cache miss**: synthesise with the selected provider, store the audio in the cache, play it. Concurrent misses
    for the same cache key share one synthesis (per-key single flight), so overlapping identical announcements cause
-   one provider call; different keys synthesise independently.
+   one provider call; different keys synthesise independently. Each caller observes its own cancellation token;
+   the shared synthesis owns a separate token. Cancelling one caller ends its wait and prevents its playback,
+   fallback and deferred synthesis, while other active callers continue. When the last waiting caller cancels,
+   cancel the shared synthesis and remove its in-progress entry so a later request can start again. Application
+   shutdown cancels all shared synthesis and playback.
 4. **Selected provider unavailable**: write a diagnostic, speak through the first available local fallback provider
    other than the failed one (the configured fallback, Piper if configured, then System Speech), and add the request
    to the pending queue (FR-007). Fallback audio is not cached under the selected provider's key.
 5. **Nothing available**: skip the announcement with a diagnostic; the workflow continues (FR-008, SC-005).
 
-Overlapping announcements keep today's ordering, characterised in slice 1. Cancellation stops synthesis and audible
-playback: today's `WindowsSoundPlayer` checks the token only before `SoundPlayer.PlaySync()`, so the shared layer
+Overlapping announcements keep today's ordering, characterised in slice 1. Cancellation follows the caller and
+shared-work rules above and stops audible playback: today's `WindowsSoundPlayer` checks the token only before `SoundPlayer.PlaySync()`, so the shared layer
 needs a player that stops on cancellation (for example `SoundPlayer.Play()` plus `Stop()` on cancellation and a
 completion wait from the WAV duration), covered by a regression test.
 
@@ -147,8 +151,11 @@ completion wait from the WAV duration), covered by a regression test.
   region and voice, which are not secret; only the key is in the credential store. Shared `Rate`, `Volume`,
   `VoiceName`, `TestMessage` stay at the top level. A settings file with only the removed fields loads with
   `system-speech`.
-- The Settings ViewModel lists providers with their capabilities, enables only supported options, shows the cache
-  size and offers "Clear cache"; the Azure key is entered in a password box and saved to the credential store.
+- Slice 2 replaces the existing Settings ViewModel properties and XAML bindings with `ProviderId` and the new
+  local-provider option sections in the same cutover as removal of the old fields. The local provider selector,
+  settings persistence, test callback and speech health bindings remain usable and compile in that slice.
+- Slice 5 extends those controls with capability filtering, Azure and fallback configuration, cache size and
+  "Clear cache"; the Azure key is entered in a password box and saved to the credential store.
 
 ## Delivery Slices
 
@@ -159,14 +166,18 @@ completion wait from the WAV duration), covered by a regression test.
    `Speech.SystemSpeech` and `Speech.Piper`, move code and tests, synthesise to WAV and play through a cancellable
    player; switch Backend callers and register both providers in MOBAflow; MOBAsmart registers the null output;
    remove `System.Speech` from `Sound` (`System.Windows.Extensions` stays for `WindowsSoundPlayer`, whose split
-   belongs to RF-29); remove `ISpeakerEngine`, `SpeakerEngineFactory`, `SpeechSpeakerEngineSelection` and the old
-   settings fields.
-3. **Cache**: `AudioCache` with options fingerprint, least-recently-used eviction, per-key single flight, size
-   display and "Clear cache".
+   belongs to RF-29); replace the existing local-provider Settings ViewModel properties, page bindings, test
+   callback and health bindings in this same slice, preserving saving and immediate switching; remove
+   `ISpeakerEngine`, `SpeakerEngineFactory`, `SpeechSpeakerEngineSelection` and the old settings fields only with
+   all their callers and bindings converted. This includes the compile-required part of the later Settings slice.
+3. **Cache**: `AudioCache` with options fingerprint, least-recently-used eviction, per-key single flight with
+   independent caller cancellation, and size/clear service APIs. The size display and "Clear cache" UI follow in
+   slice 5.
 4. **Azure and fallback**: `Speech.Azure` with credential store and fake HTTP tests; fallback provider setting
    excluding the failed provider; pending synthesis queue.
-5. **Settings and diagnostics**: provider list with capabilities, immediate switch, diagnostics for fallback and
-   skipped announcements.
+5. **Settings and diagnostics**: extend the local-provider controls from slice 2 with capabilities, Azure and
+   fallback configuration, cache size display and "Clear cache", and diagnostics for fallback and skipped
+   announcements. Immediate local-provider switching is already delivered and tested in slice 2.
 6. **Documentation**: `docs/wiki/PIPER-TTS-SETUP.md`, user guide speech section, `docs/ARCHITECTURE.md`, and a
    short "add a provider" guide.
 
@@ -174,8 +185,9 @@ Each slice is one draft PR from its own worktree.
 
 ## Dependencies and Sequencing
 
-- Start implementation after RF-23 slice 3 (#191) is merged: both change `MobaWinUiServiceCollectionExtensions`
-  and the Settings page. Spec and plan work is independent.
+- Start implementation only after PR #207 (RF-23 runtime per project, tracked by #191) is merged: both change
+  `MobaWinUiServiceCollectionExtensions` and the Settings page. Verify its current GitHub merge state before slice
+  1. Spec, plan and task corrections are independent; an open or ready-for-review PR does not satisfy this gate.
 - Coordinate with #141: this feature is the ADR's example; the ADR can reference the result instead of
   re-deciding it.
 - RF-29 (#47) drops its speech part (spec Q5); a comment on #47 records this when slice 2 lands.
@@ -190,7 +202,11 @@ Each slice is one draft PR from its own worktree.
   Windows speech package).
 - **Manual checks**: Settings page in Light and Dark; a spoken test message per provider and one fallback run with
   the network off on the maintainer's PC (requires launch approval and the maintainer's Azure key).
-- **Regression checks**: app settings load with removed fields; analyzer baselines unchanged.
+- **Regression checks**: slice 2 compiles with all removed-field callers and bindings converted; both the Settings
+  test callback and `AnnouncementService` use the current selection and settings without restarting; app settings
+  load with removed fields; analyzer baselines unchanged. Slice 3 tests one cancelled waiter, all waiters cancelled,
+  a new request after cancellation and shutdown during shared synthesis; cancelled calls start no fallback or
+  deferred synthesis. Slice 4 repeats the cancellation assertions with fallback and the pending queue enabled.
 - **Secrets scan**: all changed files; a test asserts that the key never appears in logs, diagnostics or cache
   file names.
 - **Sonar gates**: SonarCloud green, zero OPEN/CONFIRMED issues per PR.

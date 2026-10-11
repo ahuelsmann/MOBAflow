@@ -54,7 +54,8 @@ internal sealed class TestProjectRuntimeHost : IAsyncDisposable
         await Registry.DisposeAsync().ConfigureAwait(false);
     }
 
-    private static ProjectRuntimeServices CreateServices() => new()
+    /// <summary>Services shared by the project runtimes of a test.</summary>
+    internal static ProjectRuntimeServices CreateServices() => new()
     {
         Settings = new AppSettings { Counter = { CountOfFeedbackPoints = 2, UseTimerFilter = false } },
         ActionExecutor = new Mock<IActionExecutor>().Object,

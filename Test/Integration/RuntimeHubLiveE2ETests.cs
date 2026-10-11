@@ -44,7 +44,7 @@ internal sealed class RuntimeHubLiveE2ETests
         }
     }
 
-    [Test, Order(1)]
+    [Test]
     public async Task RuntimeHub_Should_ForwardSnapshotAndLocomotiveDriveCommand()
     {
         var testSnapshot = new MobaRuntimeSnapshot
@@ -93,7 +93,8 @@ internal sealed class RuntimeHubLiveE2ETests
         Assert.That(drive.Forward, Is.True);
     }
 
-    [Test, Order(3)]
+    [Test]
+    [DependsOnTest(nameof(RestFallback_Should_RoundtripSnapshotAndCommands), AllowFailure = true)]
     public async Task RegisterRemote_Should_DeliverCachedSnapshot_WithoutNewPush()
     {
         var cachedSnapshot = new MobaRuntimeSnapshot
@@ -130,7 +131,8 @@ internal sealed class RuntimeHubLiveE2ETests
         Assert.That(receivedSnapshot.SignalBoxElements[0].Name, Is.EqualTo("Cached Signal"));
     }
 
-    [Test, Order(2)]
+    [Test]
+    [DependsOnTest(nameof(RuntimeHub_Should_ForwardSnapshotAndLocomotiveDriveCommand), AllowFailure = true)]
     public async Task RestFallback_Should_RoundtripSnapshotAndCommands()
     {
         await PublishSolutionAsync().ConfigureAwait(false);
