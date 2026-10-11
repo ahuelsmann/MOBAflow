@@ -26,11 +26,16 @@ public class SolutionController : ControllerBase
     private const int SolutionSchemaVersion = Solution.CurrentSchemaVersion;
 
     private readonly ISolutionCache _solutionCache;
+    private readonly IRuntimeSnapshotCache _snapshotCache;
     private readonly IHubContext<RuntimeHub> _hubContext;
 
-    public SolutionController(ISolutionCache solutionCache, IHubContext<RuntimeHub> hubContext)
+    public SolutionController(
+        ISolutionCache solutionCache,
+        IRuntimeSnapshotCache snapshotCache,
+        IHubContext<RuntimeHub> hubContext)
     {
         _solutionCache = solutionCache;
+        _snapshotCache = snapshotCache;
         _hubContext = hubContext;
     }
 
@@ -86,6 +91,8 @@ public class SolutionController : ControllerBase
             : null;
 
         _solutionCache.Set(json, sourcePath, activeProjectName);
+        // A removed project has no runtime anymore; its last snapshot must not be served or counted.
+        _snapshotCache.RetainProjects(_solutionCache.ContainsProject);
 
         if (!_solutionCache.TryGet(out var entry))
         {
@@ -93,7 +100,7 @@ public class SolutionController : ControllerBase
         }
 
         await _hubContext.Clients
-            .Group("runtime-remote")
+            .Group(RuntimeHub.RuntimeRemoteGroup)
             .SendAsync(RuntimeHubMethods.SolutionUpdated, entry.UpdatedAt.ToString("O"), cancellationToken)
             .ConfigureAwait(false);
 

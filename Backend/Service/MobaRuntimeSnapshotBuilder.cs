@@ -77,6 +77,7 @@ internal static class MobaRuntimeSnapshotBuilder
 
         return new MobaRuntimeSnapshot
         {
+            ProjectId = activeProjectContext?.ActiveProject.Id ?? Guid.Empty,
             IsConnected = telemetry.IsConnected,
             IsTrackPowerOn = telemetry.IsTrackPowerOn,
             StatusText = telemetry.StatusText,
