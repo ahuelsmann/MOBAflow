@@ -79,14 +79,23 @@ function Resolve-InternalTarget([string] $File, [string] $Target) {
     return [IO.Path]::GetFullPath((Join-Path $baseDirectory $pathPart.TrimStart('/')))
 }
 
-function Get-ExternalLinkError([string] $Url) {
+function Get-ExternalLinkError {
+    param(
+        [string] $Url,
+        [scriptblock] $Request = {
+            param([string] $TargetUrl)
+            # Some servers reject HEAD; GET is the portable check.
+            Invoke-WebRequest -Uri $TargetUrl -Method Get -TimeoutSec $TimeoutSeconds `
+                -MaximumRedirection 10 -SkipHttpErrorCheck -UserAgent 'MOBAflow-link-check'
+        },
+        [scriptblock] $Delay = { param([int] $Seconds) Start-Sleep -Seconds $Seconds }
+    )
+
     # Retry temporary server/network failures; missing pages and denied requests still fail immediately.
     $maximumAttempts = 3
     for ($attempt = 1; $attempt -le $maximumAttempts; $attempt++) {
         try {
-            # Some servers reject HEAD; GET is the portable check.
-            $response = Invoke-WebRequest -Uri $Url -Method Get -TimeoutSec $TimeoutSeconds `
-                -MaximumRedirection 10 -SkipHttpErrorCheck -UserAgent 'MOBAflow-link-check'
+            $response = & $Request $Url
             $status = [int] $response.StatusCode
             if ($status -lt 400 -or $status -eq 429) {
                 return $null
@@ -106,7 +115,7 @@ function Get-ExternalLinkError([string] $Url) {
         }
 
         Write-Verbose "External link '$Url' $detail; retrying after $attempt second(s)."
-        Start-Sleep -Seconds $attempt
+        & $Delay $attempt
     }
 }
 

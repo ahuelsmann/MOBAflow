@@ -85,47 +85,48 @@ try {
     }
     $checks++
 
-    # Simulate HTTP responses without external services or real retry delays.
-    function Invoke-WebRequest {
-        param($Uri, $Method, $TimeoutSec, $MaximumRedirection, [switch] $SkipHttpErrorCheck, $UserAgent)
-        $global:documentationLinkHttpTest.RequestCount++
-        if ($global:documentationLinkHttpTest.Responses.Count -eq 0) {
-            throw 'Unexpected additional HTTP request.'
-        }
-
-        $response = $global:documentationLinkHttpTest.Responses.Dequeue()
-        if ($response -eq 'network-error') {
-            throw [Net.Http.HttpRequestException]::new('Simulated network failure.')
-        }
-
-        return [pscustomobject] @{ StatusCode = $response }
-    }
-
-    function Start-Sleep {
-        param([int] $Seconds)
-        $global:documentationLinkHttpTest.RetryDelays.Add($Seconds)
-    }
-
+    # Inject HTTP responses and retry delays into the helper; never shadow built-in commands.
     function Assert-ExternalResult([object[]] $Responses, [bool] $ShouldFail, [int] $Attempts, [string] $Scenario) {
         Initialize-Fixture @{ 'README.md' = '[external](https://example.invalid/)' }
-        # The invoked checker has its own script scope; mocks share this test-owned state explicitly.
-        $global:documentationLinkHttpTest = [pscustomobject] @{
+        # Load the helper without requesting external URLs.
+        . $scriptPath -Root $fixture 6> $null | Out-Null
+        $httpTestState = [pscustomobject] @{
             Responses = [Collections.Generic.Queue[object]]::new()
             RequestCount = 0
             RetryDelays = [Collections.Generic.List[int]]::new()
         }
-        foreach ($response in $Responses) { $global:documentationLinkHttpTest.Responses.Enqueue($response) }
-        $failed = $false
-        $failureMessage = $null
-        try { & $scriptPath -Root $fixture -IncludeExternal 6> $null | Out-Null }
-        catch { $failed = $true; $failureMessage = $_.Exception.Message }
-        if ($failed -ne $ShouldFail -or $global:documentationLinkHttpTest.RequestCount -ne $Attempts) {
-            throw "Unexpected result for '$Scenario': failed=$failed, requests=$($global:documentationLinkHttpTest.RequestCount). $failureMessage"
+        foreach ($response in $Responses) { $httpTestState.Responses.Enqueue($response) }
+        $request = {
+            param([string] $TargetUrl)
+            if ($TargetUrl -ne 'https://example.invalid/') { throw 'Unexpected request URL.' }
+            $httpTestState.RequestCount++
+            if ($httpTestState.Responses.Count -eq 0) { throw 'Unexpected additional HTTP request.' }
+            $response = $httpTestState.Responses.Dequeue()
+            if ($response -eq 'network-error') {
+                throw [Net.Http.HttpRequestException]::new('Simulated network failure.')
+            }
+            return [pscustomobject] @{ StatusCode = $response }
+        }.GetNewClosure()
+        $delay = {
+            param([int] $Seconds)
+            $httpTestState.RetryDelays.Add($Seconds)
+        }.GetNewClosure()
+        $failureMessage = Get-ExternalLinkError -Url 'https://example.invalid/' -Request $request -Delay $delay
+        $failed = -not [string]::IsNullOrEmpty($failureMessage)
+        if ($failed -ne $ShouldFail -or $httpTestState.RequestCount -ne $Attempts) {
+            throw "Unexpected result for '$Scenario': failed=$failed, requests=$($httpTestState.RequestCount). $failureMessage"
+        }
+
+        if ($ShouldFail) {
+            $expectedFailure = if ($Responses[-1] -eq 'network-error') { 'Simulated network failure.' } else { "returned $($Responses[-1])" }
+            if ($failureMessage -notlike "*$expectedFailure*") {
+                throw "Unexpected failure for '$Scenario': $failureMessage"
+            }
         }
 
         $expectedDelays = @(1..($Attempts - 1) | Where-Object { $Attempts -gt 1 })
-        if (Compare-Object $expectedDelays $global:documentationLinkHttpTest.RetryDelays.ToArray()) {
-            throw "Unexpected retry delays for '$Scenario': $($global:documentationLinkHttpTest.RetryDelays -join ', ')."
+        if (Compare-Object $expectedDelays $httpTestState.RetryDelays.ToArray()) {
+            throw "Unexpected retry delays for '$Scenario': $($httpTestState.RetryDelays -join ', ')."
         }
         $script:checks++
     }
@@ -143,6 +144,5 @@ try {
     Write-Host "Documentation link self-tests passed ($checks checks)."
 }
 finally {
-    Remove-Variable -Name documentationLinkHttpTest -Scope Global -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath $fixture -Recurse -Force -ErrorAction SilentlyContinue
 }
