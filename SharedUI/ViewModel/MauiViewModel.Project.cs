@@ -101,52 +101,63 @@ public sealed partial class MauiViewModel
                 if (!IsCurrentProjectSelection(version)) return;
             }
 
-            if (project is not null && _runtimeHubRemoteClient is not null)
-            {
-                await _runtimeHubRemoteClient.SelectProjectAsync(project.Id, cancellationToken).ConfigureAwait(false);
-                if (!IsCurrentProjectSelection(version)) return;
-            }
+            await SelectRemoteProjectForSelectionAsync(project, cancellationToken).ConfigureAwait(false);
+            if (!IsCurrentProjectSelection(version)) return;
 
-            if (project is not null)
-            {
-                if (projectChanged)
-                    await _runtimeConnection.ActivateProjectAsync(project, cancellationToken).ConfigureAwait(false);
-                else
-                    await _runtimeConnection.UpdateProjectAsync(project, cancellationToken).ConfigureAwait(false);
-                _localProjectId = project.Id;
-                if (!IsCurrentProjectSelection(version)) return;
-            }
-            else
-            {
-                _localProjectId = null;
-            }
+            await RefreshLocalProjectForSelectionAsync(project, projectChanged, cancellationToken).ConfigureAwait(false);
+            if (!IsCurrentProjectSelection(version)) return;
 
-            await _uiDispatcher.InvokeOnUiAsync(() =>
-            {
-                if (IsCurrentProjectSelection(version))
-                {
-                    Z21IpAddress = address;
-                    _z21Port = port;
-                }
-                return Task.CompletedTask;
-            }).ConfigureAwait(false);
+            await PublishSelectedProjectEndpointAsync(address, port, version).ConfigureAwait(false);
 
             if (IsCurrentProjectSelection(version) && (endpointChanged || projectChanged) && address.Length > 0)
                 await _runtimeConnection.ConnectAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException and not AccessViolationException)
         {
-            // Each request completes so a later selection can recover after a failed handoff.
-            if (ex is not OperationCanceledException)
-            {
-                LogProjectSelectionFailed(_logger, ex);
-                await _uiDispatcher.InvokeOnUiAsync(() =>
-                {
-                    if (IsCurrentProjectSelection(version)) Z21ConnectionStatus = $"Project selection failed: {ex.Message}";
-                    return Task.CompletedTask;
-                }).ConfigureAwait(false);
-            }
+            await ReportProjectSelectionFailureAsync(ex, version).ConfigureAwait(false);
         }
+    }
+
+    private Task SelectRemoteProjectForSelectionAsync(Project? project, CancellationToken cancellationToken) =>
+        project is not null && _runtimeHubRemoteClient is not null
+            ? _runtimeHubRemoteClient.SelectProjectAsync(project.Id, cancellationToken)
+            : Task.CompletedTask;
+
+    private async Task RefreshLocalProjectForSelectionAsync(Project? project, bool projectChanged, CancellationToken cancellationToken)
+    {
+        if (project is null)
+        {
+            _localProjectId = null;
+            return;
+        }
+        if (projectChanged)
+            await _runtimeConnection.ActivateProjectAsync(project, cancellationToken).ConfigureAwait(false);
+        else
+            await _runtimeConnection.UpdateProjectAsync(project, cancellationToken).ConfigureAwait(false);
+        _localProjectId = project.Id;
+    }
+
+    private Task PublishSelectedProjectEndpointAsync(string address, int port, long version) =>
+        _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            if (IsCurrentProjectSelection(version))
+            {
+                Z21IpAddress = address;
+                _z21Port = port;
+            }
+            return Task.CompletedTask;
+        });
+
+    private async Task ReportProjectSelectionFailureAsync(Exception exception, long version)
+    {
+        // Each request completes so a later selection can recover after a failed handoff.
+        if (exception is OperationCanceledException) return;
+        LogProjectSelectionFailed(_logger, exception);
+        await _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            if (IsCurrentProjectSelection(version)) Z21ConnectionStatus = $"Project selection failed: {exception.Message}";
+            return Task.CompletedTask;
+        }).ConfigureAwait(false);
     }
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Project selection failed")]
