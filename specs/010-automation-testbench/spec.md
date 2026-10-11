@@ -2,7 +2,7 @@
 
 **Feature Directory**: `010-automation-testbench`
 
-**Source Issue**: [#35](https://github.com/ahuelsmann/MOBAflow/issues/35)
+**Source Issue**: #35
 
 **Created**: 2026-10-11
 
