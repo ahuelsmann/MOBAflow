@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Moba.Common.Runtime;
 using Moba.MOBApi.Controllers;
 using Moba.MOBApi.Hubs;
 using Moba.MOBApi.Service;
@@ -28,11 +29,28 @@ internal sealed class SolutionControllerTests
         """;
 
     private SolutionCache _cache = null!;
+    private RuntimeSnapshotCache _snapshots = null!;
 
     [SetUp]
     public void SetUp()
     {
         _cache = new SolutionCache();
+        _snapshots = new RuntimeSnapshotCache();
+    }
+
+    [Test]
+    public async Task PutSolution_ForgetsSnapshotsOfProjectsThatLeftTheSolution()
+    {
+        var kept = Guid.NewGuid();
+        var removed = Guid.NewGuid();
+        _snapshots.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = kept, IsConnected = true }));
+        _snapshots.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = removed, IsConnected = true }));
+        var controller = CreateController(_cache, IPAddress.Loopback, _snapshots);
+        SetRequestBody(controller, $$"""{"name":"Layout","schemaVersion":4,"projects":[{"id":"{{kept}}","name":"Station"}]}""");
+
+        await controller.PutSolution(CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(_snapshots.GetAll().Select(entry => entry.ProjectId), Is.EquivalentTo(new[] { kept }));
     }
 
     [Test]
@@ -102,7 +120,10 @@ internal sealed class SolutionControllerTests
         Assert.That(value, Is.Not.Null);
     }
 
-    private static SolutionController CreateController(ISolutionCache cache, IPAddress remoteIp)
+    private static SolutionController CreateController(
+        ISolutionCache cache,
+        IPAddress remoteIp,
+        IRuntimeSnapshotCache? snapshots = null)
     {
         var clientProxy = new Mock<IClientProxy>();
         clientProxy
@@ -115,7 +136,7 @@ internal sealed class SolutionControllerTests
         var hubContext = new Mock<IHubContext<RuntimeHub>>();
         hubContext.Setup(context => context.Clients).Returns(hubClients.Object);
 
-        var controller = new SolutionController(cache, hubContext.Object)
+        var controller = new SolutionController(cache, snapshots ?? new RuntimeSnapshotCache(), hubContext.Object)
         {
             ControllerContext = new ControllerContext
             {

@@ -9,9 +9,13 @@ using Domain;
 /// </summary>
 public interface IProjectRuntimeHost
 {
+    /// <summary>Gets the projects whose runtime is connected to its Z21.</summary>
+    IReadOnlyCollection<Guid> ConnectedProjectIds { get; }
+
     /// <summary>
     /// Replaces all runtimes with one runtime per project, in project order. When two projects use the same Z21,
     /// the earlier project connects; a runtime created again for an open Z21 connection takes it over.
+    /// Every discarded runtime first sets its known locomotives to speed 0; an empty list discards all runtimes.
     /// </summary>
     Task LoadAsync(IReadOnlyList<Project> projects, CancellationToken cancellationToken = default);
 

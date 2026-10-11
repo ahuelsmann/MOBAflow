@@ -4,11 +4,10 @@ namespace Moba.Test.Backend;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
-using Moba.Backend.Service;
 using Moba.Backend.Service.ProjectRuntimes;
-using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
+using Moba.Test.Helpers;
 
 using Moq;
 
@@ -21,34 +20,24 @@ internal sealed class ProjectRuntimeHostTests
 {
     private static readonly string[] YardOnly = ["yard"];
 
+    private TestProjectRuntimeHost _fixture = null!;
+    private ProjectRuntimeHost _host = null!;
     private EventBus _applicationBus = null!;
     private List<Mock<IZ21>> _createdZ21s = null!;
-    private Z21ConnectionRegistry _registry = null!;
-    private ProjectRuntimeHost _host = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _applicationBus = new EventBus(NullLogger<EventBus>.Instance);
-        _createdZ21s = [];
-        _registry = new Z21ConnectionRegistry(
-            () => new ForwardingEventBus(new EventBus(NullLogger<EventBus>.Instance), _applicationBus),
-            _ =>
-            {
-                var z21 = new Mock<IZ21>();
-                _createdZ21s.Add(z21);
-                return z21.Object;
-            });
-        _host = new ProjectRuntimeHost(
-            new ProjectRuntimeFactory(_registry, CreateServices()),
-            NullLogger<ProjectRuntimeHost>.Instance);
+        _fixture = new TestProjectRuntimeHost();
+        _host = _fixture.Host;
+        _applicationBus = _fixture.ApplicationBus;
+        _createdZ21s = _fixture.Z21s;
     }
 
     [TearDown]
     public async Task TearDownAsync()
     {
-        await _host.DisposeAsync().ConfigureAwait(false);
-        await _registry.DisposeAsync().ConfigureAwait(false);
+        await _fixture.DisposeAsync().ConfigureAwait(false);
     }
 
     [Test]
@@ -135,6 +124,82 @@ internal sealed class ProjectRuntimeHostTests
     }
 
     [Test]
+    public async Task DiscardingAConnectedRuntime_FirstSetsItsLocomotivesToSpeedZero()
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
+        var yard = Project("Yard", "192.168.0.112");
+        yard.Locomotives.Add(new Locomotive { Name = "V 60", DigitalAddress = 5 });
+        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        _createdZ21s[0].Raise(z21 => z21.OnConnectedChanged += null, true);
+
+        Assert.That(_host.ConnectedProjectIds, Is.EqualTo(new[] { station.Id }));
+
+        await _host.LoadAsync([]).ConfigureAwait(false);
+
+        _createdZ21s[0].Verify(z21 => z21.SetLocoDriveAsync(3, 0, true, It.IsAny<CancellationToken>()), Times.Once);
+        // A runtime that never connected has no trains to stop.
+        _createdZ21s[1].Verify(z21 => z21.SetLocoDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        _createdZ21s[0].Verify(z21 => z21.DisconnectAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task StoppingTrains_SkipsInvalidAddressesAndContinuesAfterAFailure()
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { Name = "Invalid", DigitalAddress = 10000 });
+        station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
+        station.Locomotives.Add(new Locomotive { Name = "V 60", DigitalAddress = 5 });
+        await _host.LoadAsync([station]).ConfigureAwait(false);
+        ConfirmConnection(_createdZ21s[0]);
+        _createdZ21s[0]
+            .Setup(z21 => z21.SetLocoDriveAsync(3, 0, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Expected test failure"));
+
+        await _host.LoadAsync([]).ConfigureAwait(false);
+
+        _createdZ21s[0].Verify(z21 => z21.SetLocoDriveAsync(5, 0, true, It.IsAny<CancellationToken>()), Times.Once);
+        _createdZ21s[0].Verify(z21 => z21.SetLocoDriveAsync(10000, It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ManualDisconnect_FirstSetsTheLocomotivesToSpeedZero()
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
+        await _host.LoadAsync([station]).ConfigureAwait(false);
+        ConfirmConnection(_createdZ21s[0]);
+        var calls = new List<string>();
+        _createdZ21s[0]
+            .Setup(z21 => z21.SetLocoDriveAsync(3, 0, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("stop"))
+            .Returns(Task.CompletedTask);
+        _createdZ21s[0].Setup(z21 => z21.DisconnectAsync()).Callback(() => calls.Add("disconnect")).Returns(Task.CompletedTask);
+
+        await _host.Get(station.Id)!.Runtime.DisconnectAsync().ConfigureAwait(false);
+
+        Assert.That(calls, Is.EqualTo(StopThenDisconnect));
+    }
+
+    [Test]
+    public async Task CancelledShutdown_StillDiscardsTheRuntime()
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
+        await _host.LoadAsync([station]).ConfigureAwait(false);
+        ConfirmConnection(_createdZ21s[0]);
+        _createdZ21s[0]
+            .Setup(z21 => z21.SetLocoDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns<int, int, bool, CancellationToken>((_, _, _, token) => Task.Delay(Timeout.Infinite, token));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await Assert.CatchAsync<OperationCanceledException>(() => _host.LoadAsync([], timeout.Token)).ConfigureAwait(false);
+
+        Assert.That(_host.Get(station.Id), Is.Null);
+        _createdZ21s[0].Verify(z21 => z21.Dispose(), Times.Never, "An open connection stays for a takeover until it is unused.");
+    }
+
+    [Test]
     public async Task Selecting_ForwardsOnlyTheSelectedRuntimeEventsToTheApplicationBus()
     {
         var station = Project("Station", "192.168.0.111");
@@ -163,6 +228,29 @@ internal sealed class ProjectRuntimeHostTests
 
         _createdZ21s[1].Verify(z21 => z21.SetTrackPowerOnAsync(It.IsAny<CancellationToken>()), Times.Once);
         _createdZ21s[0].Verify(z21 => z21.SetTrackPowerOnAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task RuntimeSnapshotChanged_ReportsEveryProjectWithItsId_UntilTheProjectIsRemoved()
+    {
+        var station = Project("Station", "192.168.0.111");
+        var yard = Project("Yard", "192.168.0.112");
+        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        _host.SelectProject(station.Id);
+        var received = new List<Guid>();
+        _host.RuntimeSnapshotChanged += (_, e) => received.Add(e.Snapshot.ProjectId);
+
+        InPortCounterServiceTests.Raise(_createdZ21s[1], 1);
+        var reportedForYard = received.Count;
+        await _host.RemoveAsync(yard.Id).ConfigureAwait(false);
+        received.Clear();
+        InPortCounterServiceTests.Raise(_createdZ21s[1], 1);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(reportedForYard, Is.GreaterThan(0), "A project that is not selected still reports its snapshots.");
+            Assert.That(received, Is.Empty, "A removed project reports nothing.");
+        }
     }
 
     [Test]
@@ -226,6 +314,60 @@ internal sealed class ProjectRuntimeHostTests
         Assert.That(_host.Selected?.ProjectId, Is.EqualTo(station.Id));
     }
 
+    [TestCase("load")]
+    [TestCase("remove")]
+    [TestCase("replace")]
+    public async Task CancellingAStop_PropagatesTheTokenAndDisposesTheRuntime(string operation)
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { DigitalAddress = 3 });
+        await _host.LoadAsync([station]).ConfigureAwait(false);
+        ConfirmConnection(_createdZ21s[0]);
+        using var cancellation = new CancellationTokenSource();
+        var stopping = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var stopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _createdZ21s[0].Setup(value => value.SetLocoDriveAsync(3, 0, true, It.IsAny<CancellationToken>()))
+            .Returns<int, int, bool, CancellationToken>((_, _, _, token) =>
+            {
+                stopping.TrySetResult(token);
+                return stopped.Task.WaitAsync(token);
+            });
+
+        var pending = operation switch
+        {
+            "remove" => _host.RemoveAsync(station.Id, cancellation.Token),
+            "replace" => _host.ReplaceAsync(station, cancellation.Token),
+            _ => _host.LoadAsync([], cancellation.Token)
+        };
+        try
+        {
+            var receivedToken = await stopping.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            Assert.That(receivedToken, Is.EqualTo(cancellation.Token));
+            await cancellation.CancelAsync().ConfigureAwait(false);
+            await Assert.ThrowsAsync<TaskCanceledException>(() => pending.WaitAsync(TimeSpan.FromSeconds(5))).ConfigureAwait(false);
+            Assert.That(_host.Get(station.Id), Is.Null);
+        }
+        finally
+        {
+            await cancellation.CancelAsync().ConfigureAwait(false);
+            stopped.TrySetResult();
+            _createdZ21s[0].Setup(value => value.SetLocoDriveAsync(3, 0, true, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            try
+            {
+                await pending.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when the host honored the cancellation token.
+            }
+        }
+    }
+
+    private static void ConfirmConnection(Mock<IZ21> z21) =>
+        z21.Raise(value => value.OnConnectedChanged += null, true);
+    private static readonly string[] StopThenDisconnect = ["stop", "disconnect"];
+
     private ulong Count(Project project, uint inPort) =>
         _host.Get(project.Id)!.Runtime.Current.InPortCounters.Single(counter => counter.InPort == inPort).Count;
 
@@ -244,7 +386,7 @@ internal sealed class ProjectRuntimeHostTests
             _ => z21.Object);
         await using var registryLifetime = registry.ConfigureAwait(false);
         var host = new ProjectRuntimeHost(
-            new ProjectRuntimeFactory(registry, CreateServices()), NullLogger<ProjectRuntimeHost>.Instance);
+            new ProjectRuntimeFactory(registry, TestProjectRuntimeHost.CreateServices()), NullLogger<ProjectRuntimeHost>.Instance);
         await using var hostLifetime = host.ConfigureAwait(false);
         var project = Project("Station", "192.0.2.42");
         var locomotive = new Locomotive { DigitalAddress = 12 };
@@ -269,26 +411,7 @@ internal sealed class ProjectRuntimeHostTests
         z21.Verify(connection => connection.SetLocoFunctionAsync(12, 2, It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    private static Project Project(string name, string z21Address) =>
-        new() { Name = name, Z21 = { IpAddress = z21Address } };
-
-    private static ProjectRuntimeServices CreateServices() => new()
-    {
-        Settings = new AppSettings { Counter = { CountOfFeedbackPoints = 2, UseTimerFilter = false } },
-        ActionExecutor = new Mock<IActionExecutor>().Object,
-        WorkflowDependencies = new WorkflowServiceDependencies
-        {
-            Validator = new Mock<IWorkflowValidator>().Object,
-            EffectPlanner = new Mock<IWorkflowEffectPlanner>().Object,
-            TraceStore = new Mock<IWorkflowTraceStore>().Object,
-            TimeProvider = TimeProvider.System
-        },
-        SharedExecutionContext = new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
-        StopTransitionService = new JourneyStopTransitionService(),
-        RuntimeStateStore = new Mock<IJourneyRuntimeStateStore>().Object,
-        TimeProvider = TimeProvider.System,
-        LoggerFactory = NullLoggerFactory.Instance
-    };
+    private static Project Project(string name, string z21Address) => TestProjectRuntimeHost.Project(name, z21Address);
 
     private sealed record TestEvent(string Name) : EventBase;
 }

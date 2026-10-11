@@ -132,7 +132,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "Backend/Service/MobaRuntimeService.RuntimeApi.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "Backend",
@@ -2400,13 +2400,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0330",
       "path": "MOBApi/Service/RuntimeHostRegistry.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0330",
-      "path": "MOBApi/Service/RuntimeSnapshotCache.cs",
       "count": 1
     },
     {
@@ -5711,6 +5704,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1849",
       "path": "Test/Backend/MobaRuntimeServiceTrackPowerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1849",
+      "path": "Test/Backend/ProjectRuntimeHostTests.cs",
       "count": 1
     },
     {

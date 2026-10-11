@@ -133,6 +133,16 @@ public sealed class RestApiSolutionSyncService : IDisposable
         if (e.PropertyName == nameof(ISolutionSession.SelectedProject))
         {
             QueuePush();
+            // MOBAsmart connects to the Z21 of the selected project.
+            QueueRuntimeSettingsPush();
+        }
+    }
+    private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // MOBAsmart connects to the Z21 of the selected project until it selects a project itself (slice 4).
+        if (sender is ProjectViewModel && e.PropertyName is nameof(ProjectViewModel.Z21IpAddress) or nameof(ProjectViewModel.Z21Port))
+        {
+            QueueRuntimeSettingsPush();
         }
     }
     private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e)

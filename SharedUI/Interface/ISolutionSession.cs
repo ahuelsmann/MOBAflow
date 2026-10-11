@@ -68,6 +68,17 @@ public interface ISolutionSession : IProjectContext
     /// </summary>
     Task StartRuntimesAsync();
 
+    /// <summary>
+    /// Gets the names of the projects whose runtime is connected to its Z21, optionally only of the given projects.
+    /// Their trains stop when the runtime is discarded.
+    /// </summary>
+    IReadOnlyList<string> GetConnectedProjectNames(IReadOnlyCollection<Guid>? projectIds = null);
+
+    /// <summary>
+    /// Sets every known locomotive to speed 0 and discards all project runtimes, for example before the app closes.
+    /// </summary>
+    Task StopRuntimesAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Removes <paramref name="project"/> from the solution and selects the first remaining project.</summary>
     void RemoveProject(ProjectViewModel project);
 

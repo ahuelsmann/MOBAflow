@@ -395,10 +395,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (SelectedProject == null) return;
         if (_dialogService == null) return;
 
-        // Show confirmation dialog
+        // Show confirmation dialog; a connected runtime stops its trains when the project goes away.
+        var stopsTrains = _session.GetConnectedProjectNames([SelectedProject.Model.Id]).Count > 0;
         var confirmed = await _dialogService.ShowConfirmationAsync(
             title: "Delete Project",
-            message: "Do you really want to delete the project?",
+            message: stopsTrains
+                ? "Do you really want to delete the project? Its runtime is connected to a Z21; "
+                    + "all its locomotives are set to speed 0 first."
+                : "Do you really want to delete the project?",
             confirmButtonText: "Yes",
             cancelButtonText: "No",
             isCancelDefault: true);
@@ -450,6 +454,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return true;
         }
 
+        // The dialog and a following save prompt need the UI context.
+        if (!await ConfirmStopTrainsAsync("Closing MOBAflow").ConfigureAwait(true))
+        {
+            return false;
+        }
+
         if (HasUnsavedChanges)
         {
             var saved = await _session
@@ -470,7 +480,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         try
         {
-            await _runtimeConnection.DisconnectAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+            // Every runtime sets its locomotives to speed 0 and closes its Z21 connection.
+            await _session.StopRuntimesAsync(cancellationTokenSource.Token).ConfigureAwait(false);
         }
         catch (TaskCanceledException ex)
         {

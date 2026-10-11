@@ -5,20 +5,26 @@ namespace Moba.MOBApi.Service;
 using System.Collections.Concurrent;
 
 /// <summary>
-/// Tracks MOBAsmart (or other) SignalR remote clients registered on the runtime hub.
+/// Tracks MOBAsmart (or other) SignalR remote clients registered on the runtime hub, each for one project.
 /// </summary>
 public interface IRuntimeRemoteRegistry
 {
-    void Register(string connectionId, string clientId);
+    /// <summary>
+    /// Registers a remote for one project and returns the project it was registered for before, if any.
+    /// </summary>
+    Guid? Register(string connectionId, string clientId, Guid projectId);
 
     void Unregister(string connectionId);
+
+    /// <summary>Gets the project a remote connection is registered for.</summary>
+    Guid? GetProject(string connectionId);
 
     int Count { get; }
 
     IReadOnlyList<RuntimeRemoteClientInfo> GetAll();
 }
 
-public sealed record RuntimeRemoteClientInfo(string ConnectionId, string ClientId, DateTimeOffset ConnectedAt);
+public sealed record RuntimeRemoteClientInfo(string ConnectionId, string ClientId, Guid ProjectId, DateTimeOffset ConnectedAt);
 
 public sealed class RuntimeRemoteRegistry : IRuntimeRemoteRegistry
 {
@@ -26,12 +32,14 @@ public sealed class RuntimeRemoteRegistry : IRuntimeRemoteRegistry
 
     public int Count => _clients.Count;
 
-    public void Register(string connectionId, string clientId)
+    public Guid? Register(string connectionId, string clientId, Guid projectId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
         ArgumentException.ThrowIfNullOrWhiteSpace(clientId);
 
-        _clients[connectionId] = new RuntimeRemoteClientInfo(connectionId, clientId, DateTimeOffset.UtcNow);
+        var previous = GetProject(connectionId);
+        _clients[connectionId] = new RuntimeRemoteClientInfo(connectionId, clientId, projectId, DateTimeOffset.UtcNow);
+        return previous;
     }
 
     public void Unregister(string connectionId)
@@ -39,6 +47,9 @@ public sealed class RuntimeRemoteRegistry : IRuntimeRemoteRegistry
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
         _clients.TryRemove(connectionId, out _);
     }
+
+    public Guid? GetProject(string connectionId) =>
+        _clients.TryGetValue(connectionId, out var client) ? client.ProjectId : null;
 
     public IReadOnlyList<RuntimeRemoteClientInfo> GetAll()
     {

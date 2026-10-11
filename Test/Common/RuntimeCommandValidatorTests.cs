@@ -9,6 +9,8 @@ using Moba.Common.Runtime;
 [TestFixture]
 internal sealed class RuntimeCommandValidatorTests
 {
+    private static readonly Guid Project = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
     [TestCase(1, 0)]
     [TestCase(9999, 126)]
     [TestCase(3, 64)]
@@ -50,6 +52,7 @@ internal sealed class RuntimeCommandValidatorTests
     {
         var command = new RuntimeCommandEnvelope
         {
+            ProjectId = Project,
             Type = RuntimeCommandType.SetLocomotiveFunction,
             LocomotiveAddress = 3,
             FunctionIndex = functionIndex,
@@ -86,8 +89,8 @@ internal sealed class RuntimeCommandValidatorTests
     [Test]
     public void ResetJourney_RequiresIdentifier()
     {
-        var withId = new RuntimeCommandEnvelope { Type = RuntimeCommandType.ResetJourney, JourneyId = Guid.NewGuid() };
-        var withoutId = new RuntimeCommandEnvelope { Type = RuntimeCommandType.ResetJourney, JourneyId = Guid.Empty };
+        var withId = new RuntimeCommandEnvelope { ProjectId = Project, Type = RuntimeCommandType.ResetJourney, JourneyId = Guid.NewGuid() };
+        var withoutId = new RuntimeCommandEnvelope { ProjectId = Project, Type = RuntimeCommandType.ResetJourney, JourneyId = Guid.Empty };
 
         using (Assert.EnterMultipleScope())
         {
@@ -99,9 +102,21 @@ internal sealed class RuntimeCommandValidatorTests
     [Test]
     public void UnknownCommandType_IsRejected()
     {
-        var command = new RuntimeCommandEnvelope { Type = (RuntimeCommandType)42 };
+        var command = new RuntimeCommandEnvelope { ProjectId = Project, Type = (RuntimeCommandType)42 };
 
         Assert.That(RuntimeCommandValidator.TryValidate(command, out _), Is.False);
+    }
+
+    [Test]
+    public void Command_WithoutProject_IsRejected()
+    {
+        var command = Drive(3, 10) with { ProjectId = Guid.Empty };
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.False);
+            Assert.That(error, Is.EqualTo("ProjectId is required."));
+        }
     }
 
     [TestCase(RuntimeCommandType.SetLocomotiveDrive, "Address", "Address is required.")]
@@ -117,6 +132,7 @@ internal sealed class RuntimeCommandValidatorTests
     {
         var command = new RuntimeCommandEnvelope
         {
+            ProjectId = Project,
             Type = type,
             LocomotiveAddress = 3,
             Speed = 0,
@@ -153,6 +169,7 @@ internal sealed class RuntimeCommandValidatorTests
     {
         var command = new RuntimeCommandEnvelope
         {
+            ProjectId = Project,
             Type = RuntimeCommandType.SetLocomotiveFunction,
             LocomotiveAddress = address,
             FunctionIndex = 0,
@@ -181,6 +198,7 @@ internal sealed class RuntimeCommandValidatorTests
     {
         var command = new RuntimeCommandEnvelope
         {
+            ProjectId = Project,
             Type = RuntimeCommandType.SetLocomotiveFunction,
             LocomotiveAddress = 3,
             FunctionIndex = 0,
@@ -201,6 +219,7 @@ internal sealed class RuntimeCommandValidatorTests
 
     private static RuntimeCommandEnvelope Drive(int address, int speed) => new()
     {
+        ProjectId = Project,
         Type = RuntimeCommandType.SetLocomotiveDrive,
         LocomotiveAddress = address,
         Speed = speed,
@@ -209,6 +228,7 @@ internal sealed class RuntimeCommandValidatorTests
 
     private static RuntimeCommandEnvelope SignalAspectCommand(Guid signalId, SignalAspect aspect) => new()
     {
+        ProjectId = Project,
         Type = RuntimeCommandType.SetSignalAspect,
         SignalId = signalId,
         SignalAspect = aspect

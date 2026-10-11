@@ -78,15 +78,66 @@ internal partial class MainWindowViewModelShutdownTests
     }
 
     [Test]
-    public async Task PrepareForShutdownAsync_DisconnectsOnlyOnce()
+    public async Task PrepareForShutdownAsync_StopsAllProjectRuntimesOnlyOnce()
     {
-        var mobaRuntimeMock = CreateMobaRuntimeMock();
-        var viewModel = CreateViewModel(mobaRuntimeMock);
+        var host = new Mock<IProjectRuntimeHost>();
+        host.SetupGet(value => value.ConnectedProjectIds).Returns([]);
+        var viewModel = CreateViewModel(CreateMobaRuntimeMock(), host: host);
 
         await viewModel.PrepareForShutdownAsync();
         await viewModel.PrepareForShutdownAsync();
 
-        mobaRuntimeMock.Verify(client => client.DisconnectAsync(It.IsAny<CancellationToken>()), Times.Once);
+        // An empty project list stops the trains of every runtime and discards them.
+        host.Verify(value => value.LoadAsync(
+            It.Is<IReadOnlyList<Project>>(projects => projects.Count == 0),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task PrepareForShutdownAsync_WithConnectedRuntimeAndCancel_KeepsEverythingRunning()
+    {
+        var solution = new Solution { Projects = [new Project { Name = "Station" }] };
+        var host = new Mock<IProjectRuntimeHost>();
+        host.SetupGet(value => value.ConnectedProjectIds).Returns([solution.Projects[0].Id]);
+        var dialog = new Mock<IDialogService>();
+        dialog.Setup(value => value.ShowConfirmationAsync(
+                "Stop all trains?", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(false);
+        var viewModel = CreateViewModel(CreateMobaRuntimeMock(), host: host, dialog: dialog, solution: solution);
+
+        var closed = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+
+        Assert.That(closed, Is.False);
+        dialog.Verify(value => value.ShowConfirmationAsync(
+            "Stop all trains?",
+            It.Is<string>(message => message.Contains("'Station'", StringComparison.Ordinal)),
+            "Stop trains", "Cancel", true), Times.Once);
+        host.Verify(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task NewSolution_WithConnectedRuntime_AsksBeforeStoppingTheTrains(bool confirm)
+    {
+        var solution = new Solution { Projects = [new Project { Name = "Station" }] };
+        var host = new Mock<IProjectRuntimeHost>();
+        host.SetupGet(value => value.ConnectedProjectIds).Returns([solution.Projects[0].Id]);
+        var dialog = new Mock<IDialogService>();
+        dialog.Setup(value => value.ShowConfirmationAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(confirm);
+        var viewModel = CreateViewModel(CreateMobaRuntimeMock(), host: host, dialog: dialog, solution: solution);
+        host.Invocations.Clear();
+
+        await viewModel.NewSolutionCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(solution.Projects.Single().Name, Is.EqualTo(confirm ? "New Project" : "Station"));
+            host.Verify(
+                value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()),
+                confirm ? Times.Once() : Times.Never());
+        }
     }
 
     private static Mock<IMobaRuntime> CreateMobaRuntimeMock()
@@ -99,7 +150,12 @@ internal partial class MainWindowViewModelShutdownTests
         return mobaRuntimeMock;
     }
 
-    private static MainWindowViewModel CreateViewModel(Mock<IMobaRuntime> mobaRuntimeMock, IEventBus? eventBus = null)
+    private static MainWindowViewModel CreateViewModel(
+        Mock<IMobaRuntime> mobaRuntimeMock,
+        IEventBus? eventBus = null,
+        Mock<IProjectRuntimeHost>? host = null,
+        Mock<IDialogService>? dialog = null,
+        Solution? solution = null)
     {
         var uiDispatcherMock = new Mock<IUiDispatcher>();
         var loggerMock = new Mock<ILogger<MainWindowViewModel>>();
@@ -117,11 +173,19 @@ internal partial class MainWindowViewModelShutdownTests
             eventBus ?? new Mock<IEventBus>().Object,
             uiDispatcherMock.Object,
             new AppSettings(),
-            TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object),
+            host is null
+                ? TestSolutionSessions.Create(solution ?? new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object)
+                : new SolutionSession(
+                    solution ?? new Solution(),
+                    new NullIoService(),
+                    uiDispatcherMock.Object,
+                    host.Object,
+                    NullLogger<SolutionSession>.Instance),
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
             },
-            loggerMock.Object);
+            loggerMock.Object,
+            dialogService: dialog?.Object);
     }
 }

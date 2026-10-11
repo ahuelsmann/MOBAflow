@@ -35,6 +35,8 @@ internal static class TestSolutionSessions
     /// </summary>
     private sealed class SingleRuntimeProjectHost(IConnectionRuntime runtime) : IProjectRuntimeHost
     {
+        public IReadOnlyCollection<Guid> ConnectedProjectIds => [];
+
         public Task LoadAsync(IReadOnlyList<Project> projects, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
 

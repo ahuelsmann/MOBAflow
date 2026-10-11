@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Service.ProjectRuntimes;
 
+using Common.Events;
+using Common.Runtime;
+
 using Domain;
 
 using Interface;
@@ -12,8 +15,14 @@ using Microsoft.Extensions.Logging;
 /// only decides which runtime the UI shows. Runtimes live as long as their solution.
 /// </summary>
 public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<ProjectRuntimeHost> logger)
-    : IProjectRuntimeHost, IAsyncDisposable
+    : IProjectRuntimeHost, IProjectRuntimeSnapshots, IAsyncDisposable
 {
+    private static readonly Action<ILogger, Guid, Exception?> LogStopLocomotivesFailed =
+        LoggerMessage.Define<Guid>(
+            LogLevel.Error,
+            new EventId(2, nameof(LogStopLocomotivesFailed)),
+            "Setting the locomotives of project {ProjectId} to speed 0 failed");
+
     private static readonly Action<ILogger, string, Exception?> LogRuntimeStartFailed =
         LoggerMessage.Define<string>(
             LogLevel.Warning,
@@ -26,8 +35,15 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
     // The order of the projects in the solution; the earliest project of a Z21 owns its connection.
     private readonly List<Guid> _order = [];
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly Dictionary<Guid, Guid> _snapshotSubscriptions = [];
     private Guid? _selectedId;
     private Guid? _requestedSelection;
+
+    /// <inheritdoc />
+    public event EventHandler<ProjectRuntimeSnapshotEventArgs>? RuntimeSnapshotChanged;
+
+    /// <inheritdoc />
+    public IReadOnlyList<MobaRuntimeSnapshot> Snapshots => [.. Runtimes.Select(runtime => runtime.Runtime.Current)];
 
     /// <summary>Raised after the selected runtime changed.</summary>
     public event EventHandler? SelectedRuntimeChanged;
@@ -47,6 +63,10 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         }
     }
 
+    /// <inheritdoc />
+    public IReadOnlyCollection<Guid> ConnectedProjectIds =>
+        [.. Runtimes.Where(runtime => runtime.IsConnected).Select(runtime => runtime.ProjectId)];
+
     /// <summary>Gets the runtime of a project, if it exists.</summary>
     public ProjectRuntime? Get(Guid projectId)
     {
@@ -63,7 +83,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await DisposeAllAsync().ConfigureAwait(false);
+            await DisposeAllAsync(cancellationToken).ConfigureAwait(false);
             lock (_runtimes)
             {
                 _order.Clear();
@@ -120,7 +140,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
                 _order.Remove(projectId);
             }
 
-            await RemoveCoreAsync(projectId).ConfigureAwait(false);
+            await RemoveCoreAsync(projectId, cancellationToken).ConfigureAwait(false);
             await ReconcileZ21OwnersAsync([removedKey], cancellationToken).ConfigureAwait(false);
             await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
         }
@@ -146,7 +166,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
                 }
             }
 
-            await RemoveCoreAsync(project.Id).ConfigureAwait(false);
+            await RemoveCoreAsync(project.Id, cancellationToken).ConfigureAwait(false);
             await AddCoreAsync(project, cancellationToken).ConfigureAwait(false);
             await ReconcileZ21OwnersAsync([previousKey, Get(project.Id)?.Z21Key], cancellationToken).ConfigureAwait(false);
             await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
@@ -186,6 +206,8 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         lock (_runtimes)
         {
             _runtimes[project.Id] = runtime;
+            _snapshotSubscriptions[project.Id] =
+                runtime.Connection.EventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
         }
 
         if (_requestedSelection == project.Id)
@@ -229,7 +251,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
 
             foreach (var runtime in sharing)
             {
-                await RemoveCoreAsync(runtime.ProjectId).ConfigureAwait(false);
+                await RemoveCoreAsync(runtime.ProjectId, cancellationToken).ConfigureAwait(false);
             }
 
             foreach (var runtime in sharing)
@@ -239,16 +261,31 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         }
     }
 
-    private async Task RemoveCoreAsync(Guid projectId)
+    private async Task RemoveCoreAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
         var runtime = Detach(projectId);
-        if (runtime is not null)
+        if (runtime is null)
+        {
+            return;
+        }
+
+        // No runtime is discarded while its trains could still be moving. A cancelled stop (for example the
+        // shutdown timeout) still discards the runtime and then ends the operation.
+        try
+        {
+            await runtime.StopLocomotivesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            LogStopLocomotivesFailed(_logger, projectId, ex);
+        }
+        finally
         {
             await runtime.DisposeAsync().ConfigureAwait(false);
         }
     }
 
-    private async Task DisposeAllAsync()
+    private async Task DisposeAllAsync(CancellationToken cancellationToken = default)
     {
         List<Guid> projectIds;
         lock (_runtimes)
@@ -258,7 +295,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
 
         foreach (var projectId in projectIds)
         {
-            await RemoveCoreAsync(projectId).ConfigureAwait(false);
+            await RemoveCoreAsync(projectId, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -271,9 +308,21 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
 
         lock (_runtimes)
         {
-            return _runtimes.Remove(projectId, out var runtime) ? runtime : null;
+            if (!_runtimes.Remove(projectId, out var runtime))
+            {
+                return null;
+            }
+
+            if (_snapshotSubscriptions.Remove(projectId, out var subscription))
+            {
+                runtime.Connection.EventBus.Unsubscribe(subscription);
+            }
+
+            return runtime;
         }
     }
+
+    private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e) => RuntimeSnapshotChanged?.Invoke(this, new ProjectRuntimeSnapshotEventArgs(e.Snapshot));
 
     private void SelectCore(Guid? projectId)
     {

@@ -149,16 +149,60 @@ public partial class MainWindowViewModel
     public Task<SolutionSaveResult> SaveSolutionWithStatusAsync() => _session.SaveSolutionWithStatusAsync();
 
     [RelayCommand]
-    private Task NewSolutionAsync() => _session.NewSolutionAsync();
+    private async Task NewSolutionAsync()
+    {
+        if (await ConfirmStopTrainsAsync("Creating a new solution").ConfigureAwait(true))
+        {
+            await _session.NewSolutionAsync().ConfigureAwait(true);
+        }
+    }
 
     [RelayCommand]
-    private Task LoadSolutionAsync() => _session.LoadSolutionAsync();
+    private async Task LoadSolutionAsync()
+    {
+        if (await ConfirmStopTrainsAsync("Opening another solution").ConfigureAwait(true))
+        {
+            await _session.LoadSolutionAsync().ConfigureAwait(true);
+        }
+    }
 
     /// <summary>
     /// Loads a solution from a specific file path.
     /// Used by auto-load functionality to ensure the same code path as manual loading.
     /// </summary>
-    public Task LoadSolutionFromPathAsync(string filePath) => _session.LoadSolutionFromPathAsync(filePath);
+    public async Task LoadSolutionFromPathAsync(string filePath)
+    {
+        if (await ConfirmStopTrainsAsync("Opening another solution").ConfigureAwait(true))
+        {
+            await _session.LoadSolutionFromPathAsync(filePath).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>
+    /// Warns before an action discards runtimes that are connected to their Z21. Confirming lets the runtimes set
+    /// their locomotives to speed 0 before they are discarded; cancelling keeps everything running.
+    /// </summary>
+    /// <returns><see langword="true"/> to continue the action.</returns>
+    private async Task<bool> ConfirmStopTrainsAsync(string action, IReadOnlyCollection<Guid>? projectIds = null)
+    {
+        var connected = _session.GetConnectedProjectNames(projectIds);
+        if (connected.Count == 0 || _dialogService is null)
+        {
+            return true;
+        }
+
+        return await _dialogService.ShowConfirmationAsync(
+            title: "Stop all trains?",
+            message: $"{action} stops {DescribeRuntimes(connected)}. "
+                + "All locomotives on the Z21 are set to speed 0 first.",
+            confirmButtonText: "Stop trains",
+            cancelButtonText: "Cancel",
+            isCancelDefault: true).ConfigureAwait(true);
+    }
+
+    private static string DescribeRuntimes(IReadOnlyList<string> projectNames) => projectNames.Count == 1
+        ? $"the runtime of project '{projectNames[0]}'"
+        : $"the runtimes of projects {string.Join(", ", projectNames.Select(name => $"'{name}'"))}";
 
     private bool CanSaveSolution() => _session.CanSave;
 

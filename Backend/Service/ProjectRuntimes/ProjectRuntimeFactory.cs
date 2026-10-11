@@ -150,6 +150,7 @@ public sealed class ProjectRuntimeServices
 public sealed class ProjectRuntime : IAsyncDisposable
 {
     private readonly Project _project;
+    private readonly MobaRuntimeService _service;
     private readonly InPortCounterService _counters;
     private readonly LocomotiveWhistleAutomationService _whistle;
     private int _disposed;
@@ -163,6 +164,7 @@ public sealed class ProjectRuntime : IAsyncDisposable
         LocomotiveWhistleAutomationService whistle)
     {
         _project = project;
+        _service = runtime;
         Z21Key = Z21ConnectionRegistry.ToKey(project.Z21);
         Runtime = runtime;
         Connection = connection;
@@ -198,6 +200,13 @@ public sealed class ProjectRuntime : IAsyncDisposable
         await Runtime.StartAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Gets a value indicating whether the runtime is connected to its Z21.</summary>
+    public bool IsConnected => Runtime.Current.IsConnected;
+
+    /// <summary>Sets every known locomotive on the project's Z21 to speed 0.</summary>
+    public Task StopLocomotivesAsync(CancellationToken cancellationToken = default) =>
+        _service.StopAllLocomotivesAsync(cancellationToken);
+
     /// <summary>Refreshes the project's saved definitions while keeping running commands.</summary>
     public async Task UpdateAsync(Project project, CancellationToken cancellationToken = default)
     {
@@ -215,7 +224,7 @@ public sealed class ProjectRuntime : IAsyncDisposable
         }
 
         _whistle.Dispose();
-        ((IDisposable)Runtime).Dispose();
+        _service.Dispose();
         await Interlocking.DisposeAsync().ConfigureAwait(false);
         // Flushes a pending counter save before the runtime goes away.
         await _counters.DisposeAsync().ConfigureAwait(false);
