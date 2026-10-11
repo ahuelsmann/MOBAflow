@@ -6,9 +6,12 @@ using Microsoft.Extensions.Options;
 
 using Moba.Common.Configuration;
 using Moba.Sound;
+using Moq;
 
 internal class PiperSpeechEngineTest
 {
+    private readonly List<string> _temporaryFiles = [];
+
     [Test]
     public void Name_Should_BePiperTts()
     {
@@ -252,6 +255,181 @@ internal class PiperSpeechEngineTest
         Assert.That(engine, Is.TypeOf<CustomSpeakerEngine>());
     }
 
+    [Test]
+    public async Task AnnouncementAsync_VoiceArgument_DoesNotReplaceConfiguredPiperModel()
+    {
+        var modelPath = CreateTempFile();
+        var runner = new FakePiperProcessRunner();
+        var engine = CreateEngine(
+            new SpeechOptions { PiperExecutablePath = CreateTempFile(), PiperModelPath = modelPath },
+            runner,
+            new FakePiperAudioPlayer());
+
+        await engine.AnnouncementAsync("Next stop Central.", "Another voice").ConfigureAwait(false);
+
+        Assert.That(runner.LastRequest!.ModelPath, Is.EqualTo(modelPath));
+    }
+
+    [Test]
+    public async Task AnnouncementAsync_VolumeSetting_DoesNotChangeCurrentPiperAudio()
+    {
+        var options = new SpeechOptions
+        {
+            PiperExecutablePath = CreateTempFile(),
+            PiperModelPath = CreateTempFile(),
+            Volume = 0
+        };
+        var audioPlayer = new FakePiperAudioPlayer();
+        var engine = CreateEngine(options, new FakePiperProcessRunner(), audioPlayer);
+
+        await engine.AnnouncementAsync("Next stop Central.", null).ConfigureAwait(false);
+        var mutedSettingAudio = audioPlayer.PlayedAudio;
+        options.Volume = 100;
+        await engine.AnnouncementAsync("Next stop Central.", null).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(mutedSettingAudio, Is.Not.Empty);
+            Assert.That(audioPlayer.PlayedAudio, Is.EqualTo(mutedSettingAudio));
+        }
+    }
+
+    [Test]
+    public async Task AnnouncementAsync_CancelledDuringSynthesis_DoesNotPlayAndDeletesOutput()
+    {
+        var started = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var pending = new TaskCompletionSource<PiperProcessResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var runner = new Mock<IPiperProcessRunner>();
+        runner.Setup(value => value.SynthesizeAsync(It.IsAny<PiperSynthesisRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<PiperSynthesisRequest, CancellationToken>((request, token) =>
+            {
+                WritePcmWave(request.OutputPath, [0, 1000, 0, 0]);
+                started.SetResult(request.OutputPath);
+            })
+            .Returns((PiperSynthesisRequest request, CancellationToken token) => pending.Task.WaitAsync(token));
+        var audioPlayer = new FakePiperAudioPlayer();
+        var engine = CreateEngine(
+            new SpeechOptions { PiperExecutablePath = CreateTempFile(), PiperModelPath = CreateTempFile() },
+            runner.Object,
+            audioPlayer);
+        using var cancellation = new CancellationTokenSource();
+
+        var announcement = engine.AnnouncementAsync("Next stop Central.", null, cancellation.Token);
+        try
+        {
+            var outputPath = await started.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            await cancellation.CancelAsync().ConfigureAwait(false);
+            await Assert.CatchAsync<OperationCanceledException>(() =>
+                announcement.WaitAsync(TimeSpan.FromSeconds(10))).ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(audioPlayer.PlayedPath, Is.Empty);
+                Assert.That(File.Exists(outputPath), Is.False);
+            }
+        }
+        finally
+        {
+            await cancellation.CancelAsync().ConfigureAwait(false);
+        }
+    }
+
+    [Test]
+    public async Task AnnouncementAsync_CancelledDuringPlayback_PropagatesAndDeletesOutput()
+    {
+        var started = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var pending = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var player = new Mock<IPiperAudioPlayer>();
+        player.Setup(value => value.PlayAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((path, token) => started.SetResult(path))
+            .Returns((string path, CancellationToken token) => pending.Task.WaitAsync(token));
+        var engine = CreateEngine(
+            new SpeechOptions { PiperExecutablePath = CreateTempFile(), PiperModelPath = CreateTempFile() },
+            new FakePiperProcessRunner(),
+            player.Object);
+        using var cancellation = new CancellationTokenSource();
+
+        var announcement = engine.AnnouncementAsync("Next stop Central.", null, cancellation.Token);
+        try
+        {
+            var outputPath = await started.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            await cancellation.CancelAsync().ConfigureAwait(false);
+            await Assert.CatchAsync<OperationCanceledException>(() =>
+                announcement.WaitAsync(TimeSpan.FromSeconds(10))).ConfigureAwait(false);
+            Assert.That(File.Exists(outputPath), Is.False);
+        }
+        finally
+        {
+            await cancellation.CancelAsync().ConfigureAwait(false);
+        }
+    }
+
+    [Test]
+    public async Task AnnouncementAsync_OverlappingCalls_UseIndependentFilesAndCanFinishOutOfOrder()
+    {
+        var firstCompletion = new TaskCompletionSource<PiperProcessResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstPath = string.Empty;
+        var secondPath = string.Empty;
+        var runner = new Mock<IPiperProcessRunner>();
+        runner.Setup(value => value.SynthesizeAsync(It.IsAny<PiperSynthesisRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<PiperSynthesisRequest, CancellationToken>((request, token) =>
+            {
+                WritePcmWave(request.OutputPath, [0, 1000, 0, 0]);
+                if (request.Text == "First")
+                {
+                    firstPath = request.OutputPath;
+                }
+                else
+                {
+                    secondPath = request.OutputPath;
+                }
+            })
+            .Returns((PiperSynthesisRequest request, CancellationToken token) => request.Text == "First"
+                ? firstCompletion.Task.WaitAsync(token)
+                : Task.FromResult(new PiperProcessResult(0, string.Empty, string.Empty)));
+        var audioPlayer = new FakePiperAudioPlayer();
+        var engine = CreateEngine(
+            new SpeechOptions { PiperExecutablePath = CreateTempFile(), PiperModelPath = CreateTempFile() },
+            runner.Object,
+            audioPlayer);
+        using var cancellation = new CancellationTokenSource();
+
+        var first = engine.AnnouncementAsync("First", null, cancellation.Token);
+        try
+        {
+            await engine.AnnouncementAsync("Second", null, cancellation.Token)
+                .WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(first.IsCompleted, Is.False);
+                Assert.That(firstPath, Is.Not.Empty);
+                Assert.That(secondPath, Is.Not.Empty.And.Not.EqualTo(firstPath));
+                Assert.That(audioPlayer.PlayedPath, Is.EqualTo(secondPath));
+                Assert.That(File.Exists(secondPath), Is.False);
+            }
+            firstCompletion.SetResult(new PiperProcessResult(0, string.Empty, string.Empty));
+            await first.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(audioPlayer.PlayedPath, Is.EqualTo(firstPath));
+                Assert.That(File.Exists(firstPath), Is.False);
+            }
+        }
+        finally
+        {
+            await cancellation.CancelAsync().ConfigureAwait(false);
+        }
+    }
+
+    [TearDown]
+    public void RemoveTemporaryFiles()
+    {
+        foreach (var path in _temporaryFiles)
+        {
+            File.Delete(path);
+        }
+        _temporaryFiles.Clear();
+    }
+
     private static PiperSpeechEngine CreateEngine(
         SpeechOptions options,
         IPiperProcessRunner runner,
@@ -264,9 +442,10 @@ internal class PiperSpeechEngineTest
             audioPlayer);
     }
 
-    private static string CreateTempFile()
+    private string CreateTempFile()
     {
         var path = Path.Combine(Path.GetTempPath(), $"mobaflow-test-{Guid.NewGuid():N}.tmp");
+        _temporaryFiles.Add(path);
         File.WriteAllText(path, string.Empty);
         return path;
     }
@@ -322,14 +501,16 @@ internal class PiperSpeechEngineTest
     {
         public string PlayedPath { get; private set; } = string.Empty;
 
+        public byte[] PlayedAudio { get; private set; } = [];
+
         public CancellationToken LastCancellationToken { get; private set; }
 
-        public Task PlayAsync(string wavPath, CancellationToken cancellationToken = default)
+        public async Task PlayAsync(string wavPath, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             LastCancellationToken = cancellationToken;
             PlayedPath = wavPath;
-            return Task.CompletedTask;
+            PlayedAudio = await File.ReadAllBytesAsync(wavPath, cancellationToken).ConfigureAwait(false);
         }
     }
 
