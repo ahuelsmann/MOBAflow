@@ -41,5 +41,5 @@ and ordering of every occurrence in multi-match slots, including zero-match slot
 Checkboxes record requirements-quality review, not maintainer acceptance or feature completion.
 Review defaults before the next phase: virtual-instant stepping, edit locking and cancellation on page/project/solution departure.
 The [technical plan](../plan.md), research, data model, runtime/UI contracts and validation guide now exist as draft designs.
-RF-23 integration no longer blocks planning. Design review, task generation and cross-artifact consistency analysis remain
-before implementation; no product code or executed acceptance suite is claimed.
+RF-23/design #241 are integrated. The [task list](../tasks.md) is generated and cross-artifact consistency analysis is complete.
+Backlog review/integration remain before implementation. No product code or executed acceptance suite is claimed.
