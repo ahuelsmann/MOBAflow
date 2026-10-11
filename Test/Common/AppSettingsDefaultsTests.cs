@@ -99,6 +99,68 @@ internal class AppSettingsDefaultsTests
         });
     }
 
+    [TestCase(null, "")]
+    [TestCase("", "")]
+    [TestCase(" ", " ")]
+    [TestCase("tools/piper.exe", "tools/piper.exe")]
+    [TestCase("C:/Speech Tools/piper.exe", "C:/Speech Tools/piper.exe")]
+    public void PiperExecutablePath_NormalizesMissingPathAndPreservesConfiguredPath(string? path, string expected)
+    {
+        var settings = new AppSettings();
+        settings.Speech.PiperExecutablePath = path!;
+
+        Assert.That(settings.PiperExecutablePath, Is.EqualTo(expected));
+    }
+
+    [TestCase(null, "")]
+    [TestCase("", "")]
+    [TestCase(" ", " ")]
+    [TestCase("voices/en.onnx", "voices/en.onnx")]
+    [TestCase("C:/Speech Models/en.onnx", "C:/Speech Models/en.onnx")]
+    public void PiperModelPath_NormalizesMissingPathAndPreservesConfiguredPath(string? path, string expected)
+    {
+        var settings = new AppSettings();
+        settings.Speech.PiperModelPath = path!;
+
+        Assert.That(settings.PiperModelPath, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void PiperPaths_FollowCurrentSpeechSettingsWithoutCachingOrMixingPaths()
+    {
+        var settings = new AppSettings
+        {
+            Speech = new SpeechSettings
+            {
+                PiperExecutablePath = "tools/first.exe",
+                PiperModelPath = "voices/first.onnx"
+            }
+        };
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings.PiperExecutablePath, Is.EqualTo("tools/first.exe"));
+            Assert.That(settings.PiperModelPath, Is.EqualTo("voices/first.onnx"));
+        }
+
+        settings.Speech.PiperExecutablePath = "tools/second.exe";
+        settings.Speech.PiperModelPath = "voices/second.onnx";
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings.PiperExecutablePath, Is.EqualTo("tools/second.exe"));
+            Assert.That(settings.PiperModelPath, Is.EqualTo("voices/second.onnx"));
+        }
+
+        settings.Speech = new SpeechSettings();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings.PiperExecutablePath, Is.Empty);
+            Assert.That(settings.PiperModelPath, Is.Empty);
+        }
+    }
+
     [Test]
     public void Speech_EnablePronunciationNormalization_default_is_true()
     {

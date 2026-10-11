@@ -33,7 +33,28 @@ internal sealed class RecordingArtifactTests
             Assert.That(artifact.Summary.MarkerCount, Is.EqualTo(1));
             Assert.That(artifact.Summary.FirstSequence, Is.EqualTo(7));
             Assert.That(artifact.Summary.LastSequence, Is.EqualTo(9));
+            Assert.That(artifact.Summary.DurationTicks, Is.EqualTo(9));
         });
+    }
+
+    [Test]
+    public void Summary_RejectsMissingEntriesWithParameterName()
+    {
+        var exception = Assert.Throws<ArgumentNullException>(() => RecordingSummary.Create(null!));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("entries"));
+    }
+
+    [Test]
+    public void Constructor_EmptyRecordingHasZeroCountsSequencesAndDuration()
+    {
+        var artifact = CreateArtifact([]);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(artifact.Entries, Is.Empty);
+            Assert.That(artifact.Summary, Is.EqualTo(new RecordingSummary(0, 0, 0, 0, 0, 0, 0, 0)));
+        }
     }
 
     [Test]
