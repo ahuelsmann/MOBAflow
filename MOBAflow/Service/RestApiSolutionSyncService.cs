@@ -4,9 +4,6 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using SharedUI.Interface;
-using SharedUI.ViewModel;
-
-using Common.Events;
 
 using Domain;
 
@@ -20,7 +17,6 @@ using System.Text.Json;
 
 /// <summary>
 /// Pushes the in-memory <see cref="Solution"/> to the MOBApi cache whenever it changes or MOBApi becomes reachable.
-/// Also pushes Z21 runtime settings when the Z21 connection is established or the endpoint changes.
 /// </summary>
 
 public sealed class RestApiSolutionSyncService : IDisposable
@@ -33,19 +29,13 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     private readonly ISolutionSession _solutionSession;
 
-    private readonly IEventBus _eventBus;
-
     private readonly ILogger<RestApiSolutionSyncService> _logger;
 
     private readonly LocalMobApiClient _mobApiClient;
 
     private readonly object _debounceLock = new();
 
-    private readonly List<Guid> _eventSubscriptions = [];
-
     private CancellationTokenSource? _debounceCts;
-
-    private string? _lastPushedZ21Endpoint;
 
     private bool _disposed;
     private readonly object _metricsLock = new();
@@ -82,8 +72,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         RestApiProcessService restApiProcessService,
 
-        IEventBus eventBus,
-
         ILogger<RestApiSolutionSyncService> logger,
 
         LocalMobApiClient mobApiClient)
@@ -98,15 +86,11 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         ArgumentNullException.ThrowIfNull(restApiProcessService);
 
-        ArgumentNullException.ThrowIfNull(eventBus);
-
         ArgumentNullException.ThrowIfNull(logger);
 
         _appSettings = appSettings;
 
         _solutionSession = solutionSession;
-
-        _eventBus = eventBus;
 
         _logger = logger;
 
@@ -122,36 +106,23 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         restApiProcessService.ApiBecameReachable += OnApiBecameReachable;
 
-        _eventSubscriptions.Add(_eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => QueueRuntimeSettingsPush()));
-
     }
 
     private void OnSolutionChanged(object? sender, EventArgs e) => QueuePush();
+
+    private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e) => QueuePush();
 
     private void OnSolutionSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ISolutionSession.SelectedProject))
         {
             QueuePush();
-            // MOBAsmart connects to the Z21 of the selected project.
-            QueueRuntimeSettingsPush();
         }
     }
-    private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // MOBAsmart connects to the Z21 of the selected project until it selects a project itself (slice 4).
-        if (sender is ProjectViewModel && e.PropertyName is nameof(ProjectViewModel.Z21IpAddress) or nameof(ProjectViewModel.Z21Port))
-        {
-            QueueRuntimeSettingsPush();
-        }
-    }
-
     private void OnApiBecameReachable(object? sender, int port)
     {
         _ = port;
-        _lastPushedZ21Endpoint = null;
         QueuePush();
-        QueueRuntimeSettingsPush();
     }
 
     /// <summary>
@@ -188,51 +159,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         _ = PushDebouncedAsync(token);
 
-    }
-
-    /// <summary>
-    /// Schedules a push of the current Z21 endpoint to MOBApi runtime settings.
-    /// </summary>
-
-    public void QueueRuntimeSettingsPush()
-
-    {
-
-        if (_disposed)
-
-        {
-
-            return;
-
-        }
-
-        _ = PushRuntimeSettingsDebouncedAsync();
-
-    }
-
-    private async Task PushRuntimeSettingsDebouncedAsync()
-
-    {
-
-        try
-
-        {
-
-            await Task.Delay(DebounceMilliseconds, CancellationToken.None).ConfigureAwait(false);
-
-            var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
-
-            await PushRuntimeSettingsAsync(port, CancellationToken.None).ConfigureAwait(false);
-
-        }
-
-        catch (Exception ex)
-
-        {
-
-            _logger.LogDebug(ex, "Debounced runtime settings push failed");
-
-        }
     }
 
     private async Task PushDebouncedAsync(CancellationToken cancellationToken)
@@ -319,8 +245,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
                 _logger.LogDebug("Solution pushed to MOBApi on port {Port}", port);
 
-                await PushRuntimeSettingsAsync(port, cancellationToken).ConfigureAwait(false);
-
                 return;
 
             }
@@ -377,85 +301,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
         }
     }
 
-    private async Task PushRuntimeSettingsAsync(int port, CancellationToken cancellationToken)
-
-    {
-
-        // MOBAsmart connects to the Z21 of the project selected in MOBAflow. Without a Z21 the endpoint is
-        // cleared, so a phone never connects to the Z21 of a previously selected project.
-
-        var z21 = _solutionSession.SelectedProject?.Model.Z21;
-
-        var z21Ip = z21?.IpAddress.Trim() ?? string.Empty;
-
-        var z21Port = z21 is { Port: > 0 } ? z21.Port : Z21Endpoint.DefaultPort;
-
-        var endpointKey = z21Ip.Length == 0 ? string.Empty : $"{z21Ip}:{z21Port}";
-
-        if (string.Equals(_lastPushedZ21Endpoint, endpointKey, StringComparison.Ordinal))
-
-        {
-
-            return;
-
-        }
-
-        using var content = new StringContent(
-            JsonSerializer.Serialize(new { z21IpAddress = z21Ip, z21Port }),
-            Encoding.UTF8,
-            "application/json");
-
-        using var request = endpointKey.Length == 0
-            ? new HttpRequestMessage(HttpMethod.Delete, "api/runtime-settings")
-            : new HttpRequestMessage(HttpMethod.Put, "api/runtime-settings") { Content = content };
-
-        try
-
-        {
-
-            using var response = await _mobApiClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-
-            if (response.IsSuccessStatusCode)
-
-            {
-
-                _lastPushedZ21Endpoint = endpointKey;
-
-                _logger.LogDebug("Runtime settings pushed to MOBApi on port {Port}", port);
-
-                return;
-
-            }
-
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-
-            _logger.LogWarning(
-
-                "Runtime settings push to MOBApi failed with status {StatusCode}: {Body}",
-
-                (int)response.StatusCode,
-
-                responseBody);
-
-        }
-
-        catch (HttpRequestException ex)
-
-        {
-
-            _logger.LogDebug(ex, "MOBApi not reachable for runtime settings push on port {Port}", port);
-
-        }
-
-        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-
-        {
-
-            _logger.LogDebug(ex, "Runtime settings push to MOBApi timed out on port {Port}", port);
-
-        }
-    }
-
     public void Dispose()
 
     {
@@ -470,15 +315,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         _disposed = true;
 
-        foreach (var subscriptionId in _eventSubscriptions)
-
-        {
-
-            _eventBus.Unsubscribe(subscriptionId);
-
-        }
-
-        _eventSubscriptions.Clear();
+        _solutionSession.ModelChanged -= OnSolutionModelChanged;
 
         lock (_debounceLock)
 

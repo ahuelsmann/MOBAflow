@@ -31,4 +31,19 @@ internal sealed class MobileSolutionContextTests
         Assert.That(context.SelectedProject?.Locomotives, Has.Count.EqualTo(1));
         Assert.That(context.SelectedProject?.Locomotives[0].Name, Is.EqualTo("BR 110 Verkehrsrot"));
     }
+
+    [Test]
+    public void ApplySolution_AgainKeepsTheProjectThePhoneSelected()
+    {
+        var station = new Project { Name = "Station" };
+        var yard = new Project { Name = "Yard" };
+        var context = new MobileSolutionContext();
+        context.ApplySolution(new Solution { Name = "Layout", Projects = [station, yard] }, "Station");
+        context.SelectedProject = context.SolutionViewModel!.Projects.Single(project => project.Model.Id == yard.Id);
+
+        // MOBAflow still names Station as its selected project in the next sync.
+        context.ApplySolution(new Solution { Name = "Layout", Projects = [station, yard] }, "Station");
+
+        Assert.That(context.SelectedProject?.Model.Id, Is.EqualTo(yard.Id));
+    }
 }

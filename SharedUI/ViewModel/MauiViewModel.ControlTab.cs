@@ -31,6 +31,11 @@ public sealed partial class MauiViewModel
         }
 
         _projectContext.PropertyChanged += OnProjectContextPropertyChangedForControlTab;
+        RefreshProjectPicker();
+        Z21IpAddress = _projectContext.SelectedProject?.Model.Z21.IpAddress.Trim() ?? string.Empty;
+        _z21Port = _projectContext.SelectedProject?.Model.Z21.Port is > 0
+            ? _projectContext.SelectedProject.Model.Z21.Port
+            : Backend.Protocol.Z21Protocol.DefaultPort;
         _shownProjectId = _projectContext.SelectedProject?.Model.Id;
     }
 
@@ -236,10 +241,10 @@ public sealed partial class MauiViewModel
             if (_remoteLocomotiveFleetIsLive
                 && _cachedRemoteLocomotiveFleet is { Count: > 0 })
             {
-                return _cachedRemoteLocomotiveFleet;
+                return FilterFleetToCurrentProject(_cachedRemoteLocomotiveFleet);
             }
 
-            var liveRuntimeFleet = _runtimeSnapshots.Current.LocomotiveFleet;
+            var liveRuntimeFleet = FilterFleetToCurrentProject(_runtimeSnapshots.Current.LocomotiveFleet);
             if (liveRuntimeFleet.Count > 0)
             {
                 return liveRuntimeFleet;
@@ -254,10 +259,10 @@ public sealed partial class MauiViewModel
 
         if (_cachedRemoteLocomotiveFleet is { Count: > 0 })
         {
-            return _cachedRemoteLocomotiveFleet;
+            return FilterFleetToCurrentProject(_cachedRemoteLocomotiveFleet);
         }
 
-        var localFleet = _runtimeSnapshots.Current.LocomotiveFleet;
+        var localFleet = FilterFleetToCurrentProject(_runtimeSnapshots.Current.LocomotiveFleet);
         if (localFleet.Count > 0)
         {
             return localFleet;
@@ -346,8 +351,11 @@ public sealed partial class MauiViewModel
             _uiDispatcher.InvokeOnUi(ApplyBestAvailableLocomotiveFleet);
         }
 
+        var activateProject = projectId != _shownProjectId;
         _shownProjectId = projectId;
+        _uiDispatcher.InvokeOnUi(RefreshProjectPicker);
         RunInBackground(SelectRemoteProjectAsync(), "Select remote project");
+        RunInBackground(ApplySelectedProjectZ21Async(activateProject), "Connect to the selected project's Z21");
     }
 
     /// <summary>

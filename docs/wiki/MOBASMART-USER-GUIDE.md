@@ -22,10 +22,16 @@ MOBAsmart uses two related connections:
 | **Z21** | Direct feedback, telemetry, track power and low-latency locomotive commands |
 | **MOBAflow** | Solution/fleet sync, photos, signal-box plan, runtime snapshots and remote command fallback through MOBApi |
 
-The app discovers the Z21 and MOBAflow on the LAN and tries recently found
-addresses first; tap the MOBAflow status to search again. There is no manual
-address entry. The MOBAflow connection is enabled or disabled
-with the switch on the Counter tab.
+The app discovers MOBAflow on the LAN and tries recently found addresses first;
+tap the MOBAflow status to search again. The MOBAflow connection is enabled or
+disabled with the switch on the Counter tab.
+
+In MOBAflow every project is a layout with its own Z21. On the phone you select
+one project of the synchronized solution with **Project** on the Counter tab;
+the phone then shows and controls that project and connects to its Z21. The
+phone does not search for a Z21 and has no manual address entry: assign the
+Z21 to the project in MOBAflow. Selecting another project closes the connection
+to the previous project's Z21.
 
 When both routes are available, locomotive commands prefer the direct local Z21
 connection. Signal-box and shared domain state use the active MOBAflow session.
@@ -36,6 +42,7 @@ connection. Signal-box and shared domain state use the active MOBAflow session.
 
 The Counter tab contains connection state and the lap-counter setup.
 
+- Select the project this phone controls.
 - View Z21 temperature and supply telemetry while connected.
 - Turn track power on or off.
 - Select how many feedback points should be counted.
@@ -111,7 +118,9 @@ when the SignalR connection is available.
 - Confirm the phone and Z21 use the same LAN and are not separated by a guest
   network.
 - Disable mobile-data/VPN routing temporarily if it intercepts local traffic.
-- Restart discovery by reopening the app after the Z21 is ready.
+- Check that the selected project has a Z21 assigned in MOBAflow and that the
+  solution was synchronized to the phone.
+- Select the project again or reopen the app after the Z21 is ready.
 - Ensure no firewall or access-point rule blocks Z21 UDP traffic.
 
 ### MOBAflow shows Search or OFF

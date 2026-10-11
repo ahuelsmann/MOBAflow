@@ -52,7 +52,8 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 
 - [x] T022 Project identifier in MOBApi commands and runtime snapshots; reject unknown projects (runtime settings are removed in T024)
 - [x] T023 MOBAflow applies remote commands to the named project's runtime only
-- [ ] T024 MOBAsmart project selection and per-project Z21 address for the direct connection
+- [x] T024 MOBAsmart project selection and per-project Z21 address for the direct connection; runtime settings,
+  the global Z21 address/port and the phone's own Z21 search removed
 - [ ] T025 Tests for project routing and MOBAsmart selection; run suites, Android build and analyzer gates for validation
 - [ ] T026 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 

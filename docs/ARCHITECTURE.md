@@ -250,7 +250,8 @@ IZ21 / JourneyManager / WorkflowService
   solution connects; the later runtime gets a detached connection, reports the
   conflict and never connects (`Z21AssignmentDiagnostics` shows it in the project
   diagnostics). MOBAflow never searches the network for a Z21 on its own
-  (`ProjectZ21EndpointSource`); MOBAsmart keeps `SettingsZ21EndpointSource`.
+  (`ProjectZ21EndpointSource`). MOBAsmart uses the same endpoint source with the
+  project selected on the phone; switching projects changes its local Z21 connection.
 - Each connection has its own `ForwardingEventBus`. Runtime handlers run on the
   publishing thread without waiting for the UI dispatcher. Only application
   delivery is dispatched to the UI thread and checks the current selection there;

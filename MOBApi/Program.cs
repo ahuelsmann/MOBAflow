@@ -13,7 +13,6 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IClientRegistry, ClientRegistry>();
 builder.Services.AddSingleton<ISolutionCache, SolutionCache>();
-builder.Services.AddSingleton<IRuntimeSettingsCache, RuntimeSettingsCache>();
 builder.Services.AddSingleton<IRuntimeSnapshotCache, RuntimeSnapshotCache>();
 builder.Services.AddSingleton<IRuntimeHostRegistry, RuntimeHostRegistry>();
 builder.Services.AddSingleton<IRuntimeRemoteRegistry, RuntimeRemoteRegistry>();

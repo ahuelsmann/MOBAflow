@@ -2147,13 +2147,6 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "CA1031",
-      "path": "MOBAsmart/Service/RuntimeSettingsClient.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA1031",
       "path": "MOBAsmart/Service/SettingsService.cs",
       "count": 1
     },
@@ -2387,13 +2380,6 @@
       "ruleId": "CA2007",
       "path": "MOBAsmart/Service/PhotoUploadService.cs",
       "count": 4
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA2007",
-      "path": "MOBAsmart/Service/RuntimeSettingsClient.cs",
-      "count": 1
     },
     {
       "project": "MOBAsmart",
@@ -2924,13 +2910,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1305",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1305",
       "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
       "count": 1
     },
@@ -3177,7 +3156,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 15
+      "count": 13
     },
     {
       "project": "SharedUI",
@@ -3296,7 +3275,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "SharedUI",

@@ -6,7 +6,6 @@ using Backend;
 using Backend.Interface;
 using Backend.Service;
 using Common.Configuration;
-using Common.Discovery;
 using Common.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -71,7 +70,6 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
         services.AddSingleton<IPhotoUriResolver, MauiPhotoUriResolver>();
         services.AddSingleton<IRestApiClientRegistration, RestApiClientRegistrationService>();
-        services.AddSingleton<IRuntimeSettingsClient, RuntimeSettingsClient>();
         services.AddSingleton<INetworkProfileChangeNotifier, MauiNetworkProfileChangeNotifier>();
 
         return services;
@@ -85,6 +83,9 @@ public static class MobaMauiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingletonWithInterface<MobileSolutionContext, IProjectContext>();
+        // The phone controls the Z21 of the project selected on it; it never searches the network for one.
+        services.AddSingleton<IZ21EndpointSource>(sp => new ProjectZ21EndpointSource(
+            () => sp.GetRequiredService<IProjectContext>().SelectedProject?.Model));
         services.AddSingleton<IMobileSolutionStore>(sp => new MobileSolutionStore(
             Path.Combine(FileSystem.AppDataDirectory, "mobile-cache"),
             sp.GetRequiredService<ILogger<MobileSolutionStore>>()));
@@ -129,14 +130,12 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<IRestDiscoveryService>(),
-            sp.GetRequiredService<IZ21DiscoveryService>(),
             sp.GetRequiredService<IPhotoUploadService>(),
             sp.GetRequiredService<IPhotoCaptureService>(),
             sp.GetRequiredService<INetworkProfileChangeNotifier>(),
             sp.GetRequiredService<ILogger<MauiViewModel>>(),
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IRestApiClientRegistration>(),
-            sp.GetRequiredService<IRuntimeSettingsClient>(),
             sp.GetRequiredService<ISolutionRemoteLoader>(),
             sp.GetRequiredService<IMobileSolutionStore>(),
             sp.GetRequiredService<IRuntimeHubRemoteClient>(),
