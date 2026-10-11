@@ -460,6 +460,7 @@ internal sealed class MauiViewModelPerformanceTests
             .ReturnsAsync(true);
 
         var settingsService = CreateSettingsServiceMock(appSettings).Object;
+        var endpointLocator = TestEndpointLocators.Create(appSettings, settingsService);
         var viewModel = new MauiViewModel(
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
@@ -468,7 +469,8 @@ internal sealed class MauiViewModelPerformanceTests
             uiDispatcherMock.Object,
             appSettings,
             settingsService,
-            TestEndpointLocators.Create(appSettings, settingsService),
+            endpointLocator,
+            TestHubSessions.Create(appSettings, endpointLocator, photoUploadMock.Object, runtimeHubRemoteClient),
             photoUploadMock.Object,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,
