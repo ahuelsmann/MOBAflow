@@ -15,15 +15,13 @@ using System.Threading;
 /// </summary>
 public sealed partial class MobaRuntimeService
 {
-    private const int ConnectionFailuresBeforeRescan = 3;
-
     private int _z21ConnectionFailureCount;
 
     private void BeginAutoConnectToZ21()
     {
         _isZ21Connecting = true;
         _statusText = string.IsNullOrEmpty(_endpointSource.DisplayAddress)
-            ? "Looking for the Z21..."
+            ? "Connecting to Z21..."
             : $"Connecting to {_endpointSource.DisplayAddress}...";
         PublishSnapshot();
 
@@ -75,12 +73,7 @@ public sealed partial class MobaRuntimeService
                 return;
             }
 
-            var rediscover = _z21ConnectionFailureCount >= ConnectionFailuresBeforeRescan;
-            var endpoint = await _endpointSource.ResolveAsync(rediscover).ConfigureAwait(false);
-            if (rediscover)
-            {
-                _z21ConnectionFailureCount = 0;
-            }
+            var endpoint = await _endpointSource.ResolveAsync().ConfigureAwait(false);
 
             if (endpoint.Address is not { } address)
             {

@@ -41,9 +41,9 @@ public static class RuntimeSnapshotProjector
     }
 
     /// <summary>
-    /// Projects the mobile connection label and whether a fresh connection should persist the entered IP address.
+    /// Projects the mobile connection label.
     /// </summary>
-    public static MauiRuntimeProjection ProjectMaui(MobaRuntimeSnapshot snapshot, bool wasConnected)
+    public static MauiRuntimeProjection ProjectMaui(MobaRuntimeSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
@@ -53,7 +53,7 @@ public static class RuntimeSnapshotProjector
                 ? null
                 : snapshot.StatusText;
 
-        return new MauiRuntimeProjection(ProjectStatus(snapshot), connectionStatus, snapshot.IsConnected && !wasConnected);
+        return new MauiRuntimeProjection(ProjectStatus(snapshot), connectionStatus);
     }
 
     /// <summary>
@@ -97,8 +97,7 @@ public sealed record RuntimeStatusProjection(
 
 public sealed record MauiRuntimeProjection(
     RuntimeStatusProjection Status,
-    string? Z21ConnectionStatus,
-    bool ShouldPersistCurrentIpAddress);
+    string? Z21ConnectionStatus);
 
 public sealed record TrainControlRuntimeProjection(
     bool IsConnected,

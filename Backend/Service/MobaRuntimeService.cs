@@ -3,7 +3,6 @@
 namespace Moba.Backend.Service;
 
 using Common.Configuration;
-using Common.Discovery;
 using Common.Events;
 using Common.Runtime;
 using Interface;
@@ -96,7 +95,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ILogger<MobaRuntimeService> logger,
         IEventBus? eventBus = null,
         JourneyManagerFactory? journeyManagerFactory = null,
-        IZ21DiscoveryService? z21Discovery = null,
         TimeProvider? timeProvider = null,
         IInterlockingRuntime? interlockingRuntime = null,
         InPortCounterService? inPortCounterService = null,
@@ -117,7 +115,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _settings = settings;
         _logger = logger;
         _eventBus = eventBus;
-        _endpointSource = endpointSource ?? new SettingsZ21EndpointSource(settings, z21Discovery);
+        // Without a source of its own (MOBAsmart), the runtime connects to the Z21 of the project it runs.
+        _endpointSource = endpointSource ?? new ProjectZ21EndpointSource(() => _activeProjectContext?.ActiveProject);
         _interlockingRuntime = interlockingRuntime;
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
         _inPortCounters.SnapshotChanged += OnJourneyRuntimeChanged;

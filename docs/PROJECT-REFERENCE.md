@@ -273,7 +273,6 @@ MOBApi maps controllers plus two SignalR hubs.
 | `GET /api/status` | API/runtime host status and clients |
 | `GET/PUT /api/solution` | Current solution cache |
 | `GET /api/solution/meta` | Solution metadata |
-| `GET/PUT /api/runtime-settings` | Z21/runtime settings shared by the desktop host |
 | `GET /api/runtime/meta?projectId={id}` | Runtime cache metadata of one project |
 | `GET /api/runtime/snapshot?projectId={id}` | Current runtime snapshot of one project |
 | `PUT /api/runtime/snapshot` | Store a snapshot; the snapshot names its project (`projectId`) |

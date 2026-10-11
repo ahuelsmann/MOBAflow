@@ -128,10 +128,10 @@ public static class MobaBackendServiceCollectionExtensions
                     InPortCounterService = sp.GetRequiredService<InPortCounterService>()
                 },
                 sp.GetService<ILogger<JourneyManager>>()),
-            z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
             timeProvider: sp.GetRequiredService<TimeProvider>(),
             interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>(),
-            inPortCounterService: sp.GetRequiredService<InPortCounterService>()));
+            inPortCounterService: sp.GetRequiredService<InPortCounterService>(),
+            endpointSource: sp.GetService<IZ21EndpointSource>()));
         services.TryAddSingleton<IRuntimeSnapshotProvider>(sp => sp.GetRequiredService<IMobaRuntime>());
         services.TryAddSingleton<IConnectionRuntime>(sp => sp.GetRequiredService<IMobaRuntime>());
         services.TryAddSingleton<ITrafficMonitor>(sp => sp.GetRequiredService<IMobaRuntime>());

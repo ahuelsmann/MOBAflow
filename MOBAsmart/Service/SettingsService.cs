@@ -91,8 +91,6 @@ public class SettingsService : ISettingsService
                     _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
                     _settings.Application.IsDarkMode = loadedSettings.Application.IsDarkMode;
                     _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
-                    _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
-                    _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
                     _settings.Counter.CountOfFeedbackPoints = loadedFeedbackPointCount;
                     _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;

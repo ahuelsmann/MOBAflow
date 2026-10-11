@@ -122,8 +122,8 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
             }
 
             var activeProjectName = meta?.ActiveProjectName ?? meta?.FirstProjectName;
-            var activeProject = ResolveActiveProject(solution, activeProjectName);
             await ApplySolutionOnUiThreadAsync(solution, activeProjectName, cancellationToken).ConfigureAwait(false);
+            var activeProject = SelectedOr(ResolveActiveProject(solution, activeProjectName));
 
             // When MOBAsmart controls MOBAflow remotely, runtime signal aspects and Z21 state
             // come from MOBAflow snapshots. Re-activating the local runtime would publish stale
@@ -176,11 +176,11 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
                 return false;
             }
 
-            var activeProject = ResolveActiveProject(entry.Solution, entry.Meta.ActiveProjectName);
             await ApplySolutionOnUiThreadAsync(
                 entry.Solution,
                 entry.Meta.ActiveProjectName,
                 cancellationToken).ConfigureAwait(false);
+            var activeProject = SelectedOr(ResolveActiveProject(entry.Solution, entry.Meta.ActiveProjectName));
 
             if (_mobileRuntimeCoordinator?.PreferRemoteRuntime != true)
             {
@@ -289,6 +289,9 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
 
         public string? FirstProjectName { get; init; }
     }
+
+    /// <summary>The project the phone controls after the solution was applied.</summary>
+    private Project SelectedOr(Project fallback) => _mobileSolutionContext.SelectedProject?.Model ?? fallback;
 
     private static Project ResolveActiveProject(Solution solution, string? activeProjectName)
     {

@@ -122,13 +122,6 @@ internal class AppSettingsDefaultsTests
     }
 
     [Test]
-    public void Z21_DefaultPort_default_is_21105()
-    {
-        var z21 = new Z21Settings();
-        Assert.That(z21.DefaultPort, Is.EqualTo("21105"));
-    }
-
-    [Test]
     public void AppSettings_Application_default_is_not_null()
     {
         var settings = new AppSettings();
@@ -227,13 +220,6 @@ internal class AppSettingsDefaultsTests
             Assert.That(settings, Is.Not.Null);
             Assert.That(settings!.Counter.CountOfFeedbackPoints, Is.EqualTo(expectedValue));
         }
-    }
-
-    [Test]
-    public void Z21_CurrentIpAddress_default_is_non_empty()
-    {
-        var z21 = new Z21Settings();
-        Assert.That(z21.CurrentIpAddress, Is.Not.Empty);
     }
 
     [Test]

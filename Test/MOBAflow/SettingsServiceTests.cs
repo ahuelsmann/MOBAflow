@@ -20,8 +20,6 @@ internal sealed class SettingsServiceTests
         {
             var path = Path.Combine(directory, "appsettings.json");
             var settings = new AppSettings();
-            settings.Z21.CurrentIpAddress = "192.0.2.42";
-            settings.Z21.DefaultPort = "21106";
             settings.Z21.AutoConnectRetryIntervalSeconds = 17;
             var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
 

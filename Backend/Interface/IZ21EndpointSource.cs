@@ -14,11 +14,10 @@ public interface IZ21EndpointSource
     string DisplayAddress { get; }
 
     /// <summary>
-    /// Resolves the Z21 to connect to. A source that allows it may search the network first.
+    /// Resolves the Z21 to connect to.
     /// </summary>
-    /// <param name="rediscover">Whether repeated connection failures ask for a new network search.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task<Z21EndpointResolution> ResolveAsync(bool rediscover, CancellationToken cancellationToken = default);
+    Task<Z21EndpointResolution> ResolveAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
