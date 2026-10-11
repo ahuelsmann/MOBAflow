@@ -30,6 +30,12 @@ public interface IRuntimeHubRemoteClient : IAsyncDisposable
 
     Task DisconnectAsync();
 
+    /// <summary>
+    /// Shows and controls one project of the synchronized solution: registers for its snapshots and sends its
+    /// id with every command. Every project has its own runtime and Z21 in MOBAflow.
+    /// </summary>
+    Task SelectProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
+
     Task RequestLatestSnapshotAsync(CancellationToken cancellationToken = default);
 
     Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default);

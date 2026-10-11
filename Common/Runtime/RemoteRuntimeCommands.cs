@@ -11,6 +11,11 @@ public sealed record RuntimeCommandEnvelope
 {
     public Guid CommandId { get; init; } = Guid.NewGuid();
 
+    /// <summary>
+    /// Gets the project whose runtime executes the command. Every project has its own runtime and Z21.
+    /// </summary>
+    public Guid ProjectId { get; init; }
+
     public RuntimeCommandType Type { get; init; }
 
     public string? ClientId { get; init; }

@@ -5,6 +5,7 @@ namespace Moba.Test.MOBApi;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+using Moba.Common.Runtime;
 using Moba.MOBApi.Controllers;
 using Moba.MOBApi.Service;
 
@@ -18,12 +19,14 @@ using System.Net;
 [TestFixture]
 internal sealed class RuntimeCommandsControllerTests
 {
+    private static readonly Guid Project = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
     [Test]
     public void Drive_WithValidValues_ReturnsAccepted()
     {
         var controller = CreateController(capacity: 4);
 
-        var result = controller.EnqueueLocomotiveDrive(new RuntimeCommandsController.SetLocomotiveDriveRequest(3, 40, true));
+        var result = controller.EnqueueLocomotiveDrive(new RuntimeCommandsController.SetLocomotiveDriveRequest(Project, 3, 40, true));
 
         Assert.That(result, Is.InstanceOf<AcceptedResult>());
     }
@@ -35,7 +38,7 @@ internal sealed class RuntimeCommandsControllerTests
         var controller = CreateController(capacity: 4);
 
         var result = controller.EnqueueLocomotiveDrive(
-            new RuntimeCommandsController.SetLocomotiveDriveRequest(address, speed, true));
+            new RuntimeCommandsController.SetLocomotiveDriveRequest(Project, address, speed, true));
 
         Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }
@@ -46,7 +49,7 @@ internal sealed class RuntimeCommandsControllerTests
         var controller = CreateController(capacity: 4);
 
         var result = controller.EnqueueLocomotiveFunction(
-            new RuntimeCommandsController.SetLocomotiveFunctionRequest(3, 32, true));
+            new RuntimeCommandsController.SetLocomotiveFunctionRequest(Project, 3, 32, true));
 
         Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }
@@ -57,7 +60,18 @@ internal sealed class RuntimeCommandsControllerTests
         var controller = CreateController(capacity: 4);
 
         var result = controller.EnqueueSignalAspect(
-            new RuntimeCommandsController.SetSignalAspectRequest(Guid.NewGuid(), (SignalAspect)999));
+            new RuntimeCommandsController.SetSignalAspectRequest(Project, Guid.NewGuid(), (SignalAspect)999));
+
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+
+    [Test]
+    public void Drive_ForUnknownProject_ReturnsBadRequest()
+    {
+        var controller = CreateController(capacity: 4);
+
+        var result = controller.EnqueueLocomotiveDrive(
+            new RuntimeCommandsController.SetLocomotiveDriveRequest(Guid.NewGuid(), 3, 40, true));
 
         Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }
@@ -66,9 +80,9 @@ internal sealed class RuntimeCommandsControllerTests
     public void Drive_WhenQueueIsFull_ReturnsTooManyRequests()
     {
         var controller = CreateController(capacity: 1);
-        controller.EnqueueLocomotiveDrive(new RuntimeCommandsController.SetLocomotiveDriveRequest(3, 40, true));
+        controller.EnqueueLocomotiveDrive(new RuntimeCommandsController.SetLocomotiveDriveRequest(Project, 3, 40, true));
 
-        var result = controller.EnqueueLocomotiveDrive(new RuntimeCommandsController.SetLocomotiveDriveRequest(4, 40, true));
+        var result = controller.EnqueueLocomotiveDrive(new RuntimeCommandsController.SetLocomotiveDriveRequest(Project, 4, 40, true));
 
         Assert.That((result as ObjectResult)?.StatusCode, Is.EqualTo(StatusCodes.Status429TooManyRequests));
     }
@@ -76,26 +90,65 @@ internal sealed class RuntimeCommandsControllerTests
     [Test]
     public void JourneyReset_WhenQueueIsFull_ReturnsTooManyRequests()
     {
-        var admission = new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 1));
-        var controller = new JourneyProgressController(new Mock<IRuntimeSnapshotCache>().Object, admission)
+        var firstJourney = Guid.NewGuid();
+        var secondJourney = Guid.NewGuid();
+        var queue = new RuntimeCommandQueue(capacity: 1);
+        var controller = new JourneyProgressController(
+            SnapshotWithJourneys(firstJourney, secondJourney),
+            new RuntimeCommandAdmission(queue, KnownProject()))
         {
             ControllerContext = LoopbackContext()
         };
 
-        var first = controller.Reset(Guid.NewGuid());
-        var second = controller.Reset(Guid.NewGuid());
+        var first = controller.Reset(firstJourney);
+        var second = controller.Reset(secondJourney);
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(first, Is.InstanceOf<AcceptedResult>());
             Assert.That((second as ObjectResult)?.StatusCode, Is.EqualTo(StatusCodes.Status429TooManyRequests));
+            Assert.That(queue.TryDequeue(out var queued), Is.True);
+            Assert.That(queued?.ProjectId, Is.EqualTo(Project));
         }
+    }
+
+    [Test]
+    public void JourneyReset_ForJourneyOfNoProject_ReturnsNotFound()
+    {
+        var controller = new JourneyProgressController(
+            SnapshotWithJourneys(Guid.NewGuid()),
+            new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 1), KnownProject()))
+        {
+            ControllerContext = LoopbackContext()
+        };
+
+        Assert.That(controller.Reset(Guid.NewGuid()), Is.InstanceOf<NotFoundObjectResult>());
     }
 
     private static RuntimeCommandsController CreateController(int capacity)
     {
         var queue = new RuntimeCommandQueue(capacity);
-        return new RuntimeCommandsController(new RuntimeCommandAdmission(queue));
+        return new RuntimeCommandsController(new RuntimeCommandAdmission(queue, KnownProject()));
+    }
+
+    /// <summary>A synchronized solution that contains only <see cref="Project"/>.</summary>
+    private static ISolutionCache KnownProject()
+    {
+        var solutionCache = new Mock<ISolutionCache>();
+        solutionCache.Setup(cache => cache.ContainsProject(Project)).Returns(true);
+        return solutionCache.Object;
+    }
+
+    /// <summary>The runtime snapshot of <see cref="Project"/> with the given journeys.</summary>
+    private static RuntimeSnapshotCache SnapshotWithJourneys(params Guid[] journeyIds)
+    {
+        var cache = new RuntimeSnapshotCache();
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
+        {
+            ProjectId = Project,
+            JourneyStates = journeyIds.ToDictionary(id => id, id => new JourneyRuntimeSnapshot { JourneyId = id })
+        }));
+        return cache;
     }
 
     private static ControllerContext LoopbackContext()

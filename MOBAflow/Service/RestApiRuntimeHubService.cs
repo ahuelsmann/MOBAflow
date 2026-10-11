@@ -4,7 +4,6 @@ namespace Moba.WinUI.Service;
 
 using Backend.Interface;
 
-using Common.Events;
 using Common.Runtime;
 
 using Microsoft.Extensions.Logging;
@@ -12,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
 
 using System.Text;
-using System.Text.Json;
 
 /// <summary>
 /// Connects the MOBAflow runtime host to MOBApi RuntimeHub and pushes snapshot updates.
@@ -21,16 +19,22 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
 {
     private const int PushDebounceMilliseconds = 75;
 
+    private static readonly Action<ILogger, Guid, Exception?> LogProjectPushFailed =
+        LoggerMessage.Define<Guid>(
+            LogLevel.Debug,
+            new EventId(1, nameof(LogProjectPushFailed)),
+            "Runtime snapshot push of project {ProjectId} failed");
+
     private readonly IRuntimeHubHostClient _runtimeHubHostClient;
-    private readonly IMobaRuntime _mobaRuntime;
-    private readonly IEventBus _eventBus;
+    private readonly IProjectRuntimeSnapshots _host;
     private readonly ILogger<RestApiRuntimeHubService> _logger;
     private readonly LocalMobApiClient _mobApiClient;
     private readonly object _debounceLock = new();
-    private readonly Guid _subscriptionId;
     private CancellationTokenSource? _debounceCts;
     private Task _debounceTask = Task.CompletedTask;
-    private MobaRuntimeSnapshot? _pendingSnapshot;
+    // Every project has its own runtime; the latest snapshot of each project waits for the next push.
+    private readonly Dictionary<Guid, MobaRuntimeSnapshot> _pendingSnapshots = [];
+    private bool _pushScheduled;
     private int _disposeState;
     private readonly object _metricsLock = new();
     private DateTimeOffset? _lastHubPushAt;
@@ -84,17 +88,15 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
 
     public RestApiRuntimeHubService(
         IRuntimeHubHostClient runtimeHubHostClient,
-        IMobaRuntime mobaRuntime,
-        IEventBus eventBus,
+        IProjectRuntimeSnapshots host,
         ILogger<RestApiRuntimeHubService> logger,
         LocalMobApiClient mobApiClient)
     {
         _runtimeHubHostClient = runtimeHubHostClient;
-        _mobaRuntime = mobaRuntime;
-        _eventBus = eventBus;
+        _host = host ?? throw new ArgumentNullException(nameof(host));
         _logger = logger;
         _mobApiClient = mobApiClient ?? throw new ArgumentNullException(nameof(mobApiClient));
-        _subscriptionId = _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
+        _host.RuntimeSnapshotChanged += OnRuntimeSnapshotChanged;
     }
 
     public async Task ConnectHostAsync(int port, CancellationToken cancellationToken = default)
@@ -104,7 +106,10 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
             await _runtimeHubHostClient.ConnectAsync("127.0.0.1", port, cancellationToken).ConfigureAwait(false);
         }
 
-        await PushSnapshotImmediateAsync(_mobaRuntime.Current, cancellationToken).ConfigureAwait(false);
+        foreach (var snapshot in _host.Snapshots)
+        {
+            await PushSnapshotImmediateAsync(snapshot, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public async Task DisconnectHostAsync()
@@ -120,7 +125,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
             return;
         }
 
-        _eventBus.Unsubscribe(_subscriptionId);
+        _host.RuntimeSnapshotChanged -= OnRuntimeSnapshotChanged;
         CancellationTokenSource? debounceCts;
         Task debounceTask;
         lock (_debounceLock)
@@ -128,7 +133,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
             debounceCts = _debounceCts;
             _debounceCts = null;
             debounceTask = _debounceTask;
-            _pendingSnapshot = null;
+            _pendingSnapshots.Clear();
         }
 
         if (debounceCts is not null)
@@ -142,7 +147,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
         GC.SuppressFinalize(this);
     }
 
-    private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
+    private void OnRuntimeSnapshotChanged(object? sender, ProjectRuntimeSnapshotEventArgs e)
     {
         QueuePush(e.Snapshot);
     }
@@ -162,10 +167,16 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
                 return;
             }
 
-            _pendingSnapshot = snapshot;
-            _debounceCts?.Cancel();
-            _debounceCts?.Dispose();
-            _debounceCts = new CancellationTokenSource();
+            // A fixed batch window: later snapshots join the pending batch instead of restarting the delay, so a
+            // runtime that publishes often cannot hold back the snapshots of the other projects.
+            _pendingSnapshots[snapshot.ProjectId] = snapshot;
+            if (_pushScheduled)
+            {
+                return;
+            }
+
+            _pushScheduled = true;
+            _debounceCts ??= new CancellationTokenSource();
             token = _debounceCts.Token;
             _debounceTask = PushDebouncedAsync(token);
         }
@@ -176,26 +187,35 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
         try
         {
             await Task.Delay(PushDebounceMilliseconds, cancellationToken).ConfigureAwait(false);
-            MobaRuntimeSnapshot? snapshot;
-            lock (_debounceLock)
-            {
-                snapshot = _pendingSnapshot;
-                _pendingSnapshot = null;
-            }
-
-            if (snapshot == null)
-            {
-                return;
-            }
-
-            await PushSnapshotImmediateAsync(snapshot, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            return;
         }
-        catch (Exception ex)
+
+        List<MobaRuntimeSnapshot> snapshots;
+        lock (_debounceLock)
         {
-            _logger.LogDebug(ex, "Runtime snapshot push failed");
+            snapshots = [.. _pendingSnapshots.Values];
+            _pendingSnapshots.Clear();
+            _pushScheduled = false;
+        }
+
+        // A failed push of one project must not hold back the snapshots of the other projects.
+        foreach (var snapshot in snapshots)
+        {
+            try
+            {
+                await PushSnapshotImmediateAsync(snapshot, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                LogProjectPushFailed(_logger, snapshot.ProjectId, ex);
+            }
         }
     }
 
