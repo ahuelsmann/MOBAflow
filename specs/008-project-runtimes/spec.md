@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-06
 
-**Status**: Draft
+**Status**: Implemented; automated acceptance is recorded in [acceptance.md](acceptance.md).
 
 **Spec Kit**: Required
 

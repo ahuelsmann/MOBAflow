@@ -26,7 +26,8 @@ repository does not yet publish ready-to-install GitHub release packages.
 
 ### Layout network
 
-- Roco Z21 command station reachable from the operating device.
+- One Roco Z21 command station per project/layout, reachable from the operating
+  devices. Multiple projects in one solution run in parallel.
 - A LAN that permits device-to-device UDP and TCP traffic.
 - Feedback modules and other layout hardware as required by your setup.
 
@@ -69,12 +70,24 @@ as well. See the [project reference](../PROJECT-REFERENCE.md#mobapi-endpoints).
 
 ## First desktop start
 
-1. Open **Settings** in MOBAflow.
-2. Confirm the Z21 IP address and UDP port (`21105` by default).
-3. Create a solution or open the included sample solution.
-4. Select a project and connect to the Z21.
+1. Create a solution or open the included sample solution.
+2. On **Solution**, use **Z21 Finder** to search the network and drag an unassigned
+   command station onto each project, or enter its IP address and UDP port in that
+   project's properties (`21105` by default).
+3. Each project starts its own runtime and connects to its assigned Z21. A missing
+   address or a duplicate assignment leaves the affected project disconnected;
+   the other projects keep running. Z21 endpoints are not app-wide settings.
+4. Select a project to view its state. This changes the displayed runtime and the
+   target of page commands; it does not stop the other projects.
 5. Verify feedback and telemetry in **Overview** or **Monitor** before operating
    trains.
+
+Opening or creating another solution, deleting a connected project or closing
+MOBAflow asks **Stop all trains?**. Confirmation sends speed 0 to the known
+locomotives of the affected runtimes before discarding them; cancellation keeps
+them running. Changing a connected project's Z21 assignment also stops its known
+locomotives before reconnecting. See the
+[desktop guide](MOBAFLOW-USER-GUIDE.md#projects-z21-assignment-and-safe-switching).
 
 If MOBAsmart should synchronize with the desktop, keep the REST API auto-start
 setting enabled and confirm that the main-window status bar reports a healthy
@@ -85,10 +98,12 @@ API.
 1. Connect the phone to the same LAN as the Z21 and desktop PC.
 2. Grant notification permission when Android requests it; the foreground
    service uses the notification while a session is active.
-3. Wait for the Z21 status to become ON.
-4. Enable the **MOBAflow** switch. MOBAsmart discovers MOBApi on the LAN and
-   synchronizes the current solution. It remembers the addresses it found and
-   tries them first next time; tap the MOBAflow status to search again.
+3. Enable the **MOBAflow** switch. MOBAsmart discovers MOBApi on the LAN and
+   synchronizes the current solution. It remembers the MOBApi addresses it found
+   and tries them first next time; tap the MOBAflow status to search again.
+4. Select a project with **Project** on the Counter tab, then wait for its Z21
+   status to become ON. The phone uses that project's address and port; it does
+   not search the network for a Z21.
 5. Android asks for camera permission only when you take photos for upload.
 
 See the [MOBAsmart guide](MOBASMART-USER-GUIDE.md) for the connection model and
@@ -131,7 +146,8 @@ are unavailable.
 
 ### Z21 cannot be reached
 
-- Verify the configured IP and that both devices share the same LAN.
+- Verify the project's Z21 IP and port and that the operating devices share the
+  same LAN. Check project diagnostics for duplicate assignments.
 - Check the private-network firewall profile.
 - Confirm that another app has not left stale Z21 clients; restart the app and,
   if necessary, the command station.

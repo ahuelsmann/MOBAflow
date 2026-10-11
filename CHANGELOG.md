@@ -24,6 +24,13 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- One runtime and one Z21 connection per project of the loaded solution; projects
+  run concurrently with isolated feedback, counters and remote commands.
+- Per-project Z21 assignment with the solution page's Z21 Finder and duplicate
+  endpoint diagnostics; MOBAsmart selects a project and uses its address and port.
+- A confirmation before switching solutions, deleting a connected project or
+  closing MOBAflow; affected runtimes stop known locomotives before disposal.
+
 - Event Manager for visually editing ordered journey feedback sequences.
 - Feedback-sequence progress persistence and MOBApi endpoints for mobile/runtime
   synchronization.
@@ -33,6 +40,13 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 - Spec Kit workflow, focused mutation-test lanes and coverage thresholds.
 
 ### Changed
+
+- A solution session owns loading, selection, dirty state and auto-save. Saved
+  master-data changes refresh runtime definitions while keeping journey progress,
+  current signal aspects and running workflows.
+- MOBApi caches snapshots per project and validates the project named by remote
+  commands. Global Z21 settings, runtime-settings endpoints and the phone's Z21
+  discovery are removed.
 
 - MOBApi validates remote locomotive, function, signal and journey-reset commands
   before they reach MOBAflow and rejects invalid values; its fallback command queue
