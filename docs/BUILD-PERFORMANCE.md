@@ -59,9 +59,8 @@ Use reliable deploy when fast deploy behaves inconsistently on a device.
 The .NET SDK band from `global.json` (10.0.4xx, at least 10.0.401) and the MAUI Android workload are
 prerequisites. The workload set version is pinned in the install command, not in `global.json`: a
 `workloadVersion` there would fail every build, including desktop-only builds, on machines without that
-workload set. `dotnet workload restore` always moves to the newest workload set, so install the pinned
-set explicitly. From a clean checkout, run the install, restore, publish, and bundle validation defined
-in the disabled CI job:
+workload set. Install the pinned set explicitly instead of relying on `--skip-manifest-update`.
+From a clean checkout, run the install, restore, publish, and bundle validation defined in CI:
 
 ```powershell
 dotnet workload install maui-android --version 10.0.401.1
@@ -127,11 +126,21 @@ Open `build.binlog` with [MSBuild Structured Log Viewer](https://msbuildlog.com/
 The public, authoritative pull-request check is `.github/workflows/quality.yml`.
 It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
-and retains the reports and packages. The Android Release AAB job is disabled
-while MOBAsmart is not distributed. Its required check name remains in place,
-but the job is skipped without allocating a runner. Re-enable its code-change
-condition when Android release distribution starts. Mobile tests remain an
-explicit opt-in graph with `IncludeMobaSmartTests=true`.
+and retains the reports and packages. The Android Release AAB job is skipped on
+regular PR and main runs while MOBAsmart is not distributed. Its required check
+name remains in place. To validate SDK/workload changes on a clean Windows runner,
+dispatch Quality with `validate_android=true` against the task branch:
+
+```powershell
+gh workflow run quality.yml --ref <task-branch> -f validate_android=true
+```
+
+The job installs and verifies workload set 10.0.401.1, publishes the Release AAB,
+enforces the Android analyzer baseline and validates/archives the bundle. It does
+not deploy to a device or publish a GitHub Release. The SDK follows the agreed
+10.0.4xx feature-band policy in `global.json`: patches at least 10.0.401 are allowed,
+so this is a feature-band pin rather than an exact SDK patch pin. Mobile tests
+remain an explicit opt-in graph with `IncludeMobaSmartTests=true`.
 
 The Linux display job also runs the MOBApi process integration tests
 (`MobApiProcessTests`, `RuntimeHubLiveE2ETests`) in the `net10.0` target. Each
@@ -147,7 +156,8 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 `.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
-`main`, manual runs and every other change run all enabled jobs.
+`main`, manual runs and every other change run all enabled jobs; Android additionally
+requires the manual `validate_android` input.
 
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
