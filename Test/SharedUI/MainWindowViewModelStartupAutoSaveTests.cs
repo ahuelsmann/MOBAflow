@@ -230,7 +230,7 @@ internal partial class MainWindowViewModelShutdownTests
             new LocalRuntimeCommandGateway(runtime),
             eventBus,
             dispatcher.Object,
-            new AppSettings(),
+            TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             TestSolutionSessions.Create(solution ?? new Solution(), dispatcher.Object, runtime, ioService),
             new ActionExecutionContext
             {

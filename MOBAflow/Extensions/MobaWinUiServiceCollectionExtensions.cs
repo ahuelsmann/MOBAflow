@@ -309,6 +309,17 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<ISolutionSession>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<SolutionSession>());
+        services.AddSingleton(sp => new SettingsPageViewModel(
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<ISettingsService>(),
+            sp.GetRequiredService<IUiDispatcher>(),
+            sp.GetRequiredService<ILogger<SettingsPageViewModel>>(),
+            sp.GetService<IFeatureTogglePageProvider>(),
+            speechTestAction: async message =>
+            {
+                var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
+                await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
+            }));
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
@@ -317,22 +328,15 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<SettingsPageViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ActionExecutionContext>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
             sp.GetRequiredService<IIoService>(),
             sp.GetRequiredService<ICityService>(),
             sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<AnnouncementService>(),
-            featureTogglePageProvider: sp.GetService<IFeatureTogglePageProvider>(),
             loggerFactory: sp.GetRequiredService<ILoggerFactory>(),
             dialogService: sp.GetService<IDialogService>(),
-            speechTestAction: async message =>
-            {
-                var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
-                await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
-            },
             projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
             workflowService: sp.GetRequiredService<IWorkflowService>(),
             workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));

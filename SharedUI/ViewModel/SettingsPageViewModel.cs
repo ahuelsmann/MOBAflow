@@ -1,7 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend.Service;
 using Common.Configuration;
+using Common.Extension;
+using Common.Navigation;
+using CommunityToolkit.Mvvm.ComponentModel;
+using Interface;
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
@@ -12,12 +17,78 @@ using System.Collections.ObjectModel;
 using System.IO;
 
 /// <summary>
-/// MainWindowViewModel - Settings Management
-/// Handles application settings properties and persistence (Z21, Speech, Application, HealthCheck).
+/// Owns application settings presentation, speech testing and immediate persistence.
 /// Automatically saves settings immediately after each change.
 /// </summary>
-public partial class MainWindowViewModel
+public sealed partial class SettingsPageViewModel : ObservableObject
 {
+    private readonly AppSettings _settings;
+    private readonly ISettingsService _settingsService;
+    private readonly IUiDispatcher _uiDispatcher;
+    private readonly ILogger<SettingsPageViewModel> _logger;
+    private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
+    private readonly Func<string, Task>? _speechTestAction;
+    private readonly AnnouncementService? _announcementService;
+
+    /// <summary>Creates shared settings presentation state with host-provided persistence and speech integration.</summary>
+    public SettingsPageViewModel(
+        AppSettings settings,
+        ISettingsService settingsService,
+        IUiDispatcher uiDispatcher,
+        ILogger<SettingsPageViewModel> logger,
+        IFeatureTogglePageProvider? featureTogglePageProvider = null,
+        Func<string, Task>? speechTestAction = null,
+        AnnouncementService? announcementService = null)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
+        ArgumentNullException.ThrowIfNull(logger);
+        _settings = settings;
+        _settingsService = settingsService;
+        _uiDispatcher = uiDispatcher;
+        _logger = logger;
+        _featureTogglePageProvider = featureTogglePageProvider;
+        _speechTestAction = speechTestAction;
+        _announcementService = announcementService;
+        InitializeFeatureToggleItems();
+    }
+
+    /// <summary>Raised only after the configured feedback point count actually changes.</summary>
+    public event EventHandler? FeedbackPointCountChanged;
+
+    [ObservableProperty]
+    public partial string ErrorMessage { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool ShowErrorMessage { get; set; }
+
+    [ObservableProperty]
+    public partial bool ShowSuccessMessage { get; set; }
+
+    [ObservableProperty]
+    public partial int SelectedThemeIndex { get; set; } = 1;
+
+    /// <summary>Gets or sets the persisted shell theme.</summary>
+    public bool IsDarkMode
+    {
+        get => _settings.Application.IsDarkMode;
+        set => UpdateSetting(() => _settings.Application.IsDarkMode,
+            updated => _settings.Application.IsDarkMode = updated, value, nameof(IsDarkMode));
+    }
+
+    private void PersistSettingsSafely()
+    {
+        _settingsService.SaveSettingsAsync(_settings)
+            .Observe(LogPersistSettingsFailed);
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Persist settings failed")]
+    private partial void LogPersistSettingsFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Speech test failed")]
+    private partial void LogSpeechTestFailed(Exception exception);
+
     private readonly List<PiperVoiceOption> _availablePiperVoiceOptions = [];
     private string _selectedPiperLanguage = string.Empty;
 
@@ -430,7 +501,6 @@ public partial class MainWindowViewModel
                 _settings.Speech.SpeakerEngineName = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsPiperSpeechEngineSelected));
-                OnPropertyChanged(nameof(SpeechStatusDisplayText));
                 PersistSettings();
             }
         }
@@ -650,8 +720,7 @@ public partial class MainWindowViewModel
                 OnPropertyChanged();
                 PersistSettings();
 
-                // Immediately update Track Statistics on Overview page (replaces collection, safe in property setter)
-                InitializeStatisticsFromFeedbackPoints();
+                FeedbackPointCountChanged?.Invoke(this, EventArgs.Empty);
             }
         }
     }
@@ -871,6 +940,22 @@ public partial class MainWindowViewModel
 
     #endregion
 
+    #region Signal Box / Viessmann Multiplex Signals (binding for Settings page)
+
+    /// <summary>Invert polarity for address 1 (e.g. 201).</summary>
+    public bool InvertPolarityOffset0Setting { get => _settings.SignalBox.InvertPolarityOffset0; set => SetSignalBoxInvert(0, value); }
+
+    /// <summary>Invert polarity for address 2 (e.g. 202).</summary>
+    public bool InvertPolarityOffset1Setting { get => _settings.SignalBox.InvertPolarityOffset1; set => SetSignalBoxInvert(1, value); }
+
+    /// <summary>Invert polarity for address 3 (e.g. 203).</summary>
+    public bool InvertPolarityOffset2Setting { get => _settings.SignalBox.InvertPolarityOffset2; set => SetSignalBoxInvert(2, value); }
+
+    /// <summary>Invert polarity for address 4 (e.g. 204).</summary>
+    public bool InvertPolarityOffset3Setting { get => _settings.SignalBox.InvertPolarityOffset3; set => SetSignalBoxInvert(3, value); }
+
+    #endregion
+
     #region Signal Box / Viessmann Multiplex-Signale
 
     private void SetSignalBoxInvert(int offset, bool value)
@@ -1063,12 +1148,10 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task ResetToDefaultsAsync()
     {
-        if (_settingsService == null) return;
-
         try
         {
             ShowErrorMessage = false;
-            await _settingsService.ResetToDefaultsAsync().ConfigureAwait(false);
+            await _settingsService.ResetToDefaultsAsync().ConfigureAwait(true);
 
             // Notify all settings properties changed
             OnPropertyChanged(nameof(DisplayIpAddress));
@@ -1120,7 +1203,7 @@ public partial class MainWindowViewModel
             RefreshFeatureToggleItems();
 
             ShowSuccessMessage = true;
-            await Task.Delay(3000).ConfigureAwait(false);
+            await Task.Delay(3000).ConfigureAwait(true);
             ShowSuccessMessage = false;
         }
         catch (Exception ex)
@@ -1196,9 +1279,12 @@ public partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Speech test failed");
-            ErrorMessage = ex.Message;
-            ShowErrorMessage = true;
+            LogSpeechTestFailed(ex);
+            _uiDispatcher.InvokeOnUi(() =>
+            {
+                ErrorMessage = ex.Message;
+                ShowErrorMessage = true;
+            });
         }
     }
 

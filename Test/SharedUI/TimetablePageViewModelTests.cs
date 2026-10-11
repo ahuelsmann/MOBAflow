@@ -712,7 +712,7 @@ internal sealed class TimetablePageViewModelTests
             new LocalRuntimeCommandGateway(runtime.Object),
             eventBus,
             dispatcher.Object,
-            new AppSettings(),
+            TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object),
             new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
             Mock.Of<ILogger<MainWindowViewModel>>());

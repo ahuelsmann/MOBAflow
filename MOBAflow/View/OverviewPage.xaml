@@ -40,7 +40,7 @@
                 </Expander.HeaderTemplate>
                 <StackPanel Padding="56,16,0,16" Spacing="16">
                     <StackPanel Spacing="8">
-                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="{x:Bind ViewModel.AutoStartWebApp, Mode=OneWay, Converter={StaticResource BoolToAutoStartLabelConverter}}" />
+                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="{x:Bind ViewModel.SettingsPage.AutoStartWebApp, Mode=OneWay, Converter={StaticResource BoolToAutoStartLabelConverter}}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <Ellipse

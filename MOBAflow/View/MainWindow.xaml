@@ -68,7 +68,7 @@
                         Margin="0"
                         VerticalAlignment="Center"
                         FontSize="12"
-                        IsOn="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}"
+                        IsOn="{x:Bind ViewModel.SettingsPage.IsDarkMode, Mode=TwoWay}"
                         OffContent="Light"
                         OnContent="Dark"
                         Toggled="ThemeToggleSwitch_Toggled" />
@@ -350,16 +350,16 @@
                     Background="Transparent"
                     BorderThickness="0">
                     <DropDownButton.Content>
-                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.SelectedSpeechEngine, Mode=OneWay}" />
+                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.SettingsPage.SelectedSpeechEngine, Mode=OneWay}" />
                     </DropDownButton.Content>
                     <DropDownButton.Flyout>
                         <MenuFlyout>
                             <MenuFlyoutItem
-                                Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
+                                Command="{x:Bind ViewModel.SettingsPage.SelectSpeechEngineCommand}"
                                 CommandParameter="System Speech (Windows SAPI)"
                                 Text="System Speech (Windows SAPI)" />
                             <MenuFlyoutItem
-                                Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
+                                Command="{x:Bind ViewModel.SettingsPage.SelectSpeechEngineCommand}"
                                 CommandParameter="Piper TTS"
                                 Text="Piper TTS" />
                         </MenuFlyout>

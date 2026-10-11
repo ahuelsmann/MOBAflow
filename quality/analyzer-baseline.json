@@ -2539,7 +2539,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Settings.cs",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.cs",
       "count": 2
     },
     {
@@ -2693,7 +2700,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.SettingsPageLayout.cs",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
       "count": 1
     },
     {
@@ -2812,7 +2819,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1308",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.SettingsPageLayout.cs",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
       "count": 1
     },
     {
@@ -2861,7 +2868,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Settings.cs",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.cs",
       "count": 1
     },
     {
@@ -2968,13 +2975,6 @@
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs",
       "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Settings.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3576,7 +3576,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 27
+      "count": 22
     },
     {
       "project": "SharedUI",
@@ -5354,6 +5354,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/RuntimeSnapshotProjectorTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SettingsPageViewModelTests.cs",
       "count": 1
     },
     {
