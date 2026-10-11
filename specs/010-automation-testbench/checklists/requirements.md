@@ -20,7 +20,7 @@
 - [x] Acceptance scenarios cover execution, controls, results and persistence.
 - [x] Edge cases include malformed input, simultaneous work, failures, cancellation and state isolation.
 - [x] Current action-list behavior, platform scope and exclusions are bounded.
-- [x] Integrated RF-23 slice 3 and the remaining Spec Kit phases are explicit dependencies.
+- [x] RF-23 slice 3 integration is verified; remaining design-review, task and analysis gates are explicit.
 
 ## Feature Readiness
 
@@ -31,7 +31,8 @@
 
 ## Notes
 
-Reviewed on 2026-10-11 against main `2aabcbe8`, Issue #35, its preparation plan and the five post-merge review findings on #230.
+Requirements reviewed on 2026-10-11 against main `2aabcbe8`, Issue #35 and post-merge findings on #230/#233.
+Technical planning and prerequisite status were refreshed against integrated main `39312ca9` after #207/#211 merged.
 Clarified common versus production-only validation, raw versus counted feedback, occurrence counts and ordered matching,
 existing journey initial state and feedback-reachable workflow selection. Added acceptance cases for these boundaries;
 the cases are requirements and have not yet been executed.
@@ -39,5 +40,6 @@ The follow-up review additionally clarified explicit state for all captured jour
 and ordering of every occurrence in multi-match slots, including zero-match slots.
 Checkboxes record requirements-quality review, not maintainer acceptance or feature completion.
 Review defaults before the next phase: virtual-instant stepping, edit locking and cancellation on page/project/solution departure.
-Ready for requirements clarification/review. Technical planning and implementation remain blocked by integrated RF-23 slice 3;
-there is no technical plan, task list, consistency analysis, product code or executed acceptance suite for this feature yet.
+The [technical plan](../plan.md), research, data model, runtime/UI contracts and validation guide now exist as draft designs.
+RF-23/design #241 are integrated. The [task list](../tasks.md) is generated and cross-artifact consistency analysis is complete.
+Backlog review/integration remain before implementation. No product code or executed acceptance suite is claimed.

@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-08
 
-**Status**: Approved; implementation waits for the merge of #207 (maintainer instruction, 2026-10-11)
+**Status**: Approved; slice 1 implemented in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11); later slices pending.
 
 **Spec Kit**: Required
 

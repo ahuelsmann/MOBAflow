@@ -26,13 +26,13 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- One runtime and one Z21 per project: MOBAflow runs every project of a solution at
-  the same time, each on its own Z21; the selected project decides what the pages
-  show. The **Z21 Finder** on the Solution page assigns found Z21 to projects.
-- Safe switch: before a connected project runtime is discarded, its known
-  locomotives are set to speed 0, and MOBAflow asks **Stop all trains?** first.
-- MOBAsmart project picker: the phone controls one project and connects to its Z21;
-  MOBApi routes snapshots and commands by project.
+- One runtime and one Z21 connection per project of the loaded solution; projects
+  run concurrently with isolated feedback, counters and remote commands.
+- Per-project Z21 assignment with the solution page's Z21 Finder and duplicate
+  endpoint diagnostics; MOBAsmart selects a project and uses its address and port.
+- A confirmation before switching solutions, deleting a connected project or
+  closing MOBAflow; affected runtimes stop known locomotives before disposal.
+
 - Event Manager for visually editing ordered journey feedback sequences.
 - Feedback-sequence progress persistence and MOBApi endpoints for mobile/runtime
   synchronization.
@@ -42,6 +42,13 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 - Spec Kit workflow, focused mutation-test lanes and coverage thresholds.
 
 ### Changed
+
+- A solution session owns loading, selection, dirty state and auto-save. Saved
+  master-data changes refresh runtime definitions while keeping journey progress,
+  current signal aspects and running workflows.
+- MOBApi caches snapshots per project and validates the project named by remote
+  commands. Global Z21 settings, runtime-settings endpoints and the phone's Z21
+  discovery are removed.
 
 - MOBApi validates remote locomotive, function, signal and journey-reset commands
   before they reach MOBAflow and rejects invalid values; its fallback command queue

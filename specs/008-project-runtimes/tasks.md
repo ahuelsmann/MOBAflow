@@ -6,6 +6,10 @@
 
 Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 
+Completion evidence: [automated acceptance](acceptance.md), including build/test
+results, integrated slices and manual checks awaiting separate authorization.
+The closing PR must pass its current-head CI/Sonar gates before integration.
+
 ## Slice 1 - Solution session (no behavior change)
 
 - [x] T001 Add characterization tests for solution load, save, auto-save, dirty state and project/journey selection in `Test/SharedUI/SolutionSessionTests.cs`

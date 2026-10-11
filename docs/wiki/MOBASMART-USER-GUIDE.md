@@ -31,10 +31,15 @@ one project of the synchronized solution with **Project** on the Counter tab;
 the phone then shows and controls that project and connects to its Z21. The
 phone does not search for a Z21 and has no manual address entry: assign the
 Z21 to the project in MOBAflow. Selecting another project closes the connection
-to the previous project's Z21.
+to the previous project's Z21 and connects using the new project's address and
+port. It does not stop trains on the previous layout; MOBAflow keeps running
+that project's runtime. The phone preserves its selection during later solution
+syncs; a newly synchronized solution starts with MOBAflow's selected project.
 
 When both routes are available, locomotive commands prefer the direct local Z21
-connection. Signal-box and shared domain state use the active MOBAflow session.
+connection. Signal-box and shared domain state use the selected project's MOBAflow runtime.
+Snapshots and remote commands carry that project's identifier; phones can select
+different projects without changing the project shown on the desktop.
 
 ## The four tabs
 

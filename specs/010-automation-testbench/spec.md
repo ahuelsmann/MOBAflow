@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-11
 
-**Status**: Draft requirements; implementation blocked by RF-23 slice 3 and the remaining Spec Kit phases.
+**Status**: Requirements/design integrated through #233/#241; draft task backlog and consistency analysis exist. Backlog review/integration remain before implementation.
 
 **Spec Kit**: Required
 
@@ -31,12 +31,13 @@ does not modify a solution file or schema. It adds no public REST/SignalR endpoi
 behavior or persisted layout change. No compatibility or migration path is introduced. Recheck schema version 4
 before the persistence slice; a version bump requires a concrete format reason. Andreas owns the example solution.
 
-**Evidence and prerequisites**: Requirements were reconciled against main `2aabcbe8e3adc75a94db865dfc14ecf9187efcae`,
-the [preparation plan](../../plans/issue-35-automation-testbench.md), ordered workflow actions and direct InPort/count
-event plans. RF-23 [#191](https://github.com/ahuelsmann/MOBAflow/issues/191) is incomplete: project-runtime construction,
-per-project persistent counters and safe disposal in #207/#211 are not merged. Preparing these requirements is allowed;
-production code and characterization tests wait for integrated RF-23 slice 3. Technical planning, tasks and cross-artifact
-analysis must use that integrated base. RF-24/#219 and #141 are not additional hard prerequisites for #35.
+**Evidence and prerequisites**: Requirements were initially reconciled against main `2aabcbe8` and clarified in #233.
+Technical design now uses integrated main `39312ca93413eef13fa6d7bb8360d5bf5fdda4ae`: #211 and #207 were verified merged
+on 2026-10-11. Their RF-23 project-runtime construction, counters and disposal seams satisfy this feature's integration
+gate; this is not a claim that every RF-23 task or the testbench is complete. The [technical plan](plan.md) and
+[readiness tracker](../../plans/issue-35-automation-testbench.md) record the remaining design/backlog review and integration
+gates. The [tasks](tasks.md) map requirements to implementation/validation; consistency analysis is reported in the backlog PR.
+Design PR #241 is merged; RF-24/#219 and #141 are not additional hard prerequisites for #35.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -296,19 +297,19 @@ use or generate the maintainer's example solution.
 
 ## Assumptions
 
-- This is a requirements draft, not approval of a runtime design or permission to implement before RF-23 slice 3.
-  The technical plan, tasks and analysis remain absent until their integrated source contracts can be reviewed.
+- Requirements/design are integrated through #233/#241. RF-23 slice 3 is integrated; tasks are generated and consistency
+  analysis is complete. Backlog review/integration and slice validation remain before product implementation.
 - The first operator surface is the Windows desktop page described in #35 and its existing preparation plan.
   Android/remote testbench execution requires a separate scope decision.
 - Current production workflows are ordered action lists. Historical graph/retry wording in #35 does not authorize
   restoring superseded behavior; assertions cover only currently supported action failures, cancellation and delays.
 - Single step means the next virtual instant with all resulting same-time work. This explicit default is a reviewable
   requirement; if operator feedback chooses an action-level step, reconcile it before technical planning.
-- Playback speed must be finite and positive. Its editor range and default belong to the later UI design, while
-  execution timing and outcomes are invariant across supported settings.
+- Playback speed must be finite and positive. The proposed UI default is 1.0 for each scenario; execution timing and
+  outcomes are invariant across supported settings, without adding an application configuration default.
 - Leaving the page or replacing its project/solution cancels/releases execution; edit locking while Running/Paused
   avoids ambiguous changes to the active scenario. These operator defaults must be reviewed before implementation.
 - Production counts resume their stored values after restart. Scenario initialization is independent and never
   reintroduces zero-on-restart semantics for production counters.
-- Scenario schema changes, isolated execution data, technical contracts and disposal guarantees will be detailed
-  in the later technical plan. No real/example solution, public API, runtime lifecycle or module boundary is changed here.
+- Scenario schema changes, isolated execution data, technical contracts and disposal guarantees are proposed in
+  [plan.md](plan.md). These planning documents change no real/example solution, public API, runtime code or module boundary.

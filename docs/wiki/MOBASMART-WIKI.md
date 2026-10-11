@@ -31,7 +31,7 @@ bounded LAN probing. Discovery advertises the MOBApi address and HTTP port
 
 The runtime connection uses:
 
-- REST for health, solution data, per-project snapshots and commands;
+- REST for health, solution data, project-addressed snapshots and commands;
 - `/runtime-hub` for live runtime and solution notifications; and
 - `/photos-hub` plus photo endpoints for rolling-stock images.
 

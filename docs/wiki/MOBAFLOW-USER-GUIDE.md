@@ -12,53 +12,55 @@ by MOBAsmart and MOBApi.
 ## First session
 
 1. Create a solution or open an existing `.json` solution file.
-2. Assign a Z21 to each project on the **Solution** page (see
-   [Projects and their Z21](#projects-and-their-z21)).
-3. Select a project and verify its connection and track-power state in the
-   status bar.
-4. If you use MOBAsmart, keep **Auto-start REST API with MOBAflow** enabled or
+2. On **Solution**, assign one Z21 to each project with **Z21 Finder**, or enter
+   the IP address and UDP port in the project's properties (`21105` by default).
+3. Each project starts its own runtime and connects to its assigned Z21.
+4. Select a project to inspect its connection and track-power state in the
+   status bar; the other projects keep running.
+5. If you use MOBAsmart, keep **Auto-start REST API with MOBAflow** enabled or
    start MOBApi separately.
 
 MOBAflow can automatically reopen the last solution. Settings and solution data
 are separate: app preferences live in the local settings file, while projects,
 rolling stock, journeys and plans are stored in the solution JSON.
 
-## Projects and their Z21
+## Projects, Z21 assignment and safe switching
 
-Each project of a solution is one layout with its own Z21. MOBAflow runs every
-project at the same time: each has its own runtime that connects to its Z21,
-counts its feedback and runs its journeys and workflows, also while another
-project is selected. Selecting a project only decides which runtime the pages
-and the status bar show; the other projects keep running.
+Each project represents one layout with its own runtime and its own Z21. All
+projects of the loaded solution run at the same time. Selecting a project changes
+what the pages show and which layout receives commands from those pages; it does
+not stop or restart the other projects.
 
-Assign the Z21 per project:
+On **Solution**, expand **Z21 Finder** and search the network. It lists unassigned
+command stations with their IP address and serial number. Drag one onto a project,
+or double-click it to assign it to the selected project. You can also edit the
+project's Z21 IP address and UDP port in its properties. Z21 endpoints belong to
+projects, not to **Settings**; MOBAflow never searches for or replaces an assigned
+Z21 automatically.
 
-- Open the **Solution** page and search with the **Z21 Finder**. It lists every
-  Z21 on the network with its IP address and serial number.
-- Drag a Z21 onto a project, or double-click it to assign it to the selected
-  project. Each Z21 belongs to one project only.
-- You can also type the **IP address** and **Port** in the project properties.
-  Leave the address empty when a project has no Z21.
+Each Z21 belongs to one project. If projects contain the same address, **Messages**
+reports the conflict: the first project in solution order connects, and later
+projects using that address stay disconnected. A project without an address also
+stays disconnected while the other projects run normally.
 
-MOBAflow never searches for a Z21 on its own, because with several Z21 on the
-network an automatic search could connect a project to another layout. When two
-projects use the same Z21, only the earlier project in the solution connects and
-**Messages** reports the conflict.
+Before opening or creating another solution, deleting a connected project or
+closing MOBAflow, **Stop all trains?** asks for confirmation. Confirming sets all
+known locomotives of the affected runtimes to speed 0 before those runtimes are
+discarded; cancelling keeps the solution and runtimes unchanged. Changing a
+connected project's Z21 assignment stops its known locomotives before replacing
+its runtime on the new endpoint. Reloading a solution reuses existing open
+connections after the stop sequence.
 
-### Stopping trains safely
-
-Before MOBAflow discards a connected project runtime, it sets every known
-locomotive on that Z21 to speed 0. This happens when you create or open another
-solution, delete a project, change a project's Z21, disconnect, or close
-MOBAflow. For a new or opened solution, a deleted project and closing MOBAflow,
-MOBAflow first asks **Stop all trains?** and names the affected projects;
-**Cancel** keeps everything running.
+Saved master-data changes refresh the runtime's definitions without restarting
+journeys or cancelling running workflows. Journey progress and current signal
+aspects remain runtime state. Feedback counters are stored separately per project,
+outside the solution JSON.
 
 ## Main areas
 
 ### Overview and Monitor
 
-**Overview** shows the active operating state, including Z21 telemetry,
+**Overview** shows the selected project's operating state, including Z21 telemetry,
 track-power state, feedback counters, lap progress and connected clients.
 
 **Monitor** shows continuous traffic and activity. The expandable **Messages**
@@ -169,8 +171,9 @@ effects without waiting or contacting Z21, audio, speech, scripts, displays, or
 journey mutation handlers. **Recent trace** shows correlated lifecycle entries
 for the selected workflow; traces are memory-only and reset with the process.
 
-Execution stops safely when it is cancelled, the project changes, the runtime
-disconnects, or the application shuts down. An action failure stops the workflow;
+Execution stops safely when it is cancelled, its project's runtime is discarded
+or disconnected, or the application shuts down. Selecting another project in the
+UI keeps existing project workflows running. An action failure stops the workflow;
 later actions do not run. Review the trace, correct the action settings, and let
 a subsequent event start a new execution.
 
@@ -234,9 +237,12 @@ language and voice are independent from the English application UI.
 ## MOBAsmart and MOBApi
 
 MOBApi is the local REST and SignalR bridge. MOBAflow can start its own isolated
-MOBApi process and publish the current solution and the runtime snapshots of every
-project.
-MOBAsmart then discovers the endpoint on the LAN.
+MOBApi process and publish the current solution and snapshots of every project.
+MOBAsmart then discovers the endpoint on the LAN and selects one project with
+**Project** on its Counter tab. Its direct Z21 connection uses that project's
+address and port; snapshots and remote commands name the same project. Selecting
+another project on the phone closes its previous Z21 connection while MOBAflow
+keeps that project's runtime running.
 
 The bridge supports solution synchronization, runtime state, remote commands,
 journey progress, client registration and rolling-stock
@@ -270,7 +276,8 @@ is focused. Other global shortcuts are not currently defined.
 
 - Confirm that the PC and Z21 are on the same private network.
 - Verify the selected project's Z21 IP address and UDP port, normally `21105`.
-- Check **Messages** for a Z21 that another project already uses.
+- Resolve duplicate-Z21 assignments shown in **Messages**; each project needs its
+  own Z21.
 - Allow MOBAflow through Windows Firewall.
 - Check **Monitor** and **Messages** before restarting hardware.
 

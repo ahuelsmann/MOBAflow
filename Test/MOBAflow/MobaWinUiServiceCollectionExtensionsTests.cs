@@ -3,11 +3,14 @@
 namespace Moba.Test.MOBAflow;
 
 using Moba.Backend.Interface;
+using Moba.Backend.Service;
+using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 using Moba.SharedUI.Interface;
@@ -15,6 +18,8 @@ using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
+using Moba.Sound;
+using Moq;
 
 /// <summary>
 /// Tests for MOBAflow DI extension methods and startup validation.
@@ -93,6 +98,51 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         Assert.That(viewModel.WorkflowLibrary.CanDryRun, Is.True);
     }
 
+    [Test]
+    public async Task SettingsSpeechTest_KeepsFirstResolvedEngine_WhileAnnouncementsUseCurrentSelection()
+    {
+        var systemSpeaker = new Mock<ISpeakerEngine>();
+        var piperSpeaker = new Mock<ISpeakerEngine>();
+        systemSpeaker.Setup(engine => engine.AnnouncementAsync(It.IsAny<string>(), null))
+            .Returns(Task.CompletedTask);
+        piperSpeaker.Setup(engine => engine.AnnouncementAsync(
+                It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var systemRegistration = new Mock<ISpeakerEngineRegistration>();
+        var piperRegistration = new Mock<ISpeakerEngineRegistration>();
+        systemRegistration.Setup(value => value.CanCreate(SpeechSpeakerEngineSelection.SystemSpeech)).Returns(true);
+        piperRegistration.Setup(value => value.CanCreate(SpeechSpeakerEngineSelection.PiperTts)).Returns(true);
+        systemRegistration.Setup(value => value.Create(It.IsAny<SpeechOptions>())).Returns(systemSpeaker.Object);
+        piperRegistration.Setup(value => value.Create(It.IsAny<SpeechOptions>())).Returns(piperSpeaker.Object);
+        var provider = CreateValidatorServiceProvider(services =>
+        {
+            services.RemoveAll<ISpeakerEngineRegistration>();
+            services.AddSingleton(systemRegistration.Object);
+            services.AddSingleton(piperRegistration.Object);
+        });
+        await using (provider.ConfigureAwait(false))
+        {
+            var settings = provider.GetRequiredService<AppSettings>();
+            settings.Speech.SpeakerEngineName = SpeechSpeakerEngineSelection.SystemSpeech;
+            settings.Speech.TestMessage = "Settings test";
+            settings.Speech.VoiceName = "Configured voice";
+            var viewModel = provider.GetRequiredService<MainWindowViewModel>();
+
+            await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
+            settings.Speech.SpeakerEngineName = SpeechSpeakerEngineSelection.PiperTts;
+            await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
+            await provider.GetRequiredService<AnnouncementService>()
+                .GenerateAndSpeakAnnouncementAsync("Workflow announcement", new Station(), 1).ConfigureAwait(false);
+
+            systemSpeaker.Verify(engine => engine.AnnouncementAsync("Settings test", null), Times.Exactly(2));
+            piperSpeaker.Verify(engine => engine.AnnouncementAsync(
+                "Workflow announcement", null, CancellationToken.None), Times.Once);
+            systemRegistration.Verify(value => value.Create(It.IsAny<SpeechOptions>()), Times.Once);
+            piperRegistration.Verify(value => value.Create(It.IsAny<SpeechOptions>()), Times.Once);
+            Assert.That(provider.GetRequiredService<ISpeakerEngine>(), Is.SameAs(systemSpeaker.Object));
+        }
+    }
+
     private static ServiceProvider CreatePlatformServiceProvider()
     {
         var services = new ServiceCollection();
@@ -128,7 +178,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         return services.BuildServiceProvider();
     }
 
-    private static ServiceProvider CreateValidatorServiceProvider()
+    private static ServiceProvider CreateValidatorServiceProvider(Action<IServiceCollection>? configure = null)
     {
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
@@ -146,6 +196,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         // Last-registration-wins keeps production DI intact while preventing a
         // headless runner from touching DispatcherQueue during ViewModel creation.
         services.AddSingleton(Moq.Mock.Of<IUiDispatcher>());
+        configure?.Invoke(services);
 
         return services.BuildServiceProvider();
     }
