@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Common.Configuration;
@@ -527,15 +528,17 @@ internal sealed class MauiViewModelControlTabTests
         uiDispatcherMock
             .Setup(dispatcher => dispatcher.InvokeOnUiLowPriority(It.IsAny<Action>()))
             .Callback<Action>(action => action());
+        var settings = new AppSettings();
+        var settingsService = new Mock<ISettingsService>().Object;
         return new MauiViewModel(
             mobaRuntime ?? runtimeMock!.Object,
             mobaRuntime ?? runtimeMock!.Object,
             mobaRuntime ?? runtimeMock!.Object,
             new LocalRuntimeCommandGateway(mobaRuntime ?? runtimeMock!.Object),
             uiDispatcherMock.Object,
-            new AppSettings(),
-            new Mock<ISettingsService>().Object,
-            new Mock<IRestDiscoveryService>().Object,
+            settings,
+            settingsService,
+            TestEndpointLocators.Create(settings, settingsService),
             new Mock<IPhotoUploadService>().Object,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,

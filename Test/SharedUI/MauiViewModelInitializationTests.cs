@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
@@ -225,7 +226,10 @@ internal sealed class MauiViewModelInitializationTests
             dependencies.UiDispatcherMock.Object,
             dependencies.Settings,
             dependencies.SettingsServiceMock.Object,
-            dependencies.RestDiscoveryMock.Object,
+            TestEndpointLocators.Create(
+                dependencies.Settings,
+                dependencies.SettingsServiceMock.Object,
+                dependencies.RestDiscoveryMock.Object),
             dependencies.PhotoUploadMock.Object,
             dependencies.PhotoCaptureMock.Object,
             dependencies.NetworkNotifierMock.Object,

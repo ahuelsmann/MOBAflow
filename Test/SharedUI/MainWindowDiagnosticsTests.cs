@@ -107,7 +107,7 @@ internal sealed class MainWindowDiagnosticsTests
             new LocalRuntimeCommandGateway(runtime.Object),
             new Mock<IEventBus>().Object,
             dispatcher.Object,
-            new AppSettings(),
+            TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             TestSolutionSessions.Create(solution, dispatcher.Object, runtime.Object),
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object,

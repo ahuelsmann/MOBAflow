@@ -126,7 +126,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             var settings = provider.GetRequiredService<AppSettings>();
             settings.Speech.TestMessage = "Settings test";
-            var viewModel = provider.GetRequiredService<MainWindowViewModel>();
+            var viewModel = provider.GetRequiredService<SettingsPageViewModel>();
             await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
             viewModel.SystemSpeechDefaultVoiceName = "Windows voice";
             viewModel.SelectedSpeechProviderId = "piper";
@@ -148,6 +148,21 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
                 Assert.That(savedSettings, Has.Some.Contains("Windows voice"));
                 Assert.That(settings.Speech.ProviderId, Is.EqualTo("piper"));
             }
+        }
+    }
+
+    [Test]
+    public async Task AddMobaWinUiViewModelsAndWindowSharesSettingsStateWithShell()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var settings = provider.GetRequiredService<SettingsPageViewModel>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(shell.SettingsPage, Is.SameAs(settings));
+            Assert.That(provider.GetRequiredService<SettingsPageViewModel>(), Is.SameAs(settings));
+            Assert.That(settings.Settings, Is.SameAs(provider.GetRequiredService<ISettingsService>().GetSettings()));
         }
     }
 

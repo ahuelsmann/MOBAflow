@@ -20,6 +20,51 @@ using Moq;
 [TestFixture]
 internal sealed class MobaRuntimeServiceProjectIsolationTests
 {
+    [TestCase(21105, 21105, true)]
+    [TestCase(21105, 21106, true)]
+    [TestCase(21106, 21105, true)]
+    [TestCase(31000, 31000, true)]
+    [TestCase(31000, 31001, false)]
+    public async Task MobileEndpoint_UsesSameSolutionOrderConflictRuleAsDesktop(int ownerPort, int selectedPort, bool conflict)
+    {
+        var owner = new Project { Name = "Owner", Z21 = { IpAddress = "192.168.0.111", Port = ownerPort } };
+        var selected = new Project { Name = "Selected", Z21 = { IpAddress = "192.168.0.111", Port = selectedPort } };
+        var solution = new Solution { Projects = [owner, selected] };
+        var endpoint = new ProjectZ21EndpointSource(() => selected, solution: () => solution);
+
+        var resolution = await endpoint.ResolveAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(resolution.Address is null, Is.EqualTo(conflict));
+            if (conflict) Assert.That(resolution.Error, Does.Contain("Owner"));
+        }
+        var first = await new ProjectZ21EndpointSource(() => owner, solution: () => solution).ResolveAsync().ConfigureAwait(false);
+        Assert.That(first.Address, Is.Not.Null);
+    }
+
+    [TestCase(false, false)]
+    [TestCase(false, true)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public async Task LateConnectionAttempt_CannotUseAnotherProjectsEndpoint(bool sameProjectId, bool automatic)
+    {
+        var active = new Project { Z21 = { IpAddress = "192.168.0.111" } };
+        var selected = new Project { Z21 = { IpAddress = "192.168.0.112" } };
+        if (sameProjectId) selected.Id = active.Id;
+        var z21 = CreateZ21Mock();
+        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
+            new ActionExecutionContextFactory(new ActionExecutionContext { Z21 = z21.Object }), new AppSettings(), Mock.Of<ILogger<MobaRuntimeService>>(),
+            endpointSource: new ProjectZ21EndpointSource(() => selected));
+        await runtime.ActivateProjectAsync(active).ConfigureAwait(false);
+
+        if (automatic) await runtime.StartAsync().ConfigureAwait(false);
+        else await runtime.ConnectAsync().ConfigureAwait(false);
+
+        z21.Verify(value => value.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(runtime.Current.StatusText, Does.Contain("selected project's runtime"));
+    }
+
     [Test]
     public async Task ActivateProjectAsync_ClonesProject_PreservingJourneyIds()
     {
@@ -35,6 +80,57 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         Assert.That(runtime.Current.JourneyStates, Has.Count.EqualTo(1));
         Assert.That(runtime.Current.JourneyStates.ContainsKey(journeyId), Is.True,
             "Runtime copy must preserve the editor journey Ids so snapshots and reset resolve correctly.");
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task ProjectHandoff_WaitsForAnInFlightConnectionBeforeLoggingOff(bool automatic)
+    {
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var z21 = CreateZ21Mock();
+        z21.Setup(value => value.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Returns(() => { entered.TrySetResult(); return release.Task; });
+        using var runtime = CreateRuntime(z21.Object);
+        await runtime.ActivateProjectAsync(new Project { Z21 = { IpAddress = "192.168.0.111" } }).ConfigureAwait(false);
+
+        var connection = automatic ? runtime.StartAsync() : runtime.ConnectAsync();
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var handoff = runtime.DisconnectForProjectSwitchAsync();
+        var disconnectedDuringConnect = handoff.IsCompleted;
+        release.TrySetResult();
+        await Task.WhenAll(connection, handoff).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        Assert.That(disconnectedDuringConnect, Is.False, "The old attempt must finish before the handoff logs off.");
+        z21.Verify(value => value.DisconnectAsync(), Times.Once);
+        Assert.That(runtime.Current.StatusText, Is.EqualTo("Disconnected"));
+    }
+
+    [Test]
+    public async Task UpdateProjectAsync_WaitsForActivationToFinish()
+    {
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var interlocking = new Mock<IInterlockingRuntime>();
+        using var runtime = CreateRuntime(CreateZ21Mock().Object, interlockingRuntime: interlocking.Object);
+        var project = new Project();
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
+        interlocking.Setup(value => value.ActivateAsync(It.IsAny<InterlockingDefinition>(), It.IsAny<CancellationToken>()))
+            .Returns(() => { entered.TrySetResult(); return release.Task; });
+
+        var activation = runtime.ActivateProjectAsync(project);
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var updated = new Project { Id = project.Id, Journeys = [new Journey { Name = "Updated" }] };
+        var update = runtime.UpdateProjectAsync(updated);
+        var updatedDuringActivation = update.IsCompleted;
+        release.TrySetResult();
+        await Task.WhenAll(activation, update).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(updatedDuringActivation, Is.False);
+            Assert.That(runtime.Current.JourneyStates, Does.ContainKey(updated.Journeys[0].Id));
+        }
     }
 
     [Test]

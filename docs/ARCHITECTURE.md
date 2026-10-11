@@ -265,6 +265,17 @@ IZ21 / JourneyManager / WorkflowService
   maps the feature criteria to tests and distinguishes automated evidence from
   app/device and live-hardware checks.
 
+**Settings presentation (RF-24 slice 1):**
+
+- The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
+  speech selectors. Its required dependencies are AppSettings, ISettingsService, the UI dispatcher
+  and logging; speech testing uses the existing host action. It never depends on MainWindowViewModel.
+- The ViewModel owns settings persistence, feature items, Piper choices, reset commands and section
+  state. SettingsPage keeps file pickers and visual ordering/reset feedback.
+- The shell retains counter/status projections until later slices. It reacts only to actual valid
+  feedback-count changes and speech selection, and detaches subscriptions at shutdown. The
+  architecture guard rejects shell dependencies in the extracted SettingsPage.
+
 **One runtime per project (MOBAflow):**
 
 - `ProjectRuntimeHost` (`Backend/Service/ProjectRuntimes/`) holds one runtime per
@@ -536,7 +547,7 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;

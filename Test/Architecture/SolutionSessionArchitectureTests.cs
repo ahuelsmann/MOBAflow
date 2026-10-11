@@ -45,7 +45,8 @@ internal sealed class SolutionSessionArchitectureTests
         var violations = new List<string>();
         foreach (var (relative, syntaxRoot) in Sources(SourceFolders))
         {
-            if (AllowedDependents.Keys.Any(allowed => relative.StartsWith(allowed, StringComparison.Ordinal)))
+            if (!relative.StartsWith("MOBAflow/View/SettingsPage", StringComparison.Ordinal)
+                && AllowedDependents.Keys.Any(allowed => relative.StartsWith(allowed, StringComparison.Ordinal)))
             {
                 continue;
             }

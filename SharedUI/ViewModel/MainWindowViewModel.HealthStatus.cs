@@ -12,7 +12,7 @@ public partial class MainWindowViewModel
 {
     /// <summary>
     /// Gets the speech status text shown in the status bar.
-    /// Uses Piper health details for Piper TTS and a local-ready text for System Speech.
+    /// Uses the current provider health result for both local providers.
     /// </summary>
     public string SpeechStatusDisplayText => SpeechHealthStatus;
 
