@@ -212,7 +212,8 @@ internal class SettingsService : ISettingsService
                 ApplyLoadedSettings(settings);
             }
 
-            var document = JsonSerializer.SerializeToNode(_settings, JsonOptions.Default);
+            var document = JsonSerializer.SerializeToNode(_settings, JsonOptions.Default)
+                ?? throw new InvalidOperationException("Failed to serialize application settings.");
             // The desktop owns endpoints in Project. Mobile still uses these settings until RF-23 slice 4b.
             if (document["z21"] is JsonObject z21)
             {

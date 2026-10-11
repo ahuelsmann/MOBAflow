@@ -162,7 +162,7 @@ internal sealed class ProjectRuntimeHostTests
         station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
         station.Locomotives.Add(new Locomotive { Name = "V 60", DigitalAddress = 5 });
         await _host.LoadAsync([station]).ConfigureAwait(false);
-        _createdZ21s[0].Raise(z21 => z21.OnConnectedChanged += null, true);
+        ConfirmConnection(_createdZ21s[0]);
         _createdZ21s[0]
             .Setup(z21 => z21.SetLocoDriveAsync(3, 0, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Expected test failure"));
@@ -179,7 +179,7 @@ internal sealed class ProjectRuntimeHostTests
         var station = Project("Station", "192.168.0.111");
         station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
         await _host.LoadAsync([station]).ConfigureAwait(false);
-        _createdZ21s[0].Raise(z21 => z21.OnConnectedChanged += null, true);
+        ConfirmConnection(_createdZ21s[0]);
         var calls = new List<string>();
         _createdZ21s[0]
             .Setup(z21 => z21.SetLocoDriveAsync(3, 0, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -198,7 +198,7 @@ internal sealed class ProjectRuntimeHostTests
         var station = Project("Station", "192.168.0.111");
         station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
         await _host.LoadAsync([station]).ConfigureAwait(false);
-        _createdZ21s[0].Raise(z21 => z21.OnConnectedChanged += null, true);
+        ConfirmConnection(_createdZ21s[0]);
         _createdZ21s[0]
             .Setup(z21 => z21.SetLocoDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .Returns<int, int, bool, CancellationToken>((_, _, _, token) => Task.Delay(Timeout.Infinite, token));
