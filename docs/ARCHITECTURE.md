@@ -253,6 +253,22 @@ IZ21 / JourneyManager / WorkflowService
   maps the feature criteria to tests and distinguishes automated evidence from
   app/device and live-hardware checks.
 
+**Locomotive presentation (RF-24 slice 2a):**
+
+- The host owns one `LocomotivesPageViewModel`, shared by LocomotivesPage and the locomotive
+  library in TrainsPage. It depends on ISolutionSession, existing I/O/settings services,
+  LayoutColumnWidthsViewModel and the existing LocomotiveManagementViewModel; it has no shell dependency.
+- Selection, search/filter identity, inventory CRUD, photo commands and panel expansion belong
+  to the focused editor. The session keeps canonical project selection and auto-save ownership.
+  Decoder/CV/passport presentation continues to use the same management instance.
+- Uploaded-photo navigation stays in the shell and forwards locomotive assignments to the editor.
+  The host supplies the Windows Explorer action; shared presentation contains no Explorer launch.
+  Photo copying retains the initiating entity/solution checks and ignores results after disposal.
+- The page coordinates visual column widths and matching load/unload subscriptions. Editor disposal
+  releases session, collection and model handlers without changing bound state during shutdown.
+  The architecture guard rejects shell dependencies in LocomotivesPage. Wagon, train-composition
+  and central layout-persistence extraction remain later RF-24 slices.
+
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
@@ -535,7 +551,7 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `SettingsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `LocomotivesPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;

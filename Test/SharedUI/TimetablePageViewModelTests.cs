@@ -17,8 +17,17 @@ using Moba.SharedUI.ViewModel;
 using Moq;
 
 [TestFixture]
-internal sealed class TimetablePageViewModelTests
+internal sealed class TimetablePageViewModelTests : IDisposable
 {
+    private readonly TestLocomotivePages _locomotivePages = new();
+
+    [TearDown]
+    public void Dispose()
+    {
+        _locomotivePages.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     private static readonly DateTimeOffset OperatingTime = new(2026, 8, 1, 10, 0, 0, TimeSpan.Zero);
 
     [Test]
@@ -689,7 +698,7 @@ internal sealed class TimetablePageViewModelTests
         });
     }
 
-    private static TimetableTestContext CreateContext(
+    private TimetableTestContext CreateContext(
         Project project,
         ITimetableOperationsService operations,
         TimetableEvaluationResult? evaluationResult = null,
@@ -704,6 +713,7 @@ internal sealed class TimetablePageViewModelTests
         runtime.Setup(value => value.Current).Returns(MobaRuntimeSnapshot.Empty);
         runtime.Setup(value => value.GetTrafficPackets()).Returns([]);
 
+        var locomotiveSession1 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object);
         var mainWindow = new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
@@ -713,7 +723,8 @@ internal sealed class TimetablePageViewModelTests
             eventBus,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object),
+            _locomotivePages.GetPage(locomotiveSession1, null),
+            locomotiveSession1,
             new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
             Mock.Of<ILogger<MainWindowViewModel>>());
         var evaluation = new StubEvaluationService(evaluationResult ?? new TimetableEvaluationResult([]));

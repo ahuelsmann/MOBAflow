@@ -18,8 +18,17 @@ using Moq;
 /// Signal-box editor changes reach the runtime through the project refresh and the command gateway.
 /// </summary>
 [TestFixture]
-internal sealed class MainWindowViewModelSignalBoxTests
+internal sealed class MainWindowViewModelSignalBoxTests : IDisposable
 {
+    private readonly TestLocomotivePages _locomotivePages = new();
+
+    [TearDown]
+    public void Dispose()
+    {
+        _locomotivePages.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     private static readonly string[] UpdateThenAspect = ["update", "aspect"];
 
     [Test]
@@ -93,13 +102,14 @@ internal sealed class MainWindowViewModelSignalBoxTests
         return runtime;
     }
 
-    private static MainWindowViewModel CreateViewModel(
+    private MainWindowViewModel CreateViewModel(
         Project project,
         Mock<IMobaRuntime> runtime,
         Mock<IRuntimeCommandGateway> gateway)
     {
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
+        var locomotiveSession1 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
@@ -109,7 +119,8 @@ internal sealed class MainWindowViewModelSignalBoxTests
             new Mock<IEventBus>().Object,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object),
+            _locomotivePages.GetPage(locomotiveSession1, null),
+            locomotiveSession1,
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             NullLogger<MainWindowViewModel>.Instance)
         {

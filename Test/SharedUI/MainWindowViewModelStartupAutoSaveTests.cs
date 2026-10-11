@@ -211,7 +211,7 @@ internal partial class MainWindowViewModelShutdownTests
             Times.Never);
     }
 
-    private static MainWindowViewModel CreateViewModel(
+    private MainWindowViewModel CreateViewModel(
         IMobaRuntime runtime,
         IEventBus eventBus,
         IIoService ioService,
@@ -222,6 +222,7 @@ internal partial class MainWindowViewModelShutdownTests
             .Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
 
+        var locomotiveSession1 = TestSolutionSessions.Create(solution ?? new Solution(), dispatcher.Object, runtime, ioService);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime,
@@ -231,7 +232,8 @@ internal partial class MainWindowViewModelShutdownTests
             eventBus,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            TestSolutionSessions.Create(solution ?? new Solution(), dispatcher.Object, runtime, ioService),
+            _locomotivePages.GetPage(locomotiveSession1, ioService),
+            locomotiveSession1,
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object

@@ -224,6 +224,7 @@ public sealed class JourneyCounterProjectionTests
 
     private sealed class ProjectionFixture : IAsyncDisposable
     {
+        private readonly TestLocomotivePages _locomotivePages = new();
         private readonly EventBus _eventBus = new(NullLogger<EventBus>.Instance);
         private MobaRuntimeSnapshot _snapshot;
 
@@ -243,9 +244,20 @@ public sealed class JourneyCounterProjectionTests
                 .ReturnsAsync((true, "projection-test.json", null));
             io.Setup(service => service.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((true, "projection-test.json", null));
             Settings.Counter.CountOfFeedbackPoints = 7;
-            ViewModel = new MainWindowViewModel(new LayoutColumnWidthsViewModel(), Runtime.Object, Runtime.Object, Runtime.Object, Gateway.Object, _eventBus,
-                dispatcher.Object, TestSettingsPages.Create(Settings, dispatcher.Object), TestSolutionSessions.Create(solution ?? new Solution { Projects = [new Project()] }, dispatcher.Object, Runtime.Object, io.Object),
-                new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, NullLogger<MainWindowViewModel>.Instance,
+            var locomotiveSession1 = TestSolutionSessions.Create(solution ?? new Solution { Projects = [new Project()] }, dispatcher.Object, Runtime.Object, io.Object);
+            ViewModel = new MainWindowViewModel(
+                new LayoutColumnWidthsViewModel(),
+                Runtime.Object,
+                Runtime.Object,
+                Runtime.Object,
+                Gateway.Object,
+                _eventBus,
+                dispatcher.Object,
+                TestSettingsPages.Create(Settings, dispatcher.Object),
+                _locomotivePages.GetPage(locomotiveSession1, io.Object),
+                locomotiveSession1,
+                new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
+                NullLogger<MainWindowViewModel>.Instance,
                 io.Object);
         }
 
@@ -264,6 +276,7 @@ public sealed class JourneyCounterProjectionTests
         public async ValueTask DisposeAsync()
         {
             await ViewModel.PrepareForShutdownAsync();
+            _locomotivePages.Dispose();
         }
     }
 }

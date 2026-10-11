@@ -17,8 +17,17 @@ using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
-internal sealed class MainWindowDiagnosticsTests
+internal sealed class MainWindowDiagnosticsTests : IDisposable
 {
+    private readonly TestLocomotivePages _locomotivePages = new();
+
+    [TearDown]
+    public void Dispose()
+    {
+        _locomotivePages.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     [Test]
     public void Diagnostics_CanBeFilteredBySeverity()
     {
@@ -85,7 +94,7 @@ internal sealed class MainWindowDiagnosticsTests
             ]
         };
 
-    private static MainWindowViewModel CreateViewModel(
+    private MainWindowViewModel CreateViewModel(
         Solution solution,
         IProjectDiagnosticsService diagnostics)
     {
@@ -99,6 +108,7 @@ internal sealed class MainWindowDiagnosticsTests
         dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
 
+        var locomotiveSession1 = TestSolutionSessions.Create(solution, dispatcher.Object, runtime.Object);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
@@ -108,7 +118,8 @@ internal sealed class MainWindowDiagnosticsTests
             new Mock<IEventBus>().Object,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            TestSolutionSessions.Create(solution, dispatcher.Object, runtime.Object),
+            _locomotivePages.GetPage(locomotiveSession1, null),
+            locomotiveSession1,
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object,
             projectDiagnosticsService: diagnostics);

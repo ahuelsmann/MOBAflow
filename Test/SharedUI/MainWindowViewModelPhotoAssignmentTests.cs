@@ -23,15 +23,24 @@ using Moq;
 using CommunityToolkit.Mvvm.Input;
 
 [TestFixture]
-internal sealed class MainWindowViewModelPhotoAssignmentTests
+internal sealed class MainWindowViewModelPhotoAssignmentTests : IDisposable
 {
+    private readonly TestLocomotivePages _locomotivePages = new();
+
+    [TearDown]
+    public void Dispose()
+    {
+        _locomotivePages.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     [Test]
     public void AssignUploadedPhotoToSelectedEntity_AssignsToSelectedLocomotive()
     {
         var viewModel = CreateViewModel();
         var locomotive = new LocomotiveViewModel(new Locomotive { Name = "BR 218" });
         viewModel.UpdateActivePhotoAssignmentPageTag("locomotives");
-        viewModel.SelectedLocomotive = locomotive;
+        viewModel.LocomotivesPage.SelectedLocomotive = locomotive;
 
         var result = viewModel.AssignUploadedPhotoToSelectedEntity("photos/temp/a.jpg");
 
@@ -84,7 +93,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         var viewModel = CreateViewModel();
         var locomotive = new LocomotiveViewModel(new Locomotive { Name = "BR 218" });
         var passengerWagon = new PassengerWagonViewModel(new PassengerWagon { Name = "Avmz" });
-        viewModel.SelectedLocomotive = locomotive;
+        viewModel.LocomotivesPage.SelectedLocomotive = locomotive;
         viewModel.SelectedPassengerWagon = passengerWagon;
         viewModel.UpdateActivePhotoAssignmentPageTag("passengerwagons");
 
@@ -95,7 +104,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         Assert.That(locomotive.PhotoPath, Is.Null);
     }
 
-    private static MainWindowViewModel CreateViewModel()
+    private MainWindowViewModel CreateViewModel()
     {
         var mobaRuntimeMock = new Mock<IMobaRuntime>();
         mobaRuntimeMock.SetupGet(client => client.Current).Returns(MobaRuntimeSnapshot.Empty);
@@ -110,6 +119,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
             .Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
 
+        var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
@@ -119,7 +129,8 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
             eventBusMock.Object,
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object),
+            _locomotivePages.GetPage(locomotiveSession1, null),
+            locomotiveSession1,
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
@@ -139,7 +150,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         var savedJson = string.Empty;
         var viewModel = CreateViewModel(project, json => savedJson = json);
         var observedNames = Array.Empty<string>();
-        viewModel.PropertyChanged += (_, e) =>
+        NotificationSource(viewModel, kind).PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == FilterProperty(kind))
                 observedNames = Names(viewModel, kind);
@@ -187,7 +198,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         var oldSelection = Selection(viewModel, kind);
         var notifications = 0;
         var observedNames = Names(viewModel, kind);
-        viewModel.PropertyChanged += (_, e) =>
+        NotificationSource(viewModel, kind).PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == FilterProperty(kind))
             {
@@ -237,14 +248,14 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         SetSearch(viewModel, kind, search);
         var selected = Selection(viewModel, kind);
         var source = BindingSource(viewModel, kind);
-        viewModel.PropertyChanged += (_, e) =>
+        NotificationSource(viewModel, kind).PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == FilterProperty(kind) && !ReferenceEquals(source, BindingSource(viewModel, kind)))
             {
                 // WinUI Selector clears its two-way selection when ItemsSource is replaced.
                 switch (kind)
                 {
-                    case TrainVehicleKind.Locomotive: viewModel.SelectedLocomotive = null; break;
+                    case TrainVehicleKind.Locomotive: viewModel.LocomotivesPage.SelectedLocomotive = null; break;
                     case TrainVehicleKind.PassengerWagon: viewModel.SelectedPassengerWagon = null; break;
                     default: viewModel.SelectedGoodsWagon = null; break;
                 }
@@ -260,9 +271,12 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         }
     }
 
+    private static System.ComponentModel.INotifyPropertyChanged NotificationSource(MainWindowViewModel viewModel, TrainVehicleKind kind)
+        => kind == TrainVehicleKind.Locomotive ? viewModel.LocomotivesPage : viewModel;
+
     private static object BindingSource(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
-        TrainVehicleKind.Locomotive => viewModel.FilteredLocomotiveLibrary,
+        TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.FilteredLocomotiveLibrary,
         TrainVehicleKind.PassengerWagon => viewModel.FilteredPassengerWagonLibrary,
         _ => viewModel.FilteredGoodsWagonLibrary
     };
@@ -364,7 +378,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         }
     }
 
-    private static MainWindowViewModel CreateViewModel(Project project, Action<string> save, Mock<IIoService>? io = null)
+    private MainWindowViewModel CreateViewModel(Project project, Action<string> save, Mock<IIoService>? io = null)
     {
         var runtime = new Mock<IMobaRuntime>();
         runtime.SetupGet(value => value.Current).Returns(MobaRuntimeSnapshot.Empty);
@@ -377,11 +391,21 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
             .Callback((Solution solution, string _) => save(JsonSerializer.Serialize(solution, JsonOptions.Default)))
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
+        var locomotiveSession2 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object, io.Object);
         var viewModel = new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(), runtime.Object, runtime.Object, runtime.Object, new LocalRuntimeCommandGateway(runtime.Object), new Mock<IEventBus>().Object,
-            dispatcher.Object, TestSettingsPages.Create(new AppSettings(), dispatcher.Object), TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object, io.Object),
+            new LayoutColumnWidthsViewModel(),
+            runtime.Object,
+            runtime.Object,
+            runtime.Object,
+            new LocalRuntimeCommandGateway(runtime.Object),
+            new Mock<IEventBus>().Object,
+            dispatcher.Object,
+            TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
+            _locomotivePages.GetPage(locomotiveSession2, io.Object),
+            locomotiveSession2,
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
-            NullLogger<MainWindowViewModel>.Instance, io.Object)
+            NullLogger<MainWindowViewModel>.Instance,
+            io.Object)
         {
             CurrentSolutionPath = "inventory.json",
             SelectedProject = new ProjectViewModel(project)
@@ -391,21 +415,21 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
 
     private static string FilterProperty(TrainVehicleKind kind) => kind switch
     {
-        TrainVehicleKind.Locomotive => nameof(MainWindowViewModel.FilteredLocomotiveLibrary),
+        TrainVehicleKind.Locomotive => nameof(LocomotivesPageViewModel.FilteredLocomotiveLibrary),
         TrainVehicleKind.PassengerWagon => nameof(MainWindowViewModel.FilteredPassengerWagonLibrary),
         _ => nameof(MainWindowViewModel.FilteredGoodsWagonLibrary)
     };
 
     private static string[] Names(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
-        TrainVehicleKind.Locomotive => viewModel.FilteredLocomotiveLibrary.Select(item => item.Name).ToArray(),
+        TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.FilteredLocomotiveLibrary.Select(item => item.Name).ToArray(),
         TrainVehicleKind.PassengerWagon => viewModel.FilteredPassengerWagonLibrary.Select(item => item.Name).ToArray(),
         _ => viewModel.FilteredGoodsWagonLibrary.Select(item => item.Name).ToArray()
     };
 
     private static object? Selection(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
-        TrainVehicleKind.Locomotive => viewModel.SelectedLocomotive,
+        TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.SelectedLocomotive,
         TrainVehicleKind.PassengerWagon => viewModel.SelectedPassengerWagon,
         _ => viewModel.SelectedGoodsWagon
     };
@@ -419,14 +443,14 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
 
     private static ICommand AddCommand(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
-        TrainVehicleKind.Locomotive => viewModel.AddLocomotiveCommand,
+        TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.AddLocomotiveCommand,
         TrainVehicleKind.PassengerWagon => viewModel.AddPassengerWagonCommand,
         _ => viewModel.AddGoodsWagonCommand
     };
 
     private static ICommand DeleteCommand(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
-        TrainVehicleKind.Locomotive => viewModel.DeleteLocomotiveCommand,
+        TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.DeleteLocomotiveCommand,
         TrainVehicleKind.PassengerWagon => viewModel.DeletePassengerWagonCommand,
         _ => viewModel.DeleteGoodsWagonCommand
     };
@@ -435,7 +459,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
     {
         switch (kind)
         {
-            case TrainVehicleKind.Locomotive: viewModel.LocomotiveSearchText = search; break;
+            case TrainVehicleKind.Locomotive: viewModel.LocomotivesPage.LocomotiveSearchText = search; break;
             case TrainVehicleKind.PassengerWagon: viewModel.PassengerWagonSearchText = search; break;
             default: viewModel.GoodsWagonSearchText = search; break;
         }
@@ -445,7 +469,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
     {
         switch (kind)
         {
-            case TrainVehicleKind.Locomotive: viewModel.SelectedLocomotive!.Name = name; break;
+            case TrainVehicleKind.Locomotive: viewModel.LocomotivesPage.SelectedLocomotive!.Name = name; break;
             case TrainVehicleKind.PassengerWagon: viewModel.SelectedPassengerWagon!.Name = name; break;
             default: viewModel.SelectedGoodsWagon!.Name = name; break;
         }
