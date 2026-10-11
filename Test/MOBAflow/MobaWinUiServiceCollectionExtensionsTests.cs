@@ -126,7 +126,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             settings.Speech.SpeakerEngineName = SpeechSpeakerEngineSelection.SystemSpeech;
             settings.Speech.TestMessage = "Settings test";
             settings.Speech.VoiceName = "Configured voice";
-            var viewModel = provider.GetRequiredService<MainWindowViewModel>();
+            var viewModel = provider.GetRequiredService<SettingsPageViewModel>();
 
             await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
             settings.Speech.SpeakerEngineName = SpeechSpeakerEngineSelection.PiperTts;
@@ -140,6 +140,21 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             systemRegistration.Verify(value => value.Create(It.IsAny<SpeechOptions>()), Times.Once);
             piperRegistration.Verify(value => value.Create(It.IsAny<SpeechOptions>()), Times.Once);
             Assert.That(provider.GetRequiredService<ISpeakerEngine>(), Is.SameAs(systemSpeaker.Object));
+        }
+    }
+
+    [Test]
+    public async Task AddMobaWinUiViewModelsAndWindowSharesSettingsStateWithShell()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var settings = provider.GetRequiredService<SettingsPageViewModel>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(shell.SettingsPage, Is.SameAs(settings));
+            Assert.That(provider.GetRequiredService<SettingsPageViewModel>(), Is.SameAs(settings));
+            Assert.That(settings.Settings, Is.SameAs(provider.GetRequiredService<ISettingsService>().GetSettings()));
         }
     }
 

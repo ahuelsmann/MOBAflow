@@ -8,7 +8,6 @@ using Backend.Service.Validation;
 using Common.Configuration;
 using Common.Events;
 using Common.Extension;
-using Common.Navigation;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -23,12 +22,11 @@ using Microsoft.Extensions.Logging;
 using Service;
 
 using System.Collections.ObjectModel;
-
-// For NullIoService
+using System.ComponentModel;
 
 /// <summary>
 /// Core ViewModel for main window functionality.
-/// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow, Train, Z21, Settings.
+/// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow, Train and Z21.
 /// </summary>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
@@ -52,9 +50,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     // Optional Services
     private readonly ICityService? _cityLibraryService;
     private readonly ISettingsService? _settingsService;
-    private readonly AnnouncementService? _announcementService;
-    private readonly Func<string, Task>? _speechTestAction;
-    private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
     private readonly IDialogService? _dialogService;
 
     // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
@@ -76,18 +71,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="runtimeCommandGateway">Route for every operator command (local, recorded or remote).</param>
     /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
     /// <param name="uiDispatcher">Dispatcher used to marshal callbacks onto the UI thread.</param>
-    /// <param name="settings">Application-wide settings object.</param>
+    /// <param name="settingsPage">Shared settings presentation and persistence.</param>
     /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
     /// <param name="executionContext">Execution context containing shared dependencies for workflow actions.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
     /// <param name="ioService">Optional IO service implementation (null uses <see cref="NullIoService"/>).</param>
     /// <param name="cityLibraryService">Optional city library service for master data.</param>
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
-    /// <param name="announcementService">Optional announcement service for text-to-speech announcements.</param>
-    /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
     /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
-    /// <param name="speechTestAction">Optional direct speech test action for the selected speaker engine.</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
         IRuntimeSnapshotProvider runtimeSnapshots,
@@ -96,18 +88,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IRuntimeCommandGateway runtimeCommandGateway,
         IEventBus eventBus,
         IUiDispatcher uiDispatcher,
-        AppSettings settings,
+        SettingsPageViewModel settingsPage,
         ISolutionSession solutionSession,
         ActionExecutionContext executionContext,
         ILogger<MainWindowViewModel> logger,
         IIoService? ioService = null,  // Optional for WebApp/MAUI
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
-        AnnouncementService? announcementService = null,
-        IFeatureTogglePageProvider? featureTogglePageProvider = null,
         ILoggerFactory? loggerFactory = null,
         IDialogService? dialogService = null,
-        Func<string, Task>? speechTestAction = null,
         IProjectDiagnosticsService? projectDiagnosticsService = null,
         IWorkflowService? workflowService = null,
         IWorkflowTraceStore? workflowTraceStore = null)
@@ -119,7 +108,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
-        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(settingsPage);
         ArgumentNullException.ThrowIfNull(solutionSession);
         ArgumentNullException.ThrowIfNull(executionContext);
         ArgumentNullException.ThrowIfNull(logger);
@@ -132,15 +121,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _runtimeCommandGateway = runtimeCommandGateway;
         _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
+        var settings = settingsPage.Settings;
         _settings = settings;
+        SettingsPage = settingsPage;
+        SettingsPage.PropertyChanged += OnSettingsPagePropertyChanged;
+        SettingsPage.FeedbackPointCountChanged += OnFeedbackPointCountChanged;
         _logger = logger;
         _layoutColumnWidths = layoutColumnWidths;
         _layoutColumnWidths.LoadFrom(settings.Layout);
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
-        _announcementService = announcementService;
-        _speechTestAction = speechTestAction;
-        _featureTogglePageProvider = featureTogglePageProvider;
         _dialogService = dialogService;
         _projectDiagnosticsService = projectDiagnosticsService;
 
@@ -173,7 +163,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         UseTimerFilter = settings.Counter.UseTimerFilter;
         TimerIntervalSeconds = settings.Counter.TimerIntervalSeconds;
 
-        IsDarkMode = settings.Application.IsDarkMode;
         InitializeLayoutPanelStates();
 
         _eventBusSubscriptions.Add(eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText)));
@@ -187,15 +176,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
         NotifyRuntimeCommandStatesChanged();
 
-        InitializeFeatureToggleItems();
-
         UpdateSolutionLoadedStatus();
     }
     #endregion
 
     #region Properties
-    [ObservableProperty]
-    private bool _isDarkMode = true;  // Dark theme is default for WinUI
 
     /// <summary>
     /// Observable column widths per page. Bound from grid ColumnDefinitions; when values are set
@@ -205,6 +190,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     /// <summary>Gets the singleton workflow catalog and editor state shared by workflow surfaces.</summary>
     public WorkflowLibraryViewModel WorkflowLibrary { get; }
+
+    /// <summary>Gets the host-owned settings state shared with SettingsPage and shell surfaces.</summary>
+    public SettingsPageViewModel SettingsPage { get; }
 
     /// <summary>
     /// Application settings model shared with the shell. Exposed for UI behaviors that walk the visual tree
@@ -221,15 +209,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// Non-generic logger for UI shell subsystems (e.g. layout behaviors) that are not constructed via DI.
     /// </summary>
     public ILogger UiShellLogger => _logger;
-
-    /// <summary>
-    /// Called when IsDarkMode changes. Persists to AppSettings.
-    /// </summary>
-    partial void OnIsDarkModeChanged(bool value)
-    {
-        _settings.Application.IsDarkMode = value;
-        PersistSettingsSafely();
-    }
 
     /// <summary>
     /// Health status message for Speech Service (Azure).
@@ -267,30 +246,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private object? _currentSelectedObject;
-
-    /// <summary>
-    /// Error message to display in UI (Settings page).
-    /// </summary>
-    [ObservableProperty]
-    private string _errorMessage = string.Empty;
-
-    /// <summary>
-    /// Controls visibility of error message in UI.
-    /// </summary>
-    [ObservableProperty]
-    private bool _showErrorMessage;
-
-    /// <summary>
-    /// Controls visibility of success message in UI.
-    /// </summary>
-    [ObservableProperty]
-    private bool _showSuccessMessage;
-
-    /// <summary>
-    /// Selected theme index for UI theme picker (0=Light, 1=Dark, 2=System).
-    /// </summary>
-    [ObservableProperty]
-    private int _selectedThemeIndex = 1; // Default: Dark
 
     /// <summary>
     /// The currently selected object for JourneysPage properties panel.
@@ -509,6 +464,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         _isShuttingDown = true;
         _session.BeginShutdown();
+        SettingsPage.PropertyChanged -= OnSettingsPagePropertyChanged;
+        SettingsPage.FeedbackPointCountChanged -= OnFeedbackPointCountChanged;
         WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
         WorkflowLibrary.Dispose();
         foreach (var subscriptionId in _eventBusSubscriptions)
@@ -518,6 +475,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _eventBusSubscriptions.Clear();
 
         return true;
+    }
+
+    private void OnFeedbackPointCountChanged(object? sender, EventArgs e)
+    {
+        InitializeStatisticsFromFeedbackPoints();
+    }
+
+    private void OnSettingsPagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SettingsPageViewModel.SelectedSpeechEngine))
+        {
+            OnPropertyChanged(nameof(SpeechStatusDisplayText));
+        }
     }
 
     private void PersistSettingsSafely()
@@ -623,21 +593,5 @@ public sealed partial class MainWindowViewModel : ObservableObject
         new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = PassengerClass.First },
         new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = PassengerClass.Second }
     ];
-    #endregion
-
-    #region Signal Box / Viessmann Multiplex Signals (binding for Settings page)
-
-    /// <summary>Invert polarity for address 1 (e.g. 201).</summary>
-    public bool InvertPolarityOffset0Setting { get => _settings.SignalBox.InvertPolarityOffset0; set => SetSignalBoxInvert(0, value); }
-
-    /// <summary>Invert polarity for address 2 (e.g. 202).</summary>
-    public bool InvertPolarityOffset1Setting { get => _settings.SignalBox.InvertPolarityOffset1; set => SetSignalBoxInvert(1, value); }
-
-    /// <summary>Invert polarity for address 3 (e.g. 203).</summary>
-    public bool InvertPolarityOffset2Setting { get => _settings.SignalBox.InvertPolarityOffset2; set => SetSignalBoxInvert(2, value); }
-
-    /// <summary>Invert polarity for address 4 (e.g. 204).</summary>
-    public bool InvertPolarityOffset3Setting { get => _settings.SignalBox.InvertPolarityOffset3; set => SetSignalBoxInvert(3, value); }
-
     #endregion
 }

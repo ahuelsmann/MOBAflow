@@ -75,13 +75,45 @@ public sealed class JourneyCounterProjectionTests
         await using var fixture = new ProjectionFixture();
 
         // A cleared NumberBox reports NaN; converting it would remove every saved counter.
-        fixture.ViewModel.CountOfFeedbackPoints = double.NaN;
+        fixture.ViewModel.SettingsPage.CountOfFeedbackPoints = double.NaN;
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(fixture.Settings.Counter.CountOfFeedbackPoints, Is.EqualTo(7));
-            Assert.That(fixture.ViewModel.CountOfFeedbackPoints, Is.EqualTo(7));
+            Assert.That(fixture.ViewModel.SettingsPage.CountOfFeedbackPoints, Is.EqualTo(7));
         }
+    }
+
+    [Test]
+    public async Task SettingsFeedbackCountUpdatesStatisticsAndDetachesOnShutdown()
+    {
+        var fixture = new ProjectionFixture();
+        await using var fixtureLifetime = fixture.ConfigureAwait(false);
+        fixture.ViewModel.SettingsPage.CountOfFeedbackPoints = 3;
+        Assert.That(fixture.ViewModel.Statistics, Has.Count.EqualTo(3));
+
+        await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+        fixture.ViewModel.SettingsPage.CountOfFeedbackPoints = 1;
+        Assert.That(fixture.ViewModel.Statistics, Has.Count.EqualTo(3));
+    }
+
+    [Test]
+    public async Task SettingsSpeechSelectionRefreshesShellStatusAndDetachesOnShutdown()
+    {
+        var fixture = new ProjectionFixture();
+        await using var fixtureLifetime = fixture.ConfigureAwait(false);
+        fixture.ViewModel.UpdateHealthStatus("Ready");
+        var updates = 0;
+        fixture.ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.SpeechStatusDisplayText)) updates++;
+        };
+        fixture.ViewModel.SettingsPage.SelectedSpeechEngine = "Piper TTS";
+        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Does.StartWith("Piper TTS:"));
+
+        await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+        fixture.ViewModel.SettingsPage.SelectedSpeechEngine = "System Speech (Windows SAPI)";
+        Assert.That(updates, Is.EqualTo(1));
     }
 
     [Test]
@@ -212,7 +244,7 @@ public sealed class JourneyCounterProjectionTests
             io.Setup(service => service.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((true, "projection-test.json", null));
             Settings.Counter.CountOfFeedbackPoints = 7;
             ViewModel = new MainWindowViewModel(new LayoutColumnWidthsViewModel(), Runtime.Object, Runtime.Object, Runtime.Object, Gateway.Object, _eventBus,
-                dispatcher.Object, Settings, TestSolutionSessions.Create(solution ?? new Solution { Projects = [new Project()] }, dispatcher.Object, Runtime.Object, io.Object),
+                dispatcher.Object, TestSettingsPages.Create(Settings, dispatcher.Object), TestSolutionSessions.Create(solution ?? new Solution { Projects = [new Project()] }, dispatcher.Object, Runtime.Object, io.Object),
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, NullLogger<MainWindowViewModel>.Instance,
                 io.Object);
         }

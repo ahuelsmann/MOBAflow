@@ -2,9 +2,40 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
-public partial class MainWindowViewModel
+public sealed partial class SettingsPageViewModel
 {
+    [ObservableProperty]
+    public partial string LayoutResetTitle { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string LayoutResetMessage { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool IsLayoutResetSuccessful { get; set; }
+
+    [RelayCommand]
+    private async Task ResetLayoutsAsync()
+    {
+        try
+        {
+            _settings.Layout = new LayoutSettings { TabVisibility = _settings.Layout.TabVisibility };
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(true);
+            IsLayoutResetSuccessful = true;
+            LayoutResetTitle = "Layouts reset";
+            LayoutResetMessage = "Saved layouts were reset. Reopen pages to apply their default layout.";
+            OnPropertyChanged(nameof(SettingsSectionSortMode));
+        }
+        catch (Exception ex)
+        {
+            IsLayoutResetSuccessful = false;
+            LayoutResetTitle = "Layout reset failed";
+            LayoutResetMessage = ex.Message;
+        }
+    }
+
     public string SettingsSectionSortMode
     {
         get => NormalizeSettingsSectionSortMode(GetSettingsPageLayout().SortMode);
