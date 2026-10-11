@@ -190,7 +190,7 @@ internal sealed partial class RestApiStatusServiceTests
             new LocalRuntimeCommandGateway(mobaRuntime.Object),
             eventBus,
             uiDispatcher.Object,
-            appSettings,
+            TestSettingsPages.Create(appSettings, uiDispatcher.Object),
             TestSolutionSessions.Create(new Solution(), uiDispatcher.Object, mobaRuntime.Object),
             new ActionExecutionContext
             {

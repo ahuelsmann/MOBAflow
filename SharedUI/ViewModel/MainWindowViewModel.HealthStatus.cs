@@ -15,7 +15,7 @@ public partial class MainWindowViewModel
     /// Uses Piper health details for Piper TTS and a local-ready text for System Speech.
     /// </summary>
     public string SpeechStatusDisplayText =>
-        IsPiperSpeechEngineSelected
+        SettingsPage.IsPiperSpeechEngineSelected
             ? SpeechHealthStatus
             : "System Speech: Ready (local)";
 
