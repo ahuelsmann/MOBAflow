@@ -14,6 +14,12 @@ public sealed partial class LocalMobApiClient(AppSettings appSettings) : IDispos
     private const int DefaultPort = 5001;
     private readonly HttpClient _httpClient = new();
 
+    internal LocalMobApiClient(AppSettings appSettings, HttpMessageHandler handler) : this(appSettings)
+    {
+        _httpClient.Dispose();
+        _httpClient = new HttpClient(handler, disposeHandler: false);
+    }
+
     /// <summary>Base address of the local MOBApi process, for example <c>http://127.0.0.1:5001/</c>.</summary>
     public Uri BaseUri => MobApiEndpoint.Local(Port).BaseUri;
 

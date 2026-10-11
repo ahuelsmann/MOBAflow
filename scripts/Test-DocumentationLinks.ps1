@@ -79,6 +79,46 @@ function Resolve-InternalTarget([string] $File, [string] $Target) {
     return [IO.Path]::GetFullPath((Join-Path $baseDirectory $pathPart.TrimStart('/')))
 }
 
+function Get-ExternalLinkError {
+    param(
+        [string] $Url,
+        [scriptblock] $Request = {
+            param([string] $TargetUrl)
+            # Some servers reject HEAD; GET is the portable check.
+            Invoke-WebRequest -Uri $TargetUrl -Method Get -TimeoutSec $TimeoutSeconds `
+                -MaximumRedirection 10 -SkipHttpErrorCheck -UserAgent 'MOBAflow-link-check'
+        },
+        [scriptblock] $Delay = { param([int] $Seconds) Start-Sleep -Seconds $Seconds }
+    )
+
+    # Retry temporary server/network failures; missing pages and denied requests still fail immediately.
+    $maximumAttempts = 3
+    for ($attempt = 1; $attempt -le $maximumAttempts; $attempt++) {
+        try {
+            $response = & $Request $Url
+            $status = [int] $response.StatusCode
+            if ($status -lt 400 -or $status -eq 429) {
+                return $null
+            }
+
+            $detail = "returned $status"
+            if ($status -notin @(408, 500, 502, 503, 504)) {
+                return $detail
+            }
+        }
+        catch {
+            $detail = "failed: $($_.Exception.Message)"
+        }
+
+        if ($attempt -eq $maximumAttempts) {
+            return $detail
+        }
+
+        Write-Verbose "External link '$Url' $detail; retrying after $attempt second(s)."
+        & $Delay $attempt
+    }
+}
+
 $failures = [Collections.Generic.List[string]]::new()
 $externalTargets = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
 $checkedLinks = 0
@@ -114,16 +154,9 @@ $checkedExternal = 0
 if ($IncludeExternal) {
     foreach ($entry in $externalTargets.GetEnumerator()) {
         $checkedExternal++
-        try {
-            # Some servers reject HEAD; GET without reading the body is the portable check.
-            $response = Invoke-WebRequest -Uri $entry.Key -Method Get -TimeoutSec $TimeoutSeconds `
-                -MaximumRedirection 10 -SkipHttpErrorCheck -UserAgent 'MOBAflow-link-check'
-            if ($response.StatusCode -ge 400 -and $response.StatusCode -ne 429) {
-                $failures.Add("$($entry.Value): external link '$($entry.Key)' returned $($response.StatusCode)")
-            }
-        }
-        catch {
-            $failures.Add("$($entry.Value): external link '$($entry.Key)' failed: $($_.Exception.Message)")
+        $errorDetail = Get-ExternalLinkError $entry.Key
+        if ($null -ne $errorDetail) {
+            $failures.Add("$($entry.Value): external link '$($entry.Key)' $errorDetail")
         }
     }
 }
