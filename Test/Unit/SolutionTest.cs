@@ -40,34 +40,34 @@ internal class SolutionTest
     }
 
     [Test]
-    public void LoadAsync_WithNullPath_ThrowsArgumentException()
+    public async Task LoadAsync_WithNullPath_ThrowsArgumentException()
     {
         var solution = new Solution();
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await solution.LoadAsync(null!));
+        var ex = await Assert.ThrowsAsync<ArgumentException>(async () => await solution.LoadAsync(null!)).ConfigureAwait(false);
         Assert.That(ex!.ParamName, Is.EqualTo("filePath"));
     }
 
     [Test]
-    public void LoadAsync_WithEmptyPath_ThrowsArgumentException()
+    public async Task LoadAsync_WithEmptyPath_ThrowsArgumentException()
     {
         var solution = new Solution();
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await solution.LoadAsync(""));
+        var ex = await Assert.ThrowsAsync<ArgumentException>(async () => await solution.LoadAsync("")).ConfigureAwait(false);
         Assert.That(ex!.ParamName, Is.EqualTo("filePath"));
     }
 
     [Test]
-    public void LoadAsync_WithWhitespacePath_ThrowsArgumentException()
+    public async Task LoadAsync_WithWhitespacePath_ThrowsArgumentException()
     {
         var solution = new Solution();
-        Assert.ThrowsAsync<ArgumentException>(async () => await solution.LoadAsync("   "));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await solution.LoadAsync("   ")).ConfigureAwait(false);
     }
 
     [Test]
-    public void LoadAsync_WithNonExistentFile_ThrowsFileNotFoundException()
+    public async Task LoadAsync_WithNonExistentFile_ThrowsFileNotFoundException()
     {
         var solution = new Solution();
         var path = Path.Combine(TestContext.CurrentContext.TestDirectory, "nonexistent.json");
-        var ex = Assert.ThrowsAsync<FileNotFoundException>(async () => await solution.LoadAsync(path));
+        var ex = await Assert.ThrowsAsync<FileNotFoundException>(async () => await solution.LoadAsync(path)).ConfigureAwait(false);
         Assert.That(ex!.FileName, Is.EqualTo(path));
     }
 
@@ -125,16 +125,16 @@ internal class SolutionTest
     }
 
     [Test]
-    public void LoadAsync_WithOlderSchema_ThrowsInvalidOperationException()
+    public async Task LoadAsync_WithOlderSchema_ThrowsInvalidOperationException()
     {
         var path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"solution-{Guid.NewGuid():N}.json");
-        File.WriteAllText(path, """{"name":"Test","projects":[],"schemaVersion":2}""");
+        await File.WriteAllTextAsync(path, """{"name":"Test","projects":[],"schemaVersion":2}""").ConfigureAwait(false);
 
         try
         {
             var solution = new Solution();
 
-            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => await solution.LoadAsync(path));
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () => await solution.LoadAsync(path)).ConfigureAwait(false);
 
             Assert.That(exception!.Message, Does.Contain("incompatible"));
         }

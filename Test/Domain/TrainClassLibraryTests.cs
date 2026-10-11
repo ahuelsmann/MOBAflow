@@ -9,7 +9,6 @@ using Moba.Domain;
 /// </summary>
 [TestFixture]
 [NonParallelizable]
-[Order(0)]
 internal sealed class TrainClassLibraryUninitializedTests
 {
     [Test]
@@ -39,7 +38,7 @@ internal sealed class TrainClassLibraryUninitializedTests
 /// </summary>
 [TestFixture]
 [NonParallelizable]
-[Order(1)]
+[DependsOnFixture(typeof(TrainClassLibraryUninitializedTests), AllowFailure = true)]
 internal sealed class TrainClassLibraryTests
 {
     private string _tempDirectory = null!;
@@ -262,6 +261,7 @@ internal sealed class TrainClassLibraryTests
         // Assert
         Assert.That(all, Has.Count.EqualTo(2));
         Assert.That(all, Has.All.Matches<LocomotiveSeries>(series =>
+            series is not null &&
             series.Name == string.Empty &&
             series.Vmax == 0 &&
             series.Type == string.Empty &&
