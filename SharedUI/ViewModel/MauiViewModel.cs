@@ -162,6 +162,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(OnSolutionSyncedForSignalBox));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(OnSolutionSyncedForControlTab));
 
+        ProjectNames = [];
+        SelectedProjectIndex = -1;
         WireProjectContextForControlTab();
 
         if (_runtimeHubRemoteClient != null)

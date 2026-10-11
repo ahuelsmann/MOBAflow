@@ -4,9 +4,6 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using SharedUI.Interface;
-using SharedUI.ViewModel;
-
-using Common.Events;
 
 using Domain;
 
@@ -74,7 +71,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
         ISolutionSession solutionSession,
 
         RestApiProcessService restApiProcessService,
-
 
         ILogger<RestApiSolutionSyncService> logger,
 

@@ -24,13 +24,13 @@ public sealed partial class MauiViewModel
 
     private void WireProjectContextForControlTab()
     {
-        RefreshProjectPicker();
         if (_projectContext == null)
         {
             return;
         }
 
         _projectContext.PropertyChanged += OnProjectContextPropertyChangedForControlTab;
+        RefreshProjectPicker();
         Z21IpAddress = _projectContext.SelectedProject?.Model.Z21.IpAddress.Trim() ?? string.Empty;
     }
 
