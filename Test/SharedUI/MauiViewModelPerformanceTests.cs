@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
 using Moba.Common.Configuration;
-using Moba.Common.Discovery;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
@@ -468,7 +467,6 @@ internal sealed class MauiViewModelPerformanceTests
             appSettings,
             CreateSettingsServiceMock(appSettings).Object,
             new Mock<IRestDiscoveryService>().Object,
-            new Mock<IZ21DiscoveryService>().Object,
             photoUploadMock.Object,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,

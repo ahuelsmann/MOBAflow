@@ -303,8 +303,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
             new AppSettings
             {
                 // Disable auto-connect during tests to keep behavior deterministic.
-                Counter = new CounterSettings { CountOfFeedbackPoints = 3, UseTimerFilter = false },
-                Z21 = new Z21Settings { CurrentIpAddress = string.Empty }
+                Counter = new CounterSettings { CountOfFeedbackPoints = 3, UseTimerFilter = false }
             },
             loggerMock.Object,
             eventBus,

@@ -49,20 +49,10 @@ public class DisplaySettings
 }
 
 /// <summary>
-/// Z21 digital command station connection settings.
+/// Z21 connection behaviour. The Z21 address belongs to each project (<c>Project.Z21</c>).
 /// </summary>
 public class Z21Settings
 {
-    /// <summary>
-    /// Current Z21 IP address.
-    /// </summary>
-    public string CurrentIpAddress { get; set; } = "192.168.0.111";
-
-    /// <summary>
-    /// Default Z21 port.
-    /// </summary>
-    public string DefaultPort { get; set; } = "21105";
-
     /// <summary>
     /// Auto-connect retry interval in seconds (how often to attempt reconnection if Z21 is unreachable).
     /// Default: 10 seconds.
