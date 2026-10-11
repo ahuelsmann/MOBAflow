@@ -93,17 +93,7 @@ public sealed partial class MauiViewModel
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (_runtimeHubRemoteClient?.IsConnected == true)
-            {
-                try
-                {
-                    await _runtimeHubRemoteClient.DisconnectAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogDebug(ex, "Runtime hub disconnect before reconnect failed");
-                }
-            }
+            await _hubSession.DisconnectAsync().ConfigureAwait(false);
 
             // Reconnect may repeat with unchanged endpoint; use the normal health-check timeout.
             var reachable = await RefreshRestApiReachableAsync(cancellationToken, useConnectTimeout: false).ConfigureAwait(false);
@@ -174,7 +164,7 @@ public sealed partial class MauiViewModel
             }
 
             var hubConnected = !reachable
-                || (_runtimeHubRemoteClient?.IsConnected ?? false)
+                || _hubSession.IsConnected
                 || await EnsureRuntimeHubConnectionAsync(true, forceReconnect: true).ConfigureAwait(false);
 
             if (!reachable)
@@ -256,29 +246,8 @@ public sealed partial class MauiViewModel
     }
 
     private async Task DisconnectMobaflowAsync()
-
     {
-
-        if (_runtimeHubRemoteClient?.IsConnected == true)
-
-        {
-
-            try
-
-            {
-
-                await _runtimeHubRemoteClient.DisconnectAsync().ConfigureAwait(false);
-
-            }
-
-            catch (Exception ex)
-
-            {
-
-                _logger.LogDebug(ex, "Runtime hub disconnect failed during MOBAflow toggle off");
-
-            }
-        }
+        await _hubSession.DisconnectAsync().ConfigureAwait(false);
 
         await _uiDispatcher.InvokeOnUiAsync(() =>
         {
@@ -288,7 +257,6 @@ public sealed partial class MauiViewModel
             UpdateRuntimeCoordinatorState();
             return Task.CompletedTask;
         }).ConfigureAwait(false);
-
     }
 
     /// <summary>
