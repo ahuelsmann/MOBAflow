@@ -538,6 +538,7 @@ MainWindowViewModel(
 - Live capture occurs in `RecordingEventBusDecorator` before UI dispatch and persists only explicitly mapped payloads.
 - Explicit WinUI, MOBAsmart, RuntimeHub, and REST-fallback commands pass through `IRuntimeCommandGateway`; `RecordingRuntimeCommandGateway` records sanitized correlated request/outcome entries around the concrete local or mobile gateway.
 - Command failures retain only the bounded outcome `failed` or `cancelled`; exception messages, stack traces, paths, endpoints, credentials, and raw payloads never cross the recording boundary.
+- Locomotive information queries record display-only requests and outcomes. All-functions-off records one operator request even when the mobile coordinator sends 32 individual function commands.
 - Replay never publishes recorded events to the root EventBus and never calls `IMobaRuntime` or `IZ21`.
 - `RecordingReplayService` schedules journal entries against a freshly constructed, in-memory `IsolatedReplayRuntime`.
 - The isolated runtime factory does not receive the production service provider or any external-effect adapter.
@@ -627,9 +628,10 @@ ViewModel ──► IRuntimeCommandGateway
   aspect never overtakes a configuration update.
 - `Test/Architecture/RuntimeCommandPathArchitectureTests.cs` fails when a
   ViewModel uses a command role or creates a gateway.
-- Not yet recorded: fail-safe acknowledgement, all functions off and locomotive
-  info (issue #188). MOBAsmart injects the recording gateway for throttle and
-  signal commands; the coordinator selects their local or remote route.
+- Fail-safe acknowledgement and all functions off record requests that can be
+  applied to isolated replay state, plus display-only outcomes. Locomotive info
+  requests and outcomes are display-only. MOBAsmart injects the recording gateway
+  for throttle and signal commands; the coordinator selects their local or remote route.
 
 ### Notification mechanisms
 
