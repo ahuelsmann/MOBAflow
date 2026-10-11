@@ -102,6 +102,13 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
     /// Disconnects the Z21 connections that no project runtime uses anymore.
     /// </summary>
     public Task DisconnectUnusedAsync() => _connections.DisconnectUnusedAsync();
+
+    /// <summary>Keeps the Z21 owner name current after the project was renamed.</summary>
+    public void RenameOwner(Project project)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        _connections.RenameOwner(project.Id, project.Name);
+    }
 }
 
 /// <summary>
@@ -188,8 +195,8 @@ public sealed class ProjectRuntime : IAsyncDisposable
     /// </summary>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        await Runtime.ActivateProjectAsync(_project, cancellationToken).ConfigureAwait(false);
         _whistle.Activate(_project);
+        await Runtime.ActivateProjectAsync(_project, cancellationToken).ConfigureAwait(false);
         await Runtime.StartAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -199,6 +206,14 @@ public sealed class ProjectRuntime : IAsyncDisposable
     /// <summary>Sets every known locomotive on the project's Z21 to speed 0.</summary>
     public Task StopLocomotivesAsync(CancellationToken cancellationToken = default) =>
         _service.StopAllLocomotivesAsync(cancellationToken);
+
+    /// <summary>Refreshes the project's saved definitions while keeping running commands.</summary>
+    public async Task UpdateAsync(Project project, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _whistle.UpdateDefinitions(project);
+        await Runtime.UpdateProjectAsync(project, cancellationToken).ConfigureAwait(false);
+    }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

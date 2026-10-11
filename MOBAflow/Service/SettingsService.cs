@@ -12,7 +12,7 @@ using SharedUI.Interface;
 
 using System.Diagnostics;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
+using System.Text.Json.Nodes;
 
 /// <summary>
 /// Service for reading and writing application settings to appsettings.json.
@@ -20,7 +20,6 @@ using System.Text.Json.Serialization.Metadata;
 /// </summary>
 internal class SettingsService : ISettingsService
 {
-    private static readonly JsonSerializerOptions WinUiJsonOptions = CreateWinUiJsonOptions();
     private readonly AppSettings _settings;
     private readonly string _settingsFilePath;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
@@ -39,27 +38,6 @@ internal class SettingsService : ISettingsService
 
         // Load settings synchronously to avoid deadlock
         LoadSettingsSync();
-    }
-
-    private static JsonSerializerOptions CreateWinUiJsonOptions()
-    {
-        var resolver = new DefaultJsonTypeInfoResolver();
-        resolver.Modifiers.Add(typeInfo =>
-        {
-            if (typeInfo.Type != typeof(Z21Settings))
-            {
-                return;
-            }
-
-            for (var index = typeInfo.Properties.Count - 1; index >= 0; index--)
-            {
-                if (typeInfo.Properties[index].Name is "currentIpAddress" or "defaultPort")
-                {
-                    typeInfo.Properties.RemoveAt(index);
-                }
-            }
-        });
-        return new JsonSerializerOptions(JsonOptions.Default) { TypeInfoResolver = resolver };
     }
 
     private static string ResolveSettingsFilePath()
@@ -111,6 +89,9 @@ internal class SettingsService : ISettingsService
         _settings.Application.AutoStartWebApp = source.Application.AutoStartWebApp;
         _settings.Application.IsDarkMode = source.Application.IsDarkMode;
         _settings.Application.UseSystemTheme = source.Application.UseSystemTheme;
+
+        _settings.Z21.AutoConnectRetryIntervalSeconds = source.Z21.AutoConnectRetryIntervalSeconds;
+        _settings.Z21.SystemStatePollingIntervalSeconds = source.Z21.SystemStatePollingIntervalSeconds;
 
         _settings.Counter.CountOfFeedbackPoints = source.Counter.CountOfFeedbackPoints;
         _settings.Counter.TargetLapCount = source.Counter.TargetLapCount;
@@ -231,7 +212,15 @@ internal class SettingsService : ISettingsService
                 ApplyLoadedSettings(settings);
             }
 
-            var json = JsonSerializer.Serialize(_settings, WinUiJsonOptions);
+            var document = JsonSerializer.SerializeToNode(_settings, JsonOptions.Default);
+            // The desktop owns endpoints in Project. Mobile still uses these settings until RF-23 slice 4b.
+            if (document["z21"] is JsonObject z21)
+            {
+                z21.Remove("currentIpAddress");
+                z21.Remove("defaultPort");
+            }
+
+            var json = document.ToJsonString(JsonOptions.Default);
             await File.WriteAllTextAsync(_settingsFilePath, json);
             _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);
         }

@@ -17,6 +17,18 @@ using System.Text.Json;
 /// </summary>
 public sealed partial class MobaRuntimeService
 {
+    /// <summary>Lowest DCC locomotive address the Z21 accepts.</summary>
+    private const uint MinLocomotiveAddress = 1;
+
+    /// <summary>Highest DCC locomotive address the Z21 accepts.</summary>
+    private const uint MaxLocomotiveAddress = 9999;
+
+    private static readonly Action<ILogger, int, Exception?> LogStopLocomotiveFailed =
+        LoggerMessage.Define<int>(
+            LogLevel.Error,
+            new EventId(3, nameof(LogStopLocomotiveFailed)),
+            "Setting locomotive {Address} to speed 0 failed");
+
     /// <inheritdoc />
     public async Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
@@ -141,6 +153,7 @@ public sealed partial class MobaRuntimeService
             _statusText = "Disconnecting...";
             PublishSnapshot();
 
+            // Trains keep their last speed after logging off; a failed stop leaves the connection open for retry.
             await StopAllLocomotivesAsync(cancellationToken).ConfigureAwait(false);
             await _z21.DisconnectAsync().ConfigureAwait(false);
 
@@ -219,7 +232,7 @@ public sealed partial class MobaRuntimeService
             .ToDictionary(pair => pair.Key, pair => pair.Value.IsForward);
         foreach (var locomotive in _activeProjectContext?.ActiveProject.Locomotives ?? [])
         {
-            if (locomotive.DigitalAddress is { } address and > 0 and <= 9999)
+            if (locomotive.DigitalAddress is { } address and >= MinLocomotiveAddress and <= MaxLocomotiveAddress)
             {
                 directions.TryAdd((int)address, true);
             }
@@ -235,6 +248,7 @@ public sealed partial class MobaRuntimeService
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                LogStopLocomotiveFailed(_logger, address, ex);
                 failures.Add(new InvalidOperationException($"Failed to stop locomotive at address {address}.", ex));
             }
         }

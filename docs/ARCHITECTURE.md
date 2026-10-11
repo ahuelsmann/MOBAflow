@@ -251,8 +251,10 @@ IZ21 / JourneyManager / WorkflowService
   conflict and never connects (`Z21AssignmentDiagnostics` shows it in the project
   diagnostics). MOBAflow never searches the network for a Z21 on its own
   (`ProjectZ21EndpointSource`); MOBAsmart keeps `SettingsZ21EndpointSource`.
-- Each connection has its own `ForwardingEventBus`. Runtime handlers subscribe to
-  it; only the bus of the selected project also publishes to the application bus,
+- Each connection has its own `ForwardingEventBus`. Runtime handlers run on the
+  publishing thread without waiting for the UI dispatcher. Only application
+  delivery is dispatched to the UI thread and checks the current selection there;
+  only the selected project's bus publishes to the application bus,
   so UI subscribers keep their contract and show the selected project.
   `SelectedProjectRuntime` and `SelectedProjectInterlocking` give pages and host
   services the selected project's runtime and interlocking; project updates are
@@ -270,7 +272,7 @@ IZ21 / JourneyManager / WorkflowService
 - Manual disconnect also stops known locomotives before logging off. Stop commands use
   DCC addresses 1–9999 and continue after individual send failures. Failed manual stops
   keep the connection available for retry; host shutdown passes its cancellation token
-  through the stop loop and retains a runtime when its stop is cancelled.
+  through the stop loop and disposes a runtime when its stop is cancelled.
 - Covered by `Test/Backend/ProjectRuntimeHostTests.cs` and
   `Test/SharedUI/MainWindowViewModelShutdownTests.cs`.
 
