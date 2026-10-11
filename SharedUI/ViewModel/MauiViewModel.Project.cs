@@ -48,7 +48,8 @@ public sealed partial class MauiViewModel
         try
         {
             ProjectNames = projects is null ? [] : [.. projects.Select(project => project.Name)];
-            SelectedProjectIndex = projects is not null && _projectContext?.SelectedProject is { } selected
+            var selected = _projectContext?.SelectedProject;
+            SelectedProjectIndex = projects is not null && selected is not null
                 ? projects.IndexOf(selected)
                 : -1;
         }

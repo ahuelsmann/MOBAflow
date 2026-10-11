@@ -5247,69 +5247,6 @@
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/Backend/PersistentInPortCounterTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/Backend/TimetableOperationsServiceTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/Backend/WorkflowExecutionCoordinatorTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/Common/RecordingArtifactTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/MOBAdisplay/UdpDisplayDatagramTransportTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/SharedUI/MauiViewModelControlTabTests.cs",
-      "count": 14
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/SharedUI/MauiViewModelMobaflowOfflineTests.cs",
-      "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/SharedUI/TrainControlHostSelectionTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/SharedUI/TrainControlViewModelLocomotiveListTests.cs",
-      "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0005",
       "path": "Test/Backend/Z21BroadcastProtocolTests.cs",
       "count": 1
