@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Moba.Test</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\Common.csproj" />
+    <!-- Two existing Common fixtures also exercise backend discovery and shared speed conversion. -->
+    <ProjectReference Include="..\..\Backend\Backend.csproj" />
+    <ProjectReference Include="..\..\SharedUI\SharedUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Test\Common\**\*.cs" Link="Common\%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- Reuse backend contracts that also exercise Common recording models and signal mappings. -->
+    <Compile Include="..\..\Test\Backend\Recording*.cs" Link="Backend\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Test\Backend\MultiplexerCommandResolverTests.cs" Link="Backend\MultiplexerCommandResolverTests.cs" />
+    <Using Include="Moba.Domain" />
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\Test\TestData\Recording\**" Link="TestData\Recording\%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
