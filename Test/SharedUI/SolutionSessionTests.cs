@@ -36,7 +36,7 @@ internal sealed partial class SolutionSessionTests
     }
 
     [Test]
-    public async Task LoadSolutionFromPath_ReplacesProjectsInPlaceSelectsFirstAndActivatesIt()
+    public async Task LoadSolutionFromPath_ReplacesProjectsInPlaceSelectsFirstAndCreatesTheirRuntimes()
     {
         var solution = new Solution();
         var session = CreateSession(solution, out var io, out var runtime);
@@ -62,7 +62,10 @@ internal sealed partial class SolutionSessionTests
             Assert.That(loadedEvents, Is.EqualTo(1));
         }
 
-        runtime.Verify(value => value.ActivateProjectAsync(loaded.Projects[0], It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.LoadAsync(
+            It.Is<IReadOnlyList<Project>>(projects => projects.SequenceEqual(loaded.Projects)),
+            It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.SelectProject(loaded.Projects[0].Id), Times.AtLeastOnce);
     }
 
     [Test]
@@ -128,7 +131,7 @@ internal sealed partial class SolutionSessionTests
     }
 
     [Test]
-    public async Task NewSolution_ReplacesProjectsClearsSelectionAndActivatesNewProject()
+    public async Task NewSolution_ReplacesProjectsClearsSelectionAndCreatesTheNewProjectRuntime()
     {
         var session = CreateSession(new Solution { Projects = [new Project { Name = "Old" }] }, out _, out var runtime);
         session.CurrentSolutionPath = "old.json";
@@ -144,7 +147,9 @@ internal sealed partial class SolutionSessionTests
             Assert.That(session.SelectedProject, Is.Null);
         }
 
-        runtime.Verify(value => value.ActivateProjectAsync(session.Solution.Projects[0], It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.LoadAsync(
+            It.Is<IReadOnlyList<Project>>(projects => projects.Single() == session.Solution.Projects[0]),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -210,8 +215,48 @@ internal sealed partial class SolutionSessionTests
 
         session.SelectedProject!.Name = "Renamed";
 
-        runtime.Verify(value => value.UpdateProjectAsync(session.SelectedProject.Model, It.IsAny<CancellationToken>()), Times.Once);
-        runtime.Verify(value => value.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
+        runtime.Verify(value => value.UpdateAsync(session.SelectedProject.Model, It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.ReplaceAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
+        runtime.Verify(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public void SelectingAProject_OnlyShowsItsRuntime()
+    {
+        var solution = new Solution { Projects = [new Project { Name = "A" }, new Project { Name = "B" }] };
+        var session = CreateSession(solution, out _, out var runtime);
+        runtime.Invocations.Clear();
+
+        session.SelectedProject = session.SolutionViewModel!.Projects[1];
+
+        // Selecting a project must not restart or re-activate any runtime (#190).
+        runtime.Verify(value => value.SelectProject(solution.Projects[1].Id), Times.Once);
+        runtime.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public void ChangingTheZ21Assignment_RecreatesTheProjectRuntime()
+    {
+        var session = CreateSession(new Solution(), out _, out var runtime);
+        runtime.Invocations.Clear();
+
+        session.SelectedProject!.Z21IpAddress = "192.168.0.111";
+
+        // A new address also clears the old serial number; that second change only refreshes the snapshot.
+        runtime.Verify(value => value.ReplaceAsync(session.SelectedProject.Model, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public void AddingAndRemovingProjects_CreatesAndDiscardsTheirRuntimes()
+    {
+        var session = CreateSession(new Solution(), out _, out var runtime);
+        var added = new Project { Name = "Yard" };
+
+        var viewModel = session.AddProject(added);
+        session.RemoveProject(viewModel);
+
+        runtime.Verify(value => value.AddAsync(added, It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.RemoveAsync(added.Id, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -237,15 +282,61 @@ internal sealed partial class SolutionSessionTests
         Assert.That(changes, Is.EqualTo(1), "Only one persisted change while tracked, not suppressed and not UI-only.");
     }
 
+    [Test]
+    public async Task NewSolution_AfterAsynchronousRuntimeStop_RaisesLoadedOnTheCallingContext()
+    {
+        var session = CreateSession(new Solution(), out _, out var runtime);
+        var stopping = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        runtime.Setup(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()))
+            .Returns(stopping.Task);
+        var uiContext = new TestUiContext();
+        SynchronizationContext? eventContext = null;
+        session.SolutionLoaded += (_, _) => eventContext = SynchronizationContext.Current;
+        var original = SynchronizationContext.Current;
+        Task operation;
+        try
+        {
+            SynchronizationContext.SetSynchronizationContext(uiContext);
+            operation = session.NewSolutionAsync();
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(original);
+        }
+
+        stopping.SetResult();
+        await operation.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        Assert.That(eventContext, Is.SameAs(uiContext));
+    }
+
+    private sealed class TestUiContext : SynchronizationContext
+    {
+        public override void Post(SendOrPostCallback callback, object? state)
+        {
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                var original = Current;
+                SetSynchronizationContext(this);
+                try
+                {
+                    callback(state);
+                }
+                finally
+                {
+                    SetSynchronizationContext(original);
+                }
+            });
+        }
+    }
+
     private static SolutionSession CreateSession(
         Solution solution,
         out Mock<IIoService> io,
-        out Mock<IConnectionRuntime> runtime)
+        out Mock<IProjectRuntimeHost> runtime)
     {
         io = new Mock<IIoService>();
-        runtime = new Mock<IConnectionRuntime>();
-        runtime.Setup(value => value.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        runtime = new Mock<IProjectRuntimeHost>();
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
         dispatcher.Setup(value => value.InvokeOnUiAsync(It.IsAny<Func<Task<SolutionSaveResult>>>()))

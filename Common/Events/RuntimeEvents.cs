@@ -10,6 +10,11 @@ using Runtime;
 public sealed record RuntimeSnapshotChangedEvent(MobaRuntimeSnapshot Snapshot) : EventBase;
 
 /// <summary>
+/// Published when the UI starts showing another project's runtime; views reload what they read from it.
+/// </summary>
+public sealed record SelectedRuntimeChangedEvent : EventBase;
+
+/// <summary>
 /// Published after a journey has completed an authoritative station transition.
 /// Timetable projections use this event instead of inferring arrivals from broad runtime snapshots.
 /// </summary>

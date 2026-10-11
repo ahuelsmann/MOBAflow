@@ -39,13 +39,15 @@ Findings on `main` at `0113551f` (2026-10-06).
 
 ## Decisions
 
-- **Runtime scope**: each project runtime is a DI scope created by a project-runtime factory. The scope holds the
-  project's `IZ21` connection, `MobaRuntimeService`, counters, interlocking and workflow context. Rationale: these
-  types already depend only on each other; scoping them avoids a second set of hand-written factories.
+- **Runtime scope**: each project runtime is an object graph built by `ProjectRuntimeFactory`: the project's `IZ21`
+  connection, `MobaRuntimeService`, counters, interlocking, workflow context and whistle automation. Slice 3b
+  builds it explicitly instead of a DI scope: the shared singletons (workflow handlers, stores, audio, UI services)
+  would otherwise have to become scoped or be duplicated, and the graph is small and stable.
 - **Z21 takeover**: an app-lifetime `Z21ConnectionRegistry` owns connections keyed by endpoint; a runtime borrows its
   endpoint's connection, so a runtime created again for the same project reuses it (FR-005).
-- **Events**: each runtime scope gets its own event bus for runtime-internal handlers; the session forwards the
-  selected project's runtime events to the app-wide UI bus. UI subscribers therefore keep their contract and show the
+- **Events**: each Z21 connection gets its own `ForwardingEventBus` for runtime-internal handlers on the publishing
+  thread; only delivery to the app-wide UI bus waits for the UI dispatcher and checks the current selection there.
+  Runtime handling therefore continues while the UI is busy. UI subscribers keep their contract and show the
   selected project (FR-009) without a project identifier on every event.
 - **No copy**: the runtime keeps runtime values (signal aspect, current station, counters) in runtime state keyed by
   id and reads master data from the session's project; `CloneForRuntime`, `UpdateJourneyEventsAsync` and

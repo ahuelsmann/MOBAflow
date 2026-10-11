@@ -4,7 +4,9 @@ namespace Moba.WinUI.Extensions;
 
 using Backend.Data;
 using Backend.Interface;
+using Backend.Network;
 using Backend.Service;
+using Backend.Service.ProjectRuntimes;
 using Backend.Service.TrackPlan;
 using Backend.Service.Validation;
 using Common.Configuration;
@@ -104,15 +106,61 @@ public static class MobaWinUiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<Solution>();
-        services.AddSingleton<IInPortCounterStore>(_ => new FileInPortCounterStore(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "MOBAflow", "inport-counters.json")));
+        services.AddMobaWinUiProjectRuntimes();
         services.AddMobaBackendServices();
         services.AddSingleton(sp => new AnnouncementService(
             sp.GetRequiredService<ISpeakerEngineFactory>(),
             sp.GetRequiredService<ILogger<AnnouncementService>>()));
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers one runtime per project. Each runtime borrows the connection of its project's Z21 and publishes
+    /// to its own event bus; the bus of the selected project also forwards to the application bus. Pages and host
+    /// services use the selected project's runtime and interlocking. Registered before the backend services so
+    /// these registrations replace the single-runtime defaults.
+    /// </summary>
+    private static void AddMobaWinUiProjectRuntimes(this IServiceCollection services)
+    {
+        services.AddSingleton(sp =>
+        {
+            var loggers = sp.GetRequiredService<ILoggerFactory>();
+            var applicationBus = sp.GetRequiredService<IEventBus>();
+            var dispatcher = sp.GetRequiredService<IUiDispatcher>();
+            // Only application delivery waits for the UI thread; project runtimes handle feedback independently.
+            // Check selection on delivery so queued events of a deselected project never reach the UI.
+            return new Z21ConnectionRegistry(
+                () => new ForwardingEventBus(
+                    new EventBus(loggers.CreateLogger<EventBus>()),
+                    applicationBus,
+                    dispatcher.InvokeOnUiLowPriority),
+                bus => new Z21(
+                    new UdpWrapper(loggers.CreateLogger<UdpWrapper>()),
+                    bus,
+                    loggers.CreateLogger<Z21>(),
+                    new Z21Monitor(loggers.CreateLogger<Z21Monitor>())));
+        });
+        services.AddSingleton(sp => new ProjectRuntimeServices
+        {
+            Settings = sp.GetRequiredService<AppSettings>(),
+            ActionExecutor = sp.GetRequiredService<IActionExecutor>(),
+            WorkflowDependencies = sp.GetRequiredService<WorkflowServiceDependencies>(),
+            SharedExecutionContext = sp.GetRequiredService<ActionExecutionContext>(),
+            StopTransitionService = sp.GetRequiredService<IJourneyStopTransitionService>(),
+            RuntimeStateStore = sp.GetRequiredService<IJourneyRuntimeStateStore>(),
+            TimeProvider = sp.GetRequiredService<TimeProvider>(),
+            LoggerFactory = sp.GetRequiredService<ILoggerFactory>(),
+            // Feedback counters are stored per project.
+            CounterStoreFactory = projectId => new FileInPortCounterStore(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "MOBAflow", "inport-counters", $"{projectId:N}.json"))
+        });
+        services.AddSingleton<ProjectRuntimeFactory>();
+        services.AddSingleton<ProjectRuntimeHost>();
+        services.AddSingleton<IProjectRuntimeHost>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
+        services.AddSingleton<IMobaRuntime, SelectedProjectRuntime>();
+        services.AddSingleton<IInterlockingRuntime, SelectedProjectInterlocking>();
     }
 
     /// <summary>
@@ -252,7 +300,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<Solution>(),
             sp.GetRequiredService<IIoService>(),
             sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<IConnectionRuntime>(),
+            sp.GetRequiredService<IProjectRuntimeHost>(),
             sp.GetRequiredService<ILogger<SolutionSession>>(),
             sp.GetRequiredService<ActionExecutionContext>().SoundPlayer,
             sp.GetRequiredService<ILoggerFactory>()));
@@ -283,7 +331,6 @@ public static class MobaWinUiServiceCollectionExtensions
                 var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
                 await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
             },
-            locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>(),
             projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
             workflowService: sp.GetRequiredService<IWorkflowService>(),
             workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));

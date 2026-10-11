@@ -26,7 +26,7 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
     private readonly Dictionary<FunctionKey, FunctionExecution> _executions = [];
     private readonly Guid _subscriptionId;
     private CancellationTokenSource _lifetime = new();
-    private Project? _project;
+    private (LocomotiveWhistleRule Rule, int Address)[] _rules = [];
     private bool _disposed;
 
     public LocomotiveWhistleAutomationService(
@@ -61,19 +61,48 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
 
     public void Activate(Project? project)
     {
+        var rules = SnapshotRules(project);
         CancellationTokenSource previous;
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             previous = _lifetime;
             _lifetime = new CancellationTokenSource();
-            _project = project;
+            _rules = rules;
             _executions.Clear();
         }
 
         previous.Cancel();
         previous.Dispose();
     }
+
+    /// <summary>Refreshes saved definitions without cancelling an executing whistle.</summary>
+    public void UpdateDefinitions(Project project)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        var rules = SnapshotRules(project);
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _rules = rules;
+        }
+    }
+
+    private static (LocomotiveWhistleRule Rule, int Address)[] SnapshotRules(Project? project) =>
+        project?.LocomotiveWhistleRules
+            .Select(rule => (Rule: rule, Locomotive: project.Locomotives.SingleOrDefault(locomotive => locomotive.Id == rule.LocomotiveId)))
+            .Where(match => match.Locomotive?.DigitalAddress is not null)
+            .Select(match => (Rule: new LocomotiveWhistleRule
+            {
+                Id = match.Rule.Id,
+                LocomotiveId = match.Rule.LocomotiveId,
+                InPort = match.Rule.InPort,
+                FunctionIndex = match.Rule.FunctionIndex,
+                DelayMilliseconds = match.Rule.DelayMilliseconds,
+                ActiveDurationMilliseconds = match.Rule.ActiveDurationMilliseconds,
+                Enabled = match.Rule.Enabled
+            }, Address: checked((int)match.Locomotive!.DigitalAddress!.Value)))
+            .ToArray() ?? [];
 
     public Task HandleFeedbackAsync(int inPort, CancellationToken cancellationToken = default)
     {
@@ -86,12 +115,7 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             lifetimeToken = _lifetime.Token;
-            matches = _project?.LocomotiveWhistleRules
-                .Where(rule => rule.Enabled && rule.InPort == inPort)
-                .Select(rule => (Rule: rule, Locomotive: _project.Locomotives.SingleOrDefault(locomotive => locomotive.Id == rule.LocomotiveId)))
-                .Where(match => match.Locomotive?.DigitalAddress is not null)
-                .Select(match => (match.Rule, Address: checked((int)match.Locomotive!.DigitalAddress!.Value)))
-                .ToArray() ?? [];
+            matches = _rules.Where(match => match.Rule.Enabled && match.Rule.InPort == inPort).ToArray();
         }
 
         if (matches.Length == 0)
@@ -270,7 +294,7 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
                 return;
             _disposed = true;
             lifetime = _lifetime;
-            _project = null;
+            _rules = [];
         }
         _eventBus.Unsubscribe(_subscriptionId);
         lifetime.Cancel();

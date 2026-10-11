@@ -27,7 +27,7 @@ public sealed partial class MobaRuntimeService
         }
 
         _statusText = connected
-            ? MobaRuntimeStatusFormatter.GetConnectedStatusText(_settings.Z21.CurrentIpAddress)
+            ? MobaRuntimeStatusFormatter.GetConnectedStatusText(_endpointSource.DisplayAddress)
             : MobaRuntimeStatusFormatter.GetDisconnectedStatusText(_isManualDisconnectRequested);
 
         PublishSnapshot();
