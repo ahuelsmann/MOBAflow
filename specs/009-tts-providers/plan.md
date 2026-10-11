@@ -6,7 +6,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Approved; implementation waits for the merge of #207 (maintainer instruction, 2026-10-11)
+**Status**: Approved; slice 1 implemented in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11); later slices pending.
 
 **Input**: Feature specification from `/specs/009-tts-providers/spec.md`
 
