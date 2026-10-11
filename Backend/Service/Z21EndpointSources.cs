@@ -7,6 +7,8 @@ using Interface;
 
 using Protocol;
 
+using ProjectRuntimes;
+
 using System.Net;
 
 /// <summary>
@@ -16,7 +18,8 @@ using System.Net;
 /// </summary>
 /// <param name="project">Returns the project whose Z21 the runtime uses; null when none is selected.</param>
 /// <param name="unavailableReason">Why the runtime must not connect, for example a Z21 another project uses.</param>
-public sealed class ProjectZ21EndpointSource(Func<Project?> project, string? unavailableReason = null) : IZ21EndpointSource
+public sealed class ProjectZ21EndpointSource(
+    Func<Project?> project, string? unavailableReason = null, Func<Solution?>? solution = null) : IZ21EndpointSource
 {
     private readonly Func<Project?> _project = project ?? throw new ArgumentNullException(nameof(project));
     private readonly string? _unavailableReason = unavailableReason;
@@ -48,6 +51,15 @@ public sealed class ProjectZ21EndpointSource(Func<Project?> project, string? una
             return Task.FromResult(Z21EndpointResolution.Unavailable("No project selected"));
         }
 
+        // Match the desktop lease's solution-order ownership, including the two standard Z21 ports.
+        var key = Z21ConnectionRegistry.ToKey(selectedProject.Z21);
+        var owner = solution?.Invoke()?.Projects
+            .TakeWhile(candidate => candidate.Id != selectedProject.Id)
+            .FirstOrDefault(candidate => key is not null
+                && string.Equals(Z21ConnectionRegistry.ToKey(candidate.Z21), key, StringComparison.OrdinalIgnoreCase));
+        if (owner is not null)
+            return Task.FromResult(Z21EndpointResolution.Unavailable($"Z21 {key} is already used by project '{owner.Name}'"));
+
         var address = selectedProject.Z21.IpAddress.Trim();
         if (string.IsNullOrEmpty(address))
         {
@@ -60,7 +72,7 @@ public sealed class ProjectZ21EndpointSource(Func<Project?> project, string? una
         }
 
         var port = selectedProject.Z21.Port > 0 ? selectedProject.Z21.Port : Z21Protocol.DefaultPort;
-        return Task.FromResult(new Z21EndpointResolution(ipAddress, port, null));
+        return Task.FromResult(new Z21EndpointResolution(ipAddress, port, null) { ProjectId = selectedProject.Id });
     }
 
     /// <summary>Copies the name and Z21 of a project, so later editor changes do not move the runtime.</summary>

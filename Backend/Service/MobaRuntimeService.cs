@@ -8,6 +8,7 @@ using Common.Runtime;
 using Interface;
 using Manager;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Threading;
 
 /// <summary>
@@ -31,11 +32,13 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private Timer? _z21AutoConnectTimer;
     private int _autoConnectAttemptInProgress;
     private readonly SemaphoreSlim _startLock = new(1, 1);
+    // Activation, definition refresh and connection handoff must not interleave.
+    private readonly SemaphoreSlim _projectActivationLock = new(1, 1);
     private bool _started;
 
-    private readonly Dictionary<int, LocomotiveRuntimeSnapshot> _locomotiveStates = [];
-    private readonly Dictionary<int, DateTimeOffset> _lastLocomotiveFunctionCommandAt = [];
-    private readonly Dictionary<int, DateTimeOffset> _lastLocomotiveDriveCommandAt = [];
+    private readonly ConcurrentDictionary<int, LocomotiveRuntimeSnapshot> _locomotiveStates = new();
+    private readonly ConcurrentDictionary<int, DateTimeOffset> _lastLocomotiveFunctionCommandAt = new();
+    private readonly ConcurrentDictionary<int, DateTimeOffset> _lastLocomotiveDriveCommandAt = new();
     private static readonly TimeSpan LocomotiveFunctionCommandGracePeriod = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan LocomotiveDriveCommandGracePeriod = TimeSpan.FromSeconds(3);
 
@@ -188,6 +191,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _inPortCounters.SnapshotChanged -= OnJourneyRuntimeChanged;
         if (_ownsInPortCounters) _inPortCounters.Dispose();
         _startLock.Dispose();
+        _projectActivationLock.Dispose();
     }
 
     private void ReplaceActiveProjectContext(ActiveProjectContext? nextContext)
