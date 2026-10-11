@@ -7,7 +7,7 @@
 ## Baseline and ownership
 
 Prerequisites and current action/event models rechecked on 2026-10-11 against `github/main` at
-`38546d6dc2303dc3639254b5410ff543d64efe36`. The detailed execution inventory below remains the preparation audit
+`2aabcbe8e3adc75a94db865dfc14ecf9187efcae`. The detailed execution inventory below remains the preparation audit
 from `9b03676a`; refresh it against the integrated RF-23 factory before technical planning.
 Issue #35 is open. Its 2026-10-09 comment confirms that the early RF-01 through RF-05 gates are resolved
 and recommends the RF-23 project-runtime factory as the basis. RF-23 [#191](https://github.com/ahuelsmann/MOBAflow/issues/191)
@@ -16,6 +16,8 @@ The existing `specs/008-project-runtimes/` belongs to RF-23. Draft requirements 
 [specs/010-automation-testbench/spec.md](../specs/010-automation-testbench/spec.md) and
 [checklists/requirements.md](../specs/010-automation-testbench/checklists/requirements.md).
 They are preparation, not an approved implementation specification; the technical plan, tasks and consistency analysis remain pending.
+PR #230 merged before its review completed. Its five later findings are addressed by the clarified requirements below;
+this follow-up does not satisfy the RF-23 integration gate or claim executed acceptance tests.
 
 This replaces the July execution inventory with the current ordered-action and event-plan baseline.
 Workflow 2.0 #32 was delivered, but #132 subsequently replaced workflow graphs with ordered actions;
@@ -71,6 +73,11 @@ Do not alter another session's RF-23 branches or turn their proposed factory int
 
 Production counters resume stored values across restarts. A test scenario explicitly seeds its own independent counts;
 it does not reset live counts or adopt a zero-on-restart production model. Manual seed/correction emits no counted feedback.
+Initial journey state is limited to activation and the current stop/position supported by `JourneySessionState`.
+Train assignments and locomotive addresses are captured project definitions; no separate train runtime state is invented.
+Runnable workflow selection requires an enabled assignment in a selected, initially active journey. Feedback supplies
+the production invocation context; selection neither invokes directly nor filters other matching workflow invocations.
+An absence assertion may still refer to any known workflow, including an unassigned one.
 
 ## Contract proposals to reconcile in Spec Kit
 
@@ -91,6 +98,8 @@ it consumes the same validated effect vocabulary as `WorkflowEffectPlanner` rath
 Capture Z21/drive/functions, turnout/signal commands, announcements, audio, scripts and display intents.
 Journey stop transitions remain production domain operations against isolated state, not external effects.
 The feedback-triggered whistle gateway must also be recording-only and cannot resolve the root runtime.
+Deliver raw synthetic activation to the private feedback consumers independently of the counted-feedback path.
+A timer-filtered activation may still trigger whistle behavior, but must not increment counters or retrigger a journey workflow.
 
 Payload/reference validation stays common. Only the production adapter checks file existence or launches a process.
 The recording adapter performs no filesystem access. Script capture includes an opaque action identity and a sanitized
@@ -122,6 +131,10 @@ Synthetic events never publish to the root EventBus or root recorder.
 
 Trace includes virtual time, stable sequence, input/workflow/action correlation, typed payload, outcome and relevant state transitions.
 Assertions may match a subset of fields, ordered occurrences, absence/forbidden effects and virtual-time bounds.
+Positive invocation/effect predicates default to exactly one match; explicit exact counts or inclusive ranges replace that
+default. Absence requires zero. Count across the entire predicate/time window; ignore unrelated effects without claiming
+they were verified. Ordered slots bind distinct entries in increasing logical order, with unrelated entries allowed between
+them and each slot's count constraint still enforced. State assertions target named initial/final state or a correlated transition.
 Distinguish invalid scenario/assertion, execution failure, comparison mismatch, cancellation and runner error.
 Report the first mismatch while preserving the complete trace and comparison results.
 
@@ -166,6 +179,9 @@ and final RF-23 runtime-host tests. Refresh fixture names at each implementation
 - Test delayed actions, pause, one-step, cancellation while waiting/executing, restart and invalid runner transitions.
 - Test stored initial counts, direct targets, counter saturation/correction, active/inactive journeys and explicit stop transitions.
 - Test malformed references/IDs/times/assertions, partial matching, ordered/negative assertions, first mismatch and full trace retention.
+- Test missing audio/script files without probes versus malformed payload failures; filtered raw feedback still reaches whistle rules.
+- Test reachable workflow selection and reject unassigned runnable targets; never suppress other matching production invocations.
+- Test one expected occurrence plus unrelated effects, duplicate matches, inclusive count ranges and distinct ordered slots.
 - Test project/session switches and persistence/schema roundtrip without editing any real or example solution.
 - Run affected portable tests and consumers plus broader suites for runtime/DI/persistence changes. Compile the desktop app.
 - With explicit launch authorization, inspect Light/Dark/High Contrast, keyboard, focus, Narrator, scaling and drag/drop.

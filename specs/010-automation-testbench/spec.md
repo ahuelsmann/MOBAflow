@@ -31,7 +31,7 @@ does not modify a solution file or schema. It adds no public REST/SignalR endpoi
 behavior or persisted layout change. No compatibility or migration path is introduced. Recheck schema version 4
 before the persistence slice; a version bump requires a concrete format reason. Andreas owns the example solution.
 
-**Evidence and prerequisites**: Requirements were reconciled against main `38546d6dc2303dc3639254b5410ff543d64efe36`,
+**Evidence and prerequisites**: Requirements were reconciled against main `2aabcbe8e3adc75a94db865dfc14ecf9187efcae`,
 the [preparation plan](../../plans/issue-35-automation-testbench.md), ordered workflow actions and direct InPort/count
 event plans. RF-23 [#191](https://github.com/ahuelsmann/MOBAflow/issues/191) is incomplete: project-runtime construction,
 per-project persistent counters and safe disposal in #207/#211 are not merged. Preparing these requirements is allowed;
@@ -42,8 +42,9 @@ analysis must use that integrated base. RF-24/#219 and #141 are not additional h
 
 ### User Story 1 - Test an automation without affecting the layout (Priority: P1)
 
-An operator selects a project and creates a scenario with explicit starting counts, active journeys and train/journey
-state. The operator adds synthetic feedback, runs the scenario and inspects the actions it would have produced.
+An operator selects a project and creates a scenario with explicit starting counts, journey activation and current-stop
+state. Train assignments and locomotive addresses come from the captured project definitions; no separate train position,
+speed or occupancy state is seeded. The operator adds synthetic feedback and inspects the actions it would have produced.
 Every visible output belongs to the isolated test run.
 
 **Why this priority**: The testbench is useful only when it exercises normal automation behavior without operating devices.
@@ -63,6 +64,17 @@ Seed that input at 10, submit two accepted feedbacks and inspect the recorded wo
    command or state mutation to that runtime; legitimate unrelated production telemetry may continue.
 5. **Given** a requested execution target is a live runtime, **When** execution is requested, **Then** it is rejected before
    any input or effect; executing a scenario always requires an explicitly identified isolated testbench target.
+6. **Given** a structurally valid audio/script action names a missing file, **When** it runs, **Then** its intent is captured
+   without any file probe; a missing payload or empty required path still fails shared structural validation.
+7. **Given** a rapid feedback activation is rejected by the counter's timer filter and an enabled whistle rule matches,
+   **When** that synthetic activation arrives, **Then** raw feedback still reaches the whistle rule and records its production
+   function behavior, while the count stays unchanged and no counted-feedback journey workflow is invoked again.
+8. **Given** a selected workflow is not assigned to an enabled event entry of a selected, initially active journey,
+   **When** execution is requested, **Then** validation rejects that runnable selection without effects; selecting a workflow
+   alone never invokes it, activates a journey or changes an assignment.
+9. **Given** an explicit journey current-stop identity and index, **When** the scenario is initialized, **Then** they resolve
+   consistently against captured journey definitions without emitting feedback or an arrival workflow; an inconsistent
+   stop/index is rejected before effects. Train assignment and locomotive address remain the captured project values.
 
 ---
 
@@ -112,6 +124,12 @@ absence expectation. Verify mismatch reporting and its correlation with the reta
    distinguishable from an ordinary expected-versus-actual mismatch and all available trace entries remain inspectable.
 4. **Given** script arguments contain sensitive text, **When** the script intent is captured, **Then** no argument value,
    derivative/hash of that value or sensitive absolute path appears in any testbench-generated output.
+5. **Given** a positive effect expectation has no explicit count, **When** one matching effect and unrelated effects occur,
+   **Then** it passes; two matching effects fail. An explicit inclusive range of 1 to 2 passes for two matches.
+6. **Given** an absence expectation, **When** one matching occurrence appears, **Then** it fails even if other effects
+   are unrelated; no matching occurrence passes.
+7. **Given** ordered expectations for effects A then B, **When** an unrelated effect appears between A and B, **Then**
+   order passes; B then A fails. One trace entry cannot satisfy two slots in the same ordered group.
 
 ---
 
@@ -160,14 +178,23 @@ use or generate the maintainer's example solution.
   Names MUST be nonempty and unique within that project; duplicated scenarios MUST have independent identities.
 - **FR-002**: A scenario MUST define its project references, controlled initial state, synthetic input times and order,
   typed partial expectations and playback settings. Users MUST be able to select the journeys/workflows under test.
+  A selected runnable workflow MUST be referenced by an enabled event entry of a selected, initially active journey.
+  Workflow selection is a test target, not a direct invocation or an execution filter: synthetic feedback and production
+  event-plan matching supply its invocation context. All matching enabled entries of the isolated active journeys execute,
+  including other workflows; selection MUST NOT suppress them. Known workflows may be referenced by absence expectations
+  even when they are not runnable targets. Unassigned workflows require a project assignment before selection as a target.
 - **FR-003**: Execution MUST validate identifiers, references, input ordering, times, playback settings and expectations
   before effects. Duplicate `(virtual time, explicit order)` input pairs MUST be rejected.
 - **FR-004**: A run MUST use isolated project definitions captured at its start. No mutable runtime or edited project data
   may be shared with live execution. Editing an unrelated scenario MUST NOT change its execution baseline.
 - **FR-005**: Every run MUST be visibly identified as isolated and every input visibly synthetic. A live execution target
   MUST be rejected; test inputs, recorded events and commands MUST never reach the production runtime or its recorder.
-- **FR-006**: The testbench MUST exercise the same accepted-feedback, journey, ordered-action, validation, delay,
+- **FR-006**: The testbench MUST exercise the same raw/accepted-feedback, journey, ordered-action, structural validation, delay,
   cancellation and failure behavior as production automation. It MUST NOT implement a second automation engine.
+  Payload/reference validation MUST be shared. Environment-dependent checks such as audio/script file existence,
+  executable availability and device availability belong only to production execution and MUST NOT run in the testbench;
+  a structurally valid intent is captured regardless of those resources. This exception does not suppress structural errors
+  or failures in the shared executor and isolated domain operations.
 - **FR-007**: Device commands, locomotive functions, turnouts/signals, announcements, audio, scripts, displays and
   feedback-triggered whistles MUST be captured as intended effects, with zero external execution or environment probes.
   Script intent inspection MUST NOT read script files or check for their existence.
@@ -178,6 +205,9 @@ use or generate the maintainer's example solution.
   journey activation and workflow execution MUST NOT implicitly reset live or isolated counts or trigger fake feedback.
 - **FR-010**: Accepted feedback MUST retain current filtering/count semantics. Only enabled entries of active journeys
   whose direct InPort/count targets match may invoke their assigned reusable workflow.
+  Each synthetic raw activation MUST also reach the isolated raw-feedback consumers independently of counter acceptance.
+  Counter-filter rejection MUST NOT suppress raw feedback delivery or feedback-triggered whistle behavior; it MUST prevent
+  that activation from incrementing the count or producing a counted-feedback journey invocation.
 - **FR-011**: Play, Pause, Single step, Cancel, Restart and adjustable playback speed MUST operate on virtual time.
   Playback speed MUST NOT alter input ordering, delayed-action timing or expectation results.
 - **FR-012**: Pause MUST prevent progression to future virtual times. Single step MUST complete the next virtual instant
@@ -192,6 +222,15 @@ use or generate the maintainer's example solution.
   relevant state transition and outcome. Repeat comparison MUST ignore only opaque per-run/correlation identities.
 - **FR-017**: Expectations MUST support invocation/absence, ordered commands, selected typed payload fields,
   journey/stop transitions, count values and virtual-time bounds without requiring every trace field to be duplicated.
+  An occurrence predicate consists of its event/effect kind, references, selected fields and optional inclusive virtual-time
+  bounds. A positive invocation/effect expectation MUST default to exactly one matching occurrence; an explicit exact count
+  or inclusive minimum/maximum MAY replace that default. Absence means exactly zero and MUST reject a nonzero count setting.
+  Counts MUST be nonnegative integers with minimum no greater than maximum. Counts cover the entire applicable trace/time
+  window; additional matching occurrences MUST fail an exceeded maximum, while unrelated occurrences and unspecified fields
+  remain unverified. Independent expectations may match the same entry. Ordered groups MUST bind each slot to a distinct
+  entry in increasing logical sequence, allowing unrelated entries between slots; each slot's occurrence constraint also
+  applies to its predicate. State-value expectations compare the named initial/final state or correlated transition rather
+  than counting repeated state snapshots.
 - **FR-018**: Results MUST distinguish invalid scenario/expectation, completed without expectations, Passed,
   comparison mismatch, execution failure, cancellation and testbench error. A first mismatch MUST identify its
   expectation and corresponding trace data; all available trace and comparison results MUST remain inspectable.
@@ -205,16 +244,19 @@ use or generate the maintainer's example solution.
 
 - **Scenario**: Named, stable project-owned definition containing reference selections, initial state, ordered synthetic
   inputs, partial expectations and playback settings; separate from executions and their results.
-- **Initial State**: Explicit isolated counts, active journeys, train/journey positions and relevant domain state;
-  never borrowed from or written into production runtime state implicitly.
+- **Initial State**: Explicit isolated input counts, each selected journey's activation and current stop (stable stop identity
+  and corresponding index; no reached stop is also valid). Stop name/index MUST agree with captured definitions.
+  Train assignments and locomotive addresses remain captured project data, not mutable train runtime state.
+  Runtime run/correlation identities and feedback timestamps are derived by the isolated executor, not seeded operator fields.
+  Initial state is never borrowed from or written into production runtime state implicitly.
 - **Synthetic Input**: Scenario-owned input identity, virtual time, explicit order, event category and typed payload;
   retains synthetic origin throughout execution and trace inspection.
 - **Run**: One independent execution of a scenario against fixed project definitions, with controlled virtual time,
   a recoverable execution state and separate captured outputs/results.
 - **Captured Effect / Trace Entry**: Safe representation of an intended output or state transition, its logical time/order,
   input/workflow/action correlation and outcome; no executed external side effect or sensitive raw payload.
-- **Expectation / Comparison Result**: Selected fields, ordered occurrences, absence or time bounds and the corresponding
-  actual match or first mismatch. It does not claim that unspecified behavior has been verified.
+- **Expectation / Comparison Result**: Selected fields, exact/inclusive occurrence counts, ordered occurrences, absence
+  or time bounds and the corresponding actual match or first mismatch. Unspecified behavior has not been verified.
 
 ## Success Criteria *(mandatory)*
 
