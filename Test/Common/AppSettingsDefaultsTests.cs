@@ -175,6 +175,60 @@ internal class AppSettingsDefaultsTests
         Assert.That(counter.UseTimerFilter, Is.True);
     }
 
+    [TestCase(0, 0, 0, 0)]
+    [TestCase(0, -1, 0, 0)]
+    [TestCase(0, int.MinValue, 0, 0)]
+    [TestCase(0, 1, 1, 1)]
+    [TestCase(0, int.MaxValue, int.MaxValue, 1)]
+    [TestCase(4, 4, 4, 0)]
+    [TestCase(4, 0, 0, 1)]
+    [TestCase(4, -1, 0, 1)]
+    [TestCase(4, int.MinValue, 0, 1)]
+    [TestCase(4, 5, 5, 1)]
+    [TestCase(int.MaxValue, int.MaxValue, int.MaxValue, 0)]
+    [TestCase(int.MaxValue, 0, 0, 1)]
+    public void CounterFeedbackPointsNotifyOnlyWhenNormalizedValueChanges(
+        int initialValue, int requestedValue, int expectedValue, int expectedNotifications)
+    {
+        var counter = new CounterSettings { CountOfFeedbackPoints = initialValue };
+        var changes = new List<(object? Sender, EventArgs Args, int Count)>();
+        counter.FeedbackPointsChanged += (sender, args) =>
+            changes.Add((sender, args, counter.CountOfFeedbackPoints));
+
+        counter.CountOfFeedbackPoints = requestedValue;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(counter.CountOfFeedbackPoints, Is.EqualTo(expectedValue));
+            Assert.That(changes, Has.Count.EqualTo(expectedNotifications));
+            if (changes.Count == 1)
+            {
+                Assert.That(changes[0].Sender, Is.SameAs(counter));
+                Assert.That(changes[0].Args, Is.SameAs(EventArgs.Empty));
+                Assert.That(changes[0].Count, Is.EqualTo(expectedValue),
+                    "Subscribers must observe the updated feedback point count.");
+            }
+        }
+    }
+
+    [TestCase("{}", 0)]
+    [TestCase("{\"Counter\":{}}", 0)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":-2147483648}}", 0)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":-1}}", 0)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":0}}", 0)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":3}}", 3)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":2147483647}}", int.MaxValue)]
+    public void CounterFeedbackPointsLoadFromHandEditedSettings(string json, int expectedValue)
+    {
+        var settings = JsonSerializer.Deserialize<AppSettings>(json);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings, Is.Not.Null);
+            Assert.That(settings!.Counter.CountOfFeedbackPoints, Is.EqualTo(expectedValue));
+        }
+    }
+
     [Test]
     public void Z21_CurrentIpAddress_default_is_non_empty()
     {
