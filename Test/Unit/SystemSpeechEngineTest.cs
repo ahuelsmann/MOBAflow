@@ -26,20 +26,18 @@ internal class SystemSpeechEngineTest
     }
 
     [Test]
-    public Task OutputSpeech_MinimalTest()
+    public async Task OutputSpeech_MinimalTest()
     {
         // Some CI agents have no audio device which causes System.Speech to throw an AudioException.
         // In that case we mark the test as ignored instead of failing the pipeline.
         try
         {
-            Assert.DoesNotThrowAsync(async () =>
-                await _speakerEngine.AnnouncementAsync("Test Nachricht.", null));
+            await Assert.DoesNotThrowAsync(async () =>
+                await _speakerEngine.AnnouncementAsync("Test Nachricht.", null)).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex.Message.Contains("Audio device error", StringComparison.OrdinalIgnoreCase))
         {
             Assert.Ignore("Skipping SystemSpeechEngine test because no audio device is available on this environment.");
         }
-
-        return Task.CompletedTask;
     }
 }
