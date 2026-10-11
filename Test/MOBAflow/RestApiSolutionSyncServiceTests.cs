@@ -3,7 +3,6 @@
 namespace Moba.Test.MOBAflow;
 
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
 
@@ -17,7 +16,6 @@ using Moba.WinUI.Service;
 using Moq;
 
 [TestFixture]
-[SuppressMessage("Performance", "CA1812", Justification = "NUnit creates this fixture through reflection.")]
 internal sealed partial class RestApiSolutionSyncServiceTests
 {
     [Test]
