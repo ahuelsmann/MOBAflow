@@ -12,6 +12,7 @@ using SharedUI.Interface;
 
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 /// <summary>
 /// Service for reading and writing application settings to appsettings.json.
@@ -211,11 +212,14 @@ internal class SettingsService : ISettingsService
                 ApplyLoadedSettings(settings);
             }
 
-            var document = JsonSerializer.SerializeToNode(_settings, JsonOptions.Default)!;
+            var document = JsonSerializer.SerializeToNode(_settings, JsonOptions.Default);
             // The desktop owns endpoints in Project. Mobile still uses these settings until RF-23 slice 4b.
-            var z21 = document["z21"]!.AsObject();
-            z21.Remove("currentIpAddress");
-            z21.Remove("defaultPort");
+            if (document["z21"] is JsonObject z21)
+            {
+                z21.Remove("currentIpAddress");
+                z21.Remove("defaultPort");
+            }
+
             var json = document.ToJsonString(JsonOptions.Default);
             await File.WriteAllTextAsync(_settingsFilePath, json);
             _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);

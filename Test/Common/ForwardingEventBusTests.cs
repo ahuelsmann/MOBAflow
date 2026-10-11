@@ -82,5 +82,18 @@ internal sealed class ForwardingEventBusTests
         Assert.That(applicationReceived, Is.EqualTo(1));
     }
 
+    [Test]
+    public void FailingRuntimeHandler_IsCountedByTheForwardingBus()
+    {
+        var bus = new ForwardingEventBus(
+            new EventBus(NullLogger<EventBus>.Instance),
+            new EventBus(NullLogger<EventBus>.Instance));
+        bus.Subscribe<TestEvent>(_ => throw new InvalidOperationException("Expected test failure"));
+
+        bus.Publish(new TestEvent());
+
+        Assert.That(bus.HandlerFailureCount, Is.EqualTo(1));
+    }
+
     private sealed record TestEvent : EventBase;
 }

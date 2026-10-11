@@ -102,6 +102,13 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
     /// Disconnects the Z21 connections that no project runtime uses anymore.
     /// </summary>
     public Task DisconnectUnusedAsync() => _connections.DisconnectUnusedAsync();
+
+    /// <summary>Keeps the Z21 owner name current after the project was renamed.</summary>
+    public void RenameOwner(Project project)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        _connections.RenameOwner(project.Id, project.Name);
+    }
 }
 
 /// <summary>

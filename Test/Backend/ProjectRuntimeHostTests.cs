@@ -202,6 +202,20 @@ internal sealed class ProjectRuntimeHostTests
     }
 
     [Test]
+    public async Task RenamingTheOwnerOfAZ21_NamesItInLaterConflicts()
+    {
+        var station = Project("Station", "192.168.0.111");
+        await _host.LoadAsync([station]).ConfigureAwait(false);
+        station.Name = "Main station";
+        await _host.UpdateAsync(station).ConfigureAwait(false);
+
+        var yard = Project("Yard", "192.168.0.111");
+        await _host.AddAsync(yard).ConfigureAwait(false);
+
+        Assert.That(_host.Get(yard.Id)!.Connection.ConflictProjectName, Is.EqualTo("Main station"));
+    }
+
+    [Test]
     public async Task SelectionRequestedBeforeTheRuntimeExists_AppliesOnceItIsCreated()
     {
         var station = Project("Station", "192.168.0.111");

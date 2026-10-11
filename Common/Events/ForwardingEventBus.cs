@@ -13,7 +13,8 @@ namespace Moba.Common.Events;
 /// Whether an event is forwarded is decided when it is delivered, so an event queued before the project was deselected never
 /// reaches the application bus.
 /// </param>
-public sealed class ForwardingEventBus(IEventBus local, IEventBus target, Action<Action>? deliver = null) : IEventBus
+public sealed class ForwardingEventBus(IEventBus local, IEventBus target, Action<Action>? deliver = null)
+    : IEventBus, IEventBusDiagnostics
 {
     private readonly IEventBus _local = local ?? throw new ArgumentNullException(nameof(local));
     private readonly IEventBus _target = target ?? throw new ArgumentNullException(nameof(target));
@@ -41,6 +42,10 @@ public sealed class ForwardingEventBus(IEventBus local, IEventBus target, Action
             }
         });
     }
+
+    /// <inheritdoc />
+    /// <remarks>Failures of the runtime handlers on the local bus.</remarks>
+    public long HandlerFailureCount => (_local as IEventBusDiagnostics)?.HandlerFailureCount ?? 0;
 
     /// <inheritdoc />
     public Guid Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class, IEvent => _local.Subscribe(handler);
