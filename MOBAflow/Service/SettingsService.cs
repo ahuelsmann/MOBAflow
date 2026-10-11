@@ -12,6 +12,7 @@ using SharedUI.Interface;
 
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 /// <summary>
 /// Service for reading and writing application settings to appsettings.json.
@@ -19,19 +20,46 @@ using System.Text.Json;
 /// </summary>
 internal class SettingsService : ISettingsService
 {
+    private static readonly JsonSerializerOptions WinUiJsonOptions = CreateWinUiJsonOptions();
     private readonly AppSettings _settings;
     private readonly string _settingsFilePath;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
     private readonly ILogger<SettingsService> _logger;
 
     public SettingsService(AppSettings settings, ILogger<SettingsService> logger)
+        : this(settings, logger, ResolveSettingsFilePath())
+    {
+    }
+
+    internal SettingsService(AppSettings settings, ILogger<SettingsService> logger, string settingsFilePath)
     {
         _settings = settings;
         _logger = logger;
-        _settingsFilePath = ResolveSettingsFilePath();
+        _settingsFilePath = settingsFilePath;
 
         // Load settings synchronously to avoid deadlock
         LoadSettingsSync();
+    }
+
+    private static JsonSerializerOptions CreateWinUiJsonOptions()
+    {
+        var resolver = new DefaultJsonTypeInfoResolver();
+        resolver.Modifiers.Add(typeInfo =>
+        {
+            if (typeInfo.Type != typeof(Z21Settings))
+            {
+                return;
+            }
+
+            for (var index = typeInfo.Properties.Count - 1; index >= 0; index--)
+            {
+                if (typeInfo.Properties[index].Name is "currentIpAddress" or "defaultPort")
+                {
+                    typeInfo.Properties.RemoveAt(index);
+                }
+            }
+        });
+        return new JsonSerializerOptions(JsonOptions.Default) { TypeInfoResolver = resolver };
     }
 
     private static string ResolveSettingsFilePath()
@@ -203,7 +231,7 @@ internal class SettingsService : ISettingsService
                 ApplyLoadedSettings(settings);
             }
 
-            var json = JsonSerializer.Serialize(_settings, JsonOptions.Default);
+            var json = JsonSerializer.Serialize(_settings, WinUiJsonOptions);
             await File.WriteAllTextAsync(_settingsFilePath, json);
             _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);
         }

@@ -245,7 +245,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
             ClearSelection();
 
-            await _projectRuntimes.LoadAsync([.. Solution.Projects]).ConfigureAwait(false);
+            await _projectRuntimes.LoadAsync([.. Solution.Projects]).ConfigureAwait(true);
 
             SolutionLoaded?.Invoke(this, EventArgs.Empty);
         }

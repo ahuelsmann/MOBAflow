@@ -282,6 +282,54 @@ internal sealed partial class SolutionSessionTests
         Assert.That(changes, Is.EqualTo(1), "Only one persisted change while tracked, not suppressed and not UI-only.");
     }
 
+    [Test]
+    public async Task NewSolution_AfterAsynchronousRuntimeStop_RaisesLoadedOnTheCallingContext()
+    {
+        var session = CreateSession(new Solution(), out _, out var runtime);
+        var stopping = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        runtime.Setup(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()))
+            .Returns(stopping.Task);
+        var uiContext = new TestUiContext();
+        SynchronizationContext? eventContext = null;
+        session.SolutionLoaded += (_, _) => eventContext = SynchronizationContext.Current;
+        var original = SynchronizationContext.Current;
+        Task operation;
+        try
+        {
+            SynchronizationContext.SetSynchronizationContext(uiContext);
+            operation = session.NewSolutionAsync();
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(original);
+        }
+
+        stopping.SetResult();
+        await operation.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        Assert.That(eventContext, Is.SameAs(uiContext));
+    }
+
+    private sealed class TestUiContext : SynchronizationContext
+    {
+        public override void Post(SendOrPostCallback callback, object? state)
+        {
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                var original = Current;
+                SetSynchronizationContext(this);
+                try
+                {
+                    callback(state);
+                }
+                finally
+                {
+                    SetSynchronizationContext(original);
+                }
+            });
+        }
+    }
+
     private static SolutionSession CreateSession(
         Solution solution,
         out Mock<IIoService> io,

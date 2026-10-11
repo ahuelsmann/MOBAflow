@@ -132,7 +132,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "Backend/Service/MobaRuntimeService.RuntimeApi.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "Backend",

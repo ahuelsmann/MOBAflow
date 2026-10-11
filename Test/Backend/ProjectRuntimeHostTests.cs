@@ -232,6 +232,60 @@ internal sealed class ProjectRuntimeHostTests
         Assert.That(_host.Selected?.ProjectId, Is.EqualTo(station.Id));
     }
 
+    [TestCase("load")]
+    [TestCase("remove")]
+    [TestCase("replace")]
+    public async Task CancellingAStop_PropagatesTheTokenAndKeepsTheRuntimeForCleanup(string operation)
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { DigitalAddress = 3 });
+        await _host.LoadAsync([station]).ConfigureAwait(false);
+        ConfirmConnection(_createdZ21s[0]);
+        var original = _host.Get(station.Id);
+        using var cancellation = new CancellationTokenSource();
+        var stopping = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var stopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _createdZ21s[0].Setup(value => value.SetLocoDriveAsync(3, 0, true, It.IsAny<CancellationToken>()))
+            .Returns<int, int, bool, CancellationToken>((_, _, _, token) =>
+            {
+                stopping.TrySetResult(token);
+                return stopped.Task.WaitAsync(token);
+            });
+
+        var pending = operation switch
+        {
+            "remove" => _host.RemoveAsync(station.Id, cancellation.Token),
+            "replace" => _host.ReplaceAsync(station, cancellation.Token),
+            _ => _host.LoadAsync([], cancellation.Token)
+        };
+        try
+        {
+            var receivedToken = await stopping.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            Assert.That(receivedToken, Is.EqualTo(cancellation.Token));
+            await cancellation.CancelAsync().ConfigureAwait(false);
+            await Assert.ThrowsAsync<TaskCanceledException>(() => pending.WaitAsync(TimeSpan.FromSeconds(5))).ConfigureAwait(false);
+            Assert.That(_host.Get(station.Id), Is.SameAs(original));
+        }
+        finally
+        {
+            await cancellation.CancelAsync().ConfigureAwait(false);
+            stopped.TrySetResult();
+            _createdZ21s[0].Setup(value => value.SetLocoDriveAsync(3, 0, true, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            try
+            {
+                await pending.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when the host honored the cancellation token.
+            }
+        }
+    }
+
+    private static void ConfirmConnection(Mock<IZ21> z21) =>
+        z21.Raise(value => value.OnConnectedChanged += null, true);
+
     private ulong Count(Project project, uint inPort) =>
         _host.Get(project.Id)!.Runtime.Current.InPortCounters.Single(counter => counter.InPort == inPort).Count;
 

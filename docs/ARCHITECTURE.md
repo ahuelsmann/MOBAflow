@@ -267,6 +267,10 @@ IZ21 / JourneyManager / WorkflowService
   shell asks first ("Stop all trains?") before a new or opened solution, a project
   deletion or closing MOBAflow when an affected runtime is connected; cancelling keeps
   everything running.
+- Manual disconnect also stops known locomotives before logging off. Stop commands use
+  DCC addresses 1–9999 and continue after individual send failures. Failed manual stops
+  keep the connection available for retry; host shutdown passes its cancellation token
+  through the stop loop and retains a runtime when its stop is cancelled.
 - Covered by `Test/Backend/ProjectRuntimeHostTests.cs` and
   `Test/SharedUI/MainWindowViewModelShutdownTests.cs`.
 

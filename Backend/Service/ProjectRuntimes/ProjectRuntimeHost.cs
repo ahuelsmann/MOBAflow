@@ -73,7 +73,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await DisposeAllAsync().ConfigureAwait(false);
+            await DisposeAllAsync(cancellationToken).ConfigureAwait(false);
             lock (_runtimes)
             {
                 _order.Clear();
@@ -125,12 +125,12 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         try
         {
             var removedKey = Get(projectId)?.Z21Key;
+            await RemoveCoreAsync(projectId, cancellationToken).ConfigureAwait(false);
             lock (_runtimes)
             {
                 _order.Remove(projectId);
             }
 
-            await RemoveCoreAsync(projectId).ConfigureAwait(false);
             await ReconcileZ21OwnersAsync([removedKey], cancellationToken).ConfigureAwait(false);
             await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
         }
@@ -156,7 +156,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
                 }
             }
 
-            await RemoveCoreAsync(project.Id).ConfigureAwait(false);
+            await RemoveCoreAsync(project.Id, cancellationToken).ConfigureAwait(false);
             await AddCoreAsync(project, cancellationToken).ConfigureAwait(false);
             await ReconcileZ21OwnersAsync([previousKey, Get(project.Id)?.Z21Key], cancellationToken).ConfigureAwait(false);
             await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
@@ -185,7 +185,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        await DisposeAllAsync().ConfigureAwait(false);
+        await DisposeAllAsync(CancellationToken.None).ConfigureAwait(false);
         _gate.Dispose();
     }
 
@@ -238,7 +238,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
 
             foreach (var runtime in sharing)
             {
-                await RemoveCoreAsync(runtime.ProjectId).ConfigureAwait(false);
+                await RemoveCoreAsync(runtime.ProjectId, cancellationToken).ConfigureAwait(false);
             }
 
             foreach (var runtime in sharing)
@@ -248,9 +248,10 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         }
     }
 
-    private async Task RemoveCoreAsync(Guid projectId)
+    private async Task RemoveCoreAsync(Guid projectId, CancellationToken cancellationToken)
     {
-        var runtime = Detach(projectId);
+        cancellationToken.ThrowIfCancellationRequested();
+        var runtime = Get(projectId);
         if (runtime is null)
         {
             return;
@@ -259,17 +260,18 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         // No runtime is discarded while its trains could still be moving.
         try
         {
-            await runtime.StopLocomotivesAsync().ConfigureAwait(false);
+            await runtime.StopLocomotivesAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             LogStopLocomotivesFailed(_logger, projectId, ex);
         }
 
+        Detach(projectId);
         await runtime.DisposeAsync().ConfigureAwait(false);
     }
 
-    private async Task DisposeAllAsync()
+    private async Task DisposeAllAsync(CancellationToken cancellationToken)
     {
         List<Guid> projectIds;
         lock (_runtimes)
@@ -279,7 +281,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
 
         foreach (var projectId in projectIds)
         {
-            await RemoveCoreAsync(projectId).ConfigureAwait(false);
+            await RemoveCoreAsync(projectId, cancellationToken).ConfigureAwait(false);
         }
     }
 

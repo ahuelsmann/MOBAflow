@@ -133,6 +133,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
         if (e.PropertyName == nameof(ISolutionSession.SelectedProject))
         {
             QueuePush();
+            QueueRuntimeSettingsPush();
         }
     }
     private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e)

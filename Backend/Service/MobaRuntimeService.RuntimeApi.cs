@@ -141,6 +141,7 @@ public sealed partial class MobaRuntimeService
             _statusText = "Disconnecting...";
             PublishSnapshot();
 
+            await StopAllLocomotivesAsync(cancellationToken).ConfigureAwait(false);
             await _z21.DisconnectAsync().ConfigureAwait(false);
 
             _isConnected = false;
@@ -148,7 +149,7 @@ public sealed partial class MobaRuntimeService
             _statusText = "Disconnected";
             PublishSnapshot();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _statusText = $"Error: {ex.Message}";
             PublishSnapshot();
@@ -207,23 +208,40 @@ public sealed partial class MobaRuntimeService
     /// </summary>
     public async Task StopAllLocomotivesAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (!_isConnected)
         {
             return;
         }
 
-        var directions = _locomotiveStates.ToDictionary(pair => pair.Key, pair => pair.Value.IsForward);
+        var directions = _locomotiveStates
+            .Where(pair => pair.Key is > 0 and <= 9999)
+            .ToDictionary(pair => pair.Key, pair => pair.Value.IsForward);
         foreach (var locomotive in _activeProjectContext?.ActiveProject.Locomotives ?? [])
         {
-            if (locomotive.DigitalAddress is { } address and > 0 and <= int.MaxValue)
+            if (locomotive.DigitalAddress is { } address and > 0 and <= 9999)
             {
                 directions.TryAdd((int)address, true);
             }
         }
 
+        List<Exception> failures = [];
         foreach (var (address, forward) in directions)
         {
-            await SetLocomotiveDriveAsync(address, 0, forward, cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                await SetLocomotiveDriveAsync(address, 0, forward, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                failures.Add(new InvalidOperationException($"Failed to stop locomotive at address {address}.", ex));
+            }
+        }
+
+        if (failures.Count > 0)
+        {
+            throw new AggregateException("Some locomotives could not be stopped.", failures);
         }
     }
 
