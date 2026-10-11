@@ -242,7 +242,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
                 // Fast REST discovery, anchored on the subnet of the selected project's Z21.
                 var fast = await _endpointLocator
-                    .DiscoverAsync(GetDiscoveryAnchor(), fullScan: false, _applicationLifetimeCts.Token)
+                    .DiscoverAsync(ToDiscoveryAnchor(Z21IpAddress), fullScan: false, _applicationLifetimeCts.Token)
                     .ConfigureAwait(false);
                 if (fast is not null)
                 {
@@ -290,7 +290,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private async Task RestDiscoveryLoopAsync()
     {
         var found = await _endpointLocator
-            .DiscoverWithRetriesAsync(GetDiscoveryAnchor, _applicationLifetimeCts.Token)
+            .DiscoverWithRetriesAsync(() => ToDiscoveryAnchor(Z21IpAddress), _applicationLifetimeCts.Token)
             .ConfigureAwait(false);
         if (found is not null)
         {
@@ -313,7 +313,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>The subnet of the selected project's Z21 anchors the LAN discovery; null without a Z21.</summary>
-    private string? GetDiscoveryAnchor() => string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
+    private static string? ToDiscoveryAnchor(string? z21IpAddress) =>
+        string.IsNullOrWhiteSpace(z21IpAddress) ? null : z21IpAddress.Trim();
 
     private void OnNetworkProfilePossiblyChanged(object? sender, EventArgs e)
     {
@@ -375,7 +376,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private async Task RetryMobaflowDiscoveryCoreAsync()
     {
         _endpointLocator.ResetDiscoveryCadence();
-        await DiscoverMobaflowEndpointAsync(fullScan: true, GetDiscoveryAnchor(), _applicationLifetimeCts.Token).ConfigureAwait(false);
+        await DiscoverMobaflowEndpointAsync(fullScan: true, ToDiscoveryAnchor(Z21IpAddress), _applicationLifetimeCts.Token).ConfigureAwait(false);
         await RefreshRestApiReachableAsync(_applicationLifetimeCts.Token, useConnectTimeout: false).ConfigureAwait(false);
         if (IsRestApiReachable)
         {
@@ -590,7 +591,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         // Only a connected Z21 confirms the subnet the phone is on.
         var found = await _endpointLocator
-            .DiscoverWhenDueAsync(IsConnected ? GetDiscoveryAnchor() : null, _applicationLifetimeCts.Token)
+            .DiscoverWhenDueAsync(IsConnected ? ToDiscoveryAnchor(Z21IpAddress) : null, _applicationLifetimeCts.Token)
             .ConfigureAwait(false);
         if (found is not null)
         {
@@ -636,7 +637,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         {
             if (_settings.RestApi.IsConnectionEnabled && !_mobaflowConnectInProgress)
             {
-                await DiscoverMobaflowEndpointAsync(false, GetDiscoveryAnchor(), _applicationLifetimeCts.Token).ConfigureAwait(false);
+                await DiscoverMobaflowEndpointAsync(false, ToDiscoveryAnchor(Z21IpAddress), _applicationLifetimeCts.Token).ConfigureAwait(false);
                 serverIp = _settings.RestApi.CurrentIpAddress?.Trim() ?? string.Empty;
                 serverPort = _settings.RestApi.Port;
             }
@@ -1324,7 +1325,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             if (string.IsNullOrEmpty(ip) || !port.HasValue)
             {
                 var discovered = await _endpointLocator
-                    .FindAsync(GetDiscoveryAnchor(), _applicationLifetimeCts.Token)
+                    .FindAsync(ToDiscoveryAnchor(Z21IpAddress), _applicationLifetimeCts.Token)
                     .ConfigureAwait(false);
                 ip = discovered?.IpAddress;
                 port = discovered?.Port;
