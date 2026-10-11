@@ -14,10 +14,7 @@ public partial class MainWindowViewModel
     /// Gets the speech status text shown in the status bar.
     /// Uses Piper health details for Piper TTS and a local-ready text for System Speech.
     /// </summary>
-    public string SpeechStatusDisplayText =>
-        IsPiperSpeechEngineSelected
-            ? SpeechHealthStatus
-            : "System Speech: Ready (local)";
+    public string SpeechStatusDisplayText => SpeechHealthStatus;
 
     /// <summary>
     /// Update health status UI properties based on status message.
@@ -25,7 +22,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public void UpdateHealthStatus(string statusMessage)
     {
-        SpeechHealthStatus = $"Piper TTS: {statusMessage.TrimStart('✅', '❌', '⚠', '️', '⏳', ' ')}";
+        SpeechHealthStatus = $"Speech: {statusMessage.TrimStart('✅', '❌', '⚠', '️', '⏳', ' ')}";
 
         // Update icon and color based on status
         if (statusMessage.Contains("Ready"))

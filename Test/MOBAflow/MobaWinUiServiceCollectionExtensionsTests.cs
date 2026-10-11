@@ -18,7 +18,8 @@ using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
-using Moba.Sound;
+using Moba.Speech.Base;
+using Moba.Test.Speech;
 using Moq;
 
 /// <summary>
@@ -99,47 +100,54 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     }
 
     [Test]
-    public async Task SettingsSpeechTest_KeepsFirstResolvedEngine_WhileAnnouncementsUseCurrentSelection()
+    public async Task SettingsSpeechTest_AndAnnouncementsUseCurrentProviderAndOptions()
     {
-        var systemSpeaker = new Mock<ISpeakerEngine>();
-        var piperSpeaker = new Mock<ISpeakerEngine>();
-        systemSpeaker.Setup(engine => engine.AnnouncementAsync(It.IsAny<string>(), null))
-            .Returns(Task.CompletedTask);
-        piperSpeaker.Setup(engine => engine.AnnouncementAsync(
-                It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        var systemRegistration = new Mock<ISpeakerEngineRegistration>();
-        var piperRegistration = new Mock<ISpeakerEngineRegistration>();
-        systemRegistration.Setup(value => value.CanCreate(SpeechSpeakerEngineSelection.SystemSpeech)).Returns(true);
-        piperRegistration.Setup(value => value.CanCreate(SpeechSpeakerEngineSelection.PiperTts)).Returns(true);
-        systemRegistration.Setup(value => value.Create(It.IsAny<SpeechOptions>())).Returns(systemSpeaker.Object);
-        piperRegistration.Setup(value => value.Create(It.IsAny<SpeechOptions>())).Returns(piperSpeaker.Object);
+        var system = new SpeechOutputTests.FakeProvider("system-speech");
+        var piper = new SpeechOutputTests.FakeProvider("piper");
+        var player = new SpeechOutputTests.FakePlayer();
+        var savedSettings = new List<string>();
         var provider = CreateValidatorServiceProvider(services =>
         {
-            services.RemoveAll<ISpeakerEngineRegistration>();
-            services.AddSingleton(systemRegistration.Object);
-            services.AddSingleton(piperRegistration.Object);
+            services.RemoveAll<ISpeechProvider>();
+            services.AddSingleton<ISpeechProvider>(system);
+            services.AddSingleton<ISpeechProvider>(piper);
+            services.AddSingleton<IWavePlayer>(player);
+            services.AddSingleton<ISettingsService>(sp =>
+            {
+                var settingsService = new Mock<ISettingsService>();
+                settingsService.Setup(value => value.GetSettings()).Returns(sp.GetRequiredService<AppSettings>());
+                settingsService.Setup(value => value.SaveSettingsAsync(It.IsAny<AppSettings>()))
+                    .Callback<AppSettings>(value => savedSettings.Add(System.Text.Json.JsonSerializer.Serialize(value)))
+                    .Returns(Task.CompletedTask);
+                return settingsService.Object;
+            });
         });
         await using (provider.ConfigureAwait(false))
         {
             var settings = provider.GetRequiredService<AppSettings>();
-            settings.Speech.SpeakerEngineName = SpeechSpeakerEngineSelection.SystemSpeech;
             settings.Speech.TestMessage = "Settings test";
-            settings.Speech.VoiceName = "Configured voice";
             var viewModel = provider.GetRequiredService<MainWindowViewModel>();
-
             await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
-            settings.Speech.SpeakerEngineName = SpeechSpeakerEngineSelection.PiperTts;
+            viewModel.SystemSpeechDefaultVoiceName = "Windows voice";
+            viewModel.SelectedSpeechProviderId = "piper";
+            viewModel.PiperModelPath = "selected.onnx";
+            viewModel.SpeechRate = 2;
+            viewModel.SpeechVolume = 65;
             await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
             await provider.GetRequiredService<AnnouncementService>()
                 .GenerateAndSpeakAnnouncementAsync("Workflow announcement", new Station(), 1).ConfigureAwait(false);
-
-            systemSpeaker.Verify(engine => engine.AnnouncementAsync("Settings test", null), Times.Exactly(2));
-            piperSpeaker.Verify(engine => engine.AnnouncementAsync(
-                "Workflow announcement", null, CancellationToken.None), Times.Once);
-            systemRegistration.Verify(value => value.Create(It.IsAny<SpeechOptions>()), Times.Once);
-            piperRegistration.Verify(value => value.Create(It.IsAny<SpeechOptions>()), Times.Once);
-            Assert.That(provider.GetRequiredService<ISpeakerEngine>(), Is.SameAs(systemSpeaker.Object));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(system.Requests, Has.One.Matches<SpeechRequest>(request => request is not null && request.Text == "Settings test"));
+                Assert.That(piper.Requests, Has.Count.EqualTo(2));
+                Assert.That(piper.Requests[0].Text, Is.EqualTo("Settings test"));
+                Assert.That(piper.Requests[1].Text, Is.EqualTo("Workflow announcement"));
+                Assert.That(piper.Requests.All(request => request.Rate == 2 && request.Volume == 65), Is.True);
+                Assert.That(player.PlayCount, Is.EqualTo(3));
+                Assert.That(savedSettings, Has.Some.Contains("selected.onnx"));
+                Assert.That(savedSettings, Has.Some.Contains("Windows voice"));
+                Assert.That(settings.Speech.ProviderId, Is.EqualTo("piper"));
+            }
         }
     }
 

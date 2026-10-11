@@ -9,7 +9,7 @@ using Common.Extension;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-using Sound;
+using Speech.Base;
 
 /// <summary>
 /// Centralized health check service that monitors the selected speech service and provides
@@ -96,9 +96,9 @@ public partial class HealthCheckService : IDisposable
 
         try
         {
-            // Check local Piper TTS configuration.
-            var isConfigured = _speechHealthCheck.IsConfigured();
-            var isHealthy = isConfigured && await _speechHealthCheck.TestConnectivityAsync();
+            // Check local Speech provider configuration.
+            var isHealthy = await _speechHealthCheck.TestConnectivityAsync();
+            var isConfigured = isHealthy;
 
             var previousStatus = SpeechServiceStatus;
             var previousHealthy = IsSpeechServiceHealthy;
@@ -107,19 +107,19 @@ public partial class HealthCheckService : IDisposable
             {
                 SpeechServiceStatus = "⚠️ Not Configured";
                 IsSpeechServiceHealthy = false;
-                Console.WriteLine("⚠️ Piper TTS: Not Configured");
+                Console.WriteLine("⚠️ Speech provider: Not Configured");
             }
             else if (isHealthy)
             {
                 SpeechServiceStatus = "✅ Ready";
                 IsSpeechServiceHealthy = true;
-                Console.WriteLine("✅ Piper TTS: Ready");
+                Console.WriteLine("✅ Speech provider: Ready");
             }
             else
             {
                 SpeechServiceStatus = "❌ Connection Failed";
                 IsSpeechServiceHealthy = false;
-                Console.WriteLine("❌ Piper TTS: Startup Failed");
+                Console.WriteLine("❌ Speech provider: Startup Failed");
             }
 
             // Notify if status changed
@@ -129,7 +129,7 @@ public partial class HealthCheckService : IDisposable
                 _logger.LogInformation("Health status changed: {Status}", SpeechServiceStatus);
                 OnHealthStatusChanged(new HealthStatusChangedEventArgs
                 {
-                    ServiceName = "PiperTts",
+                    ServiceName = "Speech",
                     IsHealthy = IsSpeechServiceHealthy,
                     StatusMessage = SpeechServiceStatus
                 });

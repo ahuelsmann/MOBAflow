@@ -87,7 +87,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
     /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
-    /// <param name="speechTestAction">Optional direct speech test action for the selected speaker engine.</param>
+    /// <param name="speechTestAction">Optional direct speech test action for the selected speech provider.</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
         IRuntimeSnapshotProvider runtimeSnapshots,

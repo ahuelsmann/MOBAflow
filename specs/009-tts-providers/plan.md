@@ -6,7 +6,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Approved; slice 1 implemented in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11); later slices pending.
+**Status**: Approved; slice 1 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11). Slice 2 implemented on `codex/issue-136-tts-slice2`; draft PR preparation and manual UI acceptance pending. Slices 3-6 pending.
 
 **Input**: Feature specification from `/specs/009-tts-providers/spec.md`
 
@@ -36,7 +36,8 @@ folder. Azure key in the Windows credential store; Azure region and voice in the
 `MobaBackendServiceCollectionExtensionsTests` are moved or replaced.
 
 **Target Platforms**: Contract and shared speech output `net10.0` (Backend calls them on every platform); all
-provider libraries `net10.0-windows`, referenced by MOBAflow only.
+provider libraries `net10.0-windows` (local providers use the host target `net10.0-windows10.0.22621.0`),
+referenced by MOBAflow only.
 
 **Affected Layers**: `Sound` (speech parts move out), `Common/Configuration` (speech settings), `Backend`
 (`AnnouncementService`, `ActionExecutionContext`, DI), `SharedUI` (settings and health ViewModels), `MOBAflow`
@@ -66,7 +67,8 @@ Android speech and runtime plugin loading excluded.
   cancellation and failures, all without live paid calls.
 - [x] Validation follows the `AGENTS.md` matrix (shared logic plus WinUI compile, Android compile for the package
   removal).
-- [x] The design reuses `ISoundPlayer`, the speech health check and the DI extension methods; `ISpeakerEngine` and
+- [x] The design retains `ISoundPlayer` for sound effects and uses `IWavePlayer` for cancellable speech WAV playback,
+  with a Windows host adapter, the speech health check and the DI extension methods; `ISpeakerEngine` and
   its factory are replaced, not kept beside the new contract.
 - [x] Spec and plan reference #136.
 - [x] Artifacts stay below `specs/`.
@@ -108,7 +110,7 @@ Names follow the `TrackLibrary.Base` / `TrackLibrary.PikoA` pattern; final names
 
 1. Build the request from the current settings and resolve the selected provider by id (FR-003, takes effect for
    the next call). An unknown or missing id selects the default provider `system-speech` and writes a diagnostic.
-2. **Cache hit**: play the cached WAV through `ISoundPlayer`; no provider call (FR-006, SC-003).
+2. **Cache hit**: play the cached WAV through `IWavePlayer`; no provider call (FR-006, SC-003).
 3. **Cache miss**: synthesise with the selected provider, store the audio in the cache, play it. Concurrent misses
    for the same cache key share one synthesis (per-key single flight), so overlapping identical announcements cause
    one provider call; different keys synthesise independently. Each caller observes its own cancellation token;
@@ -204,7 +206,9 @@ Each slice is one draft PR from its own worktree.
   the network off on the maintainer's PC (requires launch approval and the maintainer's Azure key).
 - **Regression checks**: slice 2 compiles with all removed-field callers and bindings converted; both the Settings
   test callback and `AnnouncementService` use the current selection and settings without restarting; app settings
-  load with removed fields; analyzer baselines unchanged. Slice 3 tests one cancelled waiter, all waiters cancelled,
+  load with removed fields; analyzer baseline gates stay unchanged. Refresh snapshots only for removed/moved
+  diagnostics and reviewed findings already suppressed as false positives. Slice 3 tests one cancelled waiter,
+  all waiters cancelled,
   a new request after cancellation and shutdown during shared synthesis; cancelled calls start no fallback or
   deferred synthesis. Slice 4 repeats the cancellation assertions with fallback and the pending queue enabled.
 - **Secrets scan**: all changed files; a test asserts that the key never appears in logs, diagnostics or cache

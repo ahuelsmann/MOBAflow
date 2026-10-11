@@ -93,9 +93,9 @@ internal class AppSettingsDefaultsTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(speech.PiperExecutablePath, Is.EqualTo(string.Empty));
-            Assert.That(speech.PiperModelPath, Is.EqualTo(string.Empty));
-            Assert.That(speech.PiperConfigPath, Is.EqualTo(string.Empty));
+            Assert.That(speech.Piper.ExecutablePath, Is.EqualTo(string.Empty));
+            Assert.That(speech.Piper.ModelPath, Is.EqualTo(string.Empty));
+            Assert.That(speech.Piper.ConfigPath, Is.EqualTo(string.Empty));
         });
     }
 
@@ -103,22 +103,22 @@ internal class AppSettingsDefaultsTests
     public void Speech_EnablePronunciationNormalization_default_is_true()
     {
         var speech = new SpeechSettings();
-        Assert.That(speech.EnablePronunciationNormalization, Is.True);
+        Assert.That(speech.Piper.EnablePronunciationNormalization, Is.True);
     }
 
     [Test]
     public void Speech_PiperSentenceSilenceSeconds_default_is_zero()
     {
         var speech = new SpeechSettings();
-        Assert.That(speech.PiperSentenceSilenceSeconds, Is.Zero);
+        Assert.That(speech.Piper.SentenceSilenceSeconds, Is.Zero);
     }
 
     [Test]
     public void Speech_PronunciationReplacements_default_is_empty()
     {
         var speech = new SpeechSettings();
-        Assert.That(speech.PronunciationReplacements, Is.Not.Null);
-        Assert.That(speech.PronunciationReplacements, Is.Empty);
+        Assert.That(speech.Piper.PronunciationReplacements, Is.Not.Null);
+        Assert.That(speech.Piper.PronunciationReplacements, Is.Empty);
     }
 
     [Test]

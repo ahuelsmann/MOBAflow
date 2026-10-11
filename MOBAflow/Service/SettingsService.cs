@@ -83,6 +83,7 @@ internal class SettingsService : ISettingsService
     /// </summary>
     private void ApplyLoadedSettings(AppSettings source)
     {
+        _settings.Speech = source.Speech;
         _settings.Application.LastSolutionPath = source.Application.LastSolutionPath;
         _settings.Application.AutoLoadLastSolution = source.Application.AutoLoadLastSolution;
         _settings.Application.AutoStartWebApp = source.Application.AutoStartWebApp;

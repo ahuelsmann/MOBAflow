@@ -145,9 +145,9 @@ jobs:
         run: |
           $settingsPath = 'artifacts/MOBAflow-win-x64/appsettings.json'
           $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
-          $settings.Speech.PiperExecutablePath = ''
-          $settings.Speech.PiperModelPath = ''
-          $settings.Speech.PiperConfigPath = ''
+          $settings.Speech.Piper.ExecutablePath = ''
+          $settings.Speech.Piper.ModelPath = ''
+          $settings.Speech.Piper.ConfigPath = ''
           $settings.Application.LastSolutionPath = $null
           $settings.Application.PhotoStoragePath = ''
           $settings | ConvertTo-Json -Depth 20 | Set-Content $settingsPath -Encoding utf8NoBOM
