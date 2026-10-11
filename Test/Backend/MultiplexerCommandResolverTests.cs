@@ -29,9 +29,12 @@ internal sealed class MultiplexerCommandResolverTests
     {
         var command = MultiplexerCommandResolver.Resolve(baseAddress, multiplexerArticle, signalArticle, aspect);
 
-        Assert.That(command.DccAddress, Is.EqualTo(expectedDccAddress));
-        Assert.That(command.Output, Is.EqualTo(expectedOutput));
-        Assert.That(command.Activate, Is.EqualTo(expectedActivate));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(command.DccAddress, Is.EqualTo(expectedDccAddress));
+            Assert.That(command.Output, Is.EqualTo(expectedOutput));
+            Assert.That(command.Activate, Is.EqualTo(expectedActivate));
+        }
     }
 
     [Test]
@@ -44,9 +47,12 @@ internal sealed class MultiplexerCommandResolverTests
 
         var command = MultiplexerCommandResolver.Resolve(201, "5229", "4046", SignalAspect.Ks2, settings);
 
-        Assert.That(command.AddressOffset, Is.EqualTo(2));
-        Assert.That(command.OriginalActivate, Is.True);
-        Assert.That(command.Activate, Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(command.AddressOffset, Is.EqualTo(2));
+            Assert.That(command.OriginalActivate, Is.True);
+            Assert.That(command.Activate, Is.False);
+        }
     }
 
     [Test]
@@ -60,9 +66,12 @@ internal sealed class MultiplexerCommandResolverTests
                 {
                     var command = MultiplexerCommandResolver.Resolve(201, definition.ArticleNumber, signalArticle, aspect);
 
-                    Assert.That(command.DccAddress, Is.InRange(201, 204));
-                    Assert.That(command.Output, Is.InRange(0, 1));
-                    Assert.That(command.AddressOffset, Is.InRange(0, 3));
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(command.DccAddress, Is.InRange(201, 204));
+                        Assert.That(command.Output, Is.InRange(0, 1));
+                        Assert.That(command.AddressOffset, Is.InRange(0, 3));
+                    }
                 }
             }
         }
@@ -73,9 +82,12 @@ internal sealed class MultiplexerCommandResolverTests
     {
         var command = MultiplexerCommandResolver.Resolve(201, "5229", null, SignalAspect.Ks1);
 
-        Assert.That(command.DccAddress, Is.EqualTo(201));
-        Assert.That(command.Output, Is.EqualTo(1));
-        Assert.That(command.Activate, Is.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(command.DccAddress, Is.EqualTo(201));
+            Assert.That(command.Output, Is.EqualTo(1));
+            Assert.That(command.Activate, Is.True);
+        }
     }
 
     [Test]
@@ -95,8 +107,11 @@ internal sealed class MultiplexerCommandResolverTests
 
         var command = MultiplexerCommandResolver.Resolve(201, "5229", "4046", aspect, settings);
 
-        Assert.That(command.AddressOffset, Is.EqualTo(offset));
-        Assert.That(command.Activate, Is.EqualTo(!command.OriginalActivate));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(command.AddressOffset, Is.EqualTo(offset));
+            Assert.That(command.Activate, Is.EqualTo(!command.OriginalActivate));
+        }
     }
 
     [Test]
@@ -133,5 +148,76 @@ internal sealed class MultiplexerCommandResolverTests
     {
         Assert.Throws<ArgumentException>(() =>
             MultiplexerCommandResolver.Resolve(201, "5229", "4042", SignalAspect.Zs1));
+    }
+
+    [TestCase(1, "4046", SignalAspect.Hp0, 1, 0, true)]
+    [TestCase(2041, "4046", SignalAspect.Dunkel, 2044, 1, true)]
+    [TestCase(2043, "4040", SignalAspect.Ks1Blink, 2044, 0, true)]
+    [TestCase(2043, "4042", SignalAspect.Hp0, 2043, 0, false)]
+    public void Resolve_ValidAddressBoundariesPreserveCommand(
+        int baseAddress, string article, SignalAspect aspect, int address, int output, bool activate)
+    {
+        var command = MultiplexerCommandResolver.Resolve(baseAddress, "5229", article, aspect);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(command.DccAddress, Is.EqualTo(address));
+            Assert.That(command.AddressOffset, Is.EqualTo(address - baseAddress));
+            Assert.That(command.Output, Is.EqualTo(output));
+            Assert.That(command.Activate, Is.EqualTo(activate));
+            Assert.That(command.OriginalActivate, Is.EqualTo(activate));
+        }
+    }
+
+    [TestCase(0)]
+    [TestCase(-1)]
+    [TestCase(2045)]
+    [TestCase(int.MaxValue)]
+    public void Resolve_RejectsBaseAddressOutsideDccRange(int baseAddress)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            MultiplexerCommandResolver.Resolve(baseAddress, "5229", "4042", SignalAspect.Hp0));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("baseAddress"));
+    }
+
+    [Test]
+    public void Resolve_RejectsOverflowEvenWhenSelectedAspectUsesBaseAddress()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            MultiplexerCommandResolver.Resolve(2043, "5229", "4046", SignalAspect.Hp0));
+    }
+
+    [Test]
+    public void Resolve_InvertedInactiveCommandActivatesAndKeepsOriginalValue()
+    {
+        var settings = new SignalBoxSettings { InvertPolarityOffset0 = true };
+
+        var command = MultiplexerCommandResolver.Resolve(201, "5229", "4042", SignalAspect.Hp0, settings);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(command.DccAddress, Is.EqualTo(201));
+            Assert.That(command.Output, Is.Zero);
+            Assert.That(command.OriginalActivate, Is.False);
+            Assert.That(command.Activate, Is.True);
+        }
+    }
+
+    [Test]
+    public void Resolve_InversionForOtherOffsetDoesNotChangeSelectedCommand()
+    {
+        var settings = new SignalBoxSettings { InvertPolarityOffset0 = true };
+
+        var command = MultiplexerCommandResolver.Resolve(201, "5229", "4046", SignalAspect.Dunkel, settings);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(command.DccAddress, Is.EqualTo(204));
+            Assert.That(command.Output, Is.EqualTo(1));
+            Assert.That(command.AddressOffset, Is.EqualTo(3));
+            Assert.That(command.OriginalActivate, Is.True);
+            Assert.That(command.Activate, Is.True);
+        }
     }
 }

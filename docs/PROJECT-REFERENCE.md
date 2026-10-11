@@ -123,8 +123,13 @@ shared master data loaded through `MasterDataStore`.
 
 ### Journeys and feedback
 
-`InPortCounterService` counts accepted activations per InPort for the application
-session; only an explicit reset sets the counters back to zero. A journey's
+`InPortCounterService` counts accepted activations per configured InPort and
+persists counts through `IInPortCounterStore` / `FileInPortCounterStore`.
+WinUI uses `%LOCALAPPDATA%/MOBAflow/inport-counters.json`; Android uses a separate
+file in its app-data directory. Counts survive restarts; timestamps and lap
+timing do not. Set/reset commands save corrections without publishing feedback
+activations. An unreadable store disables counting until a later load succeeds
+or an explicit reset replaces the saved counts. A journey's
 `EventPlan` holds independent `JourneyEvent` entries (InPort, count, optional
 workflow, enabled). For every accepted activation, `JourneyManager` evaluates all
 journeys marked `IsActive` and starts the workflow of each enabled event whose
