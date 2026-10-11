@@ -171,7 +171,8 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
     public Task UpdateAsync(Project project, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(project);
-        return Get(project.Id)?.Runtime.UpdateProjectAsync(project, cancellationToken) ?? Task.CompletedTask;
+        _factory.RenameOwner(project);
+        return Get(project.Id)?.UpdateAsync(project, cancellationToken) ?? Task.CompletedTask;
     }
 
     /// <inheritdoc />

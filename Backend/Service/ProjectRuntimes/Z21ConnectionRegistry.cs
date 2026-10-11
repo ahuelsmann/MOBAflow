@@ -7,6 +7,8 @@ using Domain;
 
 using Interface;
 
+using Protocol;
+
 /// <summary>
 /// Owns the Z21 connections for the application lifetime, one per Z21 address. A project runtime borrows the
 /// connection of its project's Z21; a runtime created again for the same project takes over the open connection.
@@ -114,7 +116,10 @@ public sealed class Z21ConnectionRegistry(Func<ForwardingEventBus> busFactory, F
         }
     }
 
-    /// <summary>Normalizes a Z21 address and port; null when no Z21 is assigned.</summary>
+    /// <summary>
+    /// Identifies the Z21 a project uses; null when no Z21 is assigned. The two standard ports reach the same
+    /// command station (a runtime tries both), so they share one key; another port keeps its own.
+    /// </summary>
     public static string? ToKey(Z21Endpoint endpoint)
     {
         ArgumentNullException.ThrowIfNull(endpoint);
@@ -125,7 +130,19 @@ public sealed class Z21ConnectionRegistry(Func<ForwardingEventBus> busFactory, F
         }
 
         var port = endpoint.Port > 0 ? endpoint.Port : Z21Endpoint.DefaultPort;
-        return $"{address}:{port}";
+        return port is Z21Protocol.DefaultPort or Z21Protocol.AlternativePort ? address : $"{address}:{port}";
+    }
+
+    /// <summary>Keeps the owner's name current after its project was renamed, for later conflict messages.</summary>
+    public void RenameOwner(Guid projectId, string projectName)
+    {
+        lock (_gate)
+        {
+            foreach (var entry in _connections.Values.Where(entry => entry.OwnerProjectId == projectId))
+            {
+                entry.OwnerProjectName = projectName;
+            }
+        }
     }
 
     private Z21ConnectionLease CreateDetached(Guid projectId, string? conflictProjectName)

@@ -43,6 +43,15 @@ internal sealed class Z21AssignmentDiagnosticsTests
     }
 
     [Test]
+    public void BothStandardPortsOfOneAddress_AreTheSameZ21()
+    {
+        var station = Project("Station", "192.168.0.111", port: 21105);
+        var yard = Project("Yard", "192.168.0.111", port: 21106);
+
+        Assert.That(Z21AssignmentDiagnostics.Analyze(yard, [station, yard]), Has.Count.EqualTo(1));
+    }
+
+    [Test]
     public void OwnZ21_ReportsNothing()
     {
         var station = Project("Station", "192.168.0.111");
