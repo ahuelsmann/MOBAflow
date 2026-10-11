@@ -1089,7 +1089,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             runtimeMock: runtime, projectContext: context);
 
         viewModel.SelectedProjectIndex = 1;
-        await connected.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await connected.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
         runtime.Verify(value => value.ActivateProjectAsync(yard, It.IsAny<CancellationToken>()), Times.Once);
         runtime.Verify(value => value.DisconnectForProjectSwitchAsync(It.IsAny<CancellationToken>()), Times.Once);

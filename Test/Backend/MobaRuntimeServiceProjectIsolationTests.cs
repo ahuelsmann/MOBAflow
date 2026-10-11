@@ -92,14 +92,14 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         z21.Setup(value => value.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(() => { entered.TrySetResult(); return release.Task; });
         using var runtime = CreateRuntime(z21.Object);
-        await runtime.ActivateProjectAsync(new Project { Z21 = { IpAddress = "192.168.0.111" } });
+        await runtime.ActivateProjectAsync(new Project { Z21 = { IpAddress = "192.168.0.111" } }).ConfigureAwait(false);
 
         var connection = automatic ? runtime.StartAsync() : runtime.ConnectAsync();
-        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         var handoff = runtime.DisconnectForProjectSwitchAsync();
         var disconnectedDuringConnect = handoff.IsCompleted;
         release.TrySetResult();
-        await Task.WhenAll(connection, handoff).WaitAsync(TimeSpan.FromSeconds(5));
+        await Task.WhenAll(connection, handoff).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
         Assert.That(disconnectedDuringConnect, Is.False, "The old attempt must finish before the handoff logs off.");
         z21.Verify(value => value.DisconnectAsync(), Times.Once);
@@ -114,20 +114,23 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         var interlocking = new Mock<IInterlockingRuntime>();
         using var runtime = CreateRuntime(CreateZ21Mock().Object, interlockingRuntime: interlocking.Object);
         var project = new Project();
-        await runtime.ActivateProjectAsync(project);
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
         interlocking.Setup(value => value.ActivateAsync(It.IsAny<InterlockingDefinition>(), It.IsAny<CancellationToken>()))
             .Returns(() => { entered.TrySetResult(); return release.Task; });
 
         var activation = runtime.ActivateProjectAsync(project);
-        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         var updated = new Project { Id = project.Id, Journeys = [new Journey { Name = "Updated" }] };
         var update = runtime.UpdateProjectAsync(updated);
         var updatedDuringActivation = update.IsCompleted;
         release.TrySetResult();
-        await Task.WhenAll(activation, update).WaitAsync(TimeSpan.FromSeconds(5));
+        await Task.WhenAll(activation, update).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
-        Assert.That(updatedDuringActivation, Is.False);
-        Assert.That(runtime.Current.JourneyStates.ContainsKey(updated.Journeys[0].Id), Is.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(updatedDuringActivation, Is.False);
+            Assert.That(runtime.Current.JourneyStates, Does.ContainKey(updated.Journeys[0].Id));
+        }
     }
 
     [Test]

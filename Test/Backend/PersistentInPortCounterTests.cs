@@ -451,19 +451,20 @@ internal sealed class PersistentInPortCounterTests
         var stationStore = new MemoryStore();
         var z21 = new Mock<IZ21>();
         var settings = Settings(1);
-        await using var counters = new InPortCounterService(z21.Object, settings,
+        var counters = new InPortCounterService(z21.Object, settings,
             projectStoreFactory: id => id == station.Id ? stationStore : yardStore.Object);
+        await using var countersScope = counters.ConfigureAwait(false);
         using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
             new ActionExecutionContext { Z21 = z21.Object }, settings, Mock.Of<ILogger<MobaRuntimeService>>(), inPortCounterService: counters);
-        await runtime.ActivateProjectAsync(station);
+        await runtime.ActivateProjectAsync(station).ConfigureAwait(false);
         counters.Set(1, 42);
         using var cancellation = new CancellationTokenSource();
 
         var activation = runtime.ActivateProjectAsync(yard, cancellation.Token);
-        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
-        await cancellation.CancelAsync();
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await cancellation.CancelAsync().ConfigureAwait(false);
         loaded.TrySetResult(new Dictionary<uint, ulong> { [1] = 7 });
-        await activation.WaitAsync(TimeSpan.FromSeconds(5));
+        await activation.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
