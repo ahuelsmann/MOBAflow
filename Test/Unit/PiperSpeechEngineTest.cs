@@ -18,7 +18,7 @@ internal class PiperSpeechEngineTest
     }
 
     [Test]
-    public void AnnouncementAsync_Should_Throw_WhenExecutableMissing()
+    public async Task AnnouncementAsync_Should_Throw_WhenExecutableMissing()
     {
         var options = new SpeechOptions
         {
@@ -28,14 +28,14 @@ internal class PiperSpeechEngineTest
 
         var engine = CreateEngine(options, new FakePiperProcessRunner(), new FakePiperAudioPlayer());
 
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await engine.AnnouncementAsync("Naechster Halt Bielefeld Hauptbahnhof.", null));
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await engine.AnnouncementAsync("Naechster Halt Bielefeld Hauptbahnhof.", null)).ConfigureAwait(false);
 
         Assert.That(ex!.Message, Does.Contain("Piper executable not found"));
     }
 
     [Test]
-    public void AnnouncementAsync_Should_Throw_WhenModelMissing()
+    public async Task AnnouncementAsync_Should_Throw_WhenModelMissing()
     {
         var options = new SpeechOptions
         {
@@ -45,8 +45,8 @@ internal class PiperSpeechEngineTest
 
         var engine = CreateEngine(options, new FakePiperProcessRunner(), new FakePiperAudioPlayer());
 
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await engine.AnnouncementAsync("Naechster Halt Bielefeld Hauptbahnhof.", null));
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await engine.AnnouncementAsync("Naechster Halt Bielefeld Hauptbahnhof.", null)).ConfigureAwait(false);
 
         Assert.That(ex!.Message, Does.Contain("Piper model not found"));
     }

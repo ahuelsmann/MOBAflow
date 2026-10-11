@@ -12,6 +12,7 @@ using SharedUI.Interface;
 
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 /// <summary>
 /// Service for reading and writing application settings to appsettings.json.
@@ -25,10 +26,15 @@ internal class SettingsService : ISettingsService
     private readonly ILogger<SettingsService> _logger;
 
     public SettingsService(AppSettings settings, ILogger<SettingsService> logger)
+        : this(settings, logger, ResolveSettingsFilePath())
+    {
+    }
+
+    internal SettingsService(AppSettings settings, ILogger<SettingsService> logger, string settingsFilePath)
     {
         _settings = settings;
         _logger = logger;
-        _settingsFilePath = ResolveSettingsFilePath();
+        _settingsFilePath = settingsFilePath;
 
         // Load settings synchronously to avoid deadlock
         LoadSettingsSync();
@@ -83,6 +89,9 @@ internal class SettingsService : ISettingsService
         _settings.Application.AutoStartWebApp = source.Application.AutoStartWebApp;
         _settings.Application.IsDarkMode = source.Application.IsDarkMode;
         _settings.Application.UseSystemTheme = source.Application.UseSystemTheme;
+
+        _settings.Z21.AutoConnectRetryIntervalSeconds = source.Z21.AutoConnectRetryIntervalSeconds;
+        _settings.Z21.SystemStatePollingIntervalSeconds = source.Z21.SystemStatePollingIntervalSeconds;
 
         _settings.Counter.CountOfFeedbackPoints = source.Counter.CountOfFeedbackPoints;
         _settings.Counter.TargetLapCount = source.Counter.TargetLapCount;
@@ -203,7 +212,15 @@ internal class SettingsService : ISettingsService
                 ApplyLoadedSettings(settings);
             }
 
-            var json = JsonSerializer.Serialize(_settings, JsonOptions.Default);
+            var document = JsonSerializer.SerializeToNode(_settings, JsonOptions.Default);
+            // The desktop owns endpoints in Project. Mobile still uses these settings until RF-23 slice 4b.
+            if (document["z21"] is JsonObject z21)
+            {
+                z21.Remove("currentIpAddress");
+                z21.Remove("defaultPort");
+            }
+
+            var json = document.ToJsonString(JsonOptions.Default);
             await File.WriteAllTextAsync(_settingsFilePath, json);
             _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);
         }

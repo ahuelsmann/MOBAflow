@@ -245,7 +245,8 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
             ClearSelection();
 
-            await _projectRuntimes.LoadAsync([.. Solution.Projects]).ConfigureAwait(false);
+            // Subscribers of SolutionLoaded change UI-bound collections; stay on the UI thread.
+            await _projectRuntimes.LoadAsync([.. Solution.Projects]).ConfigureAwait(true);
 
             SolutionLoaded?.Invoke(this, EventArgs.Empty);
         }

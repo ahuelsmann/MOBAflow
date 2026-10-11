@@ -126,7 +126,7 @@ internal sealed class WorkflowExecutionEndToEndTests
             Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
             Assert.That(result.SourceCorrelationId, Is.EqualTo(sourceId));
             Assert.That(_fakeUdp.SentPayloads, Is.Not.Empty);
-            Assert.That(entries, Is.All.Matches<WorkflowLifecycleEvent>(entry => entry.SourceCorrelationId == sourceId && entry.ExecutionId == result.ExecutionId));
+            Assert.That(entries, Is.All.Matches<WorkflowLifecycleEvent>(entry => entry is not null && entry.SourceCorrelationId == sourceId && entry.ExecutionId == result.ExecutionId));
             Assert.That(entries.Select(entry => entry.Sequence), Is.EqualTo(Enumerable.Range(1, entries.Count).Select(value => (long)value)));
             Assert.That(entries.Where(entry => entry.Kind == WorkflowLifecycleKind.StepStarted).Select(entry => entry.StepId), Is.EqualTo(workflow.Actions.Select(action => action.Id)));
             Assert.That(entries.Count(entry => entry.Kind == WorkflowLifecycleKind.WorkflowCompleted), Is.EqualTo(1));
