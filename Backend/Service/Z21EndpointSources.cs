@@ -43,15 +43,15 @@ public sealed class ProjectZ21EndpointSource(Func<Project?> project, string? una
             return Task.FromResult(Z21EndpointResolution.Unavailable(_unavailableReason));
         }
 
-        if (_project() is not { } project)
+        if (_project() is not { } selectedProject)
         {
             return Task.FromResult(Z21EndpointResolution.Unavailable("No project selected"));
         }
 
-        var address = project.Z21.IpAddress.Trim();
+        var address = selectedProject.Z21.IpAddress.Trim();
         if (string.IsNullOrEmpty(address))
         {
-            return Task.FromResult(Z21EndpointResolution.Unavailable($"No Z21 assigned to project '{project.Name}'"));
+            return Task.FromResult(Z21EndpointResolution.Unavailable($"No Z21 assigned to project '{selectedProject.Name}'"));
         }
 
         if (!IPAddress.TryParse(address, out var ipAddress))
@@ -59,7 +59,7 @@ public sealed class ProjectZ21EndpointSource(Func<Project?> project, string? una
             return Task.FromResult(Z21EndpointResolution.Unavailable($"Invalid Z21 IP address '{address}'"));
         }
 
-        var port = project.Z21.Port > 0 ? project.Z21.Port : Z21Protocol.DefaultPort;
+        var port = selectedProject.Z21.Port > 0 ? selectedProject.Z21.Port : Z21Protocol.DefaultPort;
         return Task.FromResult(new Z21EndpointResolution(ipAddress, port, null));
     }
 

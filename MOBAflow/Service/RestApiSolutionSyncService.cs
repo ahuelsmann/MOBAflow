@@ -102,11 +102,15 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         solutionSession.PropertyChanged += OnSolutionSessionPropertyChanged;
 
+        solutionSession.ModelChanged += OnSolutionModelChanged;
+
         restApiProcessService.ApiBecameReachable += OnApiBecameReachable;
 
     }
 
     private void OnSolutionChanged(object? sender, EventArgs e) => QueuePush();
+
+    private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e) => QueuePush();
 
     private void OnSolutionSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -310,6 +314,8 @@ public sealed class RestApiSolutionSyncService : IDisposable
         }
 
         _disposed = true;
+
+        _solutionSession.ModelChanged -= OnSolutionModelChanged;
 
         lock (_debounceLock)
 
