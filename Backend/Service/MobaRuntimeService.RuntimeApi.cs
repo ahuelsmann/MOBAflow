@@ -86,12 +86,25 @@ public sealed partial class MobaRuntimeService
     }
 
     /// <inheritdoc />
-    public Task UpdateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
+    public async Task UpdateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
+    {
+        await _projectActivationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            UpdateProjectCore(editableProject, cancellationToken);
+        }
+        finally
+        {
+            _projectActivationLock.Release();
+        }
+    }
+
+    private void UpdateProjectCore(Project editableProject, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(editableProject);
         var context = _activeProjectContext;
-        if (context?.ActiveProject.Id != editableProject.Id) return Task.CompletedTask;
+        if (context?.ActiveProject.Id != editableProject.Id) return;
 
         var definitions = CloneForRuntime(editableProject);
         var running = context.ActiveProject.SignalBoxPlan;
@@ -109,7 +122,6 @@ public sealed partial class MobaRuntimeService
 
         context.ReplaceDefinitions(definitions);
         PublishSnapshot();
-        return Task.CompletedTask;
     }
 
     /// <summary>Creates an isolated runtime copy using the canonical JSON serialization with preserved entity Ids.</summary>
@@ -122,6 +134,19 @@ public sealed partial class MobaRuntimeService
 
     /// <inheritdoc />
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
+    {
+        await _projectActivationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await ConnectCoreAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _projectActivationLock.Release();
+        }
+    }
+
+    private async Task ConnectCoreAsync(CancellationToken cancellationToken)
     {
         // An unreadable counter file is reported in the snapshot and must not prevent Z21 control.
         await _inPortCounters.TryInitializeAsync(cancellationToken).ConfigureAwait(false);
@@ -171,6 +196,19 @@ public sealed partial class MobaRuntimeService
         => await DisconnectCoreAsync(stopLocomotives: false, cancellationToken).ConfigureAwait(false);
 
     private async Task DisconnectCoreAsync(bool stopLocomotives, CancellationToken cancellationToken)
+    {
+        await _projectActivationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await DisconnectUnderLockAsync(stopLocomotives, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _projectActivationLock.Release();
+        }
+    }
+
+    private async Task DisconnectUnderLockAsync(bool stopLocomotives, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 

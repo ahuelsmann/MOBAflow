@@ -1073,6 +1073,30 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     }
 
     [Test]
+    public async Task ProjectPicker_RemoteRegistrationFailureStillActivatesAndConnectsLocalProject()
+    {
+        var station = new Project { Z21 = { IpAddress = "192.168.0.111" } };
+        var yard = new Project { Z21 = { IpAddress = "192.168.0.112" } };
+        var context = CreateProjectContext(new Solution { Projects = [station, yard] });
+        var connected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var runtime = new Mock<IMobaRuntime>();
+        runtime.Setup(value => value.ConnectAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => connected.TrySetResult()).Returns(Task.CompletedTask);
+        var hub = new Mock<IRuntimeHubRemoteClient>();
+        hub.Setup(value => value.SelectProjectAsync(yard.Id, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new IOException("Remote registration interrupted"));
+        var viewModel = CreateViewModel(new EventBus(NullLogger<EventBus>.Instance), hub.Object,
+            runtimeMock: runtime, projectContext: context);
+
+        viewModel.SelectedProjectIndex = 1;
+        await connected.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        runtime.Verify(value => value.ActivateProjectAsync(yard, It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.DisconnectForProjectSwitchAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.That(viewModel.Z21IpAddress, Is.EqualTo(yard.Z21.IpAddress));
+    }
+
+    [Test]
     public void SwitchingProjects_DropsTheLocomotivesOfThePreviousProject()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);

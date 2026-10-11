@@ -118,10 +118,19 @@ public sealed partial class MauiViewModel
         }
     }
 
-    private Task SelectRemoteProjectForSelectionAsync(Project? project, CancellationToken cancellationToken) =>
-        project is not null && _runtimeHubRemoteClient is not null
-            ? _runtimeHubRemoteClient.SelectProjectAsync(project.Id, cancellationToken)
-            : Task.CompletedTask;
+    private async Task SelectRemoteProjectForSelectionAsync(Project? project, CancellationToken cancellationToken)
+    {
+        if (project is null || _runtimeHubRemoteClient is null) return;
+        try
+        {
+            await _runtimeHubRemoteClient.SelectProjectAsync(project.Id, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException and not AccessViolationException)
+        {
+            // Remote registration can fail during a network interruption; the local handoff still owns its project.
+            LogRemoteProjectSelectionFailed(_logger, ex);
+        }
+    }
 
     private async Task RefreshLocalProjectForSelectionAsync(Project? project, bool projectChanged, CancellationToken cancellationToken)
     {
@@ -162,4 +171,7 @@ public sealed partial class MauiViewModel
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Project selection failed")]
     private static partial void LogProjectSelectionFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Remote project selection failed; continuing the local project handoff")]
+    private static partial void LogRemoteProjectSelectionFailed(ILogger logger, Exception exception);
 }

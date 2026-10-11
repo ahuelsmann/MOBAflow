@@ -68,54 +68,67 @@ public sealed partial class MobaRuntimeService
 
         try
         {
-            if (_isConnected || _isManualDisconnectRequested)
+            await _projectActivationLock.WaitAsync().ConfigureAwait(false);
+            try
             {
-                return;
+                await AttemptZ21ConnectionCoreAsync().ConfigureAwait(false);
             }
-
-            var endpoint = await _endpointSource.ResolveAsync().ConfigureAwait(false);
-            if (_isManualDisconnectRequested || !EndpointMatchesActiveProject(endpoint)) return;
-
-            if (endpoint.Address is not { } address)
+            finally
             {
-                _isZ21Connecting = false;
-                _statusText = endpoint.Error ?? "No Z21 address";
-                PublishSnapshot();
-                return;
+                _projectActivationLock.Release();
             }
-
-            var portsToTry = BuildConnectionPorts(endpoint.Port);
-            Exception? lastException = null;
-
-            foreach (var port in portsToTry)
-            {
-                try
-                {
-                    _isZ21Connecting = true;
-                    _statusText = "Connecting to Z21...";
-                    PublishSnapshot();
-
-                    _z21.SetSystemStatePollingInterval(_settings.Z21.SystemStatePollingIntervalSeconds);
-                    await _z21.ConnectAsync(address, port).ConfigureAwait(false);
-                    _z21ConnectionFailureCount = 0;
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    lastException = ex;
-                }
-            }
-
-            _z21ConnectionFailureCount++;
-            _isZ21Connecting = false;
-            _statusText = $"Z21 unavailable: {lastException?.Message ?? "Connection failed"}";
-            PublishSnapshot();
-            _logger.LogWarning(lastException, "Automatic Z21 connection attempt failed (failures={FailureCount})", _z21ConnectionFailureCount);
         }
         finally
         {
             Interlocked.Exchange(ref _autoConnectAttemptInProgress, 0);
         }
+    }
+
+    private async Task AttemptZ21ConnectionCoreAsync()
+    {
+        if (_isConnected || _isManualDisconnectRequested)
+        {
+            return;
+        }
+
+        var endpoint = await _endpointSource.ResolveAsync().ConfigureAwait(false);
+        if (_isManualDisconnectRequested || !EndpointMatchesActiveProject(endpoint)) return;
+
+        if (endpoint.Address is not { } address)
+        {
+            _isZ21Connecting = false;
+            _statusText = endpoint.Error ?? "No Z21 address";
+            PublishSnapshot();
+            return;
+        }
+
+        var portsToTry = BuildConnectionPorts(endpoint.Port);
+        Exception? lastException = null;
+
+        foreach (var port in portsToTry)
+        {
+            try
+            {
+                _isZ21Connecting = true;
+                _statusText = "Connecting to Z21...";
+                PublishSnapshot();
+
+                _z21.SetSystemStatePollingInterval(_settings.Z21.SystemStatePollingIntervalSeconds);
+                await _z21.ConnectAsync(address, port).ConfigureAwait(false);
+                _z21ConnectionFailureCount = 0;
+                return;
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+            }
+        }
+
+        _z21ConnectionFailureCount++;
+        _isZ21Connecting = false;
+        _statusText = $"Z21 unavailable: {lastException?.Message ?? "Connection failed"}";
+        PublishSnapshot();
+        _logger.LogWarning(lastException, "Automatic Z21 connection attempt failed (failures={FailureCount})", _z21ConnectionFailureCount);
     }
 
     private static IReadOnlyList<int> BuildConnectionPorts(int configuredPort)

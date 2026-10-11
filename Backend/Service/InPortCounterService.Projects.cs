@@ -37,6 +37,7 @@ public sealed partial class InPortCounterService
             Task previousWriter;
             lock (_sync) { previousWriter = _saveTask; }
             await previousWriter.WaitAsync(cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
             var store = _projectStoreFactory(projectId);
             lock (_sync)
             {
@@ -54,7 +55,9 @@ public sealed partial class InPortCounterService
                 ReconcileInputsLocked();
             }
 
-            await TryInitializeAsync(cancellationToken).ConfigureAwait(false);
+            // The store swap is committed. Finish its load so the runtime can activate the same project,
+            // even if this caller cancels; cancellation remains honored before the swap.
+            await TryInitializeAsync(CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {

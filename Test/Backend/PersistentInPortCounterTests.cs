@@ -440,6 +440,40 @@ internal sealed class PersistentInPortCounterTests
     }
 
     [Test]
+    public async Task RuntimeActivation_CancellationDuringCommittedCounterLoadKeepsProjectAndCountsTogether()
+    {
+        var station = new Moba.Domain.Project();
+        var yard = new Moba.Domain.Project();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var loaded = new TaskCompletionSource<IReadOnlyDictionary<uint, ulong>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var yardStore = new Mock<IInPortCounterStore>();
+        yardStore.Setup(value => value.LoadAsync(default)).Returns(() => { entered.TrySetResult(); return loaded.Task; });
+        var stationStore = new MemoryStore();
+        var z21 = new Mock<IZ21>();
+        var settings = Settings(1);
+        await using var counters = new InPortCounterService(z21.Object, settings,
+            projectStoreFactory: id => id == station.Id ? stationStore : yardStore.Object);
+        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
+            new ActionExecutionContext { Z21 = z21.Object }, settings, Mock.Of<ILogger<MobaRuntimeService>>(), inPortCounterService: counters);
+        await runtime.ActivateProjectAsync(station);
+        counters.Set(1, 42);
+        using var cancellation = new CancellationTokenSource();
+
+        var activation = runtime.ActivateProjectAsync(yard, cancellation.Token);
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await cancellation.CancelAsync();
+        loaded.TrySetResult(new Dictionary<uint, ulong> { [1] = 7 });
+        await activation.WaitAsync(TimeSpan.FromSeconds(5));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(runtime.Current.ProjectId, Is.EqualTo(yard.Id));
+            Assert.That(runtime.Current.InPortCounters[0].Count, Is.EqualTo(7UL));
+            Assert.That(stationStore.Counts[1], Is.EqualTo(42UL));
+        }
+    }
+
+    [Test]
     public async Task MobileCounterStore_HandoffDrainsOldWritesBeforeAcceptingNewCounts()
     {
         var station = Guid.NewGuid();

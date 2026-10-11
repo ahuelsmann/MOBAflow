@@ -32,6 +32,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private Timer? _z21AutoConnectTimer;
     private int _autoConnectAttemptInProgress;
     private readonly SemaphoreSlim _startLock = new(1, 1);
+    // Activation, definition refresh and connection handoff must not interleave.
     private readonly SemaphoreSlim _projectActivationLock = new(1, 1);
     private bool _started;
 
