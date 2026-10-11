@@ -7,6 +7,7 @@ using Moba.Common.Display;
 /// Tests for function button appearance used by MOBAsmart and MOBAflow.
 /// </summary>
 [TestFixture]
+[Category("Unit")]
 internal sealed class FunctionBacklightColorTests
 {
     [Test]
@@ -92,15 +93,37 @@ internal sealed class FunctionBacklightColorTests
             Is.EqualTo(expectedBackground));
     }
 
-    [TestCase(null)]
-    [TestCase("")]
-    [TestCase(" ")]
-    [TestCase("12345")]
-    [TestCase("1234567")]
-    public void Resolve_WhenOn_MissingOrUnsupportedColorUsesGray(string? accent)
+    [Test]
+    public void Resolve_WhenOn_MissingOrUnsupportedColorUsesGray(
+        [Values(null, "", " ", "12345", "1234567")] string? accent,
+        [Values] FunctionBacklightColor.AppearanceTheme theme)
     {
-        Assert.That(FunctionBacklightColor.Resolve(true, accent, FunctionBacklightColor.AppearanceTheme.Dark),
-            Is.EqualTo(FunctionBacklightColor.Resolve(true, "#808080", FunctionBacklightColor.AppearanceTheme.Dark)));
+        var expected = theme == FunctionBacklightColor.AppearanceTheme.Dark
+            ? new FunctionBacklightColor.Appearance(0xFF5A5A5A, 0xFFFFFFFF, 0xFFE8E8E8)
+            : new FunctionBacklightColor.Appearance(0xFFC9C9C9, 0xFF121212, 0xFF3D3D3D);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(FunctionBacklightColor.Resolve(true, accent, theme), Is.EqualTo(expected));
+            Assert.That(FunctionBacklightColor.ToArgb(true, accent, theme), Is.EqualTo(expected.BackgroundArgb));
+        }
+    }
+
+    [TestCase("#ABABAB", FunctionBacklightColor.AppearanceTheme.Dark, 0xFF757575u, 0xFFFFFFFFu, 0xFFE8E8E8u)]
+    [TestCase("#ACACAC", FunctionBacklightColor.AppearanceTheme.Dark, 0xFF8B8B8Bu, 0xFFFFFFFFu, 0xFFE8E8E8u)]
+    [TestCase("#B0B0B0", FunctionBacklightColor.AppearanceTheme.Dark, 0xFF8E8E8Eu, 0xFFFFFFFFu, 0xFFE8E8E8u)]
+    [TestCase("#C0C0C0", FunctionBacklightColor.AppearanceTheme.Dark, 0xFF999999u, 0xFFFFFFFFu, 0xFFE8E8E8u)]
+    [TestCase("#FFFFFF", FunctionBacklightColor.AppearanceTheme.Dark, 0xFFC7C7C7u, 0xFFFFFFFFu, 0xFFE8E8E8u)]
+    [TestCase("#777777", FunctionBacklightColor.AppearanceTheme.Light, 0xFFC5C5C5u, 0xFFFFFFFFu, 0xFFE8E8E8u)]
+    [TestCase("#7F7F7F", FunctionBacklightColor.AppearanceTheme.Light, 0xFFC9C9C9u, 0xFF121212u, 0xFF3D3D3Du)]
+    [TestCase("#000000", FunctionBacklightColor.AppearanceTheme.Light, 0xFF939393u, 0xFFFFFFFFu, 0xFFE8E8E8u)]
+    public void ResolveGrayAccentsPreservesThemeAppearanceAcrossContrastTransitions(
+        string accent, FunctionBacklightColor.AppearanceTheme theme,
+        uint background, uint primaryText, uint secondaryText)
+    {
+        var expected = new FunctionBacklightColor.Appearance(background, primaryText, secondaryText);
+
+        Assert.That(FunctionBacklightColor.Resolve(true, accent, theme), Is.EqualTo(expected));
     }
 
     [TestCase(FunctionBacklightColor.AppearanceTheme.Dark)]
