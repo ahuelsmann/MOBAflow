@@ -219,7 +219,7 @@ internal class AnnouncementServiceTests
     }
 
     [Test]
-    public void GenerateAndSpeakAnnouncementAsync_CancelledSpeech_IsNotSuppressed()
+    public async Task GenerateAndSpeakAnnouncementAsync_CancelledSpeech_IsNotSuppressed()
     {
         // Arrange
         using var cancellation = new CancellationTokenSource();
@@ -239,11 +239,11 @@ internal class AnnouncementServiceTests
         var service = new AnnouncementService(factory.Object, _mockLogger.Object);
 
         // Act & Assert
-        Assert.CatchAsync<OperationCanceledException>(() => service.GenerateAndSpeakAnnouncementAsync(
+        await Assert.CatchAsync<OperationCanceledException>(() => service.GenerateAndSpeakAnnouncementAsync(
             "Next stop {StationName}",
             new Station { Name = "Minden" },
             1,
-            cancellation.Token));
+            cancellation.Token)).ConfigureAwait(false);
         speaker.Verify(engine => engine.AnnouncementAsync(
             It.IsAny<string>(),
             null,

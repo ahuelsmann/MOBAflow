@@ -21,7 +21,7 @@ internal sealed class SolutionLoadFailureTests
         {
             await File.WriteAllTextAsync(path, json).ConfigureAwait(false);
 
-            Assert.ThrowsAsync(exceptionType, async () => await solution.LoadAsync(path).ConfigureAwait(false));
+            await Assert.ThrowsAsync(exceptionType, async () => await solution.LoadAsync(path).ConfigureAwait(false)).ConfigureAwait(false);
 
             using (Assert.EnterMultipleScope())
             {

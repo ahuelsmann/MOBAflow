@@ -24,7 +24,7 @@ internal sealed class TimetableEvaluationServiceTests
         var result = _service.Evaluate(project);
 
         // Assert
-        Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.PlatformConflict));
+        Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.PlatformConflict));
     }
 
     [Test]
@@ -44,8 +44,8 @@ internal sealed class TimetableEvaluationServiceTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.PlatformConflict));
-            Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.JourneyConflict));
+            Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.PlatformConflict));
+            Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.JourneyConflict));
         });
     }
 
@@ -69,7 +69,7 @@ internal sealed class TimetableEvaluationServiceTests
         var result = _service.Evaluate(project);
 
         // Assert
-        Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.TurnaroundConflict));
+        Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.TurnaroundConflict));
     }
 
     [Test]
@@ -85,7 +85,7 @@ internal sealed class TimetableEvaluationServiceTests
         var result = _service.Evaluate(project);
 
         // Assert
-        Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.InvalidReference));
+        Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.InvalidReference));
     }
 
     [Test]
@@ -108,7 +108,7 @@ internal sealed class TimetableEvaluationServiceTests
         var result = _service.Evaluate(project);
 
         // Assert
-        Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.InvalidTimeRange));
+        Assert.That(result.Issues, Has.Some.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.InvalidTimeRange));
     }
 
     [Test]
@@ -134,7 +134,7 @@ internal sealed class TimetableEvaluationServiceTests
         var result = _service.Evaluate(project, states);
 
         // Assert
-        Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.PlatformConflict));
+        Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.PlatformConflict));
     }
 
     [Test]
@@ -160,8 +160,8 @@ internal sealed class TimetableEvaluationServiceTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.PlatformConflict));
-            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.JourneyConflict));
+            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.PlatformConflict));
+            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.JourneyConflict));
         });
     }
 
@@ -188,8 +188,8 @@ internal sealed class TimetableEvaluationServiceTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.PlatformConflict));
-            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.JourneyConflict));
+            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.PlatformConflict));
+            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue is not null && issue.Kind == TimetableIssueKind.JourneyConflict));
         });
     }
 

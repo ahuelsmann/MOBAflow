@@ -218,14 +218,14 @@ internal class Z21UnitTests
     }
 
     [Test]
-    public void SetLocoFunctionAsync_Throws_ForIndexAbove31()
+    public async Task SetLocoFunctionAsync_Throws_ForIndexAbove31()
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         using var z21 = new Z21(fakeUdp, eventBus);
 
-        Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => z21.SetLocoFunctionAsync(address: 3, functionIndex: 32, on: true));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => z21.SetLocoFunctionAsync(address: 3, functionIndex: 32, on: true)).ConfigureAwait(false);
     }
 
     [Test]
@@ -251,14 +251,14 @@ internal class Z21UnitTests
     }
 
     [Test]
-    public void SetAllLocoFunctionsOffAsync_Throws_ForInvalidAddress()
+    public async Task SetAllLocoFunctionsOffAsync_Throws_ForInvalidAddress()
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         using var z21 = new Z21(fakeUdp, eventBus);
 
-        Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => z21.SetAllLocoFunctionsOffAsync(address: 0));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => z21.SetAllLocoFunctionsOffAsync(address: 0)).ConfigureAwait(false);
     }
 
     private static byte[] CreateRBusPacket(byte firstStateByte) =>
