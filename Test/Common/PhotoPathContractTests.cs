@@ -4,6 +4,7 @@ namespace Moba.Test.Common;
 using Moba.Common.Path;
 
 [TestFixture]
+[Category("Unit")]
 [NonParallelizable] // Solution-directory selection is shared process state.
 internal sealed class PhotoPathContractTests
 {
@@ -128,6 +129,19 @@ internal sealed class PhotoPathContractTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(PhotoPathHelper.TryGetStorageRelativePath(_root.FullName, fullPath, out var relative), Is.False);
+            Assert.That(relative, Is.Null);
+        }
+    }
+
+    [Test]
+    public void TryGetStorageRelativePath_RejectsRelativeInputEvenWhenItResolvesInsideStorage()
+    {
+        // Use the current directory as storage so resolving the relative input would otherwise succeed.
+        var storageRoot = Directory.GetCurrentDirectory();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryGetStorageRelativePath(storageRoot, "locomotives/abc.jpg", out var relative), Is.False);
             Assert.That(relative, Is.Null);
         }
     }
@@ -275,6 +289,19 @@ internal sealed class PhotoPathContractTests
                     ".jpg/../../../outside.jpg", out var fullPath, out var relative), Is.False);
             Assert.That(fullPath, Is.Null);
             Assert.That(relative, Is.Null);
+        }
+    }
+
+    [Test]
+    public void TryBuildPhotoUploadFullPath_RejectsDestinationAtExactParentDirectory()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(PhotoPathHelper.TryBuildPhotoUploadFullPath(_root.FullName, "locomotives", EntityId,
+                    ".jpg/../../../", out var fullPath, out var relative), Is.False);
+            Assert.That(fullPath, Is.Null);
+            Assert.That(relative, Is.Null);
+            Assert.That(Directory.GetFileSystemEntries(_root.FullName), Is.Empty);
         }
     }
 
