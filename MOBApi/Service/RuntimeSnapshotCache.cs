@@ -26,6 +26,11 @@ public interface IRuntimeSnapshotCache
     /// </summary>
     /// <returns>The cached entry.</returns>
     RuntimeSnapshotCacheEntry Set(string json);
+
+    /// <summary>
+    /// Forgets the snapshots of projects the synchronized solution no longer contains.
+    /// </summary>
+    void RetainProjects(Func<Guid, bool> isInSolution);
 }
 
 public sealed class RuntimeSnapshotCache : IRuntimeSnapshotCache
@@ -74,6 +79,19 @@ public sealed class RuntimeSnapshotCache : IRuntimeSnapshotCache
             var entry = new RuntimeSnapshotCacheEntry(snapshot.ProjectId, json, DateTimeOffset.UtcNow, snapshot.IsConnected);
             _entries[snapshot.ProjectId] = entry;
             return entry;
+        }
+    }
+
+    /// <inheritdoc />
+    public void RetainProjects(Func<Guid, bool> isInSolution)
+    {
+        ArgumentNullException.ThrowIfNull(isInSolution);
+        lock (_lock)
+        {
+            foreach (var projectId in _entries.Keys.Where(projectId => !isInSolution(projectId)).ToList())
+            {
+                _entries.Remove(projectId);
+            }
         }
     }
 }

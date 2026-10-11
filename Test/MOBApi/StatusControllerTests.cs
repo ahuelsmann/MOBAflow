@@ -39,14 +39,47 @@ internal sealed class RuntimeRemoteRegistryTests
 internal sealed class StatusControllerTests
 {
     [Test]
+    public void SessionOperational_FollowsTheProjectsRemotesControl()
+    {
+        var connected = Guid.NewGuid();
+        var disconnected = Guid.NewGuid();
+        var snapshots = new RuntimeSnapshotCache();
+        snapshots.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = disconnected, IsConnected = false }));
+        snapshots.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = connected, IsConnected = true }));
+        var host = new RuntimeHostRegistry();
+        host.SetHost("host-conn");
+        var remotes = new RuntimeRemoteRegistry();
+
+        var withoutRemotes = SessionOperational(host, remotes, snapshots);
+        remotes.Register("remote-conn", "mobasmart", disconnected);
+        var remoteOnDisconnectedProject = SessionOperational(host, remotes, snapshots);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(withoutRemotes, Is.True, "Without remotes one connected project is enough.");
+            Assert.That(remoteOnDisconnectedProject, Is.False, "The project a remote controls is not connected.");
+        }
+    }
+
+    private static bool SessionOperational(
+        RuntimeHostRegistry host,
+        RuntimeRemoteRegistry remotes,
+        RuntimeSnapshotCache snapshots) =>
+        JsonSerializer.SerializeToElement(
+                RuntimeStatusBuilder.BuildRuntimeStatus(host, remotes, new RuntimeBroadcastMetrics(), snapshots))
+            .GetProperty("sessionOperational")
+            .GetBoolean();
+
+    [Test]
     public void GetStatus_IncludesRuntimeAndSolutionDiagnostics()
     {
         var snapshotCache = new RuntimeSnapshotCache();
+        var projectId = Guid.NewGuid();
         var signalId = Guid.NewGuid();
         snapshotCache.Set(
             RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
             {
-                ProjectId = Guid.NewGuid(),
+                ProjectId = projectId,
                 IsConnected = true,
                 SignalBoxElements =
                 [
@@ -75,7 +108,7 @@ internal sealed class StatusControllerTests
         hostRegistry.SetHost("host-conn");
 
         var remoteRegistry = new RuntimeRemoteRegistry();
-        remoteRegistry.Register("remote-conn", "mobasmart", Guid.NewGuid());
+        remoteRegistry.Register("remote-conn", "mobasmart", projectId);
 
         var broadcastMetrics = new RuntimeBroadcastMetrics();
         broadcastMetrics.RecordSnapshotBroadcast(842);

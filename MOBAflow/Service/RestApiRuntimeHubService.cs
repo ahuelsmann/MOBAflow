@@ -34,6 +34,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
     private Task _debounceTask = Task.CompletedTask;
     // Every project has its own runtime; the latest snapshot of each project waits for the next push.
     private readonly Dictionary<Guid, MobaRuntimeSnapshot> _pendingSnapshots = [];
+    private bool _pushScheduled;
     private int _disposeState;
     private readonly object _metricsLock = new();
     private DateTimeOffset? _lastHubPushAt;
@@ -166,10 +167,16 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
                 return;
             }
 
+            // A fixed batch window: later snapshots join the pending batch instead of restarting the delay, so a
+            // runtime that publishes often cannot hold back the snapshots of the other projects.
             _pendingSnapshots[snapshot.ProjectId] = snapshot;
-            _debounceCts?.Cancel();
-            _debounceCts?.Dispose();
-            _debounceCts = new CancellationTokenSource();
+            if (_pushScheduled)
+            {
+                return;
+            }
+
+            _pushScheduled = true;
+            _debounceCts ??= new CancellationTokenSource();
             token = _debounceCts.Token;
             _debounceTask = PushDebouncedAsync(token);
         }
@@ -191,6 +198,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
         {
             snapshots = [.. _pendingSnapshots.Values];
             _pendingSnapshots.Clear();
+            _pushScheduled = false;
         }
 
         // A failed push of one project must not hold back the snapshots of the other projects.

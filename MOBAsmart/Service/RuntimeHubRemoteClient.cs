@@ -271,13 +271,15 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
     private async Task RegisterRemoteAsync(CancellationToken cancellationToken)
     {
-        if (_hubConnection == null || !IsConnected || string.IsNullOrWhiteSpace(_clientId) || _projectId == Guid.Empty)
+        if (_hubConnection == null || !IsConnected || string.IsNullOrWhiteSpace(_clientId))
         {
             return;
         }
 
+        // Without a project yet the phone still registers, so it receives the solution and can select one.
+        var projectId = _projectId == Guid.Empty ? string.Empty : _projectId.ToString();
         await _hubConnection
-            .InvokeAsync(RuntimeHubMethods.RegisterRemote, _clientId, _projectId.ToString(), cancellationToken)
+            .InvokeAsync(RuntimeHubMethods.RegisterRemote, _clientId, projectId, cancellationToken)
             .ConfigureAwait(false);
     }
 

@@ -57,7 +57,8 @@ public sealed class RuntimeHub : Hub
     }
 
     /// <summary>
-    /// Registers a remote for one project; registering again moves the remote to another project.
+    /// Registers a remote for one project; registering again moves the remote to another project. A remote without a
+    /// project yet (an empty id) only receives solution updates, so it can load the solution and select one.
     /// </summary>
     public async Task RegisterRemote(string clientId, string projectId)
     {
@@ -67,15 +68,18 @@ public sealed class RuntimeHub : Hub
             throw new HubException("ClientId is required.");
         }
 
-        var project = ParseProject(projectId);
+        var project = string.IsNullOrWhiteSpace(projectId) ? Guid.Empty : ParseProject(projectId);
         var previous = _remoteRegistry.Register(Context.ConnectionId, presenceId, project);
-        if (previous is { } previousProject && previousProject != project)
+        if (previous is { } previousProject && previousProject != project && previousProject != Guid.Empty)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, ProjectGroup(previousProject)).ConfigureAwait(false);
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, RuntimeRemoteGroup).ConfigureAwait(false);
-        await Groups.AddToGroupAsync(Context.ConnectionId, ProjectGroup(project)).ConfigureAwait(false);
+        if (project != Guid.Empty)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, ProjectGroup(project)).ConfigureAwait(false);
+        }
 
         if (_snapshotCache.TryGet(project, out var entry))
         {

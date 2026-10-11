@@ -16,7 +16,7 @@ public static class RuntimeStatusBuilder
         IRuntimeSnapshotCache snapshotCache)
     {
         var snapshotCacheInfo = BuildSnapshotCacheInfo(snapshotCache);
-        var isConnected = snapshotCacheInfo is { Available: true, IsConnected: true };
+        var entries = snapshotCache.GetAll();
 
         return new
         {
@@ -25,8 +25,11 @@ public static class RuntimeStatusBuilder
             lastSnapshotBroadcastAt = broadcastMetrics.LastSnapshotBroadcastAt,
             lastSnapshotPayloadBytes = broadcastMetrics.LastSnapshotPayloadBytes,
             totalSnapshotBroadcastCount = broadcastMetrics.TotalSnapshotBroadcastCount,
-            sessionOperational = hostRegistry.HasHost && isConnected,
-            snapshotCache = snapshotCacheInfo
+            sessionOperational = hostRegistry.HasHost && IsSessionConnected(remoteRegistry, entries),
+            snapshotCache = snapshotCacheInfo,
+            projects = entries
+                .Select(entry => new { projectId = entry.ProjectId, isConnected = entry.IsConnected, updatedAt = entry.UpdatedAt })
+                .ToList()
         };
     }
 
@@ -48,6 +51,24 @@ public static class RuntimeStatusBuilder
             updatedAt = entry.UpdatedAt,
             activeProjectName = entry.ActiveProjectName
         };
+    }
+
+    /// <summary>
+    /// Every project has its own runtime: the session works when every project a remote controls is connected,
+    /// or, without remotes, when at least one project is connected.
+    /// </summary>
+    private static bool IsSessionConnected(
+        IRuntimeRemoteRegistry remoteRegistry,
+        IReadOnlyList<RuntimeSnapshotCacheEntry> entries)
+    {
+        var controlled = remoteRegistry.GetAll()
+            .Select(remote => remote.ProjectId)
+            .Where(projectId => projectId != Guid.Empty)
+            .Distinct()
+            .ToList();
+        return controlled.Count == 0
+            ? entries.Any(entry => entry.IsConnected)
+            : controlled.All(projectId => entries.Any(entry => entry.ProjectId == projectId && entry.IsConnected));
     }
 
     private static SnapshotCacheStatus BuildSnapshotCacheInfo(IRuntimeSnapshotCache snapshotCache)
