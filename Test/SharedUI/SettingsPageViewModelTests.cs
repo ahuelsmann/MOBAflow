@@ -48,6 +48,46 @@ internal sealed class SettingsPageViewModelTests
         persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Exactly(2));
     }
 
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    [TestCase(3)]
+    public void SignalPolarityChangesOnlyTheChosenOffsetAndNotifiesAndSavesOnce(int offset)
+    {
+        var (viewModel, settings, persistence, _) = Create();
+        var before = GetPolarities(settings);
+        var expected = (bool[])before.Clone();
+        expected[offset] = !before[offset];
+        var notifications = new List<string?>();
+        viewModel.PropertyChanged += (_, e) => notifications.Add(e.PropertyName);
+        Action<bool> update = offset switch
+        {
+            0 => value => viewModel.InvertPolarityOffset0Setting = value,
+            1 => value => viewModel.InvertPolarityOffset1Setting = value,
+            2 => value => viewModel.InvertPolarityOffset2Setting = value,
+            _ => value => viewModel.InvertPolarityOffset3Setting = value
+        };
+
+        update(expected[offset]);
+        update(expected[offset]);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(GetPolarities(settings), Is.EqualTo(expected));
+            Assert.That(notifications, Has.Count.EqualTo(1));
+            Assert.That(notifications.Single(), Is.EqualTo($"InvertPolarityOffset{offset}Setting"));
+        }
+        persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Once);
+    }
+
+    private static bool[] GetPolarities(AppSettings settings) =>
+    [
+        settings.SignalBox.InvertPolarityOffset0,
+        settings.SignalBox.InvertPolarityOffset1,
+        settings.SignalBox.InvertPolarityOffset2,
+        settings.SignalBox.InvertPolarityOffset3
+    ];
+
     [Test]
     public void FeedbackCountNotifiesOnlyForActualValidChanges()
     {

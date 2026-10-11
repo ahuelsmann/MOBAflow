@@ -80,14 +80,14 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     private void PersistSettingsSafely()
     {
         _settingsService.SaveSettingsAsync(_settings)
-            .Observe(LogPersistSettingsFailed);
+            .Observe(ex => LogPersistSettingsFailed(_logger, ex));
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Persist settings failed")]
-    private partial void LogPersistSettingsFailed(Exception exception);
+    private static partial void LogPersistSettingsFailed(ILogger logger, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Speech test failed")]
-    private partial void LogSpeechTestFailed(Exception exception);
+    private static partial void LogSpeechTestFailed(ILogger logger, Exception exception);
 
     private readonly List<PiperVoiceOption> _availablePiperVoiceOptions = [];
     private string _selectedPiperLanguage = string.Empty;
@@ -990,7 +990,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
                 propertyName = null;
                 break;
         }
-        if (changed && propertyName != null)
+        if (changed)
         {
             OnPropertyChanged(propertyName);
             PersistSettings();
@@ -1047,7 +1047,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// Gets whether the Settings page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsSettingsPageAvailable => true;
+    public static bool IsSettingsPageAvailable => true;
 
     /// <summary>
     /// Gets whether the Monitor page is available.
@@ -1279,7 +1279,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            LogSpeechTestFailed(ex);
+            LogSpeechTestFailed(_logger, ex);
             _uiDispatcher.InvokeOnUi(() =>
             {
                 ErrorMessage = ex.Message;
