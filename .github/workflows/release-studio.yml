@@ -145,7 +145,6 @@ jobs:
         run: |
           $settingsPath = 'artifacts/MOBAflow-win-x64/appsettings.json'
           $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
-          $settings.Z21.CurrentIpAddress = ''
           $settings.Speech.PiperExecutablePath = ''
           $settings.Speech.PiperModelPath = ''
           $settings.Speech.PiperConfigPath = ''

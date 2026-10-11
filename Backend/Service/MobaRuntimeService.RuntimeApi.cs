@@ -103,7 +103,7 @@ public sealed partial class MobaRuntimeService
     {
         // An unreadable counter file is reported in the snapshot and must not prevent Z21 control.
         await _inPortCounters.TryInitializeAsync(cancellationToken).ConfigureAwait(false);
-        var endpoint = await _endpointSource.ResolveAsync(rediscover: false, cancellationToken).ConfigureAwait(false);
+        var endpoint = await _endpointSource.ResolveAsync(cancellationToken).ConfigureAwait(false);
         if (endpoint.Address is not { } address)
         {
             _isZ21Connecting = false;

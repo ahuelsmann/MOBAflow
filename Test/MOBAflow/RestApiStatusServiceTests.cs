@@ -145,7 +145,6 @@ internal sealed partial class RestApiStatusServiceTests
             appSettings,
             mainWindowViewModel.SolutionSession,
             restApiProcessService,
-            eventBus,
             NullLogger<RestApiSolutionSyncService>.Instance,
             mobApiClient);
 

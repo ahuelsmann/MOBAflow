@@ -160,7 +160,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1031",
       "path": "MOBAflow/Service/RestApiSolutionSyncService.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -1098,7 +1098,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
       "path": "MOBAflow/Service/RestApiSolutionSyncService.cs",
-      "count": 10
+      "count": 5
     },
     {
       "project": "MOBAflow",
@@ -1378,7 +1378,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1873",
       "path": "MOBAflow/Service/RestApiSolutionSyncService.cs",
-      "count": 6
+      "count": 3
     },
     {
       "project": "MOBAflow",
@@ -2651,13 +2651,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceLocomotiveStateTests.cs",
       "count": 1
     },
@@ -2666,6 +2659,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/MobaRuntimeServiceProjectZ21Tests.cs",
       "count": 1
     },
     {
@@ -3540,13 +3540,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/MOBAflow/WinUiSettingsPersistenceTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
       "path": "Test/MOBAflow/WinUiShutdownCoordinatorTests.cs",
       "count": 1
     },
@@ -3583,13 +3576,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeCommandsControllerTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/MOBApi/RuntimeSettingsControllerTests.cs",
       "count": 1
     },
     {
@@ -4646,13 +4632,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2000",
-      "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2000",
       "path": "Test/Backend/Z21UnitTests.cs",
       "count": 12
     },
@@ -4809,13 +4788,6 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -5278,13 +5250,6 @@
       "ruleId": "CsWinRT1028",
       "path": "Test/SharedUI/WorkflowLibraryViewModelTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0005",
-      "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
-      "count": 2
     },
     {
       "project": "Test",
@@ -5759,13 +5724,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
-      "path": "Test/MOBApi/RuntimeSettingsControllerTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
       "path": "Test/MOBApi/SolutionControllerTests.cs",
       "count": 2
     },
@@ -5851,7 +5809,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
       "path": "Test/SharedUI/RuntimeSnapshotProjectorTests.cs",
-      "count": 6
+      "count": 4
     },
     {
       "project": "Test",

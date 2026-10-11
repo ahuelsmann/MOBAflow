@@ -61,7 +61,7 @@ Backend/Service/Z21ConnectionRegistry.cs     # app-lifetime connections keyed by
 Backend/Service/MobaRuntimeService*.cs       # no project copy; runtime values only
 Domain/Project.cs                            # Z21 endpoint per project
 Common/Configuration/AppSettings*.cs         # Z21 address/port/recent list removed
-MOBApi/**                                    # project identifier in commands, snapshots, runtime settings
+MOBApi/**                                    # project identifier in commands and snapshots; runtime settings removed
 MOBAsmart/**, SharedUI/ViewModel/Maui*       # project selection
 docs/wiki/MOBAFLOW-USER-GUIDE.md, INSTALLATION.md, MOBASMART-USER-GUIDE.md
 ```
@@ -85,8 +85,8 @@ Each slice is one reviewable PR on its own branch from `main`; this branch carri
      project's Z21, per-project counters, conflict diagnostics, selected-project event forwarding; the Z21 address
      leaves the MOBAflow settings and the runtime no longer searches by itself. Fixes #190.
    - 3c: switch/close warning with speed 0, also before a project's Z21 address changes.
-4. **MOBApi and MOBAsmart**: project identifier in commands, snapshots and runtime settings; MOBAsmart project
-   selection and per-project Z21 address.
+4. **MOBApi and MOBAsmart**: project identifier in commands and snapshots (4a); MOBAsmart project selection with
+   the selected project's Z21 address, without runtime settings or a Z21 search on the phone (4b).
 5. **Documentation**: user wiki, `docs/ARCHITECTURE.md`, CHANGELOG.
 
 ## Validation Strategy

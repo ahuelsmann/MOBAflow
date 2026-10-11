@@ -52,8 +52,11 @@ public sealed class MobileSolutionContext : ObservableObject, IProjectContext
     {
         ArgumentNullException.ThrowIfNull(solution);
 
+        var previousProjectId = _selectedProject?.Model.Id;
         _solutionViewModel = new SolutionViewModel(solution);
-        _selectedProject = ResolveProjectViewModel(_solutionViewModel, activeProjectName);
+        // The phone keeps the project it controls; a new solution starts with MOBAflow's selected project.
+        _selectedProject = _solutionViewModel.Projects.FirstOrDefault(project => project.Model.Id == previousProjectId)
+            ?? ResolveProjectViewModel(_solutionViewModel, activeProjectName);
         SelectedJourney = null;
 
         OnPropertyChanged(nameof(SolutionViewModel));

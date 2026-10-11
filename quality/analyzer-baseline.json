@@ -2147,13 +2147,6 @@
       "project": "MOBApi",
       "targetFramework": "net10.0",
       "ruleId": "CA1515",
-      "path": "MOBApi/Controllers/RuntimeSettingsController.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1515",
       "path": "MOBApi/Controllers/SolutionController.cs",
       "count": 1
     },
@@ -2189,22 +2182,8 @@
       "project": "MOBApi",
       "targetFramework": "net10.0",
       "ruleId": "CA1515",
-      "path": "MOBApi/Models/RuntimeSettingsModels.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1515",
       "path": "MOBApi/Service/ClientRegistry.cs",
       "count": 2
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1515",
-      "path": "MOBApi/Service/IRuntimeSettingsCache.cs",
-      "count": 1
     },
     {
       "project": "MOBApi",
@@ -2247,13 +2226,6 @@
       "ruleId": "CA1515",
       "path": "MOBApi/Service/RuntimeRemoteRegistry.cs",
       "count": 3
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1515",
-      "path": "MOBApi/Service/RuntimeSettingsCache.cs",
-      "count": 1
     },
     {
       "project": "MOBApi",
@@ -2351,13 +2323,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
       "path": "MOBApi/Controllers/RuntimeController.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "MOBApi/Controllers/RuntimeSettingsController.cs",
       "count": 1
     },
     {
@@ -2798,13 +2763,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1305",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1305",
       "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
       "count": 1
     },
@@ -3051,7 +3009,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 15
+      "count": 13
     },
     {
       "project": "SharedUI",
@@ -3170,7 +3128,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "SharedUI",
@@ -4331,13 +4289,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceLocomotiveStateTests.cs",
       "count": 1
     },
@@ -4346,6 +4297,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/MobaRuntimeServiceProjectZ21Tests.cs",
       "count": 1
     },
     {
@@ -5207,13 +5165,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeCommandsControllerTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/MOBApi/RuntimeSettingsControllerTests.cs",
       "count": 1
     },
     {
@@ -6235,13 +6186,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2000",
-      "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2000",
       "path": "Test/Backend/Z21UnitTests.cs",
       "count": 12
     },
@@ -6391,13 +6335,6 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -6783,13 +6720,6 @@
       "ruleId": "CA5394",
       "path": "Test/MOBAdisplay/DisplayPayloadCodecTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
-      "count": 2
     },
     {
       "project": "Test",
@@ -7257,13 +7187,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/MOBApi/RuntimeSettingsControllerTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
       "path": "Test/MOBApi/SolutionControllerTests.cs",
       "count": 2
     },
@@ -7349,7 +7272,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
       "path": "Test/SharedUI/RuntimeSnapshotProjectorTests.cs",
-      "count": 6
+      "count": 4
     },
     {
       "project": "Test",

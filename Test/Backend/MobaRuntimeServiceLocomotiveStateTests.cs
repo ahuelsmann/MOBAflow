@@ -146,10 +146,7 @@ internal sealed class MobaRuntimeServiceLocomotiveStateTests
             z21,
             workflowServiceMock.Object,
             new ActionExecutionContext { Z21 = z21 },
-            new AppSettings
-            {
-                Z21 = new Z21Settings { CurrentIpAddress = string.Empty }
-            },
+            new AppSettings(),
             loggerMock.Object);
     }
 }
