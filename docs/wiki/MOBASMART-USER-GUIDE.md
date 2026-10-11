@@ -42,12 +42,19 @@ The Counter tab contains connection state and the lap-counter setup.
 - Set the target lap count.
 - Enable a timer filter to suppress duplicate feedback events.
 - Inspect lap count, last feedback and timing statistics for each input.
+- Set or reset one input's count.
 - Reset all counters.
 - Toggle light/dark theme.
 - Capture a photo and upload it to the connected MOBAflow library.
 
 The camera button requires a reachable MOBApi endpoint. The photo is stored by
 the desktop-side API, not only on the phone.
+
+Lap counts are saved on the phone and restored after an app restart; timing
+history starts again with new feedback. Use **Set** with a non-negative whole
+number or **Reset** on a counter row to correct one input. These controls affect
+the phone's local counters, not the desktop's journey counters, even while the
+MOBAflow connection is ON.
 
 ### SignalBox
 
@@ -130,6 +137,8 @@ when the SignalR connection is available.
   the visible range.
 - Check whether the timer-filter interval is suppressing legitimate repeated
   events.
+- Check for a saved-counter load error. Resolve the storage problem and retry,
+  or deliberately reset all local counters to replace the saved values.
 
 ### Photo upload fails
 
