@@ -25,9 +25,9 @@ public class RuntimeController : ControllerBase
     }
 
     [HttpGet("meta")]
-    public IActionResult GetMeta()
+    public IActionResult GetMeta([FromQuery] Guid projectId)
     {
-        if (!_snapshotCache.TryGet(out var entry))
+        if (!_snapshotCache.TryGet(projectId, out var entry))
         {
             return NotFound(new { error = "No runtime snapshot available yet." });
         }
@@ -40,9 +40,9 @@ public class RuntimeController : ControllerBase
     }
 
     [HttpGet("snapshot")]
-    public IActionResult GetSnapshot()
+    public IActionResult GetSnapshot([FromQuery] Guid projectId)
     {
-        if (!_snapshotCache.TryGet(out var entry))
+        if (!_snapshotCache.TryGet(projectId, out var entry))
         {
             return NotFound(new { error = "No runtime snapshot available yet." });
         }
@@ -66,7 +66,12 @@ public class RuntimeController : ControllerBase
             return BadRequest(new { error = "Invalid runtime snapshot JSON." });
         }
 
-        _snapshotCache.Set(json, snapshot.IsConnected);
-        return Ok(new { updatedAt = DateTimeOffset.UtcNow, isConnected = snapshot.IsConnected });
+        if (snapshot.ProjectId == Guid.Empty)
+        {
+            return BadRequest(new { error = "The runtime snapshot names no project." });
+        }
+
+        var entry = _snapshotCache.Set(json);
+        return Ok(new { projectId = entry.ProjectId, updatedAt = entry.UpdatedAt, isConnected = entry.IsConnected });
     }
 }

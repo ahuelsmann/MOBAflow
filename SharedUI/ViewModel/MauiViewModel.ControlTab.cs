@@ -328,5 +328,14 @@ public sealed partial class MauiViewModel
         }
 
         _uiDispatcher.InvokeOnUi(ApplyBestAvailableLocomotiveFleet);
+        RunInBackground(SelectRemoteProjectAsync(), "Select remote project");
     }
+
+    /// <summary>
+    /// MOBAflow runs one runtime per project; remote control shows and commands the project selected here.
+    /// </summary>
+    private Task SelectRemoteProjectAsync() =>
+        _runtimeHubRemoteClient is not null && _projectContext?.SelectedProject?.Model.Id is { } projectId
+            ? _runtimeHubRemoteClient.SelectProjectAsync(projectId, _applicationLifetimeCts.Token)
+            : Task.CompletedTask;
 }

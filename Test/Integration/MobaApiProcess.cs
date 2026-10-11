@@ -96,6 +96,17 @@ internal sealed class MobaApiProcess : IAsyncDisposable
         return await _client.SendAsync(request).ConfigureAwait(false);
     }
 
+    public async Task PublishSolutionAsync(Guid projectId)
+    {
+        var solutionJson =
+            $$"""{"name":"Process integration","schemaVersion":{{Moba.Domain.Solution.CurrentSchemaVersion}},"projects":[{"id":"{{projectId}}","name":"Process integration"}]}""";
+        using var response = await SendAsync(
+            HttpMethod.Put,
+            "api/solution",
+            new StringContent(solutionJson, Encoding.UTF8, "application/json")).ConfigureAwait(false);
+        await EnsureSuccessAsync(response).ConfigureAwait(false);
+    }
+
     public async Task PublishSnapshotAsync(string snapshotJson)
     {
         using var response = await SendAsync(
@@ -105,9 +116,9 @@ internal sealed class MobaApiProcess : IAsyncDisposable
         await EnsureSuccessAsync(response).ConfigureAwait(false);
     }
 
-    public async Task<string> ReadSnapshotAsync()
+    public async Task<string> ReadSnapshotAsync(Guid projectId)
     {
-        using var response = await SendAsync(HttpMethod.Get, "api/runtime/snapshot").ConfigureAwait(false);
+        using var response = await SendAsync(HttpMethod.Get, $"api/runtime/snapshot?projectId={projectId}").ConfigureAwait(false);
         await EnsureSuccessAsync(response).ConfigureAwait(false);
         return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
     }

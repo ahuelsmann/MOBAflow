@@ -83,6 +83,7 @@ public static class RuntimeSnapshotPreservation
     {
         return new MobaRuntimeSnapshot
         {
+            ProjectId = source.ProjectId,
             IsConnected = source.IsConnected,
             IsTrackPowerOn = source.IsTrackPowerOn,
             StatusText = source.StatusText,

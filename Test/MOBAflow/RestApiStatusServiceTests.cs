@@ -136,8 +136,7 @@ internal sealed partial class RestApiStatusServiceTests
         using var mobApiClient = new LocalMobApiClient(appSettings);
         var runtimeHubService = new RestApiRuntimeHubService(
             runtimeHubHostClient.Object,
-            mobaRuntime.Object,
-            eventBus,
+            new Mock<IProjectRuntimeSnapshots>().Object,
             NullLogger<RestApiRuntimeHubService>.Instance,
             mobApiClient);
 

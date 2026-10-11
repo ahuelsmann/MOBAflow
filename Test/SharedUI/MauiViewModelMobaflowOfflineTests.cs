@@ -117,8 +117,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
             .ReturnsAsync(true);
 
-        var projectContext = new MobileSolutionContext();
-        projectContext.ApplySolution(new Solution
+        var projectContext = CreateProjectContext(new Solution
         {
             Name = "Cached",
             Projects =
@@ -229,9 +228,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         var signalId = Guid.Parse("3d6c0ace-dde2-4329-95d5-8e474b65828f");
 
-        var projectContext = new MobileSolutionContext();
-
-        projectContext.ApplySolution(new Solution
+        var projectContext = CreateProjectContext(new Solution
 
         {
 
@@ -702,11 +699,19 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         });
     }
 
+    /// <summary>The phone's view of a synchronized solution.</summary>
+    private static MobileSolutionContext CreateProjectContext(Solution solution, string? activeProjectName = null)
+    {
+        var context = new MobileSolutionContext();
+        context.ApplySolution(solution, activeProjectName);
+        return context;
+    }
+
     private MauiViewModel CreateViewModel(
         EventBus eventBus,
         IRuntimeHubRemoteClient? runtimeHubRemoteClient = null,
         Mock<IMobaRuntime>? runtimeMock = null,
-        IProjectContext? projectContext = null,
+        MobileSolutionContext? projectContext = null,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
         IRuntimeCommandGateway? runtimeCommandGateway = null,
         AppSettings? settings = null,
@@ -830,6 +835,45 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         restDiscoveryMock.Verify(
             service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [Test]
+    public async Task RemoteControl_FollowsTheSelectedProject()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var settings = new AppSettings
+        {
+            RestApi =
+            {
+                CurrentIpAddress = "192.168.0.42",
+                Port = 5001,
+                IsConnectionEnabled = true
+            }
+        };
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        hubMock.SetupGet(hub => hub.IsConnected).Returns(true);
+        var photoUploadMock = new Mock<IPhotoUploadService>();
+        photoUploadMock
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
+            .ReturnsAsync(true);
+        var station = new Project { Name = "Station" };
+        var yard = new Project { Name = "Yard" };
+        var projectContext = CreateProjectContext(new Solution { Name = "Layout", Projects = [station, yard] });
+
+        var viewModel = CreateViewModel(
+            eventBus,
+            runtimeHubRemoteClient: hubMock.Object,
+            projectContext: projectContext,
+            settings: settings,
+            photoUploadService: photoUploadMock.Object);
+
+        await viewModel.InitializeAsync().ConfigureAwait(false);
+        await Task.Delay(300).ConfigureAwait(false);
+        hubMock.Verify(hub => hub.SelectProjectAsync(station.Id, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+
+        projectContext.SelectedProject = projectContext.SolutionViewModel!.Projects.Single(project => project.Model.Id == yard.Id);
+
+        hubMock.Verify(hub => hub.SelectProjectAsync(yard.Id, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]

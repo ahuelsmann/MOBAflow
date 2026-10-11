@@ -9,6 +9,38 @@ using Moba.MOBApi.Service;
 [TestFixture]
 internal sealed class RuntimeSnapshotCacheTests
 {
+    private static readonly Guid ProjectA = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid ProjectB = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
+    [Test]
+    public void Set_KeepsEachProjectsSnapshotSeparately()
+    {
+        var cache = new RuntimeSnapshotCache();
+
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = ProjectA, IsConnected = true, MainCurrent = 1 }));
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = ProjectB, IsConnected = false, MainCurrent = 2 }));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(cache.TryGet(ProjectA, out var a), Is.True);
+            Assert.That(a.IsConnected, Is.True);
+            Assert.That(RuntimeJsonSerializer.Deserialize(a.Json)!.MainCurrent, Is.EqualTo(1));
+            Assert.That(cache.TryGet(ProjectB, out var b), Is.True);
+            Assert.That(b.IsConnected, Is.False);
+            Assert.That(RuntimeJsonSerializer.Deserialize(b.Json)!.MainCurrent, Is.EqualTo(2));
+            Assert.That(cache.GetAll().Select(entry => entry.ProjectId), Is.EquivalentTo(new[] { ProjectA, ProjectB }));
+        }
+    }
+
+    [Test]
+    public void Set_RejectsSnapshotWithoutProject()
+    {
+        var cache = new RuntimeSnapshotCache();
+
+        Assert.Throws<ArgumentException>(() => cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { IsConnected = true })));
+        Assert.That(cache.GetAll(), Is.Empty);
+    }
+
     [Test]
     public void Set_PreservesSignalBoxElements_WhenIncomingSnapshotOmitsThem()
     {
@@ -17,6 +49,7 @@ internal sealed class RuntimeSnapshotCacheTests
 
         var withSignals = RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
             [
@@ -29,18 +62,19 @@ internal sealed class RuntimeSnapshotCacheTests
             ]
         });
 
-        cache.Set(withSignals, isConnected: true);
+        cache.Set(withSignals);
 
         var telemetryOnly = RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectA,
             IsConnected = true,
             MainCurrent = 99,
             SignalBoxElements = []
         });
 
-        cache.Set(telemetryOnly, isConnected: true);
+        cache.Set(telemetryOnly);
 
-        Assert.That(cache.TryGet(out var entry), Is.True);
+        Assert.That(cache.TryGet(ProjectA, out var entry), Is.True);
         var restored = RuntimeJsonSerializer.Deserialize(entry.Json);
         Assert.Multiple(() =>
         {
@@ -59,6 +93,7 @@ internal sealed class RuntimeSnapshotCacheTests
 
         cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
             [
@@ -70,10 +105,11 @@ internal sealed class RuntimeSnapshotCacheTests
                     SignalAspect = SignalAspect.Hp0
                 }
             ]
-        }), isConnected: true);
+        }));
 
         cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
             [
@@ -85,16 +121,17 @@ internal sealed class RuntimeSnapshotCacheTests
                     SignalAspect = SignalAspect.Ks1
                 }
             ]
-        }), isConnected: true);
+        }));
 
         cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectA,
             IsConnected = true,
             MainCurrent = 42,
             SignalBoxElements = []
-        }), isConnected: true);
+        }));
 
-        Assert.That(cache.TryGet(out var entry), Is.True);
+        Assert.That(cache.TryGet(ProjectA, out var entry), Is.True);
         var restored = RuntimeJsonSerializer.Deserialize(entry.Json);
         Assert.That(restored!.SignalBoxElements.Single().SignalAspect, Is.EqualTo(SignalAspect.Ks1));
     }
@@ -108,6 +145,7 @@ internal sealed class RuntimeSnapshotCacheTests
 
         cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
             [
@@ -120,10 +158,11 @@ internal sealed class RuntimeSnapshotCacheTests
                     Y = 0
                 }
             ]
-        }), isConnected: true);
+        }));
 
         cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
             [
@@ -136,9 +175,9 @@ internal sealed class RuntimeSnapshotCacheTests
                     Y = 4
                 }
             ]
-        }), isConnected: true);
+        }));
 
-        Assert.That(cache.TryGet(out var entry), Is.True);
+        Assert.That(cache.TryGet(ProjectA, out var entry), Is.True);
         var restored = RuntimeJsonSerializer.Deserialize(entry.Json);
         Assert.Multiple(() =>
         {
@@ -156,6 +195,7 @@ internal sealed class RuntimeSnapshotCacheTests
 
         var withFleet = RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectA,
             IsConnected = true,
             LocomotiveFleet =
             [
@@ -168,18 +208,19 @@ internal sealed class RuntimeSnapshotCacheTests
             ]
         });
 
-        cache.Set(withFleet, isConnected: true);
+        cache.Set(withFleet);
 
         var telemetryOnly = RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectA,
             IsConnected = true,
             MainCurrent = 99,
             LocomotiveFleet = []
         });
 
-        cache.Set(telemetryOnly, isConnected: true);
+        cache.Set(telemetryOnly);
 
-        Assert.That(cache.TryGet(out var entry), Is.True);
+        Assert.That(cache.TryGet(ProjectA, out var entry), Is.True);
         var restored = RuntimeJsonSerializer.Deserialize(entry.Json);
         Assert.Multiple(() =>
         {

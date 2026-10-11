@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Service.ProjectRuntimes;
 
+using Common.Events;
+using Common.Runtime;
+
 using Domain;
 
 using Interface;
@@ -12,7 +15,7 @@ using Microsoft.Extensions.Logging;
 /// only decides which runtime the UI shows. Runtimes live as long as their solution.
 /// </summary>
 public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<ProjectRuntimeHost> logger)
-    : IProjectRuntimeHost, IAsyncDisposable
+    : IProjectRuntimeHost, IProjectRuntimeSnapshots, IAsyncDisposable
 {
     private static readonly Action<ILogger, Guid, Exception?> LogStopLocomotivesFailed =
         LoggerMessage.Define<Guid>(
@@ -32,8 +35,15 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
     // The order of the projects in the solution; the earliest project of a Z21 owns its connection.
     private readonly List<Guid> _order = [];
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly Dictionary<Guid, Guid> _snapshotSubscriptions = [];
     private Guid? _selectedId;
     private Guid? _requestedSelection;
+
+    /// <inheritdoc />
+    public event EventHandler<ProjectRuntimeSnapshotEventArgs>? RuntimeSnapshotChanged;
+
+    /// <inheritdoc />
+    public IReadOnlyList<MobaRuntimeSnapshot> Snapshots => [.. Runtimes.Select(runtime => runtime.Runtime.Current)];
 
     /// <summary>Raised after the selected runtime changed.</summary>
     public event EventHandler? SelectedRuntimeChanged;
@@ -195,6 +205,8 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
         lock (_runtimes)
         {
             _runtimes[project.Id] = runtime;
+            _snapshotSubscriptions[project.Id] =
+                runtime.Connection.EventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
         }
 
         if (_requestedSelection == project.Id)
@@ -292,9 +304,21 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
 
         lock (_runtimes)
         {
-            return _runtimes.Remove(projectId, out var runtime) ? runtime : null;
+            if (!_runtimes.Remove(projectId, out var runtime))
+            {
+                return null;
+            }
+
+            if (_snapshotSubscriptions.Remove(projectId, out var subscription))
+            {
+                runtime.Connection.EventBus.Unsubscribe(subscription);
+            }
+
+            return runtime;
         }
     }
+
+    private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e) => RuntimeSnapshotChanged?.Invoke(this, new ProjectRuntimeSnapshotEventArgs(e.Snapshot));
 
     private void SelectCore(Guid? projectId)
     {

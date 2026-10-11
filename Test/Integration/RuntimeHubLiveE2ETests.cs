@@ -23,6 +23,7 @@ using System.Text.Json;
 internal sealed class RuntimeHubLiveE2ETests
 {
     private static readonly TimeSpan StepTimeout = TimeSpan.FromSeconds(10);
+    private static readonly Guid ProjectId = Guid.Parse("99999999-8888-7777-6666-555555555555");
     private MobaApiProcess? _server;
 
     private string BaseUrl => _server?.BaseUri.ToString().TrimEnd('/')
@@ -48,6 +49,7 @@ internal sealed class RuntimeHubLiveE2ETests
     {
         var testSnapshot = new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectId,
             IsConnected = true,
             IsTrackPowerOn = true,
             StatusText = "E2E connected",
@@ -65,6 +67,7 @@ internal sealed class RuntimeHubLiveE2ETests
         var driveReceived = new TaskCompletionSource<(int Address, int Speed, bool Forward)>(TaskCreationOptions.RunContinuationsAsynchronously);
         var sessionStateReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        await PublishSolutionAsync().ConfigureAwait(false);
         await using var hostHub = await ConnectHostHubAsync(driveReceived).ConfigureAwait(false);
         await using var remoteHub = await ConnectRemoteHubAsync(snapshotReceived, sessionStateReceived, testSnapshot.StatusText).ConfigureAwait(false);
 
@@ -81,7 +84,7 @@ internal sealed class RuntimeHubLiveE2ETests
         Assert.That(sessionOperational, Is.True);
 
         await remoteHub
-            .InvokeAsync(RuntimeHubMethods.SetLocomotiveDrive, 3, 42, true)
+            .InvokeAsync(RuntimeHubMethods.SetLocomotiveDrive, ProjectId.ToString(), 3, 42, true)
             .ConfigureAwait(false);
 
         var drive = await driveReceived.Task.WaitAsync(StepTimeout).ConfigureAwait(false);
@@ -95,6 +98,7 @@ internal sealed class RuntimeHubLiveE2ETests
     {
         var cachedSnapshot = new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectId,
             IsConnected = true,
             StatusText = "Cached before remote connect",
             SignalBoxElements =
@@ -129,10 +133,12 @@ internal sealed class RuntimeHubLiveE2ETests
     [Test, Order(2)]
     public async Task RestFallback_Should_RoundtripSnapshotAndCommands()
     {
+        await PublishSolutionAsync().ConfigureAwait(false);
         using var http = new HttpClient { BaseAddress = new Uri(BaseUrl) };
 
         var snapshot = new MobaRuntimeSnapshot
         {
+            ProjectId = ProjectId,
             IsConnected = true,
             StatusText = "REST E2E"
         };
@@ -143,18 +149,18 @@ internal sealed class RuntimeHubLiveE2ETests
             Assert.That(putResponse.IsSuccessStatusCode, Is.True, await putResponse.Content.ReadAsStringAsync());
         }
 
-        var metaResponse = await http.GetAsync("/api/runtime/meta").ConfigureAwait(false);
+        var metaResponse = await http.GetAsync($"/api/runtime/meta?projectId={ProjectId}").ConfigureAwait(false);
         Assert.That(metaResponse.IsSuccessStatusCode, Is.True);
         var meta = await metaResponse.Content.ReadFromJsonAsync<JsonElement>().ConfigureAwait(false);
         Assert.That(meta.GetProperty("isConnected").GetBoolean(), Is.True);
 
-        var getSnapshotResponse = await http.GetAsync("/api/runtime/snapshot").ConfigureAwait(false);
+        var getSnapshotResponse = await http.GetAsync($"/api/runtime/snapshot?projectId={ProjectId}").ConfigureAwait(false);
         Assert.That(getSnapshotResponse.IsSuccessStatusCode, Is.True);
         var restored = RuntimeJsonSerializer.Deserialize(await getSnapshotResponse.Content.ReadAsStringAsync().ConfigureAwait(false));
         Assert.That(restored?.StatusText, Is.EqualTo("REST E2E"));
 
         var signalId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-        var commandBody = JsonSerializer.Serialize(new { signalId, aspect = SignalAspect.Hp0.ToString() });
+        var commandBody = JsonSerializer.Serialize(new { projectId = ProjectId, signalId, aspect = SignalAspect.Hp0.ToString() });
         using (var postContent = new StringContent(commandBody, Encoding.UTF8, "application/json"))
         {
             var postResponse = await http.PostAsync("/api/runtime/commands/signal-aspect", postContent).ConfigureAwait(false);
@@ -168,9 +174,21 @@ internal sealed class RuntimeHubLiveE2ETests
         Assert.That(pending!.Type, Is.EqualTo(RuntimeCommandType.SetSignalAspect));
         Assert.That(pending.SignalId, Is.EqualTo(signalId));
         Assert.That(pending.SignalAspect, Is.EqualTo(SignalAspect.Hp0));
+        Assert.That(pending.ProjectId, Is.EqualTo(ProjectId));
 
         var emptyPending = await http.GetAsync("/api/runtime/commands/pending").ConfigureAwait(false);
         Assert.That(emptyPending.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NoContent));
+    }
+
+    /// <summary>Synchronizes a solution that contains <see cref="ProjectId"/>; commands name known projects only.</summary>
+    private async Task PublishSolutionAsync()
+    {
+        using var http = new HttpClient { BaseAddress = new Uri(BaseUrl) };
+        var solutionJson =
+            $$"""{"name":"E2E","schemaVersion":{{Solution.CurrentSchemaVersion}},"projects":[{"id":"{{ProjectId}}","name":"E2E"}]}""";
+        using var content = new StringContent(solutionJson, Encoding.UTF8, "application/json");
+        using var response = await http.PutAsync(new Uri("/api/solution", UriKind.Relative), content).ConfigureAwait(false);
+        Assert.That(response.IsSuccessStatusCode, Is.True, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
     }
 
     private async Task<HubConnection> ConnectHostHubAsync(
@@ -180,7 +198,7 @@ internal sealed class RuntimeHubLiveE2ETests
             .WithUrl($"{BaseUrl}/runtime-hub")
             .Build();
 
-        hub.On<int, int, bool>(RuntimeHubMethods.ExecuteSetLocomotiveDrive, (address, speed, forward) =>
+        hub.On<string, int, int, bool>(RuntimeHubMethods.ExecuteSetLocomotiveDrive, (_, address, speed, forward) =>
         {
             driveReceived.TrySetResult((address, speed, forward));
             return Task.CompletedTask;
@@ -222,7 +240,7 @@ internal sealed class RuntimeHubLiveE2ETests
         });
 
         await hub.StartAsync().ConfigureAwait(false);
-        await hub.InvokeAsync(RuntimeHubMethods.RegisterRemote, "e2e-test-client").ConfigureAwait(false);
+        await hub.InvokeAsync(RuntimeHubMethods.RegisterRemote, "e2e-test-client", ProjectId.ToString()).ConfigureAwait(false);
         return hub;
     }
 }

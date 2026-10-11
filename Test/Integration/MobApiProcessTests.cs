@@ -18,6 +18,8 @@ using System.Threading.Channels;
 [NonParallelizable]
 internal sealed class MobApiProcessTests
 {
+    private static readonly Guid ProjectId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
     [Test]
     [CancelAfter(45_000)]
     public async Task HealthEndpoint_ShouldMatchMobAsmartDiscoveryContract()
@@ -42,11 +44,12 @@ internal sealed class MobApiProcessTests
         var server = await MobaApiProcess.StartAsync(MobaApiProcess.GetAvailablePort()).ConfigureAwait(false);
         await using var serverLifetime = server.ConfigureAwait(false);
 
+        await server.PublishSolutionAsync(ProjectId).ConfigureAwait(false);
         using var accepted = await server
             .SendAsync(
                 HttpMethod.Post,
                 "api/runtime/commands/locomotive/drive",
-                JsonContent.Create(new { address = 3, speed = 40, forward = true }))
+                JsonContent.Create(new { projectId = ProjectId, address = 3, speed = 40, forward = true }))
             .ConfigureAwait(false);
         using var pending = await server.SendAsync(HttpMethod.Get, "api/runtime/commands/pending").ConfigureAwait(false);
         var command = await pending.Content.ReadFromJsonAsync<RuntimeCommandEnvelope>().ConfigureAwait(false);
@@ -57,6 +60,30 @@ internal sealed class MobApiProcessTests
             Assert.That(pending.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(command?.Type, Is.EqualTo(RuntimeCommandType.SetLocomotiveDrive));
             Assert.That(command?.LocomotiveAddress, Is.EqualTo(3));
+            Assert.That(command?.ProjectId, Is.EqualTo(ProjectId));
+        }
+    }
+
+    [Test]
+    [CancelAfter(45_000)]
+    public async Task RemoteCommand_WithoutProject_IsRejected()
+    {
+        var server = await MobaApiProcess.StartAsync(MobaApiProcess.GetAvailablePort()).ConfigureAwait(false);
+        await using var serverLifetime = server.ConfigureAwait(false);
+        await server.PublishSolutionAsync(ProjectId).ConfigureAwait(false);
+
+        using var rejected = await server
+            .SendAsync(
+                HttpMethod.Post,
+                "api/runtime/commands/locomotive/drive",
+                JsonContent.Create(new { address = 3, speed = 40, forward = true }))
+            .ConfigureAwait(false);
+        using var pending = await server.SendAsync(HttpMethod.Get, "api/runtime/commands/pending").ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(rejected.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            Assert.That(pending.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
         }
     }
 
@@ -70,10 +97,10 @@ internal sealed class MobApiProcessTests
         {
             await using (var firstServer = await MobaApiProcess.StartAsync(port))
             {
-                var firstSnapshot = RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { IsConnected = true });
+                var firstSnapshot = RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = ProjectId, IsConnected = true });
                 await firstServer.PublishSnapshotAsync(firstSnapshot);
 
-                var restSnapshot = await firstServer.ReadSnapshotAsync();
+                var restSnapshot = await firstServer.ReadSnapshotAsync(ProjectId);
                 reconnectProbe = await SignalRReconnectProbe.StartAsync(firstServer.HubUri);
                 var firstSignalRSnapshot = await reconnectProbe.WaitForSnapshotAsync(firstSnapshot);
 
@@ -83,10 +110,10 @@ internal sealed class MobApiProcessTests
             await using (var restartedServer = await MobaApiProcess.StartAsync(port))
             {
                 await reconnectProbe.WaitForReconnectAsync();
-                var restartedSnapshot = RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { IsConnected = false });
+                var restartedSnapshot = RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = ProjectId, IsConnected = false });
                 await restartedServer.PublishSnapshotAsync(restartedSnapshot);
 
-                var restSnapshot = await restartedServer.ReadSnapshotAsync();
+                var restSnapshot = await restartedServer.ReadSnapshotAsync(ProjectId);
                 var signalRSnapshot = await reconnectProbe.RegisterAndWaitForSnapshotAsync(restartedSnapshot);
 
                 Assert.That(signalRSnapshot, Is.EqualTo(restSnapshot));
@@ -129,12 +156,12 @@ internal sealed class MobApiProcessTests
                 probe._snapshots.Writer.TryWrite(snapshot));
             connection.Reconnected += async _ =>
             {
-                await connection.InvokeAsync(RuntimeHubMethods.RegisterRemote, ClientId);
+                await connection.InvokeAsync(RuntimeHubMethods.RegisterRemote, ClientId, ProjectId.ToString());
                 probe._reconnected.TrySetResult();
             };
 
             await connection.StartAsync();
-            await connection.InvokeAsync(RuntimeHubMethods.RegisterRemote, ClientId);
+            await connection.InvokeAsync(RuntimeHubMethods.RegisterRemote, ClientId, ProjectId.ToString());
             return probe;
         }
 
@@ -143,7 +170,7 @@ internal sealed class MobApiProcessTests
 
         public async Task<string> RegisterAndWaitForSnapshotAsync(string expectedSnapshot)
         {
-            await _connection.InvokeAsync(RuntimeHubMethods.RegisterRemote, ClientId);
+            await _connection.InvokeAsync(RuntimeHubMethods.RegisterRemote, ClientId, ProjectId.ToString());
             return await WaitForSnapshotAsync(expectedSnapshot);
         }
 

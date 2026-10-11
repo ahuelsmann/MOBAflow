@@ -845,6 +845,13 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
+      "path": "MOBAflow/Service/ProjectRuntimeCommandRouter.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAflow",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1515",
       "path": "MOBAflow/Service/RestApiProcessService.cs",
       "count": 1
     },
@@ -1084,7 +1091,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
       "path": "MOBAflow/Service/RestApiRuntimeHubService.cs",
-      "count": 3
+      "count": 2
     },
     {
       "project": "MOBAflow",
@@ -1946,20 +1953,6 @@
       "ruleId": "IDE0005",
       "path": "MOBAflow/Converter/BoolToPickerStateBrushConverter.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0005",
-      "path": "MOBAflow/Service/RestApiRuntimeCommandConsumerService.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0005",
-      "path": "MOBAflow/Service/RestApiRuntimeHubService.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -3498,6 +3491,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAflow/ProjectRuntimeCommandRouterTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAflow/RecordingFileServiceTests.cs",
       "count": 1
     },
@@ -4990,7 +4990,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/MOBAflow/RestApiRuntimeHubServiceTests.cs",
-      "count": 3
+      "count": 1
     },
     {
       "project": "Test",
@@ -5487,13 +5487,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0028",
       "path": "Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0053",
-      "path": "Test/MOBAflow/RestApiRuntimeHubServiceTests.cs",
       "count": 1
     },
     {
@@ -6537,7 +6530,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/MOBAflow/RestApiRuntimeHubServiceTests.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Test",

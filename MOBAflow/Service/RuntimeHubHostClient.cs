@@ -3,7 +3,6 @@
 namespace Moba.WinUI.Service;
 
 using Common.Discovery;
-using Backend.Interface;
 
 using Common.Runtime;
 
@@ -19,18 +18,15 @@ using SharedUI.Interface;
 /// </summary>
 public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
 {
-    private readonly IMobaRuntime _mobaRuntime;
-    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
+    private readonly ProjectRuntimeCommandRouter _router;
     private readonly ILogger<RuntimeHubHostClient>? _logger;
     private HubConnection? _hubConnection;
 
     public RuntimeHubHostClient(
-        IMobaRuntime mobaRuntime,
-        IRuntimeCommandGateway runtimeCommandGateway,
+        ProjectRuntimeCommandRouter router,
         ILogger<RuntimeHubHostClient>? logger = null)
     {
-        _mobaRuntime = mobaRuntime;
-        _runtimeCommandGateway = runtimeCommandGateway;
+        _router = router ?? throw new ArgumentNullException(nameof(router));
         _logger = logger;
     }
 
@@ -52,9 +48,9 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
             ])
             .Build();
 
-        _hubConnection.On<string, string>(RuntimeHubMethods.ExecuteSetSignalAspect, OnExecuteSetSignalAspectAsync);
-        _hubConnection.On<int, int, bool>(RuntimeHubMethods.ExecuteSetLocomotiveDrive, OnExecuteSetLocomotiveDriveAsync);
-        _hubConnection.On<int, int, bool>(RuntimeHubMethods.ExecuteSetLocomotiveFunction, OnExecuteSetLocomotiveFunctionAsync);
+        _hubConnection.On<string, string, string>(RuntimeHubMethods.ExecuteSetSignalAspect, OnExecuteSetSignalAspectAsync);
+        _hubConnection.On<string, int, int, bool>(RuntimeHubMethods.ExecuteSetLocomotiveDrive, OnExecuteSetLocomotiveDriveAsync);
+        _hubConnection.On<string, int, int, bool>(RuntimeHubMethods.ExecuteSetLocomotiveFunction, OnExecuteSetLocomotiveFunctionAsync);
         _hubConnection.Reconnected += OnReconnectedAsync;
 
         await _hubConnection.StartAsync(cancellationToken).ConfigureAwait(false);
@@ -118,9 +114,12 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
         try
         {
             await RegisterHostAsync(CancellationToken.None).ConfigureAwait(false);
-            await PushSnapshotAsync(
-                RuntimeSnapshotRemoteFilter.ForMobasmartBroadcast(_mobaRuntime.Current),
-                CancellationToken.None).ConfigureAwait(false);
+            foreach (var snapshot in _router.Snapshots)
+            {
+                await PushSnapshotAsync(
+                    RuntimeSnapshotRemoteFilter.ForMobasmartBroadcast(snapshot),
+                    CancellationToken.None).ConfigureAwait(false);
+            }
         }
         catch (Exception ex)
         {
@@ -128,23 +127,36 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
         }
     }
 
-    private async Task OnExecuteSetSignalAspectAsync(string signalId, string aspect)
+    private async Task OnExecuteSetSignalAspectAsync(string projectId, string signalId, string aspect)
     {
         if (!Guid.TryParse(signalId, out var id) || !Enum.TryParse<SignalAspect>(aspect, out var parsedAspect))
         {
             return;
         }
 
-        await _runtimeCommandGateway.SetSignalAspectAsync(id, parsedAspect).ConfigureAwait(false);
+        if (ForProject(projectId) is { } gateway)
+        {
+            await gateway.SetSignalAspectAsync(id, parsedAspect).ConfigureAwait(false);
+        }
     }
 
-    private async Task OnExecuteSetLocomotiveDriveAsync(int address, int speed, bool forward)
+    private async Task OnExecuteSetLocomotiveDriveAsync(string projectId, int address, int speed, bool forward)
     {
-        await _runtimeCommandGateway.SetLocomotiveDriveAsync(address, speed, forward).ConfigureAwait(false);
+        if (ForProject(projectId) is { } gateway)
+        {
+            await gateway.SetLocomotiveDriveAsync(address, speed, forward).ConfigureAwait(false);
+        }
     }
 
-    private async Task OnExecuteSetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn)
+    private async Task OnExecuteSetLocomotiveFunctionAsync(string projectId, int address, int functionIndex, bool isOn)
     {
-        await _runtimeCommandGateway.SetLocomotiveFunctionAsync(address, functionIndex, isOn).ConfigureAwait(false);
+        if (ForProject(projectId) is { } gateway)
+        {
+            await gateway.SetLocomotiveFunctionAsync(address, functionIndex, isOn).ConfigureAwait(false);
+        }
     }
+
+    /// <summary>Every project has its own runtime; a command for a project that is not loaded is dropped.</summary>
+    private IRuntimeCommandGateway? ForProject(string projectId) =>
+        Guid.TryParse(projectId, out var id) ? _router.ForProject(id) : null;
 }
