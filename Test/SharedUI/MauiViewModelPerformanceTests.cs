@@ -7,6 +7,7 @@
 // 4. Z21 connected: switch away from Control tab, confirm no UI jank every 5s on Counter.
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
@@ -458,6 +459,7 @@ internal sealed class MauiViewModelPerformanceTests
             .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
             .ReturnsAsync(true);
 
+        var settingsService = CreateSettingsServiceMock(appSettings).Object;
         var viewModel = new MauiViewModel(
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
@@ -465,8 +467,8 @@ internal sealed class MauiViewModelPerformanceTests
             runtimeCommandGateway ?? new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             uiDispatcherMock.Object,
             appSettings,
-            CreateSettingsServiceMock(appSettings).Object,
-            new Mock<IRestDiscoveryService>().Object,
+            settingsService,
+            TestEndpointLocators.Create(appSettings, settingsService),
             photoUploadMock.Object,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,

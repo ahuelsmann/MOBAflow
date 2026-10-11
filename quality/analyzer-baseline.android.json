@@ -2644,6 +2644,13 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "SharedUI/Mobile/MobaflowEndpointLocator.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "SharedUI/Service/PhotoStorageService.cs",
       "count": 2
     },
@@ -2722,14 +2729,14 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 13
+      "count": 8
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
-      "count": 8
+      "count": 7
     },
     {
       "project": "SharedUI",
@@ -3149,14 +3156,14 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 13
+      "count": 11
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
-      "count": 10
+      "count": 9
     },
     {
       "project": "SharedUI",
@@ -3275,7 +3282,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
       "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
-      "count": 3
+      "count": 2
     },
     {
       "project": "SharedUI",
