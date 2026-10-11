@@ -128,5 +128,7 @@ Async-void setters cannot delay a context commit. Modifying old page lifetimes i
 ## Planning outcome
 
 All research unknowns have a chosen design. Implementation must first prove the shared scheduling seam and production
-regressions; this is a validation dependency, not an unresolved requirements placeholder. Tasks and consistency analysis
-remain the next phase. No example solution, runtime code, app launch or hardware operation occurred.
+regressions; this is a validation dependency, not an unresolved requirements placeholder. Follow-up [tasks](tasks.md) and
+read-only consistency analysis are complete as draft backlog work; design #241 is merged. Backlog review/integration and
+product implementation remain.
+No example solution, runtime code, app launch or hardware operation occurred.
