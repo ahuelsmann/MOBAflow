@@ -150,7 +150,7 @@ public sealed partial class MobaRuntimeService
 
         if (DateTimeOffset.UtcNow - commandedAt.ToUniversalTime() > LocomotiveDriveCommandGracePeriod)
         {
-            _lastLocomotiveDriveCommandAt.Remove(address);
+            _lastLocomotiveDriveCommandAt.TryRemove(address, out _);
             return false;
         }
 

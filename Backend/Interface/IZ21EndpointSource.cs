@@ -28,6 +28,9 @@ public interface IZ21EndpointSource
 /// <param name="Error">A user-facing reason when no address is available.</param>
 public sealed record Z21EndpointResolution(IPAddress? Address, int Port, string? Error)
 {
+    /// <summary>Identifies the project supplying this endpoint, so late connection attempts cannot cross projects.</summary>
+    public Guid? ProjectId { get; init; }
+
     /// <summary>Creates a resolution without an address.</summary>
     public static Z21EndpointResolution Unavailable(string error) => new(null, 0, error);
 }

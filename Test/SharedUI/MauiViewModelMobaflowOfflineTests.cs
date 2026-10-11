@@ -916,6 +916,13 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         var yard = new Project { Name = "Yard" };
         var projectContext = CreateProjectContext(new Solution { Name = "Layout", Projects = [station, yard] });
 
+        var stationSelected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var yardSelected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        hubMock.Setup(value => value.SelectProjectAsync(station.Id, It.IsAny<CancellationToken>()))
+            .Callback(() => stationSelected.TrySetResult()).Returns(Task.CompletedTask);
+        hubMock.Setup(value => value.SelectProjectAsync(yard.Id, It.IsAny<CancellationToken>()))
+            .Callback(() => yardSelected.TrySetResult()).Returns(Task.CompletedTask);
+
         var viewModel = CreateViewModel(
             eventBus,
             runtimeHubRemoteClient: hubMock.Object,
@@ -924,10 +931,12 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             photoUploadService: photoUploadMock.Object);
 
         await viewModel.InitializeAsync().ConfigureAwait(false);
-        await Task.Delay(300).ConfigureAwait(false);
+        await stationSelected.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         hubMock.Verify(hub => hub.SelectProjectAsync(station.Id, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
 
         projectContext.SelectedProject = projectContext.SolutionViewModel!.Projects.Single(project => project.Model.Id == yard.Id);
+
+        await yardSelected.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
         hubMock.Verify(hub => hub.SelectProjectAsync(yard.Id, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -948,7 +957,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         runtimeMock.Setup(runtime => runtime.ConnectAsync(It.IsAny<CancellationToken>()))
             .Callback(() => { connected = true; calls.Add("connect"); })
             .Returns(Task.CompletedTask);
-        runtimeMock.Setup(runtime => runtime.DisconnectAsync(It.IsAny<CancellationToken>()))
+        runtimeMock.Setup(runtime => runtime.DisconnectForProjectSwitchAsync(It.IsAny<CancellationToken>()))
             .Callback(() => { connected = false; calls.Add("disconnect"); })
             .Returns(Task.CompletedTask);
         runtimeMock.Setup(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
@@ -985,8 +994,109 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         }
 
         runtimeMock.Verify(runtime => runtime.ActivateProjectAsync(yard, It.IsAny<CancellationToken>()), Times.Once);
-        runtimeMock.Verify(runtime => runtime.DisconnectAsync(It.IsAny<CancellationToken>()), Times.Once);
+        runtimeMock.Verify(runtime => runtime.DisconnectForProjectSwitchAsync(It.IsAny<CancellationToken>()), Times.Once);
+        runtimeMock.Verify(runtime => runtime.DisconnectAsync(It.IsAny<CancellationToken>()), Times.Never);
         runtimeMock.Verify(runtime => runtime.ConnectAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task RapidProjectSelection_SerializesRemoteAndLocalHandoffAndSkipsStaleActivation(bool delayRemote)
+    {
+        var station = new Project { Name = "Station", Z21 = { IpAddress = "192.168.0.111" } };
+        var yard = new Project { Name = "Yard", Z21 = { IpAddress = "192.168.0.112" } };
+        var depot = new Project { Name = "Depot", Z21 = { IpAddress = "192.168.0.113" } };
+        var context = CreateProjectContext(new Solution { Projects = [station, yard, depot] });
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var connected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var runtime = new Mock<IMobaRuntime>();
+        var hub = new Mock<IRuntimeHubRemoteClient>();
+        hub.Setup(value => value.SelectProjectAsync(yard.Id, It.IsAny<CancellationToken>()))
+            .Returns(() => { if (delayRemote) { started.TrySetResult(); return release.Task; } return Task.CompletedTask; });
+        var disconnects = 0;
+        runtime.Setup(value => value.DisconnectForProjectSwitchAsync(It.IsAny<CancellationToken>()))
+            .Returns(() => { if (!delayRemote && ++disconnects == 1) { started.TrySetResult(); return release.Task; } return Task.CompletedTask; });
+        runtime.Setup(value => value.ConnectAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => connected.TrySetResult()).Returns(Task.CompletedTask);
+        var viewModel = CreateViewModel(new EventBus(NullLogger<EventBus>.Instance), hub.Object,
+            runtimeMock: runtime, projectContext: context);
+
+        viewModel.SelectedProjectIndex = 1;
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        viewModel.SelectedProjectIndex = 2;
+        hub.Verify(value => value.SelectProjectAsync(depot.Id, It.IsAny<CancellationToken>()), Times.Never);
+        release.TrySetResult();
+        await connected.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.SelectedProject?.Model.Id, Is.EqualTo(depot.Id));
+            Assert.That(viewModel.Z21IpAddress, Is.EqualTo(depot.Z21.IpAddress));
+        }
+        runtime.Verify(value => value.ActivateProjectAsync(yard, It.IsAny<CancellationToken>()), Times.Never);
+        runtime.Verify(value => value.ActivateProjectAsync(depot, It.IsAny<CancellationToken>()), Times.Once);
+        hub.Verify(value => value.SelectProjectAsync(depot.Id, It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.ConnectAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task SameProjectSync_UpdatesDefinitionsWithoutRestartingItsRuntime(bool changeEndpoint)
+    {
+        var station = new Project { Name = "Station", Z21 = { IpAddress = "192.168.0.111" } };
+        var yard = new Project { Name = "Yard", Z21 = { IpAddress = "192.168.0.112" } };
+        var context = CreateProjectContext(new Solution { Projects = [station, yard] });
+        var connected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var updated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var runtime = new Mock<IMobaRuntime>();
+        runtime.Setup(value => value.ConnectAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => connected.TrySetResult()).Returns(Task.CompletedTask);
+        runtime.Setup(value => value.UpdateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
+            .Callback<Project, CancellationToken>((project, _) => { if (project.Journeys.Count == 1) updated.TrySetResult(); })
+            .Returns(Task.CompletedTask);
+        var coordinator = new MobileRuntimeCoordinator(runtime.Object, Mock.Of<IRuntimeHubRemoteClient>());
+        coordinator.SetMobaflowSessionActive(true);
+        var viewModel = CreateViewModel(new EventBus(NullLogger<EventBus>.Instance),
+            runtimeMock: runtime, projectContext: context, mobileRuntimeCoordinator: coordinator);
+        viewModel.SelectedProjectIndex = 1;
+        await connected.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var freshYard = new Project
+        {
+            Id = yard.Id, Name = yard.Name,
+            Z21 = { IpAddress = changeEndpoint ? "192.168.0.113" : yard.Z21.IpAddress },
+            Journeys = [new Journey { Name = "New definition" }]
+        };
+
+        context.ApplySolution(new Solution { Projects = [station, freshYard] });
+        await updated.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        runtime.Verify(value => value.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.UpdateProjectAsync(freshYard, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task ProjectPicker_RemoteRegistrationFailureStillActivatesAndConnectsLocalProject()
+    {
+        var station = new Project { Z21 = { IpAddress = "192.168.0.111" } };
+        var yard = new Project { Z21 = { IpAddress = "192.168.0.112" } };
+        var context = CreateProjectContext(new Solution { Projects = [station, yard] });
+        var connected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var runtime = new Mock<IMobaRuntime>();
+        runtime.Setup(value => value.ConnectAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => connected.TrySetResult()).Returns(Task.CompletedTask);
+        var hub = new Mock<IRuntimeHubRemoteClient>();
+        hub.Setup(value => value.SelectProjectAsync(yard.Id, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new IOException("Remote registration interrupted"));
+        var viewModel = CreateViewModel(new EventBus(NullLogger<EventBus>.Instance), hub.Object,
+            runtimeMock: runtime, projectContext: context);
+
+        viewModel.SelectedProjectIndex = 1;
+        await connected.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        runtime.Verify(value => value.ActivateProjectAsync(yard, It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.DisconnectForProjectSwitchAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.That(viewModel.Z21IpAddress, Is.EqualTo(yard.Z21.IpAddress));
     }
 
     [Test]
