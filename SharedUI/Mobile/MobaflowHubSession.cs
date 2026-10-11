@@ -167,27 +167,22 @@ public sealed partial class MobaflowHubSession
             await DisconnectAsync().ConfigureAwait(false);
         }
 
-        var clientId = _clientRegistration?.ClientId;
-        if (string.IsNullOrWhiteSpace(clientId))
-        {
-            clientId = Guid.NewGuid().ToString("N");
-        }
+        return await ConnectWithRetriesAsync(_hubClient, endpoint, forceReconnect, beforeConnectAttempt, cancellationToken)
+            .ConfigureAwait(false);
+    }
 
+    private async Task<HubConnectionOutcome> ConnectWithRetriesAsync(
+        IRuntimeHubRemoteClient hubClient,
+        MobaflowEndpoint endpoint,
+        bool forceReconnect,
+        Func<Task> beforeConnectAttempt,
+        CancellationToken cancellationToken)
+    {
+        var clientId = ResolveClientId();
         foreach (var delay in ConnectRetryDelays)
         {
-            if (delay > TimeSpan.Zero)
-            {
-                try
-                {
-                    await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    return HubConnectionOutcome.Unchanged;
-                }
-            }
-
-            if (!_settings.RestApi.IsConnectionEnabled)
+            if (!await WaitBeforeAttemptAsync(delay, cancellationToken).ConfigureAwait(false)
+                || !_settings.RestApi.IsConnectionEnabled)
             {
                 return HubConnectionOutcome.Unchanged;
             }
@@ -195,10 +190,10 @@ public sealed partial class MobaflowHubSession
             try
             {
                 await beforeConnectAttempt().ConfigureAwait(false);
-                await _hubClient
+                await hubClient
                     .ConnectAsync(endpoint.IpAddress, endpoint.Port, clientId, cancellationToken, forceReconnect)
                     .ConfigureAwait(false);
-                return HubConnectionOutcome.Connected(_hubClient.HasActiveHost);
+                return HubConnectionOutcome.Connected(hubClient.HasActiveHost);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -207,6 +202,31 @@ public sealed partial class MobaflowHubSession
         }
 
         return HubConnectionOutcome.ConnectFailed;
+    }
+
+    /// <summary>Waits before a retry; false when the app is shutting down.</summary>
+    private async Task<bool> WaitBeforeAttemptAsync(TimeSpan delay, CancellationToken cancellationToken)
+    {
+        if (delay <= TimeSpan.Zero)
+        {
+            return true;
+        }
+
+        try
+        {
+            await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+    }
+
+    private string ResolveClientId()
+    {
+        var clientId = _clientRegistration?.ClientId;
+        return string.IsNullOrWhiteSpace(clientId) ? Guid.NewGuid().ToString("N") : clientId;
     }
 
     /// <summary>
