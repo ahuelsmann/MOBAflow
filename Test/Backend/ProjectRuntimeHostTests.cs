@@ -204,7 +204,7 @@ internal sealed class ProjectRuntimeHostTests
             .Returns<int, int, bool, CancellationToken>((_, _, _, token) => Task.Delay(Timeout.Infinite, token));
         using var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
 
-        Assert.CatchAsync<OperationCanceledException>(() => _host.LoadAsync([], timeout.Token));
+        await Assert.CatchAsync<OperationCanceledException>(() => _host.LoadAsync([], timeout.Token)).ConfigureAwait(false);
 
         Assert.That(_host.Get(station.Id), Is.Null);
         _createdZ21s[0].Verify(z21 => z21.Dispose(), Times.Never, "An open connection stays for a takeover until it is unused.");
