@@ -3512,6 +3512,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAflow/RestApiSolutionSyncServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAflow/RestApiStatusServicePhotoHubTests.cs",
       "count": 1
     },
@@ -3527,6 +3534,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAflow/UiDispatcherTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAflow/WinUiSettingsPersistenceTests.cs",
       "count": 1
     },
     {
@@ -5299,6 +5313,13 @@
       "ruleId": "CsWinRT1030",
       "path": "Test/MOBAdisplay/UdpDisplayDatagramTransportTests.cs",
       "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CsWinRT1030",
+      "path": "Test/MOBAflow/RestApiSolutionSyncServiceTests.cs",
+      "count": 2
     },
     {
       "project": "Test",
