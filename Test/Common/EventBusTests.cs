@@ -11,8 +11,17 @@ using Moba.Common.Events;
 /// Covers Publish, Subscribe, Unsubscribe, and GetSubscriberCount.
 /// </summary>
 [TestFixture]
+[Category("Unit")]
 internal class EventBusTests
 {
+    [Test]
+    public void Constructor_RejectsNullLoggerWithParameterName()
+    {
+        var exception = Assert.Throws<ArgumentNullException>(() => new EventBus(null!));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("logger"));
+    }
+
     [Test]
     public void Publish_WithNoSubscribers_DoesNotThrow()
     {
@@ -52,7 +61,8 @@ internal class EventBusTests
         var logger = new RecordingLogger<EventBus>();
         var bus = new EventBus(logger);
         var laterHandlerInvoked = false;
-        bus.Subscribe<FeedbackReceivedEvent>(_ => throw new InvalidOperationException("Expected test failure"));
+        var failure = new InvalidOperationException("Expected test failure");
+        bus.Subscribe<FeedbackReceivedEvent>(_ => throw failure);
         bus.Subscribe<FeedbackReceivedEvent>(_ => laterHandlerInvoked = true);
 
         bus.Publish(new FeedbackReceivedEvent(1));
@@ -61,8 +71,52 @@ internal class EventBusTests
         {
             Assert.That(laterHandlerInvoked, Is.True);
             Assert.That(logger.Levels, Does.Contain(LogLevel.Error));
+            Assert.That(logger.Messages, Has.One.EqualTo("EventBus handler failed for FeedbackReceivedEvent"));
+            Assert.That(logger.Exceptions, Has.One.SameAs(failure));
             Assert.That(bus.HandlerFailureCount, Is.EqualTo(1));
         });
+    }
+
+    [Test]
+    public void Publish_StaticHandlerRemainsSubscribedUntilRemovedAndFailuresAreIsolated()
+    {
+        var logger = new RecordingLogger<EventBus>();
+        var bus = new EventBus(logger);
+        // A named static method has a null delegate target, unlike a compiler-generated lambda target.
+        Action<FeedbackReceivedEvent> staticHandler = ThrowFromStaticHandler;
+        var staticId = bus.Subscribe(staticHandler);
+        var received = new List<FeedbackReceivedEvent>();
+        bus.Subscribe<FeedbackReceivedEvent>(received.Add);
+
+        Assert.That(bus.GetSubscriberCount<FeedbackReceivedEvent>(), Is.EqualTo(2));
+
+        var firstEvent = new FeedbackReceivedEvent(1);
+        var secondEvent = new FeedbackReceivedEvent(2);
+        bus.Publish(firstEvent);
+        bus.Publish(secondEvent);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(received, Has.Count.EqualTo(2));
+            Assert.That(received[0], Is.SameAs(firstEvent));
+            Assert.That(received[1], Is.SameAs(secondEvent));
+            Assert.That(bus.GetSubscriberCount<FeedbackReceivedEvent>(), Is.EqualTo(2));
+            Assert.That(bus.HandlerFailureCount, Is.EqualTo(2));
+            Assert.That(logger.Levels, Has.Count.EqualTo(2).And.All.EqualTo(LogLevel.Error));
+        }
+
+        bus.Unsubscribe(staticId);
+        var thirdEvent = new FeedbackReceivedEvent(3);
+        bus.Publish(thirdEvent);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(bus.GetSubscriberCount<FeedbackReceivedEvent>(), Is.EqualTo(1));
+            Assert.That(received, Has.Count.EqualTo(3));
+            Assert.That(received[2], Is.SameAs(thirdEvent));
+            Assert.That(bus.HandlerFailureCount, Is.EqualTo(2));
+            Assert.That(logger.Levels, Has.Count.EqualTo(2));
+        }
     }
 
     [Test]
@@ -191,9 +245,14 @@ internal class EventBusTests
         Assert.That(captured!.InPort, Is.EqualTo(42));
     }
 
+    private static void ThrowFromStaticHandler(FeedbackReceivedEvent _) =>
+        throw new InvalidOperationException("Expected static-handler test failure");
+
     private sealed class RecordingLogger<T> : ILogger<T>
     {
         public List<LogLevel> Levels { get; } = [];
+        public List<string> Messages { get; } = [];
+        public List<Exception?> Exceptions { get; } = [];
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
@@ -207,6 +266,8 @@ internal class EventBusTests
             Func<TState, Exception?, string> formatter)
         {
             Levels.Add(logLevel);
+            Messages.Add(formatter(state, exception));
+            Exceptions.Add(exception);
         }
     }
 }

@@ -99,6 +99,68 @@ internal class AppSettingsDefaultsTests
         });
     }
 
+    [TestCase(null, "")]
+    [TestCase("", "")]
+    [TestCase(" ", " ")]
+    [TestCase("tools/piper.exe", "tools/piper.exe")]
+    [TestCase("C:/Speech Tools/piper.exe", "C:/Speech Tools/piper.exe")]
+    public void PiperExecutablePath_NormalizesMissingPathAndPreservesConfiguredPath(string? path, string expected)
+    {
+        var settings = new AppSettings();
+        settings.Speech.PiperExecutablePath = path!;
+
+        Assert.That(settings.PiperExecutablePath, Is.EqualTo(expected));
+    }
+
+    [TestCase(null, "")]
+    [TestCase("", "")]
+    [TestCase(" ", " ")]
+    [TestCase("voices/en.onnx", "voices/en.onnx")]
+    [TestCase("C:/Speech Models/en.onnx", "C:/Speech Models/en.onnx")]
+    public void PiperModelPath_NormalizesMissingPathAndPreservesConfiguredPath(string? path, string expected)
+    {
+        var settings = new AppSettings();
+        settings.Speech.PiperModelPath = path!;
+
+        Assert.That(settings.PiperModelPath, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void PiperPaths_FollowCurrentSpeechSettingsWithoutCachingOrMixingPaths()
+    {
+        var settings = new AppSettings
+        {
+            Speech = new SpeechSettings
+            {
+                PiperExecutablePath = "tools/first.exe",
+                PiperModelPath = "voices/first.onnx"
+            }
+        };
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings.PiperExecutablePath, Is.EqualTo("tools/first.exe"));
+            Assert.That(settings.PiperModelPath, Is.EqualTo("voices/first.onnx"));
+        }
+
+        settings.Speech.PiperExecutablePath = "tools/second.exe";
+        settings.Speech.PiperModelPath = "voices/second.onnx";
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings.PiperExecutablePath, Is.EqualTo("tools/second.exe"));
+            Assert.That(settings.PiperModelPath, Is.EqualTo("voices/second.onnx"));
+        }
+
+        settings.Speech = new SpeechSettings();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings.PiperExecutablePath, Is.Empty);
+            Assert.That(settings.PiperModelPath, Is.Empty);
+        }
+    }
+
     [Test]
     public void Speech_EnablePronunciationNormalization_default_is_true()
     {
@@ -166,6 +228,60 @@ internal class AppSettingsDefaultsTests
     {
         var counter = new CounterSettings();
         Assert.That(counter.UseTimerFilter, Is.True);
+    }
+
+    [TestCase(0, 0, 0, 0)]
+    [TestCase(0, -1, 0, 0)]
+    [TestCase(0, int.MinValue, 0, 0)]
+    [TestCase(0, 1, 1, 1)]
+    [TestCase(0, int.MaxValue, int.MaxValue, 1)]
+    [TestCase(4, 4, 4, 0)]
+    [TestCase(4, 0, 0, 1)]
+    [TestCase(4, -1, 0, 1)]
+    [TestCase(4, int.MinValue, 0, 1)]
+    [TestCase(4, 5, 5, 1)]
+    [TestCase(int.MaxValue, int.MaxValue, int.MaxValue, 0)]
+    [TestCase(int.MaxValue, 0, 0, 1)]
+    public void CounterFeedbackPointsNotifyOnlyWhenNormalizedValueChanges(
+        int initialValue, int requestedValue, int expectedValue, int expectedNotifications)
+    {
+        var counter = new CounterSettings { CountOfFeedbackPoints = initialValue };
+        var changes = new List<(object? Sender, EventArgs Args, int Count)>();
+        counter.FeedbackPointsChanged += (sender, args) =>
+            changes.Add((sender, args, counter.CountOfFeedbackPoints));
+
+        counter.CountOfFeedbackPoints = requestedValue;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(counter.CountOfFeedbackPoints, Is.EqualTo(expectedValue));
+            Assert.That(changes, Has.Count.EqualTo(expectedNotifications));
+            if (changes.Count == 1)
+            {
+                Assert.That(changes[0].Sender, Is.SameAs(counter));
+                Assert.That(changes[0].Args, Is.SameAs(EventArgs.Empty));
+                Assert.That(changes[0].Count, Is.EqualTo(expectedValue),
+                    "Subscribers must observe the updated feedback point count.");
+            }
+        }
+    }
+
+    [TestCase("{}", 0)]
+    [TestCase("{\"Counter\":{}}", 0)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":-2147483648}}", 0)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":-1}}", 0)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":0}}", 0)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":3}}", 3)]
+    [TestCase("{\"Counter\":{\"CountOfFeedbackPoints\":2147483647}}", int.MaxValue)]
+    public void CounterFeedbackPointsLoadFromHandEditedSettings(string json, int expectedValue)
+    {
+        var settings = JsonSerializer.Deserialize<AppSettings>(json);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings, Is.Not.Null);
+            Assert.That(settings!.Counter.CountOfFeedbackPoints, Is.EqualTo(expectedValue));
+        }
     }
 
     [Test]
