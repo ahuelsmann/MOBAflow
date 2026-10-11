@@ -98,18 +98,11 @@ public partial class HealthCheckService : IDisposable
         {
             // Check local Speech provider configuration.
             var isHealthy = await _speechHealthCheck.TestConnectivityAsync();
-            var isConfigured = isHealthy;
 
             var previousStatus = SpeechServiceStatus;
             var previousHealthy = IsSpeechServiceHealthy;
 
-            if (!isConfigured)
-            {
-                SpeechServiceStatus = "⚠️ Not Configured";
-                IsSpeechServiceHealthy = false;
-                Console.WriteLine("⚠️ Speech provider: Not Configured");
-            }
-            else if (isHealthy)
+            if (isHealthy)
             {
                 SpeechServiceStatus = "✅ Ready";
                 IsSpeechServiceHealthy = true;
@@ -117,11 +110,10 @@ public partial class HealthCheckService : IDisposable
             }
             else
             {
-                SpeechServiceStatus = "❌ Connection Failed";
+                SpeechServiceStatus = "⚠️ Unavailable";
                 IsSpeechServiceHealthy = false;
-                Console.WriteLine("❌ Speech provider: Startup Failed");
+                Console.WriteLine("⚠️ Speech provider: Unavailable");
             }
-
             // Notify if status changed
             if (SpeechServiceStatus != previousStatus || IsSpeechServiceHealthy != previousHealthy)
             {

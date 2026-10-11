@@ -92,11 +92,11 @@ public class SpeechSettings
 public class PiperSpeechSettings
 {
     /// <summary>Path to the local Piper executable.</summary>
-    public string ExecutablePath { get; set; } = string.Empty;
+    public string ExecutablePath { get; set => field = value ?? string.Empty; } = string.Empty;
     /// <summary>Path to the selected .onnx voice model.</summary>
-    public string ModelPath { get; set; } = string.Empty;
+    public string ModelPath { get; set => field = value ?? string.Empty; } = string.Empty;
     /// <summary>Optional path to the model configuration.</summary>
-    public string ConfigPath { get; set; } = string.Empty;
+    public string ConfigPath { get; set => field = value ?? string.Empty; } = string.Empty;
     /// <summary>Maximum synthesis time in seconds.</summary>
     public int TimeoutSeconds { get; set; } = 30;
     /// <summary>Normalizes station abbreviations before synthesis.</summary>

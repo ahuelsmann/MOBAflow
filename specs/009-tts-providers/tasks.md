@@ -47,10 +47,10 @@ new provider contract:
 - [ ] T011 Tests for resolution, immediate switch through both `AnnouncementService` and the Settings test command, local-provider settings persistence, unknown ids, a fresh configuration, a settings file with only removed fields, failures and cancellation; run the Windows suite, MOBAflow FastDebug build and Android build for validation; have the maintainer check changed Settings bindings in Light and Dark with launch approval
 - [ ] T012 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
-Slice 2 automated validation: portable Release suite 2,183 passed, 1 skipped; Windows Release suite 2,273 passed,
+Slice 2 automated validation: portable Release suite 2,330 passed, 1 skipped; Windows Release suite 2,422 passed,
 0 skipped, including controlled process timeout/cancellation tests and in-memory Windows speech synthesis.
-Android FastDebug compiles and its restored graph contains `Speech.Base`, with no local Windows speech provider
-or `System.Speech`. Both desktop analyzer snapshots remove obsolete diagnostics and reflect relocated NUnit/SAPI
+WinUI FastDebug and Android FastDebug/Release compile. The Android restored graph contains `Speech.Base`, with no local Windows speech provider
+or `System.Speech`. All three analyzer snapshots remove obsolete diagnostics and reflect relocated NUnit/SAPI
 false positives already suppressed by their analyzers or a narrowly justified source suppression; no combined
 rule quota increases and the baseline guards remain unchanged. T011 stays open for the maintainer's Light/Dark
 Settings check with explicit launch approval. T012 stays open until this draft's current commit passes SonarCloud

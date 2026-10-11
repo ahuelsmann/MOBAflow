@@ -183,6 +183,46 @@ internal sealed class SpeechOutputTests
         await Assert.CatchAsync<OperationCanceledException>(() => output.SpeakAsync("Test", cancellation.Token)).ConfigureAwait(false);
     }
 
+#if WINDOWS
+    [Test]
+    public async Task HostHealthStatus_FollowsTheCurrentProviderWithoutSpeaking()
+    {
+        var settings = new AppSettings();
+        var system = new FakeProvider("system-speech");
+        var piper = new FakeProvider("piper")
+        {
+            Capabilities = new SpeechCapabilities([], true, true, false, "Model missing.")
+        };
+        var player = new FakePlayer();
+        var output = new SpeechOutput(settings, [system, piper], player, NullLogger<SpeechOutput>.Instance);
+        using var health = new Moba.WinUI.Service.HealthCheckService(new SpeechHealthCheck(output),
+            NullLogger<Moba.WinUI.Service.HealthCheckService>.Instance,
+            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
+        var reported = new List<bool>();
+        health.HealthStatusChanged += (_, status) => reported.Add(status.IsHealthy);
+        settings.Speech.ProviderId = "piper";
+        await health.PerformHealthCheckAsync().ConfigureAwait(false);
+        await health.PerformHealthCheckAsync().ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(health.IsSpeechServiceHealthy, Is.False);
+            Assert.That(health.SpeechServiceStatus, Does.Contain("Unavailable"));
+        }
+        settings.Speech.ProviderId = "system-speech";
+        await health.PerformHealthCheckAsync().ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(health.IsSpeechServiceHealthy, Is.True);
+            Assert.That(health.SpeechServiceStatus, Does.Contain("Ready"));
+            Assert.That(reported, Has.Count.EqualTo(2));
+            Assert.That(reported[0], Is.False);
+            Assert.That(reported[1], Is.True);
+            Assert.That(system.Requests, Is.Empty);
+            Assert.That(piper.Requests, Is.Empty);
+            Assert.That(player.PlayCount, Is.Zero);
+        }
+    }
+#endif
     internal sealed class FakeProvider(string id) : ISpeechProvider
     {
         public string Id => id;

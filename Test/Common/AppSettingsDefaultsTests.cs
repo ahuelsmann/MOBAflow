@@ -107,9 +107,9 @@ internal class AppSettingsDefaultsTests
     public void PiperExecutablePath_NormalizesMissingPathAndPreservesConfiguredPath(string? path, string expected)
     {
         var settings = new AppSettings();
-        settings.Speech.PiperExecutablePath = path!;
+        settings.Speech.Piper.ExecutablePath = path!;
 
-        Assert.That(settings.PiperExecutablePath, Is.EqualTo(expected));
+        Assert.That(settings.Speech.Piper.ExecutablePath, Is.EqualTo(expected));
     }
 
     [TestCase(null, "")]
@@ -120,9 +120,9 @@ internal class AppSettingsDefaultsTests
     public void PiperModelPath_NormalizesMissingPathAndPreservesConfiguredPath(string? path, string expected)
     {
         var settings = new AppSettings();
-        settings.Speech.PiperModelPath = path!;
+        settings.Speech.Piper.ModelPath = path!;
 
-        Assert.That(settings.PiperModelPath, Is.EqualTo(expected));
+        Assert.That(settings.Speech.Piper.ModelPath, Is.EqualTo(expected));
     }
 
     [Test]
@@ -132,32 +132,35 @@ internal class AppSettingsDefaultsTests
         {
             Speech = new SpeechSettings
             {
-                PiperExecutablePath = "tools/first.exe",
-                PiperModelPath = "voices/first.onnx"
+                Piper = new PiperSpeechSettings
+                {
+                    ExecutablePath = "tools/first.exe",
+                    ModelPath = "voices/first.onnx"
+                }
             }
         };
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(settings.PiperExecutablePath, Is.EqualTo("tools/first.exe"));
-            Assert.That(settings.PiperModelPath, Is.EqualTo("voices/first.onnx"));
+            Assert.That(settings.Speech.Piper.ExecutablePath, Is.EqualTo("tools/first.exe"));
+            Assert.That(settings.Speech.Piper.ModelPath, Is.EqualTo("voices/first.onnx"));
         }
 
-        settings.Speech.PiperExecutablePath = "tools/second.exe";
-        settings.Speech.PiperModelPath = "voices/second.onnx";
+        settings.Speech.Piper.ExecutablePath = "tools/second.exe";
+        settings.Speech.Piper.ModelPath = "voices/second.onnx";
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(settings.PiperExecutablePath, Is.EqualTo("tools/second.exe"));
-            Assert.That(settings.PiperModelPath, Is.EqualTo("voices/second.onnx"));
+            Assert.That(settings.Speech.Piper.ExecutablePath, Is.EqualTo("tools/second.exe"));
+            Assert.That(settings.Speech.Piper.ModelPath, Is.EqualTo("voices/second.onnx"));
         }
 
         settings.Speech = new SpeechSettings();
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(settings.PiperExecutablePath, Is.Empty);
-            Assert.That(settings.PiperModelPath, Is.Empty);
+            Assert.That(settings.Speech.Piper.ExecutablePath, Is.Empty);
+            Assert.That(settings.Speech.Piper.ModelPath, Is.Empty);
         }
     }
 
