@@ -89,8 +89,9 @@ Execution/cancellation/internal errors take precedence over comparisons and neve
 ## Comparison semantics
 
 A predicate specifies kind and optionally identities/selected safe fields. Missing fields are wildcards, not implicit
-defaults. Time windows are inclusive and use virtual ticks; no window covers the entire trace. Counts cover every matching
-entry in that window. Positive effect/invocation/transition expectations default to exactly one; explicit Exact(n) or
+defaults. Time windows are inclusive and use virtual ticks. When no window is specified, matching covers the entire trace.
+Counts cover every matching entry in that window. Positive effect/invocation/transition expectations default to exactly one;
+explicit Exact(n) or
 Range(min,max) replaces it. Range bounds are nonnegative/inclusive and min <= max; absence is zero.
 
 Evaluate Initial/Final state once at their named boundary. Transition assertions count actual changes, not UI snapshots.
