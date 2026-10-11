@@ -7,10 +7,10 @@ Read-only configuration/API/log review. No settings changed, jobs retried or can
 | Workflow | Trigger | Jobs / runner | Timeout | Permissions |
 | --- | --- | --- | --- | --- |
 | Quality | main push, every PR, manual | Instructions Linux; Desktop Windows; Display Linux; Android Windows; Mutation Linux | 5/60/45/60/20 min | contents:read |
-| Spec Kit governance | issue opened/edited/reopened; filtered PR opened/synchronize/reopened | Issue and plan validation, Linux | 5/10 min | global issues:write plus contents:read |
-| Deploy MOBAflow website | main push for docs/** or own YAML; manual | Pages, Linux | no explicit limit | contents:read, pages:write, id-token:write |
+| Spec Kit governance | issue opened/edited/reopened; filtered PR opened/synchronize/reopened | Issue and plan validation, Linux | 5/10 min | global contents:read; issues:write on the issue job |
+| Deploy MOBAflow website | main push for docs/** or own YAML; manual | Pages, Linux | 20 min | contents:read, pages:write, id-token:write |
 | Release Studio | manual signed SemVer tag | Windows build/test/package; draft release only | 60 min | contents:write |
-| Stale work visibility | Monday 04:17 UTC; manual | mark after 60 days, no auto-close | no explicit limit | contents:read, issues:write, pull-requests:write |
+| Stale work visibility | Monday 04:17 UTC; manual | mark after 60 days, no auto-close | 10 min | contents:read, issues:write, pull-requests:write |
 
 Additional hosted checks: CodeQL default setup (Actions, C/C++, C#, JS/TS, Python),
 SonarCloud external analysis, Dependabot, dependency submission, Copilot and Pages system workflow.
@@ -43,14 +43,23 @@ Owners decided on 2026-10-09: CI-02 to CI-04 move to #209, CI-05 and CI-06 to #1
   repository ruleset "main": pull request required, squash merge only, resolved review threads, six required
   checks including SonarCloud, no force-push and no deletion. The observation was correct at its time and is
   historical. Whether the required check names still match after #197 is checked in #209.
-- [ ] CI-02 (medium, #209): remove global issues:write from spec-kit-governance.yml; retain it only on the
+- [x] CI-02 (medium, #209): remove global issues:write from spec-kit-governance.yml; retain it only on the
   issue job, which already has job-level rights. Done: issue validation still works and PR plan job is read-only.
-- [ ] CI-03 (low, #209): add explicit timeouts to Pages and stale jobs based on observed runtime.
-  Done: both jobs have bounded runtime and normal runs pass.
-- [ ] CI-04 (medium, #209): decide reproducible SDK/workload pins. global.json specifies SDK10.0.302 with
+  Done by #198 (2026-10-08): the workflow grants only contents: read, and issues: write stays on the issue job.
+  The issue validation run for #209 itself passed on 2026-10-09.
+- [x] CI-03 (low, #209): add explicit timeouts to Pages and stale jobs based on observed runtime.
+  Done: both jobs have bounded runtime and normal runs pass. Pages has timeout-minutes: 20, above
+  deploy-pages' own 10-minute timeout, and stale has timeout-minutes: 10; observed runtimes on main
+  were under 2 minutes for Pages and under 15 seconds for the weekly stale run.
+- [x] CI-04 (medium, #209): decide reproducible SDK/workload pins. global.json specifies SDK10.0.302 with
   rollForward latestFeature; actual PR154 used SDK/workload10.0.401, no workloadVersion.
   --skip-manifest-update is not a workload pin. Done: clean runner uses the agreed versions and
   Windows/Android Release tests, analyzers and bundle checks pass.
+  Owner decided on 2026-10-10: pin the feature band. global.json names SDK 10.0.401 with rollForward
+  latestPatch, so patches of the 10.0.4xx band apply and a new band is a reviewed change. The Android job
+  installs workload set 10.0.401.1 with `dotnet workload install maui-android --version`; a workloadVersion
+  in global.json would fail every build on machines without that set. The Windows and Linux jobs run on the
+  pinned band. The Android job is disabled since #195, so its pin is first exercised when it is re-enabled.
 - [ ] CI-05 (medium, #197 CI-3): evaluate scoped docs-only CI. Preserve required-check names/results;
   do not introduce permanently pending filtered checks. Done: docs, shared code, WinUI and Android
   sample diffs receive the intended jobs without bypassing product gates.

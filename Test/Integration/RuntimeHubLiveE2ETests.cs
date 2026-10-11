@@ -14,23 +14,39 @@ using System.Text;
 using System.Text.Json;
 
 /// <summary>
-/// Live end-to-end tests against a running MOBApi process (port 5001).
-/// Start MOBApi before running: dotnet run --project MOBApi/MOBApi.csproj
+/// End-to-end tests against the built MOBApi, started once for this fixture as an isolated process.
+/// The tests run in order against the same server, so a snapshot pushed earlier is cached for later tests.
 /// </summary>
 [TestFixture]
+[NonParallelizable]
 [Category("LiveE2E")]
 internal sealed class RuntimeHubLiveE2ETests
 {
-    private const int Port = 5001;
-    private static readonly string BaseUrl = $"http://127.0.0.1:{Port}";
     private static readonly TimeSpan StepTimeout = TimeSpan.FromSeconds(10);
     private static readonly Guid ProjectId = Guid.Parse("99999999-8888-7777-6666-555555555555");
+    private MobaApiProcess? _server;
+
+    private string BaseUrl => _server?.BaseUri.ToString().TrimEnd('/')
+        ?? throw new InvalidOperationException("The MOBApi process is not running.");
+
+    [OneTimeSetUp]
+    public async Task StartServerAsync()
+    {
+        _server = await MobaApiProcess.StartAsync(MobaApiProcess.GetAvailablePort()).ConfigureAwait(false);
+    }
+
+    [OneTimeTearDown]
+    public async Task StopServerAsync()
+    {
+        if (_server is not null)
+        {
+            await _server.DisposeAsync().ConfigureAwait(false);
+        }
+    }
 
     [Test, Order(1)]
     public async Task RuntimeHub_Should_ForwardSnapshotAndLocomotiveDriveCommand()
     {
-        await EnsureMobApiReachableAsync();
-
         var testSnapshot = new MobaRuntimeSnapshot
         {
             ProjectId = ProjectId,
@@ -80,8 +96,6 @@ internal sealed class RuntimeHubLiveE2ETests
     [Test, Order(3)]
     public async Task RegisterRemote_Should_DeliverCachedSnapshot_WithoutNewPush()
     {
-        await EnsureMobApiReachableAsync();
-
         var cachedSnapshot = new MobaRuntimeSnapshot
         {
             ProjectId = ProjectId,
@@ -119,8 +133,6 @@ internal sealed class RuntimeHubLiveE2ETests
     [Test, Order(2)]
     public async Task RestFallback_Should_RoundtripSnapshotAndCommands()
     {
-        await EnsureMobApiReachableAsync();
-
         await PublishSolutionAsync().ConfigureAwait(false);
         using var http = new HttpClient { BaseAddress = new Uri(BaseUrl) };
 
@@ -168,25 +180,8 @@ internal sealed class RuntimeHubLiveE2ETests
         Assert.That(emptyPending.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NoContent));
     }
 
-    private static async Task EnsureMobApiReachableAsync()
-    {
-        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
-        try
-        {
-            var response = await http.GetAsync($"{BaseUrl}/api/status").ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode)
-            {
-                Assert.Ignore($"MOBApi responded with {(int)response.StatusCode}; start it on port {Port}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Assert.Ignore($"MOBApi not reachable on port {Port}: {ex.Message}");
-        }
-    }
-
     /// <summary>Synchronizes a solution that contains <see cref="ProjectId"/>; commands name known projects only.</summary>
-    private static async Task PublishSolutionAsync()
+    private async Task PublishSolutionAsync()
     {
         using var http = new HttpClient { BaseAddress = new Uri(BaseUrl) };
         var solutionJson =
@@ -196,7 +191,7 @@ internal sealed class RuntimeHubLiveE2ETests
         Assert.That(response.IsSuccessStatusCode, Is.True, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
     }
 
-    private static async Task<HubConnection> ConnectHostHubAsync(
+    private async Task<HubConnection> ConnectHostHubAsync(
         TaskCompletionSource<(int Address, int Speed, bool Forward)> driveReceived)
     {
         var hub = new HubConnectionBuilder()
@@ -214,7 +209,7 @@ internal sealed class RuntimeHubLiveE2ETests
         return hub;
     }
 
-    private static async Task<HubConnection> ConnectRemoteHubAsync(
+    private async Task<HubConnection> ConnectRemoteHubAsync(
         TaskCompletionSource<MobaRuntimeSnapshot> snapshotReceived,
         TaskCompletionSource<bool> sessionStateReceived,
         string expectedStatusText)

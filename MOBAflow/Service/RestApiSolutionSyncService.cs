@@ -216,7 +216,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         {
 
-            await Task.Delay(DebounceMilliseconds).ConfigureAwait(false);
+            await Task.Delay(DebounceMilliseconds, CancellationToken.None).ConfigureAwait(false);
 
             var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
 
