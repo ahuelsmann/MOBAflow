@@ -166,6 +166,9 @@ checked weekly and on demand by `.github/workflows/documentation-links.yml`,
 so an unreachable foreign server does not block a pull request. Run the
 internal check locally with `./scripts/Test-DocumentationLinks.ps1`; add
 `-IncludeExternal` to request external links as well.
+Temporary HTTP 408/500/502/503/504 and network failures get up to three attempts,
+with one- and two-second retry delays. Persistent failures and HTTP 403/404 still
+fail the check; the existing HTTP 429 tolerance is unchanged.
 
 The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
 The thresholds are per production assembly as well as global, so an improvement
