@@ -4,7 +4,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Approved task list; no implementation task starts before #207 is merged (maintainer instruction, 2026-10-11).
+**Status**: Slice 1 locally validated; draft PR and CI/Sonar gate pending. #207 merged as `39312ca9` on 2026-10-11 before implementation started.
 
 Input: [spec.md](spec.md), [plan.md](plan.md).
 
@@ -12,9 +12,28 @@ Implementation starts only after [PR #207](https://github.com/ahuelsmann/MOBAflo
 
 ## Slice 1 - Characterise current behavior
 
-- [ ] T001 Add characterization tests for announcements through the current engines: engine selection, voice, rate and volume forwarding, overlapping announcements, cancellation and failure handling; distinguish per-call factory resolution in `AnnouncementService` from the singleton used by the Settings test callback
-- [ ] T002 Run the portable and Windows test suites for validation; secrets scan and line endings
+- [X] T001 Add characterization tests for announcements through the current engines: engine selection, voice, rate and volume forwarding, overlapping announcements, cancellation and failure handling; distinguish per-call factory resolution in `AnnouncementService` from the singleton used by the Settings test callback
+- [X] T002 Run the portable and Windows test suites for validation; secrets scan and line endings
 - [ ] T003 Open the slice PR as draft; Sonar quality gate (SonarCloud) green with zero open issues before review
+
+Validation on merged `main` at `31d2d3a6`: portable Release suite 2,224 passed, 1 skipped; Windows Release suite 2,283 passed, 0 skipped. Both test graphs compile. No production speech behavior changes.
+
+### Characterization baseline
+
+Slice 1 starts from merged `main` at `39312ca9`. The tests retain the current behavior rather than implement the
+new provider contract:
+
+- `AnnouncementService` resolves the selected engine and current voice/rate/volume options for each call. It passes
+  a null voice override and the caller's cancellation token to the engine.
+- The production Settings test callback resolves the singleton `ISpeakerEngine`: after its first resolution it
+  retains the same engine even if selection changes. The new shared output must replace this path in slice 2.
+- The service and Piper do not queue overlapping calls; later calls can finish first. Piper uses independent WAV
+  files and removes them after playback, synthesis cancellation or playback cancellation.
+- Piper maps rate to length scale, selects its voice from the configured model, ignores the voice override and
+  currently leaves the WAV unchanged when the volume option changes. These are current limitations, not the
+  required option support of the new providers.
+- Empty templates do not resolve an engine; caller cancellation propagates; ordinary factory/engine failures are
+  logged and suppressed by default, while the explicit non-suppression path propagates the failure.
 
 ## Slice 2 - Contract, shared output and local providers
 
