@@ -6,6 +6,10 @@
 
 Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 
+Completion evidence: [automated acceptance](acceptance.md), including build/test
+results, integrated slices and manual checks awaiting separate authorization.
+The closing PR must pass its current-head CI/Sonar gates before integration.
+
 ## Slice 1 - Solution session (no behavior change)
 
 - [x] T001 Add characterization tests for solution load, save, auto-save, dirty state and project/journey selection in `Test/SharedUI/SolutionSessionTests.cs`
@@ -15,7 +19,7 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 - [x] T005 Inject session/focused contracts into `TimetablePageViewModel`, `TrainControlViewModel` and `MatrixPageViewModel`; EventManagerViewModel uses the session for solution selection but retains the shell adapter for command status; MonitorPageViewModel and the Android shutdown lookup remain named exceptions for RF-24
 - [x] T006 Add an architecture test rejecting dependencies on `MainWindowViewModel` outside the existing named shell/composition, page, layout and shell-state entries; page and shell-state decomposition belongs to RF-24 (FR-001, SC-004)
 - [x] T007 Run the portable and Windows test suites and the analyzer gates for validation; secrets scan and line endings
-- [ ] T008 Open the slice PR as draft; Sonar quality gate (SonarCloud) green with zero open issues before review
+- [x] T008 Open the slice PR as draft; Sonar quality gate (SonarCloud) green with zero open issues before review
 
 ## Slice 2 - Live definitions snapshot
 
@@ -46,7 +50,7 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 
 - [x] T019 Switch/close warning dialog and speed 0 for every known locomotive before discarding runtimes or changing a project's Z21 address
 - [x] T020 Tests for switch, close, cancel and address change with fake Z21 endpoints; run suites and analyzer gates for validation
-- [ ] T021 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
+- [x] T021 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 4 - MOBApi and MOBAsmart
 
@@ -54,11 +58,11 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 - [x] T023 MOBAflow applies remote commands to the named project's runtime only
 - [x] T024 MOBAsmart project selection and per-project Z21 address for the direct connection; runtime settings,
   the global Z21 address/port and the phone's own Z21 search removed
-- [ ] T025 Tests for project routing and MOBAsmart selection; run suites, Android build and analyzer gates for validation
-- [ ] T026 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
+- [x] T025 Tests for project routing and MOBAsmart selection; run suites, Android build and analyzer gates for validation
+- [x] T026 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 5 - Documentation
 
-- [ ] T027 Update `docs/wiki/MOBAFLOW-USER-GUIDE.md`, `INSTALLATION.md` and `MOBASMART-USER-GUIDE.md`: one runtime and one Z21 per project, per-project Z21 setting, switch warning
-- [ ] T028 Update `docs/ARCHITECTURE.md` and `CHANGELOG.md`; validate links and instruction consistency
-- [ ] T029 Final PR closes #191 with the Sonar quality gate (SonarCloud) green and zero open issues; record manual checks still pending approval
+- [x] T027 Update `docs/wiki/MOBAFLOW-USER-GUIDE.md`, `INSTALLATION.md` and `MOBASMART-USER-GUIDE.md`: one runtime and one Z21 per project, per-project Z21 setting, switch warning
+- [x] T028 Update `docs/ARCHITECTURE.md` and `CHANGELOG.md`; validate links and instruction consistency
+- [x] T029 Final PR closes #191 with the Sonar quality gate (SonarCloud) green and zero open issues; record manual checks still pending approval
