@@ -17,6 +17,16 @@ using Moq;
 [TestFixture]
 internal sealed class RuntimeCommandGatewayRoutingTests
 {
+    private static readonly string[] ExpectedRecordedCommandTypes =
+    [
+        "command.fail-safe-acknowledge.request",
+        "command.fail-safe-acknowledge.result",
+        "command.locomotive-functions-off.request",
+        "command.locomotive-functions-off.result",
+        "command.locomotive-info.request",
+        "command.locomotive-info.result"
+    ];
+
     [Test]
     public async Task LocalGateway_ForwardsAddedCommandsToRuntime()
     {
@@ -73,7 +83,7 @@ internal sealed class RuntimeCommandGatewayRoutingTests
     }
 
     [Test]
-    public async Task RecordingGateway_ForwardsAddedCommandsWithoutRecording()
+    public async Task RecordingGateway_ForwardsAddedCommandsAndRecordsRequestsAndOutcomes()
     {
         var session = new RecordingSessionService(TimeProvider.System);
         await using var sessionLifetime = session.ConfigureAwait(false);
@@ -89,6 +99,7 @@ internal sealed class RuntimeCommandGatewayRoutingTests
         inner.Verify(g => g.AcknowledgeFailSafeAsync(It.IsAny<CancellationToken>()), Times.Once);
         inner.Verify(g => g.SetAllLocomotiveFunctionsOffAsync(3, It.IsAny<CancellationToken>()), Times.Once);
         inner.Verify(g => g.RequestLocomotiveInfoAsync(3, It.IsAny<CancellationToken>()), Times.Once);
-        Assert.That(artifact.Entries.Where(entry => entry.Source == "runtime-command-gateway"), Is.Empty);
+        Assert.That(artifact.Entries.Where(entry => entry.Source == "runtime-command-gateway")
+            .Select(entry => entry.TypeKey), Is.EqualTo(ExpectedRecordedCommandTypes));
     }
 }
