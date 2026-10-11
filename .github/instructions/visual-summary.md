@@ -5,4 +5,4 @@ described here are **not implemented** in the repository. Keep for historical co
 
 ---
 
-# MOBAflow Qualitäts-Framework - Visuelle Übersicht
+# MOBAflow quality framework - visual overview

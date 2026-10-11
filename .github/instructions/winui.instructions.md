@@ -70,22 +70,19 @@ protected override DataTemplate? SelectTemplateCore(
     };
 ```
 
-## Grid und Spaltenlayout
+## Grid and column layout
 
-Ausführlich:
-[fluent-design.instructions.md](./fluent-design.instructions.md)
-→ Abschnitt **Grid System (Spalten & Inhalte)**.
+See [WinUI design guidance](./fluent-design.instructions.md) for the current
+resource, sizing and scrolling rules.
 
-- **Spalten:** `Width="Auto"` nur für schmale Inhalte (Splitter,
-  Buttons); für Inhalte `*` mit **MinWidth**
-  (ggf. **MaxWidth**). Keine Lücken in **Grid.Column**
-  (0, 1, 2, …).
-- **Inhalt in \*-Spalten:** Immer **ScrollViewer** oder **ListView**,
-  wenn Inhalt länger werden kann;
-  **TextTrimming="CharacterEllipsis"** für Text in engen Zellen.
-  Kein festes **Width** am Kind in \*-Spalten.
-- **Zeilen:** Scrollbaren Bereich in Zeile mit **Height="*"** legen;
-  darin genau einen **ScrollViewer** mit dem restlichen Inhalt.
+- **Columns:** Use `Width="Auto"` for bounded controls such as splitters and
+  buttons. Use `*` for resizable content with a suitable `MinWidth` and, where
+  needed, `MaxWidth`. Keep `Grid.Column` assignments aligned with the definitions.
+- **Content in star-sized columns:** Let children use the available width.
+  Wrap or trim long text deliberately; use `TextTrimming="CharacterEllipsis"`
+  where appropriate. Avoid fixed child widths unless intentionally required.
+- **Scrolling:** Place scrollable content in a `Height="*"` row with one
+  scrolling owner. Do not nest a self-scrolling `ListView` in a `ScrollViewer`.
 
 ## Responsive Layout (VSM)
 

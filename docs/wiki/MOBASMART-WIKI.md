@@ -54,6 +54,11 @@ solution and selected runtime metadata are stored separately below the
 These are implementation details; users should normally configure connections
 through the app rather than editing files directly.
 
+Local InPort counts are stored separately in `inport-counters.json` in the
+Android app-data directory. Only counts are restored, not feedback timestamps
+or lap timing. Counter set/reset commands remain local even when the MOBAflow
+session is active; they do not change the desktop counter file.
+
 ## Related documentation
 
 - [MOBAsmart user guide](MOBASMART-USER-GUIDE.md)

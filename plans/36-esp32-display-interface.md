@@ -68,7 +68,9 @@ Lost frames are expected frames the device did not confirm as presented (skipped
 frames the device rejected for good), each counted once; the device's rejected-frame counter is reported for
 information because it also counts incomplete transfers the host repaired. Reconnects are reported as recoveries
 after a failed frame. A reboot is detected from device uptime and from an accepted-frame counter below the frames
-the host saw presented, and the uptime check handles the firmware's 49.7-day millisecond wrap. A run shorter
+the host saw presented, and the uptime check handles the firmware's 49.7-day millisecond wrap. Each
+`WrongSession` rejection of a negotiated session is counted on the frame transport as a session loss and fails the
+run, because the host renegotiates silently afterwards. A run shorter
 than 2 hours, at another rate or started less than a minute after boot is marked as not an acceptance run.
 Partially presented frames are excluded by the protocol, which presents only complete frames, and are confirmed
 visually during slice 4.

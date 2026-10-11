@@ -43,20 +43,21 @@ public static class RestApiDiscoveryCandidateBuilder
             var selfLast = bytes[3];
             for (var offset = 1; offset <= clampedRadius; offset++)
             {
-                TryAddHost(bytes[0], bytes[1], bytes[2], (byte)(selfLast + offset));
-                TryAddHost(bytes[0], bytes[1], bytes[2], (byte)(selfLast - offset));
+                TryAddHost(bytes[0], bytes[1], bytes[2], selfLast + offset);
+                TryAddHost(bytes[0], bytes[1], bytes[2], selfLast - offset);
             }
         }
 
         return result;
 
-        void TryAddHost(byte a, byte b, byte c, byte d)
+        void TryAddHost(byte a, byte b, byte c, int lastOctet)
         {
-            if (d is 0 or 255)
+            if (lastOctet is < 1 or > 254)
             {
                 return;
             }
 
+            var d = (byte)lastOctet;
             var key = ((uint)a << 24) | ((uint)b << 16) | ((uint)c << 8) | d;
             if (!seen.Add(key))
             {

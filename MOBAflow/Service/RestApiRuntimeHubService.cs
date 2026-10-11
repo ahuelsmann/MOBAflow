@@ -135,8 +135,11 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
             _pendingSnapshots.Clear();
         }
 
-        debounceCts?.Cancel();
-        debounceCts?.Dispose();
+        if (debounceCts is not null)
+        {
+            await debounceCts.CancelAsync().ConfigureAwait(false);
+            debounceCts.Dispose();
+        }
 
         await debounceTask.ConfigureAwait(false);
         await DisconnectHostAsync().ConfigureAwait(false);

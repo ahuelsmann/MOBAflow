@@ -45,7 +45,7 @@ public partial class CounterPage
         EnsureViewModelHooked();
         Dispatcher.DispatchAsync(async () =>
         {
-            _viewModelInitializationTask ??= _viewModel.InitializeAsync();
+            _viewModelInitializationTask ??= _viewModel.InitializeAsync(CancellationToken.None);
             await _viewModelInitializationTask.ConfigureAwait(false);
         });
     }

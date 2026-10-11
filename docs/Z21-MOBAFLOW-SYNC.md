@@ -61,8 +61,12 @@ this domain model.
 ### 2. Runtime command forwarding
 
 [`MobileRuntimeCoordinator`](../SharedUI/Service/MobileRuntimeCoordinator.cs) routes
-`SetSignalAspect`, `SetLocomotiveDrive`, and `SetLocomotiveFunction` to MOBAflow when a
-MOBApi session is active. MOBAflow performs multiplexer resolution and Z21 I/O.
+signal-aspect commands to MOBAflow when a MOBApi session is active. MOBAflow
+performs multiplexer resolution and Z21 I/O. Locomotive drive/function commands
+prefer the local Z21 connection and use MOBAflow only as a fallback when the
+local connection is unavailable. Track power and InPort counter set/reset
+commands remain local; connecting to MOBApi does not redirect those operations
+to the desktop.
 
 MOBAflow runs one runtime per project, so every command carries the id of the project
 selected in MOBAsmart. MOBApi rejects a command for a project that the synchronized

@@ -96,7 +96,7 @@ public sealed partial class MauiViewModel
 
         try
         {
-            await RefreshRestApiReachableAsync().ConfigureAwait(false);
+            await RefreshRestApiReachableAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
 
             if (_shouldReconnectLocalZ21OnResume
                 && !IsConnected

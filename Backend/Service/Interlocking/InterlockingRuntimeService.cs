@@ -292,7 +292,7 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
 
     private async Task ConsumeAsync()
     {
-        await foreach (var item in _workItems.Reader.ReadAllAsync())
+        await foreach (var item in _workItems.Reader.ReadAllAsync(CancellationToken.None))
         {
             try
             {

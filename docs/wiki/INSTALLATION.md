@@ -61,8 +61,11 @@ run it separately:
 dotnet run --project MOBApi/MOBApi.csproj
 ```
 
-MOBApi listens on `http://0.0.0.0:5001` and announces this address on the LAN so
-MOBAsmart can find it.
+MOBApi listens on all network interfaces, using HTTP port `5001` by default.
+Discovery announces a reachable LAN address and the configured port so
+MOBAsmart can find it. `0.0.0.0` is a listen address, not an address to enter
+on the phone. If you change the port, adjust the private-network firewall rule
+as well. See the [project reference](../PROJECT-REFERENCE.md#mobapi-endpoints).
 
 ## First desktop start
 

@@ -42,7 +42,7 @@ public sealed class MobApiUdpDiscoveryResponder : IDisposable
         }
 
         _cts = new CancellationTokenSource();
-        _listenerTask = Task.Run(() => ListenAsync(_cts.Token));
+        _listenerTask = Task.Run(() => ListenAsync(_cts.Token), CancellationToken.None);
     }
 
     /// <summary>

@@ -188,7 +188,7 @@ public sealed class Z21EventPipeline : IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        await StopAsync(DefaultShutdownTimeout).ConfigureAwait(false);
+        await StopAsync(DefaultShutdownTimeout, CancellationToken.None).ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
 

@@ -147,7 +147,8 @@ public sealed partial class MauiViewModel
                 ResolveRuntimeCommandGateway(),
                 item.ElementId,
                 aspect,
-                _pendingSignalAspects)
+                _pendingSignalAspects,
+                _applicationLifetimeCts.Token)
             .ConfigureAwait(false);
     }
 

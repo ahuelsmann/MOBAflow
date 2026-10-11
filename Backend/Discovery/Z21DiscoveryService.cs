@@ -170,7 +170,7 @@ public sealed class Z21DiscoveryService : IZ21DiscoveryService
             var endpoint = new IPEndPoint(ip, port);
             try
             {
-                udp.Send(handshake, handshake.Length, endpoint);
+                await udp.SendAsync(handshake, endpoint, cancellationToken).ConfigureAwait(false);
             }
             catch (SocketException)
             {
@@ -207,7 +207,7 @@ public sealed class Z21DiscoveryService : IZ21DiscoveryService
             var endpoint = new IPEndPoint(address, port);
             try
             {
-                udp.Send(handshake, handshake.Length, endpoint);
+                await udp.SendAsync(handshake, endpoint, cancellationToken).ConfigureAwait(false);
             }
             catch (SocketException)
             {

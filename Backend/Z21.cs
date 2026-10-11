@@ -192,7 +192,7 @@ public partial class Z21 : IZ21, IAsyncDisposable
     /// </summary>
     public async Task DisconnectAsync()
     {
-        await _connectionLock.WaitAsync().ConfigureAwait(false);
+        await _connectionLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
             // Step 1: Stop timers FIRST to prevent new callbacks from starting
@@ -201,7 +201,7 @@ public partial class Z21 : IZ21, IAsyncDisposable
 
             // Step 2: Small delay to allow any in-flight timer callbacks to complete
             // This prevents race condition where timer callback starts just before timer.Dispose()
-            await Task.Delay(100).ConfigureAwait(false);
+            await Task.Delay(100, CancellationToken.None).ConfigureAwait(false);
 
             // Step 3: Only send LAN_LOGOFF if UDP is connected
             if (_udp.IsConnected)
@@ -211,7 +211,7 @@ public partial class Z21 : IZ21, IAsyncDisposable
                 // and can hit the 20-client limit after many debug sessions
                 try
                 {
-                    await _udp.SendAsync(Z21Command.BuildLogoff()).ConfigureAwait(false);
+                    await _udp.SendAsync(Z21Command.BuildLogoff(), CancellationToken.None).ConfigureAwait(false);
                     _logger?.LogInformation("LAN_LOGOFF sent to Z21");
                 }
                 catch (Exception ex)

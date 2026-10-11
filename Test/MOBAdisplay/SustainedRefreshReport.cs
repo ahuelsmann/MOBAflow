@@ -8,7 +8,8 @@ using System.Text;
 
 /// <summary>
 /// Evaluates one sustained-refresh run against the Issue #36 acceptance thresholds:
-/// at most 1 percent dropped or rejected frames and no device reboot, over at least 2 hours at the normal refresh rate.
+/// at most 1 percent dropped or rejected frames, no device reboot and no lost protocol session, over at least 2 hours
+/// at the normal refresh rate.
 /// </summary>
 internal sealed record SustainedRefreshReport(
     TimeSpan Duration,
@@ -18,6 +19,7 @@ internal sealed record SustainedRefreshReport(
     long PresentedFrames,
     long FailedFrames,
     long Recoveries,
+    long SessionLosses,
     HealthResponsePayload HealthBefore,
     HealthResponsePayload HealthAfter)
 {
@@ -89,8 +91,9 @@ internal sealed record SustainedRefreshReport(
         && RefreshHz == NormalRefreshHz
         && HealthBefore.UptimeSeconds >= MinimumUptimeBeforeRun.TotalSeconds;
 
-    /// <summary>True when the loss and reboot thresholds of the run are met.</summary>
-    public bool Passed => ExpectedFrames > 0 && !RebootDetected && LossRatio <= MaximumLossRatio;
+    /// <summary>True when the loss, reboot and negotiated-session thresholds of the run are met.</summary>
+    public bool Passed =>
+        ExpectedFrames > 0 && !RebootDetected && SessionLosses == 0 && LossRatio <= MaximumLossRatio;
 
     /// <summary>Formats the report for the Issue #36 acceptance record.</summary>
     public string Format()
@@ -114,6 +117,7 @@ internal sealed record SustainedRefreshReport(
             $"Device accepted / rejected: {DeviceAcceptedFrames} / {DeviceRejectedFrames} (rejected includes repaired transfers)");
         builder.AppendLine(culture, $"Device uptime before / after: {HealthBefore.UptimeSeconds} s / {HealthAfter.UptimeSeconds} s");
         builder.AppendLine(culture, $"Reboot detected: {(RebootDetected ? "yes" : "no")}");
+        builder.AppendLine(culture, $"Session losses: {SessionLosses} (limit 0)");
         builder.AppendLine(culture, $"Lost frames: {LostFrames} ({LossRatio:P2}, limit {MaximumLossRatio:P0})");
         builder.Append(culture, $"Result: {Verdict}");
         return builder.ToString();

@@ -123,7 +123,10 @@ public class PhotoUploadService : IPhotoUploadService
         {
             // Proper cleanup
             streamContent?.Dispose();
-            fileStream?.Dispose();
+            if (fileStream is not null)
+            {
+                await fileStream.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 

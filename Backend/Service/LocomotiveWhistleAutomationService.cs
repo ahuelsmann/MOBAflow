@@ -246,7 +246,7 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
 
     private void OnFeedbackReceived(FeedbackReceivedEvent feedback)
     {
-        _ = ObserveAsync(HandleFeedbackAsync(feedback.InPort));
+        _ = ObserveAsync(HandleFeedbackAsync(feedback.InPort, CancellationToken.None));
     }
 
     private async Task ObserveAsync(Task task)

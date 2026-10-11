@@ -21,8 +21,15 @@
     },
     {
       "name": "common",
-      "status": "planned",
+      "status": "active",
       "test-directories": ["Test/Common"],
+      "test-files": [
+        "Test/Backend/MultiplexerCommandResolverTests.cs",
+        "Test/Backend/RecordingArtifactSerializerTests.cs",
+        "Test/Backend/RecordingEventCaptureTests.cs",
+        "Test/Backend/RecordingReplayServiceTests.cs",
+        "Test/Backend/RecordingSessionServiceTests.cs"
+      ],
       "production-projects": ["Common/Common.csproj"]
     },
     {

@@ -1,680 +1,173 @@
-# Issue #35 Automation Testbench Implementation Plan
+# Issue #35 Automation Testbench Preparation Plan
 
 **GitHub Issue**: #35
 **Spec Kit**: Required
+**Status**: Proposed; preparation only. Implementation remains blocked by G3 and G7/G8 below.
 
-## Document status
+## Baseline and ownership
 
-- Status: Proposed; implementation blocked by the readiness gates below
-- GitHub owner: [Issue #35 - Add AutomationTestbenchPage for safe event and workflow simulation](https://github.com/ahuelsmann/MOBAflow/issues/35)
-- Priority: P1
-- Plan/issue relationship: one plan for one actionable issue
-- Delete this plan after Issue #35 is accepted and closed; Git history and the closed issue remain the record
-- Planning baseline: clean `github/main` at `677ba975`, inspected locally on 2026-07-22 after Workflow 2.0 PR #74, RecorderPage PR #76, and RF-02 follow-up PR #78
-- Local inspection: refreshed for the instruction, workflow graph/execution, action/effect, journey, recording/replay, event, DI, schema, and test seams listed below; every file was scanned individually before reading
-- Secrets scan: `sonar analyze secrets <path>` works non-interactively and reported no findings for every inspected file
-- Review follow-up: incorporates all ten actionable comments from merged planning PR #52 and corrects all six actionable comments left unresolved on merged baseline PR #66
+Refreshed on 2026-10-11 against `github/main` at `9b03676a9865275711d4031815f26a2d35e2474b`.
+Issue #35 is open. Its 2026-10-09 comment confirms that the early RF-01 through RF-05 gates are resolved
+and recommends the RF-23 project-runtime factory as the basis. RF-23 [#191](https://github.com/ahuelsmann/MOBAflow/issues/191)
+remains open; PRs #207, #211 and #217 are drafts and not merged. `Backend/Service/ProjectRuntimes/` is absent from this main.
+The existing `specs/008-project-runtimes/` belongs to RF-23; no automation-testbench feature specification exists yet.
 
-## Outcome
+This replaces the July execution inventory with the current ordered-action and event-plan baseline.
+Workflow 2.0 #32 was delivered, but #132 subsequently replaced workflow graphs with ordered actions;
+#124 introduced direct InPort/count event-plan matching. Do not restore graph branches, joins, nested workflows
+or retry policies just because older testbench planning mentioned them.
+Keep one standalone plan for #35; delete it after accepted completion.
 
-Deliver a deterministic AutomationTestbenchPage that runs persisted automation scenarios against an isolated clone of the selected project. It must exercise production journey, workflow, validation, and event-facing services through replaceable interfaces while making live Z21, MOBApi, speaker, script process, filesystem side effects, and physical display access impossible by construction.
+## Outcome and scope
 
-The page is the final delivery surface. The primary deliverable is the platform-neutral isolated runtime, virtual-time scheduler, recording effect boundary, scenario validator, trace, and assertion comparator.
+Named, persisted scenarios exercise the production workflow/journey services in an isolated project runtime.
+The runtime records intended effects and compares typed expectations with actual state and a correlated chronological trace.
+The WinUI page is the final surface; the platform-neutral runtime, clock, runner and comparison are the first deliverables.
 
-## Scope
+In scope: scenario create/edit/duplicate/delete, selected project/journey/workflow and explicit initial state,
+timed or step-based synthetic inputs, play/pause/step/cancel/restart, adjustable virtual time, partial assertions
+and first-mismatch reporting with the full trace retained. Cover all current external effect types.
 
-### In scope
-
-- Persisted named scenarios owned by a project.
-- Controlled initial feedback, journey, train, and relevant domain/runtime state.
-- Timed and step-based synthetic feedback/runtime events.
-- Deterministic play, pause, single-step, cancel, restart, and virtual-time speed.
-- Production journey and workflow execution behind testbench-safe interfaces.
-- Recording of intended commands, signal/turnout operations, announcements, audio, scripts, display actions, and workflow lifecycle events.
-- Typed partial assertions and expected-versus-actual comparison.
-- Complete correlated trace with first-mismatch reporting.
-- WinUI editor and execution page.
-- Schema, sample data, automated tests, and operator documentation.
-
-### Out of scope
-
-- Sending any command to live hardware or external services.
-- Executing PowerShell or other scripts.
-- Replacing the production workflow engine with a testbench-only engine.
-- RecorderPage import in the MVP.
-- Automatic scenario generation.
-- Hardware acceptance testing.
-- Feature-specific legacy compatibility branches. Additive JSON evolution follows the repository compatibility rules; any genuinely breaking change requires a separately approved upgrade path.
+Out of scope: live hardware/network/audio/script/display effects, a second automation engine, automatic scenario generation,
+RecorderPage import in the MVP, concrete RFID/camera providers and restoring superseded workflow behavior.
+Do not create or edit an example `solution.json`: Andreas will create the example himself.
+The persistence slice updates the scenario model and JSON schema; use isolated in-memory test data and temporary test fixtures
+for roundtrip validation rather than changing the operator's or shipped sample solution.
 
 ## Readiness gates
 
-Implementation must not begin until all gates applicable to the selected slice are satisfied.
-
-| Gate | Requirement | Blocks |
+| Gate | Requirement / current evidence | Blocks |
 | --- | --- | --- |
-| G1 | RF-01 through RF-05 are complete or withdrawn according to the approved refactoring sequence. RF-01, RF-02, RF-04, and RF-05 are complete; RF-03/#50 was withdrawn on 2026-09-25 (private home-network scope, see RF-19). | All implementation beyond research |
-| G2 | Issue #32 Workflow 2.0 domain/executor contracts and structured lifecycle-event shape are stable. Satisfied by merged PR #74; the testbench must consume those contracts rather than recreate them. | Satisfied; re-verify at implementation start |
-| G3 | The isolated-runtime and external-effect contracts in this plan are accepted. | Runtime and handler changes |
-| G4 | The post-#32 schema baseline is version 4. The optional initialized scenario collection remains additive under the repository JSON compatibility rules; recheck immediately before the persistence slice, and require an approved upgrade path for any final breaking change. | Persistence slice |
-| G5 | The implementation workspace passes the mandatory secret scan and the current local instruction/plan consolidation is reconciled. | Any local file read or edit |
-| G6 | The plan is linked from open Issue #35 and `plan-required` remains present until implementation completion. | Implementation start |
-| G7 | The Spec Kit flow for Issue #35 (specification, clarification, tasks and analysis under `specs/NNN-automation-testbench/`) is complete, reconciled with this plan and linked from the issue. | Implementation start |
-
-Research and plan refinement may continue before G1. No production-code or characterization-test implementation starts before G1, G3, G5, G6, and G7. G2 is satisfied but its merged contracts must be re-verified immediately before implementation.
-
-## Dependencies and sequencing
-
-### Hard dependencies
-
-- RF-04 Ordered Z21 event pipeline: satisfied by #43; its bounded FIFO and failure-isolation behavior remains the production-parity event source.
-- Workflow 2.0 domain, executor, cancellation, retry, failure-policy, dry-run, and lifecycle contracts: satisfied by #32/PR #74 and now owned by `WorkflowService`, `WorkflowExecutionCoordinator`, and `WorkflowLifecycleEvent`.
-- RF-03/#50: withdrawn; it no longer gates implementation under G1. Its removal package RF-19 is not a testbench code dependency.
-- Current schema: post-#32 version 4 is the confirmed baseline. The scenario collection is still additive, but the classification is repeated immediately before Slice 6.
-
-### Program sequencing dependencies
-
-The repository quality plan places RF-01 through RF-05 before broad feature development. RF-03/#50 was withdrawn, so this programme gate no longer blocks the testbench.
-
-### Soft dependencies and consumers
-
-- Issue #30 RecorderPage: PR #76 is merged and supplies recording payloads, ordered capture, command correlation, replay scheduling, a live-runtime safety gate, and a dependency-free replay projection. Reuse those contracts and terminology where compatible, but do not treat `IsolatedReplayRuntime` as a production workflow/journey runtime. Remaining Issue #30 work does not block the MVP.
-- Issue #34 interlocking: consume the testbench as the preferred simulation and safety-regression surface before hardware-active interlocking acceptance.
-- Issue #36 display interface: capture current display intents in the MVP, then extend typed capability-aware assertions after the interface stabilizes.
-- Issues #31 and #33: future scenario consumers; no MVP dependency.
-
-## Local Slice 1 baseline (2026-07-22)
-
-This baseline is analysis only. It does not release product implementation while G1 remains open.
-
-### Confirmed execution and isolation seams
-
-- `IWorkflowService` now owns the validated Workflow 2.0 graph API through `WorkflowExecutionRequest` and propagates `CancellationToken`. `WorkflowService` and `WorkflowExecutionCoordinator` use injected `TimeProvider`, time-provider-aware delays, bounded retries, per-source FIFO coordination, dry-run planning, nested workflows, parallel joins, and structured lifecycle events.
-- Live parallel branches still use `Task.WhenAll`, and `WorkflowLifecycleEvent.Sequence` is allocated under a shared lock in arrival order. The lifecycle contract has correlation IDs and an explicit `TimestampUtc`, but no stable branch/step path that would make live parallel event order independent of task interleaving. Slice 1 must characterize this before defining deterministic testbench merge keys.
-- `ActionExecutionContext` still requires the live `IZ21` service and carries optional live speaker and sound-player services. `ActionExecutionContextFactory.Create` allocates a new wrapper but shallow-copies `Project`, `Journey`, `JourneySessionState`, `Station`, and `Platform` references from `ActionExecutionContextState`; it does not isolate that mutable state. The testbench deep clone remains the actual isolation boundary.
-- Workflow handlers perform effects directly: raw commands and signal aspects call `context.Z21`, audio calls `ISoundPlayer`, announcements call `IAnnouncementService`, and scripts perform file checks and start a PowerShell process.
-- `WorkflowEffectPlanner` already performs pure payload validation and emits typed effect categories/resource descriptors for dry runs, but live handlers do not consume a replaceable effect sink. Slice 1 must extend this single planning vocabulary rather than introduce a competing effect taxonomy.
-- Audio and script handlers still call `IFileSystem.FileExists`, and the script handler starts a process. Environment-dependent checks and all I/O must move behind the production effect boundary for zero-filesystem testbench runs.
-- `JourneyManager` subscribes directly to `IZ21.Received`, serializes feedback mutation with a `SemaphoreSlim`, queues Workflow 2.0 runs through `WorkflowExecutionCoordinator`, and publishes immutable journey transitions before legacy callbacks. It still records `JourneySessionState.LastFeedbackTime` with `DateTime.Now`; production DI still defaults to a file-backed runtime state store.
-- `LocomotiveWhistleAutomationService` already accepts `TimeProvider` and cancellation, but its production `ILocomotiveFunctionCommandGateway` delegates to the root `IMobaRuntime`. The isolated scope therefore needs a recording gateway registration, not a second whistle implementation.
-- `WorkflowLifecycleEvent.TimestampUtc` already uses the injected workflow `TimeProvider`, while inherited `EventBase.CreatedUtc` and journey runtime events still use wall-clock construction. The testbench should prefer explicit domain timestamps and add a production-event construction seam only where a required event has no deterministic timestamp field.
-- RecorderPage now provides `RecordingEventBusDecorator`, `RecordingRuntimeCommandGateway`, `TimeProviderRecordingReplayDelayScheduler`, `RecordingReplaySafetyGate`, and dependency-free `IsolatedReplayRuntime`. These are reusable safety, payload, ordering, and scheduling references, but replay only projects allow-listed journal payloads into private state and does not run production journey/workflow services.
-- `AddMobaBackendServices` registers production Z21, file stores, handlers, runtime, action context, locomotive gateway, whistle automation, recording services, replay services, and the Workflow 2.0 graph as one root service graph. The testbench factory must build a separate fail-closed graph instead of decorating this provider with a mode flag.
-- `Project` contains Workflow 2.0 graphs but no automation-scenario collection. `Solution.CurrentSchemaVersion` is 4; an initialized optional scenario collection remains additive under the current exact-version policy.
-
-### Existing regression coverage to preserve
-
-- `WorkflowGraphExecutionTests`: dry-run effect planning, condition branches, bounded retry, failure branches, persisted-order dry-run parallel effects, nested correlation, cancellation, and validation rejection.
-- `WorkflowServiceTests` and `WorkflowExecutionEndToEndTests`: compatibility entry point, cancellation rejection, graph execution, command execution, and lifecycle completion behavior.
-- `WorkflowActionHandlersTests`: command, audio, announcement, signal-aspect, script-file, journey-stop, and cancellation propagation behavior.
-- `JourneyManagerFeedbackTests`: unexpected inputs, repeats, stop-transition ordering, independent-source concurrency, same-source serialization, source correlation, cancellation, stable completion, and structured-event-before-legacy-callback ordering.
-- `RecordingReplayServiceTests`: replay order, speed changes, pause/step/seek/cancel, live-hardware blocking, dependency-free runtime construction, and payload allow-listing.
-- `LocomotiveWhistleAutomationServiceTests`: delayed activation, project-activation cancellation, pulse coalescing, and validation bounds using the default system clock and real waits. They do not currently prove controlled virtual-time behavior.
-- `EventBusTests`: invocation, failure isolation, subscription lifecycle, and event-instance delivery. They do not currently assert subscriber invocation order.
-- `MobaBackendServiceCollectionExtensionsTests`: core service resolution and unique workflow-handler types. The double-registration test resolves one singleton twice; it does not prove descriptor-level idempotence or absence of duplicate `IZ21` registrations.
-
-### Characterization tests required before changing existing seams
-
-1. Live parallel Workflow 2.0 branch start/completion and lifecycle sequencing, including simultaneous effects and multiple failures; do not infer deterministic order from `Task.WhenAll` completion or the current locked sequence counter.
-2. `ActionExecutionContextFactory` reference-sharing behavior, followed by an explicit proof that the testbench deep clone shares no mutable project, journey, session, station, or platform object.
-3. One inventory test proving every external workflow action has exactly one planner descriptor and one production effect path.
-4. Audio/script tests separating platform-neutral payload validation from production-only file/process behavior.
-5. Journey feedback ordering across state persistence, stop transition, coordinator enqueue, workflow execution, index advancement, cancellation, and completion.
-6. Controlled-`TimeProvider` whistle tests covering delay, active duration, coalescing, and cancellation without real waits.
-7. An EventBus ordering assertion if testbench behavior relies on subscription order; otherwise the isolated bus contract must explicitly avoid that dependency.
-8. Descriptor-level DI multiplicity tests for registrations whose idempotence is required, using service-descriptor counts or `IEnumerable<T>` resolution rather than repeated resolution of one singleton.
-
-### Post-contract integration coverage
-
-These tests require the testbench contracts or isolated provider to exist and therefore are not pre-change characterization prerequisites:
-
-- isolated whistle registration proving feedback-triggered function commands cannot resolve the root runtime;
-- synthetic-event construction proving production defaults remain unchanged while testbench-facing timestamps use virtual time;
-- DI-negative tests rejecting live Z21, root runtime, file state stores, process, audio, MOBApi, and physical display adapters from an isolated scope.
-
-## Architecture decisions
-
-### AD-1: Dedicated fail-closed runtime scope
-
-Decision: construct every test run through an `IAutomationTestbenchRuntimeFactory` that creates a dedicated disposable runtime scope. The scope receives a canonical deep clone of the selected project and owns its own EventBus, journey state store, virtual time, workflow executor dependencies, trace collector, and recording effects.
-
-The scope must not resolve or reference the root `IMobaRuntime`, production `IZ21`, MOBApi clients, physical `ISpeakerEngine`, production script launcher, physical `IFrameSender`, or file-backed journey state store.
-
-Reuse RecorderPage's dependency-free construction, replay scheduling, allow-listed payload, and safety-gate patterns where their contracts fit. Do not reuse `IsolatedReplayRuntime` as the automation engine: it projects journal payloads into private state and does not execute production Workflow 2.0 or journey services.
-
-Rationale: a UI mode flag around the production singleton is not a sufficient safety boundary. Dependency construction must make live effects impossible even when a future handler forgets a runtime-mode check.
-
-Alternatives rejected:
-
-- Reusing `MobaRuntimeService.SimulateFeedbackAsync`: it routes through the production Z21 instance and active runtime.
-- Temporarily disconnecting Z21: disconnect state is mutable and does not prevent other external effects.
-- Handler-specific UI checks: distributed checks are not fail-closed and are easy to bypass.
-
-### AD-2: Production handlers call a typed effect boundary
-
-Decision: introduce a platform-neutral `IWorkflowEffectSink` used by production workflow action handlers after payload resolution and validation. Provide:
-
-- `ProductionWorkflowEffectSink` for live Z21, audio, announcement, script, and display adapters.
-- `RecordingWorkflowEffectSink` for testbench runs; it records typed intents and never performs I/O.
-
-`WorkflowEffectPlanner` remains the single pure action-validation and effect-description owner. The live and recording sinks consume the same resolved action/effect vocabulary so dry-run, production execution, RecorderPage payloads, and testbench assertions do not diverge into competing taxonomies.
-
-State-only actions such as journey-stop transitions remain production domain operations and do not go through the external-effect sink. Feedback-triggered locomotive commands are also part of the boundary: `ILocomotiveFunctionCommandGateway` receives production and recording implementations, so `LocomotiveWhistleAutomationService` cannot resolve the root runtime in an isolated scope.
-
-Environment-dependent validation belongs to the production effect adapter. Audio and script handlers perform platform-neutral payload validation before calling the sink; only the production sink may check file existence or launch a process. The recording sink performs no filesystem access.
-
-The script effect records an opaque action ID, a sanitized project-relative path or leaf name, and `ArgumentsRedacted = true`. Raw `PowerShellActionPayload.Arguments` is never copied, hashed, logged, persisted, or displayed by the testbench. Process creation moves behind the production sink so `ExecuteScriptWorkflowActionHandler` no longer calls `Process.Start` directly.
-
-Rationale: the production ActionExecutor and handlers remain the single engine, while effects become replaceable and testable.
-
-Alternative rejected: registering separate testbench-only action handlers, because that would test a second behavior path rather than the production handlers.
-
-### AD-3: One time abstraction for production and testbench
-
-Decision: retain the Workflow 2.0 and coordinator `TimeProvider`/`CancellationToken` contracts and extend the same abstraction to remaining journey timestamps and automation-delay paths. Use the .NET time-provider-aware delay APIs. Implement a controlled testbench time provider/scheduler that supports:
-
-- automatic advance at a configured speed;
-- pause without completing future delays;
-- advancing to the next scheduled operation for single-step;
-- stable ordering by `DueTime`, explicit scenario order, and a stable logical operation path;
-- a scheduler pump that, after every advance, processes registered continuations and all newly scheduled same-time work to quiescence before selecting the next due operation;
-- cancellation of all pending waits;
-- restart from a newly cloned initial snapshot.
-
-The pump tracks runner-owned operations explicitly and must not infer quiescence from a single `Task.Yield` or an empty timer queue while registered continuations are still active.
-
-No testbench code may rely on wall-clock time, `DateTime.Now`, `DateTimeOffset.UtcNow`, or unqualified `Task.Delay`. Existing production defaults may remain system-time based where compatibility requires it, but the isolated scope must inject its clock explicitly.
-
-### AD-4: Synthetic provenance is explicit
-
-Decision: every injected input is wrapped in an immutable `AutomationTestInputEnvelope` containing scenario ID, run ID, input ID, virtual timestamp, explicit order, event kind, typed payload, and `Origin = SyntheticTestbench`.
-
-The runner converts the payload to the production-facing event/feedback contract inside the isolated scope. Existing explicit timestamp contracts such as `WorkflowLifecycleEvent.TimestampUtc` receive the testbench `TimeProvider`. For event types that expose only `EventBase.CreatedUtc`, add an explicit construction timestamp only when that event must participate in deterministic assertions; do not change all production event defaults speculatively. Trace entries retain the original envelope and provenance. Synthetic events are never published on the root application EventBus.
-
-### AD-5: Deterministic trace and comparison
-
-Decision: trace entries use a run-local monotonically increasing sequence and carry:
-
-- virtual timestamp;
-- correlation/run/input/workflow/action IDs;
-- source and event kind;
-- typed payload;
-- outcome and optional error category;
-- state-before/state-after references where relevant.
-
-Concurrent producers do not allocate observable order by racing on an atomic counter. Each emission carries a stable logical key: virtual timestamp, scenario input order, workflow invocation path, branch/step path, action index, and per-action effect index. The runner buffers emissions and performs a deterministic merge at each scheduler quiescence boundary; only then does it allocate display sequence numbers.
-
-The current Workflow 2.0 lifecycle sequence records lock-acquisition order and does not expose a stable branch path. Slice 1 must either add that logical path to the production lifecycle contract or derive it from immutable execution metadata before testbench assertions consume parallel traces.
-
-Comparison sorts by that deterministic merged sequence, not wall-clock timestamp or task completion order. Partial assertions match only declared fields. Ordered assertions consume matching entries in order. The result reports the first mismatch but retains the complete trace and all comparison results.
-
-### AD-6: Production state remains immutable from the testbench
-
-Decision: clone the selected project through a canonical runtime-project projection at run start. The projection excludes all automation scenario definitions and fingerprint metadata before cloning or fingerprinting. Store journey/runtime state in memory.
-
-Isolation is verified through construction and attribution, not full before/after equality of a live root snapshot. Tests prove that the isolated object graph shares no mutable runtime state or live effect adapters, publishes no synthetic event to the root EventBus, and performs no root-runtime command. Legitimate concurrent Z21 telemetry or timestamp updates therefore cannot create false isolation failures.
-
-Scenario editing changes the editor project only through ViewModel commands and the existing solution save path. Executing a scenario never mutates the editor project or production runtime.
-
-### AD-7: Schema ownership
-
-Decision: add `AutomationTestScenarios` to `Project`, initialized to an empty collection. The post-#32 baseline is `Solution.CurrentSchemaVersion = 4`. Because the property is additive and safely defaults when absent, keep version 4 unchanged. Update `MOBAflow/solution.json` and `MOBAflow/Build/Schemas/solution.schema.json` together and add no feature-specific legacy branch.
-
-Rebase immediately before the persistence slice and repeat the compatibility classification. If the final model contains a genuinely breaking change, stop and obtain an approved upgrade path rather than incrementing the version without one.
-
-### AD-8: UI remains a thin MVVM surface
-
-Decision: use a specialized `AutomationTestbenchViewModel` for editor and ephemeral run state. Commands own create, duplicate, delete, validate, run, pause, step, cancel, restart, and assertion editing. Code-behind performs only WinUI view adaptation. EventBus handlers rely on `UiThreadEventBusDecorator` and do not dispatch manually.
-
-The page and ViewModel lifecycle must be explicitly selected during implementation. A transient run ViewModel is preferred unless product review requires run-state preservation across navigation.
-
-## Data model
-
-### AutomationTestScenario
-
-- `Id: Guid`
-- `Name: string`
-- `Description: string?`
-- `ProjectSnapshotFingerprint: string?` for diagnostics, not as a compatibility mechanism; computed only from a canonical runtime-project projection that excludes every scenario and fingerprint field
-- `InitialState: AutomationTestInitialState`
-- `Inputs: List<AutomationTestInput>`
-- `Assertions: List<AutomationTestAssertion>`
-- `DefaultPlaybackRate: double`
-- `Enabled: bool`
-
-Validation:
-
-- ID must be non-empty and unique within the project.
-- Name must be non-empty and unique using the repository's normal name comparison.
-- Playback rate must be finite and within an explicitly documented safe range.
-- References must resolve against the selected project.
-- Input IDs and assertion IDs must be unique.
-- Input timestamps must be non-negative.
-
-### AutomationTestInitialState
-
-- feedback values keyed by stable feedback identity or InPort as supported by the current domain;
-- selected journey and its position/occurrence state;
-- selected train and locomotive runtime state;
-- relevant signal/turnout/domain state supported by the current runtime;
-- optional deterministic seed.
-
-Validation rejects contradictory, missing, deleted, or unsupported references before constructing a runtime.
-
-### AutomationTestInput
-
-- `Id: Guid`
-- `At: TimeSpan`
-- `Order: int`
-- `Kind: AutomationTestInputKind`
-- typed payload appropriate to the kind
-- optional label
-
-Ordering key: `At`, then `Order`. Each (`At`, `Order`) pair must be unique within a scenario; validation rejects duplicates rather than using mutable list position as an implicit tie-breaker.
-
-### CapturedWorkflowEffect
-
-- run sequence and virtual timestamp;
-- input/workflow/action correlation;
-- effect kind;
-- typed, allow-listed payload;
-- status: intended, rejected, failed, or cancelled;
-- script arguments are always represented as redacted and are never copied or hashed;
-- no live credential, audio data, file contents, private network data, or sensitive absolute path.
-
-### AutomationTestAssertion
-
-- `Id: Guid`
-- assertion kind;
-- expected occurrence constraint;
-- ordering group/index when ordered;
-- typed partial payload matcher;
-- optional virtual-time bound;
-- optional negation for forbidden effects.
-
-### AutomationTestRunResult
-
-- run ID and scenario ID;
-- start/end virtual time;
-- terminal state: passed, failed, cancelled, invalid, or runner error;
-- complete trace;
-- assertion results;
-- first mismatch reference;
-- production-state isolation result.
-
-### Runner state machine
-
-`Idle -> Validating -> Ready|Invalid`; `Ready -> Running <-> Paused -> Completed|Failed|Cancelled`
-
-- `Invalid -> Validating|Idle`; validation failure returns an editable invalid result and never leaves the runner stuck in `Validating`.
-- Single-step is an operation while Paused and returns to Paused.
-- Restart is allowed only after cancellation/completion/failure and creates a fresh runtime scope.
-- Editing a scenario while Running or Paused is blocked.
-- Disposal from any non-terminal state cancels and disposes the isolated scope.
-
-## Contracts
-
-### IAutomationTestbenchRuntimeFactory
-
-Responsibilities:
-
-- clone and validate the project snapshot;
-- create only isolated dependencies;
-- reject construction if a production effect implementation is present;
-- return an async-disposable run scope.
-
-### IAutomationTestbenchRunner
-
-Operations:
-
-- `ValidateAsync`
-- `StartAsync`
-- `PauseAsync`
-- `StepAsync`
-- `CancelAsync`
-- `RestartAsync`
-
-All asynchronous operations accept and propagate `CancellationToken`. Concurrent state-changing operations are serialized and invalid transitions return typed results.
-
-### IWorkflowEffectSink
-
-Typed operations cover:
-
-- raw/semantic Z21 commands;
-- locomotive functions and drive commands;
-- signal and turnout operations;
-- announcements;
-- audio playback intents;
-- PowerShell/script intents with raw arguments redacted;
-- display/frame actions;
-- feedback-triggered locomotive-function commands through the same recording boundary used by `ILocomotiveFunctionCommandGateway`.
-
-Platform-neutral handlers validate payload shape and references. Environment checks such as file existence and all I/O occur only in the production implementation. The recording implementation has no dependency on network, process, filesystem, audio, or display implementations.
-
-### IAutomationTestClock
-
-Built on or compatible with `TimeProvider`; exposes current virtual time, pending-operation inspection, controlled advancement, pause/resume, registered-operation tracking, quiescence pumping, and cancellation. Production services consume `TimeProvider`, not the testbench-specific control API.
-
-### IAutomationTraceSink
-
-Run-local buffered trace. Producers attach stable logical ordering keys; the runner deterministically merges emissions at scheduler quiescence boundaries and allocates final sequence numbers after the merge. Atomic append order is not treated as deterministic. Consumers receive immutable snapshots.
-
-### IAutomationAssertionEvaluator
-
-Pure comparison service from validated assertions plus immutable trace/state snapshots to a deterministic result. It performs no I/O and has no runtime dependency.
-
-## Existing files expected to change
-
-Final line-level changes must be confirmed against the implementation baseline before editing.
-
-### Domain and schema
-
-- `Domain/Project.cs`: persisted scenario collection.
-- `Domain/Solution.cs`: verify compatibility behavior; do not increment the schema version for the additive scenario collection.
-- `MOBAflow/Build/Schemas/solution.schema.json`: complete scenario and assertion schema.
-- `MOBAflow/solution.json`: English sample scenario only if a useful minimal sample is approved.
-
-### Backend execution seams
-
-- `Backend/Interface/IWorkflowService.cs` and `Backend/Interface/WorkflowExecution.cs`: preserve the Workflow 2.0 request/result and cancellation contracts; extend only if the accepted isolated effect or logical-path contract requires it.
-- `Backend/Service/WorkflowService.cs` and `Backend/Service/WorkflowService.Graph.cs`: preserve injected time, cancellation, retry, dry-run, nested, and lifecycle behavior; add stable logical execution metadata only if characterization proves the current parallel sequence insufficient.
-- `Backend/Service/WorkflowEffectPlanner.cs`: remain the pure payload-validation and effect-description owner shared by dry-run, live, and recording paths.
-- `Backend/Service/ActionExecutionContext.cs`: effect sink and run correlation dependencies; do not treat the factory's shallow wrapper as mutable-state isolation.
-- `Backend/Service/WorkflowActionHandlers.cs`: typed effect sink calls; move environment-dependent file checks and direct process launch into the production sink.
-- `Backend/Service/LocomotiveWhistleAutomationService.cs` and its gateway registration: provide an isolated recording path for feedback-triggered function commands.
-- `Backend/Manager/JourneyManager.cs`: replace the remaining wall-clock session timestamp, retain coordinator cancellation/ordering, add an injected synthetic feedback path, and support in-memory state.
-- `Common/Events/WorkflowEvents.cs` and selected production event factories: reuse explicit workflow timestamps; add a construction timestamp only for event types required by deterministic testbench assertions.
-- `Backend/Service/Recording/IsolatedReplayRuntime.cs`, `Backend/Service/Recording/RecordingEventBusDecorator.cs`, and `SharedUI/Service/RecordingRuntimeCommandGateway.cs`: reuse compatible scheduling, payload, correlation, and fail-closed patterns without routing testbench traffic through root recording services.
-- `Backend/Extensions/MobaBackendServiceCollectionExtensions.cs`: production and RecorderPage registrations only; testbench isolated registrations belong in a dedicated factory/extension. Add descriptor-multiplicity guards only where characterization demonstrates they are required.
-- `Common/Events/IEventBus.cs`: change only if Issue #32/RF-04 establishes an async ordered contract; do not introduce testbench-specific branches.
-
-### SharedUI and WinUI
-
-- `SharedUI/ViewModel/MainWindowViewModel.Solution.cs`: only if selection/save notifications require integration; do not add testbench behavior to the root ViewModel.
-- `MOBAflow/Service/NavigationRegistration.cs`: page registration and English navigation metadata.
-- `MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs`: runner, factory, and ViewModel registrations.
-- `MOBAflow/Extensions/WinUiDiContainerValidator.cs`: resolve the page/ViewModel without constructing live testbench effects.
-
-## Planned new files
-
-Names follow existing repository layout and must be verified immediately before creation.
-
-### Domain
-
-- `Domain/AutomationTestScenario.cs`
-- `Domain/AutomationTestInput.cs`
-- `Domain/AutomationTestAssertion.cs`
-- `Domain/AutomationTestRunResult.cs`
-
-### Backend
-
-- `Backend/Interface/IAutomationTestbenchRunner.cs`
-- `Backend/Interface/IWorkflowEffectSink.cs`
-- `Backend/Service/AutomationTestbenchRunner.cs`
-- `Backend/Service/AutomationTestbenchRuntimeFactory.cs`
-- `Backend/Service/AutomationTestClock.cs`
-- `Backend/Service/AutomationTraceCollector.cs`
-- `Backend/Service/AutomationAssertionEvaluator.cs`
-- `Backend/Service/ProductionWorkflowEffectSink.cs`
-- `Backend/Service/RecordingWorkflowEffectSink.cs`
-
-### SharedUI and WinUI
-
-- `SharedUI/ViewModel/AutomationTestbenchViewModel.cs`
-- `MOBAflow/View/AutomationTestbenchPage.xaml`
-- `MOBAflow/View/AutomationTestbenchPage.xaml.cs`
-
-### Tests
-
-- `Test/Domain/AutomationTestScenarioTests.cs`
-- `Test/Backend/AutomationTestClockTests.cs`
-- `Test/Backend/AutomationTestbenchIsolationTests.cs`
-- `Test/Backend/AutomationTestbenchRunnerTests.cs`
-- `Test/Backend/AutomationAssertionEvaluatorTests.cs`
-- `Test/SharedUI/AutomationTestbenchViewModelTests.cs`
-
-Existing workflow, journey, schema, DI, and integration fixtures receive focused regression cases rather than duplicating entire suites.
-
-## Delivery slices
-
-### Slice 1: Prerequisite contracts and characterization tests
-
-Goal: make the existing execution behavior explicit before changing seams.
-
-- Rebase onto current `main` immediately before the slice, then re-verify every affected file.
-- Add the pre-change characterization coverage listed above for live parallel lifecycle ordering, shallow context sharing, action planning/effect paths, journey transitions, controlled whistle time, EventBus ordering assumptions, and DI multiplicity.
-- Finalize `IWorkflowEffectSink`, time, correlation, and cancellation contracts without changing user-visible behavior.
-- Inventory every external action type and document its current production effect path plus the approved target sink operation.
-- Reconcile the contracts with RecorderPage's merged recording payload, command-correlation, replay-delay, and safety vocabulary; do not reuse its projection runtime as a workflow engine.
-
-Exit criteria:
-
-- contracts are reviewed;
-- production behavior is characterized;
-- no second workflow engine exists;
-- every external action has one reviewed planner-to-production-to-recording mapping for Slice 3.
-
-### Slice 2: Scenario model and validation
-
-Goal: define and validate scenario types without executing or persisting them.
-
-- Add standalone domain entities and in-memory collection behavior without adding `Project.AutomationTestScenarios` or changing solution JSON/schema files.
-- Add pure validation for references, ordering, ranges, contradictory initial state, malformed assertions, and unsupported event/effect types.
-- Add a canonical runtime-project projection for deep clone/fingerprint that excludes all scenarios and fingerprint metadata.
-- Record the provisional version-4 additive classification; repeat it under G4 immediately before Slice 6, where persistence is introduced atomically.
-
-Exit criteria:
-
-- complete domain tests;
-- malformed scenarios cannot reach runner construction;
-- no platform references in Domain/Common/Backend.
-
-### Slice 3: Virtual time, trace, and recording effects
-
-Goal: prove deterministic scheduling and zero I/O independently of the full runner.
-
-- Implement controllable time, registered-operation tracking, quiescence pumping, and stable simultaneous-event ordering.
-- Implement immutable correlated trace with logical producer keys and deterministic merge points.
-- Route production action handlers and feedback-triggered locomotive command gateways through recording-capable effect boundaries.
-- Add production adapters preserving current behavior, including production-only file existence checks.
-- Add recording sink and negative tests proving no network, process, filesystem, audio, display, or root-runtime dependency is reachable.
-
-Exit criteria:
-
-- repeated schedules produce byte-for-byte-equivalent normalized traces;
-- cancellation clears pending operations;
-- script actions are captured without process creation;
-- no external effect remains hidden inside a workflow handler or feedback-triggered command gateway;
-- existing workflow tests remain green.
-
-### Slice 4: Isolated runner and production service integration
-
-Goal: execute feedback-to-journey-to-workflow scenarios inside a disposable isolated scope.
-
-- Build the isolated runtime factory with cloned project, private EventBus, in-memory journey state, test clock, recording effects, and the merged Workflow 2.0 executor.
-- Inject synthetic envelopes without using the root runtime or root EventBus and stamp converted production events with virtual time.
-- Implement state machine operations, explicit invalid-validation recovery, and restart-from-clean-snapshot.
-- Capture workflow lifecycle and domain transitions.
-- Verify object-graph, attribution, EventBus, and command isolation without comparing volatile live root snapshots.
-
-Exit criteria:
-
-- no Z21 connection is required;
-- isolation-negative tests fail if any production effect registration is introduced;
-- pause, step, cancellation, retry, timeout, and simultaneous events are deterministic;
-- no testbench-attributed mutation, event, or command reaches production state after pass, failure, or cancellation.
-
-### Slice 5: Assertion engine and diagnostics
-
-Goal: produce actionable deterministic results.
-
-- Implement typed partial matching, occurrence constraints, ordered groups, negative assertions, virtual-time bounds, and final-state assertions.
-- Identify the first mismatch while retaining complete trace and comparison detail.
-- Add correlation navigation between input, workflow, step/action, transition, and effect.
-
-Exit criteria:
-
-- evaluator is pure and fully unit tested;
-- malformed expectations are distinguished from failed expectations;
-- trace remains complete after first mismatch.
-
-### Slice 6: Persistence and schema
-
-Goal: save and reopen complete scenarios.
-
-- Rebase on the then-current schema and confirm version 4 remains the active exact-version baseline.
-- Add the empty-initialized `Project.AutomationTestScenarios` collection.
-- Keep the schema version unchanged for this additive property; if any final change is breaking, stop for an approved upgrade path.
-- Update schema and sample solution atomically.
-- Add canonical serialization, schema validation, and solution save/load roundtrip tests.
-- Do not add legacy migration code.
-
-Exit criteria:
-
-- saved scenarios round-trip with all inputs and assertions;
-- malformed JSON is rejected with actionable diagnostics;
-- current schema and sample data validate in build checks.
-
-### Slice 7: ViewModel and AutomationTestbenchPage
-
-Goal: expose safe scenario authoring and execution controls.
-
-- Implement specialized ViewModel with commands and CanExecute state derived from runner state.
-- Add master-detail scenario editor, initial-state editor, ordered input timeline, assertion editor, execution controls, result summary, and trace.
-- Register page, ViewModel, navigation metadata, feature toggle only if the existing product convention requires one, and DI validation.
-- All UI strings are English.
-- Use `ThemeResource`, accessible names, keyboard operation, text trimming, and responsive/scroll-safe layout.
-- Keep code-behind limited to view adaptation.
-
-Exit criteria:
-
-- create/edit/duplicate/delete/save/reopen flow works;
-- live runtime ambiguity is visibly blocked;
-- Light, Dark, and High Contrast checks pass;
-- keyboard and Narrator validation is documented;
-- XAML compiler contains the page and no `<Page Remove>` entry exists.
-
-### Slice 8: Optional integrations
-
-Not part of MVP acceptance:
-
-- derive a scenario from RecorderPage recordings after Issue #30;
-- add interlocking-focused scenario templates after Issue #34;
-- add capability-aware display assertions after Issue #36.
-
-## Test strategy
-
-### Domain and serialization
-
-- default collections and stable IDs;
-- duplicate and malformed input/assertion validation;
-- missing/deleted project references;
-- stable simultaneous-event ordering;
-- complete JSON roundtrip;
-- solution schema validation and current-version rejection behavior.
-
-### Time and concurrency
-
-- delay completion only after virtual advance;
-- pause prevents completion;
-- single-step advances exactly one next operation group;
-- cancellation completes no later effects;
-- restart creates new run/correlation IDs and clean state;
-- bounded retries and timeouts;
-- deterministic same-time and parallel-branch ordering independent of task scheduling;
-- scheduler quiescence after chained delays and same-time continuation registration;
-- concurrent command serialization, invalid runner transitions, and recovery from validation failure.
-
-### Isolation and safety
-
-- isolated provider contains no production Z21/UDP client, MOBApi client, physical speaker, process launcher, physical frame sender, or file journey store;
-- raw command, signal, turnout, audio, announcement, script, and display actions produce captured intents only;
-- PowerShell test proves zero process starts;
-- network test proves zero UDP/HTTP/SignalR sends;
-- forbidden-effect assertion remains zero;
-- root EventBus receives no synthetic test event;
-- no isolated object shares mutable state with the root runtime, and no testbench-attributed event or command reaches the root runtime during pass/fail/cancel.
-
-### Workflow and journey integration
-
-- feedback selects the correct journey step;
-- journey position and stop transitions;
-- sequential and parallel workflow ordering from Issue #32;
-- retry, continue, stop, failure branch, nested workflow, cancellation, and timeout;
-- structured lifecycle correlation;
-- action validation failure before any effect intent.
-
-### Assertion evaluator
-
-- exact and partial typed payload match;
-- positive, negative, occurrence, ordered, and time-bounded assertions;
-- first mismatch selection;
-- complete trace preservation;
-- malformed assertion versus runtime failure;
-- deterministic normalized results across repeat runs.
-
-### ViewModel and WinUI
-
-- command CanExecute for every runner state;
-- editing disabled during active run;
-- selection and project change handling;
-- save notification integration;
-- DI resolution and page registration;
-- XAML compile;
-- English visible strings;
-- Light/Dark/High Contrast, keyboard, focus, Narrator, scaling, and non-color-only status indicators.
-
-## Validation quickstart
-
-Implementation is not complete until the following sequence is documented with exact observed results.
-
-1. Run focused platform-neutral tests for Domain, Backend, Common, and SharedUI.
-2. Run `dotnet test Test/Test.csproj`.
-3. Restore and run the WinUI FastDebug compile check:
-   `dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore /p:BuildMOBApiDependency=false /p:CopyMOBApiToOutput=false`.
-4. Run repository JSON validation for `MOBAflow/solution.json` and `MOBAflow/Build/Schemas/solution.schema.json`.
-5. Resolve the full WinUI DI container and AutomationTestbenchPage in the existing DI tests.
-6. Run an automated safety scenario containing every external effect type and prove that all are captured while live-effect counters remain zero.
-7. Run the same scenario twice from the same project snapshot and compare normalized trace/result output for equality.
-8. Cancel once during delay, retry, and parallel execution; prove no later effects and no testbench-attributed root-runtime mutation, event, or command.
-9. Manually validate create/save/reopen/run/pause/step/restart plus Light, Dark, High Contrast, keyboard, focus, Narrator, and text scaling.
-10. Confirm no unintended `<Page Remove>` entry exists and the XAML compiler generated the page.
-
-## Risks and mitigations
-
-| Risk | Mitigation |
-| --- | --- |
-| Live side effect escapes isolation | Dedicated fail-closed runtime scope, negative DI tests, recording-only sink, zero-I/O assertions |
-| Post-#32 or RecorderPage contract drift invalidates the runner | Rebase immediately before each slice; consume the merged Workflow 2.0 executor and reuse compatible RecorderPage contracts without duplicating either engine |
-| Real time leaks into deterministic paths | TimeProvider and cancellation characterization; analyzer/code-search validation for wall-clock calls |
-| Parallel actions produce unstable traces | Stable logical operation keys, quiescence barriers, deterministic merge points, then final sequence allocation |
-| Script handler launches a process | Move process creation behind production effect sink; recording sink has no process dependency |
-| Test run mutates editor or production state | Scenario-free canonical projection, in-memory stores, disjoint object graphs, and attribution/reference isolation checks |
-| Schema conflicts with Issues #31-#34 | Rebase immediately before persistence; preserve the version for additive fields and require an approved upgrade path for breaking changes |
-| Trace leaks private data | Typed allow-listed payloads; raw script arguments omitted rather than hashed; sensitive paths redacted; no credentials, file contents, audio data, or unnecessary endpoints |
-| Page grows into code-behind behavior | Commands and specialized ViewModel; code-behind limited to input/view adaptation |
-| Testbench becomes a second engine | Production workflow/journey services remain the only execution owners |
-
-## Documentation and issue traceability
-
-During delivery:
-
-- Each pull request names Issue #35 as its primary work item and identifies the delivery slice.
-- Secondary dependency references use `Refs #32`, `Refs #30`, `Refs #34`, or `Refs #36`; they do not close those issues.
-- GitHub owns status and acceptance criteria. This plan owns technical sequence, architecture decisions, risks, and validation.
-- Update `docs/ARCHITECTURE.md` when the isolated runtime and effect boundary are implemented.
-- Update user documentation when the page becomes available.
-- Record exact test/build/manual-validation evidence in the final pull request.
-- Delete this plan when Issue #35 is closed.
-
-## Implementation start checklist
-
-- [x] RF-01 through RF-05 complete or withdrawn (RF-03/#50 withdrawn on 2026-09-25)
-- [x] Issue #32 executor/lifecycle contracts stable through merged PR #74
-- [x] Post-#32 schema version 4 and additive scenario-collection classification confirmed; repeat before Slice 6
-- [x] Mandatory local secret scan succeeds
-- [x] Local instruction and plan consolidation reconciled
-- [x] Plan reviewed and linked from Issue #35
-- [x] `plan-required` present
-- [ ] Spec Kit flow complete and linked from Issue #35 (G7)
-- [ ] Slice 1 affected files re-verified immediately before implementation
-- [ ] No unrelated working-tree changes overlap the implementation slice
+| G1 | RF-01/#49, RF-02/#48, RF-04/#43 and RF-05/#51 are closed completed; RF-03/#50 is closed not planned. Verified on GitHub on 2026-10-11. | Satisfied; old RF-03 observation work is not reopened here |
+| G2 | Consume the current production contract. #32, #124 and #132 are closed completed; current workflows are action lists and journeys match event-plan targets directly. | Recheck at implementation start |
+| G3 | Isolated construction, effect boundary, clock, trace and assertion proposals below are reconciled and accepted through Spec Kit. | Runtime/handler implementation |
+| G4 | `Solution.CurrentSchemaVersion` is 4; scenario data is directly added to the current project/schema. No legacy paths or migrations. Recheck the final model before persistence. | Persistence slice |
+| G5 | Mandatory secrets scans and a clean dedicated task worktree on the verified integration base. | Every implementation slice |
+| G6 | Issue #35 links this plan and the final feature artifacts; GitHub tracks the remaining work. A historical label alone is not implementation evidence. | Implementation start |
+| G7 | Specification, clarification, plan, tasks and analysis exist under `specs/NNN-automation-testbench/`, agree with this plan and are linked from #35. | Implementation start; currently missing |
+| G8 | RF-23 slice 3 is integrated, including project-runtime construction, per-project persistent counters and safe disposal. #207 and #211 were unmerged drafts at inspection time. | Production-code and characterization-test implementation |
+
+Research and plan refinement can proceed now. No runtime/model/UI implementation starts until the applicable gates pass.
+#35 does not acquire RF-24 or #141 as an additional hard dependency; use their final contracts if they are integrated by then.
+Do not alter another session's RF-23 branches or turn their proposed factory into a testbench factory here.
+
+## Current execution and isolation seams
+
+| Concern | Verified current source / behavior | Required follow-up after RF-23 integration |
+| --- | --- | --- |
+| Workflow execution | `Domain/Workflow.cs`, `Backend/Service/WorkflowService.Sequence.cs`: ordered actions, lifecycle correlation, cancellation, TimeProvider-aware action delay, stop on action failure | Use this executor; characterize its actual behavior rather than historical graph/retry expectations |
+| Feedback acceptance | `Backend/Service/InPortCounterService.cs` and `.Persistence.cs`: filtering, direct counts, load-before-feedback, buffered arrivals, stale-activation guards | Use an isolated counter store seeded from scenario state; never read/write production counter files |
+| Journey reactions | `Backend/Manager/JourneyManager.cs`, `Domain/JourneyEventPlan.cs`: enabled entries of active journeys match exact InPort/count | Exercise matching and production stop-change actions; activation is not a counter reset |
+| External effects | `Backend/Service/WorkflowActionHandlers.cs`: direct IZ21, audio, announcements, display and script process/file paths | Isolate every path; script/audio environment checks must move behind the production effect adapter |
+| Dry run | `Backend/Service/WorkflowEffectPlanner.cs`: pure effect descriptions | Reuse its vocabulary; dry run alone does not execute full journey/state/delay semantics |
+| Construction | `Backend/Extensions/MobaBackendServiceCollectionExtensions.cs`: root live registrations; RF-23 #207 proposes a per-project graph sharing some handlers/stores/audio | Review each dependency; a project runtime is not automatically a zero-I/O testbench runtime |
+| Replay | `Backend/Service/Recording/IsolatedReplayRuntime.cs` | Reuse safe payload/correlation concepts where applicable; replay projection is not production workflow/journey execution |
+| Editor/save | `SharedUI/Service/SolutionSession.cs`, `Domain/Project.cs` | Persist scenario definitions through the session; run-state/results are separate from edited project definitions |
+
+Production counters resume stored values across restarts. A test scenario explicitly seeds its own independent counts;
+it does not reset live counts or adopt a zero-on-restart production model. Manual seed/correction emits no counted feedback.
+
+## Contract proposals to reconcile in Spec Kit
+
+### Isolated runtime construction
+
+A dedicated async-disposable factory constructs a private runtime graph from a deep clone of the selected project.
+Use RF-23's integrated construction seams, but provide a private EventBus, in-memory journey/counter stores, virtual TimeProvider
+and recording-only external adapters. No live Z21/UDP, MOBApi/SignalR client, root gateway, production state store,
+process launcher, physical audio output or display sender can be resolved from that graph.
+Do not decorate the live provider with a mode flag, temporarily disconnect Z21, or call live `SimulateFeedbackAsync`.
+Reference/attribution tests prove no mutable state or command/event path is shared with the editor or production runtime.
+Legitimate concurrent production telemetry is allowed; whole live snapshot equality is not the isolation test.
+
+### Effect boundary
+
+Retain the production action executor and handlers. The proposed typed effect sink has live and recording implementations;
+it consumes the same validated effect vocabulary as `WorkflowEffectPlanner` rather than creating another taxonomy.
+Capture Z21/drive/functions, turnout/signal commands, announcements, audio, scripts and display intents.
+Journey stop transitions remain production domain operations against isolated state, not external effects.
+The feedback-triggered whistle gateway must also be recording-only and cannot resolve the root runtime.
+
+Payload/reference validation stays common. Only the production adapter checks file existence or launches a process.
+The recording adapter performs no filesystem access. Script capture includes an opaque action identity and a sanitized
+leaf/project-relative path with arguments explicitly redacted: never copy, hash, log, persist or display raw script arguments.
+Keep trace payloads typed and allow-listed; exclude credentials, file contents, audio bytes and sensitive absolute paths.
+
+### Virtual time and order
+
+Production services consume TimeProvider and CancellationToken; testbench controls own pause/resume/advance.
+Pause cannot complete future delays; single-step advances one defined next operation group and returns to Paused.
+After advancing, process tracked continuations and newly scheduled same-time work to quiescence before choosing the next time.
+An empty timer queue or a single Task.Yield is not proof that all operations have settled.
+Cancellation drains/cancels pending work and prevents later effects; restart builds a fresh isolated graph.
+Serialize runner commands and reject invalid transitions without leaving the runner stuck in Validating or Running.
+
+Order inputs by virtual time and explicit scenario order; duplicate `(At, Order)` pairs are invalid.
+Concurrent journeys may still execute independently. Define stable logical ordering keys from input, journey/workflow invocation,
+action index and effect index; merge at quiescence before allocating visible trace sequences.
+Do not use wall-clock timestamps, task completion order or a racing atomic sequence as the reproducibility contract.
+Run/correlation IDs may differ per execution; normalize those identifiers when comparing repeated results.
+The issue's older retries/parallel-workflow assertions must be clarified against the current engine; do not invent those mechanics.
+
+### Synthetic provenance and comparison
+
+Every input retains scenario/run/input identity, virtual timestamp, explicit order, typed payload and synthetic origin
+in the private runner/trace envelope. Convert to current production-facing contracts only inside the isolated graph.
+Reuse explicit lifecycle timestamps; add a construction-time seam only for events actually used in deterministic assertions.
+Synthetic events never publish to the root EventBus or root recorder.
+
+Trace includes virtual time, stable sequence, input/workflow/action correlation, typed payload, outcome and relevant state transitions.
+Assertions may match a subset of fields, ordered occurrences, absence/forbidden effects and virtual-time bounds.
+Distinguish invalid scenario/assertion, execution failure, comparison mismatch, cancellation and runner error.
+Report the first mismatch while preserving the complete trace and comparison results.
+
+### Scenario persistence and UI
+
+Define named project-owned scenarios with stable IDs, initial state, ordered inputs, typed partial assertions and playback settings.
+Validate nonempty/unique IDs and names, resolved project references, nonnegative times and finite bounded playback settings.
+Do not store run results as editable scenario data. If fingerprint metadata is retained, derive it from a canonical runtime-project
+projection excluding all scenarios and fingerprints; otherwise editing a scenario would change its own baseline.
+Clone the same scenario-free projection so unrelated scenario edits cannot alter execution state.
+Update `Domain/Project.cs` and `MOBAflow/Build/Schemas/solution.schema.json` directly. Keep schema version 4 unless the final feature requires a bump.
+Do not add compatibility, migration or adoption code. No example solution is generated.
+
+A focused shared ViewModel owns editing and run commands; code-behind only adapts the WinUI view.
+Select and specify navigation/disposal lifetime, project-switch behavior, invalid-result recovery and edit locking during Running/Paused.
+EventBus UI handlers use the existing decorated UI bus without an extra dispatcher layer.
+
+## Narrow delivery sequence after the gates
+
+1. Complete Spec Kit on the integrated RF-23 base. Inventory every effect and time seam and record the supported action-list semantics.
+2. Characterize production feedback/count restoration, workflow action delay/cancellation/failure, journey matching/stop transitions
+   and shallow context references. Introduce only the agreed replaceable effect boundary and preserve production behavior.
+3. Add validated scenario/initial-state contracts, virtual clock and isolated construction with negative DI/reference tests.
+   Prove every external effect is captured with zero network/process/file/audio/display access before adding UI execution controls.
+4. Add runner operations, stable trace and pure partial-assertion comparison. Prove repeatability, pause/step/cancel/restart
+   and deterministic simultaneous input handling with current workflows.
+5. Persist scenarios and validate JSON schema/roundtrip using test-owned data. Andreas owns the example solution.
+6. Add the page/ViewModel and existing navigation/DI registration. Document operator behavior and remaining manual acceptance.
+
+Each slice names #35 as the primary issue and remains a narrow draft PR. Later slices depend on tested integrated predecessors;
+the initial characterization and effect work is not authorized before G8.
+
+## Validation and acceptance
+
+Regression anchors: `WorkflowSequenceExecutionTests`, `WorkflowActionHandlersTests`, `WorkflowEffectPlannerTests`,
+`JourneyEventPlanTests`, `JourneyEventPlanAcceptanceTests`, `PersistentInPortCounterTests`, `RecordingReplayServiceTests`
+and final RF-23 runtime-host tests. Refresh fixture names at each implementation start.
+
+- Prove isolated DI cannot construct a live effect adapter; capture every effect category, including script and whistle actions.
+- Prove no testbench event/command/mutation reaches the production runtime and no mutable project/journey/state is shared.
+- Run unchanged scenarios twice and compare normalized traces/results, including simultaneous inputs and concurrent journeys.
+- Test delayed actions, pause, one-step, cancellation while waiting/executing, restart and invalid runner transitions.
+- Test stored initial counts, direct targets, counter saturation/correction, active/inactive journeys and explicit stop transitions.
+- Test malformed references/IDs/times/assertions, partial matching, ordered/negative assertions, first mismatch and full trace retention.
+- Test project/session switches and persistence/schema roundtrip without editing any real or example solution.
+- Run affected portable tests and consumers plus broader suites for runtime/DI/persistence changes. Compile the desktop app.
+- With explicit launch authorization, inspect Light/Dark/High Contrast, keyboard, focus, Narrator, scaling and drag/drop.
+  Never launch the app, touch hardware or deploy from a code-validation request alone.
+- Before readiness, require current-head CI, green SonarCloud and zero OPEN/CONFIRMED PR issues.
+
+## Preparation validation
+
+This refresh changes documentation only: check the final diff, secrets, line endings, internal links and Spec Kit governance.
+No .NET build/test result, implemented factory, scenario file or manual/hardware acceptance is claimed.

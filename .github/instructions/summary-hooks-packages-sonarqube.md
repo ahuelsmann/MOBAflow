@@ -5,4 +5,4 @@ described here are **not implemented** in the repository. Keep for historical co
 
 ---
 
-# MOBAflow: Git Hooks, Erweiterungen & Tools - Nutzen & Übersicht
+# MOBAflow: Git hooks, extensions and tools - benefits and overview

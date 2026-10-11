@@ -124,8 +124,6 @@ public static class OperatingStateEvaluator
         {
             OperatingStateKind.FailSafe => $"{nextDetail} Critical control actions remain blocked until the system is released again.",
             OperatingStateKind.Degraded => $"{nextDetail} The shell remains usable, but one or more supporting services are degraded.",
-            OperatingStateKind.Recovering => nextDetail,
-            OperatingStateKind.Normal => nextDetail,
             _ => nextDetail,
         };
 

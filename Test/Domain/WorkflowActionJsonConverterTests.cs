@@ -8,6 +8,52 @@ using System.Text.Json;
 [TestFixture]
 internal sealed class WorkflowActionJsonConverterTests
 {
+    [TestCase("announcement", "{\"message\":\"Arrival\"}")]
+    [TestCase("powerShell", "{\"scriptPath\":\"scripts/test.ps1\"}")]
+    [TestCase("selectSignalAspect", "{\"baseAddress\":201}")]
+    [TestCase("trainDestinationDisplay", "{\"clearBeforeRender\":false}")]
+    [TestCase("changeJourneyStop", "{\"moveToNextStop\":false}")]
+    public void RoundTripPayload_PreservesCanonicalPropertyNameAndConfiguredValues(string propertyName, string payload)
+    {
+        var json = "{\"type\":2,\"" + propertyName + "\":" + payload + "}";
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json)!;
+
+        using var document = JsonDocument.Parse(JsonSerializer.Serialize(action));
+        using var expected = JsonDocument.Parse(payload);
+        var actual = document.RootElement.GetProperty(propertyName);
+
+        foreach (var property in expected.RootElement.EnumerateObject())
+            Assert.That(actual.GetProperty(property.Name).GetRawText(), Is.EqualTo(property.Value.GetRawText()));
+    }
+
+    [TestCase("{}")]
+    [TestCase("{\"number\":\"invalid\"}")]
+    [TestCase("{\"number\":null}")]
+    public void DeserializeMissingTypeAndInvalidNumber_PreservesInvalidTypeAndZeroNumber(string json)
+    {
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json)!;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(action.Type, Is.EqualTo((ActionType)(-1)));
+            Assert.That(action.Number, Is.Zero);
+        }
+    }
+
+    [Test]
+    public void DeserializeUnknownProperty_DoesNotOverwriteKnownMetadata()
+    {
+        const string json = """{"other":"Wrong","name":"Expected","number":42,"type":2}""";
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json)!;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(action.Name, Is.EqualTo("Expected"));
+            Assert.That(action.Number, Is.EqualTo(42));
+        }
+    }
+
     [Test]
     public void Deserialize_NullToken_ReturnsNull()
     {
@@ -36,7 +82,7 @@ internal sealed class WorkflowActionJsonConverterTests
         var action = JsonSerializer.Deserialize<WorkflowAction>(json);
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(action, Is.Not.Null);
             Assert.That(action!.Id, Is.EqualTo(id));
@@ -45,7 +91,7 @@ internal sealed class WorkflowActionJsonConverterTests
             Assert.That(action.Type, Is.EqualTo(ActionType.Audio));
             Assert.That(action.DelayAfterMs, Is.EqualTo(125));
             Assert.That(action.Audio?.FilePath, Is.EqualTo("sounds/horn.wav"));
-        });
+        }
     }
 
     [Test]
@@ -63,7 +109,7 @@ internal sealed class WorkflowActionJsonConverterTests
 
         var action = JsonSerializer.Deserialize<WorkflowAction>(json);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(action, Is.Not.Null);
             Assert.That(action!.Id, Is.EqualTo(Guid.Empty));
@@ -71,7 +117,7 @@ internal sealed class WorkflowActionJsonConverterTests
             Assert.That(action.Number, Is.Zero);
             Assert.That(action.Type, Is.EqualTo((ActionType)(-1)));
             Assert.That(action.DelayAfterMs, Is.Zero);
-        });
+        }
     }
 
     [Test]
@@ -135,7 +181,7 @@ internal sealed class WorkflowActionJsonConverterTests
         var root = document.RootElement;
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(root.GetProperty("id").GetGuid(), Is.EqualTo(id));
             Assert.That(root.GetProperty("name").GetString(), Is.EqualTo("Configured action"));
@@ -143,7 +189,7 @@ internal sealed class WorkflowActionJsonConverterTests
             Assert.That(root.GetProperty("type").GetInt32(), Is.EqualTo((int)type));
             Assert.That(root.GetProperty("delayAfterMs").GetInt32(), Is.EqualTo(250));
             Assert.That(root.TryGetProperty(payloadProperty, out _), Is.False);
-        });
+        }
     }
 
     [Test]
@@ -162,13 +208,15 @@ internal sealed class WorkflowActionJsonConverterTests
         var root = document.RootElement;
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(root.GetProperty("command").GetProperty("address").GetInt32(), Is.EqualTo(3));
             Assert.That(root.GetProperty("audio").GetProperty("filePath").GetString(), Is.EqualTo("sounds/horn.wav"));
             Assert.That(root.TryGetProperty("announcement", out _), Is.False);
-        });
+        }
     }
+
+    internal static readonly string[] expected = new[] { "command", "audio" };
 
     [Test]
     public void Serialize_DeclaredType_PreservesEveryPresentPayload()
@@ -187,7 +235,7 @@ internal sealed class WorkflowActionJsonConverterTests
             .Select(property => property.Name)
             .ToArray();
 
-        Assert.That(payloadProperties, Is.EqualTo(new[] { "command", "audio" }));
+        Assert.That(payloadProperties, Is.EqualTo(expected));
     }
 
     [Test]
@@ -222,8 +270,11 @@ internal sealed class WorkflowActionJsonConverterTests
 
         var roundTripped = JsonSerializer.Deserialize<WorkflowAction>(JsonSerializer.Serialize(action));
 
-        Assert.That(roundTripped?.ChangeJourneyStop?.TargetStationId, Is.EqualTo(targetId));
-        Assert.That(roundTripped?.ChangeJourneyStop?.MoveToNextStop, Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(roundTripped?.ChangeJourneyStop?.TargetStationId, Is.EqualTo(targetId));
+            Assert.That(roundTripped?.ChangeJourneyStop?.MoveToNextStop, Is.False);
+        }
     }
 
     [Test]
@@ -248,10 +299,16 @@ internal sealed class WorkflowActionJsonConverterTests
         var roundTripped = JsonSerializer.Deserialize<WorkflowAction>(json);
 
         Assert.That(roundTripped, Is.Not.Null);
-        Assert.That(roundTripped!.Type, Is.EqualTo(ActionType.TrainDestinationDisplay));
-        Assert.That(roundTripped.TrainDestinationDisplay, Is.Not.Null);
-        Assert.That(roundTripped.TrainDestinationDisplay!.DisplayDeviceId, Is.EqualTo(displayDeviceId));
-        Assert.That(roundTripped.TrainDestinationDisplay.ClearBeforeRender, Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(roundTripped!.Type, Is.EqualTo(ActionType.TrainDestinationDisplay));
+            Assert.That(roundTripped.TrainDestinationDisplay, Is.Not.Null);
+        }
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(roundTripped.TrainDestinationDisplay!.DisplayDeviceId, Is.EqualTo(displayDeviceId));
+            Assert.That(roundTripped.TrainDestinationDisplay.ClearBeforeRender, Is.False);
+        }
     }
 
     [Test]
@@ -269,8 +326,11 @@ internal sealed class WorkflowActionJsonConverterTests
 
         var result = WorkflowActionParameterBinding.TryGetDisplayDeviceId(action, out var actual);
 
-        Assert.That(result, Is.True);
-        Assert.That(actual, Is.EqualTo(displayDeviceId));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result, Is.True);
+            Assert.That(actual, Is.EqualTo(displayDeviceId));
+        }
     }
 
     [Test]
@@ -296,12 +356,18 @@ internal sealed class WorkflowActionJsonConverterTests
         var roundTripped = JsonSerializer.Deserialize<WorkflowAction>(json);
 
         Assert.That(roundTripped, Is.Not.Null);
-        Assert.That(roundTripped!.Type, Is.EqualTo(ActionType.SelectSignalAspect));
-        Assert.That(roundTripped.SelectSignalAspect, Is.Not.Null);
-        Assert.That(roundTripped.SelectSignalAspect!.BaseAddress, Is.EqualTo(201));
-        Assert.That(roundTripped.SelectSignalAspect.SignalAspect, Is.EqualTo(SignalAspect.Hp0));
-        Assert.That(roundTripped.SelectSignalAspect.MultiplexerArticleNumber, Is.EqualTo("5229"));
-        Assert.That(roundTripped.SelectSignalAspect.SignalArticleNumber, Is.EqualTo("4046"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(roundTripped!.Type, Is.EqualTo(ActionType.SelectSignalAspect));
+            Assert.That(roundTripped.SelectSignalAspect, Is.Not.Null);
+        }
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(roundTripped.SelectSignalAspect!.BaseAddress, Is.EqualTo(201));
+            Assert.That(roundTripped.SelectSignalAspect.SignalAspect, Is.EqualTo(SignalAspect.Hp0));
+            Assert.That(roundTripped.SelectSignalAspect.MultiplexerArticleNumber, Is.EqualTo("5229"));
+            Assert.That(roundTripped.SelectSignalAspect.SignalArticleNumber, Is.EqualTo("4046"));
+        }
     }
 
     [Test]
@@ -325,9 +391,15 @@ internal sealed class WorkflowActionJsonConverterTests
         var roundTripped = JsonSerializer.Deserialize<WorkflowAction>(json);
 
         Assert.That(roundTripped, Is.Not.Null);
-        Assert.That(roundTripped!.Type, Is.EqualTo(ActionType.ExecuteScript));
-        Assert.That(roundTripped.PowerShell, Is.Not.Null);
-        Assert.That(roundTripped.PowerShell!.ScriptPath, Is.EqualTo("scripts/update.ps1"));
-        Assert.That(roundTripped.PowerShell.Arguments, Is.EqualTo("-Verbose"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(roundTripped!.Type, Is.EqualTo(ActionType.ExecuteScript));
+            Assert.That(roundTripped.PowerShell, Is.Not.Null);
+        }
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(roundTripped.PowerShell!.ScriptPath, Is.EqualTo("scripts/update.ps1"));
+            Assert.That(roundTripped.PowerShell.Arguments, Is.EqualTo("-Verbose"));
+        }
     }
 }

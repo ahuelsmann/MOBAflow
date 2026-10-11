@@ -1919,7 +1919,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             var initialColor = Functions[functionIndex].BacklightColorHex;
             var result = await _functionAppearancePicker
-                .PickAsync(new FunctionAppearancePickerRequest(initialColor))
+                .PickAsync(new FunctionAppearancePickerRequest(initialColor), CancellationToken.None)
                 .ConfigureAwait(true);
 
             if (result is null || !result.IsConfirmed)
@@ -2259,7 +2259,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private async Task SendLocomotiveDriveAsync(int address, int speed, bool forward)
     {
         MarkLocalDriveCommand(address);
-        await _runtimeCommandGateway.SetLocomotiveDriveAsync(address, speed, forward);
+        await _runtimeCommandGateway.SetLocomotiveDriveAsync(address, speed, forward, CancellationToken.None);
     }
 
     private void MarkLocalDriveCommand(int address)
@@ -2360,7 +2360,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         IsDoorReleaseBlinking = true;
         DoorReleaseBlinkOpacity = 1.0;
-        _doorReleaseBlinkCts?.Cancel();
+        if (_doorReleaseBlinkCts is not null)
+        {
+            await _doorReleaseBlinkCts.CancelAsync().ConfigureAwait(true);
+        }
+
         _doorReleaseBlinkCts = new CancellationTokenSource();
         var token = _doorReleaseBlinkCts.Token;
         var blinkHigh = true;
