@@ -8,7 +8,7 @@ npx skills add mattpocock/skills --skill=resolving-merge-conflicts
 npx skills update resolving-merge-conflicts
 ```
 
-[Source](https://github.com/mattpocock/skills/tree/main/skills/engineering/resolving-merge-conflicts)
+[Source (archived version)](https://github.com/mattpocock/skills/blob/153fc1b93de6584562765cdce299324e1ff9e661/skills/engineering/resolving-merge-conflicts/SKILL.md)
 
 ## What it does
 
