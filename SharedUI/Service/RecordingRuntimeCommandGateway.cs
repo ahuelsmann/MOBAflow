@@ -40,9 +40,11 @@ public sealed class RecordingRuntimeCommandGateway : IRuntimeCommandGateway
             cancellationToken);
 
     /// <inheritdoc />
-    /// <remarks>Not recorded yet; see issue #188.</remarks>
     public Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default) =>
-        _inner.AcknowledgeFailSafeAsync(cancellationToken);
+        ExecuteAsync(
+            Command("command.fail-safe-acknowledge", JsonSerializer.SerializeToElement(new { }), "Acknowledge fail-safe"),
+            token => _inner.AcknowledgeFailSafeAsync(token),
+            cancellationToken);
 
     /// <inheritdoc />
     public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) =>
@@ -130,14 +132,20 @@ public sealed class RecordingRuntimeCommandGateway : IRuntimeCommandGateway
             cancellationToken);
 
     /// <inheritdoc />
-    /// <remarks>Not recorded yet; see issue #188.</remarks>
     public Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default) =>
-        _inner.SetAllLocomotiveFunctionsOffAsync(address, cancellationToken);
+        ExecuteAsync(
+            Command("command.locomotive-functions-off", JsonSerializer.SerializeToElement(new { address }),
+                $"Turn off locomotive {address} functions"),
+            token => _inner.SetAllLocomotiveFunctionsOffAsync(address, token),
+            cancellationToken);
 
     /// <inheritdoc />
-    /// <remarks>Not recorded yet; see issue #188.</remarks>
     public Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default) =>
-        _inner.RequestLocomotiveInfoAsync(address, cancellationToken);
+        ExecuteAsync(
+            Command("command.locomotive-info", JsonSerializer.SerializeToElement(new { address }),
+                $"Request locomotive {address} information", replayApplicability: RecordingReplayApplicability.DisplayOnly),
+            token => _inner.RequestLocomotiveInfoAsync(address, token),
+            cancellationToken);
 
     /// <inheritdoc />
     public Task SendTurnoutCommandAsync(
@@ -160,7 +168,7 @@ public sealed class RecordingRuntimeCommandGateway : IRuntimeCommandGateway
         CancellationToken cancellationToken)
     {
         var correlationId = Guid.NewGuid();
-        Record(command, "request", "information", correlationId, command.Payload, RecordingReplayApplicability.ReplayApplicable);
+        Record(command, "request", "information", correlationId, command.Payload, command.ReplayApplicability);
         try
         {
             await execute(cancellationToken).ConfigureAwait(false);
@@ -216,12 +224,14 @@ public sealed class RecordingRuntimeCommandGateway : IRuntimeCommandGateway
         string typeKey,
         JsonElement payload,
         string displayText,
-        IReadOnlyList<RecordingEntityReference>? entityReferences = null) =>
-        new(typeKey, payload, displayText, entityReferences ?? []);
+        IReadOnlyList<RecordingEntityReference>? entityReferences = null,
+        RecordingReplayApplicability replayApplicability = RecordingReplayApplicability.ReplayApplicable) =>
+        new(typeKey, payload, displayText, entityReferences ?? [], replayApplicability);
 
     private sealed record CommandDescriptor(
         string TypeKey,
         JsonElement Payload,
         string DisplayText,
-        IReadOnlyList<RecordingEntityReference> EntityReferences);
+        IReadOnlyList<RecordingEntityReference> EntityReferences,
+        RecordingReplayApplicability ReplayApplicability);
 }
