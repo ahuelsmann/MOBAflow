@@ -27,6 +27,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 {
 
     private readonly List<MauiViewModel> _createdViewModels = [];
+    private static readonly string[] ProjectSwitchCalls = ["disconnect", "activate", "connect"];
 
     [TearDown]
 
@@ -876,25 +877,44 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
     private static readonly string[] StationAndYard = ["Station", "Yard"];
 
-    [Test]
-    public async Task ProjectPicker_SelectingAnotherProject_ConnectsToItsZ21()
+    [TestCase(false, false, false)]
+    [TestCase(true, false, false)]
+    [TestCase(false, true, false)]
+    [TestCase(false, false, true)]
+    public async Task ProjectPicker_SelectingAnotherProject_ConnectsToItsZ21(
+        bool remoteSession, bool sameAddress, bool connecting)
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var connected = false;
+        var calls = new List<string>();
         var runtimeMock = new Mock<IMobaRuntime>();
         runtimeMock.Setup(runtime => runtime.ConnectAsync(It.IsAny<CancellationToken>()))
-            .Callback(() => connected = true)
+            .Callback(() => { connected = true; calls.Add("connect"); })
             .Returns(Task.CompletedTask);
         runtimeMock.Setup(runtime => runtime.DisconnectAsync(It.IsAny<CancellationToken>()))
-            .Callback(() => connected = false)
+            .Callback(() => { connected = false; calls.Add("disconnect"); })
+            .Returns(Task.CompletedTask);
+        runtimeMock.Setup(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("activate"))
             .Returns(Task.CompletedTask);
         var station = new Project { Name = "Station", Z21 = { IpAddress = "192.168.0.111" } };
-        var yard = new Project { Name = "Yard", Z21 = { IpAddress = "192.168.0.112" } };
+        var yard = new Project
+        {
+            Name = "Yard",
+            Z21 = { IpAddress = sameAddress ? "192.168.0.111" : "192.168.0.112", Port = 21106 }
+        };
         var projectContext = CreateProjectContext(new Solution { Name = "Layout", Projects = [station, yard] });
-        var viewModel = CreateViewModel(eventBus, runtimeMock: runtimeMock, projectContext: projectContext);
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        var coordinator = new MobileRuntimeCoordinator(runtimeMock.Object, hubMock.Object);
+        coordinator.SetMobaflowSessionActive(remoteSession);
+        var viewModel = CreateViewModel(eventBus, runtimeMock: runtimeMock,
+            projectContext: projectContext, mobileRuntimeCoordinator: coordinator);
         // Connected to the Z21 of the project selected first.
-        runtimeMock.SetupGet(runtime => runtime.Current).Returns(() => new MobaRuntimeSnapshot { IsConnected = connected });
-        connected = true;
+        runtimeMock.SetupGet(runtime => runtime.Current).Returns(() => new MobaRuntimeSnapshot
+        {
+            IsConnected = connected, IsZ21Connecting = connecting
+        });
+        connected = !connecting;
 
         viewModel.SelectedProjectIndex = 1;
         await Task.Delay(200).ConfigureAwait(false);
@@ -903,7 +923,8 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         {
             Assert.That(viewModel.ProjectNames, Is.EqualTo(StationAndYard));
             Assert.That(projectContext.SelectedProject?.Model.Id, Is.EqualTo(yard.Id));
-            Assert.That(viewModel.Z21IpAddress, Is.EqualTo("192.168.0.112"));
+            Assert.That(viewModel.Z21IpAddress, Is.EqualTo(yard.Z21.IpAddress));
+            Assert.That(calls, Is.EqualTo(ProjectSwitchCalls));
         }
 
         runtimeMock.Verify(runtime => runtime.ActivateProjectAsync(yard, It.IsAny<CancellationToken>()), Times.Once);
@@ -927,6 +948,40 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         projectContext.SelectedProject = projectContext.SolutionViewModel!.Projects.Single(project => project.Model.Id == yard.Id);
 
         Assert.That(viewModel.GetStartupLocomotiveFleet(), Is.Empty);
+    }
+
+    [Test]
+    public void SwitchingProjects_WithRemoteSession_DropsCachedAndRuntimeFleetOfThePreviousProject()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var locomotive = new Locomotive { Name = "Station locomotive", DigitalAddress = 3 };
+        var station = new Project { Name = "Station", Locomotives = [locomotive] };
+        var yard = new Project { Name = "Yard" };
+        var context = CreateProjectContext(new Solution { Projects = [station, yard] });
+        var runtime = new Mock<IMobaRuntime>();
+        var hub = new Mock<IRuntimeHubRemoteClient>();
+        var coordinator = new MobileRuntimeCoordinator(runtime.Object, hub.Object);
+        coordinator.SetMobaflowSessionActive(true);
+        var viewModel = CreateViewModel(eventBus, runtimeMock: runtime,
+            projectContext: context, mobileRuntimeCoordinator: coordinator);
+        viewModel.SetControlTabActive(true);
+        IReadOnlyList<LocomotiveFleetSnapshot> oldFleet =
+        [
+            new() { LocomotiveId = locomotive.Id, Name = locomotive.Name, DigitalAddress = 3 }
+        ];
+        runtime.SetupGet(value => value.Current).Returns(new MobaRuntimeSnapshot { LocomotiveFleet = oldFleet });
+        viewModel.ApplyLiveRemoteLocomotiveFleet(oldFleet);
+        IReadOnlyList<LocomotiveFleetSnapshot>? publishedFleet = null;
+        eventBus.Subscribe<LocomotiveFleetUpdatedEvent>(update => publishedFleet = update.Fleet);
+
+        viewModel.SelectedProjectIndex = 1;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.GetStartupLocomotiveFleet(), Is.Empty);
+            Assert.That(publishedFleet, Is.Empty);
+            Assert.That(coordinator.PreferRemoteRuntime, Is.True);
+        }
     }
 
     [Test]

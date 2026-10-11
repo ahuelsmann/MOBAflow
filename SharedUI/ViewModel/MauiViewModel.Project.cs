@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend.Protocol;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 
 /// <summary>
@@ -10,6 +12,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 public sealed partial class MauiViewModel
 {
     private bool _isRefreshingProjectPicker;
+    private int _z21Port = Z21Protocol.DefaultPort;
 
     /// <summary>Gets the names of the projects of the synchronized solution, in solution order.</summary>
     [ObservableProperty]
@@ -31,26 +34,18 @@ public sealed partial class MauiViewModel
 
         var project = projects[value];
         _projectContext.SelectedProject = project;
-
-        // A project picked on the phone runs locally unless MOBAflow runs it; MOBAflow's runtime is not changed.
-        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime != true)
-        {
-            RunInBackground(
-                _runtimeConnection.ActivateProjectAsync(project.Model, _applicationLifetimeCts.Token),
-                "Activate the selected project");
-        }
     }
 
     private void RefreshProjectPicker()
     {
+        var selectedProject = _projectContext?.SelectedProject;
         var projects = _projectContext?.SolutionViewModel?.Projects;
         _isRefreshingProjectPicker = true;
         try
         {
             ProjectNames = projects is null ? [] : [.. projects.Select(project => project.Name)];
-            var selected = _projectContext?.SelectedProject;
-            SelectedProjectIndex = projects is not null && selected is not null
-                ? projects.IndexOf(selected)
+            SelectedProjectIndex = projects is not null && selectedProject is not null
+                ? projects.IndexOf(selectedProject)
                 : -1;
         }
         finally
@@ -62,26 +57,37 @@ public sealed partial class MauiViewModel
     /// <summary>
     /// Connects to the selected project's Z21; a connection to the Z21 of the previously selected project is closed.
     /// </summary>
-    private async Task ApplySelectedProjectZ21Async()
+    private async Task ApplySelectedProjectZ21Async(bool activateProject)
     {
-        var address = _projectContext?.SelectedProject?.Model.Z21.IpAddress.Trim() ?? string.Empty;
-        if (string.Equals(address, Z21IpAddress, StringComparison.OrdinalIgnoreCase))
+        var project = _projectContext?.SelectedProject?.Model;
+        var address = project?.Z21.IpAddress.Trim() ?? string.Empty;
+        var port = project?.Z21.Port is > 0 ? project.Z21.Port : Z21Protocol.DefaultPort;
+        var endpointChanged = !string.Equals(address, Z21IpAddress, StringComparison.OrdinalIgnoreCase)
+            || port != _z21Port;
+        if (!endpointChanged && !activateProject)
         {
             return;
+        }
+
+        if (endpointChanged && (_runtimeSnapshots.Current.IsConnected || _runtimeSnapshots.Current.IsZ21Connecting))
+        {
+            await _runtimeConnection.DisconnectAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
+        }
+
+        // The phone's local feedback runtime follows the project even while the UI projects MOBAflow's snapshots.
+        if (activateProject && project is not null)
+        {
+            await _runtimeConnection.ActivateProjectAsync(project, _applicationLifetimeCts.Token).ConfigureAwait(false);
         }
 
         await _uiDispatcher.InvokeOnUiAsync(() =>
         {
             Z21IpAddress = address;
+            _z21Port = port;
             return Task.CompletedTask;
         }).ConfigureAwait(false);
 
-        if (_runtimeSnapshots.Current.IsConnected)
-        {
-            await _runtimeConnection.DisconnectAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
-        }
-
-        if (address.Length > 0)
+        if (endpointChanged && address.Length > 0)
         {
             await _uiDispatcher.InvokeOnUiAsync(() => ConnectCommand.ExecuteAsync(null)).ConfigureAwait(false);
         }
