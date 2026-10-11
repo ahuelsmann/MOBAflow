@@ -2,7 +2,7 @@
 
 MOBAflow uses [GitHub Spec Kit](https://github.com/github/spec-kit) for
 specification-driven feature development. The repository is initialized with
-Spec Kit 1.0.11, the Codex skills integration, and PowerShell workflow scripts.
+Spec Kit 1.1.3, the Codex skills integration, and PowerShell workflow scripts.
 
 ## Install the CLI
 
@@ -10,7 +10,7 @@ Install `uv`, then install the repository's pinned Spec Kit version:
 
 ```powershell
 winget install --id astral-sh.uv -e
-uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v1.0.11"
+uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v1.1.3"
 specify version
 ```
 
@@ -34,6 +34,12 @@ Open Codex from the repository root so it discovers the skills under
 Use `$speckit-taskstoissues` when an approved task list should be published as
 dependency-ordered GitHub issues. The generated task issues use the `T###:`
 title convention and remain traceable to the originating feature artifacts.
+
+Spec Kit 1.1.3 deprecates this command but still supports it. The command displays
+an upstream warning and continues the existing workflow. Its replacement is the
+optional `github` extension; this update does not install or enable extensions.
+Keep using the repository's remote-selection helper until a separate, reviewed
+change adopts the replacement.
 
 Feature artifacts are stored under `specs/NNN-feature-name/`. The active feature
 is recorded by Spec Kit in `.specify/feature.json`.
@@ -103,14 +109,14 @@ agent workflow.
 
 ## Upgrade Spec Kit
 
-### Isolated update and local adaptations (1.0.11)
+### Isolated update and local adaptations (1.1.3)
 
 Use an isolated CLI without replacing your personal installation:
 
 ```powershell
-uv tool run --from git+https://github.com/github/spec-kit.git@v1.0.11 specify version
-uv tool run --from git+https://github.com/github/spec-kit.git@v1.0.11 specify integration upgrade codex
-uv tool run --from git+https://github.com/github/spec-kit.git@v1.0.11 specify integration status
+uv tool run --from git+https://github.com/github/spec-kit.git@v1.1.3 specify version
+uv tool run --from git+https://github.com/github/spec-kit.git@v1.1.3 specify integration upgrade codex
+uv tool run --from git+https://github.com/github/spec-kit.git@v1.1.3 specify integration status
 ```
 
 Start in the task worktree, retain a reviewed diff/backup and inspect generated files before proceeding.
@@ -118,6 +124,7 @@ Do not force an update over unreviewed local changes. Preserve the constitution 
 After an upgrade, reapply and test these two local adaptations:
 
 - `common.ps1`: extension registry validation and shared preset registry helpers from the prior integration.
+  Keep the Python override capability check in `Test-Python3WithYaml` to satisfy the Sonar complexity limit.
   Preserve new upstream feature-resolution behavior, including `SPECIFY_FEATURE_NO_PERSIST`.
 - `speckit-taskstoissues/SKILL.md`: use `scripts/Resolve-GitHubRepository.ps1`, not a fixed `origin` URL.
 
