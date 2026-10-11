@@ -27,7 +27,6 @@ internal sealed class SolutionSessionArchitectureTests
         ["MOBAflow/Behavior/GridColumnResizeBehavior.cs"] = "persists page column widths on the shell until RF-24",
         ["MOBAflow/Extensions/"] = "composition root registers the shell",
         ["MOBAflow/Service/NavigationRegistration.cs"] = "creates the pages that bind to the shell",
-        ["MOBAflow/Service/PostStartupInitializationService.cs"] = "starts the shell's health checks until RF-24",
         ["SharedUI/ViewModel/MonitorPageViewModel.cs"] = "reads the shell's Z21 traffic monitor state until RF-24",
         ["SharedUI/ViewModel/EventManagerViewModel.cs"] = "reads the shell's journey command status until RF-24",
         ["MOBAsmart/Platforms/Android/MainActivity.cs"] = "shutdown cleanup lookup (MOBAsmart does not register the shell)",
@@ -41,7 +40,7 @@ internal sealed class SolutionSessionArchitectureTests
     };
 
     [Test]
-    public void ServicesAndViewModels_DoNotDependOnMainWindowViewModel()
+    public void ServicesAndViewModels_DoNotDependOnShellExceptNamedConsumers()
     {
         var violations = new List<string>();
         foreach (var (relative, syntaxRoot) in Sources(SourceFolders))

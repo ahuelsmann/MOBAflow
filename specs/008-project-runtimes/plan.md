@@ -72,7 +72,7 @@ Each slice is one reviewable PR on its own branch from `main`; this branch carri
 
 1. **Solution session (no behavior change)**: move solution ownership, selection, dirty state and auto-save from
    `MainWindowViewModel` into `SolutionSession`; inject it into host services and ViewModels; architecture test for
-   FR-001 with the WinUI page exemption list. Characterization tests for load, save, auto-save and selection first.
+   FR-001 with the named page, layout and shell-state exceptions in the architecture test. Characterization tests for load, save, auto-save and selection first.
 2. **Live definitions snapshot**: the runtime reads master data from a snapshot refreshed by
    `IConnectionRuntime.UpdateProjectAsync` after every saved change (synchronization rule in
    [research.md](research.md)); journey progress, running workflows and signal aspects are kept by id;
@@ -94,7 +94,11 @@ Each slice is one reviewable PR on its own branch from `main`; this branch carri
 - **Automated tests**: characterization of load/save/auto-save/selection (slice 1); runtime values kept across editor
   changes without cancelling workflows (slice 2); two projects with two fake Z21 endpoints, conflict, takeover and
   switch sequence (slice 3); MOBApi project routing and MOBAsmart selection (slice 4).
-- **Architecture tests**: no service or ViewModel depends on `MainWindowViewModel` (FR-001, SC-004).
+- **Architecture tests**: no dependency on `MainWindowViewModel` outside the existing named shell/composition,
+  page, layout and shell-state entries in `SolutionSessionArchitectureTests.AllowedDependents` (FR-001, SC-004).
+  RF-23 does not start RF-24: MonitorPageViewModel, EventManagerViewModel, WinUI page bindings and column-width
+  persistence remain for RF-24; the named Android shutdown lookup is also recorded there. Session extraction
+  does not claim these consumers are already independent of the shell.
 - **Builds and analyzers**: cross-platform, Windows and Android Release analyzer gates from full rebuilds per slice.
 - **Suites**: `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0` and the Windows suite.
 - **Manual checks** (need separate approval to start the apps): two layouts with two Z21, switch warning, MOBAsmart
