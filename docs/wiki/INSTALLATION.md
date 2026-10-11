@@ -69,12 +69,12 @@ as well. See the [project reference](../PROJECT-REFERENCE.md#mobapi-endpoints).
 
 ## First desktop start
 
-1. Open **Settings** in MOBAflow.
-2. Confirm the Z21 IP address and UDP port (`21105` by default).
-3. Create a solution or open the included sample solution.
-4. Select a project and connect to the Z21.
-5. Verify feedback and telemetry in **Overview** or **Monitor** before operating
-   trains.
+1. Create a solution or open the included sample solution.
+2. On the **Solution** page, assign a Z21 to each project with the **Z21 Finder**
+   or type its IP address and port (`21105` by default) in the project properties.
+   Each project is one layout with its own Z21; all projects run at the same time.
+3. Select a project and verify feedback and telemetry in **Overview** or
+   **Monitor** before operating trains.
 
 If MOBAsmart should synchronize with the desktop, keep the REST API auto-start
 setting enabled and confirm that the main-window status bar reports a healthy
@@ -85,10 +85,11 @@ API.
 1. Connect the phone to the same LAN as the Z21 and desktop PC.
 2. Grant notification permission when Android requests it; the foreground
    service uses the notification while a session is active.
-3. Wait for the Z21 status to become ON.
-4. Enable the **MOBAflow** switch. MOBAsmart discovers MOBApi on the LAN and
+3. Enable the **MOBAflow** switch. MOBAsmart discovers MOBApi on the LAN and
    synchronizes the current solution. It remembers the addresses it found and
    tries them first next time; tap the MOBAflow status to search again.
+4. Select the project with **Project** on the Counter tab. The phone connects to
+   that project's Z21; wait for the Z21 status to become ON.
 5. Android asks for camera permission only when you take photos for upload.
 
 See the [MOBAsmart guide](MOBASMART-USER-GUIDE.md) for the connection model and
@@ -131,7 +132,8 @@ are unavailable.
 
 ### Z21 cannot be reached
 
-- Verify the configured IP and that both devices share the same LAN.
+- Verify the project's Z21 IP address in MOBAflow and that both devices share the
+  same LAN.
 - Check the private-network firewall profile.
 - Confirm that another app has not left stale Z21 clients; restart the app and,
   if necessary, the command station.

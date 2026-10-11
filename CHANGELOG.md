@@ -11,6 +11,8 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
+- The global Z21 address and port in the app settings, MOBApi's runtime settings
+  and MOBAsmart's own Z21 search. Each project names its Z21.
 - Sign-in, pairing and credentials between MOBAflow, MOBAsmart and MOBApi, including
   the pairing QR code, the MOBAsmart Pairing tab, the HTTPS port with certificate
   pinning and the desktop host enrollment. MOBAflow targets a private household:
@@ -24,6 +26,13 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- One runtime and one Z21 per project: MOBAflow runs every project of a solution at
+  the same time, each on its own Z21; the selected project decides what the pages
+  show. The **Z21 Finder** on the Solution page assigns found Z21 to projects.
+- Safe switch: before a connected project runtime is discarded, its known
+  locomotives are set to speed 0, and MOBAflow asks **Stop all trains?** first.
+- MOBAsmart project picker: the phone controls one project and connects to its Z21;
+  MOBApi routes snapshots and commands by project.
 - Event Manager for visually editing ordered journey feedback sequences.
 - Feedback-sequence progress persistence and MOBApi endpoints for mobile/runtime
   synchronization.
