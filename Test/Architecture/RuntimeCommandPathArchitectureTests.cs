@@ -50,6 +50,24 @@ internal sealed class RuntimeCommandPathArchitectureTests
             + "Violations: " + string.Join("; ", violations));
     }
 
+    [TestCase("MauiViewModel", 3)]
+    [TestCase("TrainControlViewModel", 1)]
+    public void MobileHost_InjectsTheRegisteredCommandGateway(string viewModelType, int gatewayArgument)
+    {
+        var path = Path.Combine(FindRepositoryRoot(), "MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs");
+        var root = CSharpSyntaxTree.ParseText(File.ReadAllText(path)).GetRoot();
+        var constructor = root.DescendantNodes().OfType<ObjectCreationExpressionSyntax>()
+            .Single(creation => TypeName(creation.Type) == viewModelType);
+        var argument = constructor.ArgumentList!.Arguments[gatewayArgument].Expression;
+        var resolvesGateway = argument.DescendantNodesAndSelf().OfType<GenericNameSyntax>()
+            .Any(name => name.Identifier.ValueText == "GetRequiredService"
+                && name.TypeArgumentList.Arguments.Count == 1
+                && TypeName(name.TypeArgumentList.Arguments[0]) == "IRuntimeCommandGateway");
+
+        Assert.That(resolvesGateway, Is.True,
+            "The mobile host must inject IRuntimeCommandGateway so operator commands pass through the recording decorator.");
+    }
+
     [Test]
     public void ViewModels_DoNotCreateRuntimeCommandGateways()
     {

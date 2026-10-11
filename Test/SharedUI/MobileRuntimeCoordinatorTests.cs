@@ -3,6 +3,8 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Interface;
+using Moba.Backend.Service.Recording;
+using Moba.Common.Recording;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -74,6 +76,38 @@ internal sealed class MobileRuntimeCoordinatorTests
 
         runtime.VerifyNoOtherCalls();
         remote.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task RecordedAllFunctionsOff_WithRemoteSession_RecordsOneIntentAndRoutesAll32Functions()
+    {
+        var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
+        var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
+        remote.Setup(value => value.SetLocomotiveFunctionAsync(7, It.IsAny<int>(), false, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
+        coordinator.SetMobaflowSessionActive(true);
+        var session = new RecordingSessionService(TimeProvider.System);
+        await using var sessionLifetime = session.ConfigureAwait(false);
+        session.Start(new RecordingSessionStartRequest("Mobile all off", "1.0"));
+        var gateway = new RecordingRuntimeCommandGateway(coordinator, session);
+
+        await gateway.SetAllLocomotiveFunctionsOffAsync(7).ConfigureAwait(false);
+        var entries = (await session.StopAsync().ConfigureAwait(false)).Artifact!.Entries
+            .Where(entry => entry.Source == "runtime-command-gateway").ToArray();
+        Assert.That(entries, Has.Length.EqualTo(2));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(entries[0].TypeKey, Is.EqualTo("command.locomotive-functions-off.request"));
+            Assert.That(entries[0].Payload.GetProperty("address").GetInt32(), Is.EqualTo(7));
+            Assert.That(entries[1].TypeKey, Is.EqualTo("command.locomotive-functions-off.result"));
+        }
+        for (var index = 0; index < 32; index++)
+        {
+            remote.Verify(value => value.SetLocomotiveFunctionAsync(7, index, false, It.IsAny<CancellationToken>()), Times.Once);
+        }
+        runtime.VerifyNoOtherCalls();
     }
 
     [Test]

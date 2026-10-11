@@ -10,6 +10,7 @@ internal static class CoreRecordingPayloadValidators
     private const string OutcomeProperty = "outcome";
     private const string JourneyIdProperty = "journeyId";
     private const string InPortProperty = "inPort";
+    private const string AddressProperty = "address";
 
     public static IReadOnlyList<IRecordingPayloadValidator> Create() =>
     [
@@ -77,6 +78,7 @@ internal static class CoreRecordingPayloadValidators
             ("elapsedTicks", IsNullableNonNegativeInt64),
             ("result", IsNullableWorkflowResult)),
         Schema("command.track-power.request", ("isOn", IsBoolean)),
+        Schema("command.fail-safe-acknowledge.request"),
         Schema("command.simulate-feedback.request", (InPortProperty, IsPositiveInt32)),
         Schema("command.journey-reset.request", (JourneyIdProperty, IsGuid)),
         Schema("command.inport-counters-reset.request"),
@@ -85,14 +87,16 @@ internal static class CoreRecordingPayloadValidators
         Schema("command.signal-aspect.request", ("signalId", IsGuid), ("aspect", IsBoundedString)),
         Schema(
             "command.locomotive-drive.request",
-            ("address", IsPositiveInt32),
+            (AddressProperty, IsPositiveInt32),
             ("speed", IsNonNegativeInt32),
             ("forward", IsBoolean)),
         Schema(
             "command.locomotive-function.request",
-            ("address", IsPositiveInt32),
+            (AddressProperty, IsPositiveInt32),
             ("functionIndex", IsNonNegativeInt32),
             ("isOn", IsBoolean)),
+        Schema("command.locomotive-functions-off.request", (AddressProperty, IsPositiveInt32)),
+        DisplaySchema("command.locomotive-info.request", (AddressProperty, IsPositiveInt32)),
         Schema(
             "command.turnout.request",
             ("decoderAddress", IsPositiveInt32),
@@ -101,6 +105,7 @@ internal static class CoreRecordingPayloadValidators
             ("queue", IsBoolean)),
         ..CommandOutcomeSchemas(
             "command.track-power",
+            "command.fail-safe-acknowledge",
             "command.simulate-feedback",
             "command.journey-reset",
             "command.inport-counters-reset",
@@ -109,6 +114,8 @@ internal static class CoreRecordingPayloadValidators
             "command.signal-aspect",
             "command.locomotive-drive",
             "command.locomotive-function",
+            "command.locomotive-functions-off",
+            "command.locomotive-info",
             "command.turnout")
     ];
 
