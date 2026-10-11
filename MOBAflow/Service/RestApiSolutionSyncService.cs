@@ -133,6 +133,8 @@ public sealed class RestApiSolutionSyncService : IDisposable
         if (e.PropertyName == nameof(ISolutionSession.SelectedProject))
         {
             QueuePush();
+            // MOBAsmart connects to the Z21 of the selected project.
+            QueueRuntimeSettingsPush();
         }
     }
     private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e)

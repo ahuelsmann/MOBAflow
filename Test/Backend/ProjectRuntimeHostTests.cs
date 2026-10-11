@@ -155,6 +155,62 @@ internal sealed class ProjectRuntimeHostTests
     }
 
     [Test]
+    public async Task StoppingTrains_SkipsInvalidAddressesAndContinuesAfterAFailure()
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { Name = "Invalid", DigitalAddress = 10000 });
+        station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
+        station.Locomotives.Add(new Locomotive { Name = "V 60", DigitalAddress = 5 });
+        await _host.LoadAsync([station]).ConfigureAwait(false);
+        _createdZ21s[0].Raise(z21 => z21.OnConnectedChanged += null, true);
+        _createdZ21s[0]
+            .Setup(z21 => z21.SetLocoDriveAsync(3, 0, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Expected test failure"));
+
+        await _host.LoadAsync([]).ConfigureAwait(false);
+
+        _createdZ21s[0].Verify(z21 => z21.SetLocoDriveAsync(5, 0, true, It.IsAny<CancellationToken>()), Times.Once);
+        _createdZ21s[0].Verify(z21 => z21.SetLocoDriveAsync(10000, It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ManualDisconnect_FirstSetsTheLocomotivesToSpeedZero()
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
+        await _host.LoadAsync([station]).ConfigureAwait(false);
+        _createdZ21s[0].Raise(z21 => z21.OnConnectedChanged += null, true);
+        var calls = new List<string>();
+        _createdZ21s[0]
+            .Setup(z21 => z21.SetLocoDriveAsync(3, 0, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("stop"))
+            .Returns(Task.CompletedTask);
+        _createdZ21s[0].Setup(z21 => z21.DisconnectAsync()).Callback(() => calls.Add("disconnect")).Returns(Task.CompletedTask);
+
+        await _host.Get(station.Id)!.Runtime.DisconnectAsync().ConfigureAwait(false);
+
+        Assert.That(calls, Is.EqualTo(StopThenDisconnect));
+    }
+
+    [Test]
+    public async Task CancelledShutdown_StillDiscardsTheRuntime()
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
+        await _host.LoadAsync([station]).ConfigureAwait(false);
+        _createdZ21s[0].Raise(z21 => z21.OnConnectedChanged += null, true);
+        _createdZ21s[0]
+            .Setup(z21 => z21.SetLocoDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns<int, int, bool, CancellationToken>((_, _, _, token) => Task.Delay(Timeout.Infinite, token));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        Assert.CatchAsync<OperationCanceledException>(() => _host.LoadAsync([], timeout.Token));
+
+        Assert.That(_host.Get(station.Id), Is.Null);
+        _createdZ21s[0].Verify(z21 => z21.Dispose(), Times.Never, "An open connection stays for a takeover until it is unused.");
+    }
+
+    [Test]
     public async Task Selecting_ForwardsOnlyTheSelectedRuntimeEventsToTheApplicationBus()
     {
         var station = Project("Station", "192.168.0.111");
@@ -245,6 +301,8 @@ internal sealed class ProjectRuntimeHostTests
 
         Assert.That(_host.Selected?.ProjectId, Is.EqualTo(station.Id));
     }
+
+    private static readonly string[] StopThenDisconnect = ["stop", "disconnect"];
 
     private ulong Count(Project project, uint inPort) =>
         _host.Get(project.Id)!.Runtime.Current.InPortCounters.Single(counter => counter.InPort == inPort).Count;
