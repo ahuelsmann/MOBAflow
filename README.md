@@ -47,7 +47,7 @@ navigation are available for testing and may change.
 | Build a track plan | Import from AnyRail or arrange Piko A track pieces with snapping, topology validation, Undo/Redo and SVG export |
 | Operate a signal box | Work with signals, switches and routes, including Viessmann multiplex signals |
 | Add sound | Play WAV effects and generate local announcements with Piper TTS or Windows Speech |
-| Monitor your layout | Inspect Z21 traffic, feedback, track power and live telemetry |
+| Monitor your layout | Inspect Z21 traffic, feedback, track power and live telemetry; record sessions and inspect isolated replay |
 | Explore timetable operation | Test dated services, delays, conflict explanations and dispatcher decisions in the preview Timetable page |
 | Experiment with displays | Design 5×5 matrix images and test the evolving ESP32-S3 display integration |
 
@@ -58,12 +58,19 @@ and checks the event rules of active journeys. When a configured count matches,
 it runs the assigned workflow—for example, playing a station announcement,
 setting a signal aspect or advancing the journey to its next stop.
 
+InPort counts are saved locally and restored after an app restart. Restarting
+the app or activating a journey does not reset them. Check the current count
+before configuring an event; setting a count manually does not trigger a workflow.
+
 Workflows are ordered action lists with optional delays. The editor provides
 validation, a dry-run mode and execution traces to help you understand each run.
 You control how a journey continues: a workflow at its final stop can point
 back to the first stop, while resetting feedback counters or adjusting event
 counts during an active journey lets you prepare the next cycle. This makes
 repeated journeys part of your event and workflow setup.
+
+Advancing past the last stop does not automatically wrap to the first stop.
+To return there, configure a workflow action that selects that stop explicitly.
 
 ## The apps
 
