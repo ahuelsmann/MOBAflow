@@ -790,6 +790,8 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         var appSettings = settings ?? new AppSettings();
         var settingsService = CreateSettingsServiceMock().Object;
+        var endpointLocator = TestEndpointLocators.Create(appSettings, settingsService, restDiscoveryService);
+        var healthService = photoUploadService ?? new Mock<IPhotoUploadService>().Object;
         var viewModel = new MauiViewModel(
             runtimeMock.Object,
             runtimeMock.Object,
@@ -798,8 +800,9 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             uiDispatcherMock.Object,
             appSettings,
             settingsService,
-            TestEndpointLocators.Create(appSettings, settingsService, restDiscoveryService),
-            photoUploadService ?? new Mock<IPhotoUploadService>().Object,
+            endpointLocator,
+            TestHubSessions.Create(appSettings, endpointLocator, healthService, runtimeHubRemoteClient),
+            healthService,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,
             NullLogger<MauiViewModel>.Instance,

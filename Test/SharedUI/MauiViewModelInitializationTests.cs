@@ -218,6 +218,10 @@ internal sealed class MauiViewModelInitializationTests
         IRuntimeCommandGateway? runtimeCommandGateway = null,
         IRuntimeHubRemoteClient? runtimeHubRemoteClient = null)
     {
+        var endpointLocator = TestEndpointLocators.Create(
+            dependencies.Settings,
+            dependencies.SettingsServiceMock.Object,
+            dependencies.RestDiscoveryMock.Object);
         var viewModel = new MauiViewModel(
             dependencies.MobaRuntimeMock.Object,
             dependencies.MobaRuntimeMock.Object,
@@ -226,16 +230,18 @@ internal sealed class MauiViewModelInitializationTests
             dependencies.UiDispatcherMock.Object,
             dependencies.Settings,
             dependencies.SettingsServiceMock.Object,
-            TestEndpointLocators.Create(
+            endpointLocator,
+            TestHubSessions.Create(
                 dependencies.Settings,
-                dependencies.SettingsServiceMock.Object,
-                dependencies.RestDiscoveryMock.Object),
+                endpointLocator,
+                dependencies.PhotoUploadMock.Object,
+                runtimeHubRemoteClient,
+                dependencies.RestApiClientRegistrationMock.Object),
             dependencies.PhotoUploadMock.Object,
             dependencies.PhotoCaptureMock.Object,
             dependencies.NetworkNotifierMock.Object,
             NullLogger<MauiViewModel>.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
-            dependencies.RestApiClientRegistrationMock.Object,
             runtimeHubRemoteClient: runtimeHubRemoteClient);
 
         _createdViewModels.Add(viewModel);

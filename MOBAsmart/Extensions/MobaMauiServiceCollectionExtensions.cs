@@ -96,6 +96,14 @@ public static class MobaMauiServiceCollectionExtensions
             Path.Combine(FileSystem.AppDataDirectory, "mobile-cache"),
             sp.GetRequiredService<ILogger<MobileSolutionStore>>()));
         services.AddSingletonWithInterface<RuntimeHubRemoteClient, IRuntimeHubRemoteClient>();
+        services.AddSingleton(sp => new MobaflowHubSession(
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<MobaflowEndpointLocator>(),
+            sp.GetRequiredService<IPhotoUploadService>(),
+            sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<ILogger<MobaflowHubSession>>(),
+            sp.GetRequiredService<IRuntimeHubRemoteClient>(),
+            sp.GetRequiredService<IRestApiClientRegistration>()));
         services.AddSingleton<RemoteRuntimeBridge>();
         services.AddSingleton<MobileRuntimeCoordinator>(sp => new MobileRuntimeCoordinator(
             sp.GetRequiredService<IMobaRuntime>(),
@@ -136,12 +144,12 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<MobaflowEndpointLocator>(),
+            sp.GetRequiredService<MobaflowHubSession>(),
             sp.GetRequiredService<IPhotoUploadService>(),
             sp.GetRequiredService<IPhotoCaptureService>(),
             sp.GetRequiredService<INetworkProfileChangeNotifier>(),
             sp.GetRequiredService<ILogger<MauiViewModel>>(),
             sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IRestApiClientRegistration>(),
             sp.GetRequiredService<ISolutionRemoteLoader>(),
             sp.GetRequiredService<IMobileSolutionStore>(),
             sp.GetRequiredService<IRuntimeHubRemoteClient>(),
