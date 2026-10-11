@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-11
 
-**Status**: Draft requirements and technical design; RF-23 integration is satisfied. Tasks and consistency analysis remain before implementation.
+**Status**: Requirements/design integrated through #233/#241; draft task backlog and consistency analysis exist. Backlog review/integration remain before implementation.
 
 **Spec Kit**: Required
 
@@ -35,8 +35,9 @@ before the persistence slice; a version bump requires a concrete format reason. 
 Technical design now uses integrated main `39312ca93413eef13fa6d7bb8360d5bf5fdda4ae`: #211 and #207 were verified merged
 on 2026-10-11. Their RF-23 project-runtime construction, counters and disposal seams satisfy this feature's integration
 gate; this is not a claim that every RF-23 task or the testbench is complete. The [technical plan](plan.md) and
-[readiness tracker](../../plans/issue-35-automation-testbench.md) record the remaining design-review, task and consistency
-analysis gates. RF-24/#219 and #141 are not additional hard prerequisites for #35.
+[readiness tracker](../../plans/issue-35-automation-testbench.md) record the remaining design/backlog review and integration
+gates. The [tasks](tasks.md) map requirements to implementation/validation; consistency analysis is reported in the backlog PR.
+Design PR #241 is merged; RF-24/#219 and #141 are not additional hard prerequisites for #35.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -296,8 +297,8 @@ use or generate the maintainer's example solution.
 
 ## Assumptions
 
-- Requirements and technical design are drafts. RF-23 slice 3 is integrated and planning artifacts now exist;
-  design review, implementation tasks and consistency analysis remain before product implementation.
+- Requirements/design are integrated through #233/#241. RF-23 slice 3 is integrated; tasks are generated and consistency
+  analysis is complete. Backlog review/integration and slice validation remain before product implementation.
 - The first operator surface is the Windows desktop page described in #35 and its existing preparation plan.
   Android/remote testbench execution requires a separate scope decision.
 - Current production workflows are ordered action lists. Historical graph/retry wording in #35 does not authorize

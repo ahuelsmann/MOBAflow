@@ -5,7 +5,7 @@
 
 ## Current planning change
 
-Work in the dedicated task worktree on codex/issue-35-technical-plan. Read AGENTS.md/applicable guidance with required
+Work in the dedicated task worktree for the relevant planning slice (currently codex/issue-35-tasks-analysis). Read AGENTS.md/applicable guidance with required
 pre-read secrets scans. Use global.json for SDK selection. No app launch, hardware action or example solution is required.
 
 For this documentation-only change: scan changed files, review diff/relative links and run the repository line-ending and
@@ -79,6 +79,7 @@ No hardware power/movement, flashing, Android deployment or public release is pa
 
 ## Next phase
 
-Review [plan.md](plan.md), [data-model.md](data-model.md) and [contracts](contracts/isolated-runtime.md).
-Generate dependency-ordered tasks, run cross-artifact consistency analysis, then implement the narrowly ordered slices.
+Review [plan.md](plan.md), [data-model.md](data-model.md), [contracts](contracts/isolated-runtime.md) and [tasks.md](tasks.md).
+Design #241 is merged. Task generation and read-only consistency analysis are complete as draft backlog work; integrate
+the reviewed backlog before executing the narrow slices. No implementation/acceptance task is checked off by this documentation step.
 CI/Sonar and future manual acceptance remain separate gates; this guide never claims them from document checks.
