@@ -7,8 +7,75 @@ using Moba.Common.Validation;
 /// Unit tests for JsonValidationService and JsonValidationResult.
 /// </summary>
 [TestFixture]
+[Category("Unit")]
 internal class JsonValidationServiceTests
 {
+    [TestCase("[]")]
+    [TestCase("null")]
+    [TestCase("true")]
+    [TestCase("false")]
+    [TestCase("123")]
+    [TestCase("\"not an object\"")]
+    public void Validate_NonObjectRoot_ReturnsHelpfulFailure(string json)
+    {
+        var result = JsonValidationService.Validate(json);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("JSON root must be an object."));
+        }
+    }
+
+    [TestCase("\"1\"")]
+    [TestCase("null")]
+    [TestCase("true")]
+    [TestCase("{}")]
+    [TestCase("[]")]
+    [TestCase("1.5")]
+    [TestCase("2147483648")]
+    [TestCase("-2147483649")]
+    public void Validate_NonIntegerSchemaVersion_ReturnsHelpfulFailure(string schemaVersion)
+    {
+        var json = "{\"name\":\"Test\",\"projects\":[],\"schemaVersion\":" + schemaVersion + "}";
+
+        var result = JsonValidationService.Validate(json, 1);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("Schema version must be a number."));
+        }
+    }
+
+    [Test]
+    public void Validate_NamedProjects_ReturnsSuccess()
+    {
+        const string json = """{"name":"Test","schemaVersion":1,"projects":[{"name":"Main layout"},{"name":"Branch line"}]}""";
+
+        var result = JsonValidationService.Validate(json, 1);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.ErrorMessage, Is.Null);
+        }
+    }
+
+    [Test]
+    public void Validate_ProjectMissingNameAfterValidProjects_IdentifiesZeroBasedIndex()
+    {
+        const string json = """{"name":"Test","projects":[{"name":"First"},{"name":"Second"},{"locomotives":[]}]}""";
+
+        var result = JsonValidationService.Validate(json);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("Project at index 2 is missing 'name' property."));
+        }
+    }
+
     [Test]
     public void Validate_EmptyString_ReturnsFailure()
     {
