@@ -7,8 +7,25 @@ using Moba.Common.Extension;
 /// Tests for TaskExtensions.SafeFireAndForget (fire-and-forget with optional exception callback).
 /// </summary>
 [TestFixture]
+[Category("Unit")]
 internal class TaskExtensionsTests
 {
+    [Test]
+    public void Observe_NullTask_ThrowsArgumentNullExceptionWithParameterName()
+    {
+        var exception = Assert.Throws<ArgumentNullException>(() => TaskExtensions.Observe(null!));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("task"));
+    }
+
+    [Test]
+    public void SafeFireAndForget_NullTask_ThrowsArgumentNullExceptionWithParameterName()
+    {
+        var exception = Assert.Throws<ArgumentNullException>(() => TaskExtensions.SafeFireAndForget(null!));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("task"));
+    }
+
     [Test]
     public void SafeFireAndForget_CompletedTask_DoesNotThrow()
     {
@@ -17,16 +34,16 @@ internal class TaskExtensionsTests
     }
 
     [Test]
-    public void SafeFireAndForget_FaultedTask_InvokesOnException()
+    public async Task SafeFireAndForget_FaultedTask_InvokesOnException()
     {
         var ex = new InvalidOperationException("test");
         var t = Task.FromException(ex);
-        Exception? captured = null;
-        t.SafeFireAndForget(e => captured = e);
+        var completion = new TaskCompletionSource<Exception>(TaskCreationOptions.RunContinuationsAsynchronously);
+        t.SafeFireAndForget(e => completion.TrySetResult(e));
 
-        Thread.Sleep(100);
-        Assert.That(captured, Is.Not.Null);
-        Assert.That(captured!.Message, Is.EqualTo("test"));
+        var captured = await completion.Task.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+
+        Assert.That(captured, Is.SameAs(ex));
     }
 
     [Test]
@@ -34,12 +51,10 @@ internal class TaskExtensionsTests
     {
         var t = Task.FromException(new InvalidOperationException("test"));
         Assert.DoesNotThrow(() => t.SafeFireAndForget());
-
-        Thread.Sleep(100);
     }
 
     [Test]
-    public void SafeFireAndForget_SuccessfulAsyncTask_CompletesWithoutCallback()
+    public async Task SafeFireAndForget_SuccessfulAsyncTask_CompletesWithoutCallback()
     {
         var completed = false;
         var t = Task.Run(async () =>
@@ -49,7 +64,7 @@ internal class TaskExtensionsTests
         });
         t.SafeFireAndForget();
 
-        Thread.Sleep(100);
+        await t.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
         Assert.That(completed, Is.True);
     }
 }
