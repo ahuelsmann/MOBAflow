@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 public sealed partial class InPortCounterService
 {
-    private readonly IInPortCounterStore? _store;
+    private IInPortCounterStore? _store;
     private readonly Queue<(FeedbackResult Feedback, DateTimeOffset ReceivedAt, long InputRevision)> _feedbackBeforeLoad = new();
     private Task<bool>? _loadTask;
     private bool _initialized;
@@ -112,6 +112,7 @@ public sealed partial class InPortCounterService
     private void EnsureInitialized()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_switchingProject) throw new InvalidOperationException("InPort counters are switching projects.");
         if (!_initialized)
             throw new InvalidOperationException(_loadFailed ? _persistenceError : "InPort counters have not been loaded yet.");
     }
@@ -122,7 +123,7 @@ public sealed partial class InPortCounterService
         {
             if (_disposed) return;
             ReconcileInputsLocked();
-            if (_initialized) QueueSaveLocked();
+            if (_initialized && !_switchingProject) QueueSaveLocked();
         }
 
         PublishSnapshotChanged();

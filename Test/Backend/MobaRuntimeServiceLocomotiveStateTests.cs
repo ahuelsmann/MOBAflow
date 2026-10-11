@@ -108,6 +108,61 @@ internal sealed class MobaRuntimeServiceLocomotiveStateTests
         }
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task ProjectHandoff_LogsOffWithoutStoppingLocomotives(bool connected)
+    {
+        var z21 = CreateZ21Mock();
+        using var runtime = CreateRuntime(z21.Object);
+        await runtime.ActivateProjectAsync(new Project { Locomotives = [new Locomotive { DigitalAddress = 3 }] }).ConfigureAwait(false);
+        if (connected) ConfirmConnection(z21);
+        await runtime.SetLocomotiveDriveAsync(3, 40, false).ConfigureAwait(false);
+        z21.Invocations.Clear();
+
+        await runtime.DisconnectForProjectSwitchAsync().ConfigureAwait(false);
+
+        z21.Verify(value => value.DisconnectAsync(), Times.Once);
+        z21.Verify(value => value.SetLocoDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(runtime.Current.IsConnected, Is.False);
+    }
+
+    [Test]
+    public async Task ProjectHandoff_PropagatesLogoffFailure()
+    {
+        var z21 = CreateZ21Mock();
+        using var runtime = CreateRuntime(z21.Object);
+        z21.Setup(value => value.DisconnectAsync()).ThrowsAsync(new IOException("Logoff failed"));
+
+        await Assert.ThrowsAsync<IOException>(() => runtime.DisconnectForProjectSwitchAsync()).ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task NewProject_DropsOldLocomotiveAddressesAndCommandGracePeriods()
+    {
+        var z21 = CreateZ21Mock();
+        using var runtime = CreateRuntime(z21.Object);
+        await runtime.ActivateProjectAsync(new Project()).ConfigureAwait(false);
+        ConfirmConnection(z21);
+        await runtime.SetLocomotiveDriveAsync(3, 40, false).ConfigureAwait(false);
+        await runtime.SetLocomotiveDriveAsync(17, 55, true).ConfigureAwait(false);
+        await runtime.SetLocomotiveFunctionAsync(3, 1, true).ConfigureAwait(false);
+        await runtime.DisconnectForProjectSwitchAsync().ConfigureAwait(false);
+        await runtime.ActivateProjectAsync(new Project { Locomotives = [new Locomotive { DigitalAddress = 3 }] }).ConfigureAwait(false);
+        Assert.That(runtime.Current.LocomotiveStates, Is.Empty);
+        ConfirmConnection(z21);
+        ReportLocomotiveInfo(z21, new LocoInfo
+        {
+            Address = 3, Speed = 12, IsForward = true, Functions = 5
+        });
+        z21.Invocations.Clear();
+
+        await runtime.DisconnectAsync().ConfigureAwait(false);
+
+        z21.Verify(value => value.SetLocoDriveAsync(17, It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(runtime.Current.LocomotiveStates[3].Functions, Is.EqualTo(5U));
+    }
+
     [Test]
     public async Task Disconnect_WhenStoppingFails_KeepsTheConnectionForAnotherStopAttempt()
     {
@@ -126,6 +181,10 @@ internal sealed class MobaRuntimeServiceLocomotiveStateTests
 
     private static void ConfirmConnection(Mock<IZ21> z21) =>
         z21.Raise(value => value.OnConnectedChanged += null, true);
+
+    // IZ21 publishes Action<LocoInfo>, so the event has no asynchronous handlers to await.
+    private static void ReportLocomotiveInfo(Mock<IZ21> z21, LocoInfo info) =>
+        z21.Raise(value => value.OnLocoInfoChanged += null, info);
 
     private static Mock<IZ21> CreateZ21Mock()
     {

@@ -62,8 +62,9 @@ The Counter tab contains connection state and the lap-counter setup.
 The camera button requires a reachable MOBApi endpoint. The photo is stored by
 the desktop-side API, not only on the phone.
 
-Lap counts are saved on the phone and restored after an app restart; timing
-history starts again with new feedback. Use **Set** with a non-negative whole
+Lap counts are saved separately for each project on the phone. Switching projects
+or restarting the app restores that project's counts; timing history starts again
+with new feedback. Use **Set** with a non-negative whole
 number or **Reset** on a counter row to correct one input. These controls affect
 the phone's local counters, not the desktop's journey counters, even while the
 MOBAflow connection is ON.

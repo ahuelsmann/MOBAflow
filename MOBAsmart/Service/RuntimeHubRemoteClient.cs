@@ -127,11 +127,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
     public async Task SelectProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
-        if (projectId == _projectId)
-        {
-            return;
-        }
-
+        // Repeat registration for the same project too: its previous attempt may have failed.
         _projectId = projectId;
         await RegisterRemoteAsync(cancellationToken).ConfigureAwait(false);
         await TryFetchInitialSnapshotAsync(cancellationToken).ConfigureAwait(false);
