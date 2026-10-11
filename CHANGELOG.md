@@ -11,6 +11,8 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
+- The global Z21 address and port in the app settings, MOBApi's runtime settings
+  and MOBAsmart's own Z21 search. Each project names its Z21.
 - Sign-in, pairing and credentials between MOBAflow, MOBAsmart and MOBApi, including
   the pairing QR code, the MOBAsmart Pairing tab, the HTTPS port with certificate
   pinning and the desktop host enrollment. MOBAflow targets a private household:
