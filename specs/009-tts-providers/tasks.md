@@ -4,13 +4,15 @@
 
 **Spec Kit**: Required
 
+**Status**: Approved task list; no implementation task starts before #207 is merged (maintainer instruction, 2026-10-11).
+
 Input: [spec.md](spec.md), [plan.md](plan.md).
 
-Implementation starts after RF-23 slice 3 (#191) is merged. Each slice is one draft PR from its own worktree.
+Implementation starts only after [PR #207](https://github.com/ahuelsmann/MOBAflow/pull/207) (RF-23 runtime per project, tracked by #191) is merged. Verify the current GitHub merge state before T001. Spec, plan and task corrections are independent. Each slice is one draft PR from its own worktree.
 
 ## Slice 1 - Characterise current behavior
 
-- [ ] T001 Add characterization tests for announcements through the current engines: engine selection, voice, rate and volume forwarding, overlapping announcements, cancellation and failure handling
+- [ ] T001 Add characterization tests for announcements through the current engines: engine selection, voice, rate and volume forwarding, overlapping announcements, cancellation and failure handling; distinguish per-call factory resolution in `AnnouncementService` from the singleton used by the Settings test callback
 - [ ] T002 Run the portable and Windows test suites for validation; secrets scan and line endings
 - [ ] T003 Open the slice PR as draft; Sonar quality gate (SonarCloud) green with zero open issues before review
 
@@ -21,16 +23,16 @@ Implementation starts after RF-23 slice 3 (#191) is merged. Each slice is one dr
 - [ ] T006 Add a cancellable WAV player for the shared layer that stops audible playback on cancellation, with a regression test against the production player behavior
 - [ ] T007 Create `Speech.SystemSpeech` (net10.0-windows): move `SystemSpeechEngine`, synthesise to a WAV stream, report voices and rate/volume support
 - [ ] T008 Create `Speech.Piper` (net10.0-windows): move the Piper engine, `PiperPronunciationNormalizer` and `PcmWavePostProcessor`; return the WAV instead of playing it
-- [ ] T009 Switch `AnnouncementService`, `ActionExecutionContext` and the Backend DI to `ISpeechOutput`; register both providers in MOBAflow; MOBAsmart registers `NullSpeechOutput`
-- [ ] T010 Remove `System.Speech` from `Sound` (keep `System.Windows.Extensions` for `WindowsSoundPlayer`); remove `ISpeakerEngine`, `SpeakerEngineFactory`, `SpeechSpeakerEngineSelection`, `SpeakerEngineConfiguration` and the old speech settings fields with their tests and docs; set `ProviderId` to `piper` in `MOBAflow/appsettings.json`
-- [ ] T011 Tests for resolution, immediate switch, unknown ids, a fresh configuration, a settings file with only removed fields, failures and cancellation; run the Windows suite, MOBAflow FastDebug build and Android build for validation
+- [ ] T009 Switch `AnnouncementService`, `ActionExecutionContext`, the Settings test callback and the Backend DI to `ISpeechOutput`; register both providers in MOBAflow; MOBAsmart registers `NullSpeechOutput`; convert speech health/status callers that depend on removed contracts in the same cutover
+- [ ] T010 Replace existing local-provider Settings ViewModel properties and page bindings with `ProviderId` and the new option sections, preserving saving, local provider selection and test behavior; remove `System.Speech` from `Sound` (keep `System.Windows.Extensions` for `WindowsSoundPlayer`); remove `ISpeakerEngine`, `SpeakerEngineFactory`, `SpeechSpeakerEngineSelection`, `SpeakerEngineConfiguration` and the old speech settings fields with all their callers, bindings, tests and docs in this same slice; set `ProviderId` to `piper` in `MOBAflow/appsettings.json`
+- [ ] T011 Tests for resolution, immediate switch through both `AnnouncementService` and the Settings test command, local-provider settings persistence, unknown ids, a fresh configuration, a settings file with only removed fields, failures and cancellation; run the Windows suite, MOBAflow FastDebug build and Android build for validation; have the maintainer check changed Settings bindings in Light and Dark with launch approval
 - [ ] T012 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 3 - Audio cache
 
 - [ ] T013 Add `AudioCache`: hashed key over provider id, provider options fingerprint, voice, language, rate, volume and text; WAV files plus index; least-recently-used eviction at the size limit (default 500 MB); corrupt entries dropped
-- [ ] T014 Use the cache in `SpeechOutput` (hit plays without a provider call, miss stores the result, concurrent identical misses share one synthesis); expose size and clear
-- [ ] T015 Tests for hit, miss, key and provider-option changes, least-recently-used eviction, concurrent identical requests, corrupt files and clear; run suites for validation
+- [ ] T014 Use the cache in `SpeechOutput` (hit plays without a provider call, miss stores the result, concurrent identical misses share one synthesis); keep caller cancellation separate from the shared synthesis token, cancel/remove the shared work when its last waiter cancels, and cancel shared work on shutdown; cancelled callers neither play audio nor initiate fallback or deferred synthesis; expose size and clear service APIs (UI in T022/T023)
+- [ ] T015 Tests for hit, miss, key and provider-option changes, least-recently-used eviction, concurrent identical requests, corrupt files and clear; cover one waiter cancelling while another completes with one provider call, all waiters cancelling the provider, a new request after cancellation, shutdown during shared synthesis and no playback/fallback/deferred synthesis for cancelled callers; run suites for validation
 - [ ] T016 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 4 - Azure provider and fallback
@@ -38,13 +40,13 @@ Implementation starts after RF-23 slice 3 (#191) is merged. Each slice is one dr
 - [ ] T017 Create `Speech.Azure` (net10.0-windows): REST synthesis with RIFF PCM output, voice list, region from the app settings and key from the Windows credential store; use `11d1c821` as reference
 - [ ] T018 Add the fallback provider setting and the fallback path in `SpeechOutput`: first available local provider other than the failed one (configured fallback, Piper if configured, then System Speech), with a diagnostic
 - [ ] T019 Add `PendingSynthesisQueue`: merged by cache key, background retry with backoff, synthesis into the cache without playback, stop on shutdown
-- [ ] T020 Tests with a fake `HttpMessageHandler` and fake providers: unreachable cloud service, failing local provider (Piper selected and failing falls back to System Speech), deferred synthesis, no replay, cancellation, and that the key never reaches logs, diagnostics or cache file names; run suites for validation
+- [ ] T020 Tests with a fake `HttpMessageHandler` and fake providers: unreachable cloud service, failing local provider (Piper selected and failing falls back to System Speech), deferred synthesis, no replay, cancellation with fallback and the pending queue enabled (including one cancelled caller sharing synthesis with another), and that the key never reaches logs, diagnostics or cache file names; run suites for validation
 - [ ] T021 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 5 - Settings and diagnostics
 
-- [ ] T022 Settings ViewModel: provider list with capabilities, only supported options enabled, fallback provider, cache size display and "Clear cache" command, Azure key entry saved to the credential store
-- [ ] T023 Settings page in MOBAflow (English text, ThemeResources); speech health check and diagnostics show fallback and skipped announcements
+- [ ] T022 Extend the local-provider Settings ViewModel controls delivered in T010: provider list with capabilities, only supported options enabled, Azure and fallback configuration, cache size display and "Clear cache" command, Azure key entry saved to the credential store
+- [ ] T023 Extend the Settings page bindings delivered in T010 with the T022 controls (English text, ThemeResources); extend the converted speech health check and diagnostics to show fallback and skipped announcements
 - [ ] T024 ViewModel tests; MOBAflow FastDebug build; Settings page checked in Light and Dark by the maintainer (launch approval) for validation
 - [ ] T025 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
