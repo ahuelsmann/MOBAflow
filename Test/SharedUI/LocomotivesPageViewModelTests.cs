@@ -43,12 +43,13 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
         _settings = new AppSettings();
+        _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _settings.Layout.LocomotivesPage.IsListExpanded = false;
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(value => value.Detect(It.IsAny<Project>())).Returns(new DigitalAddressConflictReport([], []));
         var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: _session);
         _explorer = new Mock<Action<string>>();
-        _page = new LocomotivesPageViewModel(_session, _io.Object, _settings, _persistence.Object,
+        _page = new LocomotivesPageViewModel(_session, _io.Object, _persistence.Object,
             new LayoutColumnWidthsViewModel(), management, NullLogger<LocomotivesPageViewModel>.Instance, _explorer.Object);
     }
 

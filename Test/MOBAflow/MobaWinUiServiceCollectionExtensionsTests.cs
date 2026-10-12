@@ -168,6 +168,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(shell.LocomotivesPage, Is.SameAs(locomotives));
+            Assert.That(provider.GetRequiredService<ISettingsService>().GetSettings(), Is.SameAs(shell.SettingsPage.Settings));
             Assert.That(provider.GetRequiredService<LocomotivesPageViewModel>(), Is.SameAs(locomotives));
             Assert.That(locomotives.Management, Is.SameAs(provider.GetRequiredService<LocomotiveManagementViewModel>()));
             Assert.That(locomotives.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));

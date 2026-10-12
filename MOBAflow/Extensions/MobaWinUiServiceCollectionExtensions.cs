@@ -301,7 +301,6 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(sp => new LocomotivesPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<IIoService>(),
-            sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<LocomotiveManagementViewModel>(),

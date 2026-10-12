@@ -30,7 +30,6 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     public LocomotivesPageViewModel(
         ISolutionSession session,
         IIoService ioService,
-        AppSettings settings,
         ISettingsService settingsService,
         LayoutColumnWidthsViewModel layoutColumnWidths,
         LocomotiveManagementViewModel management,
@@ -39,7 +38,6 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(ioService);
-        ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(management);
@@ -47,14 +45,14 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
         _ioService = ioService;
-        _settings = settings;
+        _settings = settingsService.GetSettings();
         _settingsService = settingsService;
         _logger = logger;
         _showPhotoInExplorer = showPhotoInExplorer;
         LayoutColumnWidths = layoutColumnWidths;
         Management = management;
-        _isLocomotivesListExpanded = settings.Layout.LocomotivesPage.IsListExpanded;
-        _isLocomotivesPropertiesExpanded = settings.Layout.LocomotivesPage.IsPropertiesExpanded;
+        _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage.IsListExpanded;
+        _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage.IsPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
         _session.SolutionReplacing += OnSolutionReplacing;
         ObserveProject(_session.SelectedProject);
@@ -209,63 +207,59 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         GC.SuppressFinalize(this);
     }
 
-    private void AttachLocomotivePhotoCommand(LocomotiveViewModel? locoVm)
+    private void AttachLocomotivePhotoCommand(LocomotiveViewModel? locomotive)
     {
-        if (locoVm == null) return;
-        if (locoVm.BrowsePhotoCommand != null) return;
+        if (locomotive is null || locomotive.BrowsePhotoCommand is not null) return;
+        locomotive.BrowsePhotoCommand = new AsyncRelayCommand(() => BrowseLocomotivePhotoAsync(locomotive));
+        locomotive.DeletePhotoCommand = new RelayCommand(() => DeleteLocomotivePhoto(locomotive));
+        locomotive.ShowInExplorerCommand = new RelayCommand(() => ShowLocomotivePhotoInExplorer(locomotive));
+    }
 
-        locoVm.BrowsePhotoCommand = new AsyncRelayCommand(async () =>
+    private async Task BrowseLocomotivePhotoAsync(LocomotiveViewModel locomotive)
+    {
+        var solution = _session.Solution;
+        var project = SelectedProject?.Model;
+        var photoPath = await _ioService.BrowseForPhotoAsync().ConfigureAwait(true);
+        if (string.IsNullOrEmpty(photoPath)) return;
+        if (_disposed || project is null || !ReferenceEquals(_session.Solution, solution) || !solution.Projects.Contains(project)) return;
+
+        var saved = await _ioService.SavePhotoAsync(photoPath, "locomotives", locomotive.Model.Id).ConfigureAwait(true);
+        if (_disposed || saved is null || !ReferenceEquals(_session.Solution, solution) || !solution.Projects.Contains(project)) return;
+
+        if (locomotive.PhotoPath == saved)
+            locomotive.InvalidatePhotoBinding();
+        else
+            locomotive.PhotoPath = saved;
+
+        SaveChanges("Save vehicle photo");
+        LogPhotoSaved(_logger, locomotive.Name);
+    }
+
+    private void DeleteLocomotivePhoto(LocomotiveViewModel locomotive)
+    {
+        locomotive.PhotoPath = null;
+        LogPhotoDeleted(_logger, locomotive.Name);
+    }
+
+    private void ShowLocomotivePhotoInExplorer(LocomotiveViewModel locomotive)
+    {
+        if (string.IsNullOrWhiteSpace(locomotive.PhotoPath)) return;
+        var fullPath = _ioService.GetPhotoFullPath(locomotive.PhotoPath);
+        if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
         {
-            var solution = _session.Solution;
-            var project = SelectedProject?.Model;
-            var photoPath = await _ioService.BrowseForPhotoAsync().ConfigureAwait(true);
-            if (string.IsNullOrEmpty(photoPath)) return;
-            if (_disposed || project is null || !ReferenceEquals(_session.Solution, solution) || !solution.Projects.Contains(project)) return;
+            LogPhotoMissing(_logger, fullPath);
+            return;
+        }
 
-            var saved = await _ioService.SavePhotoAsync(photoPath, "locomotives", locoVm.Model.Id).ConfigureAwait(true);
-            if (!_disposed && saved != null && ReferenceEquals(_session.Solution, solution) && solution.Projects.Contains(project))
-            {
-                if (locoVm.PhotoPath == saved)
-                {
-                    locoVm.InvalidatePhotoBinding();
-                }
-                else
-                {
-                    locoVm.PhotoPath = saved;
-                }
-
-                SaveChanges("Save vehicle photo");
-                LogPhotoSaved(_logger, locoVm.Name);
-            }
-        });
-
-        locoVm.DeletePhotoCommand = new RelayCommand(() =>
+        try
         {
-            locoVm.PhotoPath = null;
-            LogPhotoDeleted(_logger, locoVm.Name);
-        });
-
-        locoVm.ShowInExplorerCommand = new RelayCommand(() =>
+            _showPhotoInExplorer(fullPath);
+            LogExplorerOpened(_logger, fullPath);
+        }
+        catch (Exception ex)
         {
-            if (string.IsNullOrWhiteSpace(locoVm.PhotoPath)) return;
-
-            var fullPath = _ioService.GetPhotoFullPath(locoVm.PhotoPath);
-            if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
-            {
-                LogPhotoMissing(_logger, fullPath);
-                return;
-            }
-
-            try
-            {
-                _showPhotoInExplorer(fullPath);
-                LogExplorerOpened(_logger, fullPath);
-            }
-            catch (Exception ex)
-            {
-                LogExplorerFailed(_logger, fullPath, ex);
-            }
-        });
+            LogExplorerFailed(_logger, fullPath, ex);
+        }
     }
 
     #region Locomotive Commands

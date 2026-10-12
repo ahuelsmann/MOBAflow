@@ -21,9 +21,11 @@ internal sealed partial class TestLocomotivePages : IDisposable
         detector.Setup(service => service.Detect(It.IsAny<Moba.Domain.Project>()))
             .Returns(new DigitalAddressConflictReport([], []));
         var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: session);
+        var settings = new AppSettings();
         var persistence = new Mock<ISettingsService>();
+        persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-        var page = new LocomotivesPageViewModel(session, ioService ?? new NullIoService(), new AppSettings(),
+        var page = new LocomotivesPageViewModel(session, ioService ?? new NullIoService(),
             persistence.Object, new LayoutColumnWidthsViewModel(), management,
             NullLogger<LocomotivesPageViewModel>.Instance, _ => { });
         _pages.Add(page);
