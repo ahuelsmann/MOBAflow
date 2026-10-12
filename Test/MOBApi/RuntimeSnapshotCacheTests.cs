@@ -230,4 +230,63 @@ internal sealed class RuntimeSnapshotCacheTests
             Assert.That(restored.LocomotiveFleet[0].LocomotiveId, Is.EqualTo(locomotiveId));
         });
     }
+
+    [Test]
+    public void Set_PreservesCurrentCounterDiagnosticAndItsRecoveryAlongsideCachedProjectElements()
+    {
+        var cache = new RuntimeSnapshotCache();
+        var signalId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var locomotiveId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        var failSafeAt = new DateTimeOffset(2026, 10, 12, 1, 2, 3, TimeSpan.Zero);
+
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
+        {
+            ProjectId = ProjectA,
+            InPortCounterPersistenceError = "Previous counter error",
+            SignalBoxElements = [new SignalBoxElementRuntimeSnapshot { ElementId = signalId, SignalAspect = SignalAspect.Ks1 }],
+            LocomotiveFleet = [new LocomotiveFleetSnapshot { LocomotiveId = locomotiveId, Name = "BR 110", DigitalAddress = 7 }]
+        }));
+
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
+        {
+            ProjectId = ProjectA,
+            MainCurrent = 99,
+            IsEmergencyStopActive = true,
+            IsOperatorAckRequired = true,
+            LastFailSafeReason = "Current safety diagnostic",
+            LastFailSafeAt = failSafeAt,
+            InPortCounterPersistenceError = "Current counters could not be saved."
+        }));
+
+        Assert.That(cache.TryGet(ProjectA, out var entry), Is.True);
+        var restored = RuntimeJsonSerializer.Deserialize(entry.Json)!;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(restored.InPortCounterPersistenceError, Is.EqualTo("Current counters could not be saved."));
+            Assert.That(restored.MainCurrent, Is.EqualTo(99));
+            Assert.That(restored.IsEmergencyStopActive, Is.True);
+            Assert.That(restored.IsOperatorAckRequired, Is.True);
+            Assert.That(restored.LastFailSafeReason, Is.EqualTo("Current safety diagnostic"));
+            Assert.That(restored.LastFailSafeAt, Is.EqualTo(failSafeAt));
+            Assert.That(restored.SignalBoxElements.Single().ElementId, Is.EqualTo(signalId));
+            Assert.That(restored.LocomotiveFleet.Single().LocomotiveId, Is.EqualTo(locomotiveId));
+        }
+
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
+        {
+            ProjectId = ProjectA,
+            MainCurrent = 100,
+            InPortCounterPersistenceError = null
+        }));
+
+        Assert.That(cache.TryGet(ProjectA, out var recoveredEntry), Is.True);
+        var recovered = RuntimeJsonSerializer.Deserialize(recoveredEntry.Json)!;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(recovered.InPortCounterPersistenceError, Is.Null);
+            Assert.That(recovered.MainCurrent, Is.EqualTo(100));
+            Assert.That(recovered.SignalBoxElements.Single().SignalAspect, Is.EqualTo(SignalAspect.Ks1));
+            Assert.That(recovered.LocomotiveFleet.Single().DigitalAddress, Is.EqualTo(7));
+        }
+    }
 }
