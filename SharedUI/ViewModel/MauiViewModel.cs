@@ -33,9 +33,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly MobaflowEndpointLocator _endpointLocator;
+    private readonly MobaflowHubSession _hubSession;
     private readonly IPhotoUploadService _photoUploadService;
     private readonly IPhotoCaptureService _photoCaptureService;
-    private readonly IRestApiClientRegistration? _restApiClientRegistration;
     private readonly ISolutionRemoteLoader? _solutionRemoteLoader;
     private readonly IMobileSolutionStore? _mobileSolutionStore;
     private readonly IRuntimeHubRemoteClient? _runtimeHubRemoteClient;
@@ -52,14 +52,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     /// <summary>Cancels long-running background loops when the host app is shutting down.</summary>
     private readonly CancellationTokenSource _applicationLifetimeCts = new();
-
-    /// <summary>Last time we registered with the REST API (for periodic re-register to stay in Overview list).</summary>
-    private DateTime _lastRestApiRegisterTime = DateTime.MinValue;
-
-    private const int RestApiReregisterIntervalSeconds = 120;
-
-    private static readonly TimeSpan RestApiConnectHealthCheckTimeout = TimeSpan.FromSeconds(4);
-    private static readonly int[] RuntimeHubConnectRetryDelaysMs = [0, 500, 1500, 3000];
 
     /// <summary>Coalesces rapid platform connectivity notifications before re-running REST discovery.</summary>
     private const int NetworkChangeDebounceMilliseconds = 750;
@@ -83,12 +75,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <param name="settings">Application settings used to initialize default values.</param>
     /// <param name="settingsService">Service used to persist updated settings.</param>
     /// <param name="endpointLocator">Finds and remembers the MOBApi endpoint on the LAN.</param>
+    /// <param name="hubSession">MOBApi health check, client registration and runtime hub connection.</param>
     /// <param name="photoUploadService">Service used to upload captured photos to the server.</param>
     /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
     /// <param name="networkProfileChangeNotifier">Raises when device connectivity changes so cached LAN REST endpoints can be re-resolved.</param>
     /// <param name="logger">Logger for diagnostics.</param>
     /// <param name="eventBus">Event bus used to observe runtime and feedback changes.</param>
-    /// <param name="restApiClientRegistration">Optional: registers this app with the REST API for Overview client list (MAUI).</param>
     /// <param name="solutionRemoteLoader">Optional: syncs the MOBAflow solution from MOBApi into the local runtime.</param>
     /// <param name="mobileSolutionStore">Optional: persists synced solution and signal-box data for offline use.</param>
     /// <param name="runtimeHubRemoteClient">Optional: SignalR client for remote runtime snapshots (MOBAsmart).</param>
@@ -104,12 +96,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         AppSettings settings,
         ISettingsService settingsService,
         MobaflowEndpointLocator endpointLocator,
+        MobaflowHubSession hubSession,
         IPhotoUploadService photoUploadService,
         IPhotoCaptureService photoCaptureService,
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
         ILogger<MauiViewModel> logger,
         IEventBus eventBus,
-        IRestApiClientRegistration? restApiClientRegistration = null,
         ISolutionRemoteLoader? solutionRemoteLoader = null,
         IMobileSolutionStore? mobileSolutionStore = null,
         IRuntimeHubRemoteClient? runtimeHubRemoteClient = null,
@@ -125,6 +117,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(endpointLocator);
+        ArgumentNullException.ThrowIfNull(hubSession);
         ArgumentNullException.ThrowIfNull(photoUploadService);
         ArgumentNullException.ThrowIfNull(photoCaptureService);
         ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
@@ -137,11 +130,11 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _settings = settings;
         _settingsService = settingsService;
         _endpointLocator = endpointLocator;
+        _hubSession = hubSession;
         _photoUploadService = photoUploadService;
         _photoCaptureService = photoCaptureService;
         _networkProfileChangeNotifier = networkProfileChangeNotifier;
         _logger = logger;
-        _restApiClientRegistration = restApiClientRegistration;
         _solutionRemoteLoader = solutionRemoteLoader;
         _mobileSolutionStore = mobileSolutionStore;
         _runtimeHubRemoteClient = runtimeHubRemoteClient;
@@ -572,7 +565,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
                 var delay = _endpointLocator.GetHealthCheckDelay(
                     _settings.RestApi.IsConnectionEnabled,
-                    IsRestApiReachable && (_runtimeHubRemoteClient?.IsConnected ?? false));
+                    IsRestApiReachable && _hubSession.IsConnected);
                 await Task.Delay(delay, _applicationLifetimeCts.Token).ConfigureAwait(false);
             }
         }
@@ -655,11 +648,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         try
         {
-            TimeSpan? healthCheckTimeout = useConnectTimeout && _mobaflowConnectInProgress
-                ? RestApiConnectHealthCheckTimeout
-                : null;
-            var reachable = await _photoUploadService
-                .HealthCheckAsync(serverIp, serverPort, healthCheckTimeout)
+            var endpoint = new MobaflowEndpoint(serverIp, serverPort);
+            var reachable = await _hubSession
+                .CheckHealthAsync(endpoint, connecting: useConnectTimeout && _mobaflowConnectInProgress)
                 .ConfigureAwait(false);
             await _uiDispatcher.InvokeOnUiAsync(() =>
             {
@@ -674,18 +665,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 await _endpointLocator.RememberReachableAddressAsync(serverIp).ConfigureAwait(false);
             }
 
-            if (reachable && _restApiClientRegistration != null)
+            if (reachable)
             {
-                var now = DateTime.UtcNow;
-                var shouldRegister = _lastRestApiRegisterTime == DateTime.MinValue
-                    || (now - _lastRestApiRegisterTime).TotalSeconds >= RestApiReregisterIntervalSeconds;
-                if (shouldRegister)
-                {
-                    _lastRestApiRegisterTime = now;
-                    RunInBackground(
-                        _restApiClientRegistration.RegisterAsync(serverIp, serverPort),
-                        "REST API client registration");
-                }
+                RunInBackground(_hubSession.RegisterClientWhenDueAsync(endpoint), "REST API client registration");
             }
 
             if (reachable && _solutionRemoteLoader != null && _mobaflowInitialCatalogApplied)
@@ -716,119 +698,20 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     private async Task<bool> EnsureRuntimeHubConnectionAsync(bool reachable, bool forceReconnect = false)
     {
-        if (_runtimeHubRemoteClient == null)
+        var outcome = await _hubSession
+            .EnsureConnectedAsync(reachable, forceReconnect, SelectRemoteProjectAsync, _applicationLifetimeCts.Token)
+            .ConfigureAwait(false);
+        if (outcome.HubConnected is { } hubConnected)
         {
-            return false;
+            await SetRuntimeHubConnectedOnUiAsync(hubConnected).ConfigureAwait(false);
         }
 
-        if (!_settings.RestApi.IsConnectionEnabled)
+        if (outcome.RemoteZ21Connected is { } remoteZ21Connected)
         {
-            if (_runtimeHubRemoteClient.IsConnected)
-            {
-                try
-                {
-                    await _runtimeHubRemoteClient.DisconnectAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogDebug(ex, "Runtime hub disconnect failed");
-                }
-            }
-
-            await SetRuntimeHubConnectedOnUiAsync(false).ConfigureAwait(false);
-            await SetRemoteZ21ConnectedOnUiAsync(false).ConfigureAwait(false);
-            return false;
+            await SetRemoteZ21ConnectedOnUiAsync(remoteZ21Connected).ConfigureAwait(false);
         }
 
-        var serverIp = _settings.RestApi.CurrentIpAddress?.Trim() ?? string.Empty;
-        var serverPort = _settings.RestApi.Port;
-        if (string.IsNullOrWhiteSpace(serverIp) || serverPort <= 0)
-        {
-            await SetRuntimeHubConnectedOnUiAsync(false).ConfigureAwait(false);
-            await SetRemoteZ21ConnectedOnUiAsync(false).ConfigureAwait(false);
-            return false;
-        }
-
-        if (!reachable)
-        {
-            // Keep the SignalR session when REST health flickers; SignalR reconnect handles transport gaps.
-            if (_runtimeHubRemoteClient.IsConnected)
-            {
-                await SetRuntimeHubConnectedOnUiAsync(true).ConfigureAwait(false);
-                await SetRemoteZ21ConnectedOnUiAsync(_runtimeHubRemoteClient.HasActiveHost).ConfigureAwait(false);
-                return true;
-            }
-
-            return false;
-        }
-
-        if (_runtimeHubRemoteClient.IsConnected && !forceReconnect)
-        {
-            await SetRuntimeHubConnectedOnUiAsync(true).ConfigureAwait(false);
-            await SetRemoteZ21ConnectedOnUiAsync(_runtimeHubRemoteClient.HasActiveHost).ConfigureAwait(false);
-            return true;
-        }
-
-        if (forceReconnect && _runtimeHubRemoteClient.IsConnected)
-        {
-            try
-            {
-                await _runtimeHubRemoteClient.DisconnectAsync().ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "Runtime hub disconnect before forced reconnect failed");
-            }
-        }
-
-        var clientId = _restApiClientRegistration?.ClientId;
-        if (string.IsNullOrWhiteSpace(clientId))
-        {
-            clientId = Guid.NewGuid().ToString("N");
-        }
-
-        foreach (var delayMs in RuntimeHubConnectRetryDelaysMs)
-        {
-            if (delayMs > 0)
-            {
-                try
-                {
-                    await Task.Delay(delayMs, _applicationLifetimeCts.Token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    return false;
-                }
-            }
-
-            if (!_settings.RestApi.IsConnectionEnabled)
-            {
-                return false;
-            }
-
-            try
-            {
-                await SelectRemoteProjectAsync().ConfigureAwait(false);
-                await _runtimeHubRemoteClient
-                    .ConnectAsync(
-                        serverIp,
-                        serverPort,
-                        clientId,
-                        _applicationLifetimeCts.Token,
-                        forceReconnect)
-                    .ConfigureAwait(false);
-                await SetRuntimeHubConnectedOnUiAsync(true).ConfigureAwait(false);
-                await SetRemoteZ21ConnectedOnUiAsync(_runtimeHubRemoteClient.HasActiveHost).ConfigureAwait(false);
-                return true;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogDebug(ex, "Runtime hub connect attempt failed (delay {DelayMs} ms)", delayMs);
-            }
-        }
-
-        await SetRuntimeHubConnectedOnUiAsync(false).ConfigureAwait(false);
-        return false;
+        return outcome.IsConnected;
     }
 
     #endregion
