@@ -10,7 +10,7 @@ using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
-internal sealed class TestLocomotivePages : IDisposable
+internal sealed partial class TestLocomotivePages : IDisposable
 {
     private readonly List<LocomotivesPageViewModel> _pages = [];
 

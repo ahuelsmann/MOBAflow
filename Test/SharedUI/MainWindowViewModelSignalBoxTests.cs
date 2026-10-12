@@ -18,7 +18,7 @@ using Moq;
 /// Signal-box editor changes reach the runtime through the project refresh and the command gateway.
 /// </summary>
 [TestFixture]
-internal sealed class MainWindowViewModelSignalBoxTests : IDisposable
+internal sealed partial class MainWindowViewModelSignalBoxTests : IDisposable
 {
     private readonly TestLocomotivePages _locomotivePages = new();
 

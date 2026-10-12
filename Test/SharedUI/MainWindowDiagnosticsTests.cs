@@ -17,7 +17,7 @@ using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
-internal sealed class MainWindowDiagnosticsTests : IDisposable
+internal sealed partial class MainWindowDiagnosticsTests : IDisposable
 {
     private readonly TestLocomotivePages _locomotivePages = new();
 

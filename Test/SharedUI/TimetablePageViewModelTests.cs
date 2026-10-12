@@ -17,7 +17,7 @@ using Moba.SharedUI.ViewModel;
 using Moq;
 
 [TestFixture]
-internal sealed class TimetablePageViewModelTests : IDisposable
+internal sealed partial class TimetablePageViewModelTests : IDisposable
 {
     private readonly TestLocomotivePages _locomotivePages = new();
 

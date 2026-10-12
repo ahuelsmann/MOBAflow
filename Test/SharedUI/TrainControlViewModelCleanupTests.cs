@@ -19,7 +19,7 @@ using Moba.SharedUI.ViewModel;
 using Moq;
 
 [TestFixture]
-internal sealed class TrainControlViewModelCleanupTests : IDisposable
+internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
 {
     private readonly TestLocomotivePages _locomotivePages = new();
 

@@ -13,7 +13,7 @@ using Moba.SharedUI.ViewModel;
 using Moq;
 
 [TestFixture]
-internal sealed class JourneyMapViewModelTests : IDisposable
+internal sealed partial class JourneyMapViewModelTests : IDisposable
 {
     private readonly TestLocomotivePages _locomotivePages = new();
 

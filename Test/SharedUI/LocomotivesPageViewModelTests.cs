@@ -17,7 +17,7 @@ using System.Diagnostics.CodeAnalysis;
 
 [TestFixture]
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit creates this fixture through reflection.")]
-internal sealed class LocomotivesPageViewModelTests : IDisposable
+internal sealed partial class LocomotivesPageViewModelTests : IDisposable
 {
     private SolutionSession _session = null!;
     private Mock<IIoService> _io = null!;

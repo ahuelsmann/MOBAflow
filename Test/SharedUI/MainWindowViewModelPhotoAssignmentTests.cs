@@ -23,7 +23,7 @@ using Moq;
 using CommunityToolkit.Mvvm.Input;
 
 [TestFixture]
-internal sealed class MainWindowViewModelPhotoAssignmentTests : IDisposable
+internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposable
 {
     private readonly TestLocomotivePages _locomotivePages = new();
 

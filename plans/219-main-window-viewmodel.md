@@ -2,8 +2,8 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) implemented; PR validation pending; later slices planned
-**Evidence**: Settings integrated at `bfe9b91d725c844e74011c54522f91cf47bef3fb`; locomotive implementation base `64665ddae5699e2d199fb0d846debe0b446e8666`; synchronization target `fe85b857`, inspected on 2026-10-12
+**Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) implemented; review/integration tracked in #219; later slices planned
+**Evidence**: Settings integrated at `bfe9b91d725c844e74011c54522f91cf47bef3fb`; locomotive implementation base `64665ddae5699e2d199fb0d846debe0b446e8666`; synchronized with main `fe85b857` on 2026-10-12
 
 ## Purpose and scope
 
@@ -111,7 +111,7 @@ Refresh the base and update this plan from evidence after each integrated slice.
    and shutdown unsubscription. Speech behavior remains behind its current integration; #244
    characterizes the current first-resolved settings-test engine and is preserved here.
 2. **Rolling stock:** extract locomotives, then wagons, then train composition in separable PRs.
-   - **2a Locomotives (implemented, awaiting PR checks/review):** LocomotivesPageViewModel owns
+   - **2a Locomotives (implemented; review/integration tracked in #219):** LocomotivesPageViewModel owns
      selection, search, stable filtered-list identity, CRUD, photo commands and panel expansion.
      It reads ISolutionSession directly, reuses LocomotiveManagementViewModel and keeps the same
      state in LocomotivesPage and the locomotive library in TrainsPage. The shell only forwards
