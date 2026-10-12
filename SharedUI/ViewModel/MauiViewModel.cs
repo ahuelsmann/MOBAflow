@@ -34,6 +34,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly ISettingsService _settingsService;
     private readonly MobaflowEndpointLocator _endpointLocator;
     private readonly MobaflowHubSession _hubSession;
+    private readonly MobileRuntimeProjection _runtimeProjection;
     private readonly IPhotoUploadService _photoUploadService;
     private readonly IPhotoCaptureService _photoCaptureService;
     private readonly ISolutionRemoteLoader? _solutionRemoteLoader;
@@ -76,6 +77,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <param name="settingsService">Service used to persist updated settings.</param>
     /// <param name="endpointLocator">Finds and remembers the MOBApi endpoint on the LAN.</param>
     /// <param name="hubSession">MOBApi health check, client registration and runtime hub connection.</param>
+    /// <param name="runtimeProjection">Locomotive fleet and signal-box data of the selected project.</param>
     /// <param name="photoUploadService">Service used to upload captured photos to the server.</param>
     /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
     /// <param name="networkProfileChangeNotifier">Raises when device connectivity changes so cached LAN REST endpoints can be re-resolved.</param>
@@ -97,6 +99,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ISettingsService settingsService,
         MobaflowEndpointLocator endpointLocator,
         MobaflowHubSession hubSession,
+        MobileRuntimeProjection runtimeProjection,
         IPhotoUploadService photoUploadService,
         IPhotoCaptureService photoCaptureService,
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
@@ -118,6 +121,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(endpointLocator);
         ArgumentNullException.ThrowIfNull(hubSession);
+        ArgumentNullException.ThrowIfNull(runtimeProjection);
         ArgumentNullException.ThrowIfNull(photoUploadService);
         ArgumentNullException.ThrowIfNull(photoCaptureService);
         ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
@@ -131,6 +135,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _settingsService = settingsService;
         _endpointLocator = endpointLocator;
         _hubSession = hubSession;
+        _runtimeProjection = runtimeProjection;
         _photoUploadService = photoUploadService;
         _photoCaptureService = photoCaptureService;
         _networkProfileChangeNotifier = networkProfileChangeNotifier;
@@ -1030,7 +1035,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             if (_controlTabActive)
             {
                 ApplyBestAvailableLocomotiveFleet();
-                if (!HasAnyLocomotiveFleetAvailable())
+                if (!_runtimeProjection.HasAnyLocomotiveFleetAvailable)
                 {
                     RunInBackground(RequestSolutionSyncAsync(_applicationLifetimeCts.Token), "Solution sync after hub session restored");
                 }
@@ -1072,13 +1077,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         if (ShouldApplyLocalSignalBoxSnapshot())
         {
-            var elements = snapshot.SignalBoxElements;
-            if (_cachedRemoteSignalBoxElements is { Count: > 0 })
-            {
-                elements = SignalBoxSnapshotMerge.MergeAspectsFromCache(elements, _cachedRemoteSignalBoxElements);
-            }
-
-            RefreshSignalBoxElements(elements);
+            RefreshSignalBoxElements(_runtimeProjection.MergeCachedAspects(snapshot.SignalBoxElements));
         }
 
         if (ShouldApplyLocalProjectSnapshot())
@@ -1119,8 +1118,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         if (snapshot.SignalBoxElements.Count > 0)
         {
-            var filteredElements = FilterSignalBoxElementsToPlan(snapshot.SignalBoxElements);
-            if (ShouldCacheRemoteSignalBoxElements(filteredElements))
+            var filteredElements = _runtimeProjection.FilterSignalBoxElementsToPlan(snapshot.SignalBoxElements);
+            if (_runtimeProjection.ShouldCacheRemoteSignalBoxElements(filteredElements))
             {
                 CacheRemoteSignalBoxElements(filteredElements);
             }
@@ -1134,7 +1133,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             {
                 ApplyLiveRemoteLocomotiveFleet(snapshot.LocomotiveFleet);
             }
-            else if (ShouldCacheRemoteLocomotiveFleet(snapshot.LocomotiveFleet))
+            else if (_runtimeProjection.ShouldCacheRemoteLocomotiveFleet(snapshot.LocomotiveFleet))
             {
                 CacheRemoteLocomotiveFleet(snapshot.LocomotiveFleet);
                 ApplyBestAvailableLocomotiveFleet();
@@ -1147,7 +1146,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         if (snapshot.SignalBoxElements.Count > 0
             && snapshot.LocomotiveFleet.Count == 0
-            && !HasAnyLocomotiveFleetAvailable()
+            && !_runtimeProjection.HasAnyLocomotiveFleetAvailable
             && _controlTabActive)
         {
             RunInBackground(
