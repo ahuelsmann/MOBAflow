@@ -14,6 +14,7 @@ using Moba.Common.Runtime;
 using Moba.Domain;
 
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Mobile;
 
 using Moba.SharedUI.Service;
 
@@ -802,6 +803,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             settingsService,
             endpointLocator,
             TestHubSessions.Create(appSettings, endpointLocator, healthService, runtimeHubRemoteClient),
+            new MobileRuntimeProjection(runtimeMock.Object, projectContext, mobileRuntimeCoordinator),
             healthService,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,

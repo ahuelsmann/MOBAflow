@@ -8,8 +8,6 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Service;
-
 /// <summary>
 /// Tab-aware update throttling for the MAUI mobile client.
 /// </summary>
@@ -18,7 +16,6 @@ public sealed partial class MauiViewModel
     private bool _heavyUpdatesPaused;
     private bool _signalBoxTabActive;
     private IReadOnlyList<SignalBoxElementRuntimeSnapshot>? _pendingSignalBoxElements;
-    private IReadOnlyList<SignalBoxElementRuntimeSnapshot>? _cachedRemoteSignalBoxElements;
 
     /// <summary>
     /// Suppresses non-critical snapshot work (e.g. signal-box list rebuild) while another tab is active.
@@ -97,26 +94,14 @@ public sealed partial class MauiViewModel
         });
     }
 
-    private void CacheRemoteSignalBoxElements(IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements)
-    {
-        if (elements.Count == 0)
-        {
-            return;
-        }
-
-        _cachedRemoteSignalBoxElements = elements;
-
-        if (_mobileSolutionStore != null)
-        {
-            RunInBackground(
-                _mobileSolutionStore.SaveSignalBoxElementsAsync(elements, _applicationLifetimeCts.Token),
-                "Persist mobile signal-box cache");
-        }
-    }
+    private void CacheRemoteSignalBoxElements(IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements) =>
+        RunInBackground(
+            _runtimeProjection.CacheRemoteSignalBoxElements(elements, _applicationLifetimeCts.Token),
+            "Persist mobile signal-box cache");
 
     private void ClearCachedRemoteSignalBoxElements()
     {
-        _cachedRemoteSignalBoxElements = null;
+        _runtimeProjection.ClearRemoteSignalBoxElements();
         _pendingSignalBoxElements = null;
     }
 
@@ -132,118 +117,12 @@ public sealed partial class MauiViewModel
         OnPropertyChanged(nameof(HasSignalBoxElements));
     }
 
-    private IReadOnlyList<SignalBoxElementRuntimeSnapshot> GetBestAvailableSignalBoxElements()
-    {
-        var projectElements = BuildSignalBoxSnapshotsFromProjectContext();
-        if (projectElements.Count > 0)
-        {
-            return SignalBoxSnapshotMerge.MergeAspectsFromCache(
-                projectElements,
-                GetRuntimeSignalBoxAspectSource());
-        }
-
-        if (_cachedRemoteSignalBoxElements is { Count: > 0 })
-        {
-            var local = _runtimeSnapshots.Current.SignalBoxElements;
-            if (local.Count > 0)
-            {
-                return SignalBoxSnapshotMerge.MergeAspectsFromCache(local, _cachedRemoteSignalBoxElements);
-            }
-
-            return _cachedRemoteSignalBoxElements;
-        }
-
-        return _runtimeSnapshots.Current.SignalBoxElements;
-    }
-
-    private IReadOnlyList<SignalBoxElementRuntimeSnapshot> BuildSignalBoxSnapshotsFromProjectContext()
-    {
-        var plan = _projectContext?.SelectedProject?.Model.SignalBoxPlan;
-        return SignalBoxRuntimeSync.BuildSnapshotsFromPlan(plan);
-    }
-
-    private IReadOnlyList<SignalBoxElementRuntimeSnapshot> GetRuntimeSignalBoxAspectSource()
-    {
-        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true
-            && _cachedRemoteSignalBoxElements is { Count: > 0 })
-        {
-            return _cachedRemoteSignalBoxElements;
-        }
-
-        var localElements = _runtimeSnapshots.Current.SignalBoxElements;
-        if (localElements.Count > 0)
-        {
-            return localElements;
-        }
-
-        return _cachedRemoteSignalBoxElements ?? [];
-    }
-
-    private IReadOnlyList<SignalBoxElementRuntimeSnapshot> FilterSignalBoxElementsToPlan(
-        IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements)
-    {
-        var plan = _projectContext?.SelectedProject?.Model.SignalBoxPlan;
-        return SignalBoxRuntimeSync.FilterToPlan(plan, elements);
-    }
-
-    private bool ShouldCacheRemoteSignalBoxElements(IReadOnlyList<SignalBoxElementRuntimeSnapshot> remoteElements)
-    {
-        var projectElements = BuildSignalBoxSnapshotsFromProjectContext();
-        if (projectElements.Count == 0)
-        {
-            return true;
-        }
-
-        var projectIds = projectElements.Select(element => element.ElementId).ToHashSet();
-        return remoteElements.Count >= projectElements.Count
-               && remoteElements.All(element => projectIds.Contains(element.ElementId));
-    }
-
     /// <summary>
     /// Restores cached signal-box and locomotive fleet data from local storage at app startup.
     /// </summary>
     public void RestoreCachedMobileSnapshot(MobileSolutionCacheEntry entry)
     {
-        ArgumentNullException.ThrowIfNull(entry);
-
-        var activeProject = ResolveCachedActiveProject(entry);
-        var signalBoxElements = SignalBoxRuntimeSync.FilterToPlan(
-            activeProject.SignalBoxPlan,
-            entry.SignalBoxElements);
-        var locomotiveFleet = FilterFleetToProject(activeProject, entry.LocomotiveFleet);
-        RestoreCachedSignalBoxElements(signalBoxElements);
-        RestoreCachedLocomotiveFleet(locomotiveFleet);
-    }
-
-    private static IReadOnlyList<LocomotiveFleetSnapshot> FilterFleetToProject(
-        Domain.Project project,
-        IReadOnlyList<LocomotiveFleetSnapshot> fleet)
-    {
-        if (fleet.Count == 0)
-        {
-            return fleet;
-        }
-
-        var projectIds = project.Locomotives.Select(loco => loco.Id).ToHashSet();
-        return fleet
-            .Where(item => projectIds.Contains(item.LocomotiveId))
-            .ToList();
-    }
-
-    private static Domain.Project ResolveCachedActiveProject(MobileSolutionCacheEntry entry)
-    {
-        var activeProjectName = entry.Meta.ActiveProjectName;
-        if (!string.IsNullOrWhiteSpace(activeProjectName))
-        {
-            var match = entry.Solution.Projects.FirstOrDefault(project =>
-                string.Equals(project.Name, activeProjectName.Trim(), StringComparison.OrdinalIgnoreCase));
-            if (match != null)
-            {
-                return match;
-            }
-        }
-
-        return entry.Solution.Projects[0];
+        _runtimeProjection.RestoreCachedMobileSnapshot(entry);
     }
 
     /// <summary>
@@ -252,7 +131,7 @@ public sealed partial class MauiViewModel
     /// </summary>
     public void ApplyRestoredMobileCacheToUi()
     {
-        var signalBoxElements = GetBestAvailableSignalBoxElements();
+        var signalBoxElements = _runtimeProjection.GetBestAvailableSignalBoxElements();
         if (signalBoxElements.Count > 0)
         {
             _pendingSignalBoxElements = signalBoxElements;
@@ -262,7 +141,7 @@ public sealed partial class MauiViewModel
             }
         }
 
-        var fleet = GetBestAvailableLocomotiveFleet();
+        var fleet = _runtimeProjection.GetBestAvailableLocomotiveFleet();
         if (fleet.Count > 0)
         {
             _pendingLocomotiveFleet = null;
@@ -275,19 +154,14 @@ public sealed partial class MauiViewModel
     /// </summary>
     public void RestoreCachedSignalBoxElements(IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements)
     {
-        if (elements.Count == 0)
-        {
-            return;
-        }
-
-        _cachedRemoteSignalBoxElements = elements;
+        _runtimeProjection.RestoreCachedSignalBoxElements(elements);
     }
 
     private void ApplyBestAvailableSignalBoxElements()
     {
         var elements = _pendingSignalBoxElements is { Count: > 0 } pending
             ? pending
-            : GetBestAvailableSignalBoxElements();
+            : _runtimeProjection.GetBestAvailableSignalBoxElements();
         _pendingSignalBoxElements = null;
         RefreshSignalBoxElements(elements);
     }
@@ -298,16 +172,6 @@ public sealed partial class MauiViewModel
         {
             RequestSignalBoxSnapshotRefresh();
         }
-    }
-
-    private bool HasAnySignalBoxElementsAvailable()
-    {
-        if (_cachedRemoteSignalBoxElements is { Count: > 0 })
-        {
-            return true;
-        }
-
-        return _runtimeSnapshots.Current.SignalBoxElements.Count > 0;
     }
 
     private void RequestSignalBoxSnapshotRefresh()

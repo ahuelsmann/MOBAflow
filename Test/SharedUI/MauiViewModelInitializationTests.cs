@@ -9,6 +9,7 @@ using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Mobile;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
@@ -237,6 +238,7 @@ internal sealed class MauiViewModelInitializationTests
                 dependencies.PhotoUploadMock.Object,
                 runtimeHubRemoteClient,
                 dependencies.RestApiClientRegistrationMock.Object),
+            new MobileRuntimeProjection(dependencies.MobaRuntimeMock.Object),
             dependencies.PhotoUploadMock.Object,
             dependencies.PhotoCaptureMock.Object,
             dependencies.NetworkNotifierMock.Object,
