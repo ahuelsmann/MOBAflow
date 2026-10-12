@@ -151,15 +151,15 @@
                             Margin="0,0,0,8"
                             PlaceholderText="Search locomotives..."
                             QueryIcon="Find"
-                            Text="{x:Bind ViewModel.LocomotiveSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{x:Bind ViewModel.LocomotivesPage.LocomotiveSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                         <ListView
                             x:Name="LocomotiveLibraryListView"
                             Grid.Row="1"
                             CanDragItems="True"
                             DragItemsStarting="LocomotiveLibraryListView_DragItemsStarting"
-                            ItemsSource="{x:Bind ViewModel.FilteredLocomotiveLibrary, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.SelectedLocomotive, Mode=TwoWay}"
+                            ItemsSource="{x:Bind ViewModel.LocomotivesPage.FilteredLocomotiveLibrary, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.LocomotivesPage.SelectedLocomotive, Mode=TwoWay}"
                             SelectionMode="Single">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodel:LocomotiveViewModel">

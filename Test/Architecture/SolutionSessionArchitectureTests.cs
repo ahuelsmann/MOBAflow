@@ -46,6 +46,7 @@ internal sealed class SolutionSessionArchitectureTests
         foreach (var (relative, syntaxRoot) in Sources(SourceFolders))
         {
             if (!relative.StartsWith("MOBAflow/View/SettingsPage", StringComparison.Ordinal)
+                && !relative.StartsWith("MOBAflow/View/LocomotivesPage", StringComparison.Ordinal)
                 && AllowedDependents.Keys.Any(allowed => relative.StartsWith(allowed, StringComparison.Ordinal)))
             {
                 continue;

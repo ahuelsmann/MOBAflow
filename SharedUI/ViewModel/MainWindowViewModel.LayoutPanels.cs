@@ -9,8 +9,6 @@ public partial class MainWindowViewModel
     private bool _isJourneyListExpanded = true;
     private bool _isStationListExpanded = true;
     private bool _isJourneyPropertiesExpanded = true;
-    private bool _isLocomotivesListExpanded = true;
-    private bool _isLocomotivesPropertiesExpanded = true;
     private bool _isPassengerWagonListExpanded = true;
     private bool _isPassengerWagonPropertiesExpanded = true;
     private bool _isGoodsWagonListExpanded = true;
@@ -109,26 +107,6 @@ public partial class MainWindowViewModel
         {
             if (SetProperty(ref _isJourneyPropertiesExpanded, value))
                 PersistLayoutState(layout => layout.JourneysPage.IsJourneyPropertiesExpanded = value);
-        }
-    }
-
-    public bool IsLocomotivesListExpanded
-    {
-        get => _isLocomotivesListExpanded;
-        set
-        {
-            if (SetProperty(ref _isLocomotivesListExpanded, value))
-                PersistLayoutState(layout => layout.LocomotivesPage.IsListExpanded = value);
-        }
-    }
-
-    public bool IsLocomotivesPropertiesExpanded
-    {
-        get => _isLocomotivesPropertiesExpanded;
-        set
-        {
-            if (SetProperty(ref _isLocomotivesPropertiesExpanded, value))
-                PersistLayoutState(layout => layout.LocomotivesPage.IsPropertiesExpanded = value);
         }
     }
 
@@ -303,8 +281,6 @@ public partial class MainWindowViewModel
         _isCityLibraryVisible = _settings.Layout.JourneysPage.IsCityLibraryExpanded;
         _isWorkflowLibraryVisible = _settings.Layout.StationsPage.IsWorkflowLibraryExpanded;
         _isJourneyPropertiesExpanded = _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded;
-        _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage.IsListExpanded;
-        _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage.IsPropertiesExpanded;
         _isPassengerWagonListExpanded = _settings.Layout.PassengerWagonPage.IsListExpanded;
         _isPassengerWagonPropertiesExpanded = _settings.Layout.PassengerWagonPage.IsPropertiesExpanded;
         _isGoodsWagonListExpanded = _settings.Layout.GoodsWagonPage.IsListExpanded;
