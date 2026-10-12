@@ -110,6 +110,11 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<IMobaRuntime>(),
             sp.GetRequiredService<IRuntimeHubRemoteClient>()));
         services.AddSingleton<IMobileRuntimeCoordinator>(sp => sp.GetRequiredService<MobileRuntimeCoordinator>());
+        services.AddSingleton(sp => new MobileRuntimeProjection(
+            sp.GetRequiredService<IRuntimeSnapshotProvider>(),
+            sp.GetRequiredService<IProjectContext>(),
+            sp.GetRequiredService<IMobileRuntimeCoordinator>(),
+            sp.GetRequiredService<IMobileSolutionStore>()));
         // The mobile coordinator remains the mode owner while recording wraps only explicit command execution.
         services.AddSingleton(sp => new RecordingRuntimeCommandGateway(
             sp.GetRequiredService<MobileRuntimeCoordinator>(),
@@ -146,6 +151,7 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<MobaflowEndpointLocator>(),
             sp.GetRequiredService<MobaflowHubSession>(),
+            sp.GetRequiredService<MobileRuntimeProjection>(),
             sp.GetRequiredService<IPhotoUploadService>(),
             sp.GetRequiredService<IPhotoCaptureService>(),
             sp.GetRequiredService<INetworkProfileChangeNotifier>(),
