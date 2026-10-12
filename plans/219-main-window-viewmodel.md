@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) implemented; review/integration tracked in #219; later slices planned
-**Evidence**: Settings integrated at `bfe9b91d725c844e74011c54522f91cf47bef3fb`; locomotive implementation base `64665ddae5699e2d199fb0d846debe0b446e8666`; synchronized with main `cc4fcbba` on 2026-10-12
+**Evidence**: Settings integrated at `bfe9b91d725c844e74011c54522f91cf47bef3fb`; locomotive implementation base `64665ddae5699e2d199fb0d846debe0b446e8666`; synchronized with main `9bd2e4e8` on 2026-10-12
 
 ## Purpose and scope
 
