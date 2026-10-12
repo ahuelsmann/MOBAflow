@@ -321,7 +321,7 @@ public sealed partial class MauiViewModel
 
                 && !_mobaflowInitialCatalogApplied
 
-                && (!HasAnySignalBoxElementsAvailable() || !HasAnyLocomotiveFleetAvailable()))
+                && (!_runtimeProjection.HasAnySignalBoxElementsAvailable || !_runtimeProjection.HasAnyLocomotiveFleetAvailable))
 
             {
 
@@ -583,7 +583,7 @@ public sealed partial class MauiViewModel
 
             ApplyBestAvailableLocomotiveFleet();
 
-            if (!HasAnyLocomotiveFleetAvailable())
+            if (!_runtimeProjection.HasAnyLocomotiveFleetAvailable)
 
             {
 
