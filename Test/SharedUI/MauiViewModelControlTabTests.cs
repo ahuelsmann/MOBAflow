@@ -7,6 +7,7 @@ using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Mobile;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
@@ -542,6 +543,7 @@ internal sealed class MauiViewModelControlTabTests
             settingsService,
             endpointLocator,
             TestHubSessions.Create(settings, endpointLocator, photoUploadService, runtimeHubRemoteClient),
+            new MobileRuntimeProjection(mobaRuntime ?? runtimeMock!.Object, projectContext, mobileRuntimeCoordinator),
             photoUploadService,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,
