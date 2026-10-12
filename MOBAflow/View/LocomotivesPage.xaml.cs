@@ -17,24 +17,21 @@ internal sealed partial class LocomotivesPage
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<LocomotivesPage>? _logger;
-    private LocomotiveViewModel? _observedLocomotive;
 
-    public MainWindowViewModel ViewModel { get; }
+    public LocomotivesPageViewModel ViewModel { get; }
 
-    public LocomotiveManagementViewModel Management { get; }
+    public LocomotiveManagementViewModel Management => ViewModel.Management;
 
     private double _listExpandedWidth = 250;
     private GridLength _propertiesExpandedWidth = new(1, GridUnitType.Star);
 
     public LocomotivesPage(
-        MainWindowViewModel viewModel,
-        LocomotiveManagementViewModel management,
+        LocomotivesPageViewModel viewModel,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<LocomotivesPage>? logger = null)
     {
         ViewModel = viewModel;
-        Management = management;
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
@@ -48,8 +45,6 @@ internal sealed partial class LocomotivesPage
     {
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-        ObserveSelectedLocomotive();
-        RefreshManagement();
         RestoreLayout();
     }
 
@@ -65,7 +60,6 @@ internal sealed partial class LocomotivesPage
         try
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
-            StopObservingSelectedLocomotive();
             SaveLayout();
             if (_settingsService != null)
             {
@@ -88,51 +82,7 @@ internal sealed partial class LocomotivesPage
         {
             ApplyStarColumnState(ViewModel.IsLocomotivesPropertiesExpanded, ColProperties, ref _propertiesExpandedWidth);
         }
-        else if (e.PropertyName is nameof(ViewModel.SelectedProject)
-                 or nameof(ViewModel.SelectedLocomotive)
-                 or nameof(ViewModel.LocomotiveSearchText))
-        {
-            ObserveSelectedLocomotive();
-            RefreshManagement();
-        }
     }
-
-    private void ObserveSelectedLocomotive()
-    {
-        if (ReferenceEquals(_observedLocomotive, ViewModel.SelectedLocomotive))
-        {
-            return;
-        }
-
-        StopObservingSelectedLocomotive();
-        _observedLocomotive = ViewModel.SelectedLocomotive;
-        if (_observedLocomotive is not null)
-        {
-            _observedLocomotive.PropertyChanged += SelectedLocomotive_PropertyChanged;
-        }
-    }
-
-    private void StopObservingSelectedLocomotive()
-    {
-        if (_observedLocomotive is not null)
-        {
-            _observedLocomotive.PropertyChanged -= SelectedLocomotive_PropertyChanged;
-            _observedLocomotive = null;
-        }
-    }
-
-    private void SelectedLocomotive_PropertyChanged(
-        object? sender,
-        System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is nameof(LocomotiveViewModel.DigitalAddress) or nameof(LocomotiveViewModel.Name))
-        {
-            RefreshManagement();
-        }
-    }
-
-    private void RefreshManagement()
-        => Management.SetContext(ViewModel.SelectedProject?.Model, ViewModel.SelectedLocomotive?.Model);
 
     private void RestoreLayout()
     {

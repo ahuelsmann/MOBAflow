@@ -19,8 +19,17 @@ using Moba.SharedUI.ViewModel;
 using Moq;
 
 [TestFixture]
-internal sealed class TrainControlViewModelCleanupTests
+internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
 {
+    private readonly TestLocomotivePages _locomotivePages = new();
+
+    [TearDown]
+    public void Dispose()
+    {
+        _locomotivePages.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     [Test]
     public void Dispose_UnsubscribesFromEventBusSnapshots()
     {
@@ -82,7 +91,7 @@ internal sealed class TrainControlViewModelCleanupTests
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance));
     }
 
-    private static MainWindowViewModel CreateMainWindowViewModel()
+    private MainWindowViewModel CreateMainWindowViewModel()
     {
         var runtimeMock = new Mock<IMobaRuntime>();
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
@@ -93,6 +102,7 @@ internal sealed class TrainControlViewModelCleanupTests
             .Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
 
+        var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, runtimeMock.Object);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
@@ -102,7 +112,8 @@ internal sealed class TrainControlViewModelCleanupTests
             new EventBus(NullLogger<EventBus>.Instance),
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, runtimeMock.Object),
+            _locomotivePages.GetPage(locomotiveSession1, null),
+            locomotiveSession1,
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object);
     }

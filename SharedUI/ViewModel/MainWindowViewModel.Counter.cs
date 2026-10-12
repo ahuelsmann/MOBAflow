@@ -176,7 +176,6 @@ public partial class MainWindowViewModel
             SelectedTrain = newValue.Trains.FirstOrDefault();
 
             OnPropertyChanged(nameof(FilteredTrains));
-            OnPropertyChanged(nameof(FilteredLocomotiveLibrary));
             OnPropertyChanged(nameof(FilteredPassengerWagonLibrary));
             OnPropertyChanged(nameof(FilteredGoodsWagonLibrary));
         }
