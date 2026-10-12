@@ -129,6 +129,9 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<IMobileSolutionStore>()));
         services.AddSingleton<ISolutionRemoteLoader>(sp => sp.GetRequiredService<SolutionRemoteLoader>());
+        services.AddSingleton(sp => new MobileSolutionSynchronizer(
+            sp.GetRequiredService<ILogger<MobileSolutionSynchronizer>>(),
+            sp.GetRequiredService<ISolutionRemoteLoader>()));
 
         return services;
     }
@@ -151,13 +154,12 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<MobaflowEndpointLocator>(),
             sp.GetRequiredService<MobaflowHubSession>(),
             sp.GetRequiredService<MobileRuntimeProjection>(),
+            sp.GetRequiredService<MobileSolutionSynchronizer>(),
             sp.GetRequiredService<IPhotoUploadService>(),
             sp.GetRequiredService<IPhotoCaptureService>(),
             sp.GetRequiredService<INetworkProfileChangeNotifier>(),
             sp.GetRequiredService<ILogger<MauiViewModel>>(),
             sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<ISolutionRemoteLoader>(),
-            sp.GetRequiredService<IMobileSolutionStore>(),
             sp.GetRequiredService<IRuntimeHubRemoteClient>(),
             sp.GetRequiredService<IMobileRuntimeCoordinator>(),
             sp.GetRequiredService<IProjectContext>(),

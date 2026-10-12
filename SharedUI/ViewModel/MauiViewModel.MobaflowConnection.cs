@@ -14,6 +14,8 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
+using Mobile;
+
 /// <summary>
 /// MOBAsmart MOBAflow connection toggle and coordinator synchronization.
 /// </summary>
@@ -24,15 +26,11 @@ public sealed partial class MauiViewModel
 
     private bool _mobaflowSessionWasActive;
 
-    private bool _mobaflowInitialCatalogApplied;
-
     private bool _mobaflowConnectInProgress;
 
     private const int MobaflowConnectMaxAttempts = 3;
 
     private CancellationTokenSource? _mobaflowConnectCts;
-
-    private readonly SemaphoreSlim _mobaflowCatalogSyncLock = new(1, 1);
 
     private bool HasStoredMobaflowEndpoint() => _endpointLocator.StoredEndpoint is not null;
 
@@ -127,12 +125,12 @@ public sealed partial class MauiViewModel
         {
             if (!_settings.RestApi.IsConnectionEnabled)
             {
-                _mobaflowInitialCatalogApplied = false;
+                _solutionSynchronizer.ResetInitialCatalog();
                 await DisconnectMobaflowAsync().ConfigureAwait(false);
                 return;
             }
 
-            _mobaflowInitialCatalogApplied = false;
+            _solutionSynchronizer.ResetInitialCatalog();
             _mobaflowConnectInProgress = true;
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -295,7 +293,7 @@ public sealed partial class MauiViewModel
 
             {
 
-                _mobaflowInitialCatalogApplied = false;
+                _solutionSynchronizer.ResetInitialCatalog();
 
                 RunInBackground(ActivateLocalProjectForZ21OnlyAsync(), "Activate cached project after MOBAflow session ended");
 
@@ -319,7 +317,7 @@ public sealed partial class MauiViewModel
 
             if (mobaflowSessionActive
 
-                && !_mobaflowInitialCatalogApplied
+                && !_solutionSynchronizer.IsInitialCatalogApplied
 
                 && (!_runtimeProjection.HasAnySignalBoxElementsAvailable || !_runtimeProjection.HasAnyLocomotiveFleetAvailable))
 
@@ -368,230 +366,93 @@ public sealed partial class MauiViewModel
     }
 
     private Task OnRuntimeHubSolutionUpdatedAsync(DateTimeOffset updatedAt)
-
     {
-
         _ = updatedAt;
-
-        if (!IsMobaflowConnectionEnabled || _solutionRemoteLoader == null)
-
+        if (IsMobaflowConnectionEnabled && GetRestApiEndpoint() is { } endpoint)
         {
-
-            return Task.CompletedTask;
-
+            RunInBackground(
+                _solutionSynchronizer.SyncAfterPushAsync(endpoint, _applicationLifetimeCts.Token),
+                "Solution sync after MOBAflow push");
         }
-
-        if (string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0)
-
-        {
-
-            return Task.CompletedTask;
-
-        }
-
-        if (_mobaflowInitialCatalogApplied)
-
-        {
-
-            return Task.CompletedTask;
-
-        }
-
-        RunInBackground(
-
-            _solutionRemoteLoader.ForceSyncAsync(
-
-                RestApiIpAddress,
-
-                RestApiPort,
-
-                _applicationLifetimeCts.Token),
-
-            "Solution sync after MOBAflow push");
 
         return Task.CompletedTask;
-
     }
 
-    private async Task SyncSolutionAfterHubConnectAsync()
-
-    {
-
-        if (!IsMobaflowConnectionEnabled || _solutionRemoteLoader == null)
-
-        {
-
-            return;
-
-        }
-
-        if (string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0)
-
-        {
-
-            return;
-
-        }
-
-        try
-
-        {
-
-            await _solutionRemoteLoader
-
-                .ForceSyncAsync(RestApiIpAddress, RestApiPort, _applicationLifetimeCts.Token)
-
-                .ConfigureAwait(false);
-
-        }
-
-        catch (Exception ex)
-
-        {
-
-            _logger.LogDebug(ex, "Initial solution sync after hub connect failed");
-
-        }
-    }
+    /// <summary>The MOBApi endpoint shown on the MOBAflow card; null until one is known.</summary>
+    private MobaflowEndpoint? GetRestApiEndpoint() =>
+        string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0
+            ? null
+            : new MobaflowEndpoint(RestApiIpAddress, RestApiPort);
 
     /// <summary>
     /// One-time catalog import (signals + locomotives) after a MOBAflow session is established.
     /// Live snapshot streaming for aspects and locomotive state continues afterward.
     /// </summary>
-
     private async Task ApplyInitialMobaflowCatalogAsync()
     {
-        if (!IsMobaflowConnectionEnabled || _mobaflowInitialCatalogApplied)
+        var imported = await _solutionSynchronizer
+            .ImportInitialCatalogAsync(
+                () => IsMobaflowConnectionEnabled,
+                GetRestApiEndpoint,
+                RequestInitialRuntimeSnapshotAsync,
+                _applicationLifetimeCts.Token)
+            .ConfigureAwait(false);
+        if (!imported)
         {
             return;
         }
 
-        await _mobaflowCatalogSyncLock.WaitAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
+        _uiDispatcher.InvokeOnUiLowPriority(() =>
+        {
+            ApplyBestAvailableSignalBoxElements();
+            ApplyBestAvailableLocomotiveFleet();
+            _solutionSynchronizer.MarkInitialCatalogApplied();
+        });
+    }
+
+    private async Task RequestInitialRuntimeSnapshotAsync()
+    {
+        if (_runtimeHubRemoteClient == null)
+        {
+            return;
+        }
+
         try
         {
-            if (!IsMobaflowConnectionEnabled || _mobaflowInitialCatalogApplied)
-            {
-                return;
-            }
-
-            await SyncSolutionAfterHubConnectAsync().ConfigureAwait(false);
-
-            if (_runtimeHubRemoteClient != null)
-            {
-                try
-                {
-                    await _runtimeHubRemoteClient
-                        .RequestLatestSnapshotAsync(_applicationLifetimeCts.Token)
-                        .ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogDebug(ex, "Initial runtime snapshot request during catalog import failed");
-                }
-            }
-
-            _uiDispatcher.InvokeOnUiLowPriority(() =>
-            {
-                ApplyBestAvailableSignalBoxElements();
-                ApplyBestAvailableLocomotiveFleet();
-                _mobaflowInitialCatalogApplied = true;
-            });
+            await _runtimeHubRemoteClient
+                .RequestLatestSnapshotAsync(_applicationLifetimeCts.Token)
+                .ConfigureAwait(false);
         }
-        finally
+        catch (Exception ex)
         {
-            _mobaflowCatalogSyncLock.Release();
+            _logger.LogDebug(ex, "Initial runtime snapshot request during catalog import failed");
         }
     }
 
     /// <summary>
     /// Re-fetches the MOBAflow solution for train control when the Control tab becomes active.
     /// </summary>
-
     public async Task RequestSolutionSyncAsync(CancellationToken cancellationToken = default)
-
     {
-
-        if ((_projectContext?.SelectedProject?.Locomotives.Count ?? 0) == 0
-
-            && _solutionRemoteLoader != null)
-
+        var synced = await _solutionSynchronizer
+            .RequestSyncAsync(
+                (_projectContext?.SelectedProject?.Locomotives.Count ?? 0) > 0,
+                IsMobaflowConnectionEnabled ? GetRestApiEndpoint() : null,
+                cancellationToken)
+            .ConfigureAwait(false);
+        if (!synced)
         {
-
-            try
-
-            {
-
-                await _solutionRemoteLoader
-
-                    .TryLoadFromCacheAsync(cancellationToken: cancellationToken)
-
-                    .ConfigureAwait(false);
-
-            }
-
-            catch (Exception ex)
-
-            {
-
-                _logger.LogDebug(ex, "On-demand cached solution load failed");
-
-            }
-        }
-
-        if (!IsMobaflowConnectionEnabled
-
-            || _solutionRemoteLoader == null
-
-            || string.IsNullOrWhiteSpace(RestApiIpAddress)
-
-            || RestApiPort <= 0)
-
-        {
-
             return;
-
-        }
-
-        if (!_mobaflowInitialCatalogApplied)
-
-        {
-
-            try
-
-            {
-
-                await _solutionRemoteLoader
-
-                    .ForceSyncAsync(RestApiIpAddress, RestApiPort, cancellationToken)
-
-                    .ConfigureAwait(false);
-
-            }
-
-            catch (Exception ex)
-
-            {
-
-                _logger.LogDebug(ex, "On-demand solution sync failed");
-
-            }
         }
 
         _uiDispatcher.InvokeOnUi(() =>
-
         {
-
             ApplyBestAvailableLocomotiveFleet();
-
             if (!_runtimeProjection.HasAnyLocomotiveFleetAvailable)
-
             {
-
                 RequestSignalBoxSnapshotRefresh();
-
             }
         });
-
     }
 }
 
