@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) implemented; review/integration tracked in #219; later slices planned
-**Evidence**: Settings integrated at `bfe9b91d725c844e74011c54522f91cf47bef3fb`; locomotive implementation base `64665ddae5699e2d199fb0d846debe0b446e8666`; synchronized with main `fe85b857` on 2026-10-12
+**Evidence**: Settings integrated at `bfe9b91d725c844e74011c54522f91cf47bef3fb`; locomotive implementation base `64665ddae5699e2d199fb0d846debe0b446e8666`; synchronized with main `cc4fcbba` on 2026-10-12
 
 ## Purpose and scope
 
@@ -89,7 +89,7 @@ Do not instantiate Backend services or create fallback runtime gateways in the e
 RF-25 later owns the wider constructor cleanup; RF-24 only makes its new dependencies explicit.
 
 Preserve persistent ViewModel state with host-owned registrations matching the current singleton
-page state and transient views. The shell and pages may share a focused status/settings instance;
+page state and existing view registrations. The shell and pages may share a focused status/settings instance;
 page ViewModels must never depend on the shell. Dispose subscriptions at the actual owning lifetime.
 Keep EventBus UI dispatch at the decorated bus; inspect raw callbacks separately.
 
