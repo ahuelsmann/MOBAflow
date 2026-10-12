@@ -14,7 +14,7 @@ public partial class MainWindowViewModel
     /// Gets the speech status text shown in the status bar.
     /// Uses the current provider health result for both local providers.
     /// </summary>
-    public string SpeechStatusDisplayText => SpeechHealthStatus;
+    public string SpeechStatusDisplayText => this.SpeechHealthStatus;
 
     /// <summary>
     /// Update health status UI properties based on status message.

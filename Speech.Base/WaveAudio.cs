@@ -52,14 +52,7 @@ public static class WaveAudio
             var chunk = audio.Slice(offset, 4);
             if (chunk.SequenceEqual("fmt "u8) && length >= 16)
             {
-                var format = BinaryPrimitives.ReadUInt16LittleEndian(audio.Slice(dataOffset, 2));
-                bytesPerSecond = BinaryPrimitives.ReadInt32LittleEndian(audio.Slice(dataOffset + 8, 4));
-                blockAlign = BinaryPrimitives.ReadUInt16LittleEndian(audio.Slice(dataOffset + 12, 2));
-                bitsPerSample = BinaryPrimitives.ReadUInt16LittleEndian(audio.Slice(dataOffset + 14, 2));
-                if (format != 1 || bytesPerSecond <= 0 || blockAlign <= 0)
-                {
-                    throw new InvalidDataException("Unsupported speech WAV format.");
-                }
+                (bytesPerSecond, blockAlign, bitsPerSample) = ReadFormat(audio.Slice(dataOffset, 16));
             }
             else if (chunk.SequenceEqual("data"u8) && bytesPerSecond > 0 && length % blockAlign == 0)
             {
@@ -72,6 +65,19 @@ public static class WaveAudio
         }
 
         throw new InvalidDataException("Speech WAV contains no PCM audio.");
+    }
+
+    private static (int BytesPerSecond, int BlockAlign, int BitsPerSample) ReadFormat(ReadOnlySpan<byte> audio)
+    {
+        var format = BinaryPrimitives.ReadUInt16LittleEndian(audio[..2]);
+        var bytesPerSecond = BinaryPrimitives.ReadInt32LittleEndian(audio.Slice(8, 4));
+        var blockAlign = BinaryPrimitives.ReadUInt16LittleEndian(audio.Slice(12, 2));
+        var bitsPerSample = BinaryPrimitives.ReadUInt16LittleEndian(audio.Slice(14, 2));
+        if (format != 1 || bytesPerSecond <= 0 || blockAlign <= 0)
+        {
+            throw new InvalidDataException("Unsupported speech WAV format.");
+        }
+        return (bytesPerSecond, blockAlign, bitsPerSample);
     }
 
     private readonly record struct WaveInfo(int DataOffset, int DataLength, int BytesPerSecond, int BitsPerSample);
