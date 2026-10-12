@@ -15,7 +15,6 @@ public partial class MainWindowViewModel
     private static readonly ObservableCollection<VehicleItemViewModel> EmptyVehicleItems = [];
 
     // Preserve ItemsSource identity while membership is unchanged so editing a name keeps WinUI selection.
-    private List<LocomotiveViewModel> _filteredLocomotiveLibrary = [];
     private List<PassengerWagonViewModel> _filteredPassengerWagonLibrary = [];
     private List<GoodsWagonViewModel> _filteredGoodsWagonLibrary = [];
 
@@ -81,12 +80,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(FilteredTrains));
     }
 
-    partial void OnLocomotiveSearchTextChanged(string value)
-    {
-        _ = value;
-        OnPropertyChanged(nameof(FilteredLocomotiveLibrary));
-    }
-
     partial void OnPassengerWagonSearchTextChanged(string value)
     {
         _ = value;
@@ -117,19 +110,6 @@ public partial class MainWindowViewModel
             return string.IsNullOrWhiteSpace(TrainSearchText)
                 ? [.. SelectedProject.Trains]
                 : [.. SelectedProject.Trains.Where(train => train.Name.Contains(TrainSearchText, StringComparison.OrdinalIgnoreCase))];
-        }
-    }
-
-    public List<LocomotiveViewModel> FilteredLocomotiveLibrary
-    {
-        get
-        {
-            var search = LocomotiveSearchText.Trim();
-            var matches = SelectedProject?.Locomotives
-                .Where(locomotive => locomotive.Name.Contains(search, StringComparison.OrdinalIgnoreCase)).ToList() ?? [];
-            if (!_filteredLocomotiveLibrary.SequenceEqual(matches))
-                _filteredLocomotiveLibrary = matches;
-            return _filteredLocomotiveLibrary;
         }
     }
 

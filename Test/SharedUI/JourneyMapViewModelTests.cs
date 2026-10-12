@@ -13,8 +13,17 @@ using Moba.SharedUI.ViewModel;
 using Moq;
 
 [TestFixture]
-internal class JourneyMapViewModelTests
+internal sealed partial class JourneyMapViewModelTests : IDisposable
 {
+    private readonly TestLocomotivePages _locomotivePages = new();
+
+    [TearDown]
+    public void Dispose()
+    {
+        _locomotivePages.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     [Test]
     public void RouteStations_ReturnsJourneyStations()
     {
@@ -37,7 +46,7 @@ internal class JourneyMapViewModelTests
         Assert.That(viewModel.ProgressText, Is.EqualTo("Station 1 of 2"));
     }
 
-    private static MainWindowViewModel CreateMainWindowViewModel()
+    private MainWindowViewModel CreateMainWindowViewModel()
     {
         var runtimeMock = new Mock<IMobaRuntime>();
         var eventBusMock = new Mock<IEventBus>();
@@ -49,6 +58,7 @@ internal class JourneyMapViewModelTests
         runtimeMock.Setup(runtime => runtime.Current).Returns(new MobaRuntimeSnapshot());
         runtimeMock.Setup(runtime => runtime.GetTrafficPackets()).Returns([]);
 
+        var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), dispatcherMock.Object, runtimeMock.Object);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
@@ -58,7 +68,8 @@ internal class JourneyMapViewModelTests
             eventBusMock.Object,
             dispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcherMock.Object),
-            TestSolutionSessions.Create(new Solution(), dispatcherMock.Object, runtimeMock.Object),
+            _locomotivePages.GetPage(locomotiveSession1, null),
+            locomotiveSession1,
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
