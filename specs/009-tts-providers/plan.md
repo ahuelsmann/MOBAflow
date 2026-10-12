@@ -6,7 +6,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Approved; slice 1 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11). Slice 2 implemented in draft [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250); current-head CI/Sonar and manual UI acceptance pending. Slices 3-6 pending.
+**Status**: Approved; slice 1 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11). Slice 2 implemented in draft [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250); Sonar gate OK with zero OPEN/CONFIRMED findings on `7dbda9c5`; CI completion and manual UI acceptance pending. Slices 3-6 pending.
 
 **Input**: Feature specification from `/specs/009-tts-providers/spec.md`
 
