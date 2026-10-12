@@ -32,7 +32,7 @@ public static class LanIpv4AddressHelper
         {
             foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
             {
-                if (!IsDiscoveryCapableInterface(ni))
+                if (!IsDiscoveryCapableInterface(ni, OperatingSystem.IsAndroid()))
                 {
                     continue;
                 }
@@ -52,6 +52,20 @@ public static class LanIpv4AddressHelper
         AugmentAddresses?.Invoke(privateAddresses);
 
         return privateAddresses;
+    }
+
+    /// <summary>Filters supplied addresses to distinct private IPv4 addresses without querying the network.</summary>
+    public static IReadOnlyList<IPAddress> SelectPrivateIpv4Addresses(IEnumerable<IPAddress> addresses)
+    {
+        ArgumentNullException.ThrowIfNull(addresses);
+
+        var candidates = new List<IPAddress>();
+        foreach (var address in addresses)
+        {
+            TryAddPrivateAddress(candidates, address);
+        }
+
+        return candidates;
     }
 
     private static void TryAddPrivateAddress(List<IPAddress> addresses, IPAddress address)
@@ -74,8 +88,11 @@ public static class LanIpv4AddressHelper
         addresses.Add(address);
     }
 
-    private static bool IsDiscoveryCapableInterface(NetworkInterface ni)
+    /// <summary>Checks a supplied interface and platform flag without enumerating operating-system interfaces.</summary>
+    public static bool IsDiscoveryCapableInterface(NetworkInterface ni, bool isAndroid)
     {
+        ArgumentNullException.ThrowIfNull(ni);
+
         if (ni.OperationalStatus != OperationalStatus.Up)
         {
             return false;
@@ -95,6 +112,6 @@ public static class LanIpv4AddressHelper
         }
 
         return AllowedInterfaceTypes.Contains(ni.NetworkInterfaceType)
-               || OperatingSystem.IsAndroid();
+               || isAndroid;
     }
 }
