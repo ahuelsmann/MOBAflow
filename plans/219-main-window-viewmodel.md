@@ -2,8 +2,8 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Active; slice 1 (Settings) in implementation, later slices remain planned
-**Evidence**: implementation base `e7cc6f3232ffc6b22fe890dba054371642e901ec`, inspected on 2026-10-11
+**Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) implemented; review/integration tracked in #219; later slices planned
+**Evidence**: Settings integrated at `bfe9b91d725c844e74011c54522f91cf47bef3fb`; locomotive implementation base `64665ddae5699e2d199fb0d846debe0b446e8666`; synchronized with main `9bd2e4e8` on 2026-10-12
 
 ## Purpose and scope
 
@@ -34,7 +34,7 @@ The maintainer authorized the Settings slice on 2026-10-11. It starts from integ
 existing shell/composition, WinUI page bindings/navigation, grid-column persistence,
 MonitorPageViewModel, EventManagerViewModel and Android shutdown lookup are named residuals.
 PostStartupInitializationService already uses the session and is not a shell exception.
-This slice rejects shell dependencies in SettingsPage even while other pages remain allowed.
+SettingsPage and LocomotivesPage reject shell dependencies even while other pages remain allowed.
 The remaining core retains selected-project projections, operating state and shutdown;
 ISolutionSession owns the solution and canonical selection, and operator commands stay on
 IRuntimeCommandGateway. Settings extraction changes neither boundary.
@@ -44,12 +44,12 @@ without provider implementation or project changes.
 ## Source inventory and proposed owners
 
 The source links below reflect the refreshed integrated slice; counts describe the original inventory. Line counts are file-size
-observations, not coverage or quality metrics. The Settings slice removes two shell partials; nineteen shell source files remain.
+observations, not coverage or quality metrics. The Settings slice removes two shell partials; nineteen shell source files remain. The locomotive slice removes their locomotive members without moving the remaining wagon/train behavior.
 
 | Responsibility and evidence | Proposed boundary | Existing behavior to preserve |
 | --- | --- | --- |
 | [SettingsPageViewModel](../SharedUI/ViewModel/SettingsPageViewModel.cs), extracted from the settings partial; [SettingsPage](../MOBAflow/View/SettingsPage.xaml.cs):24-36 and its layout partial | Focused SettingsPageViewModel using AppSettings, ISettingsService and existing speech-test integration | Setter equality checks, notifications, immediate persistence, reset, feature availability, Piper voices, speech success/failure |
-| [Wagons partial](../SharedUI/ViewModel/MainWindowViewModel.Wagons.cs), 482 lines, and [Train partial](../SharedUI/ViewModel/MainWindowViewModel.Train.cs), 264 lines | Focused locomotive, passenger/goods wagon and train page state; reuse LocomotiveManagementViewModel | CRUD, filtered lists, rename selection identity, composition ordering and photo assignment to the initiating context |
+| [LocomotivesPageViewModel](../SharedUI/ViewModel/LocomotivesPageViewModel.cs), extracted locomotive editor; remaining [Wagons partial](../SharedUI/ViewModel/MainWindowViewModel.Wagons.cs) and [Train partial](../SharedUI/ViewModel/MainWindowViewModel.Train.cs) (originally 482 and 264 lines) | Focused locomotive, passenger/goods wagon and train page state; reuse LocomotiveManagementViewModel | CRUD, filtered lists, rename selection identity, composition ordering and photo assignment to the initiating context |
 | [Stations partial](../SharedUI/ViewModel/MainWindowViewModel.Stations.cs), 127 lines; [Journey partial](../SharedUI/ViewModel/MainWindowViewModel.Journey.cs), 223 lines; city commands in the core file | Stations and journey page ViewModels reading IProjectContext/IJourneySelectionContext | Shared journey selection, stations/platforms, city library, command availability, nested model change tracking |
 | [Workflow partial](../SharedUI/ViewModel/MainWindowViewModel.Workflow.cs), 187 lines; [WorkflowsPage](../MOBAflow/View/WorkflowsPage.xaml):32 onwards | Register and inject the existing WorkflowLibraryViewModel; add only page presentation state that it lacks | Selection, action editing/order, validation, dry-run cancellation, trace and editor state; no second workflow engine |
 | Counter, Diagnostics, HealthStatus, RestApiStatus and SyncDiagnostics partials | Focused counter/diagnostic/status projections using existing runtime query contracts and EventBus | Counter errors and reset result, filters, health/API status, sync state and project isolation |
@@ -89,7 +89,7 @@ Do not instantiate Backend services or create fallback runtime gateways in the e
 RF-25 later owns the wider constructor cleanup; RF-24 only makes its new dependencies explicit.
 
 Preserve persistent ViewModel state with host-owned registrations matching the current singleton
-page state and transient views. The shell and pages may share a focused status/settings instance;
+page state and existing view registrations. The shell and pages may share a focused status/settings instance;
 page ViewModels must never depend on the shell. Dispose subscriptions at the actual owning lifetime.
 Keep EventBus UI dispatch at the decorated bus; inspect raw callbacks separately.
 
@@ -104,13 +104,23 @@ not RF-24, owns settings relocation and feature-toggle representation changes.
 Each code slice starts only after the start gate and is delivered as its own draft PR.
 Refresh the base and update this plan from evidence after each integrated slice.
 
-1. **Settings (implemented, awaiting PR checks/review):** SettingsPageViewModel owns setters/reset,
+1. **Settings (integrated through #248; automated gates passed, manual UI acceptance open):** SettingsPageViewModel owns setters/reset,
    speech testing, feature toggles and settings-section state. SettingsPage, shell speech/theme and
    the overview startup indicator share this DI instance. Both superseded settings partials are
    removed. Regression tests cover persistence, reset/error paths, Piper selection, shared identity
    and shutdown unsubscription. Speech behavior remains behind its current integration; #244
    characterizes the current first-resolved settings-test engine and is preserved here.
 2. **Rolling stock:** extract locomotives, then wagons, then train composition in separable PRs.
+   - **2a Locomotives (implemented; review/integration tracked in #219):** LocomotivesPageViewModel owns
+     selection, search, stable filtered-list identity, CRUD, photo commands and panel expansion.
+     It reads ISolutionSession directly, reuses LocomotiveManagementViewModel and keeps the same
+     state in LocomotivesPage and the locomotive library in TrainsPage. The shell only forwards
+     uploaded photos for the active page. Explorer launching is adapted in WinUI composition.
+     Remove the superseded locomotive members from Wagons, Train and LayoutPanels partials;
+     keep wagon and train-composition behavior for their later slices. Regression tests cover
+     cancelled/stale photo operations, persistence, rename selection, project changes, management
+     projection and shutdown unsubscription. Manual UI acceptance remains a separate gate.
+   - **2b Wagons and 2c train composition:** planned; not implemented by 2a.
    Reuse management state; move photo commands and their context checks together. Delete Wagons.cs
    and Train.cs after their consumers move, including relevant selection handlers in core.
 3. **Stations/journeys:** extract station/platform and journey/city presentation; keep canonical

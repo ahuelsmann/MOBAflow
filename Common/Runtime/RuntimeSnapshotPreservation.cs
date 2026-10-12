@@ -107,6 +107,7 @@ public static class RuntimeSnapshotPreservation
             IsOperatorAckRequired = source.IsOperatorAckRequired,
             JourneyStates = source.JourneyStates,
             InPortCounters = source.InPortCounters,
+            InPortCounterPersistenceError = source.InPortCounterPersistenceError,
             LocomotiveStates = source.LocomotiveStates,
             LocomotiveFleet = locomotiveFleet,
             SignalBoxElements = signalBoxElements,

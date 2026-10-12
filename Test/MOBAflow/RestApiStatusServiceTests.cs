@@ -20,8 +20,17 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 
 [TestFixture]
-internal sealed partial class RestApiStatusServiceTests
+internal sealed partial class RestApiStatusServiceTests : IDisposable
 {
+    private readonly TestLocomotivePages _locomotivePages = new();
+
+    [TearDown]
+    public void Dispose()
+    {
+        _locomotivePages.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     [Test]
     public void GetToggleablePages_Should_CoverEveryRegisteredFeaturePage_WhenNavigationIsRegistered()
     {
@@ -107,7 +116,7 @@ internal sealed partial class RestApiStatusServiceTests
         await dependencies.DisposeAsync().ConfigureAwait(true);
     }
 
-    private static TestDependencies CreateDependencies(
+    private TestDependencies CreateDependencies(
         HttpMessageHandler statusHandler,
         IPhotoHubClient? actualPhotoHubClient = null,
         int port = 5001)
@@ -172,7 +181,7 @@ internal sealed partial class RestApiStatusServiceTests
             runtimeHubHostClient);
     }
 
-    private static MainWindowViewModel CreateMainWindowViewModel(
+    private MainWindowViewModel CreateMainWindowViewModel(
         AppSettings appSettings,
         Mock<IMobaRuntime> mobaRuntime,
         IEventBus eventBus)
@@ -182,6 +191,7 @@ internal sealed partial class RestApiStatusServiceTests
             .Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
 
+        var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcher.Object, mobaRuntime.Object);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
@@ -191,7 +201,8 @@ internal sealed partial class RestApiStatusServiceTests
             eventBus,
             uiDispatcher.Object,
             TestSettingsPages.Create(appSettings, uiDispatcher.Object),
-            TestSolutionSessions.Create(new Solution(), uiDispatcher.Object, mobaRuntime.Object),
+            _locomotivePages.GetPage(locomotiveSession1, null),
+            locomotiveSession1,
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object

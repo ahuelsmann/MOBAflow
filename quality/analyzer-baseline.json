@@ -2435,7 +2435,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "SharedUI",
@@ -2581,8 +2581,15 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/LocomotivesPageViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2988,7 +2995,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 19
+      "count": 11
     },
     {
       "project": "SharedUI",
@@ -3114,7 +3121,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 12
+      "count": 7
     },
     {
       "project": "SharedUI",
@@ -3184,7 +3191,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 4
+      "count": 2
     },
     {
       "project": "SharedUI",
@@ -3632,7 +3639,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 6
+      "count": 4
     },
     {
       "project": "SharedUI",
@@ -5381,6 +5388,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/LocomotivesPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/SettingsPageViewModelTests.cs",
       "count": 1
     },
@@ -5879,20 +5893,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1852",
       "path": "Test/Domain/WorkflowTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1852",
-      "path": "Test/SharedUI/JourneyMapViewModelTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1852",
-      "path": "Test/SharedUI/MainWindowViewModelShutdownTests.cs",
       "count": 1
     },
     {

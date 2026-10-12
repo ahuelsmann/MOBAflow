@@ -21,8 +21,17 @@ using Moq;
 /// Regression tests for MainWindowViewModel shutdown behavior.
 /// </summary>
 [TestFixture]
-internal partial class MainWindowViewModelShutdownTests
+internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
 {
+    private readonly TestLocomotivePages _locomotivePages = new();
+
+    [TearDown]
+    public void Dispose()
+    {
+        _locomotivePages.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     [Test]
     public async Task PrepareForShutdownAsync_UnsubscribesFromRuntimeSnapshots()
     {
@@ -150,7 +159,7 @@ internal partial class MainWindowViewModelShutdownTests
         return mobaRuntimeMock;
     }
 
-    private static MainWindowViewModel CreateViewModel(
+    private MainWindowViewModel CreateViewModel(
         Mock<IMobaRuntime> mobaRuntimeMock,
         IEventBus? eventBus = null,
         Mock<IProjectRuntimeHost>? host = null,
@@ -164,6 +173,14 @@ internal partial class MainWindowViewModelShutdownTests
             .Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
 
+        var locomotiveSession1 = host is null
+                ? TestSolutionSessions.Create(solution ?? new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object)
+                : new SolutionSession(
+                    solution ?? new Solution(),
+                    new NullIoService(),
+                    uiDispatcherMock.Object,
+                    host.Object,
+                    NullLogger<SolutionSession>.Instance);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
@@ -173,14 +190,8 @@ internal partial class MainWindowViewModelShutdownTests
             eventBus ?? new Mock<IEventBus>().Object,
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            host is null
-                ? TestSolutionSessions.Create(solution ?? new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object)
-                : new SolutionSession(
-                    solution ?? new Solution(),
-                    new NullIoService(),
-                    uiDispatcherMock.Object,
-                    host.Object,
-                    NullLogger<SolutionSession>.Instance),
+            _locomotivePages.GetPage(locomotiveSession1, null),
+            locomotiveSession1,
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
