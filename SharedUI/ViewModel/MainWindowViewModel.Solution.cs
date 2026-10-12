@@ -226,7 +226,6 @@ public partial class MainWindowViewModel
 
         // Wagons & Locomotives
         SelectedTrain = null;
-        SelectedLocomotive = null;
         SelectedPassengerWagon = null;
         SelectedGoodsWagon = null;
         SelectedVehicle = null;
