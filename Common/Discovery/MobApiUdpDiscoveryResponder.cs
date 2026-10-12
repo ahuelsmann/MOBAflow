@@ -152,20 +152,7 @@ public static class MobApiDiscoveryAddressResolver
         try
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
-            var remoteBytes = remoteIp.GetAddressBytes();
-            foreach (var local in host.AddressList)
-            {
-                if (local.AddressFamily != AddressFamily.InterNetwork)
-                {
-                    continue;
-                }
-
-                if (IsInSameSubnet(local.GetAddressBytes(), remoteBytes, 24)
-                    || IsInSameSubnet(local.GetAddressBytes(), remoteBytes, 16))
-                {
-                    return local.ToString();
-                }
-            }
+            return SelectLocalIpAddressInSubnet(remoteIp, host.AddressList);
         }
         catch
         {
@@ -183,21 +170,58 @@ public static class MobApiDiscoveryAddressResolver
         try
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
-            var candidates = host.AddressList
-                .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork)
-                .Select(ip => ip.ToString())
-                .ToList();
-
-            var preferred = candidates.FirstOrDefault(ip => ip.StartsWith("192.168.", StringComparison.Ordinal))
-                            ?? candidates.FirstOrDefault(ip => ip.StartsWith("10.", StringComparison.Ordinal))
-                            ?? candidates.FirstOrDefault(ip => ip.StartsWith("172.", StringComparison.Ordinal));
-
-            return preferred ?? "127.0.0.1";
+            return SelectLocalIpAddress(host.AddressList);
         }
         catch
         {
             return "127.0.0.1";
         }
+    }
+
+    /// <summary>Selects the first supplied IPv4 address matching the remote /24 or /16 subnet, without DNS access.</summary>
+    public static string? SelectLocalIpAddressInSubnet(IPAddress remoteIp, IEnumerable<IPAddress> localAddresses)
+    {
+        ArgumentNullException.ThrowIfNull(remoteIp);
+        ArgumentNullException.ThrowIfNull(localAddresses);
+
+        if (remoteIp.AddressFamily != AddressFamily.InterNetwork)
+        {
+            return null;
+        }
+
+        var remoteBytes = remoteIp.GetAddressBytes();
+        foreach (var local in localAddresses)
+        {
+            if (local.AddressFamily != AddressFamily.InterNetwork)
+            {
+                continue;
+            }
+
+            if (IsInSameSubnet(local.GetAddressBytes(), remoteBytes, 24)
+                || IsInSameSubnet(local.GetAddressBytes(), remoteBytes, 16))
+            {
+                return local.ToString();
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Selects the existing 192.168.*, 10.*, then 172.* advertisement preference from supplied addresses.</summary>
+    public static string SelectLocalIpAddress(IEnumerable<IPAddress> localAddresses)
+    {
+        ArgumentNullException.ThrowIfNull(localAddresses);
+
+        var candidates = localAddresses
+            .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork)
+            .Select(ip => ip.ToString())
+            .ToList();
+
+        var preferred = candidates.FirstOrDefault(ip => ip.StartsWith("192.168.", StringComparison.Ordinal))
+                        ?? candidates.FirstOrDefault(ip => ip.StartsWith("10.", StringComparison.Ordinal))
+                        ?? candidates.FirstOrDefault(ip => ip.StartsWith("172.", StringComparison.Ordinal));
+
+        return preferred ?? "127.0.0.1";
     }
 
     private static bool IsInSameSubnet(byte[] local, byte[] remote, int prefixLength)
