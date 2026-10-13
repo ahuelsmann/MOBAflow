@@ -5,7 +5,7 @@ using Common.Configuration;
 using Microsoft.Extensions.Logging;
 
 /// <summary>Resolves current settings, shares cache misses and owns cancellable announcement playback.</summary>
-public sealed partial class SpeechOutput : ISpeechOutput, IDisposable, IAsyncDisposable
+public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
 {
     private readonly AppSettings _settings;
     private readonly Dictionary<string, ISpeechProvider> _providers;
@@ -60,10 +60,7 @@ public sealed partial class SpeechOutput : ISpeechOutput, IDisposable, IAsyncDis
     /// <summary>Clears cached audio; older syntheses cannot refill the cleared generation.</summary>
     public Task ClearCacheAsync(CancellationToken cancellationToken = default) => _cache.ClearAsync(cancellationToken);
 
-    /// <inheritdoc />
-    public void Dispose() => _ = BeginShutdown();
-
-    /// <inheritdoc />
+    /// <summary>Cancels and awaits synthesis and playback. Shutdown is asynchronous only, so callers cannot skip the wait.</summary>
     public ValueTask DisposeAsync() => new(BeginShutdown());
 
     private async Task<SpeechResult> SpeakCoreAsync(string text, CancellationToken cancellationToken)
