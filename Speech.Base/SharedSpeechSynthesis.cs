@@ -1,14 +1,19 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Speech.Base;
 
-/// <summary>One synthesis per key, with a separate token owned by all active waiters.</summary>
+/// <summary>
+/// One synthesis per key, with a separate token owned by all active waiters. A completed flight stays joinable while
+/// any waiter still uses its result, so overlapping identical requests share it until the audio has played and been
+/// stored.
+/// </summary>
 internal sealed class SharedSpeechSynthesis(CancellationToken shutdownToken)
 {
     private readonly Lock _gate = new();
     private readonly Dictionary<string, Flight> _flights = new(StringComparer.Ordinal);
     private readonly HashSet<Flight> _running = [];
 
-    internal async Task<SpeechResult> RunAsync(string key, Func<CancellationToken, Task<SpeechResult>> synthesize, CancellationToken callerToken)
+    internal async Task<T> RunAsync<T>(string key, Func<CancellationToken, Task<SpeechResult>> synthesize,
+        Func<SpeechResult, Task<T>> use, CancellationToken callerToken)
     {
         Flight flight;
         lock (_gate)
@@ -27,7 +32,11 @@ internal sealed class SharedSpeechSynthesis(CancellationToken shutdownToken)
             }
             flight.Waiters++;
         }
-        try { return await flight.Completion.Task.WaitAsync(callerToken).ConfigureAwait(false); }
+        try
+        {
+            var result = await flight.Completion.Task.WaitAsync(callerToken).ConfigureAwait(false);
+            return await use(result).ConfigureAwait(false);
+        }
         finally { await ReleaseAsync(key, flight).ConfigureAwait(false); }
     }
 

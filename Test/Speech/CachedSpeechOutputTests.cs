@@ -399,6 +399,27 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
     }
 
     [Test]
+    public async Task IdenticalAnnouncementDuringPlaybackJoinsTheCompletedSynthesis()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var player = new GatedFirstPlayback();
+        var output = CreateOutput(provider, player);
+        await using var lifetime = output.ConfigureAwait(false);
+        var first = output.SpeakAsync("Overlapping");
+        await player.FirstStarted.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        var second = await output.SpeakAsync("Overlapping").WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        player.ReleaseFirst();
+        var firstResult = await first.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(firstResult.IsSuccess, Is.True);
+            Assert.That(second.IsSuccess, Is.True);
+            Assert.That(provider.Requests, Has.Count.EqualTo(1));
+            Assert.That(player.PlayCount, Is.EqualTo(2));
+        }
+    }
+
+    [Test]
     public async Task ClearAfterTheLookupRejectsAudioOfThatMiss()
     {
         var provider = new SpeechOutputTests.FakeProvider("system-speech");
@@ -484,6 +505,23 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
         {
             Assert.That(cached.WaveAudio.ToArray(), Is.EqualTo(TestWaveAudio.Create([2])));
             Assert.That(provider.Requests, Has.Count.EqualTo(2));
+        }
+    }
+
+    /// <summary>Holds the first playback open until released; later playbacks complete at once.</summary>
+    private sealed class GatedFirstPlayback : IWavePlayer
+    {
+        private readonly TaskCompletionSource _firstStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _releaseFirst = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _playCount;
+        public Task FirstStarted => _firstStarted.Task;
+        public int PlayCount => Volatile.Read(ref _playCount);
+        public void ReleaseFirst() => _releaseFirst.TrySetResult();
+        public Task PlayAsync(ReadOnlyMemory<byte> waveAudio, CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _playCount) != 1) return Task.CompletedTask;
+            _firstStarted.TrySetResult();
+            return _releaseFirst.Task.WaitAsync(cancellationToken);
         }
     }
 

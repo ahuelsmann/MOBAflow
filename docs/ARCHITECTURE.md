@@ -83,7 +83,8 @@ The default WAV limit is 500 MiB (`Speech.CacheSizeLimitMegabytes`); least recen
 synthesized audio is stored only after successful playback. The limit also applies before cache hits. A lock file
 serializes cache access across MOBAflow processes, which reload the index for every operation.
 Providers prepare a synthesis snapshot before cache lookup. Identical concurrent misses share one provider call,
-while each caller owns its wait and playback cancellation. The last cancelled waiter cancels the shared synthesis;
+which stays joinable until its audio has played and been stored, while each caller owns its wait and playback
+cancellation. The last cancelled waiter cancels the shared synthesis;
 host disposal cancels and awaits synthesis and playback. Clearing the cache invalidates writes from older work.
 Cache size/clear services are available; their Settings controls, Azure, fallback and deferred synthesis follow in later slices.
 

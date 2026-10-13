@@ -157,8 +157,9 @@ completion applies only to the current session, guarded across host-player insta
   every hit, whenever audio is stored, and when the size is read.
   A cache I/O failure is diagnosed without raw filesystem details and does not silence an otherwise valid announcement.
 - Synthesized audio is stored only after it has played successfully, with that playback as its last-use time, so the
-  cache never exceeds its limit and unheard audio never displaces played audio. Each successful playback of a cached
-  entry updates its last-use time. Provider fingerprints include effective Piper executable/model/config
+  cache never exceeds its limit and unheard audio never displaces played audio. A completed shared synthesis stays
+  joinable while any caller still plays or stores it, so an identical request during that playback reuses its audio
+  instead of calling the provider again. Each successful playback of a cached entry updates its last-use time. Provider fingerprints include effective Piper executable/model/config
   paths, pronunciation options and sentence silence; System Speech includes its
   configured default voice. Availability is excluded, so a cached announcement remains usable when the provider
   cannot start. Replacing model contents at the same configured path requires clearing the cache. Request text uses

@@ -76,25 +76,33 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
             var key = SpeechCacheKey.Create(provider.Id, prepared.OptionsFingerprint, request);
             // The generation comes from the same locked lookup, so a clear after it rejects this miss's audio.
             var lookup = await ReadCacheAsync(key, cancellationToken).ConfigureAwait(false);
-            var result = lookup.Audio is null
-                ? await _synthesis.RunAsync(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{lookup.Generation}:{key}"),
-                    token => SynthesizeSharedAsync(key, prepared, token), cancellationToken).ConfigureAwait(false)
-                : SpeechResult.Success(lookup.Audio.Value.ToArray());
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!result.IsSuccess) return ReportFailure(result);
-            await _player.PlayAsync(result.WaveAudio, cancellationToken).ConfigureAwait(false);
-            cancellationToken.ThrowIfCancellationRequested();
-            // Only audio that played successfully enters the cache, so it never displaces played audio unheard.
-            await UseCacheAsync(() => lookup.Audio is null
-                ? _cache.StoreAsync(key, result.WaveAudio, lookup.Generation, cancellationToken)
-                : _cache.MarkPlayedAsync(key, cancellationToken)).ConfigureAwait(false);
-            return result;
+            if (lookup.Audio is { } cached)
+            {
+                return await PlayAsync(SpeechResult.Success(cached.ToArray()),
+                    () => _cache.MarkPlayedAsync(key, cancellationToken), cancellationToken).ConfigureAwait(false);
+            }
+            // Playback and storage run inside the shared flight, so an overlapping identical request joins it instead
+            // of synthesizing again. Only audio that played successfully enters the cache.
+            return await _synthesis.RunAsync(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{lookup.Generation}:{key}"),
+                token => SynthesizeSharedAsync(key, prepared, token),
+                result => PlayAsync(result, () => _cache.StoreAsync(key, result.WaveAudio, lookup.Generation, cancellationToken), cancellationToken),
+                cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception ex) when (ex is InvalidOperationException or IOException or ArgumentException or NotSupportedException or System.ComponentModel.Win32Exception or UnauthorizedAccessException or TimeoutException or System.Runtime.InteropServices.COMException)
         {
             return ReportFailure(SpeechResult.Failure(SpeechFailureKind.Failed, "Speech synthesis or playback failed."));
         }
+    }
+
+    private async Task<SpeechResult> PlayAsync(SpeechResult result, Func<Task> recordPlayback, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!result.IsSuccess) return ReportFailure(result);
+        await _player.PlayAsync(result.WaveAudio, cancellationToken).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
+        await UseCacheAsync(recordPlayback).ConfigureAwait(false);
+        return result;
     }
 
     private async Task<SpeechResult> SynthesizeSharedAsync(string key, PreparedSpeechSynthesis prepared, CancellationToken token)
