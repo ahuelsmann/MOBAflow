@@ -2,7 +2,6 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
-using Backend.Service;
 using Backend.Service.Validation;
 
 using Common.Configuration;
@@ -70,11 +69,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="uiDispatcher">Dispatcher used to marshal callbacks onto the UI thread.</param>
     /// <param name="settingsPage">Shared settings presentation and persistence.</param>
     /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
-    /// <param name="executionContext">Execution context containing shared dependencies for workflow actions.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
     /// <param name="cityLibraryService">Optional city library service for master data.</param>
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
-    /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
     /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
@@ -86,16 +83,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IUiDispatcher uiDispatcher,
         SettingsPageViewModel settingsPage,
         TrainsPageViewModel trainsPage,
+        StationsPageViewModel stationsPage,
         ISolutionSession solutionSession,
-        ActionExecutionContext executionContext,
         ILogger<MainWindowViewModel> logger,
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
-        ILoggerFactory? loggerFactory = null,
         IDialogService? dialogService = null,
-        IProjectDiagnosticsService? projectDiagnosticsService = null,
-        IWorkflowService? workflowService = null,
-        IWorkflowTraceStore? workflowTraceStore = null)
+        IProjectDiagnosticsService? projectDiagnosticsService = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
@@ -107,7 +101,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(settingsPage);
         ArgumentNullException.ThrowIfNull(trainsPage);
         ArgumentNullException.ThrowIfNull(solutionSession);
-        ArgumentNullException.ThrowIfNull(executionContext);
+        ArgumentNullException.ThrowIfNull(stationsPage);
         ArgumentNullException.ThrowIfNull(logger);
 
         _session = solutionSession;
@@ -121,6 +115,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings = settings;
         SettingsPage = settingsPage;
         TrainsPage = trainsPage;
+        StationsPage = stationsPage;
         SettingsPage.PropertyChanged += OnSettingsPagePropertyChanged;
         SettingsPage.FeedbackPointCountChanged += OnFeedbackPointCountChanged;
         _logger = logger;
@@ -131,18 +126,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _dialogService = dialogService;
         _projectDiagnosticsService = projectDiagnosticsService;
 
-        WorkflowLibrary = new WorkflowLibraryViewModel(
-            _session,
-            dialogService,
-            new WorkflowValidator(),
-            loggerFactory?.CreateLogger<WorkflowLibraryViewModel>(),
-            new WorkflowLibraryRuntimeServices
-            {
-                WorkflowService = workflowService,
-                TraceStore = workflowTraceStore,
-                ExecutionContext = executionContext,
-                EventBus = eventBus
-            });
         WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
@@ -186,13 +169,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public LayoutColumnWidthsViewModel LayoutColumnWidths => _layoutColumnWidths;
 
     /// <summary>Gets the singleton workflow catalog and editor state shared by workflow surfaces.</summary>
-    public WorkflowLibraryViewModel WorkflowLibrary { get; }
+    public WorkflowLibraryViewModel WorkflowLibrary => StationsPage.WorkflowLibrary;
 
     /// <summary>Gets the host-owned settings state shared with SettingsPage and shell surfaces.</summary>
     public SettingsPageViewModel SettingsPage { get; }
 
     /// <summary>Gets the host-owned locomotive editor shared by inventory and train pages.</summary>
     public LocomotivesPageViewModel LocomotivesPage => TrainsPage.LocomotivesPage;
+
+    /// <summary>Gets the host-owned station/platform editor.</summary>
+    public StationsPageViewModel StationsPage { get; }
 
     /// <summary>Gets the host-owned train composition editor.</summary>
     public TrainsPageViewModel TrainsPage { get; }
@@ -473,6 +459,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SettingsPage.PropertyChanged -= OnSettingsPagePropertyChanged;
         SettingsPage.FeedbackPointCountChanged -= OnFeedbackPointCountChanged;
         WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
+        StationsPage.Dispose();
         WorkflowLibrary.Dispose();
         TrainsPage.Dispose();
         LocomotivesPage.Dispose();

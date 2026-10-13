@@ -50,6 +50,7 @@ internal sealed class SolutionSessionArchitectureTests
                 && !relative.StartsWith("MOBAflow/View/PassengerWagonPage", StringComparison.Ordinal)
                 && !relative.StartsWith("MOBAflow/View/GoodsWagonPage", StringComparison.Ordinal)
                 && !relative.StartsWith("MOBAflow/View/TrainsPage", StringComparison.Ordinal)
+                && !relative.StartsWith("MOBAflow/View/StationsPage", StringComparison.Ordinal)
                 && AllowedDependents.Keys.Any(allowed => relative.StartsWith(allowed, StringComparison.Ordinal)))
             {
                 continue;
