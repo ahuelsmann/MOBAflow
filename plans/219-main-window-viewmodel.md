@@ -44,7 +44,7 @@ without provider implementation or project changes.
 ## Source inventory and proposed owners
 
 The source links below reflect the refreshed integrated slice; counts describe the original inventory. Line counts are file-size
-observations, not coverage or quality metrics. The Settings slice removes two shell partials; nineteen shell source files remain. The locomotive and wagon slices remove stock editing from the shell; its narrow uploaded-photo routing and train-composition behavior remain.
+observations, not coverage or quality metrics. The Settings and rolling-stock slices remove their superseded shell partials. Stock editing and train composition now belong to focused page ViewModels; the shell retains narrow uploaded-photo routing and the station/journey runtime-refresh helper.
 
 | Responsibility and evidence | Proposed boundary | Existing behavior to preserve |
 | --- | --- | --- |
