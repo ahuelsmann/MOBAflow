@@ -2804,13 +2804,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1305",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1307",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
       "count": 1
@@ -2911,7 +2904,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 4
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -5179,6 +5172,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/JourneyMapViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/JourneyStationProjectionTests.cs",
       "count": 1
     },
     {
