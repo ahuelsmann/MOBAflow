@@ -195,6 +195,48 @@ internal sealed class MobaApiRuntimeDeploymentTests
         }
     }
 
+    [Test]
+    [Platform("Win")]
+    public void Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource()
+    {
+        var testRoot = CreateTestRoot();
+        var sourceDirectory = Path.Combine(testRoot, "source");
+        var assetDirectory = Path.Combine(sourceDirectory, "assets");
+        var runtimeRoot = Path.Combine(testRoot, "runtime");
+        Directory.CreateDirectory(assetDirectory);
+        var sourceAssembly = Path.Combine(sourceDirectory, MobaApiPathResolver.AssemblyFileName);
+        var lockedAsset = Path.Combine(assetDirectory, "locked.txt");
+        File.WriteAllText(sourceAssembly, "assembly");
+        File.WriteAllText(lockedAsset, "original asset");
+        try
+        {
+            using (File.Open(lockedAsset, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                var exception = Assert.Throws<IOException>(() =>
+                {
+                    using var deployment = MobaApiRuntimeDeployment.Create(sourceAssembly, runtimeRoot);
+                });
+
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(exception!.Message, Does.Contain("locked.txt"));
+                    Assert.That(Directory.Exists(runtimeRoot), Is.True);
+                    Assert.That(Directory.GetFileSystemEntries(runtimeRoot), Is.Empty);
+                }
+            }
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(File.ReadAllText(sourceAssembly), Is.EqualTo("assembly"));
+                Assert.That(File.ReadAllText(lockedAsset), Is.EqualTo("original asset"));
+            }
+        }
+        finally
+        {
+            Directory.Delete(testRoot, recursive: true);
+        }
+    }
+
     private static string CreateTestRoot()
     {
         var testRoot = Path.Combine(Path.GetTempPath(), nameof(MobaApiRuntimeDeploymentTests), Guid.NewGuid().ToString("N"));
