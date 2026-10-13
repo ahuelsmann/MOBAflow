@@ -573,10 +573,13 @@ and are registered as singletons by
 
 | Component | Responsibility and owned state |
 | --- | --- |
+| [`MobaflowEndpointLocator`](../SharedUI/Mobile/MobaflowEndpointLocator.cs) | Finds MOBApi on the LAN, anchored on the subnet of the selected project's Z21: startup retries, periodic rediscovery cadence and health-check delays. Remembers found and reachable addresses in the settings. |
 | [`MobaflowHubSession`](../SharedUI/Mobile/MobaflowHubSession.cs) | REST health checks, client registration cadence and SignalR connect retries/forced reconnect. Returns connection outcomes; the caller applies UI state. A failed REST check alone does not close an already connected hub. |
 | [`MobileRuntimeProjection`](../SharedUI/Mobile/MobileRuntimeProjection.cs) | Holds the latest remote fleet and signal-box snapshots, including restored cache data. Filters to the selected project and chooses/merges live remote, synchronized project, cached and local runtime data. Persists remote snapshots through `IMobileSolutionStore`; restored fleet data starts as stale. |
 | [`MobileSolutionSynchronizer`](../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog imports, tracks whether the current session's catalog was applied, and delegates push, periodic and on-demand solution refresh to `ISolutionRemoteLoader`. On-demand refresh can load the phone's cache first. |
-| `MauiViewModel` | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
+| [`MobilePhotoUploader`](../SharedUI/Mobile/MobilePhotoUploader.cs) | Takes a photo, uploads it to the known or discovered MOBApi endpoint and returns the result with its status text. |
+| [`MobileAppLifecycle`](../SharedUI/Mobile/MobileAppLifecycle.cs) | Android foreground-service keep-alive (syncs run in order), network-change debounce and the stopping state. Created and disposed by `MauiViewModel`. |
+| [`MauiViewModel`](../SharedUI/Mobile/MauiViewModel.cs) | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
 
 `MobileSolutionStore` owns disk persistence; `SolutionSession` owns the loaded
 solution and selection. Projection data does not become a second editable
