@@ -3198,7 +3198,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 17
+      "count": 12
     },
     {
       "project": "SharedUI",
@@ -3226,13 +3226,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "SharedUI/ViewModel/SpeakerEngineConfigurationViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA5394",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
       "count": 1
     },
     {
@@ -5152,6 +5145,13 @@
       "ruleId": "CA1812",
       "path": "Test/MOBApi/StatusControllerTests.cs",
       "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/BrakeAndDoorStateTests.cs",
+      "count": 1
     },
     {
       "project": "Test",

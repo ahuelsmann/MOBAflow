@@ -70,13 +70,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private int _previousLocoAddressForFunctionCache;
     private MobaRuntimeSnapshot? _lastRemoteRuntimeSnapshot;
     private int _previousSpeed;
-    private CancellationTokenSource? _doorReleaseBlinkCts;
-
-    private const string SignalWhiteHex = "#8A8A8A";
-    private const string SignalGreenHex = "#06D6A0";
-    private const string SignalYellowHex = "#FFD700";
-    private const string SignalRedHex = "#E63946";
-    private const string SignalGrayHex = "#888888";  // Neutral gray for inactive state (visible in both light/dark)
+    private readonly BrakeAndDoorState _brakeAndDoor = new(TimeProvider.System);
 
     // === DCC Speed Steps Configuration ===
 
@@ -323,43 +317,46 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <summary>
     /// True = show DoorClose icon, False = DoorOpen icon (for ContentTemplate binding).
     /// </summary>
-    public bool IsDoorCloseIconVisible => (IsDoorReleaseBlinking && IsDoorReleaseLockedNext) || (!IsDoorReleaseBlinking && IsDoorReleaseLocked);
+    public bool IsDoorCloseIconVisible =>
+        BrakeAndDoorState.IsDoorCloseIconVisible(IsDoorReleaseBlinking, IsDoorReleaseLockedNext, IsDoorReleaseLocked);
 
     /// <summary>
     /// Background color of brake button: green = released, red = applied.
     /// </summary>
-    public string BrakeButtonColorHex => IsParkingBrakeEnabled ? SignalRedHex : SignalGreenHex;
+    public string BrakeButtonColorHex => BrakeAndDoorState.GetBrakeButtonColor(IsParkingBrakeEnabled);
 
     /// <summary>
     /// Brake button: apply always possible (sets speed to 0). Release only when door release ended (doors closed).
     /// </summary>
-    public bool IsBrakeButtonEnabled => !IsParkingBrakeEnabled || IsDoorReleaseLocked;
+    public bool IsBrakeButtonEnabled => BrakeAndDoorState.IsBrakeButtonEnabled(IsParkingBrakeEnabled, IsDoorReleaseLocked);
 
     /// <summary>
     /// Segoe Fluent glyph for brake: Pause (applied) or Play (released).
     /// </summary>
-    public string BrakeButtonGlyph => IsParkingBrakeEnabled ? "\uE72E" : "\uE102";
+    public string BrakeButtonGlyph => BrakeAndDoorState.GetBrakeButtonGlyph(IsParkingBrakeEnabled);
 
     /// <summary>
     /// Background color of door release button: white when not relevant, green when released, red when locked, yellow when blinking.
     /// </summary>
-    public string DoorReleaseButtonColorHex => !IsParkingBrakeEnabled ? SignalWhiteHex : IsDoorReleaseBlinking ? SignalYellowHex : (!IsDoorReleaseLocked && SpeedKmh == 0 ? SignalGreenHex : SignalRedHex);
+    public string DoorReleaseButtonColorHex =>
+        BrakeAndDoorState.GetDoorButtonColor(IsParkingBrakeEnabled, IsDoorReleaseBlinking, IsDoorReleaseLocked, SpeedKmh);
 
-    public string DoorBlockedIndicatorColorHex => IsDoorBlocked ? SignalYellowHex : SignalWhiteHex;
+    public string DoorBlockedIndicatorColorHex => BrakeAndDoorState.GetDoorBlockedColor(IsDoorBlocked);
 
-    public string DoorBlockedIndicatorIconColorHex => IsDoorBlocked ? SignalRedHex : SignalGrayHex;
+    public string DoorBlockedIndicatorIconColorHex => BrakeAndDoorState.GetDoorBlockedIconColor(IsDoorBlocked);
 
     public double DoorBlockedIndicatorOpacity => IsDoorBlocked ? DoorReleaseBlinkOpacity : 1.0;
 
     /// <summary>
     /// Door release button only clickable when brake applied, 0 km/h, and not during blinking.
     /// </summary>
-    public bool IsDoorReleaseButtonEnabled => IsParkingBrakeEnabled && SpeedKmh == 0 && !IsDoorReleaseBlinking;
+    public bool IsDoorReleaseButtonEnabled =>
+        BrakeAndDoorState.IsDoorButtonEnabled(IsParkingBrakeEnabled, SpeedKmh, IsDoorReleaseBlinking);
 
     /// <summary>
     /// Speed may only be increased when brake released and doors closed (door release locked).
     /// </summary>
-    private bool CanIncreaseSpeed => !IsParkingBrakeEnabled && IsDoorReleaseLocked;
+    private bool CanIncreaseSpeed => BrakeAndDoorState.CanIncreaseSpeed(IsParkingBrakeEnabled, IsDoorReleaseLocked);
 
     // === Function button symbols (F0–F31) – per-locomotive PNG asset filenames, from Domain.Locomotive.FunctionSymbols ===
 
@@ -955,9 +952,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         DetachObservedProjectLocomotives();
         DetachObservedJourney();
         _speedController.Dispose();
-        _doorReleaseBlinkCts?.Cancel();
-        _doorReleaseBlinkCts?.Dispose();
-        _doorReleaseBlinkCts = null;
+        _brakeAndDoor.Dispose();
         _functionPanel.Dispose();
     }
 
@@ -1235,7 +1230,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         if (functionIndex < 0 || functionIndex > 31)
         {
-            return SignalGrayHex;
+            return TrainControlSignalColors.Gray;
         }
 
         return LocomotiveFunctionAppearanceResolver.GetColor(GetCurrentLocomotive(), functionIndex);
@@ -2035,8 +2030,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         IsDoorReleaseLockedNext = !IsDoorReleaseLocked;
         var isClosingDoor = IsDoorReleaseLockedNext;
-        var blockingDelaySeconds = isClosingDoor ? Random.Shared.Next(0, 61) : 0;
-        var transitionDelay = TimeSpan.FromSeconds(5 + blockingDelaySeconds);
+        var blockingDelaySeconds = isClosingDoor ? _brakeAndDoor.NextClosingBlockSeconds() : 0;
 
         if (!isClosingDoor)
         {
@@ -2045,55 +2039,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         IsDoorReleaseBlinking = true;
         DoorReleaseBlinkOpacity = 1.0;
-        if (_doorReleaseBlinkCts is not null)
-        {
-            await _doorReleaseBlinkCts.CancelAsync().ConfigureAwait(true);
-        }
+        var completed = await _brakeAndDoor
+            .RunDoorTransitionAsync(isClosingDoor, blockingDelaySeconds, SetDoorReleaseBlinkOpacity, SetDoorBlocked)
+            .ConfigureAwait(true);
 
-        _doorReleaseBlinkCts = new CancellationTokenSource();
-        var token = _doorReleaseBlinkCts.Token;
-        var blinkHigh = true;
-
-        async Task RunBlinkLoopAsync()
-        {
-            const int intervalMs = 400;
-            var totalMs = (int)transitionDelay.TotalMilliseconds;
-            for (var elapsed = 0; elapsed < totalMs && !token.IsCancellationRequested; elapsed += intervalMs)
-            {
-                try
-                {
-                    await Task.Delay(intervalMs, token);
-                }
-                catch (OperationCanceledException)
-                {
-                    return;
-                }
-
-                blinkHigh = !blinkHigh;
-                var opacity = blinkHigh ? 1.0 : 0.35;
-                if (_uiDispatcher != null)
-                    _uiDispatcher.InvokeOnUi(() => DoorReleaseBlinkOpacity = opacity);
-                else
-                    DoorReleaseBlinkOpacity = opacity;
-            }
-        }
-
-        try
-        {
-            if (isClosingDoor)
-            {
-                await Task.WhenAll(
-                    RunDoorBlockingTimerAsync(blockingDelaySeconds, token),
-                    RunBlinkLoopAsync());
-            }
-            else
-            {
-                await Task.WhenAll(
-                    Task.Delay(TimeSpan.FromSeconds(5), token),
-                    RunBlinkLoopAsync());
-            }
-        }
-        catch (OperationCanceledException)
+        if (!completed)
         {
             if (_uiDispatcher != null)
                 _uiDispatcher.InvokeOnUi(() => { DoorReleaseBlinkOpacity = 1.0; IsDoorReleaseBlinking = false; IsDoorBlocked = false; });
@@ -2127,11 +2077,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _logger?.LogDebug("Türfreigabe {State}", IsDoorReleaseLocked ? "gesperrt" : "freigegeben");
     }
 
-    private async Task RunDoorBlockingTimerAsync(int blockingDelaySeconds, CancellationToken cancellationToken)
+    private void SetDoorReleaseBlinkOpacity(double opacity)
     {
-        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-        SetDoorBlocked(true);
-        await Task.Delay(TimeSpan.FromSeconds(blockingDelaySeconds), cancellationToken);
+        if (_uiDispatcher != null)
+            _uiDispatcher.InvokeOnUi(() => DoorReleaseBlinkOpacity = opacity);
+        else
+            DoorReleaseBlinkOpacity = opacity;
     }
 
     private void SetDoorBlocked(bool value)
