@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.ViewModel;
+namespace Moba.SharedUI.Mobile;
 
 using Backend.Interface;
 
@@ -15,11 +15,11 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Mobile;
-
 using Service;
 
 using System.Collections.ObjectModel;
+
+using ViewModel;
 
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.
@@ -40,20 +40,14 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly IRuntimeHubRemoteClient? _runtimeHubRemoteClient;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
-    private readonly IBackgroundService? _backgroundService;
+    private readonly MobileAppLifecycle _appLifecycle;
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
     private readonly ILogger<MauiViewModel> _logger;
     private readonly IEventBus _eventBus;
     private readonly List<Guid> _eventBusSubscriptions = [];
 
-    private readonly object _networkChangeDebounceLock = new();
-    private CancellationTokenSource? _networkChangeDebounceCts;
-
     /// <summary>Cancels long-running background loops when the host app is shutting down.</summary>
     private readonly CancellationTokenSource _applicationLifetimeCts = new();
-
-    /// <summary>Coalesces rapid platform connectivity notifications before re-running REST discovery.</summary>
-    private const int NetworkChangeDebounceMilliseconds = 750;
 
     private readonly SemaphoreSlim _initializationLock = new(1, 1);
     private readonly SemaphoreSlim _refreshRestApiLock = new(1, 1);
@@ -61,7 +55,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private Task? _startupDiscoveryTask;
     private Task? _restApiHealthCheckTask;
     private bool _isApplyingLoadedSettings;
-    private bool _isStopping;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
@@ -137,7 +130,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _runtimeHubRemoteClient = runtimeHubRemoteClient;
         _runtimeCommandGateway = runtimeCommandGateway;
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator;
-        _backgroundService = backgroundService;
+        _appLifecycle = new MobileAppLifecycle(backgroundService, TimeProvider.System, logger);
         _eventBus = eventBus;
         _projectContext = projectContext;
 
@@ -310,29 +303,11 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         _ = sender;
         _ = e;
-        CancellationToken token;
-        lock (_networkChangeDebounceLock)
-        {
-            _networkChangeDebounceCts?.Cancel();
-            _networkChangeDebounceCts?.Dispose();
-            _networkChangeDebounceCts = new CancellationTokenSource();
-            token = _networkChangeDebounceCts.Token;
-        }
-
-        RunInBackground(RunDebouncedNetworkChangeAsync(token), "Debounced network profile handling");
+        RunInBackground(_appLifecycle.OnNetworkChangedAsync(HandleNetworkChangeAsync), "Debounced network profile handling");
     }
 
-    private async Task RunDebouncedNetworkChangeAsync(CancellationToken cancellationToken)
+    private async Task HandleNetworkChangeAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            await Task.Delay(NetworkChangeDebounceMilliseconds, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-
         try
         {
             if (!IsMobaflowConnectionEnabled)
@@ -489,14 +464,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// </summary>
     public void NotifyApplicationStopping()
     {
-        if (_isStopping)
+        if (!_appLifecycle.BeginStopping())
         {
             return;
         }
 
-        _isStopping = true;
-
-        RunInBackground(StopBackgroundServiceAsync(), "Stop foreground background service on shutdown");
+        RunInBackground(_appLifecycle.StopBackgroundServiceAsync(), "Stop foreground background service on shutdown");
 
         try
         {
@@ -509,13 +482,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         _networkProfileChangeNotifier.NetworkProfilePossiblyChanged -= OnNetworkProfilePossiblyChanged;
         _networkProfileChangeNotifier.StopListening();
-
-        lock (_networkChangeDebounceLock)
-        {
-            _networkChangeDebounceCts?.Cancel();
-            _networkChangeDebounceCts?.Dispose();
-            _networkChangeDebounceCts = null;
-        }
 
         foreach (var subscriptionId in _eventBusSubscriptions)
         {
@@ -534,6 +500,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         }
 
         NotifyApplicationStopping();
+        _appLifecycle.Dispose();
         _applicationLifetimeCts.Dispose();
         _initializationLock.Dispose();
         _refreshRestApiLock.Dispose();
