@@ -15,12 +15,12 @@ using Moq;
 [TestFixture]
 internal sealed partial class JourneyMapViewModelTests : IDisposable
 {
-    private readonly TestLocomotivePages _locomotivePages = new();
+    private readonly TestRollingStockPages _rollingStockPages = new();
 
     [TearDown]
     public void Dispose()
     {
-        _locomotivePages.Dispose();
+        _rollingStockPages.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -68,7 +68,7 @@ internal sealed partial class JourneyMapViewModelTests : IDisposable
             eventBusMock.Object,
             dispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcherMock.Object),
-            _locomotivePages.GetPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null),
             locomotiveSession1,
             new ActionExecutionContext
             {

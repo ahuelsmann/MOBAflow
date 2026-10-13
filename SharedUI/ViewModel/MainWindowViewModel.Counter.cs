@@ -151,9 +151,8 @@ public partial class MainWindowViewModel
     /// Re-initializes track statistics based on the new project's FeedbackPoints.
     /// Auto-selects first journey if available.
     /// </summary>
-    private void HandleSelectedProjectChanged(ProjectViewModel? oldValue, ProjectViewModel? newValue)
+    private void HandleSelectedProjectChanged(ProjectViewModel? newValue)
     {
-        ObserveRollingStockProject(oldValue, newValue);
         RefreshProjectDiagnostics();
 
         // Statistics are replaced (new ObservableCollection), not mutated in place,
@@ -172,18 +171,11 @@ public partial class MainWindowViewModel
             {
                 SelectedJourney = null;
             }
-
-            SelectedTrain = newValue.Trains.FirstOrDefault();
-
-            OnPropertyChanged(nameof(FilteredTrains));
-            OnPropertyChanged(nameof(FilteredPassengerWagonLibrary));
-            OnPropertyChanged(nameof(FilteredGoodsWagonLibrary));
         }
         else
         {
             // Clear journey selection when no project is selected
             SelectedJourney = null;
-            SelectedTrain = null;
         }
 
         UpdateSolutionLoadedStatus();

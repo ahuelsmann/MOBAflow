@@ -215,12 +215,12 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     public string PiperExecutablePath
     {
-        get => _settings.Speech.PiperExecutablePath;
+        get => _settings.Speech.Piper.ExecutablePath;
         set
         {
-            if (_settings.Speech.PiperExecutablePath != value)
+            if (_settings.Speech.Piper.ExecutablePath != value)
             {
-                _settings.Speech.PiperExecutablePath = value ?? string.Empty;
+                _settings.Speech.Piper.ExecutablePath = value ?? string.Empty;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(PiperConfigurationStatus));
                 PersistSettings();
@@ -233,15 +233,15 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     public string PiperModelPath
     {
-        get => _settings.Speech.PiperModelPath;
+        get => _settings.Speech.Piper.ModelPath;
         set
         {
-            if (_settings.Speech.PiperModelPath != value)
+            if (_settings.Speech.Piper.ModelPath != value)
             {
-                _settings.Speech.PiperModelPath = value ?? string.Empty;
-                var configPath = $"{_settings.Speech.PiperModelPath}.json";
-                _settings.Speech.PiperConfigPath = File.Exists(configPath) ? configPath : string.Empty;
-                _settings.Speech.VoiceName = Path.GetFileNameWithoutExtension(_settings.Speech.PiperModelPath);
+                _settings.Speech.Piper.ModelPath = value ?? string.Empty;
+                var configPath = $"{_settings.Speech.Piper.ModelPath}.json";
+                _settings.Speech.Piper.ConfigPath = File.Exists(configPath) ? configPath : string.Empty;
+                _settings.Speech.VoiceName = Path.GetFileNameWithoutExtension(_settings.Speech.Piper.ModelPath);
                 RefreshPiperVoiceOptions();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(PiperConfigPath));
@@ -258,12 +258,12 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     public string PiperConfigPath
     {
-        get => _settings.Speech.PiperConfigPath;
+        get => _settings.Speech.Piper.ConfigPath;
         set
         {
-            if (_settings.Speech.PiperConfigPath != value)
+            if (_settings.Speech.Piper.ConfigPath != value)
             {
-                _settings.Speech.PiperConfigPath = value ?? string.Empty;
+                _settings.Speech.Piper.ConfigPath = value ?? string.Empty;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(PiperConfigurationStatus));
                 PersistSettings();
@@ -293,13 +293,13 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     public double PiperSentenceSilenceSeconds
     {
-        get => _settings.Speech.PiperSentenceSilenceSeconds;
+        get => _settings.Speech.Piper.SentenceSilenceSeconds;
         set
         {
             var clampedValue = Math.Clamp(value, 0, 2);
-            if (Math.Abs(_settings.Speech.PiperSentenceSilenceSeconds - clampedValue) > SecondsSettingTolerance)
+            if (Math.Abs(_settings.Speech.Piper.SentenceSilenceSeconds - clampedValue) > SecondsSettingTolerance)
             {
-                _settings.Speech.PiperSentenceSilenceSeconds = clampedValue;
+                _settings.Speech.Piper.SentenceSilenceSeconds = clampedValue;
                 OnPropertyChanged();
                 PersistSettings();
             }
@@ -311,12 +311,12 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     public bool EnablePiperAudioDiagnostics
     {
-        get => _settings.Speech.EnablePiperAudioDiagnostics;
+        get => _settings.Speech.Piper.EnableAudioDiagnostics;
         set
         {
-            if (_settings.Speech.EnablePiperAudioDiagnostics != value)
+            if (_settings.Speech.Piper.EnableAudioDiagnostics != value)
             {
-                _settings.Speech.EnablePiperAudioDiagnostics = value;
+                _settings.Speech.Piper.EnableAudioDiagnostics = value;
                 OnPropertyChanged();
                 PersistSettings();
             }
@@ -446,8 +446,8 @@ public sealed partial class SettingsPageViewModel : ObservableObject
                 return;
             }
 
-            _settings.Speech.PiperModelPath = selectedVoice.ModelPath;
-            _settings.Speech.PiperConfigPath = selectedVoice.ConfigPath;
+            _settings.Speech.Piper.ModelPath = selectedVoice.ModelPath;
+            _settings.Speech.Piper.ConfigPath = selectedVoice.ConfigPath;
             _settings.Speech.VoiceName = selectedVoice.Name;
             _selectedPiperLanguage = selectedVoice.Language;
 
@@ -480,38 +480,64 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     }
 
     /// <summary>
-    /// List of available speech engines for selection.
+    /// List of available local speech provider IDs for selection.
     /// </summary>
-    public ObservableCollection<string> AvailableSpeechEngines { get; } =
+    public ObservableCollection<SpeechProviderOption> AvailableSpeechProviders { get; } =
     [
-        "System Speech (Windows SAPI)",
-        "Piper TTS"
+        new("system-speech", "System Speech (Windows SAPI)"),
+        new("piper", "Piper TTS")
     ];
 
     /// <summary>
-    /// Currently selected speech engine name.
+    /// Currently selected speech provider ID.
     /// </summary>
-    public string SelectedSpeechEngine
+    public string SelectedSpeechProviderId
     {
-        get => _settings.Speech.SpeakerEngineName;
+        get => _settings.Speech.ProviderId;
         set
         {
-            if (_settings.Speech.SpeakerEngineName != value)
+            if (_settings.Speech.ProviderId != value)
             {
-                _settings.Speech.SpeakerEngineName = value;
+                _settings.Speech.ProviderId = value;
+                _settings.Speech.VoiceName = string.Empty;
+                OnPropertyChanged(nameof(VoiceName));
+                OnPropertyChanged(nameof(SelectedPiperVoiceName));
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(IsPiperSpeechEngineSelected));
+                OnPropertyChanged(nameof(IsPiperSpeechProviderSelected));
+                OnPropertyChanged(nameof(IsSystemSpeechProviderSelected));
+                OnPropertyChanged(nameof(SelectedSpeechProviderName));
                 PersistSettings();
             }
         }
     }
 
+    /// <summary>The readable name of the selected local provider.</summary>
+    public string SelectedSpeechProviderName => AvailableSpeechProviders
+        .FirstOrDefault(provider => provider.Id == SelectedSpeechProviderId)?.DisplayName ?? "System Speech (Windows SAPI)";
+
     /// <summary>
     /// Returns true if Piper TTS is selected.
     /// Used to show/hide Piper-specific settings.
     /// </summary>
-    public bool IsPiperSpeechEngineSelected =>
-        SpeechSpeakerEngineSelection.ShouldUsePiperTts(SelectedSpeechEngine);
+    public bool IsPiperSpeechProviderSelected =>
+        SelectedSpeechProviderId == "piper";
+
+    /// <summary>Whether Windows speech options are displayed.</summary>
+    public bool IsSystemSpeechProviderSelected => !IsPiperSpeechProviderSelected;
+
+    /// <summary>Windows voice used when the shared voice selection is empty.</summary>
+    public string SystemSpeechDefaultVoiceName
+    {
+        get => _settings.Speech.SystemSpeech.DefaultVoiceName;
+        set
+        {
+            if (SetProperty(_settings.Speech.SystemSpeech.DefaultVoiceName, value ?? string.Empty,
+                _settings.Speech.SystemSpeech, static (model, voice) => model.DefaultVoiceName = voice))
+            {
+                PersistSettings();
+            }
+        }
+    }
 
     /// <summary>
     /// Refreshes installed Piper voice options from the configured model directory.
@@ -1167,8 +1193,11 @@ public sealed partial class SettingsPageViewModel : ObservableObject
             RefreshPiperVoiceOptions();
             OnPropertyChanged(nameof(SelectedPiperLanguage));
             OnPropertyChanged(nameof(SelectedPiperVoiceName));
-            OnPropertyChanged(nameof(SelectedSpeechEngine));
-            OnPropertyChanged(nameof(IsPiperSpeechEngineSelected));
+            OnPropertyChanged(nameof(SelectedSpeechProviderId));
+            OnPropertyChanged(nameof(SelectedSpeechProviderName));
+            OnPropertyChanged(nameof(IsSystemSpeechProviderSelected));
+            OnPropertyChanged(nameof(SystemSpeechDefaultVoiceName));
+            OnPropertyChanged(nameof(IsPiperSpeechProviderSelected));
             OnPropertyChanged(nameof(AutoLoadLastSolution));
             OnPropertyChanged(nameof(AutoStartWebApp));
             OnPropertyChanged(nameof(RestApiPort));
@@ -1214,10 +1243,10 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Command to select a speech engine from the UI.
+    /// Command to select a speech provider from the UI.
     /// </summary>
-    public IRelayCommand<string> SelectSpeechEngineCommand =>
-        field ??= new RelayCommand<string>(engine => SelectedSpeechEngine = engine ?? string.Empty);
+    public IRelayCommand<string> SelectSpeechProviderCommand =>
+        field ??= new RelayCommand<string>(engine => SelectedSpeechProviderId = engine ?? string.Empty);
 
     [RelayCommand]
     private async Task TestSpeechAsync()
@@ -1249,12 +1278,12 @@ public sealed partial class SettingsPageViewModel : ObservableObject
             // Use the announcement service if available
             if (_announcementService != null)
             {
-                // FIX: Check if speaker engine is properly configured
-                if (!_announcementService.IsSpeakerEngineAvailable)
+                // FIX: Check if speech output is available
+                if (!_announcementService.IsSpeechOutputAvailable)
                 {
                     _uiDispatcher.InvokeOnUi(() =>
                     {
-                        ErrorMessage = "Speech engine not configured. Please configure Piper TTS in Settings or select Windows SAPI engine.";
+                        ErrorMessage = "Speech output is not configured.";
                         ShowErrorMessage = true;
                     });
                     return;
@@ -1302,3 +1331,6 @@ public sealed record PiperVoiceOption(string Name, string Language, string Model
         return Name;
     }
 }
+
+/// <summary>A local provider choice with a stable persisted ID and a readable label.</summary>
+public sealed record SpeechProviderOption(string Id, string DisplayName);

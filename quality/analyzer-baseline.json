@@ -622,7 +622,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Service/AnnouncementService.cs",
-      "count": 8
+      "count": 7
     },
     {
       "project": "Backend",
@@ -818,7 +818,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
       "path": "Backend/Service/AnnouncementService.cs",
-      "count": 5
+      "count": 4
     },
     {
       "project": "Backend",
@@ -1762,13 +1762,6 @@
       "project": "Domain",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Domain/SpeakerEngineConfiguration.cs",
-      "count": 1
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2227",
       "path": "Domain/Station.cs",
       "count": 2
     },
@@ -2434,13 +2427,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
       "count": 1
     },
@@ -2595,13 +2581,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
       "count": 3
     },
@@ -2646,6 +2625,13 @@
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
       "count": 10
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/WagonsPageViewModel.cs",
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2832,13 +2818,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1307",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1308",
       "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
       "count": 1
@@ -3001,13 +2980,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 11
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
       "count": 1
     },
@@ -3127,13 +3099,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 7
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
       "count": 2
     },
@@ -3197,13 +3162,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
       "count": 2
     },
@@ -3247,13 +3205,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2213",
       "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2227",
-      "path": "SharedUI/ViewModel/SpeakerEngineConfigurationViewModel.cs",
       "count": 1
     },
     {
@@ -3638,20 +3589,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
       "count": 1
     },
@@ -3777,106 +3714,8 @@
     {
       "project": "Sound",
       "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 2
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1304",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 2
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1416",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1416",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 6
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Sound/SoundManager.cs",
-      "count": 4
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 7
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 9
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/PiperSpeechEngine.cs",
       "count": 4
     },
     {
@@ -3885,48 +3724,6 @@
       "ruleId": "CA1873",
       "path": "Sound/SoundManager.cs",
       "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 2
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 5
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -4011,27 +3808,6 @@
       "ruleId": "CA1308",
       "path": "Test/Backend/LocomotiveLibraryServiceTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1416",
-      "path": "Test/Sound/SpeakerEngineFactoryTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1416",
-      "path": "Test/Unit/PiperSpeechEngineTest.cs",
-      "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1416",
-      "path": "Test/Unit/SystemSpeechEngineTest.cs",
-      "count": 2
     },
     {
       "project": "Test",
@@ -4618,6 +4394,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Common/DiscoveryCandidateContractTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Common/DiscoveryResponseParserTests.cs",
       "count": 1
     },
@@ -4653,7 +4436,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/DiscoveryCandidateContractTests.cs",
+      "path": "Test/Common/GaugeThemeAppearanceTests.cs",
       "count": 1
     },
     {
@@ -4661,41 +4444,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Common/InMemorySinkTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Common/MultiplexerContractTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Common/PhotoPathContractTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Domain/PersistedDomainDefaultsTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Domain/SolutionLoadFailureTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Common/GaugeThemeAppearanceTests.cs",
       "count": 1
     },
     {
@@ -4765,7 +4513,21 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Common/MultiplexerContractTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Common/MultiplexerHelperTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Common/PhotoPathContractTests.cs",
       "count": 1
     },
     {
@@ -4842,13 +4604,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/SpeechSpeakerEngineSelectionTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
       "path": "Test/Common/SubnetCandidateBuilderTests.cs",
       "count": 1
     },
@@ -4919,6 +4674,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Domain/PersistedDomainDefaultsTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Domain/ProjectTests.cs",
       "count": 1
     },
@@ -4927,6 +4689,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Domain/SignalBoxPlanTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Domain/SolutionLoadFailureTests.cs",
       "count": 1
     },
     {
@@ -5486,6 +5255,20 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/TrainsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/WagonsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/WorkflowViewModelTests.cs",
       "count": 1
     },
@@ -5507,35 +5290,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Sound/NullSpeakerEngineTests.cs",
+      "path": "Test/Speech/SpeechSettingsTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Sound/PcmWavePostProcessorTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Sound/PiperPronunciationNormalizerTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Sound/SpeakerEngineFactoryTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Sound/SpeechHealthCheckTests.cs",
+      "path": "Test/Speech/WaveAudioTests.cs",
       "count": 1
     },
     {
@@ -5605,13 +5367,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Unit/PiperSpeechEngineTest.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
       "path": "Test/Unit/SolutionInstanceTests.cs",
       "count": 1
     },
@@ -5620,13 +5375,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Unit/SolutionTest.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Unit/SystemSpeechEngineTest.cs",
       "count": 1
     },
     {
@@ -5740,13 +5488,6 @@
       "ruleId": "CA1849",
       "path": "Test/MOBAdisplay/DisplayProtocolClientTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1849",
-      "path": "Test/Sound/SpeechHealthCheckTests.cs",
-      "count": 2
     },
     {
       "project": "Test",
@@ -5941,13 +5682,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1852",
-      "path": "Test/Sound/NullSpeakerEngineTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1852",
       "path": "Test/TrackPlanRenderer/PlacedTrackPlanEditorTests.cs",
       "count": 1
     },
@@ -5997,13 +5731,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1852",
-      "path": "Test/Unit/PiperSpeechEngineTest.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1852",
       "path": "Test/Unit/SolutionInstanceTests.cs",
       "count": 1
     },
@@ -6012,13 +5739,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1852",
       "path": "Test/Unit/SolutionTest.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1852",
-      "path": "Test/Unit/SystemSpeechEngineTest.cs",
       "count": 1
     },
     {
@@ -6068,20 +5788,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
       "path": "Test/Sound/NullSoundPlayerTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Test/Sound/NullSpeakerEngineTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Test/Unit/SystemSpeechEngineTest.cs",
       "count": 1
     },
     {
@@ -6307,13 +6013,6 @@
       "ruleId": "CA2000",
       "path": "Test/SharedUI/TrainControlViewModelSpeedTests.cs",
       "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2000",
-      "path": "Test/Unit/SystemSpeechEngineTest.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -6711,36 +6410,8 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "Test/Sound/NullSpeakerEngineTests.cs",
-      "count": 6
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "Test/Sound/SpeechHealthCheckTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "Test/Unit/PiperSpeechEngineTest.cs",
-      "count": 9
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
       "path": "Test/Unit/SolutionTest.cs",
       "count": 6
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "Test/Unit/SystemSpeechEngineTest.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -7154,13 +6825,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/Common/RestApiRecentEndpointHistoryTests.cs",
       "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Common/SpeechSpeakerEngineSelectionTests.cs",
-      "count": 2
     },
     {
       "project": "Test",
@@ -8076,20 +7740,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Sound/PcmWavePostProcessorTests.cs",
-      "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Sound/SpeechHealthCheckTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
       "path": "Test/TrackLibrary.PikoA/EditableTrackPlanOperationsTests.cs",
       "count": 2
     },
@@ -8113,13 +7763,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
       "count": 6
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Unit/PiperSpeechEngineTest.cs",
-      "count": 3
     },
     {
       "project": "Test",

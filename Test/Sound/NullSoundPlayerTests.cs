@@ -3,8 +3,12 @@ namespace Moba.Test.Sound;
 
 using Moba.Sound;
 
+#if WINDOWS
+using Microsoft.Extensions.Logging.Abstractions;
+#endif
+
 /// <summary>
-/// Tests for NullSoundPlayer - the NullObject implementation for platforms without audio.
+/// Tests for null sound output and the Windows adapter failure/cancellation boundaries.
 /// </summary>
 [TestFixture]
 internal class NullSoundPlayerTests
@@ -61,4 +65,33 @@ internal class NullSoundPlayerTests
 
         Assert.Pass("PlayAsync with empty path completed");
     }
+#if WINDOWS
+    [Test]
+    public async Task WindowsAdapterMissingWaveFilePreservesTheCauseAndReportsTheRequestedPath()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"mobaflow-missing-{Guid.NewGuid():N}.wav");
+        Assert.That(File.Exists(path), Is.False);
+        var player = new WindowsSoundPlayer(NullLogger<WindowsSoundPlayer>.Instance);
+
+        // SoundPlayer validates the missing file before calling the native playback API.
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => player.PlayAsync(path)).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(failure?.InnerException, Is.TypeOf<FileNotFoundException>());
+            Assert.That(failure?.Message, Does.Contain(path));
+        }
+    }
+
+    [Test]
+    public async Task WindowsAdapterAlreadyCancelledPropagatesCancellationBeforeNativePlayback()
+    {
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+        var player = new WindowsSoundPlayer(NullLogger<WindowsSoundPlayer>.Instance);
+
+        await Assert.CatchAsync<OperationCanceledException>(() => player.PlayAsync(
+            "cancelled.wav", cancellation.Token)).ConfigureAwait(false);
+    }
+
+#endif
 }

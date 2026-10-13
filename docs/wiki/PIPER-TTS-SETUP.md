@@ -34,14 +34,19 @@ or virtual environment, for example `.venv\Scripts\piper.exe`.
 ```json
 {
   "Speech": {
-    "PiperExecutablePath": "C:\\Tools\\piper\\piper.exe",
-    "PiperModelPath": "C:\\Tools\\piper\\voices\\de_DE-thorsten-medium.onnx",
-    "PiperConfigPath": "",
+    "ProviderId": "piper",
+    "Piper": {
+      "ExecutablePath": "C:\\Tools\\piper\\piper.exe",
+      "ModelPath": "C:\\Tools\\piper\\voices\\de_DE-thorsten-medium.onnx",
+      "ConfigPath": "",
+      "SentenceSilenceSeconds": 0,
+      "EnablePronunciationNormalization": true
+    },
+    "SystemSpeech": { "DefaultVoiceName": "" },
     "Rate": -1,
     "Volume": 90,
-    "SpeakerEngineName": "PiperTts",
     "VoiceName": "",
-    "TestMessage": "Dies ist ein Test der Sprachsynthese. Nächster Halt: Hauptbahnhof."
+    "TestMessage": "This is a speech synthesis test. Next stop: Central Station."
   }
 }
 ```
@@ -49,8 +54,9 @@ or virtual environment, for example `.venv\Scripts\piper.exe`.
 ## Using Windows speech instead
 
 Selecting Piper requires a valid executable and model file. Missing files or a
-failed synthesis produce an error; they do not automatically switch the
-announcement to Windows speech. To use Windows speech instead, select
+failed synthesis skip the announcement with a diagnostic; workflows continue. The Settings test
+shows the failure. Provider selection takes effect on the next call, including the Settings test.
+This slice does not yet automatically switch a failed announcement to Windows speech. To use Windows speech instead, select
 **System Speech (Windows SAPI)** explicitly in **Settings → Speech Synthesis**.
 
 ## Troubleshooting

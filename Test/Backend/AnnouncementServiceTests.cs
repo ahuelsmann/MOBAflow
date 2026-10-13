@@ -5,7 +5,7 @@ namespace Moba.Test.Backend;
 using Microsoft.Extensions.Logging;
 
 using Moba.Backend.Service;
-using Moba.Sound;
+using Moba.Speech.Base;
 
 using Moq;
 
@@ -221,170 +221,107 @@ internal class AnnouncementServiceTests
     [Test]
     public async Task GenerateAndSpeakAnnouncementAsync_CancelledSpeech_IsNotSuppressed()
     {
-        // Arrange
         using var cancellation = new CancellationTokenSource();
-        var speaker = new Mock<ISpeakerEngine>();
-        speaker
-            .Setup(engine => engine.AnnouncementAsync(
-                It.IsAny<string>(),
-                It.IsAny<string?>(),
-                cancellation.Token))
-            .Returns(() =>
-            {
-                cancellation.Cancel();
-                return Task.FromCanceled(cancellation.Token);
-            });
-        var factory = new Mock<ISpeakerEngineFactory>();
-        factory.Setup(value => value.CreateEngineFromOptions()).Returns(speaker.Object);
-        var service = new AnnouncementService(factory.Object, _mockLogger.Object);
-
-        // Act & Assert
+        var output = new Mock<ISpeechOutput>();
+        output.Setup(value => value.SpeakAsync(It.IsAny<string>(), cancellation.Token)).Returns(() =>
+        {
+            cancellation.Cancel();
+            return Task.FromCanceled<SpeechResult>(cancellation.Token);
+        });
+        var service = new AnnouncementService(output.Object, _mockLogger.Object);
         await Assert.CatchAsync<OperationCanceledException>(() => service.GenerateAndSpeakAnnouncementAsync(
-            "Next stop {StationName}",
-            new Station { Name = "Minden" },
-            1,
-            cancellation.Token)).ConfigureAwait(false);
-        speaker.Verify(engine => engine.AnnouncementAsync(
-            It.IsAny<string>(),
-            null,
-            cancellation.Token), Times.Once);
+            "Next stop {StationName}", new Station { Name = "Minden" }, 1, cancellation.Token)).ConfigureAwait(false);
+        output.Verify(value => value.SpeakAsync("Next stop Minden", cancellation.Token), Times.Once);
     }
 
     [Test]
     public async Task GenerateAndSpeakAnnouncementAsync_ForwardsRenderedTextAndCallerToken()
     {
         using var cancellation = new CancellationTokenSource();
-        var speaker = new Mock<ISpeakerEngine>();
-        speaker.Setup(engine => engine.AnnouncementAsync(
-                It.IsAny<string>(), null, cancellation.Token))
-            .Returns(Task.CompletedTask);
-        var service = CreateSpeakingService(speaker);
-
-        await service.GenerateAndSpeakAnnouncementAsync(
-            "Next stop {StationName}, platform {TrackNumber}.",
-            new Station { Name = "Central", Platforms = [new Platform { Number = 4 }] },
-            1,
-            cancellation.Token).ConfigureAwait(false);
-
-        speaker.Verify(engine => engine.AnnouncementAsync(
-            "Next stop Central, platform 4.", null, cancellation.Token), Times.Once);
+        var output = new Mock<ISpeechOutput>();
+        output.Setup(value => value.SpeakAsync(It.IsAny<string>(), cancellation.Token)).ReturnsAsync(SpeechResult.Success([1]));
+        var service = new AnnouncementService(output.Object, _mockLogger.Object);
+        await service.GenerateAndSpeakAnnouncementAsync("Next stop {StationName}, platform {TrackNumber}.",
+            new Station { Name = "Central", Platforms = [new Platform { Number = 4 }] }, 1, cancellation.Token).ConfigureAwait(false);
+        output.Verify(value => value.SpeakAsync("Next stop Central, platform 4.", cancellation.Token), Times.Once);
     }
 
     [TestCase(null)]
     [TestCase("")]
-    public async Task GenerateAndSpeakAnnouncementAsync_EmptyTemplate_DoesNotResolveSpeaker(string? template)
+    public async Task GenerateAndSpeakAnnouncementAsync_EmptyTemplate_DoesNotSpeak(string? template)
     {
-        var factory = new Mock<ISpeakerEngineFactory>(MockBehavior.Strict);
-        var service = new AnnouncementService(factory.Object, _mockLogger.Object);
-
-        await service.GenerateAndSpeakAnnouncementAsync(template, new Station(), 1).ConfigureAwait(false);
-
-        factory.Verify(value => value.CreateEngineFromOptions(), Times.Never);
+        var output = new Mock<ISpeechOutput>(MockBehavior.Strict);
+        await new AnnouncementService(output.Object).GenerateAndSpeakAnnouncementAsync(template, new Station(), 1).ConfigureAwait(false);
+        output.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task GenerateAndSpeakAnnouncementAsync_AlreadyCancelled_DoesNotResolveSpeaker()
+    public async Task GenerateAndSpeakAnnouncementAsync_AlreadyCancelled_DoesNotSpeak()
     {
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync().ConfigureAwait(false);
-        var factory = new Mock<ISpeakerEngineFactory>(MockBehavior.Strict);
-        var service = new AnnouncementService(factory.Object, _mockLogger.Object);
-
-        await Assert.CatchAsync<OperationCanceledException>(() => service.GenerateAndSpeakAnnouncementAsync(
-            "Next stop Central.", new Station(), 1, cancellation.Token)).ConfigureAwait(false);
-
-        factory.Verify(value => value.CreateEngineFromOptions(), Times.Never);
+        var output = new Mock<ISpeechOutput>(MockBehavior.Strict);
+        await Assert.CatchAsync<OperationCanceledException>(() => new AnnouncementService(output.Object)
+            .GenerateAndSpeakAnnouncementAsync("Test", new Station(), 1, cancellation.Token)).ConfigureAwait(false);
+        output.VerifyNoOtherCalls();
     }
 
     [Test]
     public async Task GenerateAndSpeakAnnouncementAsync_OverlappingCalls_AreNotQueuedByTheService()
     {
-        var firstCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var secondCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var speaker = new Mock<ISpeakerEngine>();
-        speaker.Setup(engine => engine.AnnouncementAsync(
-                It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
-            .Returns((string message, string? voice, CancellationToken token) =>
-                message == "First" ? firstCompletion.Task : secondCompletion.Task);
-        var service = CreateSpeakingService(speaker);
-
+        var firstCompletion = new TaskCompletionSource<SpeechResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondCompletion = new TaskCompletionSource<SpeechResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var output = new Mock<ISpeechOutput>();
+        output.Setup(value => value.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns((string text, CancellationToken _) => text == "First" ? firstCompletion.Task : secondCompletion.Task);
+        var service = new AnnouncementService(output.Object);
         var first = service.GenerateAndSpeakAnnouncementAsync("First", new Station(), 1);
         var second = service.GenerateAndSpeakAnnouncementAsync("Second", new Station(), 1);
         try
         {
-            speaker.Verify(engine => engine.AnnouncementAsync(
-                "First", null, CancellationToken.None), Times.Once);
-            speaker.Verify(engine => engine.AnnouncementAsync(
-                "Second", null, CancellationToken.None), Times.Once);
-            secondCompletion.SetResult(true);
+            secondCompletion.SetResult(SpeechResult.Success([1]));
             await second.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
-            Assert.That(first.IsCompleted, Is.False, "The second call can finish while the first is still speaking.");
-            firstCompletion.SetResult(true);
+            Assert.That(first.IsCompleted, Is.False);
+            firstCompletion.SetResult(SpeechResult.Success([1]));
             await first.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
         }
         finally
         {
-            firstCompletion.TrySetResult(true);
-            secondCompletion.TrySetResult(true);
+            firstCompletion.TrySetResult(SpeechResult.Success([1]));
+            secondCompletion.TrySetResult(SpeechResult.Success([1]));
         }
     }
 
     [TestCase(true)]
     [TestCase(false)]
-    public async Task GenerateAndSpeakAnnouncementAsync_SpeakerFailure_RespectsErrorSuppression(bool suppressErrors)
+    public async Task GenerateAndSpeakAnnouncementAsync_OutputException_RespectsErrorSuppression(bool suppressErrors)
     {
-        var failure = new InvalidOperationException("Speaker unavailable.");
-        var speaker = new Mock<ISpeakerEngine>();
-        speaker.Setup(engine => engine.AnnouncementAsync(
-                It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(failure);
-        var service = CreateSpeakingService(speaker);
-
+        var failure = new InvalidOperationException("Speech unavailable.");
+        var output = new Mock<ISpeechOutput>();
+        output.Setup(value => value.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(failure);
+        var service = new AnnouncementService(output.Object, _mockLogger.Object);
         if (suppressErrors)
         {
-            await service.GenerateAndSpeakAnnouncementAsync("Next stop Central.", new Station(), 1)
-                .ConfigureAwait(false);
+            await service.GenerateAndSpeakAnnouncementAsync("Test", new Station(), 1).ConfigureAwait(false);
         }
         else
         {
-            var result = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                service.GenerateAndSpeakAnnouncementAsync(
-                    "Next stop Central.", new Station(), 1, suppressSpeechErrors: false)).ConfigureAwait(false);
+            var result = await Assert.ThrowsAsync<InvalidOperationException>(() => service.GenerateAndSpeakAnnouncementAsync(
+                "Test", new Station(), 1, suppressSpeechErrors: false)).ConfigureAwait(false);
             Assert.That(result, Is.SameAs(failure));
         }
-
-        _mockLogger.Verify(logger => logger.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            failure,
+        _mockLogger.Verify(logger => logger.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), failure,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [Test]
-    public async Task GenerateAndSpeakAnnouncementAsync_FactoryFailure_IsLoggedAndSuppressedByDefault()
+    public async Task GenerateAndSpeakAnnouncementAsync_FailedResult_IsReportedToSettingsTest()
     {
-        var failure = new InvalidOperationException("No speaker registration.");
-        var factory = new Mock<ISpeakerEngineFactory>();
-        factory.Setup(value => value.CreateEngineFromOptions()).Throws(failure);
-        var service = new AnnouncementService(factory.Object, _mockLogger.Object);
-
-        await service.GenerateAndSpeakAnnouncementAsync("Next stop Central.", new Station(), 1)
-            .ConfigureAwait(false);
-
-        factory.Verify(value => value.CreateEngineFromOptions(), Times.Once);
-        _mockLogger.Verify(logger => logger.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            failure,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-    }
-
-    private AnnouncementService CreateSpeakingService(Mock<ISpeakerEngine> speaker)
-    {
-        var factory = new Mock<ISpeakerEngineFactory>();
-        factory.Setup(value => value.CreateEngineFromOptions()).Returns(speaker.Object);
-        return new AnnouncementService(factory.Object, _mockLogger.Object);
+        var output = new Mock<ISpeechOutput>();
+        output.Setup(value => value.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SpeechResult.Failure(SpeechFailureKind.Unavailable, "Speech unavailable."));
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => new AnnouncementService(output.Object)
+            .GenerateAndSpeakAnnouncementAsync("Test", new Station(), 1, suppressSpeechErrors: false)).ConfigureAwait(false);
+        Assert.That(failure!.Message, Is.EqualTo("Speech unavailable."));
     }
 }

@@ -358,7 +358,7 @@ internal sealed class WorkflowActionHandlersTests
 
         public CancellationToken LastCancellationToken { get; private set; }
 
-        public bool IsSpeakerEngineAvailable => true;
+        public bool IsSpeechOutputAvailable => true;
 
         public string GenerateAnnouncementText(Journey journey, Station station, int stationIndex)
             => GenerateAnnouncementText(journey.Text, station, stationIndex);

@@ -183,21 +183,29 @@
                         <!--  Speech Engine Selection  -->
                         <ComboBox
                             HorizontalAlignment="Left"
-                            Header="Speech Engine"
-                            ItemsSource="{x:Bind ViewModel.AvailableSpeechEngines}"
-                            SelectedItem="{x:Bind ViewModel.SelectedSpeechEngine, Mode=TwoWay}">
+                            Header="Speech Provider"
+                            ItemsSource="{x:Bind ViewModel.AvailableSpeechProviders}"
+                            SelectedValuePath="Id"
+                            SelectedValue="{x:Bind ViewModel.SelectedSpeechProviderId, Mode=TwoWay}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon FontSize="14" Glyph="&#xE8BD;" />
-                                        <TextBlock Text="{Binding}" />
+                                        <TextBlock Text="{Binding DisplayName}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
 
-                        <!--  Piper Settings (only shown when Piper engine selected)  -->
-                        <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsPiperSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBox
+                            HorizontalAlignment="Left"
+                            Header="Windows Voice"
+                            PlaceholderText="Leave empty to use the installed default voice"
+                            Text="{x:Bind ViewModel.SystemSpeechDefaultVoiceName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                            Visibility="{x:Bind ViewModel.IsSystemSpeechProviderSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <!--  Piper Settings (only shown when Piper provider selected)  -->
+                        <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsPiperSpeechProviderSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                             <InfoBar
                                 IsClosable="False"
                                 IsOpen="True"
@@ -301,7 +309,7 @@
                         <StackPanel
                             Orientation="Horizontal"
                             Spacing="8"
-                            Visibility="{x:Bind ViewModel.IsPiperSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Visibility="{x:Bind ViewModel.IsPiperSpeechProviderSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                             <HyperlinkButton
                                 Content="Piper install"
                                 NavigateUri="https://github.com/OHF-Voice/piper1-gpl" />
@@ -350,7 +358,7 @@
                         <Button
                             Command="{x:Bind ViewModel.TestSpeechCommand}"
                             Content="Test Speech"
-                            ToolTipService.ToolTip="Play a test message with the selected speech engine">
+                            ToolTipService.ToolTip="Play a test message with the selected speech provider">
                             <Button.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="T" Modifiers="Control" />
                             </Button.KeyboardAccelerators>
