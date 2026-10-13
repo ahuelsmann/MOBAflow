@@ -12,8 +12,9 @@ public interface IAudioCache
     /// </summary>
     Task<AudioCacheLookup> TryGetAsync(string key, CancellationToken cancellationToken = default);
     /// <summary>
-    /// Stores audio that has just played successfully, if the captured generation is still current, and evicts the
-    /// least recently played audio beyond the size limit. Audio larger than the limit is not stored.
+    /// Records audio that has just played successfully and evicts the least recently played audio beyond the size
+    /// limit. An existing entry for the key only records the playback; new audio is written only if the captured
+    /// generation is still current and the audio fits the limit.
     /// </summary>
     Task StoreAsync(string key, ReadOnlyMemory<byte> audio, long generation, CancellationToken cancellationToken = default);
     /// <summary>Records successful playback of cached audio for least-recently-played eviction.</summary>

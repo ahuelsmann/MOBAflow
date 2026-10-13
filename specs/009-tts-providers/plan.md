@@ -152,7 +152,9 @@ completion applies only to the current session, guarded across host-player insta
   first operation of a process, after a failed index update, and whenever the size is read or the cache is cleared.
   A clear increments the generation stored in the index and, once deletion starts, completes regardless of
   cancellation: earlier in-progress synthesis, also in another process, can finish playback but cannot refill the
-  cleared cache. A lookup returns the generation read under the same lock as its miss. Requests after clear use a new
+  cleared cache. A lookup returns the generation read under the same lock as its miss; a failed lookup uses the
+  generation read before it. A store with a stale generation writes nothing but still records the playback of an
+  entry that exists in the current generation. Requests after clear use a new
   shared-flight generation. A lookup reads only the requested file; the size limit is enforced from the index before
   every hit, whenever audio is stored, and when the size is read. Only when the index exceeds the limit are its
   entries checked against the files, so missing WAVs never cause valid audio to be evicted.

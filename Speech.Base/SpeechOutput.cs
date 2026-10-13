@@ -117,11 +117,13 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
 
     private async Task<AudioCacheLookup> ReadCacheAsync(string key, CancellationToken token)
     {
+        // Read before the lookup: if it fails, a clear completing meanwhile must still reject this request's audio.
+        var generationBefore = _cache.Generation;
         try { return await _cache.TryGetAsync(key, token).ConfigureAwait(false); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             CacheUnavailable(_logger);
-            return new AudioCacheLookup((ReadOnlyMemory<byte>?)null, _cache.Generation);
+            return new AudioCacheLookup((ReadOnlyMemory<byte>?)null, generationBefore);
         }
     }
 

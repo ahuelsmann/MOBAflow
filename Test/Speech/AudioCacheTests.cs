@@ -289,6 +289,28 @@ internal sealed class AudioCacheTests
     }
 
     [Test]
+    public async Task StaleStoreOfAnExistingEntryRecordsItsPlayback()
+    {
+        var audio = TestWaveAudio.Create([1]);
+        using var cache = new AudioCache(_directory, () => audio.Length * 2L, _clock);
+        var stale = cache.Generation;
+        await cache.ClearAsync().ConfigureAwait(false);
+        await cache.StoreAsync(Key("rechecked"), audio, cache.Generation).ConfigureAwait(false);
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        await cache.StoreAsync(Key("other"), audio, cache.Generation).ConfigureAwait(false);
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        await cache.StoreAsync(Key("rechecked"), audio, stale).ConfigureAwait(false);
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        await cache.StoreAsync(Key("new"), audio, cache.Generation).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That((await cache.TryGetAsync(Key("rechecked")).ConfigureAwait(false)).Audio, Is.Not.Null);
+            Assert.That((await cache.TryGetAsync(Key("other")).ConfigureAwait(false)).Audio, Is.Null);
+            Assert.That((await cache.TryGetAsync(Key("new")).ConfigureAwait(false)).Audio, Is.Not.Null);
+        }
+    }
+
+    [Test]
     public async Task ChangingLimitEvictsExistingEntriesAndOversizedAudioIsNotStored()
     {
         long limit = 1000;

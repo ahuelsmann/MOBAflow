@@ -56,21 +56,26 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         _ = WaveAudio.GetDuration(audio.Span);
         await UseAsync(async () =>
         {
-            if (generation != Generation) return;
-            if (audio.Length > Limit())
-            {
-                // A lowered limit still applies, although this audio is not retained.
-                if (Trim(protectedKey: null)) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
-                return;
-            }
-            // Waiters of one shared synthesis each store after their playback; the first write suffices.
+            // An existing entry (stored by another waiter or found by a recheck) only records this playback.
             var stored = _entries.ContainsKey(key) && File.Exists(AudioPath(key));
-            if (!stored) await WriteAtomicAsync(key + ".wav", audio, cancellationToken).ConfigureAwait(false);
+            if (!stored)
+            {
+                // New audio is written only for the current generation and within the limit.
+                if (generation != Generation) return;
+                if (audio.Length > Limit())
+                {
+                    // A lowered limit still applies, although this audio is not retained.
+                    if (Trim(protectedKey: null)) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+                    return;
+                }
+                await WriteAtomicAsync(key + ".wav", audio, cancellationToken).ConfigureAwait(false);
+            }
             try
             {
                 // The WAV is in place: record it even if the caller cancels now.
-                _entries[key] = new CacheEntry(stored ? _entries[key].Size : audio.Length, clock.GetUtcNow());
-                Trim(protectedKey: key);
+                var size = stored ? _entries[key].Size : audio.Length;
+                _entries[key] = new CacheEntry(size, clock.GetUtcNow());
+                Trim(protectedKey: size <= Limit() ? key : null);
                 await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
             }
             catch

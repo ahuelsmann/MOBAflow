@@ -420,6 +420,21 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
     }
 
     [Test]
+    public async Task FailedLookupKeepsTheGenerationFromBeforeAConcurrentClear()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var output = CreateOutput(provider, new SpeechOutputTests.FakePlayer(), cache: new ClearThenFailFirstLookup(_cache));
+        await using var lifetime = output.ConfigureAwait(false);
+        var first = await output.SpeakAsync("Lookup failed").ConfigureAwait(false);
+        await output.SpeakAsync("Lookup failed").ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(first.IsSuccess, Is.True);
+            Assert.That(provider.Requests, Has.Count.EqualTo(2));
+        }
+    }
+
+    [Test]
     public async Task ClearAfterTheLookupRejectsAudioOfThatMiss()
     {
         var provider = new SpeechOutputTests.FakeProvider("system-speech");
@@ -523,6 +538,24 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
             _firstStarted.TrySetResult();
             return _releaseFirst.Task.WaitAsync(cancellationToken);
         }
+    }
+
+    /// <summary>Lets a clear complete during the first lookup, which then fails with an I/O error.</summary>
+    private sealed class ClearThenFailFirstLookup(IAudioCache inner) : IAudioCache
+    {
+        private int _lookups;
+        public long Generation => inner.Generation;
+        public async Task<AudioCacheLookup> TryGetAsync(string key, CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _lookups) != 1) return await inner.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            await inner.ClearAsync(cancellationToken).ConfigureAwait(false);
+            throw new IOException("Cache unavailable.");
+        }
+        public Task StoreAsync(string key, ReadOnlyMemory<byte> audio, long generation, CancellationToken cancellationToken = default) =>
+            inner.StoreAsync(key, audio, generation, cancellationToken);
+        public Task MarkPlayedAsync(string key, CancellationToken cancellationToken = default) => inner.MarkPlayedAsync(key, cancellationToken);
+        public Task<long> GetSizeAsync(CancellationToken cancellationToken = default) => inner.GetSizeAsync(cancellationToken);
+        public Task ClearAsync(CancellationToken cancellationToken = default) => inner.ClearAsync(cancellationToken);
     }
 
     /// <summary>Clears the cache right after the first lookup, as a concurrent clear could.</summary>
