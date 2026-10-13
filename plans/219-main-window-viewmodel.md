@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) integrated through #257; slice 2b (Wagons) integrated through #264; slice 2c (Train composition) integrated through #272; slice 3a (Stations/platforms) implemented with validation/review tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives integrated at 656bc630; wagons integrated at c4e427d0; train composition starts from main c4e427d084af05eb6db5c6196ffa529a0fd3ac4c; train composition integrated at f6ad0853; station/platform implementation starts from main 28fafa8ef5f9dac2b76233cb2966f00a43fef1b1 on 2026-10-13
+**Evidence**: Settings integrated at bfe9b91d; locomotives integrated at 656bc630; wagons integrated at c4e427d0; train composition starts from main c4e427d084af05eb6db5c6196ffa529a0fd3ac4c; train composition integrated at f6ad0853; station/platform implementation starts from main 28fafa8ef5f9dac2b76233cb2966f00a43fef1b1 and is synchronized with main 947327d5d73a1c6f8f684e0f0f5f91e64f54f1d7 on 2026-10-13
 
 ## Purpose and scope
 
