@@ -5,7 +5,7 @@ namespace Moba.SharedUI.ViewModel;
 using Common.Configuration;
 
 /// <summary>
-/// DCC speed-step limits for train control (shared by <see cref="TrainControlViewModel"/>).
+/// DCC speed-step limits for train control (shared by <see cref="TrainControl.TrainControlViewModel"/>).
 /// </summary>
 public static class TrainControlDccSpeed
 {
