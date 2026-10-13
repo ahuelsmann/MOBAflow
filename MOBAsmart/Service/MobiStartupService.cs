@@ -3,8 +3,8 @@
 namespace Moba.MAUI.Service;
 
 using SharedUI.Interface;
+using SharedUI.Mobile;
 using SharedUI.TrainControl;
-using SharedUI.ViewModel;
 
 /// <summary>
 /// Explicit startup hook for MOBAsmart singleton services that must be initialized at app launch.

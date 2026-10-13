@@ -3,8 +3,8 @@ namespace Moba.MAUI.View;
 
 using Controls;
 using Microsoft.Extensions.DependencyInjection;
+using SharedUI.Mobile;
 using SharedUI.TrainControl;
-using SharedUI.ViewModel;
 using MauiView = Microsoft.Maui.Controls.View;
 public partial class AppTabHostPage
 {

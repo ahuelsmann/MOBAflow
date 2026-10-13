@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 [TestFixture]
 internal sealed class RuntimeCommandPathArchitectureTests
 {
-    private static readonly string[] ViewModelFolders = ["SharedUI/ViewModel", "SharedUI/TrainControl", "MOBAflow/ViewModel"];
+    private static readonly string[] ViewModelFolders = ["SharedUI/ViewModel", "SharedUI/Mobile", "SharedUI/TrainControl", "MOBAflow/ViewModel"];
 
     /// <summary>Runtime surfaces that expose layout or locomotive commands and therefore bypass the gateway.</summary>
     private static readonly HashSet<string> CommandRuntimeTypes = new(StringComparer.Ordinal)
