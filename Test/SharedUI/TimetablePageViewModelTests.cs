@@ -723,8 +723,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
             eventBus,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
             locomotiveSession1,
             new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
             Mock.Of<ILogger<MainWindowViewModel>>());

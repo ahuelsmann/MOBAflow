@@ -339,6 +339,7 @@ public static class MobaWinUiServiceCollectionExtensions
                 var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
                 await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
             }));
+        services.AddSingleton<TrainsPageViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
@@ -348,8 +349,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<SettingsPageViewModel>(),
-            sp.GetRequiredService<LocomotivesPageViewModel>(),
-            sp.GetRequiredService<WagonsPageViewModel>(),
+            sp.GetRequiredService<TrainsPageViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ActionExecutionContext>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),

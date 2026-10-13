@@ -198,6 +198,25 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(shell.WagonsPage.FilteredGoodsWagonLibrary.Single(), Is.SameAs(wagons.SelectedGoodsWagon));
         }
     }
+    [Test]
+    public async Task TrainCompositionSharesSessionInventoryAndLayoutThroughHostRegistration()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var trains = provider.GetRequiredService<TrainsPageViewModel>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(shell.TrainsPage, Is.SameAs(trains));
+            Assert.That(trains.LocomotivesPage, Is.SameAs(provider.GetRequiredService<LocomotivesPageViewModel>()));
+            Assert.That(trains.WagonsPage, Is.SameAs(provider.GetRequiredService<WagonsPageViewModel>()));
+            Assert.That(trains.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
+        }
+        shell.SelectedProject = new ProjectViewModel(new Project());
+        trains.AddTrainCommand.Execute(null);
+        Assert.That(trains.SelectedTrain, Is.SameAs(provider.GetRequiredService<ISolutionSession>().SelectedProject!.Trains.Single()));
+    }
+
     private static ServiceProvider CreatePlatformServiceProvider()
     {
         var services = new ServiceCollection();
