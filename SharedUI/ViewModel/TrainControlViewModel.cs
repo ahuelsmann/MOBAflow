@@ -269,7 +269,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
     [NotifyCanExecuteChangedFor(nameof(ToggleBrakeCommand))]
     [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
-    private bool _isParkingBrakeEnabled;
+    public partial bool IsParkingBrakeEnabled { get; set; }
 
     /// <summary>
     /// Door release locked (doors closed): Icon DoorClose. When released (doors open), speed cannot be increased.
@@ -282,7 +282,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(IsBrakeButtonEnabled))]
     [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
     [NotifyCanExecuteChangedFor(nameof(ToggleBrakeCommand))]
-    private bool _isDoorReleaseLocked = true;
+    public partial bool IsDoorReleaseLocked { get; set; }
 
     /// <summary>
     /// During the 5-second transition phase the button blinks yellow (color + opacity change).
@@ -292,27 +292,27 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(DoorReleaseButtonColorHex))]
     [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
     [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
-    private bool _isDoorReleaseBlinking;
+    public partial bool IsDoorReleaseBlinking { get; set; }
 
     /// <summary>
     /// Opacity of the door release button: alternating 1.0 / 0.35 during blinking, otherwise 1.0.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorOpacity))]
-    private double _doorReleaseBlinkOpacity = 1.0;
+    public partial double DoorReleaseBlinkOpacity { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorColorHex))]
     [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorIconColorHex))]
     [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorOpacity))]
-    private bool _isDoorBlocked;
+    public partial bool IsDoorBlocked { get; set; }
 
     /// <summary>
     /// Target state of door release after the 5-second blink phase expires.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDoorCloseIconVisible))]
-    private bool _isDoorReleaseLockedNext;
+    public partial bool IsDoorReleaseLockedNext { get; set; }
 
     /// <summary>
     /// True = show DoorClose icon, False = DoorOpen icon (for ContentTemplate binding).
@@ -771,6 +771,10 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _useRemoteRuntimeSnapshots = options?.UseRemoteRuntimeSnapshots ?? useRemoteRuntimeSnapshots;
         _hybridRuntimeSnapshots = options?.HybridRuntimeSnapshots ?? false;
         _trainControlHost = options?.Host ?? TrainControlHost.WinUi;
+
+        // Doors start closed and the door button fully visible.
+        IsDoorReleaseLocked = true;
+        DoorReleaseBlinkOpacity = 1.0;
 
         LoadTrainControlSettings();
 

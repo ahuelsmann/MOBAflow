@@ -3688,7 +3688,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 29
+      "count": 23
     },
     {
       "project": "SharedUI",
