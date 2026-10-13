@@ -88,18 +88,29 @@ Other groups are still marked as planned in [mutation-lanes.json](MutationTest/m
 and are not currently protected by Stryker.
 
 ```powershell
+# Run each lane's ordinary tests first, on Windows for the Common lane.
+dotnet test MutationTest/Domain.MutationTests.csproj -c Debug
+if ($LASTEXITCODE -ne 0) { throw "Domain baseline tests failed." }
+dotnet test MutationTest/Common/Common.MutationTests.csproj -c Debug
+if ($LASTEXITCODE -ne 0) { throw "Common baseline tests failed." }
 dotnet tool restore
+if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 Push-Location MutationTest
 try {
     dotnet stryker --skip-version-check
+    if ($LASTEXITCODE -ne 0) { throw "Domain mutation testing failed." }
     dotnet stryker --config-file stryker-common-config.json --skip-version-check
+    if ($LASTEXITCODE -ne 0) { throw "Common mutation testing failed." }
 }
 finally {
     Pop-Location
 }
 ```
 
-The quality pipeline runs both groups and archives the HTML/JSON reports. The minimum scores
+A mutation score is valid only with a passing ordinary test baseline. CI currently starts
+Stryker directly after restore; it has no separate ordinary-test step in either mutation job.
+See [Build Performance](docs/BUILD-PERFORMANCE.md#active-mutation-lanes) for job selection.
+The quality pipeline runs selected groups and archives the HTML/JSON reports. The minimum scores
 are 90% for `Domain` and initially 63% for `Common`. The Common threshold is a baseline safeguard,
 not a quality target: close meaningful gaps first, then raise the threshold as results improve.
 Extending coverage to the rest of the solution remains separate, unfinished work.
@@ -162,7 +173,7 @@ The full rules are available in:
 In brief:
 
 - **Architecture**
-  - Follow Clean Architecture (`Domain` → `Backend/Common` → `SharedUI` → `MOBAflow/MOBAsmart/MOBApi`)
+  - Follow the tested [project dependency table](docs/ARCHITECTURE.md#project-dependency-rules); `MOBApi` references only `Common`
   - Use MVVM with `CommunityToolkit.Mvvm` (`[ObservableProperty]`, `[RelayCommand]`)
   - Use constructor injection only, not a service locator
 
