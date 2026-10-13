@@ -287,7 +287,7 @@ runtime services.
 - The page coordinates visual column widths and matching load/unload subscriptions. Editor disposal
   releases session, collection and model handlers without changing bound state during shutdown.
   The architecture guard rejects shell dependencies in LocomotivesPage. Train-composition
-  and central layout-persistence extraction remain later RF-24 slices.
+  is extracted in slice 2c below; central layout-persistence extraction remains planned.
 
 **Wagon presentation (RF-24 slice 2b):**
 
@@ -302,7 +302,20 @@ runtime services.
   entity/solution checks, refresh image bindings for repeated paths and ignore results after disposal.
 - The editor detaches session, project-collection and selected-model subscriptions at shutdown.
   The architecture guard rejects shell dependencies in both wagon inventory pages.
-  Train composition and central layout persistence remain later slices.
+  Train composition is extracted in slice 2c below; central layout persistence remains planned.
+
+**Train composition (RF-24 slice 2c):**
+
+- The host owns one TrainsPageViewModel for TrainsPage. It reads ISolutionSession directly,
+  shares the existing LocomotivesPageViewModel, WagonsPageViewModel and LayoutColumnWidthsViewModel,
+  and keeps train/vehicle selection, search, train CRUD, composition order and panel expansion.
+- Selection and solution replacement detach the previous train's VehiclesModified callback.
+  Disposal releases session and train subscriptions without removing session-owned train property
+  tracking. Vehicle callbacks preserve auto-save suppression and update the existing connection
+  runtime's project snapshot; runtime ownership and operator command routing are unchanged.
+- TrainsPage retains only visual layout and drag/drop coordination. Its architecture guard rejects
+  MainWindowViewModel dependencies. The superseded Train partial is removed; the shell retains
+  its runtime-refresh helper for station/journey editors until their own extraction.
 
 **Settings presentation (RF-24 slice 1):**
 
@@ -611,7 +624,7 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `SettingsPageViewModel`, `LocomotivesPageViewModel`, `WagonsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `TrainsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;

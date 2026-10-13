@@ -2,6 +2,7 @@
 namespace Moba.Test.Helpers;
 
 using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
@@ -40,6 +41,18 @@ internal sealed partial class TestRollingStockPages : IDisposable
         var page = new WagonsPageViewModel(session, ioService ?? new NullIoService(),
             persistence.Object, new LayoutColumnWidthsViewModel(),
             NullLogger<WagonsPageViewModel>.Instance, _ => { });
+        _pages.Add(page);
+        return page;
+    }
+    public TrainsPageViewModel GetTrainsPage(ISolutionSession session, IConnectionRuntime runtime, IIoService? ioService = null)
+    {
+        var settings = new AppSettings();
+        var persistence = new Mock<ISettingsService>();
+        persistence.Setup(service => service.GetSettings()).Returns(settings);
+        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        var page = new TrainsPageViewModel(session, runtime, persistence.Object, new LayoutColumnWidthsViewModel(),
+            GetLocomotivesPage(session, ioService), GetWagonsPage(session, ioService),
+            NullLogger<TrainsPageViewModel>.Instance);
         _pages.Add(page);
         return page;
     }

@@ -24,7 +24,7 @@ using System.ComponentModel;
 
 /// <summary>
 /// Core ViewModel for main window functionality.
-/// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow, Train and Z21.
+/// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow and Z21.
 /// </summary>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
@@ -85,8 +85,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IEventBus eventBus,
         IUiDispatcher uiDispatcher,
         SettingsPageViewModel settingsPage,
-        LocomotivesPageViewModel locomotivesPage,
-        WagonsPageViewModel wagonsPage,
+        TrainsPageViewModel trainsPage,
         ISolutionSession solutionSession,
         ActionExecutionContext executionContext,
         ILogger<MainWindowViewModel> logger,
@@ -106,8 +105,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settingsPage);
-        ArgumentNullException.ThrowIfNull(locomotivesPage);
-        ArgumentNullException.ThrowIfNull(wagonsPage);
+        ArgumentNullException.ThrowIfNull(trainsPage);
         ArgumentNullException.ThrowIfNull(solutionSession);
         ArgumentNullException.ThrowIfNull(executionContext);
         ArgumentNullException.ThrowIfNull(logger);
@@ -122,8 +120,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var settings = settingsPage.Settings;
         _settings = settings;
         SettingsPage = settingsPage;
-        LocomotivesPage = locomotivesPage;
-        WagonsPage = wagonsPage;
+        TrainsPage = trainsPage;
         SettingsPage.PropertyChanged += OnSettingsPagePropertyChanged;
         SettingsPage.FeedbackPointCountChanged += OnFeedbackPointCountChanged;
         _logger = logger;
@@ -195,10 +192,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public SettingsPageViewModel SettingsPage { get; }
 
     /// <summary>Gets the host-owned locomotive editor shared by inventory and train pages.</summary>
-    public LocomotivesPageViewModel LocomotivesPage { get; }
+    public LocomotivesPageViewModel LocomotivesPage => TrainsPage.LocomotivesPage;
+
+    /// <summary>Gets the host-owned train composition editor.</summary>
+    public TrainsPageViewModel TrainsPage { get; }
 
     /// <summary>Gets the host-owned wagon editor shared by inventory and train pages.</summary>
-    public WagonsPageViewModel WagonsPage { get; }
+    public WagonsPageViewModel WagonsPage => TrainsPage.WagonsPage;
 
     /// <summary>
     /// Application settings model shared with the shell. Exposed for UI behaviors that walk the visual tree
@@ -474,6 +474,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SettingsPage.FeedbackPointCountChanged -= OnFeedbackPointCountChanged;
         WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
         WorkflowLibrary.Dispose();
+        TrainsPage.Dispose();
         LocomotivesPage.Dispose();
         WagonsPage.Dispose();
         foreach (var subscriptionId in _eventBusSubscriptions)

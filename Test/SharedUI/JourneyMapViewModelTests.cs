@@ -68,8 +68,7 @@ internal sealed partial class JourneyMapViewModelTests : IDisposable
             eventBusMock.Object,
             dispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcherMock.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null),
             locomotiveSession1,
             new ActionExecutionContext
             {

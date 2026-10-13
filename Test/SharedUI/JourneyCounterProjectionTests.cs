@@ -254,8 +254,7 @@ public sealed class JourneyCounterProjectionTests
                 _eventBus,
                 dispatcher.Object,
                 TestSettingsPages.Create(Settings, dispatcher.Object),
-                _rollingStockPages.GetLocomotivesPage(locomotiveSession1, io.Object),
-                _rollingStockPages.GetWagonsPage(locomotiveSession1, io.Object),
+                _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object),
                 locomotiveSession1,
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
                 NullLogger<MainWindowViewModel>.Instance);
