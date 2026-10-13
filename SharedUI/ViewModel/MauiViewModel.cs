@@ -36,8 +36,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly MobaflowHubSession _hubSession;
     private readonly MobileRuntimeProjection _runtimeProjection;
     private readonly MobileSolutionSynchronizer _solutionSynchronizer;
-    private readonly IPhotoUploadService _photoUploadService;
-    private readonly IPhotoCaptureService _photoCaptureService;
+    private readonly MobilePhotoUploader _photoUploader;
     private readonly IRuntimeHubRemoteClient? _runtimeHubRemoteClient;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
@@ -78,8 +77,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <param name="hubSession">MOBApi health check, client registration and runtime hub connection.</param>
     /// <param name="runtimeProjection">Locomotive fleet and signal-box data of the selected project.</param>
     /// <param name="solutionSynchronizer">Brings MOBAflow's solution to the phone.</param>
-    /// <param name="photoUploadService">Service used to upload captured photos to the server.</param>
-    /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
+    /// <param name="photoUploader">Takes a photo and uploads it to MOBAflow.</param>
     /// <param name="networkProfileChangeNotifier">Raises when device connectivity changes so cached LAN REST endpoints can be re-resolved.</param>
     /// <param name="logger">Logger for diagnostics.</param>
     /// <param name="eventBus">Event bus used to observe runtime and feedback changes.</param>
@@ -99,8 +97,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         MobaflowHubSession hubSession,
         MobileRuntimeProjection runtimeProjection,
         MobileSolutionSynchronizer solutionSynchronizer,
-        IPhotoUploadService photoUploadService,
-        IPhotoCaptureService photoCaptureService,
+        MobilePhotoUploader photoUploader,
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
         ILogger<MauiViewModel> logger,
         IEventBus eventBus,
@@ -120,8 +117,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(hubSession);
         ArgumentNullException.ThrowIfNull(runtimeProjection);
         ArgumentNullException.ThrowIfNull(solutionSynchronizer);
-        ArgumentNullException.ThrowIfNull(photoUploadService);
-        ArgumentNullException.ThrowIfNull(photoCaptureService);
+        ArgumentNullException.ThrowIfNull(photoUploader);
         ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(eventBus);
@@ -135,8 +131,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _hubSession = hubSession;
         _runtimeProjection = runtimeProjection;
         _solutionSynchronizer = solutionSynchronizer;
-        _photoUploadService = photoUploadService;
-        _photoCaptureService = photoCaptureService;
+        _photoUploader = photoUploader;
         _networkProfileChangeNotifier = networkProfileChangeNotifier;
         _logger = logger;
         _runtimeHubRemoteClient = runtimeHubRemoteClient;
@@ -1182,57 +1177,15 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             PhotoUploadSuccess = false;
             PhotoUploadStatus = null;
 
-            var localPath = await _photoCaptureService.CapturePhotoAsync().ConfigureAwait(false);
-            if (string.IsNullOrEmpty(localPath))
-            {
-                PhotoUploadStatus = "Capture cancelled or not available.";
-                return;
-            }
-
-            // Use current REST API endpoint when already known (e.g. when status was green); only run discovery when missing
-            string? ip = null;
-            int? port = null;
-            if (!string.IsNullOrWhiteSpace(RestApiIpAddress) && RestApiPort > 0)
-            {
-                ip = RestApiIpAddress.Trim();
-                port = RestApiPort;
-            }
-            if (string.IsNullOrEmpty(ip) || !port.HasValue)
-            {
-                var discovered = await _endpointLocator
-                    .FindAsync(ToDiscoveryAnchor(Z21IpAddress), _applicationLifetimeCts.Token)
-                    .ConfigureAwait(false);
-                ip = discovered?.IpAddress;
-                port = discovered?.Port;
-            }
-
-            if (string.IsNullOrEmpty(ip) || !port.HasValue)
-            {
-                PhotoUploadStatus = "⚠️ REST server not found\n\n" +
-                                    "• Is MOBAflow (PC) running with\n  \"Auto-start REST API\" enabled?\n" +
-                                    "• Are phone and PC on the same Wi‑Fi?\n" +
-                                    "• Try again in a moment (discovery\n  runs automatically).\n\n" +
-                                    "Server must listen on port 5001.";
-                return;
-            }
-
-            // ✅ Upload photo WITHOUT entityId - WinUI will assign it to the currently selected item
-            var tempId = Guid.NewGuid(); // Temporary ID for filename only
-            var (success, serverPhotoPath, error) = await _photoUploadService.UploadPhotoAsync(ip, port.Value, localPath, "latest", tempId).ConfigureAwait(false);
-            if (success)
-            {
-                PhotoUploadSuccess = true;
-                PhotoUploadStatus = serverPhotoPath ?? "Uploaded successfully.";
-                await _endpointLocator.RememberReachableAddressAsync(ip).ConfigureAwait(false);
-            }
-            else
-            {
-                PhotoUploadStatus = error ?? "Upload failed.";
-            }
-        }
-        catch (Exception ex)
-        {
-            PhotoUploadStatus = $"Error: {ex.Message}";
+            // Use the endpoint already known (e.g. when the status is green); only search the LAN without one.
+            var knownEndpoint = string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0
+                ? null
+                : new MobaflowEndpoint(RestApiIpAddress.Trim(), RestApiPort);
+            var result = await _photoUploader
+                .CaptureAndUploadAsync(knownEndpoint, ToDiscoveryAnchor(Z21IpAddress), _applicationLifetimeCts.Token)
+                .ConfigureAwait(false);
+            PhotoUploadSuccess = result.Success;
+            PhotoUploadStatus = result.Status;
         }
         finally
         {
