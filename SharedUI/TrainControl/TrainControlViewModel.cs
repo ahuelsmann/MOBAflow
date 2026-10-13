@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.ViewModel;
+namespace Moba.SharedUI.TrainControl;
 
 using Backend.Interface;
 
@@ -26,7 +26,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-using TrainControl;
+using ViewModel;
 
 /// <summary>
 /// ViewModel for TrainControlPage - provides locomotive drive control interface.
@@ -46,7 +46,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 {
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
-    private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
     private readonly IEventBus _eventBus;
@@ -59,7 +58,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private readonly LocomotiveRoster _locomotiveRoster;
     private readonly bool _useRemoteRuntimeSnapshots;
     private readonly bool _hybridRuntimeSnapshots;
-    private readonly TrainControlHost _trainControlHost;
+    private readonly TrainControlSettingsStore _settingsStore;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
     private readonly IFunctionAppearancePicker? _functionAppearancePicker;
     private readonly SpeedController _speedController = new(TimeProvider.System);
@@ -505,7 +504,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    private Journey? _currentJourney;
+    public partial Journey? CurrentJourney { get; set; }
 
     /// <summary>
     /// Current station index in the journey (0-based).
@@ -529,203 +528,105 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    private int _currentStationIndex;
+    public partial int CurrentStationIndex { get; set; }
 
     // === Computed Properties for TimetableStopsControl ===
 
-    private const string StationPlaceholder = "\u2014";
+    private StationDisplay PreviousStation => JourneyStationProjection.Previous(CurrentJourney, CurrentStationIndex);
+
+    private StationDisplay CurrentStation => JourneyStationProjection.Current(CurrentJourney, CurrentStationIndex);
+
+    private StationDisplay NextStation => JourneyStationProjection.Next(CurrentJourney, CurrentStationIndex);
 
     /// <summary>
     /// Provides TimetableStopsControl with the previous station name, using a placeholder when none.
     /// </summary>
-    public string PreviousStationName => GetPreviousStation()?.Name ?? StationPlaceholder;
+    public string PreviousStationName => PreviousStation.Name;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station arrival time.
     /// </summary>
-    public string PreviousStationArrival => ResolveArrivalText(GetPreviousStation());
+    public string PreviousStationArrival => PreviousStation.Arrival;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station departure time.
     /// </summary>
-    public string PreviousStationDeparture => ResolveDepartureText(GetPreviousStation());
+    public string PreviousStationDeparture => PreviousStation.Departure;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station track value.
     /// </summary>
-    public string PreviousStationTrack => ResolveTimetableDetailText(GetPreviousStation());
+    public string PreviousStationTrack => PreviousStation.Track;
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no previous station.
     /// </summary>
-    public bool PreviousStationHasValue => GetPreviousStation() != null;
+    public bool PreviousStationHasValue => PreviousStation.HasValue;
 
     /// <summary>
     /// Used by TimetableStopsControl to choose the previous station exit direction icon.
     /// </summary>
-    public bool PreviousStationIsExitOnLeft => GetPreviousStation()?.IsExitOnLeft ?? false;
+    public bool PreviousStationIsExitOnLeft => PreviousStation.IsExitOnLeft;
 
     /// <summary>
     /// Provides TimetableStopsControl with the current station name, using a placeholder when none.
     /// </summary>
-    public string CurrentStationName => GetCurrentStation()?.Name ?? StationPlaceholder;
+    public string CurrentStationName => CurrentStation.Name;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the current station arrival time.
     /// </summary>
-    public string CurrentStationArrival => ResolveArrivalText(GetCurrentStation());
+    public string CurrentStationArrival => CurrentStation.Arrival;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the current station departure time.
     /// </summary>
-    public string CurrentStationDeparture => ResolveDepartureText(GetCurrentStation());
+    public string CurrentStationDeparture => CurrentStation.Departure;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the current station track value.
     /// </summary>
-    public string CurrentStationTrack => ResolveTimetableDetailText(GetCurrentStation());
+    public string CurrentStationTrack => CurrentStation.Track;
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no current station.
     /// </summary>
-    public bool CurrentStationHasValue => GetCurrentStation() != null;
+    public bool CurrentStationHasValue => CurrentStation.HasValue;
 
     /// <summary>
     /// Used by TimetableStopsControl to choose the current station exit direction icon.
     /// </summary>
-    public bool CurrentStationIsExitOnLeft => GetCurrentStation()?.IsExitOnLeft ?? false;
+    public bool CurrentStationIsExitOnLeft => CurrentStation.IsExitOnLeft;
 
     /// <summary>
     /// Provides TimetableStopsControl with the next station name, using a placeholder when none.
     /// </summary>
-    public string NextStationName => GetNextStation()?.Name ?? StationPlaceholder;
+    public string NextStationName => NextStation.Name;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the next station arrival time.
     /// </summary>
-    public string NextStationArrival => ResolveArrivalText(GetNextStation());
+    public string NextStationArrival => NextStation.Arrival;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the next station departure time.
     /// </summary>
-    public string NextStationDeparture => ResolveDepartureText(GetNextStation());
+    public string NextStationDeparture => NextStation.Departure;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the next station track value.
     /// </summary>
-    public string NextStationTrack => ResolveTimetableDetailText(GetNextStation());
+    public string NextStationTrack => NextStation.Track;
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no next station.
     /// </summary>
-    public bool NextStationHasValue => GetNextStation() != null;
+    public bool NextStationHasValue => NextStation.HasValue;
 
     /// <summary>
     /// Used by TimetableStopsControl to choose the next station exit direction icon.
     /// </summary>
-    public bool NextStationIsExitOnLeft => GetNextStation()?.IsExitOnLeft ?? false;
-
-    private Station? GetPreviousStation()
-    {
-        if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
-        {
-            return null;
-        }
-
-        var currentIndex = Math.Clamp(CurrentStationIndex, 0, CurrentJourney.Stations.Count);
-        return currentIndex <= 0
-            ? null
-            : CurrentJourney.Stations[currentIndex - 1];
-    }
-
-    private Station? GetCurrentStation()
-    {
-        if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
-            return null;
-
-        if (CurrentStationIndex < 0 || CurrentStationIndex >= CurrentJourney.Stations.Count)
-        {
-            return null;
-        }
-
-        return CurrentJourney.Stations[CurrentStationIndex];
-    }
-
-    private Station? GetNextStation()
-    {
-        if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
-            return null;
-
-        var nextIndex = CurrentStationIndex + 1;
-        if (nextIndex < 0 || nextIndex >= CurrentJourney.Stations.Count)
-        {
-            return null;
-        }
-
-        return CurrentJourney.Stations[nextIndex];
-    }
-
-    private string ResolveArrivalText(Station? station)
-    {
-        if (station == null)
-        {
-            return StationPlaceholder;
-        }
-
-        return station.Arrival?.ToString("HH:mm") ?? StationPlaceholder;
-    }
-
-    private string ResolveDepartureText(Station? station)
-    {
-        if (station == null)
-        {
-            return StationPlaceholder;
-        }
-
-        return station.Departure?.ToString("HH:mm") ?? StationPlaceholder;
-    }
-
-    private string ResolveTimetableDetailText(Station? station)
-    {
-        if (station == null)
-        {
-            return StationPlaceholder;
-        }
-
-        return ResolvePlatformText(station);
-    }
-
-    private Workflow? ResolveWorkflow(Guid workflowId)
-    {
-        var selectedProjectWorkflow = _projectContext?.SelectedProject?.Model.Workflows.FirstOrDefault(workflow => workflow.Id == workflowId);
-        if (selectedProjectWorkflow != null)
-        {
-            return selectedProjectWorkflow;
-        }
-
-        return _projectContext?.SolutionViewModel?.Projects
-            .SelectMany(project => project.Model.Workflows)
-            .FirstOrDefault(workflow => workflow.Id == workflowId);
-    }
-
-    private static string ResolvePlatformText(Station? station)
-    {
-        if (station == null)
-        {
-            return StationPlaceholder;
-        }
-
-        if (station.PlatformId.HasValue)
-        {
-            var platform = station.Platforms.FirstOrDefault(platform => platform.Id == station.PlatformId.Value);
-            if (platform != null)
-            {
-                return platform.Number.ToString();
-            }
-        }
-
-        return station.Platforms.FirstOrDefault()?.Number.ToString() ?? StationPlaceholder;
-    }
+    public bool NextStationIsExitOnLeft => NextStation.IsExitOnLeft;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TrainControlViewModel"/> class that implements the digital throttle UI.
@@ -763,14 +664,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _functionAppearancePicker = functionAppearancePicker;
         _runtimeCommandGateway = runtimeCommandGateway;
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator ?? runtimeCommandGateway as IMobileRuntimeCoordinator;
-        _settingsService = settingsService;
         _projectContext = projectContext;
         _logger = logger;
         _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
         _useRemoteRuntimeSnapshots = options?.UseRemoteRuntimeSnapshots ?? useRemoteRuntimeSnapshots;
         _hybridRuntimeSnapshots = options?.HybridRuntimeSnapshots ?? false;
-        _trainControlHost = options?.Host ?? TrainControlHost.WinUi;
+        _settingsStore = new TrainControlSettingsStore(settingsService, options?.Host ?? TrainControlHost.WinUi, logger);
 
         // Doors start closed and the door button fully visible.
         IsDoorReleaseLocked = true;
@@ -1069,7 +969,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        var savedId = GetHostTrainControlSettings(_settingsService.GetSettings()).SelectedLocomotiveFromProjectId;
+        var savedId = _settingsStore.SavedLocomotiveId;
         if (LocomotiveRoster.FindSelectionToRestore(ProjectLocomotives, savedId) is not { } selection)
         {
             return;
@@ -1091,15 +991,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
     }
 
-    private TrainControlHostSettings GetHostTrainControlSettings(AppSettings settings) =>
-        _trainControlHost == TrainControlHost.Maui
-            ? settings.MauiTrainControlHost
-            : settings.WinUiTrainControlHost;
-
     private void PersistHostLocomotiveSelection(LocomotiveViewModel locomotive)
     {
-        var settings = _settingsService.GetSettings();
-        GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId = locomotive.Model.Id;
+        _settingsStore.RememberLocomotive(locomotive.Model.Id);
         QueueBackgroundTask(SaveTrainControlSettingsAsync(), "Save train control settings");
     }
 
@@ -1111,15 +1005,14 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _isRestoringLocomotive = true;
         try
         {
-            var settings = _settingsService.GetSettings();
-            var trainControl = settings.TrainControl;
+            var preferences = _settingsStore.Preferences;
 
-            RampStepSize = trainControl.SpeedRampStepSize;
-            RampIntervalMs = trainControl.SpeedRampIntervalMs;
-            SpeedSteps = trainControl.SpeedSteps;
+            RampStepSize = preferences.SpeedRampStepSize;
+            RampIntervalMs = preferences.SpeedRampIntervalMs;
+            SpeedSteps = preferences.SpeedSteps;
 
-            SelectedLocoSeries = trainControl.SelectedLocoSeries;
-            SelectedVmax = trainControl.SelectedVmax;
+            SelectedLocoSeries = preferences.SelectedLocoSeries;
+            SelectedVmax = preferences.SelectedVmax;
 
             TryRestoreSelectedLocomotiveFromProject();
             NotifyAllFunctionGlyphsChanged();
@@ -1133,60 +1026,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <summary>
     /// Saves locomotive series selection to persistent settings.
     /// </summary>
-    private async Task SaveLocoSeriesSettingsAsync()
-    {
-        try
-        {
-            var settings = _settingsService.GetSettings();
-            settings.TrainControl.SelectedLocoSeries = SelectedLocoSeries;
-            settings.TrainControl.SelectedVmax = SelectedVmax;
-
-            await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Failed to save locomotive series settings");
-        }
-    }
+    private Task SaveLocoSeriesSettingsAsync() => _settingsStore.SaveSeriesAsync(SelectedLocoSeries, SelectedVmax);
 
     /// <summary>
     /// Saves train control settings to persistent storage.
     /// </summary>
-    private async Task SaveSettingsAsync()
-    {
-        try
-        {
-            var settings = _settingsService.GetSettings();
-
-            settings.TrainControl.SpeedRampStepSize = (int)RampStepSize;
-            settings.TrainControl.SpeedRampIntervalMs = (int)RampIntervalMs;
-            settings.TrainControl.SpeedSteps = SpeedSteps;
-            if (SelectedLocomotiveFromProject?.Model != null)
-            {
-                GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId =
-                    SelectedLocomotiveFromProject.Model.Id;
-            }
-
-            await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
-
-            _logger?.LogInformation(
-                "Saved train control settings for host {Host}: LocomotiveId={LocoId}",
-                _trainControlHost,
-                GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Failed to save train control settings");
-        }
-    }
-
-    /// <summary>
-    /// Saves train control settings to persistent storage.
-    /// </summary>
-    private async Task SaveTrainControlSettingsAsync()
-    {
-        await SaveSettingsAsync().ConfigureAwait(false);
-    }
+    private Task SaveTrainControlSettingsAsync() =>
+        _settingsStore.SaveAsync(RampStepSize, RampIntervalMs, SpeedSteps, SelectedLocomotiveFromProject?.Model?.Id);
 
     /// <summary>
     /// Returns the locomotive for the current LocoAddress from the selected project or synced fleet snapshot.
@@ -2236,25 +2082,26 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        if (MainTrackCurrent == snapshot.MainCurrent
-            && ProgTrackCurrent == snapshot.ProgCurrent
-            && FilteredMainCurrent == snapshot.FilteredMainCurrent
-            && SupplyVoltage == snapshot.SupplyVoltage
-            && Temperature == snapshot.Temperature)
+        var current = new TrainControlTelemetry(
+            MainTrackCurrent,
+            ProgTrackCurrent,
+            FilteredMainCurrent,
+            SupplyVoltage,
+            Temperature,
+            PeakMainCurrent,
+            PeakTemperature);
+        if (TelemetryProjection.Apply(current, snapshot) is not { } telemetry)
         {
             return;
         }
 
-        MainTrackCurrent = snapshot.MainCurrent;
-        ProgTrackCurrent = snapshot.ProgCurrent;
-        FilteredMainCurrent = snapshot.FilteredMainCurrent;
-        SupplyVoltage = snapshot.SupplyVoltage;
-        Temperature = snapshot.Temperature;
-
-        if (snapshot.MainCurrent > PeakMainCurrent)
-            PeakMainCurrent = snapshot.MainCurrent;
-        if (snapshot.Temperature > PeakTemperature)
-            PeakTemperature = snapshot.Temperature;
+        MainTrackCurrent = telemetry.MainCurrent;
+        ProgTrackCurrent = telemetry.ProgCurrent;
+        FilteredMainCurrent = telemetry.FilteredMainCurrent;
+        SupplyVoltage = telemetry.SupplyVoltage;
+        Temperature = telemetry.Temperature;
+        PeakMainCurrent = telemetry.PeakMainCurrent;
+        PeakTemperature = telemetry.PeakTemperature;
 
         _logger?.LogDebug(
             "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +

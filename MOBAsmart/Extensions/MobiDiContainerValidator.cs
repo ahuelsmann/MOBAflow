@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Service;
 
 using SharedUI.Interface;
+using SharedUI.TrainControl;
 using SharedUI.ViewModel;
 
 using View;
