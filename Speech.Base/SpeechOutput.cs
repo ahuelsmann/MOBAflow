@@ -80,7 +80,7 @@ public sealed partial class SpeechOutput : ISpeechOutput, IDisposable, IAsyncDis
             var generation = _cache.Generation;
             var audio = await ReadCacheAsync(key, cancellationToken).ConfigureAwait(false);
             var result = audio is null
-                ? await _synthesis.RunAsync(System.FormattableString.Invariant($"{generation}:{key}"),
+                ? await _synthesis.RunAsync(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{generation}:{key}"),
                     token => SynthesizeAndCacheAsync(key, generation, prepared, token), cancellationToken).ConfigureAwait(false)
                 : SpeechResult.Success(audio);
             cancellationToken.ThrowIfCancellationRequested();
