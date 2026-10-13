@@ -26,6 +26,8 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
+using TrainControl;
+
 /// <summary>
 /// ViewModel for TrainControlPage - provides locomotive drive control interface.
 /// Implements a "digital throttle" similar to the Roco Z21 app hand controller.
@@ -54,8 +56,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private bool _isApplyingRuntimeLocomotiveState;
     private bool _disposed;
     private bool _updatesPaused;
-    private IReadOnlyList<LocomotiveFleetSnapshot>? _pendingLocomotiveFleet;
-    private IReadOnlyList<LocomotiveFleetSnapshot>? _lastAppliedLocomotiveFleet;
+    private readonly LocomotiveRoster _locomotiveRoster;
     private readonly bool _useRemoteRuntimeSnapshots;
     private readonly bool _hybridRuntimeSnapshots;
     private readonly TrainControlHost _trainControlHost;
@@ -772,6 +773,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(eventBus);
         _runtimeSnapshots = runtimeSnapshots;
+        _locomotiveRoster = new LocomotiveRoster(runtimeSnapshots, projectContext);
         _functionAppearancePicker = functionAppearancePicker;
         _runtimeCommandGateway = runtimeCommandGateway;
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator ?? runtimeCommandGateway as IMobileRuntimeCoordinator;
@@ -830,11 +832,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         if (_updatesPaused)
         {
-            if (e.Fleet.Count > 0)
-            {
-                _pendingLocomotiveFleet = e.Fleet;
-            }
-
+            _locomotiveRoster.DeferFleet(e.Fleet);
             return;
         }
 
@@ -853,47 +851,17 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
                 return;
             }
 
-            IReadOnlyList<LocomotiveViewModel> sourceItems;
             if (fleetOverride is { Count: > 0 })
             {
-                sourceItems = fleetOverride
-                    .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
-                    .Select(CreateLocomotiveViewModelFromFleetSnapshot)
-                    .ToList();
-            }
-            else if (_runtimeSnapshots.Current.LocomotiveFleet.Count > 0)
-            {
-                sourceItems = _runtimeSnapshots.Current.LocomotiveFleet
-                    .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
-                    .Select(CreateLocomotiveViewModelFromFleetSnapshot)
-                    .ToList();
-            }
-            else
-            {
-                sourceItems = _projectContext?.SelectedProject?.Locomotives
-                    ?? (IReadOnlyList<LocomotiveViewModel>)[];
-            }
-
-            if (fleetOverride is { Count: > 0 })
-            {
-                var orderedFleet = fleetOverride
-                    .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
-                    .ToList();
-                if (_lastAppliedLocomotiveFleet is not null
-                    && LocomotiveFleetSnapshotComparer.OrderedContentEquals(orderedFleet, _lastAppliedLocomotiveFleet))
+                if (_locomotiveRoster.MergeFleet(ProjectLocomotives, fleetOverride) is { } merge)
                 {
-                    return;
+                    ApplyFleetMerge(merge);
                 }
 
-                ApplyFleetItemsInPlace(orderedFleet);
-                _lastAppliedLocomotiveFleet = orderedFleet;
                 return;
             }
 
-            ProjectLocomotives = sourceItems.Count == 0
-                ? []
-                : new ObservableCollection<LocomotiveViewModel>(sourceItems);
-            _lastAppliedLocomotiveFleet = null;
+            ProjectLocomotives = _locomotiveRoster.BuildItems();
             OnPropertyChanged(nameof(HasProjectLocomotives));
             OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
             OnPropertyChanged(nameof(LocomotiveTitle));
@@ -914,54 +882,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
     }
 
-    private void ApplyFleetItemsInPlace(IReadOnlyList<LocomotiveFleetSnapshot> fleet)
+    private void ApplyFleetMerge(LocomotiveRosterMerge merge)
     {
-        var ordered = fleet
-            .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
-
-        var existingById = ProjectLocomotives.ToDictionary(item => item.Model.Id);
-        var snapshotById = ordered.ToDictionary(item => item.LocomotiveId);
-
-        for (var index = ProjectLocomotives.Count - 1; index >= 0; index--)
-        {
-            var existing = ProjectLocomotives[index];
-            if (snapshotById.ContainsKey(existing.Model.Id))
-            {
-                continue;
-            }
-
-            ProjectLocomotives.RemoveAt(index);
-        }
-
-        var collectionChanged = ProjectLocomotives.Count != ordered.Count;
-        var metadataChanged = false;
-
-        for (var index = 0; index < ordered.Count; index++)
-        {
-            var snapshot = ordered[index];
-            if (existingById.TryGetValue(snapshot.LocomotiveId, out var existing))
-            {
-                if (!existing.MatchesFleetSnapshot(snapshot))
-                {
-                    existing.ApplyFleetSnapshot(snapshot);
-                    metadataChanged = true;
-                }
-
-                if (!ReferenceEquals(ProjectLocomotives[index], existing))
-                {
-                    collectionChanged = true;
-                }
-
-                continue;
-            }
-
-            ProjectLocomotives.Insert(index, CreateLocomotiveViewModelFromFleetSnapshot(snapshot));
-            collectionChanged = true;
-            metadataChanged = true;
-        }
-
-        if (collectionChanged)
+        if (merge.CollectionChanged)
         {
             OnPropertyChanged(nameof(HasProjectLocomotives));
             OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
@@ -970,7 +893,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             SyncLocomotivePickerSelection();
         }
 
-        if (metadataChanged && GetCurrentLocomotive() != null)
+        if (merge.MetadataChanged && GetCurrentLocomotive() != null)
         {
             NotifyAllFunctionAppearanceChanged();
         }
@@ -983,14 +906,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         SyncLocomotivePickerSelection();
     }
 
-    private void SyncLocomotivePickerSelection()
-    {
-        var selectedId = SelectedLocomotiveFromProject?.Model.Id;
-        foreach (var locomotive in ProjectLocomotives)
-        {
-            locomotive.IsPickerSelected = selectedId.HasValue && locomotive.Model.Id == selectedId.Value;
-        }
-    }
+    private void SyncLocomotivePickerSelection() =>
+        LocomotiveRoster.SyncPickerSelection(ProjectLocomotives, SelectedLocomotiveFromProject?.Model.Id);
 
     /// <summary>
     /// Refreshes remote photo bindings for the MOBAsmart locomotive list.
@@ -1014,10 +931,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     public void ResumeUpdates()
     {
         _updatesPaused = false;
-        if (_pendingLocomotiveFleet is { Count: > 0 })
+        if (_locomotiveRoster.TakePendingFleet() is { } pendingFleet)
         {
-            var pendingFleet = _pendingLocomotiveFleet;
-            _pendingLocomotiveFleet = null;
             RefreshLocomotiveList(pendingFleet);
         }
 
@@ -1169,24 +1084,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     private void TryRestoreSelectedLocomotiveFromProject()
     {
-        if (ProjectLocomotives.Count == 0 || SelectedLocomotiveFromProject != null)
+        if (SelectedLocomotiveFromProject != null)
         {
             return;
         }
 
-        var settings = _settingsService.GetSettings();
-        var savedId = GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId;
-        var match = savedId.HasValue
-            ? ProjectLocomotives.FirstOrDefault(l => l.Model.Id == savedId.Value)
-            : null;
-
-        var usedFallback = match == null;
-        if (match == null)
-        {
-            match = ProjectLocomotives[0];
-        }
-
-        if (match == null)
+        var savedId = GetHostTrainControlSettings(_settingsService.GetSettings()).SelectedLocomotiveFromProjectId;
+        if (LocomotiveRoster.FindSelectionToRestore(ProjectLocomotives, savedId) is not { } selection)
         {
             return;
         }
@@ -1194,16 +1098,16 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _isRestoringLocomotive = true;
         try
         {
-            SelectedLocomotiveFromProject = match;
+            SelectedLocomotiveFromProject = selection.Locomotive;
         }
         finally
         {
             _isRestoringLocomotive = false;
         }
 
-        if (!savedId.HasValue || usedFallback)
+        if (selection.IsFallback)
         {
-            PersistHostLocomotiveSelection(match);
+            PersistHostLocomotiveSelection(selection.Locomotive);
         }
     }
 
@@ -1557,20 +1461,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             RefreshLocomotiveList(snapshot.LocomotiveFleet);
         }
-    }
-
-    private static LocomotiveViewModel CreateLocomotiveViewModelFromFleetSnapshot(LocomotiveFleetSnapshot snapshot)
-    {
-        return new LocomotiveViewModel(new Locomotive
-        {
-            Id = snapshot.LocomotiveId,
-            Name = snapshot.Name,
-            DigitalAddress = snapshot.DigitalAddress,
-            PhotoPath = snapshot.PhotoPath,
-            FunctionSymbols = snapshot.FunctionSymbols?.ToList(),
-            FunctionColors = snapshot.FunctionColors?.ToList(),
-            FunctionLabels = snapshot.FunctionLabels?.ToList()
-        });
     }
 
     private void OnZ21ConnectionChanged(bool isConnected)
