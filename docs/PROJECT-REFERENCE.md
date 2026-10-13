@@ -105,12 +105,15 @@ The mobile responsibilities are split into:
 | Component | Current responsibility |
 | --- | --- |
 | `MobileRuntimeCoordinator` | Routes operator commands to the local Z21 or the remote desktop runtime. |
+| [`MobaflowEndpointLocator`](../SharedUI/Mobile/MobaflowEndpointLocator.cs) | Discovers MOBApi on the LAN, paces rediscovery and health checks, and remembers working addresses. |
 | [`MobaflowHubSession`](../SharedUI/Mobile/MobaflowHubSession.cs) | Checks REST health, registers the phone and manages hub connection retries/reconnect outcomes. |
 | [`MobileRuntimeProjection`](../SharedUI/Mobile/MobileRuntimeProjection.cs) | Owns the last remote fleet/signal-box data, filters it to the selected project and combines live, synchronized, cached and local sources. |
 | [`MobileSolutionSynchronizer`](../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog import and coordinates push, periodic and on-demand solution refresh, including cache fallback. |
+| [`MobilePhotoUploader`](../SharedUI/Mobile/MobilePhotoUploader.cs) | Captures and uploads a photo and reports the status text. |
 | `RuntimeHubRemoteClient`, `SolutionRemoteLoader`, `MobileSolutionStore` | Provide SignalR transport, REST solution loading and persistent mobile cache respectively. |
 
-These services are application singletons. `MauiViewModel` keeps UI projection,
+These services are application singletons. [`MauiViewModel`](../SharedUI/Mobile/MauiViewModel.cs) creates its
+[`MobileAppLifecycle`](../SharedUI/Mobile/MobileAppLifecycle.cs) and keeps UI projection,
 subscriptions, the health-check loop and cancellation ownership. `SolutionSession`
 remains the owner of the loaded solution and project selection. Session loss or a
 connection-toggle change resets the initial-import flag; shutdown cancels work

@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.ViewModel;
+namespace Moba.SharedUI.Mobile;
 
 using Backend.Interface;
 
@@ -15,11 +15,11 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Mobile;
-
 using Service;
 
 using System.Collections.ObjectModel;
+
+using ViewModel;
 
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.

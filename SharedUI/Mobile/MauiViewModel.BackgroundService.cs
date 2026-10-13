@@ -1,9 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.ViewModel;
+namespace Moba.SharedUI.Mobile;
 
 using Microsoft.Extensions.Logging;
-
-using Mobile;
 
 /// <summary>
 /// Android foreground-service keep-alive for active Z21 and MOBAflow connections.

@@ -4,7 +4,7 @@ namespace Moba.MAUI;
 using Common.Configuration;
 using Common.Extension;
 using SharedUI.Interface;
-using SharedUI.ViewModel;
+using SharedUI.Mobile;
 using View;
 using System.ComponentModel;
 // ReSharper disable once PartialTypeWithSinglePart
