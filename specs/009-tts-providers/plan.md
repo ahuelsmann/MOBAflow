@@ -154,7 +154,8 @@ completion applies only to the current session, guarded across host-player insta
   cancellation: earlier in-progress synthesis, also in another process, can finish playback but cannot refill the
   cleared cache. A lookup returns the generation read under the same lock as its miss. Requests after clear use a new
   shared-flight generation. A lookup reads only the requested file; the size limit is enforced from the index before
-  every hit, whenever audio is stored, and when the size is read.
+  every hit, whenever audio is stored, and when the size is read. Only when the index exceeds the limit are its
+  entries checked against the files, so missing WAVs never cause valid audio to be evicted.
   A cache I/O failure is diagnosed without raw filesystem details and does not silence an otherwise valid announcement.
 - Synthesized audio is stored only after it has played successfully, with that playback as its last-use time, so the
   cache never exceeds its limit and unheard audio never displaces played audio. A completed shared synthesis stays

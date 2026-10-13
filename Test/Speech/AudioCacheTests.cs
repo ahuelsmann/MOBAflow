@@ -268,6 +268,27 @@ internal sealed class AudioCacheTests
     }
 
     [Test]
+    public async Task LoweredLimitIgnoresIndexedAudioWhoseFileIsMissing()
+    {
+        var audio = TestWaveAudio.Create([1]);
+        var limit = audio.Length * 3L;
+        using var cache = new AudioCache(_directory, () => limit, _clock);
+        foreach (var text in new[] { "oldest", "middle", "missing" })
+        {
+            await cache.StoreAsync(Key(text), audio, cache.Generation).ConfigureAwait(false);
+            _clock.Advance(TimeSpan.FromSeconds(1));
+        }
+        File.Delete(Path.Combine(_directory, Key("missing") + ".wav"));
+        limit = audio.Length * 2L;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That((await cache.TryGetAsync(Key("oldest")).ConfigureAwait(false)).Audio, Is.Not.Null);
+            Assert.That((await cache.TryGetAsync(Key("middle")).ConfigureAwait(false)).Audio, Is.Not.Null);
+            Assert.That((await cache.TryGetAsync(Key("missing")).ConfigureAwait(false)).Audio, Is.Null);
+        }
+    }
+
+    [Test]
     public async Task ChangingLimitEvictsExistingEntriesAndOversizedAudioIsNotStored()
     {
         long limit = 1000;

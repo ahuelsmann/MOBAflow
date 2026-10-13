@@ -227,9 +227,11 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
 
     private bool Trim(string? protectedKey)
     {
-        var size = _entries.Values.Sum(entry => entry.Size);
         var limit = Limit();
-        var changed = false;
+        if (_entries.Values.Sum(entry => entry.Size) <= limit) return false;
+        // Over the limit: count only WAVs that still exist before evicting valid audio.
+        var changed = Reconcile(CancellationToken.None);
+        var size = _entries.Values.Sum(entry => entry.Size);
         foreach (var (key, entry) in _entries
             .Where(pair => !string.Equals(pair.Key, protectedKey, StringComparison.Ordinal))
             .OrderBy(pair => pair.Value.LastPlayedAt)
