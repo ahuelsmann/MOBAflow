@@ -62,9 +62,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private readonly TrainControlHost _trainControlHost;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
     private readonly IFunctionAppearancePicker? _functionAppearancePicker;
-    private CancellationTokenSource? _sendDriveCommandDebounceCts;
-
-    private const int SendDriveCommandDebounceMs = 75;
+    private readonly SpeedController _speedController = new(TimeProvider.System);
 
     // Snapshot function bits are ignored while an explicit all-off reset is in flight, or briefly
     // after a local function command so decoder/snapshot races do not fight the UI.
@@ -74,10 +72,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private int _previousLocoAddressForFunctionCache;
     private readonly Dictionary<int, uint> _locomotiveFunctionStateCache = [];
     private readonly Dictionary<int, Dictionary<int, DateTimeOffset>> _lastLocalFunctionCommandAt = [];
-    private readonly Dictionary<int, DateTimeOffset> _lastLocalDriveCommandAt = [];
     private MobaRuntimeSnapshot? _lastRemoteRuntimeSnapshot;
     private static readonly TimeSpan FunctionCommandGracePeriod = TimeSpan.FromSeconds(3);
-    private static readonly TimeSpan DriveCommandGracePeriod = TimeSpan.FromSeconds(3);
     private int _previousSpeed;
     private CancellationTokenSource? _doorReleaseBlinkCts;
 
@@ -488,8 +484,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     [ObservableProperty]
     private bool _isRamping;
-
-    private CancellationTokenSource? _rampCancellationTokenSource;
 
     // === Journey & Station Information (for Timetable Display) ===
 
@@ -965,13 +959,10 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         DetachObservedProjectLocomotives();
         DetachObservedJourney();
-        CancelRamp();
+        _speedController.Dispose();
         _doorReleaseBlinkCts?.Cancel();
         _doorReleaseBlinkCts?.Dispose();
         _doorReleaseBlinkCts = null;
-        _sendDriveCommandDebounceCts?.Cancel();
-        _sendDriveCommandDebounceCts?.Dispose();
-        _sendDriveCommandDebounceCts = null;
         _allFunctionsOffCts?.Cancel();
         _allFunctionsOffCts?.Dispose();
         _allFunctionsOffCts = null;
@@ -1588,24 +1579,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        _sendDriveCommandDebounceCts?.Cancel();
-        _sendDriveCommandDebounceCts?.Dispose();
-        _sendDriveCommandDebounceCts = new CancellationTokenSource();
-        var token = _sendDriveCommandDebounceCts.Token;
-        _ = DebouncedSendDriveCommandAsync(token);
-    }
-
-    private async Task DebouncedSendDriveCommandAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await Task.Delay(SendDriveCommandDebounceMs, cancellationToken).ConfigureAwait(false);
-            QueueBackgroundTask(SendDriveCommandAsync(), "Send drive command");
-        }
-        catch (OperationCanceledException)
-        {
-            // Superseded by a newer speed change.
-        }
+        _speedController.QueueDrive(() => QueueBackgroundTask(SendDriveCommandAsync(), "Send drive command"));
     }
 
     /// <summary>
@@ -1638,11 +1612,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
 
         // Cancel any existing ramp operation
-        CancelRamp();
-
+        var token = _speedController.BeginRamp();
         var targetSpeed = Speed;
-        _rampCancellationTokenSource = new CancellationTokenSource();
-        var token = _rampCancellationTokenSource.Token;
 
         try
         {
@@ -1685,51 +1656,23 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     }
 
     /// <summary>
-    /// Gradually changes speed from current to target value.
+    /// Gradually changes speed from current to target value; every step updates the bound speed and sends it.
     /// </summary>
-    /// <param name="fromSpeed">Starting speed</param>
-    /// <param name="toSpeed">Target speed</param>
-    /// <param name="direction">Direction to use for commands</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    private async Task RampSpeedAsync(int fromSpeed, int toSpeed, bool direction, CancellationToken cancellationToken)
-    {
-        var currentSpeed = fromSpeed;
-        var stepSize = (int)Math.Clamp(RampStepSize, 1, 20);
-        var intervalMs = (int)Math.Clamp(RampIntervalMs, 50, 500);
-        var step = toSpeed > fromSpeed ? stepSize : -stepSize;
-
-        while (currentSpeed != toSpeed)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Calculate next speed
-            currentSpeed = step > 0 ? Math.Min(currentSpeed + stepSize, toSpeed) : Math.Max(currentSpeed - stepSize, toSpeed);
-
-            // Update the Speed property (this triggers UI update but NOT another ramp)
-            _skipSpeedChangeHandler = true;
-            Speed = currentSpeed;
-            _skipSpeedChangeHandler = false;
-
-            // Send command to Z21
-            await SendLocomotiveDriveAsync(LocoAddress, currentSpeed, direction);
-
-            // Wait before next step
-            if (currentSpeed != toSpeed)
+    private Task RampSpeedAsync(int fromSpeed, int toSpeed, bool direction, CancellationToken cancellationToken) =>
+        _speedController.RampAsync(
+            fromSpeed,
+            toSpeed,
+            RampStepSize,
+            RampIntervalMs,
+            async speed =>
             {
-                await Task.Delay(intervalMs, cancellationToken);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Cancels any ongoing ramp operation.
-    /// </summary>
-    private void CancelRamp()
-    {
-        _rampCancellationTokenSource?.Cancel();
-        _rampCancellationTokenSource?.Dispose();
-        _rampCancellationTokenSource = null;
-    }
+                // Update the Speed property (this triggers UI update but NOT another ramp)
+                _skipSpeedChangeHandler = true;
+                Speed = speed;
+                _skipSpeedChangeHandler = false;
+                await SendLocomotiveDriveAsync(LocoAddress, speed, direction).ConfigureAwait(true);
+            },
+            cancellationToken);
 
     private bool _skipSpeedChangeHandler;
 
@@ -2148,40 +2091,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private async Task SendLocomotiveDriveAsync(int address, int speed, bool forward)
     {
-        MarkLocalDriveCommand(address);
+        _speedController.MarkLocalDrive(address);
         await _runtimeCommandGateway.SetLocomotiveDriveAsync(address, speed, forward, CancellationToken.None);
     }
 
-    private void MarkLocalDriveCommand(int address)
-    {
-        if (address < 1)
-        {
-            return;
-        }
-
-        _lastLocalDriveCommandAt[address] = DateTimeOffset.UtcNow;
-    }
-
-    private bool ShouldPreserveLocalDriveCommand(int address)
-    {
-        if (address < 1)
-        {
-            return false;
-        }
-
-        if (!_lastLocalDriveCommandAt.TryGetValue(address, out var commandedAt))
-        {
-            return false;
-        }
-
-        if (DateTimeOffset.UtcNow - commandedAt.ToUniversalTime() > DriveCommandGracePeriod)
-        {
-            _lastLocalDriveCommandAt.Remove(address);
-            return false;
-        }
-
-        return true;
-    }
+    private bool ShouldPreserveLocalDriveCommand(int address) => _speedController.ShouldPreserveLocalDrive(address);
 
     private bool ShouldPreserveLocalFunctionCommand(int address, int functionIndex)
     {
