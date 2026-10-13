@@ -12,6 +12,7 @@ using Moba.MAUI.Service;
 
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.TrainControl;
 using Moba.SharedUI.ViewModel;
 
 /// <summary>
