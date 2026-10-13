@@ -307,7 +307,8 @@ public static class PhotoPathHelper
     /// <param name="baseDir">Base directory for photos (e.g. from Application.PhotoStoragePath or My Documents).</param>
     /// <param name="relativePath">Relative path, optionally starting with "photos/" or "photos\".</param>
     /// <returns>Full local path using the platform directory separator.</returns>
-    public static string ToFullPath(string baseDir, string relativePath)
+    /// <remarks>Does not check containment; callers use the guarded <c>Try…</c> methods of this class.</remarks>
+    internal static string ToFullPath(string baseDir, string relativePath)
     {
         ArgumentNullException.ThrowIfNull(baseDir);
         ArgumentNullException.ThrowIfNull(relativePath);

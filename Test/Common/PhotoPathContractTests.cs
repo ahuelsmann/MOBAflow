@@ -292,6 +292,33 @@ internal sealed class PhotoPathContractTests
         }
     }
 
+    [TestCase(@".jpg\..\..\..\outside.jpg")]
+    [TestCase("/../../../outside.jpg")]
+    public void TryBuildPhotoUploadFullPath_RejectsAlternateSeparatorTraversal(string extension)
+    {
+        var accepted = PhotoPathHelper.TryBuildPhotoUploadFullPath(
+            _root.FullName, "locomotives", EntityId, extension, out var fullPath, out _);
+
+        Assert.That(!accepted || fullPath!.StartsWith(_root.FullName, StringComparison.OrdinalIgnoreCase), Is.True,
+            $"An accepted destination must stay under the storage root: {fullPath}");
+    }
+
+    [Test]
+    public void EncodedDotSegments_AreNotDecodedAndStayUnderTheRoot()
+    {
+        var normalized = PhotoPathHelper.NormalizeStoredRelativePath("photos/%2e%2e/outside.jpg");
+        var accepted = PhotoPathHelper.TryBuildPhotoUploadFullPath(
+            _root.FullName, "locomotives", EntityId, ".%2e%2e%2foutside.jpg", out var fullPath, out _);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(normalized, Is.EqualTo("photos/%2e%2e/outside.jpg"));
+            Assert.That(accepted, Is.True);
+            Assert.That(fullPath, Does.StartWith(_root.FullName));
+            Assert.That(Path.GetFileName(fullPath), Is.EqualTo($"{EntityId}.%2e%2e%2foutside.jpg"));
+        }
+    }
+
     [Test]
     public void TryBuildPhotoUploadFullPath_RejectsDestinationAtExactParentDirectory()
     {
