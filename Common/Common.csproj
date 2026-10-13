@@ -15,4 +15,8 @@
     <ItemGroup>
         <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="Test" />
+        <InternalsVisibleTo Include="Common.MutationTests" />
+    </ItemGroup>
 </Project>
