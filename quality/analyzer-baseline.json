@@ -2511,6 +2511,13 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "SharedUI/Mobile/MobilePhotoUploader.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "SharedUI/Mobile/MobileSolutionSynchronizer.cs",
       "count": 3
     },
@@ -2603,7 +2610,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "SharedUI",
@@ -5291,6 +5298,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/MobaflowHubSessionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/MobilePhotoUploaderTests.cs",
       "count": 1
     },
     {
