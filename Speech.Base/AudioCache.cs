@@ -3,13 +3,20 @@ namespace Moba.Speech.Base;
 
 using System.Text.Json;
 
-/// <summary>Serialized, atomic WAV/index storage with a configurable least-recently-played size limit.</summary>
+/// <summary>
+/// Serialized, atomic WAV/index storage with a configurable least-recently-played size limit.
+/// A lock file serializes access across processes; every operation reloads the index under that lock.
+/// </summary>
 public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, TimeProvider clock) : IAudioCache, IDisposable
 {
+    private const string IndexName = "index.json";
+    private const string LockName = "cache.lock";
+    private const int LockAttempts = 200;
+    private static readonly TimeSpan LockRetryDelay = TimeSpan.FromMilliseconds(25);
     private readonly string _directory = Path.GetFullPath(directory);
     private readonly SemaphoreSlim _gate = new(1, 1);
     private Dictionary<string, CacheEntry> _entries = new(StringComparer.Ordinal);
-    private bool _initialized;
+    private bool _swept;
     private long _generation;
 
     /// <inheritdoc />
@@ -19,22 +26,18 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
     public async Task<byte[]?> TryGetAsync(string key, CancellationToken cancellationToken = default)
     {
         ValidateKey(key);
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        return await UseAsync(async () =>
         {
-            await InitializeAsync(cancellationToken).ConfigureAwait(false);
-            await TrimAsync(cancellationToken).ConfigureAwait(false);
             if (!_entries.ContainsKey(key)) return null;
             var path = AudioPath(key);
             var audio = File.Exists(path)
                 ? await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false)
                 : null;
             if (audio is not null && IsValidWave(audio)) return audio;
-            await RemoveAsync(key, cancellationToken).ConfigureAwait(false);
-            await SaveIndexAsync(cancellationToken).ConfigureAwait(false);
+            Remove(key);
+            await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
             return null;
-        }
-        finally { _gate.Release(); }
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -42,96 +45,138 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
     {
         ValidateKey(key);
         _ = WaveAudio.GetDuration(audio.Span);
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        await UseAsync(async () =>
         {
-            await InitializeAsync(cancellationToken).ConfigureAwait(false);
             if (generation != Generation) return;
-            if (audio.Length > Math.Max(0, sizeLimitBytes())) return;
+            if (audio.Length > Limit())
+            {
+                // A lowered limit still applies, although this audio is not retained.
+                if (Trim(protectedKey: null)) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+                return;
+            }
             await WriteAtomicAsync(key + ".wav", audio, cancellationToken).ConfigureAwait(false);
-            _entries[key] = new CacheEntry(audio.Length, clock.GetUtcNow());
-            await TrimAsync(cancellationToken).ConfigureAwait(false);
-            await SaveIndexAsync(cancellationToken).ConfigureAwait(false);
-        }
-        finally { _gate.Release(); }
+            // The WAV is in place: record it even if the caller cancels now. It counts as played only after playback.
+            _entries[key] = new CacheEntry(audio.Length, _entries.GetValueOrDefault(key)?.LastPlayedAt);
+            Trim(protectedKey: key);
+            await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task MarkPlayedAsync(string key, CancellationToken cancellationToken = default)
     {
         ValidateKey(key);
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        await UseAsync(async () =>
         {
-            await InitializeAsync(cancellationToken).ConfigureAwait(false);
-            if (_entries.TryGetValue(key, out var entry))
-            {
-                _entries[key] = entry with { LastPlayedAt = clock.GetUtcNow() };
-                await SaveIndexAsync(cancellationToken).ConfigureAwait(false);
-            }
-        }
-        finally { _gate.Release(); }
+            if (!_entries.TryGetValue(key, out var entry)) return;
+            _entries[key] = entry with { LastPlayedAt = clock.GetUtcNow() };
+            await SaveIndexAsync(cancellationToken).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task<long> GetSizeAsync(CancellationToken cancellationToken = default)
     {
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        return await UseAsync(async () =>
         {
-            await InitializeAsync(cancellationToken).ConfigureAwait(false);
-            await TrimAsync(cancellationToken).ConfigureAwait(false);
+            var changed = Reconcile(cancellationToken);
+            changed |= Trim(protectedKey: null);
+            if (changed) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
             return _entries.Values.Sum(entry => entry.Size);
-        }
-        finally { _gate.Release(); }
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task ClearAsync(CancellationToken cancellationToken = default)
     {
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        await UseAsync(async () =>
         {
-            await InitializeAsync(cancellationToken).ConfigureAwait(false);
             Interlocked.Increment(ref _generation);
-            foreach (var key in _entries.Keys.ToArray())
-            {
-                await RemoveAsync(key, cancellationToken).ConfigureAwait(false);
-            }
-            await SaveIndexAsync(cancellationToken).ConfigureAwait(false);
-        }
-        finally { _gate.Release(); }
+            foreach (var key in _entries.Keys.ToArray()) Remove(key);
+            await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public void Dispose() => _gate.Dispose();
 
-    private async Task InitializeAsync(CancellationToken cancellationToken)
+    private async Task UseAsync(Func<Task> operation, CancellationToken cancellationToken) =>
+        await UseAsync(async () =>
+        {
+            await operation().ConfigureAwait(false);
+            return true;
+        }, cancellationToken).ConfigureAwait(false);
+
+    private async Task<T> UseAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken)
     {
-        if (_initialized) return;
-        Directory.CreateDirectory(_directory);
-        var indexPath = Path.Combine(_directory, "index.json");
-        if (File.Exists(indexPath))
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            try
-            {
-                var bytes = await File.ReadAllBytesAsync(indexPath, cancellationToken).ConfigureAwait(false);
-                var loaded = JsonSerializer.Deserialize<Dictionary<string, CacheEntry>>(bytes);
-                _entries = loaded is null ? new(StringComparer.Ordinal) : new(loaded.Where(pair =>
-                    IsValidKey(pair.Key) && pair.Value is not null && pair.Value.Size >= 0), StringComparer.Ordinal);
-            }
-            catch (JsonException) { _entries.Clear(); }
+            Directory.CreateDirectory(_directory);
+            using var processLock = await AcquireProcessLockAsync(cancellationToken).ConfigureAwait(false);
+            await LoadAsync(cancellationToken).ConfigureAwait(false);
+            return await operation().ConfigureAwait(false);
         }
-        foreach (var path in Directory.EnumerateFiles(_directory, "*.wav"))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var key = Path.GetFileNameWithoutExtension(path);
-            if (IsValidKey(key) && !_entries.ContainsKey(key)) File.Delete(path);
-        }
-        _initialized = true;
+        finally { _gate.Release(); }
     }
 
-    private async Task TrimAsync(CancellationToken cancellationToken)
+    private async Task<FileStream> AcquireProcessLockAsync(CancellationToken cancellationToken)
+    {
+        var path = Path.Combine(_directory, LockName);
+        for (var attempt = 1; attempt < LockAttempts; attempt++)
+        {
+            try { return OpenLock(path); }
+            catch (IOException)
+            {
+                // Another MOBAflow process holds the cache; its operations take milliseconds.
+                await Task.Delay(LockRetryDelay, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        // The final attempt reports a lasting lock as IOException.
+        return OpenLock(path);
+    }
+
+    private static FileStream OpenLock(string path) =>
+        new(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+
+    private async Task LoadAsync(CancellationToken cancellationToken)
+    {
+        var indexPath = Path.Combine(_directory, IndexName);
+        var index = File.Exists(indexPath) ? await ReadIndexAsync(indexPath, cancellationToken).ConfigureAwait(false) : null;
+        _entries = index?.Entries is null
+            ? new(StringComparer.Ordinal)
+            : new(index.Entries.Where(pair => IsValidKey(pair.Key) && pair.Value is not null && pair.Value.Size >= 0), StringComparer.Ordinal);
+        Interlocked.Exchange(ref _generation, Math.Max(Generation, index?.Generation ?? 0));
+        if (_swept) return;
+        // Writers hold the process lock until their index is saved, so unindexed WAVs and temporary files are leftovers.
+        foreach (var path in Directory.EnumerateFiles(_directory))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var name = Path.GetFileName(path);
+            var key = Path.GetFileNameWithoutExtension(name);
+            var orphan = name.EndsWith(".tmp", StringComparison.Ordinal) ||
+                (name.EndsWith(".wav", StringComparison.Ordinal) && IsValidKey(key) && !_entries.ContainsKey(key));
+            if (orphan) File.Delete(path);
+        }
+        _swept = true;
+    }
+
+    private async Task<CacheIndex?> ReadIndexAsync(string indexPath, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var bytes = await File.ReadAllBytesAsync(indexPath, cancellationToken).ConfigureAwait(false);
+            return JsonSerializer.Deserialize<CacheIndex>(bytes);
+        }
+        catch (JsonException)
+        {
+            // A corrupt index drops all entries; sweep their WAVs again.
+            _swept = false;
+            return null;
+        }
+    }
+
+    private bool Reconcile(CancellationToken cancellationToken)
     {
         var changed = false;
         foreach (var key in _entries.Keys.ToArray())
@@ -149,28 +194,39 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
                 changed = true;
             }
         }
-        var size = _entries.Values.Sum(entry => entry.Size);
-        var limit = Math.Max(0, sizeLimitBytes());
-        foreach (var entry in _entries.OrderBy(pair => pair.Value.LastPlayedAt).ThenBy(pair => pair.Key, StringComparer.Ordinal).ToArray())
-        {
-            if (size <= limit) break;
-            await RemoveAsync(entry.Key, cancellationToken).ConfigureAwait(false);
-            size -= entry.Value.Size;
-            changed = true;
-        }
-        if (changed) await SaveIndexAsync(cancellationToken).ConfigureAwait(false);
+        return changed;
     }
 
-    private Task RemoveAsync(string key, CancellationToken cancellationToken)
+    private bool Trim(string? protectedKey)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        var size = _entries.Values.Sum(entry => entry.Size);
+        var limit = Limit();
+        var changed = false;
+        // Entries never played (for example after cancelled playback) are evicted first.
+        foreach (var (key, entry) in _entries
+            .Where(pair => !string.Equals(pair.Key, protectedKey, StringComparison.Ordinal))
+            .OrderBy(pair => pair.Value.LastPlayedAt ?? DateTimeOffset.MinValue)
+            .ThenBy(pair => pair.Key, StringComparer.Ordinal)
+            .ToArray())
+        {
+            if (size <= limit) break;
+            Remove(key);
+            size -= entry.Size;
+            changed = true;
+        }
+        return changed;
+    }
+
+    private long Limit() => Math.Max(0, sizeLimitBytes());
+
+    private void Remove(string key)
+    {
         File.Delete(AudioPath(key));
         _entries.Remove(key);
-        return Task.CompletedTask;
     }
 
     private Task SaveIndexAsync(CancellationToken cancellationToken) =>
-        WriteAtomicAsync("index.json", JsonSerializer.SerializeToUtf8Bytes(_entries), cancellationToken);
+        WriteAtomicAsync(IndexName, JsonSerializer.SerializeToUtf8Bytes(new CacheIndex(Generation, _entries)), cancellationToken);
 
     private async Task WriteAtomicAsync(string name, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken)
     {
@@ -201,5 +257,8 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         if (!IsValidKey(key)) throw new ArgumentException("Invalid speech cache key.", nameof(key));
     }
 
-    private sealed record CacheEntry(long Size, DateTimeOffset LastPlayedAt);
+    private sealed record CacheIndex(long Generation, Dictionary<string, CacheEntry>? Entries);
+
+    /// <summary>Retained WAV size and the last successful playback; null until the entry has been played.</summary>
+    private sealed record CacheEntry(long Size, DateTimeOffset? LastPlayedAt);
 }

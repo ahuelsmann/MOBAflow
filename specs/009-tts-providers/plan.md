@@ -147,15 +147,21 @@ completion applies only to the current session, guarded across host-player insta
 - `IAudioCache.GetSizeAsync` and `ClearAsync`, also exposed by `SpeechOutput`, back the later Settings size display and
   the "Clear cache" command. The host registers one cache below `%LOCALAPPDATA%/MOBAflow/SpeechCache`; the size limit
   is `Speech.CacheSizeLimitMegabytes` (500 MiB by default, zero disables storage). The limit covers retained WAV bytes.
-- WAV/index replacement is atomic. A clear increments an in-memory generation: earlier in-progress synthesis can
-  finish playback but cannot refill the cleared cache. Requests after clear use a new shared-flight generation.
+- WAV/index replacement is atomic. A lock file serializes cache operations across MOBAflow processes; each operation
+  reloads the index under that lock, and unindexed WAVs or temporary files left by an interrupted write are removed
+  once per process. A clear increments the generation stored in the index: earlier in-progress synthesis, also in
+  another process, can finish playback but cannot refill the cleared cache. Requests after clear use a new
+  shared-flight generation. A lookup checks only the requested entry; the size limit is enforced when audio is stored
+  or the size is read.
   A cache I/O failure is diagnosed without raw filesystem details and does not silence an otherwise valid announcement.
-- Successful playback updates last-use time. Provider fingerprints include effective Piper executable/model/config
+- Successful playback updates last-use time. Stored audio counts as never played until then, so audio whose playback
+  was cancelled or failed is evicted before played audio. Provider fingerprints include effective Piper executable/model/config
   paths, pronunciation options and sentence silence; System Speech includes its
   configured default voice. Availability is excluded, so a cached announcement remains usable when the provider
   cannot start. Replacing model contents at the same configured path requires clearing the cache. Request text uses
   Unicode canonical normalization in both synthesis and cache identity.
 - Host service disposal cancels caller waits, shared synthesis and playback, then awaits their completion.
+  `SpeechOutput` is only asynchronously disposable, so no caller can return before that wait.
 - The WinUI host enables unsafe blocks for generated C#/WinRT interop of disposable cache/output services; no
   handwritten unsafe speech code or UI dependency is added to `Speech.Base`. Exact analyzer snapshots retire the
   resolved WinRT configuration diagnostics and record only the two source-suppressed NUnit reflection fixtures.
