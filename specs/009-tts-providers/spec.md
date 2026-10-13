@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-08
 
-**Status**: Approved; slices 1 and 2 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) and [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250), after prerequisite #207 merged. Slice 3 cache implementation in progress. T011 manual UI acceptance and slices 4-6 remain pending.
+**Status**: Approved; slices 1 and 2 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) and [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250), after prerequisite #207 merged. Slice 3 cache implemented and locally validated; T016 tracks the draft PR and CI/Sonar gate. T011 manual UI acceptance and slices 4-6 remain pending.
 
 **Spec Kit**: Required
 
