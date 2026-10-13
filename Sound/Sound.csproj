@@ -23,7 +23,6 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Options" />
-        <PackageReference Include="System.Speech" />
         <PackageReference Include="System.Windows.Extensions" />
     </ItemGroup>
     <ItemGroup>

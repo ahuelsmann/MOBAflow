@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>Moba.Speech.Base</RootNamespace>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../Common/Common.csproj" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    </ItemGroup>
+</Project>

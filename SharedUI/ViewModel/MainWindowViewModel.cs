@@ -493,9 +493,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void OnSettingsPagePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SettingsPageViewModel.SelectedSpeechEngine))
+        if (e.PropertyName == nameof(SettingsPageViewModel.SelectedSpeechProviderId))
         {
-            OnPropertyChanged(nameof(SpeechStatusDisplayText));
+            UpdateHealthStatus("Initializing...");
         }
     }
 

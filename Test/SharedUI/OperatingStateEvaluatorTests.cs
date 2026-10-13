@@ -8,6 +8,21 @@ using Moba.SharedUI.ViewModel;
 [TestFixture]
 internal sealed class OperatingStateEvaluatorTests
 {
+    [TestCase("Speech: Unavailable")]
+    [TestCase("Speech: Check Failed")]
+    public void UnavailableSpeechDegradesTheConnectedOperatingState(string speechStatus)
+    {
+        var presentation = OperatingStateEvaluator.Evaluate(new OperatingStateInput
+        {
+            IsConnected = true,
+            SpeechHealthStatus = speechStatus
+        });
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(presentation.State, Is.EqualTo(OperatingStateKind.Degraded));
+            Assert.That(presentation.DetailText, Does.Contain("Speech provider unavailable"));
+        }
+    }
     [Test]
     public void Evaluate_ReturnsFailSafe_WhenConnectionLostAfterSuccessfulConnect()
     {

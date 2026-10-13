@@ -11,6 +11,7 @@ using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Sound;
+using Moba.Speech.Base;
 
 /// <summary>
 /// Tests for <see cref="MobaBackendServiceCollectionExtensions.AddMobaBackendServices"/>.
@@ -77,7 +78,7 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
         services.AddSingleton(new AppSettings());
         services.AddSingleton<IEventBus>(sp => new EventBus(sp.GetRequiredService<ILogger<EventBus>>()));
-        services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
+        services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
         services.AddMobaBackendServices();
         return services;

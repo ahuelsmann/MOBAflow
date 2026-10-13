@@ -42,19 +42,23 @@ this table, so it is the single source of these rules.
 | `TrackLibrary.Base` | `Moba.TrackLibrary.Base` | none |
 | `Common` | `Moba.Common` | `Domain` |
 | `Sound` | `Moba.Sound` | `Common` |
-| `Backend` | `Moba.Backend` | `Common`, `Domain`, `Sound` |
+| `Speech.Base` | `Moba.Speech.Base` | `Common` |
+| `Speech.Piper` | `Moba.Speech.Piper` | `Speech.Base` |
+| `Speech.SystemSpeech` | `Moba.Speech.SystemSpeech` | `Speech.Base` |
+| `Backend` | `Moba.Backend` | `Common`, `Domain`, `Sound`, `Speech.Base` |
 | `TrackPlan.Renderer` | `Moba.TrackPlan.Renderer` | `TrackLibrary.Base` |
 | `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base`, `Domain`, `TrackPlan.Renderer` |
 | `MOBAdisplay` | `Moba.Display` | `Domain` |
 | `MOBApi` | `Moba.MOBApi` | `Common` |
 | `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackLibrary.PikoA` |
-| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `MOBAdisplay` |
-| `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound` |
+| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
+| `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound`, `Speech.Base` |
 
 Further rules:
 
 - Only `MOBAflow` uses WinUI and only `MOBAsmart` uses MAUI. Every other
-  project stays platform-neutral.
+  project stays free of UI framework types. `Speech.Piper` and `Speech.SystemSpeech` target Windows
+  for synthesis; `Speech.Base` remains platform-neutral and is the only speech project referenced by MOBAsmart.
 - Project references point to projects in `Moba.slnx`. The rules also apply
   to `Directory.Build.props`, `Directory.Build.targets` and imported build files.
 - Every namespace declared in a project starts with the root namespace in the
@@ -64,6 +68,14 @@ Further rules:
 `Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from this
 table, the project and build files, and the C# syntax of the sources; a failure
 message names the broken rule.
+
+### Speech dependency rule
+
+`Speech.Base` owns the provider contracts, structured results and shared output. `AnnouncementService`,
+workflow execution contexts and the Settings test command all use `ISpeechOutput`. It captures the current
+provider ID and shared request options on each call. Local providers synthesize WAV data without opening
+an audio device; MOBAflow's cancellable WAV player owns audible playback. `Sound` keeps sound effects and
+no longer references `System.Speech`. Android registers `NullSpeechOutput` and includes no Windows provider.
 
 ### Track-plan dependency rule
 

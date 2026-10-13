@@ -93,9 +93,9 @@ internal class AppSettingsDefaultsTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(speech.PiperExecutablePath, Is.EqualTo(string.Empty));
-            Assert.That(speech.PiperModelPath, Is.EqualTo(string.Empty));
-            Assert.That(speech.PiperConfigPath, Is.EqualTo(string.Empty));
+            Assert.That(speech.Piper.ExecutablePath, Is.EqualTo(string.Empty));
+            Assert.That(speech.Piper.ModelPath, Is.EqualTo(string.Empty));
+            Assert.That(speech.Piper.ConfigPath, Is.EqualTo(string.Empty));
         });
     }
 
@@ -107,9 +107,9 @@ internal class AppSettingsDefaultsTests
     public void PiperExecutablePath_NormalizesMissingPathAndPreservesConfiguredPath(string? path, string expected)
     {
         var settings = new AppSettings();
-        settings.Speech.PiperExecutablePath = path!;
+        settings.Speech.Piper.ExecutablePath = path!;
 
-        Assert.That(settings.PiperExecutablePath, Is.EqualTo(expected));
+        Assert.That(settings.Speech.Piper.ExecutablePath, Is.EqualTo(expected));
     }
 
     [TestCase(null, "")]
@@ -120,9 +120,9 @@ internal class AppSettingsDefaultsTests
     public void PiperModelPath_NormalizesMissingPathAndPreservesConfiguredPath(string? path, string expected)
     {
         var settings = new AppSettings();
-        settings.Speech.PiperModelPath = path!;
+        settings.Speech.Piper.ModelPath = path!;
 
-        Assert.That(settings.PiperModelPath, Is.EqualTo(expected));
+        Assert.That(settings.Speech.Piper.ModelPath, Is.EqualTo(expected));
     }
 
     [Test]
@@ -132,32 +132,35 @@ internal class AppSettingsDefaultsTests
         {
             Speech = new SpeechSettings
             {
-                PiperExecutablePath = "tools/first.exe",
-                PiperModelPath = "voices/first.onnx"
+                Piper = new PiperSpeechSettings
+                {
+                    ExecutablePath = "tools/first.exe",
+                    ModelPath = "voices/first.onnx"
+                }
             }
         };
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(settings.PiperExecutablePath, Is.EqualTo("tools/first.exe"));
-            Assert.That(settings.PiperModelPath, Is.EqualTo("voices/first.onnx"));
+            Assert.That(settings.Speech.Piper.ExecutablePath, Is.EqualTo("tools/first.exe"));
+            Assert.That(settings.Speech.Piper.ModelPath, Is.EqualTo("voices/first.onnx"));
         }
 
-        settings.Speech.PiperExecutablePath = "tools/second.exe";
-        settings.Speech.PiperModelPath = "voices/second.onnx";
+        settings.Speech.Piper.ExecutablePath = "tools/second.exe";
+        settings.Speech.Piper.ModelPath = "voices/second.onnx";
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(settings.PiperExecutablePath, Is.EqualTo("tools/second.exe"));
-            Assert.That(settings.PiperModelPath, Is.EqualTo("voices/second.onnx"));
+            Assert.That(settings.Speech.Piper.ExecutablePath, Is.EqualTo("tools/second.exe"));
+            Assert.That(settings.Speech.Piper.ModelPath, Is.EqualTo("voices/second.onnx"));
         }
 
         settings.Speech = new SpeechSettings();
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(settings.PiperExecutablePath, Is.Empty);
-            Assert.That(settings.PiperModelPath, Is.Empty);
+            Assert.That(settings.Speech.Piper.ExecutablePath, Is.Empty);
+            Assert.That(settings.Speech.Piper.ModelPath, Is.Empty);
         }
     }
 
@@ -165,22 +168,22 @@ internal class AppSettingsDefaultsTests
     public void Speech_EnablePronunciationNormalization_default_is_true()
     {
         var speech = new SpeechSettings();
-        Assert.That(speech.EnablePronunciationNormalization, Is.True);
+        Assert.That(speech.Piper.EnablePronunciationNormalization, Is.True);
     }
 
     [Test]
     public void Speech_PiperSentenceSilenceSeconds_default_is_zero()
     {
         var speech = new SpeechSettings();
-        Assert.That(speech.PiperSentenceSilenceSeconds, Is.Zero);
+        Assert.That(speech.Piper.SentenceSilenceSeconds, Is.Zero);
     }
 
     [Test]
     public void Speech_PronunciationReplacements_default_is_empty()
     {
         var speech = new SpeechSettings();
-        Assert.That(speech.PronunciationReplacements, Is.Not.Null);
-        Assert.That(speech.PronunciationReplacements, Is.Empty);
+        Assert.That(speech.Piper.PronunciationReplacements, Is.Not.Null);
+        Assert.That(speech.Piper.PronunciationReplacements, Is.Empty);
     }
 
     [Test]

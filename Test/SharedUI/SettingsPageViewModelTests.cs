@@ -44,7 +44,7 @@ internal sealed class SettingsPageViewModelTests
         viewModel.PiperSentenceSilenceSeconds = 5;
         viewModel.PiperSentenceSilenceSeconds = 3;
 
-        Assert.That(settings.Speech.PiperSentenceSilenceSeconds, Is.EqualTo(2));
+        Assert.That(settings.Speech.Piper.SentenceSilenceSeconds, Is.EqualTo(2));
         persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Exactly(2));
     }
 
@@ -114,16 +114,16 @@ internal sealed class SettingsPageViewModelTests
         var (viewModel, settings, persistence, _) = Create();
         var notifications = new List<string?>();
         viewModel.PropertyChanged += (_, e) => notifications.Add(e.PropertyName);
-        viewModel.SelectedSpeechEngine = "Piper TTS";
-        viewModel.SelectedSpeechEngine = "Piper TTS";
+        viewModel.SelectedSpeechProviderId = "piper";
+        viewModel.SelectedSpeechProviderId = "piper";
         viewModel.IsDarkMode = false;
         viewModel.IsDarkMode = false;
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(viewModel.IsPiperSpeechEngineSelected, Is.True);
+            Assert.That(viewModel.IsPiperSpeechProviderSelected, Is.True);
             Assert.That(settings.Application.IsDarkMode, Is.False);
-            Assert.That(notifications, Does.Contain(nameof(SettingsPageViewModel.IsPiperSpeechEngineSelected)));
+            Assert.That(notifications, Does.Contain(nameof(SettingsPageViewModel.IsPiperSpeechProviderSelected)));
             Assert.That(notifications.Count(name => name == nameof(SettingsPageViewModel.IsDarkMode)), Is.EqualTo(1));
         }
         persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Exactly(2));
@@ -312,8 +312,8 @@ internal sealed class SettingsPageViewModelTests
             {
                 Assert.That(viewModel.AvailablePiperLanguages, Is.EquivalentTo(ExpectedLanguages));
                 Assert.That(viewModel.AvailablePiperVoices, Is.EqualTo(ExpectedVoices));
-                Assert.That(settings.Speech.PiperModelPath, Is.EqualTo(englishModel));
-                Assert.That(settings.Speech.PiperConfigPath, Is.Empty);
+                Assert.That(settings.Speech.Piper.ModelPath, Is.EqualTo(englishModel));
+                Assert.That(settings.Speech.Piper.ConfigPath, Is.Empty);
                 Assert.That(viewModel.VoiceName, Is.EqualTo("en_US-test-low"));
             }
         }

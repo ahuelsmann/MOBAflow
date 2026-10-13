@@ -1,7 +1,8 @@
+#if WINDOWS
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Sound;
 
-using Moba.Sound;
+using Moba.Speech.Piper;
 
 /// <summary>
 /// Tests for Piper announcement text normalization.
@@ -68,3 +69,4 @@ internal sealed class PiperPronunciationNormalizerTests
         Assert.That(PiperPronunciationNormalizer.ToGermanWords(number), Is.EqualTo(expected));
     }
 }
+#endif
