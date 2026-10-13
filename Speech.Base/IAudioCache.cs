@@ -8,9 +8,12 @@ public interface IAudioCache
     long Generation { get; }
     /// <summary>Reads valid audio, discarding missing or corrupt entries.</summary>
     Task<byte[]?> TryGetAsync(string key, CancellationToken cancellationToken = default);
-    /// <summary>Stores valid audio within the size limit, if the captured generation is still current.</summary>
+    /// <summary>
+    /// Stores valid audio no larger than the size limit, if the captured generation is still current. Until it has
+    /// played, it displaces only other unplayed audio.
+    /// </summary>
     Task StoreAsync(string key, ReadOnlyMemory<byte> audio, long generation, CancellationToken cancellationToken = default);
-    /// <summary>Records successful playback for least-recently-played eviction.</summary>
+    /// <summary>Records successful playback and evicts the least recently played audio beyond the size limit.</summary>
     Task MarkPlayedAsync(string key, CancellationToken cancellationToken = default);
     /// <summary>Returns the total size of retained WAV files in bytes.</summary>
     Task<long> GetSizeAsync(CancellationToken cancellationToken = default);

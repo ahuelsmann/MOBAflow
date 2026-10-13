@@ -148,14 +148,16 @@ completion applies only to the current session, guarded across host-player insta
   the "Clear cache" command. The host registers one cache below `%LOCALAPPDATA%/MOBAflow/SpeechCache`; the size limit
   is `Speech.CacheSizeLimitMegabytes` (500 MiB by default, zero disables storage). The limit covers retained WAV bytes.
 - WAV/index replacement is atomic. A lock file serializes cache operations across MOBAflow processes; each operation
-  reloads the index under that lock, and unindexed WAVs or temporary files left by an interrupted write are removed
-  once per process. A clear increments the generation stored in the index: earlier in-progress synthesis, also in
-  another process, can finish playback but cannot refill the cleared cache. Requests after clear use a new
-  shared-flight generation. A lookup checks only the requested entry; the size limit is enforced when audio is stored
-  or the size is read.
+  reloads the index under that lock. Unindexed WAVs or temporary files left by an interrupted write are removed on the
+  first operation of a process, after a failed index update, and whenever the size is read or the cache is cleared.
+  A clear increments the generation stored in the index: earlier in-progress synthesis, also in another process, can
+  finish playback but cannot refill the cleared cache. The generation for a miss is read after the lookup has reloaded
+  the index. Requests after clear use a new shared-flight generation. A lookup reads only the requested file; the size
+  limit is enforced from the index before every hit, after playback is recorded, and when the size is read.
   A cache I/O failure is diagnosed without raw filesystem details and does not silence an otherwise valid announcement.
-- Successful playback updates last-use time. Stored audio counts as never played until then, so audio whose playback
-  was cancelled or failed is evicted before played audio. Provider fingerprints include effective Piper executable/model/config
+- Successful playback updates last-use time. Stored audio counts as never played until then and displaces only other
+  unplayed audio; played audio is evicted only once the new audio has played. Audio whose playback was cancelled or
+  failed is therefore evicted before played audio. Provider fingerprints include effective Piper executable/model/config
   paths, pronunciation options and sentence silence; System Speech includes its
   configured default voice. Availability is excluded, so a cached announcement remains usable when the provider
   cannot start. Replacing model contents at the same configured path requires clearing the cache. Request text uses

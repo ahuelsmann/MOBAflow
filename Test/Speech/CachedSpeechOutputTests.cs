@@ -381,6 +381,22 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
     }
 
     [Test]
+    public async Task ClearByAnotherProcessDoesNotPreventCachingTheNextMiss()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var output = CreateOutput(provider, new SpeechOutputTests.FakePlayer());
+        await using var lifetime = output.ConfigureAwait(false);
+        await output.SpeakAsync("Before clear").ConfigureAwait(false);
+        using (var otherProcess = new AudioCache(_directory, () => 1000000, TimeProvider.System))
+        {
+            await otherProcess.ClearAsync().ConfigureAwait(false);
+        }
+        await output.SpeakAsync("After clear").ConfigureAwait(false);
+        await output.SpeakAsync("After clear").ConfigureAwait(false);
+        Assert.That(provider.Requests.Count(request => request.Text == "After clear"), Is.EqualTo(1));
+    }
+
+    [Test]
     public async Task RequestAfterClearDoesNotJoinOlderFlightOrReceiveItsLateAudio()
     {
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

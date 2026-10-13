@@ -80,8 +80,9 @@ no longer references `System.Speech`. Android registers `NullSpeechOutput` and i
 The Windows host shares one `AudioCache` below `%LOCALAPPDATA%/MOBAflow/SpeechCache`. It stores WAV files and an
 atomic index under SHA-256 keys; request text and provider options are absent from file names and the index.
 The default WAV limit is 500 MiB (`Speech.CacheSizeLimitMegabytes`); least recently played entries are evicted, and
-stored audio counts as played only after successful playback. A lock file serializes cache access across MOBAflow
-processes, which reload the index for every operation.
+stored audio counts as played only after successful playback and until then displaces only other unplayed audio. The
+limit also applies before cache hits. A lock file serializes cache access across MOBAflow processes, which reload the
+index for every operation.
 Providers prepare a synthesis snapshot before cache lookup. Identical concurrent misses share one provider call,
 while each caller owns its wait and playback cancellation. The last cancelled waiter cancels the shared synthesis;
 host disposal cancels and awaits synthesis and playback. Clearing the cache invalidates writes from older work.

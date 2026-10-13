@@ -28,15 +28,24 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         ValidateKey(key);
         return await UseAsync(async () =>
         {
-            if (!_entries.ContainsKey(key)) return null;
-            var path = AudioPath(key);
-            var audio = File.Exists(path)
-                ? await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false)
-                : null;
-            if (audio is not null && IsValidWave(audio)) return audio;
-            Remove(key);
-            await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
-            return null;
+            // A lowered limit applies before a hit is served; zero disables the cache.
+            var changed = Trim(protectedKey: null, unplayedOnly: false);
+            byte[]? audio = null;
+            if (_entries.ContainsKey(key))
+            {
+                var path = AudioPath(key);
+                audio = File.Exists(path)
+                    ? await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false)
+                    : null;
+                if (audio is null || !IsValidWave(audio))
+                {
+                    audio = null;
+                    Remove(key);
+                    changed = true;
+                }
+            }
+            if (changed) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+            return audio;
         }, cancellationToken).ConfigureAwait(false);
     }
 
@@ -51,14 +60,24 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
             if (audio.Length > Limit())
             {
                 // A lowered limit still applies, although this audio is not retained.
-                if (Trim(protectedKey: null)) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+                if (Trim(protectedKey: null, unplayedOnly: false)) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
                 return;
             }
             await WriteAtomicAsync(key + ".wav", audio, cancellationToken).ConfigureAwait(false);
-            // The WAV is in place: record it even if the caller cancels now. It counts as played only after playback.
-            _entries[key] = new CacheEntry(audio.Length, _entries.GetValueOrDefault(key)?.LastPlayedAt);
-            Trim(protectedKey: key);
-            await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                // The WAV is in place: record it even if the caller cancels now. It counts as played only after
+                // playback, so it may only displace other unplayed audio; played audio is evicted by MarkPlayedAsync.
+                _entries[key] = new CacheEntry(audio.Length, _entries.GetValueOrDefault(key)?.LastPlayedAt);
+                Trim(protectedKey: key, unplayedOnly: true);
+                await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            catch
+            {
+                // The WAV may now be unindexed; sweep again under the next lock.
+                _swept = false;
+                throw;
+            }
         }, cancellationToken).ConfigureAwait(false);
     }
 
@@ -70,7 +89,8 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         {
             if (!_entries.TryGetValue(key, out var entry)) return;
             _entries[key] = entry with { LastPlayedAt = clock.GetUtcNow() };
-            await SaveIndexAsync(cancellationToken).ConfigureAwait(false);
+            Trim(protectedKey: null, unplayedOnly: false);
+            await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
         }, cancellationToken).ConfigureAwait(false);
     }
 
@@ -79,8 +99,10 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
     {
         return await UseAsync(async () =>
         {
+            // Also count out orphans that another process may have left since the first sweep.
+            Sweep(cancellationToken);
             var changed = Reconcile(cancellationToken);
-            changed |= Trim(protectedKey: null);
+            changed |= Trim(protectedKey: null, unplayedOnly: false);
             if (changed) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
             return _entries.Values.Sum(entry => entry.Size);
         }, cancellationToken).ConfigureAwait(false);
@@ -93,6 +115,7 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         {
             Interlocked.Increment(ref _generation);
             foreach (var key in _entries.Keys.ToArray()) Remove(key);
+            Sweep(cancellationToken);
             await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
         }, cancellationToken).ConfigureAwait(false);
     }
@@ -147,7 +170,11 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
             ? new(StringComparer.Ordinal)
             : new(index.Entries.Where(pair => IsValidKey(pair.Key) && pair.Value is not null && pair.Value.Size >= 0), StringComparer.Ordinal);
         Interlocked.Exchange(ref _generation, Math.Max(Generation, index?.Generation ?? 0));
-        if (_swept) return;
+        if (!_swept) Sweep(cancellationToken);
+    }
+
+    private void Sweep(CancellationToken cancellationToken)
+    {
         // Writers hold the process lock until their index is saved, so unindexed WAVs and temporary files are leftovers.
         foreach (var path in Directory.EnumerateFiles(_directory))
         {
@@ -197,7 +224,7 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         return changed;
     }
 
-    private bool Trim(string? protectedKey)
+    private bool Trim(string? protectedKey, bool unplayedOnly)
     {
         var size = _entries.Values.Sum(entry => entry.Size);
         var limit = Limit();
@@ -205,6 +232,7 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         // Entries never played (for example after cancelled playback) are evicted first.
         foreach (var (key, entry) in _entries
             .Where(pair => !string.Equals(pair.Key, protectedKey, StringComparison.Ordinal))
+            .Where(pair => !unplayedOnly || pair.Value.LastPlayedAt is null)
             .OrderBy(pair => pair.Value.LastPlayedAt ?? DateTimeOffset.MinValue)
             .ThenBy(pair => pair.Key, StringComparer.Ordinal)
             .ToArray())

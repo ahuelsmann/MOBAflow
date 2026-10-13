@@ -74,8 +74,9 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
         {
             var prepared = provider.PrepareSynthesis(request);
             var key = SpeechCacheKey.Create(provider.Id, prepared.OptionsFingerprint, request);
-            var generation = _cache.Generation;
             var audio = await ReadCacheAsync(key, cancellationToken).ConfigureAwait(false);
+            // Read after the lookup: it reloads the shared index, including a clear made by another process.
+            var generation = _cache.Generation;
             var result = audio is null
                 ? await _synthesis.RunAsync(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{generation}:{key}"),
                     token => SynthesizeAndCacheAsync(key, generation, prepared, token), cancellationToken).ConfigureAwait(false)
