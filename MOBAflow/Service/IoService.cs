@@ -479,7 +479,7 @@ internal class IoService : IIoService
 
             Directory.CreateDirectory(categoryFolder);
 
-            await FileCopyAsync(sourceFilePath, destinationPath!);
+            await FileCopyAsync(sourceFilePath, destinationPath);
 
             return relativePath;
         }
