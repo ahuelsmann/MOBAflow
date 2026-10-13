@@ -14,13 +14,13 @@ internal sealed partial class PassengerWagonPage
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<PassengerWagonPage>? _logger;
 
-    public MainWindowViewModel ViewModel { get; }
+    public WagonsPageViewModel ViewModel { get; }
 
     private double _listExpandedWidth = 250;
     private double _propertiesExpandedStarValue = 1;
 
     public PassengerWagonPage(
-        MainWindowViewModel viewModel,
+        WagonsPageViewModel viewModel,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<PassengerWagonPage>? logger = null)

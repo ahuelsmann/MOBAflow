@@ -90,17 +90,13 @@ internal sealed class PersistedDomainDefaultsTests
     }
 
     [Test]
-    public void DeserializeSpeechConfiguration_OmittedProperties_SelectsDefaultEngineAndVoice()
+    public void DeserializeAnnouncementDefaults_OmittedProperties_SelectsDefaultVoice()
     {
-        var engine = JsonSerializer.Deserialize<SpeakerEngineConfiguration>("{}", JsonOptions.Default)!;
         var voice = JsonSerializer.Deserialize<Voice>("{}", JsonOptions.Default)!;
         var connection = JsonSerializer.Deserialize<ConnectingService>("{}", JsonOptions.Default)!;
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(engine.Name, Is.EqualTo("PiperTts"));
-            Assert.That(engine.Type, Is.EqualTo("Moba.Sound.PiperSpeechEngine"));
-            Assert.That(engine.Settings, Is.Empty);
             Assert.That(voice.Name, Is.EqualTo("ElkeNeural"));
             Assert.That(connection.Name, Is.EqualTo("New Connecting Service"));
         }

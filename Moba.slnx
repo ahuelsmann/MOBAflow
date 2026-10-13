@@ -27,6 +27,9 @@
     <Deploy Solution="Debug|*" />
   </Project>
   <Project Path="SharedUI/SharedUI.csproj" />
+  <Project Path="Speech.Base/Speech.Base.csproj" />
+  <Project Path="Speech.Piper/Speech.Piper.csproj" />
+  <Project Path="Speech.SystemSpeech/Speech.SystemSpeech.csproj" />
   <Project Path="Sound/Sound.csproj" />
   <Project Path="Test/Test.csproj" />
   <Project Path="TrackLibrary.Base/TrackLibrary.Base.csproj" />

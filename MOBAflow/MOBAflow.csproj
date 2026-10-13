@@ -51,6 +51,8 @@
     </ItemGroup>
     <!-- Project References -->
     <ItemGroup>
+        <ProjectReference Include="..\Speech.Piper\Speech.Piper.csproj" />
+        <ProjectReference Include="..\Speech.SystemSpeech\Speech.SystemSpeech.csproj" />
         <ProjectReference Include="..\Backend\Backend.csproj" />
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\MOBApi\MOBApi.csproj" Condition="'$(BuildMOBApiDependency)' == 'true'">

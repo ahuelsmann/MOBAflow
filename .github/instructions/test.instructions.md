@@ -39,8 +39,8 @@ Use the validation policy and commands in [AGENTS.md](../../AGENTS.md).
 - Use the portable target for shared changes and the Windows target for desktop integration.
   `Test/Analysis/` contains separate analysis helpers, not the normal test entry point.
 - Respect explicitly marked integration/hardware tests and their prerequisites. Automated railroad tests use fakes.
-- Report failed/skipped platform tests precisely. `Test/Unit/SystemSpeechEngineTest.cs` depends on Windows SAPI/audio;
-  an unavailable device does not justify dismissing unrelated failures or deleting assertions.
+- Report failed/skipped platform tests precisely. `Test/Speech/LocalSpeechProviderTests.cs` exercises Windows SAPI synthesis into memory;
+  an installed voice is required, but no audio device is opened. Report explicit skips and do not dismiss unrelated failures.
 - Coverage is available through `Test/coverlet.runsettings` and `Test/dotnet-coverage.runsettings`.
   Follow the applicable quality pipeline when coverage is needed; do not install global tools or impose a new
   percentage threshold for an ordinary fix.

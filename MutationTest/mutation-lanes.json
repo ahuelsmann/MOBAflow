@@ -15,7 +15,10 @@
     {
       "name": "backend",
       "status": "planned",
-      "test-directories": ["Test/Backend", "Test/Integration"],
+      "test-directories": [
+        "Test/Backend",
+        "Test/Integration"
+      ],
       "test-files": ["Test/Z21DccCommandDecoderTests.cs"],
       "production-projects": ["Backend/Backend.csproj"]
     },
@@ -28,7 +31,8 @@
         "Test/Backend/RecordingArtifactSerializerTests.cs",
         "Test/Backend/RecordingEventCaptureTests.cs",
         "Test/Backend/RecordingReplayServiceTests.cs",
-        "Test/Backend/RecordingSessionServiceTests.cs"
+        "Test/Backend/RecordingSessionServiceTests.cs",
+        "Test/Speech/SpeechSettingsTests.cs"
       ],
       "production-projects": ["Common/Common.csproj"]
     },
@@ -48,10 +52,6 @@
       "name": "sound",
       "status": "planned",
       "test-directories": ["Test/Sound"],
-      "test-files": [
-        "Test/Unit/PiperSpeechEngineTest.cs",
-        "Test/Unit/SystemSpeechEngineTest.cs"
-      ],
       "production-projects": ["Sound/Sound.csproj"]
     },
     {
@@ -75,8 +75,12 @@
     {
       "name": "win-ui",
       "status": "planned",
-      "test-directories": ["Test/MOBAflow", "Test/WinUI"],
-      "production-projects": ["MOBAflow/MOBAflow.csproj"]
+      "test-directories": [
+        "Test/MOBAflow",
+        "Test/WinUI"
+      ],
+      "production-projects": ["MOBAflow/MOBAflow.csproj"],
+      "test-files": ["Test/Speech/CancellableWavePlayerTests.cs"]
     },
     {
       "name": "maui",
@@ -89,6 +93,34 @@
       "status": "planned",
       "test-directories": ["Test/Architecture"],
       "production-projects": []
+    },
+    {
+      "name": "speech-base",
+      "status": "planned",
+      "test-directories": [],
+      "test-files": [
+        "Test/Speech/SpeechOutputTests.cs",
+        "Test/Speech/WaveAudioTests.cs"
+      ],
+      "production-projects": ["Speech.Base/Speech.Base.csproj"]
+    },
+    {
+      "name": "speech-piper",
+      "status": "planned",
+      "test-directories": [],
+      "test-files": [
+        "Test/Speech/LocalSpeechProviderTests.cs",
+        "Test/Speech/PcmWavePostProcessorTests.cs",
+        "Test/Speech/PiperPronunciationNormalizerTests.cs"
+      ],
+      "production-projects": ["Speech.Piper/Speech.Piper.csproj"]
+    },
+    {
+      "name": "speech-system",
+      "status": "planned",
+      "test-directories": [],
+      "test-files": ["Test/Speech/LocalSpeechProviderTests.cs"],
+      "production-projects": ["Speech.SystemSpeech/Speech.SystemSpeech.csproj"]
     }
   ]
 }
