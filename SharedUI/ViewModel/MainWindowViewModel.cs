@@ -19,8 +19,6 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Service;
-
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -34,7 +32,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private const int ShutdownDisconnectTimeoutSeconds = 5;
 
     // Core Services (required)
-    private readonly IIoService _ioService;
     private readonly ISolutionSession _session;
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
     private readonly IConnectionRuntime _runtimeConnection;
@@ -75,7 +72,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
     /// <param name="executionContext">Execution context containing shared dependencies for workflow actions.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
-    /// <param name="ioService">Optional IO service implementation (null uses <see cref="NullIoService"/>).</param>
     /// <param name="cityLibraryService">Optional city library service for master data.</param>
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
@@ -94,7 +90,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ISolutionSession solutionSession,
         ActionExecutionContext executionContext,
         ILogger<MainWindowViewModel> logger,
-        IIoService? ioService = null,  // Optional for WebApp/MAUI
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
         ILoggerFactory? loggerFactory = null,
@@ -117,7 +112,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(executionContext);
         ArgumentNullException.ThrowIfNull(logger);
 
-        _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _session = solutionSession;
         _runtimeSnapshots = runtimeSnapshots;
         _runtimeConnection = runtimeConnection;

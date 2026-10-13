@@ -239,8 +239,7 @@ internal partial class MainWindowViewModelShutdownTests
             {
                 Z21 = new Mock<IZ21>().Object
             },
-            new Mock<ILogger<MainWindowViewModel>>().Object,
-            ioService);
+            new Mock<ILogger<MainWindowViewModel>>().Object);
     }
 
     private static Mock<IMobaRuntime> CreateRuntimeMock()

@@ -406,8 +406,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             _rollingStockPages.GetWagonsPage(locomotiveSession2, io.Object),
             locomotiveSession2,
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
-            NullLogger<MainWindowViewModel>.Instance,
-            io.Object)
+            NullLogger<MainWindowViewModel>.Instance)
         {
             CurrentSolutionPath = "inventory.json",
             SelectedProject = new ProjectViewModel(project)

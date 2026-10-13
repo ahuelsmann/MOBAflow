@@ -353,7 +353,6 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ActionExecutionContext>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
-            sp.GetRequiredService<IIoService>(),
             sp.GetRequiredService<ICityService>(),
             sp.GetRequiredService<ISettingsService>(),
             loggerFactory: sp.GetRequiredService<ILoggerFactory>(),

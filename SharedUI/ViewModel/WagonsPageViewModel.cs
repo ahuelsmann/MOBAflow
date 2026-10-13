@@ -15,6 +15,8 @@ using System.ComponentModel;
 /// <summary>Owns passenger and goods wagon editing shared by inventory pages and train libraries.</summary>
 public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
 {
+    private const string SaveRollingStockOperation = "Save rolling stock";
+
     private readonly ISolutionSession _session;
     private readonly IIoService _ioService;
     private readonly AppSettings _settings;
@@ -352,7 +354,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
         AttachWagonPhotoCommand(SelectedPassengerWagon);
 
         LogWagonAdded(_logger, "passenger", wagon.Name);
-        SaveChanges("Save rolling stock");
+        SaveChanges(SaveRollingStockOperation);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeletePassengerWagon))]
@@ -370,7 +372,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
             SelectedPassengerWagon = null;
 
         LogWagonDeleted(_logger, "passenger", wagonName);
-        SaveChanges("Save rolling stock");
+        SaveChanges(SaveRollingStockOperation);
     }
 
     private bool CanDeletePassengerWagon() => SelectedPassengerWagon != null;
@@ -398,7 +400,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
         AttachWagonPhotoCommand(SelectedGoodsWagon);
 
         LogWagonAdded(_logger, "goods", wagon.Name);
-        SaveChanges("Save rolling stock");
+        SaveChanges(SaveRollingStockOperation);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteGoodsWagon))]
@@ -416,7 +418,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
             SelectedGoodsWagon = null;
 
         LogWagonDeleted(_logger, "goods", wagonName);
-        SaveChanges("Save rolling stock");
+        SaveChanges(SaveRollingStockOperation);
     }
 
     private bool CanDeleteGoodsWagon() => SelectedGoodsWagon != null;
