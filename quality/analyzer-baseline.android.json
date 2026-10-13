@@ -2574,13 +2574,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
       "count": 1
     },
@@ -3731,13 +3724,6 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.SyncDiagnostics.cs",
       "count": 14
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 3
     },
     {
       "project": "SharedUI",
