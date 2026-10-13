@@ -540,6 +540,25 @@ passes the mandatory `WorkflowValidator` gate before effect planning (dry run) o
 live action execution; ordinary connection and locomotive commands do not pass
 through that workflow pipeline. Resulting runtime snapshots refresh the UI.
 
+### Train control
+
+[`TrainControlViewModel`](../SharedUI/TrainControl/TrainControlViewModel.cs) binds the MOBAflow Train
+Control page and the MOBAsmart Engines/Control tabs. It coordinates platform-neutral collaborators in
+[`SharedUI/TrainControl`](../SharedUI/TrainControl), which take `TimeProvider` where timing matters:
+
+| Component | Responsibility |
+| --- | --- |
+| [`LocomotiveRoster`](../SharedUI/TrainControl/LocomotiveRoster.cs) | Locomotive list source (live fleet, runtime fleet, project), in-place fleet merge, paused updates and selection restore. |
+| [`SpeedController`](../SharedUI/TrainControl/SpeedController.cs) | 75 ms drive debounce, speed ramp and the grace period in which a local drive command wins over snapshots. |
+| [`FunctionPanel`](../SharedUI/TrainControl/FunctionPanel.cs) | Function bits per address, local function grace period, snapshot merge, all-functions-off and appearance edits. |
+| [`BrakeAndDoorState`](../SharedUI/TrainControl/BrakeAndDoorState.cs) | Parking brake and door release rules and the timed door transition. |
+| [`JourneyStationProjection`](../SharedUI/TrainControl/JourneyStationProjection.cs) | Previous, current and next stop of the selected journey. |
+| [`TelemetryProjection`](../SharedUI/TrainControl/TelemetryProjection.cs) | Command station readings and peaks. |
+| [`TrainControlSettingsStore`](../SharedUI/TrainControl/TrainControlSettingsStore.cs) | Ramp, speed steps, series/Vmax and the per-host (WinUI/MAUI) selected locomotive. |
+
+The ViewModel keeps the bound properties, commands and the UI-thread continuations of ramps and the
+door transition; host differences stay explicit through `TrainControlViewModelOptions`.
+
 ### MOBAsmart session and projection
 
 These platform-neutral components live in [`SharedUI/Mobile`](../SharedUI/Mobile)

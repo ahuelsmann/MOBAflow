@@ -2630,8 +2630,15 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 10
+      "path": "SharedUI/TrainControl/TrainControlSettingsStore.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 8
     },
     {
       "project": "SharedUI",
@@ -2804,13 +2811,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1305",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1307",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
       "count": 1
@@ -2910,14 +2910,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 4
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1823",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
       "count": 1
     },
     {
@@ -3057,8 +3057,8 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 28
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 25
     },
     {
       "project": "SharedUI",
@@ -3127,8 +3127,8 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 10
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 9
     },
     {
       "project": "SharedUI",
@@ -3197,8 +3197,8 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 17
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 12
     },
     {
       "project": "SharedUI",
@@ -3226,13 +3226,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "SharedUI/ViewModel/SpeakerEngineConfigurationViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA5394",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
       "count": 1
     },
     {
@@ -3274,7 +3267,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
       "count": 1
     },
     {
@@ -3330,8 +3323,8 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 6
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3360,13 +3353,6 @@
       "ruleId": "IDE0028",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
       "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0028",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3701,8 +3687,8 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 29
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 21
     },
     {
       "project": "SharedUI",
@@ -5164,7 +5150,21 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/BrakeAndDoorStateTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/FeedbackCounterEngineTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/FunctionPanelTests.cs",
       "count": 1
     },
     {
@@ -5179,6 +5179,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/JourneyMapViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/JourneyStationProjectionTests.cs",
       "count": 1
     },
     {
@@ -5416,6 +5423,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/TelemetryProjectionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/TimetablePageViewModelTests.cs",
       "count": 1
     },
@@ -5424,6 +5438,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/TrainControlHostSelectionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/TrainControlSettingsStoreTests.cs",
       "count": 1
     },
     {
