@@ -17,6 +17,7 @@ using SharedUI.Mobile;
 using SharedUI.Service;
 using SharedUI.ViewModel;
 using Sound;
+using Speech.Base;
 using View;
 
 /// <summary>
@@ -54,7 +55,7 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddLogging();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
-        services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
+        services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
         services.AddMobaBackendServices();
 
         return services;

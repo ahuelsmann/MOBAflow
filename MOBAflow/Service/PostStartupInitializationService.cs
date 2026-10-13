@@ -172,7 +172,7 @@ internal class PostStartupInitializationService
     }
 
     /// <summary>
-    /// Initializes and starts the health check service for speech engines.
+    /// Initializes and starts the health check service for speech providers.
     /// This can run in the background without blocking the UI.
     /// </summary>
     private async Task InitializeSpeechHealthCheckAsync(CancellationToken cancellationToken)

@@ -6,7 +6,7 @@ using Domain;
 
 using Microsoft.Extensions.Logging;
 
-using Sound;
+using Speech.Base;
 
 /// <summary>
 /// Service for generating station announcements from templates.
@@ -14,15 +14,15 @@ using Sound;
 /// Purpose:
 /// - Generate announcement text from journey template
 /// - Replace placeholders with station data
-/// - Delegate audio output to ISpeakerEngine (PiperSpeechEngine or SystemSpeechEngine)
+/// - Delegate audio output to ISpeechOutput
 /// 
 /// Architecture:
 /// - Template rendering: Pure backend logic (platform-independent)
-/// - Audio output: Delegated to ISpeakerEngine (can be any implementation)
-/// - Integrates with existing Sound.csproj infrastructure
+/// - Audio output: Delegated to ISpeechOutput (can be any implementation)
+/// - Integrates with existing Speech.Base.csproj infrastructure
 /// 
 /// Usage:
-/// 1. Inject ISpeakerEngine (configured in DI)
+/// 1. Inject ISpeechOutput (configured in DI)
 /// 2. Call GenerateAnnouncementText() for text generation only
 /// 3. Call GenerateAndSpeakAnnouncementAsync() for text + audio
 /// 
@@ -38,7 +38,7 @@ using Sound;
 /// </summary>
 public interface IAnnouncementService
 {
-    bool IsSpeakerEngineAvailable { get; }
+    bool IsSpeechOutputAvailable { get; }
 
     string GenerateAnnouncementText(Journey journey, Station station, int stationIndex);
 
@@ -61,26 +61,26 @@ public interface IAnnouncementService
 
 public class AnnouncementService : IAnnouncementService
 {
-    private readonly ISpeakerEngineFactory? _speakerEngineFactory;
+    private readonly ISpeechOutput? _speechOutput;
     private readonly ILogger<AnnouncementService>? _logger;
 
     /// <summary>
-    /// Gets whether a speaker engine factory is available for speech synthesis.
+    /// Gets whether a speech output is available for speech synthesis.
     /// </summary>
-    public bool IsSpeakerEngineAvailable => _speakerEngineFactory != null;
+    public bool IsSpeechOutputAvailable => _speechOutput != null;
 
     /// <summary>
-    /// Initializes announcement service with optional speaker engine factory.
-    /// If no factory is supplied, announcements are generated but not spoken.
+    /// Initializes announcement service with optional speech output.
+    /// If no output is supplied, announcements are generated but not spoken.
     /// </summary>
-    /// <param name="speakerEngineFactory">Speaker engine factory for creating engines (optional)</param>
+    /// <param name="speechOutput">Shared speech output (optional)</param>
     /// <param name="logger">Optional logger for debugging</param>
-    public AnnouncementService(ISpeakerEngineFactory? speakerEngineFactory = null, ILogger<AnnouncementService>? logger = null)
+    public AnnouncementService(ISpeechOutput? speechOutput = null, ILogger<AnnouncementService>? logger = null)
     {
-        _speakerEngineFactory = speakerEngineFactory;
+        _speechOutput = speechOutput;
         _logger = logger;
-        _logger?.LogInformation("AnnouncementService initialized (Speaker Engine Factory: {FactoryAvailable})",
-            _speakerEngineFactory != null ? "Available" : "None");
+        _logger?.LogInformation("AnnouncementService initialized (Speech Output: {OutputAvailable})",
+            _speechOutput != null ? "Available" : "None");
     }
 
     /// <summary>
@@ -141,8 +141,8 @@ public class AnnouncementService : IAnnouncementService
     }
 
     /// <summary>
-    /// Generates announcement text and speaks it via speaker engine.
-    /// Safe to call even if no speaker engine is configured (logs and returns gracefully).
+    /// Generates announcement text and speaks it via shared speech output.
+    /// Safe to call even if no speech output is configured (logs and returns gracefully).
     /// </summary>
     /// <param name="journey">Journey containing template</param>
     /// <param name="station">Station with data</param>
@@ -158,14 +158,14 @@ public class AnnouncementService : IAnnouncementService
     }
 
     /// <summary>
-    /// Generates announcement text and speaks it via speaker engine.
+    /// Generates announcement text and speaks it via shared speech output.
     /// </summary>
     /// <param name="templateText">Raw announcement template text.</param>
     /// <param name="station">Station with data.</param>
     /// <param name="stationIndex">Station position (1-based).</param>
     /// <param name="cancellationToken">Cancellation token for async operation.</param>
     /// <param name="templateName">Optional template name used for logging context.</param>
-    /// <param name="suppressSpeechErrors">When true, speech engine failures are logged but not rethrown.</param>
+    /// <param name="suppressSpeechErrors">When true, speech output failures are logged but not rethrown.</param>
     public async Task GenerateAndSpeakAnnouncementAsync(
         string? templateText,
         Station station,
@@ -184,21 +184,16 @@ public class AnnouncementService : IAnnouncementService
             return;
         }
 
-        // Speak via speaker engine if factory is available
-        if (_speakerEngineFactory != null)
+        // Speak via shared speech output if speech output is available
+        if (_speechOutput != null)
         {
             try
             {
-                // Create engine dynamically based on current settings
-                var speakerEngine = _speakerEngineFactory.CreateEngineFromOptions();
-
-                _logger?.LogInformation("Speaking announcement via {SpeakerEngine} for station '{StationName}'",
-                    speakerEngine.Name, station.Name);
-                await speakerEngine.AnnouncementAsync(
-                        announcementText,
-                        voiceName: null,
-                        cancellationToken)
-                    .ConfigureAwait(false);
+                var result = await _speechOutput.SpeakAsync(announcementText, cancellationToken).ConfigureAwait(false);
+                if (!result.IsSuccess && !suppressSpeechErrors)
+                {
+                    throw new InvalidOperationException(result.Reason);
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -215,7 +210,7 @@ public class AnnouncementService : IAnnouncementService
         }
         else
         {
-            _logger?.LogInformation("No speaker engine configured. Announcement text: \"{Text}\"", announcementText);
+            _logger?.LogInformation("No speech output configured. Announcement text: \"{Text}\"", announcementText);
         }
     }
 

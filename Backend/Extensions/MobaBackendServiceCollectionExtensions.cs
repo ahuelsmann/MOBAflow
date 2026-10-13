@@ -21,6 +21,7 @@ using Service.Interlocking;
 using Service.Recording;
 using Service.Validation;
 using Sound;
+using Speech.Base;
 
 /// <summary>
 /// Dependency injection registrations shared by all MOBAflow hosts that use the backend runtime.
@@ -105,7 +106,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton(sp => new ActionExecutionContext
         {
             Z21 = sp.GetRequiredService<IZ21>(),
-            SpeakerEngine = sp.GetService<ISpeakerEngine>(),
+            SpeechOutput = sp.GetService<ISpeechOutput>(),
             SoundPlayer = sp.GetService<ISoundPlayer>()
         });
         services.TryAddSingleton<ActionExecutionContextFactory>();

@@ -7,6 +7,7 @@ using Common.Events;
 using Interface;
 
 using Sound;
+using Speech.Base;
 
 /// <summary>
 /// Provides execution context for workflow actions.
@@ -30,7 +31,7 @@ public class ActionExecutionContext
     /// Speaker engine for text-to-speech announcements.
     /// Optional: May be null if audio is not configured.
     /// </summary>
-    public ISpeakerEngine? SpeakerEngine { get; init; }
+    public ISpeechOutput? SpeechOutput { get; init; }
 
     /// <summary>
     /// Sound player for audio file playback.
@@ -142,7 +143,7 @@ public sealed class ActionExecutionContextFactory(ActionExecutionContext service
             SourceEvent = state?.SourceEvent,
             SourceEventDefinitionId = state?.SourceEventDefinitionId,
             Z21 = services.Z21,
-            SpeakerEngine = services.SpeakerEngine,
+            SpeechOutput = services.SpeechOutput,
             SoundPlayer = services.SoundPlayer,
             CurrentProject = state?.CurrentProject,
             CurrentJourney = state?.CurrentJourney,

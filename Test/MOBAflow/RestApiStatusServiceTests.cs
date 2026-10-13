@@ -22,12 +22,12 @@ using Moq;
 [TestFixture]
 internal sealed partial class RestApiStatusServiceTests : IDisposable
 {
-    private readonly TestLocomotivePages _locomotivePages = new();
+    private readonly TestRollingStockPages _rollingStockPages = new();
 
     [TearDown]
     public void Dispose()
     {
-        _locomotivePages.Dispose();
+        _rollingStockPages.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -201,7 +201,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             eventBus,
             uiDispatcher.Object,
             TestSettingsPages.Create(appSettings, uiDispatcher.Object),
-            _locomotivePages.GetPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntime.Object, null),
             locomotiveSession1,
             new ActionExecutionContext
             {

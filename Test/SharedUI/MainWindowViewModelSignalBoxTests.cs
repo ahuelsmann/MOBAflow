@@ -20,12 +20,12 @@ using Moq;
 [TestFixture]
 internal sealed partial class MainWindowViewModelSignalBoxTests : IDisposable
 {
-    private readonly TestLocomotivePages _locomotivePages = new();
+    private readonly TestRollingStockPages _rollingStockPages = new();
 
     [TearDown]
     public void Dispose()
     {
-        _locomotivePages.Dispose();
+        _rollingStockPages.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -119,7 +119,7 @@ internal sealed partial class MainWindowViewModelSignalBoxTests : IDisposable
             new Mock<IEventBus>().Object,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _locomotivePages.GetPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
             locomotiveSession1,
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             NullLogger<MainWindowViewModel>.Instance)

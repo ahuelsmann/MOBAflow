@@ -44,5 +44,67 @@ internal sealed class SettingsServiceTests
             Directory.Delete(directory);
         }
     }
+    [Test]
+    public async Task SpeechOptions_SaveAndReloadBothLocalProviderSections()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "mobaflow-speech-settings-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "appsettings.json");
+        try
+        {
+            var settings = new AppSettings();
+            var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
+            settings.Speech.ProviderId = "piper";
+            settings.Speech.Piper.ExecutablePath = "piper.exe";
+            settings.Speech.Piper.ModelPath = "voice.onnx";
+            settings.Speech.Piper.SentenceSilenceSeconds = 0.5;
+            settings.Speech.SystemSpeech.DefaultVoiceName = "Windows voice";
+            settings.Speech.Rate = 3;
+            settings.Speech.Volume = 65;
+            await service.SaveSettingsAsync(settings).ConfigureAwait(false);
+            var loaded = new AppSettings();
+            _ = new SettingsService(loaded, NullLogger<SettingsService>.Instance, path);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(loaded.Speech.ProviderId, Is.EqualTo("piper"));
+                Assert.That(loaded.Speech.Piper.ExecutablePath, Is.EqualTo("piper.exe"));
+                Assert.That(loaded.Speech.Piper.ModelPath, Is.EqualTo("voice.onnx"));
+                Assert.That(loaded.Speech.Piper.SentenceSilenceSeconds, Is.EqualTo(0.5));
+                Assert.That(loaded.Speech.SystemSpeech.DefaultVoiceName, Is.EqualTo("Windows voice"));
+                Assert.That(loaded.Speech.Rate, Is.EqualTo(3));
+                Assert.That(loaded.Speech.Volume, Is.EqualTo(65));
+            }
+        }
+        finally
+        {
+            File.Delete(path);
+            Directory.Delete(directory);
+        }
+    }
+
+    [Test]
+    public async Task SpeechSettings_RemovedFieldsAreIgnoredByProductionLoader()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "mobaflow-old-speech-" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            await File.WriteAllTextAsync(path, """
+                {"speech":{"speakerEngineName":"PiperTts","piperExecutablePath":"old.exe","piperModelPath":"old.onnx"}}
+                """).ConfigureAwait(false);
+            var settings = new AppSettings();
+            settings.Speech.ProviderId = "piper";
+            _ = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(settings.Speech.ProviderId, Is.EqualTo("system-speech"));
+                Assert.That(settings.Speech.Piper.ExecutablePath, Is.Empty);
+                Assert.That(settings.Speech.Piper.ModelPath, Is.Empty);
+            }
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
 }
 #endif

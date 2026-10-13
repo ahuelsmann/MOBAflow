@@ -21,12 +21,12 @@ using Moq;
 [TestFixture]
 internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
 {
-    private readonly TestLocomotivePages _locomotivePages = new();
+    private readonly TestRollingStockPages _rollingStockPages = new();
 
     [TearDown]
     public void Dispose()
     {
-        _locomotivePages.Dispose();
+        _rollingStockPages.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -112,7 +112,7 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             new EventBus(NullLogger<EventBus>.Instance),
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            _locomotivePages.GetPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null),
             locomotiveSession1,
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object);

@@ -94,10 +94,9 @@ public partial class MainWindowViewModel
         switch (e.PropertyName)
         {
             case nameof(ISolutionSession.SelectedProject):
-                var oldProject = _observedSelectedProject;
                 _observedSelectedProject = _session.SelectedProject;
                 OnPropertyChanged(nameof(SelectedProject));
-                HandleSelectedProjectChanged(oldProject, _observedSelectedProject);
+                HandleSelectedProjectChanged(_observedSelectedProject);
                 break;
             case nameof(ISolutionSession.SelectedJourney):
                 OnPropertyChanged(nameof(SelectedJourney));
@@ -118,6 +117,17 @@ public partial class MainWindowViewModel
             case nameof(ISolutionSession.Solution):
                 OnPropertyChanged(e.PropertyName);
                 break;
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the runtime's snapshot of the selected project after an editor change, without re-activation.
+    /// </summary>
+    private void RefreshProjectRuntimeSnapshot()
+    {
+        if (SelectedProject is { } project)
+        {
+            ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(project.Model), "Update project runtime");
         }
     }
 
@@ -223,12 +233,6 @@ public partial class MainWindowViewModel
         SelectedWorkflow = null;
         SelectedAction = null;
         WorkflowsPageSelectedObject = null;
-
-        // Wagons & Locomotives
-        SelectedTrain = null;
-        SelectedPassengerWagon = null;
-        SelectedGoodsWagon = null;
-        SelectedVehicle = null;
 
         // General
         CurrentSelectedObject = null;
