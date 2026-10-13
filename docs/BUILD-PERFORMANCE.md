@@ -173,6 +173,12 @@ skipped steps and a skipped job count as successful.
 `scripts/Get-QualityChangeScope.Tests.ps1` checks these rules, including every
 source and copied fixture input of the mutation project.
 
+The repository consistency job also checks source-derived package and mutation
+documentation facts and runs their offline boundary tests. A separate
+[documentation consistency workflow](DOCUMENTATION-CONSISTENCY.md) supports
+semantic assessment and documentation commits in the existing PR. Its AI portion
+is initially inactive and requires explicit API/App configuration and live acceptance.
+
 The repository consistency job also lints every workflow with a pinned,
 checksum-verified actionlint release and checks internal documentation links
 and images with `scripts/Test-DocumentationLinks.ps1`. External links are
@@ -225,10 +231,12 @@ fixture. Lanes marked `planned` do not claim mutation coverage. The `architectur
 lane has no production project: its tests read project files and sources, so
 production-code mutations do not exercise them.
 
-| Active lane | Test project | Stryker configuration | Break threshold | CI selection / runner |
+<!-- documentation-facts:mutation:start -->
+| Active lane | Production project | Test project | Stryker configuration | Break threshold |
 | --- | --- | --- | --- | --- |
-| Domain | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% | Domain/test/fixture or mutation/build inputs; Linux |
-| Common | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% | Every code-relevant PR; Windows |
+| domain | `Domain/Domain.csproj` | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% |
+| common | `Common/Common.csproj` | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% |
+<!-- documentation-facts:mutation:end -->
 
 Both run on main pushes and manual Quality runs. Common uses Windows because
 its existing fixtures include Windows-specific photo paths. Its concurrency is

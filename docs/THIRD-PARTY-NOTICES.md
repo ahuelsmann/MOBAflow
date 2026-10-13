@@ -70,6 +70,7 @@ Conditional references and both mutation test hosts are included; this is a sour
 not a resolved per-platform restore graph. Each package has its own row so its version and
 usage can be compared directly with those XML entries. Versions in this section must not be edited independently of the central package catalog.
 
+<!-- documentation-facts:packages:start -->
 | Package | Version | Directly referenced in | Purpose |
 | --- | --- | --- | --- |
 | `CommunityToolkit.Maui` | `15.0.1` | `MOBAsmart` | MAUI helpers, converters and behaviors. |
@@ -111,6 +112,7 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `System.Speech` | `10.0.12` | `Sound` | Windows text-to-speech. |
 | `System.Windows.Extensions` | `10.0.12` | `Sound` | Windows audio APIs. |
 | `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | Android startup integration. |
+<!-- documentation-facts:packages:end -->
 
 ---
 

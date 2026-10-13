@@ -98,6 +98,8 @@ paths. Android Release AAB runs only on manual dispatch with `validate_android=t
 Main pushes and manual runs enable the remaining scopes. See
 [Build Performance](BUILD-PERFORMANCE.md#ci-note) and
 [`Get-QualityChangeScope.ps1`](../scripts/Get-QualityChangeScope.ps1) for the exact selection.
+[Documentation consistency](DOCUMENTATION-CONSISTENCY.md) describes the always-on
+generated-fact checks and the separately activated semantic maintenance workflow.
 See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
 Create Draft PRs. Mark ready only after current-commit SonarCloud passes and remote issue results show zero

@@ -89,6 +89,12 @@ jobs:
       - name: Validate AI repository setup
         run: python3 scripts/Test-AiRepositorySetup.py
 
+      - name: Check generated documentation facts
+        run: python3 scripts/documentation_consistency.py
+
+      - name: Test documentation consistency boundaries
+        run: python3 scripts/Test-DocumentationConsistency.py
+
       - name: Test AI repository setup helpers
         run: python3 scripts/Test-AiRepositorySetup.Tests.py
 
