@@ -10,12 +10,12 @@ using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
-internal sealed partial class TestLocomotivePages : IDisposable
+internal sealed partial class TestRollingStockPages : IDisposable
 {
-    private readonly List<LocomotivesPageViewModel> _pages = [];
+    private readonly List<IDisposable> _pages = [];
 
     // The test fixture owns this collection; returned pages stay alive until its teardown.
-    public LocomotivesPageViewModel GetPage(ISolutionSession session, IIoService? ioService = null)
+    public LocomotivesPageViewModel GetLocomotivesPage(ISolutionSession session, IIoService? ioService = null)
     {
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(service => service.Detect(It.IsAny<Moba.Domain.Project>()))
@@ -28,6 +28,18 @@ internal sealed partial class TestLocomotivePages : IDisposable
         var page = new LocomotivesPageViewModel(session, ioService ?? new NullIoService(),
             persistence.Object, new LayoutColumnWidthsViewModel(), management,
             NullLogger<LocomotivesPageViewModel>.Instance, _ => { });
+        _pages.Add(page);
+        return page;
+    }
+    public WagonsPageViewModel GetWagonsPage(ISolutionSession session, IIoService? ioService = null)
+    {
+        var settings = new AppSettings();
+        var persistence = new Mock<ISettingsService>();
+        persistence.Setup(service => service.GetSettings()).Returns(settings);
+        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        var page = new WagonsPageViewModel(session, ioService ?? new NullIoService(),
+            persistence.Object, new LayoutColumnWidthsViewModel(),
+            NullLogger<WagonsPageViewModel>.Instance, _ => { });
         _pages.Add(page);
         return page;
     }
