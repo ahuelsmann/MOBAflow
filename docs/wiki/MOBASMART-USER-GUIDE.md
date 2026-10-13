@@ -127,15 +127,18 @@ when the SignalR connection is available.
 - Check that the selected project has a Z21 assigned in MOBAflow and that the
   solution was synchronized to the phone.
 - Select the project again or reopen the app after the Z21 is ready.
-- Ensure no firewall or access-point rule blocks Z21 UDP traffic.
+- Ensure no firewall or access-point rule blocks Z21 UDP traffic on port `21105`.
 
 ### MOBAflow shows Search or OFF
 
 - **OFF** means the MOBAflow connection switch is disabled.
 - **Search** means it is enabled but MOBApi has not been reached yet.
 - Verify that MOBAflow reports a healthy REST API in its status bar.
-- Keep the phone and PC on the same LAN and allow TCP port `5001` plus discovery
-  traffic through the PC firewall.
+- Keep the phone and PC on the same trusted LAN. Allow inbound TCP `5001`
+  (or the configured MOBApi port) and discovery UDP `21106` on the PC.
+- Review the PC firewall rule profiles: the automatic helper currently uses
+  `profile=any`, including Public. Restrict access to Private for home use and
+  recheck after rules are recreated. See [Firewall and LAN notes](INSTALLATION.md#firewall-and-lan-notes).
 - Tap the MOBAflow status to retry discovery.
 
 ### Signal Box or Engines is empty

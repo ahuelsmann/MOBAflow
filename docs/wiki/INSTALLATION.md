@@ -111,24 +111,44 @@ tab behavior.
 
 ## Firewall and LAN notes
 
-Windows may prompt for firewall access when MOBAflow or MOBApi starts. Allow
-access only on private networks.
+Use MOBAflow and MOBApi only on a trusted home LAN, as described in the
+[operating model](../../SECURITY.md#operating-model). They provide no sign-in or
+transport encryption. Do not forward these ports to the internet.
 
-If MOBAsmart cannot discover the PC, verify at minimum:
+| Connection | Protocol / default port | Direction and purpose |
+| --- | --- | --- |
+| MOBAsmart to the PC | TCP `5001` | Inbound on the PC for MOBApi REST and SignalR; responses return on the same connection. Use the configured port if changed. |
+| MOBApi discovery | UDP `21106` | Inbound discovery requests on the PC; replies return to the requesting client. Allow local discovery multicast/broadcast through the access point. |
+| Operating device to Z21 | UDP `21105` | Outbound to the command station and returning feedback to the operating device. This is separate from the two MOBApi helper rules. |
 
-- TCP `5001` for MOBApi;
-- UDP `21105` between the operating device and Z21; and
-- local multicast/broadcast traffic used by discovery.
+Windows may prompt for access when an app starts. Choose Private for a trusted
+home LAN. This prompt does not restrict rules created separately by
+[`FirewallHelper`](../../MOBAflow/Service/FirewallHelper.cs): when permissions
+allow, MOBAflow recreates the inbound TCP and discovery UDP rules with
+`profile=any`, covering Private, Domain **and Public** Windows profiles. The
+current helper does not enforce a private-profile restriction.
+
+Review the rules in Windows Defender Firewall with Advanced Security. Restrict
+both `MOBAflow WebApp UDP Discovery` and `MOBAflow WebApp REST-API (Port <configured port>)`
+to Private for home use. If MOBAflow later recreates them with sufficient rights,
+check the profiles again. Do not use the service on an untrusted shared network.
+The current removal helper targets the obsolete TCP rule name for port `5000`;
+remove any remaining rule for the configured port manually when uninstalling.
 
 Guest Wi-Fi, client isolation, VPN routing and phone-to-PC firewall rules are
-common causes of discovery failures.
+common causes of discovery failures. Check TCP `5001` (or the configured port),
+UDP `21106` discovery and the independent UDP `21105` Z21 path.
 
 ## Validation
 
-Run the repository test project after source changes:
+Select the appropriate test target after source changes. Documentation-only
+changes need structural checks, not a product build; see [AGENTS.md](../../AGENTS.md):
 
 ```powershell
-dotnet test Test/Test.csproj
+# Portable tests: limit both the restore graph and the test target.
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
+# Windows tests (with the required desktop toolchain):
+dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false
 ```
 
 Windows and Android projects require their platform workloads. Cross-platform

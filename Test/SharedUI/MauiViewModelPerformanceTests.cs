@@ -473,6 +473,7 @@ internal sealed class MauiViewModelPerformanceTests
             endpointLocator,
             TestHubSessions.Create(appSettings, endpointLocator, photoUploadMock.Object, runtimeHubRemoteClient),
             new MobileRuntimeProjection(mobaRuntimeMock.Object, mobileRuntimeCoordinator: mobileRuntimeCoordinator),
+            TestSolutionSynchronizers.Create(),
             photoUploadMock.Object,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,
