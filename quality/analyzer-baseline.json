@@ -3331,7 +3331,7 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3360,13 +3360,6 @@
       "ruleId": "IDE0028",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
       "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0028",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 5
     },
     {
       "project": "SharedUI",
@@ -5165,6 +5158,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/FeedbackCounterEngineTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/FunctionPanelTests.cs",
       "count": 1
     },
     {

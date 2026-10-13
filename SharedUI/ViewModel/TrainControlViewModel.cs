@@ -63,17 +63,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
     private readonly IFunctionAppearancePicker? _functionAppearancePicker;
     private readonly SpeedController _speedController = new(TimeProvider.System);
+    private readonly FunctionPanel _functionPanel = new(TimeProvider.System);
 
     // Snapshot function bits are ignored while an explicit all-off reset is in flight, or briefly
     // after a local function command so decoder/snapshot races do not fight the UI.
-    private bool _suppressSnapshotFunctionState;
-    private CancellationTokenSource? _allFunctionsOffCts;
-    private int _functionControlVersion;
     private int _previousLocoAddressForFunctionCache;
-    private readonly Dictionary<int, uint> _locomotiveFunctionStateCache = [];
-    private readonly Dictionary<int, Dictionary<int, DateTimeOffset>> _lastLocalFunctionCommandAt = [];
     private MobaRuntimeSnapshot? _lastRemoteRuntimeSnapshot;
-    private static readonly TimeSpan FunctionCommandGracePeriod = TimeSpan.FromSeconds(3);
     private int _previousSpeed;
     private CancellationTokenSource? _doorReleaseBlinkCts;
 
@@ -963,9 +958,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _doorReleaseBlinkCts?.Cancel();
         _doorReleaseBlinkCts?.Dispose();
         _doorReleaseBlinkCts = null;
-        _allFunctionsOffCts?.Cancel();
-        _allFunctionsOffCts?.Dispose();
-        _allFunctionsOffCts = null;
+        _functionPanel.Dispose();
     }
 
     /// <summary>
@@ -1238,13 +1231,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         return LocomotiveFunctionAppearanceResolver.GetGlyph(GetCurrentLocomotive(), functionIndex);
     }
 
-    /// <summary>
-    /// Returns true when the stored value is a non-empty PNG asset filename.
-    /// Filters out Segoe MDL2 codepoint strings from earlier versions.
-    /// </summary>
-    private static bool IsValidAssetReference(string? value) =>
-        LocomotiveFunctionAppearanceResolver.IsValidAssetReference(value);
-
     private string GetFunctionColor(int functionIndex)
     {
         if (functionIndex < 0 || functionIndex > 31)
@@ -1255,9 +1241,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         return LocomotiveFunctionAppearanceResolver.GetColor(GetCurrentLocomotive(), functionIndex);
     }
 
-    private static bool IsValidHexColor(string? value) =>
-        LocomotiveFunctionAppearanceResolver.IsValidHexColor(value);
-
     /// <summary>
     /// Sets the PNG asset filename for the specified function (0–31) for the current locomotive (LocoAddress)
     /// and saves the Solution. Only effective when a locomotive with this digital address exists in the selected project.
@@ -1265,70 +1248,26 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <param name="functionIndex">Funktionsindex 0–31 (F0–F31).</param>
     /// <param name="glyph">PNG asset filename relative to Assets/FunctionSymbols/ (e.g. "headlight.png").</param>
     /// <returns>True, wenn gespeichert; False, wenn keine passende Lok im Projekt.</returns>
-    public bool SetFunctionSymbol(int functionIndex, string glyph)
+    public bool SetFunctionSymbol(int functionIndex, string glyph) =>
+        EditCurrentLocomotiveAppearance(locomotive => FunctionPanel.SetSymbol(locomotive, functionIndex, glyph));
+
+    public bool SetFunctionAppearance(int functionIndex, string? glyph, string? colorHex) =>
+        EditCurrentLocomotiveAppearance(locomotive => FunctionPanel.SetAppearance(locomotive, functionIndex, glyph, colorHex));
+
+    public bool ClearFunctionAppearance(int functionIndex) =>
+        EditCurrentLocomotiveAppearance(locomotive => FunctionPanel.ClearAppearance(locomotive, functionIndex));
+
+    /// <summary>
+    /// Applies an appearance edit to the current locomotive (LocoAddress), refreshes the buttons and saves the
+    /// solution. False when the index is invalid or no locomotive with this address exists in the project.
+    /// </summary>
+    private bool EditCurrentLocomotiveAppearance(Func<Locomotive, bool> edit)
     {
-        if (functionIndex < 0 || functionIndex > 31 || string.IsNullOrEmpty(glyph))
-            return false;
-        var loco = GetCurrentLocomotive();
-        if (loco == null)
-            return false;
-        loco.FunctionSymbols ??= new List<string>();
-        while (loco.FunctionSymbols.Count <= functionIndex)
-            loco.FunctionSymbols.Add(string.Empty);
-        loco.FunctionSymbols[functionIndex] = glyph;
-        NotifyAllFunctionAppearanceChanged();
-        QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
-        return true;
-    }
-
-    public bool SetFunctionAppearance(int functionIndex, string? glyph, string? colorHex)
-    {
-        if (functionIndex < 0 || functionIndex > 31)
-            return false;
-
-        var loco = GetCurrentLocomotive();
-        if (loco == null)
-            return false;
-
-        if (!string.IsNullOrEmpty(glyph))
+        var locomotive = GetCurrentLocomotive();
+        if (locomotive == null || !edit(locomotive))
         {
-            loco.FunctionSymbols ??= new List<string>();
-            while (loco.FunctionSymbols.Count <= functionIndex)
-                loco.FunctionSymbols.Add(string.Empty);
-            loco.FunctionSymbols[functionIndex] = glyph;
-        }
-
-        if (IsValidHexColor(colorHex))
-        {
-            loco.FunctionColors ??= new List<string>();
-            while (loco.FunctionColors.Count <= functionIndex)
-                loco.FunctionColors.Add(string.Empty);
-            loco.FunctionColors[functionIndex] = colorHex!;
-        }
-
-        NotifyAllFunctionAppearanceChanged();
-        QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
-        return true;
-    }
-
-    public bool ClearFunctionAppearance(int functionIndex)
-    {
-        if (functionIndex < 0 || functionIndex > 31)
             return false;
-
-        var loco = GetCurrentLocomotive();
-        if (loco == null)
-            return false;
-
-        loco.FunctionSymbols ??= new List<string>();
-        while (loco.FunctionSymbols.Count <= functionIndex)
-            loco.FunctionSymbols.Add(string.Empty);
-        loco.FunctionSymbols[functionIndex] = "none";
-
-        loco.FunctionColors ??= new List<string>();
-        while (loco.FunctionColors.Count <= functionIndex)
-            loco.FunctionColors.Add(string.Empty);
-        loco.FunctionColors[functionIndex] = "none";
+        }
 
         NotifyAllFunctionAppearanceChanged();
         QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
@@ -1511,7 +1450,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             SaveFunctionStatesToCache(_previousLocoAddressForFunctionCache);
             CancelAllFunctionsOffOperation();
-            _suppressSnapshotFunctionState = false;
+            _functionPanel.SuppressSnapshotBits = false;
             RestoreFunctionStatesForAddress(value);
         }
 
@@ -1813,13 +1752,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     public async Task TurnOffAllFunctionsAsync(bool resetUi = true)
     {
-        var uiResetVersion = _functionControlVersion;
-        CancelAllFunctionsOffOperation();
-        _allFunctionsOffCts = new CancellationTokenSource();
-        var token = _allFunctionsOffCts.Token;
-
         // Suppress decoder function bits before touching UI so snapshots cannot re-enable keys mid-reset.
-        _suppressSnapshotFunctionState = true;
+        var (uiResetVersion, token) = _functionPanel.BeginAllFunctionsOff();
 
         try
         {
@@ -1849,7 +1783,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
         finally
         {
-            _suppressSnapshotFunctionState = false;
+            _functionPanel.SuppressSnapshotBits = false;
         }
     }
 
@@ -1887,7 +1821,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private bool ShouldApplySnapshotFunctionBits()
     {
-        if (_suppressSnapshotFunctionState)
+        if (_functionPanel.SuppressSnapshotBits)
         {
             return false;
         }
@@ -1900,18 +1834,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         return true;
     }
 
-    private void InvalidatePendingFunctionUiResets()
-    {
-        _functionControlVersion++;
-        CancelAllFunctionsOffOperation();
-    }
+    private void InvalidatePendingFunctionUiResets() => _functionPanel.InvalidatePendingResets();
 
-    private void CancelAllFunctionsOffOperation()
-    {
-        _allFunctionsOffCts?.Cancel();
-        _allFunctionsOffCts?.Dispose();
-        _allFunctionsOffCts = null;
-    }
+    private void CancelAllFunctionsOffOperation() => _functionPanel.CancelAllFunctionsOff();
 
     private void ResetFunctionUiStates(int uiResetVersion, CancellationToken token)
     {
@@ -1920,7 +1845,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             for (int i = 0; i < Functions.Count; i++)
             {
                 token.ThrowIfCancellationRequested();
-                if (uiResetVersion != _functionControlVersion)
+                if (!_functionPanel.IsResetCurrent(uiResetVersion))
                 {
                     return;
                 }
@@ -1975,7 +1900,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
                 continue;
             }
 
-            _locomotiveFunctionStateCache[address] = locomotiveState.Functions;
+            _functionPanel.RememberBits(address, locomotiveState.Functions);
         }
     }
 
@@ -1983,7 +1908,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         if (address != LocoAddress)
         {
-            _locomotiveFunctionStateCache[address] = snapshotFunctions;
+            _functionPanel.RememberBits(address, snapshotFunctions);
             return;
         }
 
@@ -1994,17 +1919,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
-        {
-            if (ShouldPreserveLocalFunctionCommand(address, functionIndex))
-            {
-                continue;
-            }
-
-            SetFunctionState(functionIndex, (snapshotFunctions & (1u << functionIndex)) != 0);
-        }
-
-        _locomotiveFunctionStateCache[address] = GetFunctionBitmask();
+        ApplyFunctionBits(_functionPanel.MergeSnapshotBits(address, GetFunctionBitmask(), snapshotFunctions));
+        _functionPanel.RememberBits(address, GetFunctionBitmask());
     }
 
     private uint GetFunctionBitmask()
@@ -2028,7 +1944,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        _locomotiveFunctionStateCache[address] = GetFunctionBitmask();
+        _functionPanel.RememberBits(address, GetFunctionBitmask());
     }
 
     private void RestoreFunctionStatesForAddress(int address)
@@ -2043,11 +1959,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         if (snapshot.LocomotiveStates.TryGetValue(address, out var runtimeState))
         {
             ApplyFunctionBits(runtimeState.Functions);
-            _locomotiveFunctionStateCache[address] = runtimeState.Functions;
+            _functionPanel.RememberBits(address, runtimeState.Functions);
             return;
         }
 
-        if (_locomotiveFunctionStateCache.TryGetValue(address, out var cached))
+        if (_functionPanel.TryGetRememberedBits(address, out var cached))
         {
             ApplyFunctionBits(cached);
             return;
@@ -2073,21 +1989,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         return _runtimeSnapshots.Current;
     }
 
-    private void MarkLocalFunctionCommand(int address, int functionIndex)
-    {
-        if (address < 1 || functionIndex is < 0 or > 31)
-        {
-            return;
-        }
-
-        if (!_lastLocalFunctionCommandAt.TryGetValue(address, out var perFunction))
-        {
-            perFunction = [];
-            _lastLocalFunctionCommandAt[address] = perFunction;
-        }
-
-        perFunction[functionIndex] = DateTimeOffset.UtcNow;
-    }
+    private void MarkLocalFunctionCommand(int address, int functionIndex) =>
+        _functionPanel.MarkLocalFunction(address, functionIndex);
 
     private async Task SendLocomotiveDriveAsync(int address, int speed, bool forward)
     {
@@ -2096,28 +1999,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     }
 
     private bool ShouldPreserveLocalDriveCommand(int address) => _speedController.ShouldPreserveLocalDrive(address);
-
-    private bool ShouldPreserveLocalFunctionCommand(int address, int functionIndex)
-    {
-        if (functionIndex is < 0 or > 31)
-        {
-            return false;
-        }
-
-        if (!_lastLocalFunctionCommandAt.TryGetValue(address, out var perFunction)
-            || !perFunction.TryGetValue(functionIndex, out var commandedAt))
-        {
-            return false;
-        }
-
-        if (DateTimeOffset.UtcNow - commandedAt.ToUniversalTime() > FunctionCommandGracePeriod)
-        {
-            perFunction.Remove(functionIndex);
-            return false;
-        }
-
-        return true;
-    }
 
     /// <summary>
     /// Apply brake (speed to 0, then brake on) or release (only when doors closed).
