@@ -74,13 +74,4 @@ public class AppSettings
     /// </summary>
     public SignalBoxSettings SignalBox { get; set; } = new();
 
-    /// <summary>
-    /// Gets the configured Piper executable path (convenience property).
-    /// </summary>
-    public string PiperExecutablePath => string.IsNullOrEmpty(Speech.PiperExecutablePath) ? string.Empty : Speech.PiperExecutablePath;
-
-    /// <summary>
-    /// Gets the configured Piper model path (convenience property).
-    /// </summary>
-    public string PiperModelPath => string.IsNullOrEmpty(Speech.PiperModelPath) ? string.Empty : Speech.PiperModelPath;
 }

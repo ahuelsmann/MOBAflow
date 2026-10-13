@@ -31,9 +31,9 @@ $settingsPath = Join-Path $PublishDirectory 'appsettings.json'
 $settings = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
 $sensitiveValues = @(
     $settings.Z21.CurrentIpAddress,
-    $settings.Speech.PiperExecutablePath,
-    $settings.Speech.PiperModelPath,
-    $settings.Speech.PiperConfigPath,
+    $settings.Speech.Piper.ExecutablePath,
+    $settings.Speech.Piper.ModelPath,
+    $settings.Speech.Piper.ConfigPath,
     $settings.Application.LastSolutionPath,
     $settings.Application.PhotoStoragePath
 )

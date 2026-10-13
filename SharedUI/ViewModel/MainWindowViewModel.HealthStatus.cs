@@ -12,12 +12,9 @@ public partial class MainWindowViewModel
 {
     /// <summary>
     /// Gets the speech status text shown in the status bar.
-    /// Uses Piper health details for Piper TTS and a local-ready text for System Speech.
+    /// Uses the current provider health result for both local providers.
     /// </summary>
-    public string SpeechStatusDisplayText =>
-        SettingsPage.IsPiperSpeechEngineSelected
-            ? SpeechHealthStatus
-            : "System Speech: Ready (local)";
+    public string SpeechStatusDisplayText => this.SpeechHealthStatus;
 
     /// <summary>
     /// Update health status UI properties based on status message.
@@ -25,20 +22,20 @@ public partial class MainWindowViewModel
     /// </summary>
     public void UpdateHealthStatus(string statusMessage)
     {
-        SpeechHealthStatus = $"Piper TTS: {statusMessage.TrimStart('✅', '❌', '⚠', '️', '⏳', ' ')}";
+        SpeechHealthStatus = $"Speech: {statusMessage.TrimStart('✅', '❌', '⚠', '️', '⏳', ' ')}";
 
         // Update icon and color based on status
-        if (statusMessage.Contains("Ready"))
+        if (statusMessage.Contains("Ready", StringComparison.OrdinalIgnoreCase))
         {
             SpeechHealthIcon = "\uE930"; // Checkmark circle
             SpeechHealthColor = "Green";
         }
-        else if (statusMessage.Contains("Not Configured"))
+        else if (statusMessage.Contains("Not Configured", StringComparison.OrdinalIgnoreCase) || statusMessage.Contains("Unavailable", StringComparison.OrdinalIgnoreCase))
         {
             SpeechHealthIcon = "\uE7BA"; // Warning
             SpeechHealthColor = "SystemFillColorCautionBrush";
         }
-        else if (statusMessage.Contains("Failed"))
+        else if (statusMessage.Contains("Failed", StringComparison.OrdinalIgnoreCase))
         {
             SpeechHealthIcon = "\uE711"; // Error
             SpeechHealthColor = "Red";

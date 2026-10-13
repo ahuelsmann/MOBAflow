@@ -60,7 +60,7 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
         var executionContext = new ActionExecutionContext
         {
             Z21 = z21,
-            SpeakerEngine = shared.SharedExecutionContext.SpeakerEngine,
+            SpeechOutput = shared.SharedExecutionContext.SpeechOutput,
             SoundPlayer = shared.SharedExecutionContext.SoundPlayer
         };
         var unavailableReason = lease.ConflictProjectName is { } owner

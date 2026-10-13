@@ -84,6 +84,36 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
         Assert.That(viewModel.ProjectDiagnostics.Single().Severity, Is.EqualTo(ProjectDiagnosticSeverity.Error));
     }
 
+    [TestCase("Ready")]
+    [TestCase("Unavailable")]
+    public void ProviderSwitchClearsThePreviousProvidersHealthResult(string previousStatus)
+    {
+        var diagnostics = new ProjectDiagnosticsService(
+            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()), new InterlockingDefinitionValidator());
+        var viewModel = CreateViewModel(new Solution(), diagnostics);
+        viewModel.UpdateHealthStatus(previousStatus);
+        viewModel.SettingsPage.SelectedSpeechProviderId = "piper";
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.SpeechHealthStatus, Does.Contain("Initializing"));
+            Assert.That(viewModel.SpeechHealthIcon, Is.EqualTo("\uE946"));
+            Assert.That(viewModel.SpeechHealthColor, Is.EqualTo("SystemFillColorCautionBrush"));
+        }
+    }
+
+    [Test]
+    public void UnavailableSpeechIsShownAsACompletedWarningInsteadOfInitializing()
+    {
+        var diagnostics = new ProjectDiagnosticsService(
+            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()), new InterlockingDefinitionValidator());
+        var viewModel = CreateViewModel(new Solution(), diagnostics);
+        viewModel.UpdateHealthStatus("Unavailable");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.SpeechHealthIcon, Is.EqualTo("\uE7BA"));
+            Assert.That(viewModel.SpeechHealthStatus, Is.EqualTo("Speech: Unavailable"));
+        }
+    }
     private static BlockDefinition CreateBlockWithMissingClearObservation() =>
         new()
         {

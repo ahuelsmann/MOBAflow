@@ -108,11 +108,11 @@ public sealed class JourneyCounterProjectionTests
         {
             if (e.PropertyName == nameof(MainWindowViewModel.SpeechStatusDisplayText)) updates++;
         };
-        fixture.ViewModel.SettingsPage.SelectedSpeechEngine = "Piper TTS";
-        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Does.StartWith("Piper TTS:"));
+        fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "piper";
+        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Is.EqualTo("Speech: Initializing..."));
 
         await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);
-        fixture.ViewModel.SettingsPage.SelectedSpeechEngine = "System Speech (Windows SAPI)";
+        fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "system-speech";
         Assert.That(updates, Is.EqualTo(1));
     }
 
