@@ -2435,7 +2435,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 3
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2588,13 +2588,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
       "count": 3
     },
@@ -2639,6 +2632,13 @@
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
       "count": 10
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/WagonsPageViewModel.cs",
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2994,13 +2994,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 11
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
       "count": 1
     },
@@ -3120,13 +3113,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 7
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
       "count": 2
     },
@@ -3185,13 +3171,6 @@
       "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Solution.cs",
       "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 2
     },
     {
       "project": "SharedUI",
@@ -3633,13 +3612,6 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
       "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
-      "count": 4
     },
     {
       "project": "SharedUI",
@@ -5466,6 +5438,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/TrainControlViewModelSpeedTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/WagonsPageViewModelTests.cs",
       "count": 1
     },
     {

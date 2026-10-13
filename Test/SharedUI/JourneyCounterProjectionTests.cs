@@ -224,7 +224,7 @@ public sealed class JourneyCounterProjectionTests
 
     private sealed class ProjectionFixture : IAsyncDisposable
     {
-        private readonly TestLocomotivePages _locomotivePages = new();
+        private readonly TestRollingStockPages _rollingStockPages = new();
         private readonly EventBus _eventBus = new(NullLogger<EventBus>.Instance);
         private MobaRuntimeSnapshot _snapshot;
 
@@ -254,7 +254,8 @@ public sealed class JourneyCounterProjectionTests
                 _eventBus,
                 dispatcher.Object,
                 TestSettingsPages.Create(Settings, dispatcher.Object),
-                _locomotivePages.GetPage(locomotiveSession1, io.Object),
+                _rollingStockPages.GetLocomotivesPage(locomotiveSession1, io.Object),
+                _rollingStockPages.GetWagonsPage(locomotiveSession1, io.Object),
                 locomotiveSession1,
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
                 NullLogger<MainWindowViewModel>.Instance,
@@ -276,7 +277,7 @@ public sealed class JourneyCounterProjectionTests
         public async ValueTask DisposeAsync()
         {
             await ViewModel.PrepareForShutdownAsync();
-            _locomotivePages.Dispose();
+            _rollingStockPages.Dispose();
         }
     }
 }

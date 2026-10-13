@@ -25,12 +25,12 @@ using CommunityToolkit.Mvvm.Input;
 [TestFixture]
 internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposable
 {
-    private readonly TestLocomotivePages _locomotivePages = new();
+    private readonly TestRollingStockPages _rollingStockPages = new();
 
     [TearDown]
     public void Dispose()
     {
-        _locomotivePages.Dispose();
+        _rollingStockPages.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -54,7 +54,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         var viewModel = CreateViewModel();
         var passengerWagon = new PassengerWagonViewModel(new PassengerWagon { Name = "Avmz" });
         viewModel.UpdateActivePhotoAssignmentPageTag("passengerwagons");
-        viewModel.SelectedPassengerWagon = passengerWagon;
+        viewModel.WagonsPage.SelectedPassengerWagon = passengerWagon;
 
         var result = viewModel.AssignUploadedPhotoToSelectedEntity("photos/temp/b.jpg");
 
@@ -68,7 +68,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         var viewModel = CreateViewModel();
         var goodsWagon = new GoodsWagonViewModel(new GoodsWagon { Name = "Eaos" });
         viewModel.UpdateActivePhotoAssignmentPageTag("goodswagons");
-        viewModel.SelectedGoodsWagon = goodsWagon;
+        viewModel.WagonsPage.SelectedGoodsWagon = goodsWagon;
 
         var result = viewModel.AssignUploadedPhotoToSelectedEntity("photos/temp/c.jpg");
 
@@ -94,7 +94,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         var locomotive = new LocomotiveViewModel(new Locomotive { Name = "BR 218" });
         var passengerWagon = new PassengerWagonViewModel(new PassengerWagon { Name = "Avmz" });
         viewModel.LocomotivesPage.SelectedLocomotive = locomotive;
-        viewModel.SelectedPassengerWagon = passengerWagon;
+        viewModel.WagonsPage.SelectedPassengerWagon = passengerWagon;
         viewModel.UpdateActivePhotoAssignmentPageTag("passengerwagons");
 
         var result = viewModel.AssignUploadedPhotoToSelectedEntity("photos/temp/e.jpg");
@@ -129,7 +129,8 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             eventBusMock.Object,
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            _locomotivePages.GetPage(locomotiveSession1, null),
+            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
+            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
             locomotiveSession1,
             new ActionExecutionContext
             {
@@ -256,8 +257,8 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
                 switch (kind)
                 {
                     case TrainVehicleKind.Locomotive: viewModel.LocomotivesPage.SelectedLocomotive = null; break;
-                    case TrainVehicleKind.PassengerWagon: viewModel.SelectedPassengerWagon = null; break;
-                    default: viewModel.SelectedGoodsWagon = null; break;
+                    case TrainVehicleKind.PassengerWagon: viewModel.WagonsPage.SelectedPassengerWagon = null; break;
+                    default: viewModel.WagonsPage.SelectedGoodsWagon = null; break;
                 }
             }
         };
@@ -272,13 +273,13 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
     }
 
     private static System.ComponentModel.INotifyPropertyChanged NotificationSource(MainWindowViewModel viewModel, TrainVehicleKind kind)
-        => kind == TrainVehicleKind.Locomotive ? viewModel.LocomotivesPage : viewModel;
+        => kind == TrainVehicleKind.Locomotive ? viewModel.LocomotivesPage : viewModel.WagonsPage;
 
     private static object BindingSource(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
         TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.FilteredLocomotiveLibrary,
-        TrainVehicleKind.PassengerWagon => viewModel.FilteredPassengerWagonLibrary,
-        _ => viewModel.FilteredGoodsWagonLibrary
+        TrainVehicleKind.PassengerWagon => viewModel.WagonsPage.FilteredPassengerWagonLibrary,
+        _ => viewModel.WagonsPage.FilteredGoodsWagonLibrary
     };
 
     [TestCase(TrainVehicleKind.Locomotive, "selection")]
@@ -401,7 +402,8 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             new Mock<IEventBus>().Object,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _locomotivePages.GetPage(locomotiveSession2, io.Object),
+            _rollingStockPages.GetLocomotivesPage(locomotiveSession2, io.Object),
+            _rollingStockPages.GetWagonsPage(locomotiveSession2, io.Object),
             locomotiveSession2,
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             NullLogger<MainWindowViewModel>.Instance,
@@ -416,22 +418,22 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
     private static string FilterProperty(TrainVehicleKind kind) => kind switch
     {
         TrainVehicleKind.Locomotive => nameof(LocomotivesPageViewModel.FilteredLocomotiveLibrary),
-        TrainVehicleKind.PassengerWagon => nameof(MainWindowViewModel.FilteredPassengerWagonLibrary),
-        _ => nameof(MainWindowViewModel.FilteredGoodsWagonLibrary)
+        TrainVehicleKind.PassengerWagon => nameof(WagonsPageViewModel.FilteredPassengerWagonLibrary),
+        _ => nameof(WagonsPageViewModel.FilteredGoodsWagonLibrary)
     };
 
     private static string[] Names(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
         TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.FilteredLocomotiveLibrary.Select(item => item.Name).ToArray(),
-        TrainVehicleKind.PassengerWagon => viewModel.FilteredPassengerWagonLibrary.Select(item => item.Name).ToArray(),
-        _ => viewModel.FilteredGoodsWagonLibrary.Select(item => item.Name).ToArray()
+        TrainVehicleKind.PassengerWagon => viewModel.WagonsPage.FilteredPassengerWagonLibrary.Select(item => item.Name).ToArray(),
+        _ => viewModel.WagonsPage.FilteredGoodsWagonLibrary.Select(item => item.Name).ToArray()
     };
 
     private static object? Selection(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
         TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.SelectedLocomotive,
-        TrainVehicleKind.PassengerWagon => viewModel.SelectedPassengerWagon,
-        _ => viewModel.SelectedGoodsWagon
+        TrainVehicleKind.PassengerWagon => viewModel.WagonsPage.SelectedPassengerWagon,
+        _ => viewModel.WagonsPage.SelectedGoodsWagon
     };
 
     private static int ModelCount(Project project, TrainVehicleKind kind) => kind switch
@@ -444,15 +446,15 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
     private static ICommand AddCommand(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
         TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.AddLocomotiveCommand,
-        TrainVehicleKind.PassengerWagon => viewModel.AddPassengerWagonCommand,
-        _ => viewModel.AddGoodsWagonCommand
+        TrainVehicleKind.PassengerWagon => viewModel.WagonsPage.AddPassengerWagonCommand,
+        _ => viewModel.WagonsPage.AddGoodsWagonCommand
     };
 
     private static ICommand DeleteCommand(MainWindowViewModel viewModel, TrainVehicleKind kind) => kind switch
     {
         TrainVehicleKind.Locomotive => viewModel.LocomotivesPage.DeleteLocomotiveCommand,
-        TrainVehicleKind.PassengerWagon => viewModel.DeletePassengerWagonCommand,
-        _ => viewModel.DeleteGoodsWagonCommand
+        TrainVehicleKind.PassengerWagon => viewModel.WagonsPage.DeletePassengerWagonCommand,
+        _ => viewModel.WagonsPage.DeleteGoodsWagonCommand
     };
 
     private static void SetSearch(MainWindowViewModel viewModel, TrainVehicleKind kind, string search)
@@ -460,8 +462,8 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         switch (kind)
         {
             case TrainVehicleKind.Locomotive: viewModel.LocomotivesPage.LocomotiveSearchText = search; break;
-            case TrainVehicleKind.PassengerWagon: viewModel.PassengerWagonSearchText = search; break;
-            default: viewModel.GoodsWagonSearchText = search; break;
+            case TrainVehicleKind.PassengerWagon: viewModel.WagonsPage.PassengerWagonSearchText = search; break;
+            default: viewModel.WagonsPage.GoodsWagonSearchText = search; break;
         }
     }
 
@@ -470,8 +472,8 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         switch (kind)
         {
             case TrainVehicleKind.Locomotive: viewModel.LocomotivesPage.SelectedLocomotive!.Name = name; break;
-            case TrainVehicleKind.PassengerWagon: viewModel.SelectedPassengerWagon!.Name = name; break;
-            default: viewModel.SelectedGoodsWagon!.Name = name; break;
+            case TrainVehicleKind.PassengerWagon: viewModel.WagonsPage.SelectedPassengerWagon!.Name = name; break;
+            default: viewModel.WagonsPage.SelectedGoodsWagon!.Name = name; break;
         }
     }
 }

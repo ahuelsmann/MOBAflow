@@ -175,6 +175,29 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         }
     }
 
+    [Test]
+    public async Task AddMobaWinUiViewModelsAndWindowSharesWagonStateWithInventoryAndTrainLibraries()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var wagons = provider.GetRequiredService<WagonsPageViewModel>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(shell.WagonsPage, Is.SameAs(wagons));
+            Assert.That(provider.GetRequiredService<WagonsPageViewModel>(), Is.SameAs(wagons));
+            Assert.That(wagons.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
+            Assert.That(provider.GetRequiredService<ISettingsService>().GetSettings(), Is.SameAs(shell.SettingsPage.Settings));
+        }
+        shell.SelectedProject = new ProjectViewModel(new Project());
+        wagons.AddPassengerWagonCommand.Execute(null);
+        wagons.AddGoodsWagonCommand.Execute(null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(shell.WagonsPage.FilteredPassengerWagonLibrary.Single(), Is.SameAs(wagons.SelectedPassengerWagon));
+            Assert.That(shell.WagonsPage.FilteredGoodsWagonLibrary.Single(), Is.SameAs(wagons.SelectedGoodsWagon));
+        }
+    }
     private static ServiceProvider CreatePlatformServiceProvider()
     {
         var services = new ServiceCollection();

@@ -232,7 +232,8 @@ internal partial class MainWindowViewModelShutdownTests
             eventBus,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _locomotivePages.GetPage(locomotiveSession1, ioService),
+            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, ioService),
+            _rollingStockPages.GetWagonsPage(locomotiveSession1, ioService),
             locomotiveSession1,
             new ActionExecutionContext
             {
