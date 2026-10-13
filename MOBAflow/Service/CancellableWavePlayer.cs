@@ -33,15 +33,7 @@ internal sealed partial class CancellableWavePlayer(
         using var registration = cancellationToken.Register(() => StopIfCurrent(session));
         try
         {
-            await Task.Run(() =>
-            {
-                lock (PlaybackGate)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    session.Play();
-                    _activeSession = session;
-                }
-            }, cancellationToken).ConfigureAwait(false);
+            await Task.Run(() => StartSession(session, cancellationToken), cancellationToken).ConfigureAwait(false);
             await Task.Delay(duration, _timeProvider, cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -50,6 +42,15 @@ internal sealed partial class CancellableWavePlayer(
         }
     }
 
+    private static void StartSession(IWavePlaybackSession session, CancellationToken cancellationToken)
+    {
+        lock (PlaybackGate)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            session.Play();
+            _activeSession = session;
+        }
+    }
     private static void StopIfCurrent(IWavePlaybackSession session)
     {
         lock (PlaybackGate)
