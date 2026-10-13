@@ -104,18 +104,19 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             .Callback<Action>(action => action());
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, runtimeMock.Object);
+        var stationEventBus1 = new EventBus(NullLogger<EventBus>.Instance);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
             runtimeMock.Object,
             runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
-            new EventBus(NullLogger<EventBus>.Instance),
+            stationEventBus1,
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtimeMock.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus1),
             locomotiveSession1,
-            new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object);
     }
 

@@ -317,6 +317,24 @@ runtime services.
   MainWindowViewModel dependencies. The superseded Train partial is removed; the shell retains
   its runtime-refresh helper for station/journey editors until their own extraction.
 
+**Station and platform presentation (RF-24 slice 3a):**
+
+- The host owns one StationsPageViewModel for StationsPage, reading ISolutionSession directly.
+  It owns station/platform selection, properties, CRUD and panel expansion, sharing the existing
+  layout widths and settings. The Stations shell partial is removed and the architecture guard
+  rejects shell dependencies in StationsPage.
+- The page owns property tracking for its selected project-station and platform wrappers. Selection,
+  project/solution replacement, collection removal and disposal detach previous tracking and
+  collection subscriptions. A platform refresh also detaches discarded platform wrappers.
+  The session still owns persistence and updates the current runtime snapshot for model edits.
+- One WorkflowLibraryViewModel is registered through host DI and shared by the station workflow
+  library and the shell's existing workflow surfaces. Search uses the same library state through
+  both access paths. Runtime services, execution context and EventBus are composed in the host;
+  workflow behavior stays in the existing editor. Remaining workflow presentation is a later slice.
+- StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
+  unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
+  central layout persistence remains planned. The shell retains the journey runtime-refresh helper.
+
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
@@ -646,7 +664,7 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `SettingsPageViewModel`, `TrainsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;

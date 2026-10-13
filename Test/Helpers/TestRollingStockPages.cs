@@ -6,6 +6,7 @@ using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
+using Moba.Common.Events;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
@@ -53,6 +54,21 @@ internal sealed partial class TestRollingStockPages : IDisposable
         var page = new TrainsPageViewModel(session, runtime, persistence.Object, new LayoutColumnWidthsViewModel(),
             GetLocomotivesPage(session, ioService), GetWagonsPage(session, ioService),
             NullLogger<TrainsPageViewModel>.Instance);
+        _pages.Add(page);
+        return page;
+    }
+    public StationsPageViewModel GetStationsPage(ISolutionSession session, IConnectionRuntime runtime,
+        ActionExecutionContext executionContext, IEventBus eventBus, IDialogService? dialogs = null)
+    {
+        var settings = new AppSettings();
+        var persistence = new Mock<ISettingsService>();
+        persistence.Setup(service => service.GetSettings()).Returns(settings);
+        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        var library = new WorkflowLibraryViewModel(session, dialogs, new WorkflowValidator(),
+            runtimeServices: new WorkflowLibraryRuntimeServices { ExecutionContext = executionContext, EventBus = eventBus });
+        _pages.Add(library);
+        var page = new StationsPageViewModel(session, runtime, persistence.Object,
+            new LayoutColumnWidthsViewModel(), library, NullLogger<StationsPageViewModel>.Instance);
         _pages.Add(page);
         return page;
     }
