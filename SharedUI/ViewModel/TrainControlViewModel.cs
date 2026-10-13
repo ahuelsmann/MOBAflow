@@ -144,7 +144,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     partial void OnSelectedLocomotiveFromProjectChanged(LocomotiveViewModel? value)
     {
-        SyncLocomotivePickerSelection();
+        LocomotiveRoster.SyncPickerSelection(ProjectLocomotives, SelectedLocomotiveFromProject?.Model.Id);
 
         if (value != null)
         {
@@ -890,7 +890,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
             OnPropertyChanged(nameof(LocomotiveTitle));
             TryRestoreSelectedLocomotiveFromProject();
-            SyncLocomotivePickerSelection();
+            LocomotiveRoster.SyncPickerSelection(ProjectLocomotives, SelectedLocomotiveFromProject?.Model.Id);
         }
 
         if (merge.MetadataChanged && GetCurrentLocomotive() != null)
@@ -903,11 +903,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         OnPropertyChanged(nameof(HasProjectLocomotives));
         OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
-        SyncLocomotivePickerSelection();
-    }
-
-    private void SyncLocomotivePickerSelection() =>
         LocomotiveRoster.SyncPickerSelection(ProjectLocomotives, SelectedLocomotiveFromProject?.Model.Id);
+    }
 
     /// <summary>
     /// Refreshes remote photo bindings for the MOBAsmart locomotive list.
