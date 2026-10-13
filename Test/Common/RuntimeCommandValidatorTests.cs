@@ -83,7 +83,11 @@ internal sealed class RuntimeCommandValidatorTests
     {
         var command = SignalAspectCommand(Guid.NewGuid(), (SignalAspect)999);
 
-        Assert.That(RuntimeCommandValidator.TryValidate(command, out _), Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.False);
+            Assert.That(error, Is.EqualTo("SignalAspect is not a known aspect."));
+        }
     }
 
     [Test]
@@ -104,7 +108,11 @@ internal sealed class RuntimeCommandValidatorTests
     {
         var command = new RuntimeCommandEnvelope { ProjectId = Project, Type = (RuntimeCommandType)42 };
 
-        Assert.That(RuntimeCommandValidator.TryValidate(command, out _), Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.False);
+            Assert.That(error, Is.EqualTo("Unknown command type."));
+        }
     }
 
     [Test]
@@ -215,6 +223,60 @@ internal sealed class RuntimeCommandValidatorTests
     public void NullCommand_IsRejectedBeforeValidation()
     {
         Assert.Throws<ArgumentNullException>(() => RuntimeCommandValidator.TryValidate(null!, out _));
+    }
+
+    [TestCase(RuntimeCommandType.SetLocomotiveDrive)]
+    [TestCase(RuntimeCommandType.SetLocomotiveFunction)]
+    [TestCase(RuntimeCommandType.SetSignalAspect)]
+    [TestCase(RuntimeCommandType.ResetJourney)]
+    [TestCase((RuntimeCommandType)42)]
+    public void MissingProject_TakesPrecedenceOverOtherInvalidFields(RuntimeCommandType type)
+    {
+        var command = new RuntimeCommandEnvelope { ProjectId = Guid.Empty, Type = type };
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.False);
+            Assert.That(error, Is.EqualTo("ProjectId is required."));
+        }
+    }
+
+    [TestCase(RuntimeCommandType.SetLocomotiveDrive)]
+    [TestCase(RuntimeCommandType.SetLocomotiveFunction)]
+    public void MissingLocomotiveAddress_TakesPrecedenceOverOtherMissingFields(RuntimeCommandType type)
+    {
+        var command = new RuntimeCommandEnvelope { ProjectId = Project, Type = type };
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.False);
+            Assert.That(error, Is.EqualTo("Address is required."));
+        }
+    }
+
+    [TestCase(RuntimeCommandType.SetLocomotiveDrive, "Speed is required.")]
+    [TestCase(RuntimeCommandType.SetLocomotiveFunction, "FunctionIndex is required.")]
+    public void MissingNumericField_TakesPrecedenceOverMissingSwitchState(RuntimeCommandType type, string expectedError)
+    {
+        var command = new RuntimeCommandEnvelope { ProjectId = Project, Type = type, LocomotiveAddress = 3 };
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.False);
+            Assert.That(error, Is.EqualTo(expectedError));
+        }
+    }
+
+    [Test]
+    public void EmptySignalIdentifier_TakesPrecedenceOverUnknownAspect()
+    {
+        var command = SignalAspectCommand(Guid.Empty, (SignalAspect)999);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(RuntimeCommandValidator.TryValidate(command, out var error), Is.False);
+            Assert.That(error, Is.EqualTo("SignalId is required."));
+        }
     }
 
     private static RuntimeCommandEnvelope Drive(int address, int speed) => new()
