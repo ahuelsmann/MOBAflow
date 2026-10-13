@@ -343,6 +343,7 @@ public static class MobaWinUiServiceCollectionExtensions
                     throw new InvalidOperationException(result.Reason);
                 }
             }));
+        services.AddSingleton<TrainsPageViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
@@ -352,8 +353,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<SettingsPageViewModel>(),
-            sp.GetRequiredService<LocomotivesPageViewModel>(),
-            sp.GetRequiredService<WagonsPageViewModel>(),
+            sp.GetRequiredService<TrainsPageViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ActionExecutionContext>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
