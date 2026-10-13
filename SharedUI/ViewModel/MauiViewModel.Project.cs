@@ -77,7 +77,7 @@ public sealed partial class MauiViewModel
     }
 
     private bool IsCurrentProjectSelection(long version) =>
-        !_isStopping && version == Volatile.Read(ref _projectSelectionVersion);
+        !_appLifecycle.IsStopping && version == Volatile.Read(ref _projectSelectionVersion);
 
     private async Task ApplySelectedProjectAsync(Task previous, Project? project, long version)
     {
