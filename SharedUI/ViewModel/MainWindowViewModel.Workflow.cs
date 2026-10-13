@@ -20,16 +20,9 @@ public partial class MainWindowViewModel
     /// </summary>
     public string WorkflowSearchText
     {
-        get;
-        set
-        {
-            if (SetProperty(ref field, value))
-            {
-                WorkflowLibrary.SearchText = value;
-                OnPropertyChanged(nameof(FilteredWorkflows));
-            }
-        }
-    } = string.Empty;
+        get => WorkflowLibrary.SearchText;
+        set => WorkflowLibrary.SearchText = value;
+    }
 
     /// <summary>
     /// Gets the filtered workflows based on search text.
@@ -71,6 +64,9 @@ public partial class MainWindowViewModel
     private void OnWorkflowLibraryPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         _ = sender;
+        if (e.PropertyName == nameof(WorkflowLibraryViewModel.SearchText))
+            OnPropertyChanged(nameof(WorkflowSearchText));
+
         if (e.PropertyName == nameof(WorkflowLibraryViewModel.SelectedWorkflow)
             && SelectedWorkflow != WorkflowLibrary.SelectedWorkflow)
         {

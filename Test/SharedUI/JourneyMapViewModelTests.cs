@@ -59,21 +59,22 @@ internal sealed partial class JourneyMapViewModelTests : IDisposable
         runtimeMock.Setup(runtime => runtime.GetTrafficPackets()).Returns([]);
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), dispatcherMock.Object, runtimeMock.Object);
+        var stationEventBus1 = eventBusMock.Object;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
             runtimeMock.Object,
             runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
-            eventBusMock.Object,
+            stationEventBus1,
             dispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcherMock.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null),
-            locomotiveSession1,
-            new ActionExecutionContext
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtimeMock.Object, new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
-            },
+            }, stationEventBus1),
+            locomotiveSession1,
             loggerMock.Object);
     }
 }
