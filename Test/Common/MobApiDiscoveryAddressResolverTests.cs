@@ -14,7 +14,7 @@ using System.Text;
 /// </summary>
 [TestFixture]
 [Category("Unit")]
-internal sealed class MobApiDiscoveryAddressResolverTests
+internal sealed partial class MobApiDiscoveryAddressResolverTests
 {
     private static readonly string[] ExpectedPrivateAddresses = ["10.20.30.40", "172.16.0.1", "192.168.10.2"];
 
@@ -513,7 +513,7 @@ internal sealed class MobApiDiscoveryAddressResolverTests
     private static UdpReceiveResult CreateDiscoveryRequest() =>
         new(Encoding.UTF8.GetBytes("MOBAFLOW_DISCOVER"), new IPEndPoint(IPAddress.Parse("10.20.30.1"), 43210));
 
-    private sealed class DiscoveryTransportDouble : IDiscoveryDatagramTransport
+    private sealed partial class DiscoveryTransportDouble : IDiscoveryDatagramTransport
     {
         private int _closeCalls;
 
