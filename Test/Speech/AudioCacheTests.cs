@@ -32,7 +32,7 @@ internal sealed class AudioCacheTests
             Assert.That(await (cache.GetSizeAsync()).ConfigureAwait(false), Is.EqualTo(audio.Length));
         }
         using var reopened = new AudioCache(_directory, () => 500L * 1024 * 1024, _clock);
-        Assert.That(await (reopened.TryGetAsync(key)).ConfigureAwait(false), Is.EqualTo(audio));
+        Assert.That((await reopened.TryGetAsync(key).ConfigureAwait(false)).Audio?.ToArray(), Is.EqualTo(audio));
         var index = await (File.ReadAllTextAsync(Path.Combine(_directory, "index.json"))).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
@@ -56,32 +56,13 @@ internal sealed class AudioCacheTests
         await (cache.StoreAsync(Key("third"), audio, cache.Generation)).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(await (cache.TryGetAsync(Key("first"))).ConfigureAwait(false), Is.Not.Null);
-            Assert.That(await (cache.TryGetAsync(Key("second"))).ConfigureAwait(false), Is.Null);
-            Assert.That(await (cache.TryGetAsync(Key("third"))).ConfigureAwait(false), Is.Not.Null);
+            Assert.That((await cache.TryGetAsync(Key("first")).ConfigureAwait(false)).Audio, Is.Not.Null);
+            Assert.That((await cache.TryGetAsync(Key("second")).ConfigureAwait(false)).Audio, Is.Null);
+            Assert.That((await cache.TryGetAsync(Key("third")).ConfigureAwait(false)).Audio, Is.Not.Null);
             Assert.That(await (cache.GetSizeAsync()).ConfigureAwait(false), Is.EqualTo(audio.Length * 2L));
         }
         using var reopened = new AudioCache(_directory, () => audio.Length * 2L, _clock);
-        Assert.That(await (reopened.TryGetAsync(Key("second"))).ConfigureAwait(false), Is.Null);
-    }
-
-    [Test]
-    public async Task StoredButUnplayedAudioIsEvictedBeforePlayedAudio()
-    {
-        var audio = TestWaveAudio.Create([1]);
-        using var cache = new AudioCache(_directory, () => audio.Length * 2L, _clock);
-        await cache.StoreAsync(Key("played"), audio, cache.Generation).ConfigureAwait(false);
-        await cache.MarkPlayedAsync(Key("played")).ConfigureAwait(false);
-        _clock.Advance(TimeSpan.FromSeconds(1));
-        await cache.StoreAsync(Key("playback cancelled"), audio, cache.Generation).ConfigureAwait(false);
-        _clock.Advance(TimeSpan.FromSeconds(1));
-        await cache.StoreAsync(Key("new"), audio, cache.Generation).ConfigureAwait(false);
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(await cache.TryGetAsync(Key("played")).ConfigureAwait(false), Is.Not.Null);
-            Assert.That(await cache.TryGetAsync(Key("playback cancelled")).ConfigureAwait(false), Is.Null);
-            Assert.That(await cache.TryGetAsync(Key("new")).ConfigureAwait(false), Is.Not.Null);
-        }
+        Assert.That((await reopened.TryGetAsync(Key("second")).ConfigureAwait(false)).Audio, Is.Null);
     }
 
     [Test]
@@ -90,15 +71,15 @@ internal sealed class AudioCacheTests
         var audio = TestWaveAudio.Create([1]);
         using var first = new AudioCache(_directory, () => 1000, _clock);
         using var second = new AudioCache(_directory, () => 1000, _clock);
-        Assert.That(await second.TryGetAsync(Key("first")).ConfigureAwait(false), Is.Null);
+        Assert.That((await second.TryGetAsync(Key("first")).ConfigureAwait(false)).Audio, Is.Null);
         await first.StoreAsync(Key("first"), audio, first.Generation).ConfigureAwait(false);
         await second.StoreAsync(Key("second"), audio, second.Generation).ConfigureAwait(false);
         await first.MarkPlayedAsync(Key("first")).ConfigureAwait(false);
         using var restarted = new AudioCache(_directory, () => 1000, _clock);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(await restarted.TryGetAsync(Key("first")).ConfigureAwait(false), Is.Not.Null);
-            Assert.That(await restarted.TryGetAsync(Key("second")).ConfigureAwait(false), Is.Not.Null);
+            Assert.That((await restarted.TryGetAsync(Key("first")).ConfigureAwait(false)).Audio, Is.Not.Null);
+            Assert.That((await restarted.TryGetAsync(Key("second")).ConfigureAwait(false)).Audio, Is.Not.Null);
             Assert.That(await restarted.GetSizeAsync().ConfigureAwait(false), Is.EqualTo(audio.Length * 2L));
         }
     }
@@ -113,9 +94,25 @@ internal sealed class AudioCacheTests
         await second.StoreAsync(Key("late"), TestWaveAudio.Create([1]), before).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(await first.TryGetAsync(Key("late")).ConfigureAwait(false), Is.Null);
+            Assert.That((await first.TryGetAsync(Key("late")).ConfigureAwait(false)).Audio, Is.Null);
             Assert.That(second.Generation, Is.GreaterThan(before));
             Assert.That(Directory.GetFiles(_directory, "*.wav"), Is.Empty);
+        }
+    }
+
+    [Test]
+    public async Task LookupReportsTheGenerationOfAClearByAnotherInstance()
+    {
+        using var first = new AudioCache(_directory, () => 1000, _clock);
+        using var second = new AudioCache(_directory, () => 1000, _clock);
+        var before = (await second.TryGetAsync(Key("before")).ConfigureAwait(false)).Generation;
+        await first.ClearAsync().ConfigureAwait(false);
+        var lookup = await second.TryGetAsync(Key("after")).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(lookup.Audio, Is.Null);
+            Assert.That(lookup.Generation, Is.EqualTo(first.Generation));
+            Assert.That(lookup.Generation, Is.GreaterThan(before));
         }
     }
 
@@ -124,14 +121,14 @@ internal sealed class AudioCacheTests
     {
         using var cache = new AudioCache(_directory, () => 1000, _clock);
         Directory.CreateDirectory(_directory);
-        Task<byte[]?> lookup;
+        Task<AudioCacheLookup> lookup;
         using (new FileStream(Path.Combine(_directory, "cache.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
         {
             lookup = cache.TryGetAsync(Key("waiting"));
             await Task.Delay(TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
             Assert.That(lookup.IsCompleted, Is.False);
         }
-        Assert.That(await lookup.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false), Is.Null);
+        Assert.That((await lookup.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false)).Audio, Is.Null);
     }
 
     [Test]
@@ -164,34 +161,6 @@ internal sealed class AudioCacheTests
     }
 
     [Test]
-    public async Task FullCacheKeepsPlayedAudioWhenNewAudioNeverPlays()
-    {
-        var audio = TestWaveAudio.Create([1]);
-        using var cache = new AudioCache(_directory, () => audio.Length * 2L, _clock);
-        foreach (var text in new[] { "first", "second" })
-        {
-            await cache.StoreAsync(Key(text), audio, cache.Generation).ConfigureAwait(false);
-            await cache.MarkPlayedAsync(Key(text)).ConfigureAwait(false);
-            _clock.Advance(TimeSpan.FromSeconds(1));
-        }
-        await cache.StoreAsync(Key("never played"), audio, cache.Generation).ConfigureAwait(false);
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(await cache.TryGetAsync(Key("first")).ConfigureAwait(false), Is.Not.Null);
-            Assert.That(await cache.TryGetAsync(Key("second")).ConfigureAwait(false), Is.Not.Null);
-            Assert.That(await cache.TryGetAsync(Key("never played")).ConfigureAwait(false), Is.Null);
-        }
-        await cache.StoreAsync(Key("played later"), audio, cache.Generation).ConfigureAwait(false);
-        await cache.MarkPlayedAsync(Key("played later")).ConfigureAwait(false);
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(await cache.TryGetAsync(Key("first")).ConfigureAwait(false), Is.Null);
-            Assert.That(await cache.TryGetAsync(Key("second")).ConfigureAwait(false), Is.Not.Null);
-            Assert.That(await cache.TryGetAsync(Key("played later")).ConfigureAwait(false), Is.Not.Null);
-        }
-    }
-
-    [Test]
     public async Task LoweredLimitAppliesBeforeAHitIsServed()
     {
         long limit = 1000;
@@ -201,7 +170,7 @@ internal sealed class AudioCacheTests
         limit = 0;
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(await cache.TryGetAsync(Key("retained")).ConfigureAwait(false), Is.Null);
+            Assert.That((await cache.TryGetAsync(Key("retained")).ConfigureAwait(false)).Audio, Is.Null);
             Assert.That(Directory.GetFiles(_directory, "*.wav"), Is.Empty);
         }
     }
@@ -235,7 +204,7 @@ internal sealed class AudioCacheTests
             if (failAfterAudioIsWritten && ++limitReads == 2) throw new IOException("Index update failed.");
             return 1000;
         }, _clock);
-        Assert.That(await cache.TryGetAsync(Key("first lookup")).ConfigureAwait(false), Is.Null);
+        Assert.That((await cache.TryGetAsync(Key("first lookup")).ConfigureAwait(false)).Audio, Is.Null);
         failAfterAudioIsWritten = true;
         await Assert.ThrowsAsync<IOException>(() => cache.StoreAsync(Key("unindexed"), TestWaveAudio.Create([1]), cache.Generation))
             .ConfigureAwait(false);
@@ -243,7 +212,7 @@ internal sealed class AudioCacheTests
         Assert.That(File.Exists(audioPath), Is.True);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(await cache.TryGetAsync(Key("unindexed")).ConfigureAwait(false), Is.Null);
+            Assert.That((await cache.TryGetAsync(Key("unindexed")).ConfigureAwait(false)).Audio, Is.Null);
             Assert.That(File.Exists(audioPath), Is.False);
         }
     }
@@ -260,7 +229,7 @@ internal sealed class AudioCacheTests
         else File.Delete(path);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(await (cache.TryGetAsync(key)).ConfigureAwait(false), Is.Null);
+            Assert.That((await cache.TryGetAsync(key).ConfigureAwait(false)).Audio, Is.Null);
             Assert.That(await (cache.GetSizeAsync()).ConfigureAwait(false), Is.Zero);
             Assert.That(File.Exists(path), Is.False);
         }
@@ -295,7 +264,7 @@ internal sealed class AudioCacheTests
             Assert.That(Directory.GetFiles(_directory, "*.wav"), Is.Empty);
         }
         await (cache.StoreAsync(Key("new"), TestWaveAudio.Create([1]), cache.Generation)).ConfigureAwait(false);
-        Assert.That(await (cache.TryGetAsync(Key("new"))).ConfigureAwait(false), Is.Not.Null);
+        Assert.That((await cache.TryGetAsync(Key("new")).ConfigureAwait(false)).Audio, Is.Not.Null);
     }
 
     [Test]
@@ -307,7 +276,7 @@ internal sealed class AudioCacheTests
         limit = 1;
         Assert.That(await (cache.GetSizeAsync()).ConfigureAwait(false), Is.Zero);
         await (cache.StoreAsync(Key("oversized"), TestWaveAudio.Create([2]), cache.Generation)).ConfigureAwait(false);
-        Assert.That(await (cache.TryGetAsync(Key("oversized"))).ConfigureAwait(false), Is.Null);
+        Assert.That((await cache.TryGetAsync(Key("oversized")).ConfigureAwait(false)).Audio, Is.Null);
     }
 
     [Test]

@@ -74,18 +74,20 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
         {
             var prepared = provider.PrepareSynthesis(request);
             var key = SpeechCacheKey.Create(provider.Id, prepared.OptionsFingerprint, request);
-            var audio = await ReadCacheAsync(key, cancellationToken).ConfigureAwait(false);
-            // Read after the lookup: it reloads the shared index, including a clear made by another process.
-            var generation = _cache.Generation;
-            var result = audio is null
-                ? await _synthesis.RunAsync(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{generation}:{key}"),
-                    token => SynthesizeAndCacheAsync(key, generation, prepared, token), cancellationToken).ConfigureAwait(false)
-                : SpeechResult.Success(audio);
+            // The generation comes from the same locked lookup, so a clear after it rejects this miss's audio.
+            var lookup = await ReadCacheAsync(key, cancellationToken).ConfigureAwait(false);
+            var result = lookup.Audio is null
+                ? await _synthesis.RunAsync(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{lookup.Generation}:{key}"),
+                    token => SynthesizeSharedAsync(key, prepared, token), cancellationToken).ConfigureAwait(false)
+                : SpeechResult.Success(lookup.Audio.Value.ToArray());
             cancellationToken.ThrowIfCancellationRequested();
             if (!result.IsSuccess) return ReportFailure(result);
             await _player.PlayAsync(result.WaveAudio, cancellationToken).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
-            await UseCacheAsync(() => _cache.MarkPlayedAsync(key, cancellationToken)).ConfigureAwait(false);
+            // Only audio that played successfully enters the cache, so it never displaces played audio unheard.
+            await UseCacheAsync(() => lookup.Audio is null
+                ? _cache.StoreAsync(key, result.WaveAudio, lookup.Generation, cancellationToken)
+                : _cache.MarkPlayedAsync(key, cancellationToken)).ConfigureAwait(false);
             return result;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
@@ -95,27 +97,23 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
         }
     }
 
-    private async Task<SpeechResult> SynthesizeAndCacheAsync(string key, long generation, PreparedSpeechSynthesis prepared, CancellationToken token)
+    private async Task<SpeechResult> SynthesizeSharedAsync(string key, PreparedSpeechSynthesis prepared, CancellationToken token)
     {
-        // Recheck inside the shared flight: another completed flight may have filled the cache after the first miss.
-        var audio = await ReadCacheAsync(key, token).ConfigureAwait(false);
-        if (audio is not null) return SpeechResult.Success(audio);
+        // Recheck inside the shared flight: another caller may have stored this audio after the first miss.
+        var lookup = await ReadCacheAsync(key, token).ConfigureAwait(false);
+        if (lookup.Audio is { } audio) return SpeechResult.Success(audio.ToArray());
         var result = await prepared.SynthesizeAsync(token).ConfigureAwait(false);
         token.ThrowIfCancellationRequested();
-        if (result.IsSuccess)
-        {
-            await UseCacheAsync(() => _cache.StoreAsync(key, result.WaveAudio, generation, token)).ConfigureAwait(false);
-        }
         return result;
     }
 
-    private async Task<byte[]?> ReadCacheAsync(string key, CancellationToken token)
+    private async Task<AudioCacheLookup> ReadCacheAsync(string key, CancellationToken token)
     {
         try { return await _cache.TryGetAsync(key, token).ConfigureAwait(false); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             CacheUnavailable(_logger);
-            return null;
+            return new AudioCacheLookup((ReadOnlyMemory<byte>?)null, _cache.Generation);
         }
     }
 

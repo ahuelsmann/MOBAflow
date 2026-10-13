@@ -23,13 +23,13 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
     public long Generation => Interlocked.Read(ref _generation);
 
     /// <inheritdoc />
-    public async Task<byte[]?> TryGetAsync(string key, CancellationToken cancellationToken = default)
+    public async Task<AudioCacheLookup> TryGetAsync(string key, CancellationToken cancellationToken = default)
     {
         ValidateKey(key);
         return await UseAsync(async () =>
         {
             // A lowered limit applies before a hit is served; zero disables the cache.
-            var changed = Trim(protectedKey: null, unplayedOnly: false);
+            var changed = Trim(protectedKey: null);
             byte[]? audio = null;
             if (_entries.ContainsKey(key))
             {
@@ -45,7 +45,7 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
                 }
             }
             if (changed) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
-            return audio;
+            return new AudioCacheLookup(audio is null ? (ReadOnlyMemory<byte>?)null : audio, Generation);
         }, cancellationToken).ConfigureAwait(false);
     }
 
@@ -60,16 +60,17 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
             if (audio.Length > Limit())
             {
                 // A lowered limit still applies, although this audio is not retained.
-                if (Trim(protectedKey: null, unplayedOnly: false)) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+                if (Trim(protectedKey: null)) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
                 return;
             }
-            await WriteAtomicAsync(key + ".wav", audio, cancellationToken).ConfigureAwait(false);
+            // Waiters of one shared synthesis each store after their playback; the first write suffices.
+            var stored = _entries.ContainsKey(key) && File.Exists(AudioPath(key));
+            if (!stored) await WriteAtomicAsync(key + ".wav", audio, cancellationToken).ConfigureAwait(false);
             try
             {
-                // The WAV is in place: record it even if the caller cancels now. It counts as played only after
-                // playback, so it may only displace other unplayed audio; played audio is evicted by MarkPlayedAsync.
-                _entries[key] = new CacheEntry(audio.Length, _entries.GetValueOrDefault(key)?.LastPlayedAt);
-                Trim(protectedKey: key, unplayedOnly: true);
+                // The WAV is in place: record it even if the caller cancels now.
+                _entries[key] = new CacheEntry(stored ? _entries[key].Size : audio.Length, clock.GetUtcNow());
+                Trim(protectedKey: key);
                 await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
             }
             catch
@@ -89,7 +90,6 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         {
             if (!_entries.TryGetValue(key, out var entry)) return;
             _entries[key] = entry with { LastPlayedAt = clock.GetUtcNow() };
-            Trim(protectedKey: null, unplayedOnly: false);
             await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
         }, cancellationToken).ConfigureAwait(false);
     }
@@ -102,7 +102,7 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
             // Also count out orphans that another process may have left since the first sweep.
             Sweep(cancellationToken);
             var changed = Reconcile(cancellationToken);
-            changed |= Trim(protectedKey: null, unplayedOnly: false);
+            changed |= Trim(protectedKey: null);
             if (changed) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
             return _entries.Values.Sum(entry => entry.Size);
         }, cancellationToken).ConfigureAwait(false);
@@ -113,9 +113,10 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
     {
         await UseAsync(async () =>
         {
+            // Once deletion starts, finish it and persist the new generation even if the caller cancels.
             Interlocked.Increment(ref _generation);
             foreach (var key in _entries.Keys.ToArray()) Remove(key);
-            Sweep(cancellationToken);
+            Sweep(CancellationToken.None);
             await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
         }, cancellationToken).ConfigureAwait(false);
     }
@@ -224,16 +225,14 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         return changed;
     }
 
-    private bool Trim(string? protectedKey, bool unplayedOnly)
+    private bool Trim(string? protectedKey)
     {
         var size = _entries.Values.Sum(entry => entry.Size);
         var limit = Limit();
         var changed = false;
-        // Entries never played (for example after cancelled playback) are evicted first.
         foreach (var (key, entry) in _entries
             .Where(pair => !string.Equals(pair.Key, protectedKey, StringComparison.Ordinal))
-            .Where(pair => !unplayedOnly || pair.Value.LastPlayedAt is null)
-            .OrderBy(pair => pair.Value.LastPlayedAt ?? DateTimeOffset.MinValue)
+            .OrderBy(pair => pair.Value.LastPlayedAt)
             .ThenBy(pair => pair.Key, StringComparer.Ordinal)
             .ToArray())
         {
@@ -287,6 +286,6 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
 
     private sealed record CacheIndex(long Generation, Dictionary<string, CacheEntry>? Entries);
 
-    /// <summary>Retained WAV size and the last successful playback; null until the entry has been played.</summary>
-    private sealed record CacheEntry(long Size, DateTimeOffset? LastPlayedAt);
+    /// <summary>Retained WAV size and the last successful playback.</summary>
+    private sealed record CacheEntry(long Size, DateTimeOffset LastPlayedAt);
 }

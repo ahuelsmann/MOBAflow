@@ -150,14 +150,15 @@ completion applies only to the current session, guarded across host-player insta
 - WAV/index replacement is atomic. A lock file serializes cache operations across MOBAflow processes; each operation
   reloads the index under that lock. Unindexed WAVs or temporary files left by an interrupted write are removed on the
   first operation of a process, after a failed index update, and whenever the size is read or the cache is cleared.
-  A clear increments the generation stored in the index: earlier in-progress synthesis, also in another process, can
-  finish playback but cannot refill the cleared cache. The generation for a miss is read after the lookup has reloaded
-  the index. Requests after clear use a new shared-flight generation. A lookup reads only the requested file; the size
-  limit is enforced from the index before every hit, after playback is recorded, and when the size is read.
+  A clear increments the generation stored in the index and, once deletion starts, completes regardless of
+  cancellation: earlier in-progress synthesis, also in another process, can finish playback but cannot refill the
+  cleared cache. A lookup returns the generation read under the same lock as its miss. Requests after clear use a new
+  shared-flight generation. A lookup reads only the requested file; the size limit is enforced from the index before
+  every hit, whenever audio is stored, and when the size is read.
   A cache I/O failure is diagnosed without raw filesystem details and does not silence an otherwise valid announcement.
-- Successful playback updates last-use time. Stored audio counts as never played until then and displaces only other
-  unplayed audio; played audio is evicted only once the new audio has played. Audio whose playback was cancelled or
-  failed is therefore evicted before played audio. Provider fingerprints include effective Piper executable/model/config
+- Synthesized audio is stored only after it has played successfully, with that playback as its last-use time, so the
+  cache never exceeds its limit and unheard audio never displaces played audio. Each successful playback of a cached
+  entry updates its last-use time. Provider fingerprints include effective Piper executable/model/config
   paths, pronunciation options and sentence silence; System Speech includes its
   configured default voice. Availability is excluded, so a cached announcement remains usable when the provider
   cannot start. Replacing model contents at the same configured path requires clearing the cache. Request text uses
