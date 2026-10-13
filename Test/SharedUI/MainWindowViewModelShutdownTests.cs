@@ -190,8 +190,7 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
             eventBus ?? new Mock<IEventBus>().Object,
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null),
             locomotiveSession1,
             new ActionExecutionContext
             {

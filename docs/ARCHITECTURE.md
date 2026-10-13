@@ -42,19 +42,23 @@ this table, so it is the single source of these rules.
 | `TrackLibrary.Base` | `Moba.TrackLibrary.Base` | none |
 | `Common` | `Moba.Common` | `Domain` |
 | `Sound` | `Moba.Sound` | `Common` |
-| `Backend` | `Moba.Backend` | `Common`, `Domain`, `Sound` |
+| `Speech.Base` | `Moba.Speech.Base` | `Common` |
+| `Speech.Piper` | `Moba.Speech.Piper` | `Speech.Base` |
+| `Speech.SystemSpeech` | `Moba.Speech.SystemSpeech` | `Speech.Base` |
+| `Backend` | `Moba.Backend` | `Common`, `Domain`, `Sound`, `Speech.Base` |
 | `TrackPlan.Renderer` | `Moba.TrackPlan.Renderer` | `TrackLibrary.Base` |
 | `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base`, `Domain`, `TrackPlan.Renderer` |
 | `MOBAdisplay` | `Moba.Display` | `Domain` |
 | `MOBApi` | `Moba.MOBApi` | `Common` |
 | `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackLibrary.PikoA` |
-| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `MOBAdisplay` |
-| `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound` |
+| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
+| `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound`, `Speech.Base` |
 
 Further rules:
 
 - Only `MOBAflow` uses WinUI and only `MOBAsmart` uses MAUI. Every other
-  project stays platform-neutral.
+  project stays free of UI framework types. `Speech.Piper` and `Speech.SystemSpeech` target Windows
+  for synthesis; `Speech.Base` remains platform-neutral and is the only speech project referenced by MOBAsmart.
 - Project references point to projects in `Moba.slnx`. The rules also apply
   to `Directory.Build.props`, `Directory.Build.targets` and imported build files.
 - Every namespace declared in a project starts with the root namespace in the
@@ -64,6 +68,14 @@ Further rules:
 `Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from this
 table, the project and build files, and the C# syntax of the sources; a failure
 message names the broken rule.
+
+### Speech dependency rule
+
+`Speech.Base` owns the provider contracts, structured results and shared output. `AnnouncementService`,
+workflow execution contexts and the Settings test command all use `ISpeechOutput`. It captures the current
+provider ID and shared request options on each call. Local providers synthesize WAV data without opening
+an audio device; MOBAflow's cancellable WAV player owns audible playback. `Sound` keeps sound effects and
+no longer references `System.Speech`. Android registers `NullSpeechOutput` and includes no Windows provider.
 
 ### Track-plan dependency rule
 
@@ -275,7 +287,7 @@ runtime services.
 - The page coordinates visual column widths and matching load/unload subscriptions. Editor disposal
   releases session, collection and model handlers without changing bound state during shutdown.
   The architecture guard rejects shell dependencies in LocomotivesPage. Train-composition
-  and central layout-persistence extraction remain later RF-24 slices.
+  is extracted in slice 2c below; central layout-persistence extraction remains planned.
 
 **Wagon presentation (RF-24 slice 2b):**
 
@@ -290,7 +302,20 @@ runtime services.
   entity/solution checks, refresh image bindings for repeated paths and ignore results after disposal.
 - The editor detaches session, project-collection and selected-model subscriptions at shutdown.
   The architecture guard rejects shell dependencies in both wagon inventory pages.
-  Train composition and central layout persistence remain later slices.
+  Train composition is extracted in slice 2c below; central layout persistence remains planned.
+
+**Train composition (RF-24 slice 2c):**
+
+- The host owns one TrainsPageViewModel for TrainsPage. It reads ISolutionSession directly,
+  shares the existing LocomotivesPageViewModel, WagonsPageViewModel and LayoutColumnWidthsViewModel,
+  and keeps train/vehicle selection, search, train CRUD, composition order and panel expansion.
+- Selection and solution replacement detach the previous train's VehiclesModified callback.
+  Disposal releases session and train subscriptions without removing session-owned train property
+  tracking. Vehicle callbacks preserve auto-save suppression and update the existing connection
+  runtime's project snapshot; runtime ownership and operator command routing are unchanged.
+- TrainsPage retains only visual layout and drag/drop coordination. Its architecture guard rejects
+  MainWindowViewModel dependencies. The superseded Train partial is removed; the shell retains
+  its runtime-refresh helper for station/journey editors until their own extraction.
 
 **Settings presentation (RF-24 slice 1):**
 
@@ -618,7 +643,7 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `SettingsPageViewModel`, `LocomotivesPageViewModel`, `WagonsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `TrainsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;

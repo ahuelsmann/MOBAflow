@@ -1,7 +1,8 @@
+#if WINDOWS
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Sound;
 
-using Moba.Sound;
+using Moba.Speech.Piper;
 
 [TestFixture]
 internal sealed class PcmWavePostProcessorTests
@@ -33,12 +34,12 @@ internal sealed class PcmWavePostProcessorTests
         var result = PcmWavePostProcessor.Process(path);
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(result.WasProcessed, Is.True);
             Assert.That(result.TrimmedFrameCount, Is.GreaterThan(0));
             Assert.That(ReadSamples(path).Last(), Is.Zero);
-        });
+        }
     }
 
     [Test]
@@ -53,11 +54,11 @@ internal sealed class PcmWavePostProcessorTests
         var result = PcmWavePostProcessor.Process(path);
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(result.WasProcessed, Is.False);
             Assert.That(new FileInfo(path).Length, Is.EqualTo(originalLength));
-        });
+        }
     }
 
     [Test]
@@ -72,11 +73,11 @@ internal sealed class PcmWavePostProcessorTests
         var result = PcmWavePostProcessor.Process(path);
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(result.WasProcessed, Is.False);
             Assert.That(new FileInfo(path).Length, Is.EqualTo(originalLength));
-        });
+        }
     }
 
     [Test]
@@ -131,3 +132,5 @@ internal sealed class PcmWavePostProcessorTests
         return Enumerable.Range(0, dataLength / sizeof(short)).Select(_ => reader.ReadInt16()).ToArray();
     }
 }
+
+#endif

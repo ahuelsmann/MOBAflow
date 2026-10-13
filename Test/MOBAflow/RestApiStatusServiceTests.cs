@@ -201,8 +201,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             eventBus,
             uiDispatcher.Object,
             TestSettingsPages.Create(appSettings, uiDispatcher.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntime.Object, null),
             locomotiveSession1,
             new ActionExecutionContext
             {

@@ -108,11 +108,11 @@ public sealed class JourneyCounterProjectionTests
         {
             if (e.PropertyName == nameof(MainWindowViewModel.SpeechStatusDisplayText)) updates++;
         };
-        fixture.ViewModel.SettingsPage.SelectedSpeechEngine = "Piper TTS";
-        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Does.StartWith("Piper TTS:"));
+        fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "piper";
+        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Is.EqualTo("Speech: Initializing..."));
 
         await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);
-        fixture.ViewModel.SettingsPage.SelectedSpeechEngine = "System Speech (Windows SAPI)";
+        fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "system-speech";
         Assert.That(updates, Is.EqualTo(1));
     }
 
@@ -254,8 +254,7 @@ public sealed class JourneyCounterProjectionTests
                 _eventBus,
                 dispatcher.Object,
                 TestSettingsPages.Create(Settings, dispatcher.Object),
-                _rollingStockPages.GetLocomotivesPage(locomotiveSession1, io.Object),
-                _rollingStockPages.GetWagonsPage(locomotiveSession1, io.Object),
+                _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object),
                 locomotiveSession1,
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
                 NullLogger<MainWindowViewModel>.Instance);

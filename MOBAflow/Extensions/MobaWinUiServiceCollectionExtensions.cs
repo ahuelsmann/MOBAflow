@@ -31,6 +31,9 @@ using SharedUI.Shell;
 using SharedUI.TrainControl;
 using SharedUI.ViewModel;
 using Sound;
+using Speech.Base;
+using Speech.Piper;
+using Speech.SystemSpeech;
 using TrackLibrary.PikoA;
 using TrackPlan.Renderer;
 using View;
@@ -41,7 +44,7 @@ using View;
 public static class MobaWinUiServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers configuration, AppSettings, SpeechOptions, and Serilog logging.
+    /// Registers configuration, AppSettings, and Serilog logging.
     /// </summary>
     public static IServiceCollection AddMobaWinUiConfiguration(
         this IServiceCollection services,
@@ -53,7 +56,6 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(configuration);
         services.Configure<AppSettings>(configuration);
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
-        services.Configure<SpeechOptions>(configuration.GetSection("Speech"));
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
         return services;
@@ -83,18 +85,17 @@ public static class MobaWinUiServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers speaker engine factory and the configured engine singleton.
+    /// Registers local synthesis providers and the shared speech output.
     /// </summary>
     public static IServiceCollection AddMobaWinUiSpeechServices(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<ISpeakerEngineRegistration, PiperSpeakerEngineRegistration>();
-        services.AddSingleton<ISpeakerEngineRegistration, SystemSpeechEngineRegistration>();
-        services.AddSingleton<SpeakerEngineFactory>();
-        services.AddSingleton<ISpeakerEngineFactory>(sp => sp.GetRequiredService<SpeakerEngineFactory>());
-        services.AddSingleton<ISpeakerEngine>(sp =>
-            sp.GetRequiredService<SpeakerEngineFactory>().CreateEngineFromOptions());
+        services.AddSingleton<ISpeechProvider, PiperSpeechProvider>();
+        services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
+        services.AddSingleton<IWavePlayer, CancellableWavePlayer>();
+        services.AddSingleton<SpeechOutput>();
+        services.AddSingleton<ISpeechOutput>(sp => sp.GetRequiredService<SpeechOutput>());
 
         return services;
     }
@@ -110,7 +111,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddMobaWinUiProjectRuntimes();
         services.AddMobaBackendServices();
         services.AddSingleton(sp => new AnnouncementService(
-            sp.GetRequiredService<ISpeakerEngineFactory>(),
+            sp.GetRequiredService<ISpeechOutput>(),
             sp.GetRequiredService<ILogger<AnnouncementService>>()));
 
         return services;
@@ -337,9 +338,13 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetService<IFeatureTogglePageProvider>(),
             speechTestAction: async message =>
             {
-                var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
-                await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
+                var result = await sp.GetRequiredService<ISpeechOutput>().SpeakAsync(message).ConfigureAwait(false);
+                if (!result.IsSuccess)
+                {
+                    throw new InvalidOperationException(result.Reason);
+                }
             }));
+        services.AddSingleton<TrainsPageViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
@@ -349,8 +354,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<SettingsPageViewModel>(),
-            sp.GetRequiredService<LocomotivesPageViewModel>(),
-            sp.GetRequiredService<WagonsPageViewModel>(),
+            sp.GetRequiredService<TrainsPageViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ActionExecutionContext>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),

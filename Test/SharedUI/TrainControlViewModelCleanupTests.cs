@@ -113,8 +113,7 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             new EventBus(NullLogger<EventBus>.Instance),
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null),
             locomotiveSession1,
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object);

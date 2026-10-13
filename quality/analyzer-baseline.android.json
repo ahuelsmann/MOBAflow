@@ -622,7 +622,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Service/AnnouncementService.cs",
-      "count": 8
+      "count": 7
     },
     {
       "project": "Backend",
@@ -818,7 +818,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
       "path": "Backend/Service/AnnouncementService.cs",
-      "count": 5
+      "count": 4
     },
     {
       "project": "Backend",
@@ -1762,13 +1762,6 @@
       "project": "Domain",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Domain/SpeakerEngineConfiguration.cs",
-      "count": 1
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2227",
       "path": "Domain/Station.cs",
       "count": 2
     },
@@ -2581,13 +2574,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
       "count": 1
     },
@@ -2658,6 +2644,13 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "SharedUI/Mobile/MobilePhotoUploader.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "SharedUI/Mobile/MobileSolutionSynchronizer.cs",
       "count": 3
     },
@@ -2674,6 +2667,20 @@
       "ruleId": "CA1031",
       "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/TrainControl/TrainControlSettingsStore.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 8
     },
     {
       "project": "SharedUI",
@@ -2707,20 +2714,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
       "count": 1
     },
@@ -2743,7 +2736,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "SharedUI",
@@ -2770,22 +2763,22 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/TrainControl/TrainControlSettingsStore.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
-      "count": 8
     },
     {
       "project": "SharedUI",
@@ -2882,13 +2875,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
       "count": 1
     },
@@ -2897,6 +2883,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
       "count": 1
     },
     {
@@ -2972,13 +2965,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1307",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1308",
       "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
       "count": 1
@@ -3009,6 +2995,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
       "path": "SharedUI/Extensions/UiDispatcherServiceCollectionExtensions.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
       "count": 1
     },
     {
@@ -3056,13 +3049,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1823",
       "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
       "count": 1
@@ -3094,6 +3080,13 @@
       "ruleId": "CA1848",
       "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 25
     },
     {
       "project": "SharedUI",
@@ -3204,13 +3197,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
-      "count": 25
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 1
     },
@@ -3253,6 +3239,13 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 9
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
       "path": "SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs",
       "count": 4
     },
@@ -3273,13 +3266,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
-      "count": 9
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "SharedUI/Service/PhotoStorageService.cs",
       "count": 1
@@ -3290,6 +3276,13 @@
       "ruleId": "CA2007",
       "path": "SharedUI/Service/SolutionRemoteLoader.cs",
       "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 12
     },
     {
       "project": "SharedUI",
@@ -3344,13 +3337,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
-      "count": 12
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 6
     },
@@ -3371,8 +3357,8 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA2227",
-      "path": "SharedUI/ViewModel/SpeakerEngineConfigurationViewModel.cs",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
       "count": 1
     },
     {
@@ -3413,13 +3399,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
       "count": 8
@@ -3430,6 +3409,13 @@
       "ruleId": "IDE0007",
       "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 11
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3465,13 +3451,6 @@
       "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
-      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3638,6 +3617,13 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 21
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
       "count": 3
     },
@@ -3743,13 +3729,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
       "count": 1
     },
@@ -3834,13 +3813,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
-      "count": 21
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/VehicleItemViewModel.cs",
       "count": 3
     },
@@ -3875,106 +3847,8 @@
     {
       "project": "Sound",
       "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 2
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1304",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 2
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1416",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1416",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 6
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Sound/SoundManager.cs",
-      "count": 4
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 7
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 9
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/PiperSpeechEngine.cs",
       "count": 4
     },
     {
@@ -3983,48 +3857,6 @@
       "ruleId": "CA1873",
       "path": "Sound/SoundManager.cs",
       "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 2
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 5
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 1
     },
     {
       "project": "TrackLibrary.Base",
