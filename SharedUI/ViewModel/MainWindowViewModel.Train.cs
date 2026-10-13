@@ -14,10 +14,6 @@ public partial class MainWindowViewModel
 {
     private static readonly ObservableCollection<VehicleItemViewModel> EmptyVehicleItems = [];
 
-    // Preserve ItemsSource identity while membership is unchanged so editing a name keeps WinUI selection.
-    private List<PassengerWagonViewModel> _filteredPassengerWagonLibrary = [];
-    private List<GoodsWagonViewModel> _filteredGoodsWagonLibrary = [];
-
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteTrainCommand))]
     private TrainViewModel? _selectedTrain;
@@ -80,18 +76,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(FilteredTrains));
     }
 
-    partial void OnPassengerWagonSearchTextChanged(string value)
-    {
-        _ = value;
-        OnPropertyChanged(nameof(FilteredPassengerWagonLibrary));
-    }
-
-    partial void OnGoodsWagonSearchTextChanged(string value)
-    {
-        _ = value;
-        OnPropertyChanged(nameof(FilteredGoodsWagonLibrary));
-    }
-
     public ObservableCollection<VehicleItemViewModel> SelectedVehicles => SelectedTrain?.VehicleItems ?? EmptyVehicleItems;
 
     public string TrainsCompositionTitle => SelectedTrain == null
@@ -110,32 +94,6 @@ public partial class MainWindowViewModel
             return string.IsNullOrWhiteSpace(TrainSearchText)
                 ? [.. SelectedProject.Trains]
                 : [.. SelectedProject.Trains.Where(train => train.Name.Contains(TrainSearchText, StringComparison.OrdinalIgnoreCase))];
-        }
-    }
-
-    public List<PassengerWagonViewModel> FilteredPassengerWagonLibrary
-    {
-        get
-        {
-            var search = PassengerWagonSearchText.Trim();
-            var matches = SelectedProject?.PassengerWagons
-                .Where(wagon => wagon.Name.Contains(search, StringComparison.OrdinalIgnoreCase)).ToList() ?? [];
-            if (!_filteredPassengerWagonLibrary.SequenceEqual(matches))
-                _filteredPassengerWagonLibrary = matches;
-            return _filteredPassengerWagonLibrary;
-        }
-    }
-
-    public List<GoodsWagonViewModel> FilteredGoodsWagonLibrary
-    {
-        get
-        {
-            var search = GoodsWagonSearchText.Trim();
-            var matches = SelectedProject?.GoodsWagons
-                .Where(wagon => wagon.Name.Contains(search, StringComparison.OrdinalIgnoreCase)).ToList() ?? [];
-            if (!_filteredGoodsWagonLibrary.SequenceEqual(matches))
-                _filteredGoodsWagonLibrary = matches;
-            return _filteredGoodsWagonLibrary;
         }
     }
 

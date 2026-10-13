@@ -309,6 +309,15 @@ public static class MobaWinUiServiceCollectionExtensions
             showPhotoInExplorer: fullPath => System.Diagnostics.Process.Start(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
                 $"/select,\"{fullPath}\"")));
+        services.AddSingleton(sp => new WagonsPageViewModel(
+            sp.GetRequiredService<ISolutionSession>(),
+            sp.GetRequiredService<IIoService>(),
+            sp.GetRequiredService<ISettingsService>(),
+            sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
+            sp.GetRequiredService<ILogger<WagonsPageViewModel>>(),
+            showPhotoInExplorer: fullPath => System.Diagnostics.Process.Start(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
+                $"/select,\"{fullPath}\"")));
         services.AddSingleton(sp => new SolutionSession(
             sp.GetRequiredService<Solution>(),
             sp.GetRequiredService<IIoService>(),
@@ -344,10 +353,10 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<SettingsPageViewModel>(),
             sp.GetRequiredService<LocomotivesPageViewModel>(),
+            sp.GetRequiredService<WagonsPageViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ActionExecutionContext>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
-            sp.GetRequiredService<IIoService>(),
             sp.GetRequiredService<ICityService>(),
             sp.GetRequiredService<ISettingsService>(),
             loggerFactory: sp.GetRequiredService<ILoggerFactory>(),

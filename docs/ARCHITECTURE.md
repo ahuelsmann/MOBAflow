@@ -286,8 +286,23 @@ runtime services.
   Photo copying retains the initiating entity/solution checks and ignores results after disposal.
 - The page coordinates visual column widths and matching load/unload subscriptions. Editor disposal
   releases session, collection and model handlers without changing bound state during shutdown.
-  The architecture guard rejects shell dependencies in LocomotivesPage. Wagon, train-composition
+  The architecture guard rejects shell dependencies in LocomotivesPage. Train-composition
   and central layout-persistence extraction remain later RF-24 slices.
+
+**Wagon presentation (RF-24 slice 2b):**
+
+- The host owns one WagonsPageViewModel, shared by PassengerWagonPage, GoodsWagonPage and both
+  wagon libraries in TrainsPage. It reads ISolutionSession directly and reuses the existing
+  I/O/settings services and LayoutColumnWidthsViewModel without depending on the shell.
+- Passenger/goods selection, search, stable filter identity, inventory CRUD, photos and persisted
+  expansion state belong to this editor. The session owns project selection and auto-save;
+  the inventory pages retain their visual column-width handling and load/unload subscriptions.
+- The shell's small photo-assignment partial forwards uploaded photos to the active editor.
+  The host adapts Windows Explorer launching. Asynchronous copies retain the initiating
+  entity/solution checks, refresh image bindings for repeated paths and ignore results after disposal.
+- The editor detaches session, project-collection and selected-model subscriptions at shutdown.
+  The architecture guard rejects shell dependencies in both wagon inventory pages.
+  Train composition and central layout persistence remain later slices.
 
 **Settings presentation (RF-24 slice 1):**
 
@@ -596,7 +611,7 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `SettingsPageViewModel`, `LocomotivesPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `LocomotivesPageViewModel`, `WagonsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;

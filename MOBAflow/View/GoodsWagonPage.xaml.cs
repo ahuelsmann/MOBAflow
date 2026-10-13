@@ -18,13 +18,13 @@ internal sealed partial class GoodsWagonPage
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<GoodsWagonPage>? _logger;
 
-    public MainWindowViewModel ViewModel { get; }
+    public WagonsPageViewModel ViewModel { get; }
 
     private double _listExpandedWidth = 250;
     private GridLength _propertiesExpandedWidth = new(1, GridUnitType.Star);
 
     public GoodsWagonPage(
-        MainWindowViewModel viewModel,
+        WagonsPageViewModel viewModel,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<GoodsWagonPage>? logger = null)

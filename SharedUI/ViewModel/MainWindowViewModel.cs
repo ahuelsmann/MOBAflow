@@ -19,8 +19,6 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Service;
-
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -34,7 +32,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private const int ShutdownDisconnectTimeoutSeconds = 5;
 
     // Core Services (required)
-    private readonly IIoService _ioService;
     private readonly ISolutionSession _session;
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
     private readonly IConnectionRuntime _runtimeConnection;
@@ -75,7 +72,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
     /// <param name="executionContext">Execution context containing shared dependencies for workflow actions.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
-    /// <param name="ioService">Optional IO service implementation (null uses <see cref="NullIoService"/>).</param>
     /// <param name="cityLibraryService">Optional city library service for master data.</param>
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
@@ -90,10 +86,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IUiDispatcher uiDispatcher,
         SettingsPageViewModel settingsPage,
         LocomotivesPageViewModel locomotivesPage,
+        WagonsPageViewModel wagonsPage,
         ISolutionSession solutionSession,
         ActionExecutionContext executionContext,
         ILogger<MainWindowViewModel> logger,
-        IIoService? ioService = null,  // Optional for WebApp/MAUI
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
         ILoggerFactory? loggerFactory = null,
@@ -111,11 +107,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settingsPage);
         ArgumentNullException.ThrowIfNull(locomotivesPage);
+        ArgumentNullException.ThrowIfNull(wagonsPage);
         ArgumentNullException.ThrowIfNull(solutionSession);
         ArgumentNullException.ThrowIfNull(executionContext);
         ArgumentNullException.ThrowIfNull(logger);
 
-        _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _session = solutionSession;
         _runtimeSnapshots = runtimeSnapshots;
         _runtimeConnection = runtimeConnection;
@@ -127,6 +123,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings = settings;
         SettingsPage = settingsPage;
         LocomotivesPage = locomotivesPage;
+        WagonsPage = wagonsPage;
         SettingsPage.PropertyChanged += OnSettingsPagePropertyChanged;
         SettingsPage.FeedbackPointCountChanged += OnFeedbackPointCountChanged;
         _logger = logger;
@@ -156,7 +153,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         AttachSolutionSession();
         _observedSelectedProject = _session.SelectedProject;
-        HandleSelectedProjectChanged(null, _observedSelectedProject);
+        HandleSelectedProjectChanged(_observedSelectedProject);
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedProject));
@@ -199,6 +196,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     /// <summary>Gets the host-owned locomotive editor shared by inventory and train pages.</summary>
     public LocomotivesPageViewModel LocomotivesPage { get; }
+
+    /// <summary>Gets the host-owned wagon editor shared by inventory and train pages.</summary>
+    public WagonsPageViewModel WagonsPage { get; }
 
     /// <summary>
     /// Application settings model shared with the shell. Exposed for UI behaviors that walk the visual tree
@@ -475,6 +475,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
         WorkflowLibrary.Dispose();
         LocomotivesPage.Dispose();
+        WagonsPage.Dispose();
         foreach (var subscriptionId in _eventBusSubscriptions)
         {
             _eventBus.Unsubscribe(subscriptionId);

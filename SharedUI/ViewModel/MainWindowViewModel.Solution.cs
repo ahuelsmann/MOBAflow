@@ -94,10 +94,9 @@ public partial class MainWindowViewModel
         switch (e.PropertyName)
         {
             case nameof(ISolutionSession.SelectedProject):
-                var oldProject = _observedSelectedProject;
                 _observedSelectedProject = _session.SelectedProject;
                 OnPropertyChanged(nameof(SelectedProject));
-                HandleSelectedProjectChanged(oldProject, _observedSelectedProject);
+                HandleSelectedProjectChanged(_observedSelectedProject);
                 break;
             case nameof(ISolutionSession.SelectedJourney):
                 OnPropertyChanged(nameof(SelectedJourney));
@@ -226,8 +225,6 @@ public partial class MainWindowViewModel
 
         // Wagons & Locomotives
         SelectedTrain = null;
-        SelectedPassengerWagon = null;
-        SelectedGoodsWagon = null;
         SelectedVehicle = null;
 
         // General
