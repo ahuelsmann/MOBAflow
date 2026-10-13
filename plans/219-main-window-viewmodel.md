@@ -2,8 +2,8 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) integrated through #257; slice 2b (Wagons) integrated through #264; slice 2c (Train composition) implemented with validation/review tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives integrated at 656bc630; wagons integrated at c4e427d0; train composition starts from main c4e427d084af05eb6db5c6196ffa529a0fd3ac4c; PR #272 synchronized with main 435a8ab7df1738bb09651b97ddc28a6fabf35d67 on 2026-10-13
+**Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) integrated through #257; slice 2b (Wagons) integrated through #264; slice 2c (Train composition) integrated through #272; slice 3a (Stations/platforms) implemented with validation/review tracked in #219; later slices planned
+**Evidence**: Settings integrated at bfe9b91d; locomotives integrated at 656bc630; wagons integrated at c4e427d0; train composition starts from main c4e427d084af05eb6db5c6196ffa529a0fd3ac4c; train composition integrated at f6ad0853; station/platform implementation starts from main 28fafa8ef5f9dac2b76233cb2966f00a43fef1b1 on 2026-10-13
 
 ## Purpose and scope
 
@@ -34,7 +34,7 @@ The maintainer authorized the Settings slice on 2026-10-11. It starts from integ
 existing shell/composition, WinUI page bindings/navigation, grid-column persistence,
 MonitorPageViewModel, EventManagerViewModel and Android shutdown lookup are named residuals.
 PostStartupInitializationService already uses the session and is not a shell exception.
-SettingsPage, LocomotivesPage, PassengerWagonPage, GoodsWagonPage and TrainsPage reject shell dependencies even while other pages remain allowed.
+SettingsPage, LocomotivesPage, PassengerWagonPage, GoodsWagonPage, TrainsPage and StationsPage reject shell dependencies even while other pages remain allowed.
 The remaining core retains selected-project projections, operating state and shutdown;
 ISolutionSession owns the solution and canonical selection, and operator commands stay on
 IRuntimeCommandGateway. Settings extraction changes neither boundary.
@@ -44,13 +44,13 @@ without provider implementation or project changes.
 ## Source inventory and proposed owners
 
 The source links below reflect the refreshed integrated slice; counts describe the original inventory. Line counts are file-size
-observations, not coverage or quality metrics. The Settings and rolling-stock slices remove their superseded shell partials. Stock editing and train composition now belong to focused page ViewModels; the shell retains narrow uploaded-photo routing and the station/journey runtime-refresh helper.
+observations, not coverage or quality metrics. The Settings and rolling-stock slices remove their superseded shell partials. Stock editing and train composition now belong to focused page ViewModels; the shell retains narrow uploaded-photo routing and the journey runtime-refresh helper.
 
 | Responsibility and evidence | Proposed boundary | Existing behavior to preserve |
 | --- | --- | --- |
 | [SettingsPageViewModel](../SharedUI/ViewModel/SettingsPageViewModel.cs), extracted from the settings partial; [SettingsPage](../MOBAflow/View/SettingsPage.xaml.cs):24-36 and its layout partial | Focused SettingsPageViewModel using AppSettings, ISettingsService and existing speech-test integration | Setter equality checks, notifications, immediate persistence, reset, feature availability, Piper voices, speech success/failure |
 | [LocomotivesPageViewModel](../SharedUI/ViewModel/LocomotivesPageViewModel.cs), extracted locomotive editor; focused [WagonsPageViewModel](../SharedUI/ViewModel/WagonsPageViewModel.cs) and [TrainsPageViewModel](../SharedUI/ViewModel/TrainsPageViewModel.cs) (originally 482 and 264 lines) | Focused locomotive, passenger/goods wagon and train page state; reuse LocomotiveManagementViewModel | CRUD, filtered lists, rename selection identity, composition ordering and photo assignment to the initiating context |
-| [Stations partial](../SharedUI/ViewModel/MainWindowViewModel.Stations.cs), 127 lines; [Journey partial](../SharedUI/ViewModel/MainWindowViewModel.Journey.cs), 223 lines; city commands in the core file | Stations and journey page ViewModels reading IProjectContext/IJourneySelectionContext | Shared journey selection, stations/platforms, city library, command availability, nested model change tracking |
+| [StationsPageViewModel](../SharedUI/ViewModel/StationsPageViewModel.cs), extracted station/platform editor; [Journey partial](../SharedUI/ViewModel/MainWindowViewModel.Journey.cs), 223 lines; city commands in the core file | Stations and journey page ViewModels reading IProjectContext/IJourneySelectionContext | Shared journey selection, stations/platforms, city library, command availability, nested model change tracking |
 | [Workflow partial](../SharedUI/ViewModel/MainWindowViewModel.Workflow.cs), 187 lines; [WorkflowsPage](../MOBAflow/View/WorkflowsPage.xaml):32 onwards | Register and inject the existing WorkflowLibraryViewModel; add only page presentation state that it lacks | Selection, action editing/order, validation, dry-run cancellation, trace and editor state; no second workflow engine |
 | Counter, Diagnostics, HealthStatus, RestApiStatus and SyncDiagnostics partials | Focused counter/diagnostic/status projections using existing runtime query contracts and EventBus | Counter errors and reset result, filters, health/API status, sync state and project isolation |
 | [LayoutPanels](../SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs), 337 lines; [SettingsPageViewModel.Layout](../SharedUI/ViewModel/SettingsPageViewModel.Layout.cs), extracted from the settings layout partial; [GridColumnResizeBehavior](../MOBAflow/Behavior/GridColumnResizeBehavior.cs):474 onwards | One layout persistence service; reuse LayoutColumnWidthsViewModel | Panel expansion, section usage/order, setting keys, star-column values and intentionally fixed pixels |
@@ -129,7 +129,7 @@ Refresh the base and update this plan from evidence after each integrated slice.
      Regression tests cover both wagon types, project/solution changes, cancelled/late photos,
      same-path image refresh, removal, auto-save, shared DI identity and shutdown unsubscription.
      Manual UI acceptance remains open.
-   - **2c Train composition (implemented; validation/review tracked in #219):** TrainsPageViewModel owns
+   - **2c Train composition (integrated through #272; automated gates and maintainer-reported UI check passed):** TrainsPageViewModel owns
      train/vehicle selection, search, train CRUD, composition insertion/removal/reordering and persisted
      panel expansion. TrainsPage receives this focused DI instance, sharing the existing locomotive
      and wagon editors, session and column widths. The Train partial and its shell selection/layout
@@ -139,11 +139,23 @@ Refresh the base and update this plan from evidence after each integrated slice.
      layout persistence and shared host identity. The maintainer reported the UI check as unremarkable
      on 2026-10-13 and authorized merge after fresh CI/Sonar verification. This records the reported
      acceptance of slice 2c; it does not close the other slices or the programme-wide UI criteria.
-3. **Stations/journeys:** extract station/platform and journey/city presentation; keep canonical
-   project/journey selection in the session. Move ItemClicked/page commands and auto-save tracking
-   with their owners. Classify solution/project UI and signal/journey commands without changing
-   the RF-23 lifecycle.
-4. **Workflows:** inject WorkflowLibraryViewModel through DI, move any remaining page state,
+3. **Stations/journeys:** keep canonical project/journey selection in the session and move
+   page commands and auto-save tracking with their owners, preserving the RF-23 lifecycle.
+   - **3a Stations/platforms (implemented; validation/review tracked in #219):** StationsPageViewModel
+     owns station/platform selection, properties, CRUD and panel expansion. StationsPage receives
+     the focused host-owned editor; the Stations shell partial and its layout members are removed.
+     Selected station/platform property tracking and collection subscriptions detach on selection,
+     project/solution replacement and shutdown, including wrappers discarded by platform refresh.
+     Preserve defaults, workflow assignment and runtime snapshot updates. The existing workflow
+     library is registered once through host DI as a prerequisite for the station library;
+     shell and page share its search/catalog state. Workflow behavior remains in the existing editor.
+     Tests cover persistence, references, CRUD/defaults, command availability, replacement,
+     stale subscriptions, auto-save suppression, layout and actual-host shared identity.
+     Manual station/platform UI acceptance remains open.
+   - **3b Journeys/cities:** planned. Extract the remaining journey/city presentation, including
+     ItemClicked commands and selection hooks. Classify solution/project UI and signal/journey
+     commands without changing the RF-23 lifecycle.
+4. **Workflows:** the shared library DI registration is established by 3a; move remaining page state,
    update workflow and EventManager bindings, and remove shell construction/forwarding.
    Preserve one library instance shared by existing workflow surfaces.
 5. **Counter and status:** extract counter, diagnostics, health, API/sync and traffic projections;

@@ -139,18 +139,19 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
             .Callback<Action>(action => action());
 
         var locomotiveSession1 = TestSolutionSessions.Create(solution, dispatcher.Object, runtime.Object);
+        var stationEventBus1 = new Mock<IEventBus>().Object;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
             runtime.Object,
             new LocalRuntimeCommandGateway(runtime.Object),
-            new Mock<IEventBus>().Object,
+            stationEventBus1,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus1),
             locomotiveSession1,
-            new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object,
             projectDiagnosticsService: diagnostics);
     }

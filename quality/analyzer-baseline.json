@@ -3568,13 +3568,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Stations.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.SyncDiagnostics.cs",
       "count": 14
     },
@@ -5235,6 +5228,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/TrainControlViewModelSpeedTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/StationsPageViewModelTests.cs",
       "count": 1
     },
     {
