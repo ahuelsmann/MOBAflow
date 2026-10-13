@@ -10,7 +10,7 @@ internal static class TestSpeechCache
     {
         var cache = new Mock<IAudioCache>();
         cache.Setup(value => value.TryGetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((byte[]?)null);
+            .ReturnsAsync(new AudioCacheLookup((ReadOnlyMemory<byte>?)null, 0));
         return cache.Object;
     }
 }

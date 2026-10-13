@@ -112,9 +112,10 @@ Names follow the `TrackLibrary.Base` / `TrackLibrary.PikoA` pattern; final names
 1. Build the request from the current settings and resolve the selected provider by id (FR-003, takes effect for
    the next call). An unknown or missing id selects the default provider `system-speech` and writes a diagnostic.
 2. **Cache hit**: play the cached WAV through `IWavePlayer`; no provider call (FR-006, SC-003).
-3. **Cache miss**: synthesise with the selected provider, store the audio in the cache, play it. Concurrent misses
-   for the same cache key share one synthesis (per-key single flight), so overlapping identical announcements cause
-   one provider call; different keys synthesise independently. Each caller observes its own cancellation token;
+3. **Cache miss**: synthesise with the selected provider, play it, and store the audio in the cache only after
+   successful playback; cancelled or failed playback stores nothing. Concurrent misses for the same cache key share
+   one synthesis (per-key single flight), which stays joinable until its callers have played and stored the audio, so
+   overlapping identical announcements cause one provider call; different keys synthesise independently. Each caller observes its own cancellation token;
    the shared synthesis owns a separate token. Cancelling one caller ends its wait and prevents its playback,
    fallback and deferred synthesis, while other active callers continue. When the last waiting caller cancels,
    cancel the shared synthesis and remove its in-progress entry so a later request can start again. Application
@@ -148,14 +149,21 @@ completion applies only to the current session, guarded across host-player insta
   the "Clear cache" command. The host registers one cache below `%LOCALAPPDATA%/MOBAflow/SpeechCache`; the size limit
   is `Speech.CacheSizeLimitMegabytes` (500 MiB by default, zero disables storage). The limit covers retained WAV bytes.
 - WAV/index replacement is atomic. A lock file serializes cache operations across MOBAflow processes; each operation
-  reloads the index under that lock, and unindexed WAVs or temporary files left by an interrupted write are removed
-  once per process. A clear increments the generation stored in the index: earlier in-progress synthesis, also in
-  another process, can finish playback but cannot refill the cleared cache. Requests after clear use a new
-  shared-flight generation. A lookup checks only the requested entry; the size limit is enforced when audio is stored
-  or the size is read.
+  reloads the index under that lock. Unindexed WAVs or temporary files left by an interrupted write are removed on the
+  first operation of a process, after a failed index update, and whenever the size is read or the cache is cleared.
+  A clear increments the generation stored in the index and, once deletion starts, completes regardless of
+  cancellation: earlier in-progress synthesis, also in another process, can finish playback but cannot refill the
+  cleared cache. A lookup returns the generation read under the same lock as its miss; a failed lookup uses the
+  generation read before it. A store with a stale generation writes nothing but still records the playback of an
+  entry that exists in the current generation. Requests after clear use a new
+  shared-flight generation. A lookup reads only the requested file; the size limit is enforced from the index before
+  every hit, whenever audio is stored, and when the size is read. Only when the index exceeds the limit are its
+  entries checked against the files, so missing WAVs never cause valid audio to be evicted.
   A cache I/O failure is diagnosed without raw filesystem details and does not silence an otherwise valid announcement.
-- Successful playback updates last-use time. Stored audio counts as never played until then, so audio whose playback
-  was cancelled or failed is evicted before played audio. Provider fingerprints include effective Piper executable/model/config
+- Synthesized audio is stored only after it has played successfully, with that playback as its last-use time, so the
+  cache never exceeds its limit and unheard audio never displaces played audio. A completed shared synthesis stays
+  joinable while any caller still plays or stores it, so an identical request during that playback reuses its audio
+  instead of calling the provider again. Each successful playback of a cached entry updates its last-use time. Provider fingerprints include effective Piper executable/model/config
   paths, pronunciation options and sentence silence; System Speech includes its
   configured default voice. Availability is excluded, so a cached announcement remains usable when the provider
   cannot start. Replacing model contents at the same configured path requires clearing the cache. Request text uses

@@ -10,6 +10,8 @@ using Moq;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812", Justification = "NUnit creates this fixture through reflection.")]
 internal sealed partial class CachedSpeechOutputTests : IDisposable
 {
+    private static readonly string[] FullCacheAnnouncements = ["First", "Second", "Unheard", "First", "Second"];
+    private static readonly string[] FullCacheSyntheses = ["First", "Second", "Unheard"];
     private string _directory = null!;
     private AudioCache _cache = null!;
 
@@ -381,6 +383,117 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
     }
 
     [Test]
+    public async Task ClearByAnotherProcessDoesNotPreventCachingTheNextMiss()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var output = CreateOutput(provider, new SpeechOutputTests.FakePlayer());
+        await using var lifetime = output.ConfigureAwait(false);
+        await output.SpeakAsync("Before clear").ConfigureAwait(false);
+        using (var otherProcess = new AudioCache(_directory, () => 1000000, TimeProvider.System))
+        {
+            await otherProcess.ClearAsync().ConfigureAwait(false);
+        }
+        await output.SpeakAsync("After clear").ConfigureAwait(false);
+        await output.SpeakAsync("After clear").ConfigureAwait(false);
+        Assert.That(provider.Requests.Count(request => request.Text == "After clear"), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task IdenticalAnnouncementDuringPlaybackJoinsTheCompletedSynthesis()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var player = new GatedFirstPlayback();
+        var output = CreateOutput(provider, player);
+        await using var lifetime = output.ConfigureAwait(false);
+        var first = output.SpeakAsync("Overlapping");
+        await player.FirstStarted.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        var second = await output.SpeakAsync("Overlapping").WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        player.ReleaseFirst();
+        var firstResult = await first.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(firstResult.IsSuccess, Is.True);
+            Assert.That(second.IsSuccess, Is.True);
+            Assert.That(provider.Requests, Has.Count.EqualTo(1));
+            Assert.That(player.PlayCount, Is.EqualTo(2));
+        }
+    }
+
+    [Test]
+    public async Task FailedLookupKeepsTheGenerationFromBeforeAConcurrentClear()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var output = CreateOutput(provider, new SpeechOutputTests.FakePlayer(), cache: new ClearThenFailFirstLookup(_cache));
+        await using var lifetime = output.ConfigureAwait(false);
+        var first = await output.SpeakAsync("Lookup failed").ConfigureAwait(false);
+        await output.SpeakAsync("Lookup failed").ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(first.IsSuccess, Is.True);
+            Assert.That(provider.Requests, Has.Count.EqualTo(2));
+        }
+    }
+
+    [Test]
+    public async Task ClearAfterTheLookupRejectsAudioOfThatMiss()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var output = CreateOutput(provider, new SpeechOutputTests.FakePlayer(), cache: new ClearAfterFirstLookup(_cache));
+        await using var lifetime = output.ConfigureAwait(false);
+        await output.SpeakAsync("Raced with clear").ConfigureAwait(false);
+        await output.SpeakAsync("Raced with clear").ConfigureAwait(false);
+        Assert.That(provider.Requests, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public async Task AudioWhosePlaybackFailsIsNotCached()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var player = new Mock<IWavePlayer>();
+        player.SetupSequence(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new IOException("Device lost."))
+            .Returns(Task.CompletedTask);
+        var output = CreateOutput(provider, player.Object);
+        await using var lifetime = output.ConfigureAwait(false);
+        var failed = await output.SpeakAsync("Unheard").ConfigureAwait(false);
+        var sizeAfterFailure = await output.GetCacheSizeAsync().ConfigureAwait(false);
+        await output.SpeakAsync("Unheard").ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(failed.IsSuccess, Is.False);
+            Assert.That(sizeAfterFailure, Is.Zero);
+            Assert.That(provider.Requests, Has.Count.EqualTo(2));
+            Assert.That(await output.GetCacheSizeAsync().ConfigureAwait(false), Is.GreaterThan(0));
+        }
+    }
+
+    [Test]
+    public async Task FullCacheKeepsPlayedAudioWhenNewPlaybackFails()
+    {
+        var audioLength = TestWaveAudio.Create([1]).Length;
+        using var cache = new AudioCache(Path.Combine(_directory, "small"), () => audioLength * 2L, TimeProvider.System);
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var player = new Mock<IWavePlayer>();
+        player.SetupSequence(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask)
+            .Returns(Task.CompletedTask)
+            .ThrowsAsync(new IOException("Device lost."))
+            .Returns(Task.CompletedTask)
+            .Returns(Task.CompletedTask);
+        var output = CreateOutput(provider, player.Object, cache: cache);
+        await using var lifetime = output.ConfigureAwait(false);
+        foreach (var text in FullCacheAnnouncements)
+        {
+            await output.SpeakAsync(text).ConfigureAwait(false);
+        }
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.Requests.Select(request => request.Text), Is.EqualTo(FullCacheSyntheses));
+            Assert.That(await output.GetCacheSizeAsync().ConfigureAwait(false), Is.EqualTo(audioLength * 2L));
+        }
+    }
+
+    [Test]
     public async Task RequestAfterClearDoesNotJoinOlderFlightOrReceiveItsLateAudio()
     {
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -408,5 +521,58 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
             Assert.That(cached.WaveAudio.ToArray(), Is.EqualTo(TestWaveAudio.Create([2])));
             Assert.That(provider.Requests, Has.Count.EqualTo(2));
         }
+    }
+
+    /// <summary>Holds the first playback open until released; later playbacks complete at once.</summary>
+    private sealed class GatedFirstPlayback : IWavePlayer
+    {
+        private readonly TaskCompletionSource _firstStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _releaseFirst = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _playCount;
+        public Task FirstStarted => _firstStarted.Task;
+        public int PlayCount => Volatile.Read(ref _playCount);
+        public void ReleaseFirst() => _releaseFirst.TrySetResult();
+        public Task PlayAsync(ReadOnlyMemory<byte> waveAudio, CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _playCount) != 1) return Task.CompletedTask;
+            _firstStarted.TrySetResult();
+            return _releaseFirst.Task.WaitAsync(cancellationToken);
+        }
+    }
+
+    /// <summary>Lets a clear complete during the first lookup, which then fails with an I/O error.</summary>
+    private sealed class ClearThenFailFirstLookup(IAudioCache inner) : IAudioCache
+    {
+        private int _lookups;
+        public long Generation => inner.Generation;
+        public async Task<AudioCacheLookup> TryGetAsync(string key, CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _lookups) != 1) return await inner.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            await inner.ClearAsync(cancellationToken).ConfigureAwait(false);
+            throw new IOException("Cache unavailable.");
+        }
+        public Task StoreAsync(string key, ReadOnlyMemory<byte> audio, long generation, CancellationToken cancellationToken = default) =>
+            inner.StoreAsync(key, audio, generation, cancellationToken);
+        public Task MarkPlayedAsync(string key, CancellationToken cancellationToken = default) => inner.MarkPlayedAsync(key, cancellationToken);
+        public Task<long> GetSizeAsync(CancellationToken cancellationToken = default) => inner.GetSizeAsync(cancellationToken);
+        public Task ClearAsync(CancellationToken cancellationToken = default) => inner.ClearAsync(cancellationToken);
+    }
+
+    /// <summary>Clears the cache right after the first lookup, as a concurrent clear could.</summary>
+    private sealed class ClearAfterFirstLookup(IAudioCache inner) : IAudioCache
+    {
+        private int _lookups;
+        public long Generation => inner.Generation;
+        public async Task<AudioCacheLookup> TryGetAsync(string key, CancellationToken cancellationToken = default)
+        {
+            var lookup = await inner.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (Interlocked.Increment(ref _lookups) == 1) await inner.ClearAsync(cancellationToken).ConfigureAwait(false);
+            return lookup;
+        }
+        public Task StoreAsync(string key, ReadOnlyMemory<byte> audio, long generation, CancellationToken cancellationToken = default) =>
+            inner.StoreAsync(key, audio, generation, cancellationToken);
+        public Task MarkPlayedAsync(string key, CancellationToken cancellationToken = default) => inner.MarkPlayedAsync(key, cancellationToken);
+        public Task<long> GetSizeAsync(CancellationToken cancellationToken = default) => inner.GetSizeAsync(cancellationToken);
+        public Task ClearAsync(CancellationToken cancellationToken = default) => inner.ClearAsync(cancellationToken);
     }
 }
