@@ -804,6 +804,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             endpointLocator,
             TestHubSessions.Create(appSettings, endpointLocator, healthService, runtimeHubRemoteClient),
             new MobileRuntimeProjection(runtimeMock.Object, projectContext, mobileRuntimeCoordinator),
+            TestSolutionSynchronizers.Create(),
             healthService,
             new Mock<IPhotoCaptureService>().Object,
             new Mock<INetworkProfileChangeNotifier>().Object,

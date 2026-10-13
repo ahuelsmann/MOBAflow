@@ -239,6 +239,7 @@ internal sealed class MauiViewModelInitializationTests
                 runtimeHubRemoteClient,
                 dependencies.RestApiClientRegistrationMock.Object),
             new MobileRuntimeProjection(dependencies.MobaRuntimeMock.Object),
+            TestSolutionSynchronizers.Create(),
             dependencies.PhotoUploadMock.Object,
             dependencies.PhotoCaptureMock.Object,
             dependencies.NetworkNotifierMock.Object,

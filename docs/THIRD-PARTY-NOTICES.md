@@ -65,25 +65,52 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 
 ## Direct Package Inventory
 
-The following table is regenerated from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and reconciled with active project references. Versions in this section must not be edited independently of the central package catalog.
+The following table was regenerated on 2026-10-13 from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and the `PackageReference` entries in tracked project files and build-wide props/targets.
+Conditional references and both mutation test hosts are included; this is a source inventory,
+not a resolved per-platform restore graph. Each package has its own row so its version and
+usage can be compared directly with those XML entries. Versions in this section must not be edited independently of the central package catalog.
 
-| Package or family | Version(s) | Used in | Purpose |
+| Package | Version | Directly referenced in | Purpose |
 | --- | --- | --- | --- |
-| `CommunityToolkit.WinUI.Controls.ColorPicker`, `CommunityToolkit.WinUI.Controls.Sizers` | `8.2.251219` | `MOBAflow` | WinUI color picker and grid splitters. |
-| `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | MVVM primitives such as observable properties and relay commands. |
-| `CommunityToolkit.Maui` | `15.0.0` | `MOBAsmart` | MAUI helpers, converters, and behaviors. |
-| `Microsoft.WindowsAppSDK`, `Microsoft.Graphics.Win2D`, `Microsoft.Xaml.Behaviors.WinUI.Managed` | `2.3.1`, `1.4.0`, `3.0.1` | `MOBAflow` | Windows desktop shell, GPU-accelerated 2D rendering, and XAML behaviors. |
-| `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.5.0` | `MOBAflow` | Optional Azure App Configuration source (DEBUG / `AZURE_APPCONFIG_CONNECTION`). |
-| `Microsoft.AspNetCore.SignalR.Client` | `10.0.10` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
-| `Microsoft.Extensions.*` | `10.0.10` | `Common`, `Backend`, `Sound`, `SharedUI`, `Test` | Logging, dependency injection, and options. |
-| `Microsoft.Maui.Controls` | `10.0.90` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
-| `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | AndroidX startup integration for MAUI initialization providers. |
-| `System.Speech`, `System.Windows.Extensions` | `10.0.10` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
-| `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File`, `Serilog.Enrichers.*` | `4.4.0`, `10.0.0`, `2.1.0`, `3.0.0`, `7.0.0`, `3.0.1`–`4.0.0` | `Common`, `MOBAflow` | Structured logging, async/file/debug sinks, and log enrichment. |
-| `SkiaSharp`, `System.Drawing.Common` | `4.150.1`, `10.0.10` | `MOBAdisplay`, `MOBAflow` | Display frame rendering and image conversion utilities. |
-| `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `18.8.1`, `4.6.1`, `4.15.0`, `6.3.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
-| `Microsoft.CodeAnalysis.CSharp` | `5.9.0` | `Test` | C# syntax parsing for the solution architecture tests. |
-| `MinVer` | `8.0.0` | Build-wide via `Directory.Build.props` | Semantic version generation from git tags during builds. |
+| `CommunityToolkit.Maui` | `15.0.1` | `MOBAsmart` | MAUI helpers, converters and behaviors. |
+| `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | Observable properties and relay commands. |
+| `CommunityToolkit.WinUI.Controls.ColorPicker` | `8.2.251219` | `MOBAflow` | WinUI color picker. |
+| `CommunityToolkit.WinUI.Controls.Sizers` | `8.2.251219` | `MOBAflow` | WinUI grid splitters. |
+| `coverlet.collector` | `10.1.0` | `Test` | Test coverage collection. |
+| `Microsoft.AspNetCore.SignalR.Client` | `10.0.12` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
+| `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.6.0` | `MOBAflow` | Optional Azure App Configuration source. |
+| `Microsoft.CodeAnalysis.CSharp` | `5.9.0` | `Test` | C# parsing for architecture tests. |
+| `Microsoft.Extensions.DependencyInjection` | `10.0.12` | `MutationTest`, `MutationTest/Common`, `Test` | Dependency injection container. |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `10.0.12` | `Backend` | Dependency injection contracts. |
+| `Microsoft.Extensions.Http` | `10.0.12` | `MOBAsmart` | HTTP client registration. |
+| `Microsoft.Extensions.Logging` | `10.0.12` | `MutationTest/Common`, `Test` | Logging services. |
+| `Microsoft.Extensions.Logging.Abstractions` | `10.0.12` | `Backend`, `Common`, `SharedUI`, `Sound` | Logging contracts. |
+| `Microsoft.Extensions.Logging.Console` | `10.0.12` | `Test` | Console logging output. |
+| `Microsoft.Extensions.Options` | `10.0.12` | `Sound` | Typed configuration options. |
+| `Microsoft.Graphics.Win2D` | `1.4.0` | `MOBAflow` | Windows GPU-accelerated 2D rendering. |
+| `Microsoft.Maui.Controls` | `10.0.110` | `MOBAsmart` | Android MAUI UI framework. |
+| `Microsoft.NET.Test.Sdk` | `18.10.1` | `MutationTest`, `MutationTest/Common`, `Test` | Test execution host. |
+| `Microsoft.WindowsAppSDK` | `2.5.1` | `MOBAflow` | Windows desktop UI and runtime. |
+| `Microsoft.Xaml.Behaviors.WinUI.Managed` | `3.0.1` | `MOBAflow` | WinUI XAML behaviors. |
+| `MinVer` | `8.0.0` | Build-wide via `Directory.Build.props` | Build-time versions from Git tags. |
+| `Moq` | `4.21.0` | `MutationTest/Common`, `Test` | Test doubles. |
+| `NUnit` | `5.0.0` | `MutationTest`, `MutationTest/Common`, `Test` | Test framework. |
+| `NUnit.Analyzers` | `4.15.0` | `Test` | NUnit analyzer rules. |
+| `NUnit3TestAdapter` | `6.3.1` | `MutationTest`, `MutationTest/Common`, `Test` | NUnit test discovery and execution. |
+| `Serilog` | `4.4.0` | `Common` | Structured logging. |
+| `Serilog.Enrichers.Environment` | `3.0.1` | `MOBAflow` | Environment log context. |
+| `Serilog.Enrichers.Process` | `3.0.0` | `MOBAflow` | Process log context. |
+| `Serilog.Enrichers.Thread` | `4.0.0` | `MOBAflow` | Thread log context. |
+| `Serilog.Extensions.Logging` | `10.0.0` | `MOBAflow` | Microsoft logging integration. |
+| `Serilog.Sinks.Async` | `2.1.0` | `MOBAflow` | Asynchronous logging. |
+| `Serilog.Sinks.Debug` | `3.0.0` | `MOBAflow` | Debug logging output. |
+| `Serilog.Sinks.File` | `7.0.0` | `MOBAflow` | File logging output. |
+| `SkiaSharp` | `4.153.1` | `MOBAdisplay`, `MOBAflow` | Display frame and image rendering. |
+| `System.Drawing.Common` | `10.0.12` | `MOBAdisplay` | Image conversion utilities. |
+| `System.Formats.Nrbf` | `10.0.12` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
+| `System.Speech` | `10.0.12` | `Sound` | Windows text-to-speech. |
+| `System.Windows.Extensions` | `10.0.12` | `Sound` | Windows audio APIs. |
+| `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | Android startup integration. |
 
 ---
 
@@ -93,8 +120,8 @@ Native assets are tracked separately because their redistribution and platform b
 
 | Component | Version source | License | Distribution context |
 | --- | --- | --- | --- |
-| SkiaSharp native binaries | `SkiaSharp 4.150.0` in `Directory.Packages.props` | MIT | Native graphics binaries used by MOBAdisplay frame and image rendering. |
-| Windows App SDK runtime | `Microsoft.WindowsAppSDK 2.2.0` in `Directory.Packages.props` | MIT | Windows desktop runtime and deployment components. |
+| SkiaSharp native binaries | `SkiaSharp 4.153.1` in `Directory.Packages.props` | MIT | Native graphics binaries used by MOBAdisplay frame and image rendering. |
+| Windows App SDK runtime | `Microsoft.WindowsAppSDK 2.5.1` in `Directory.Packages.props` | MIT | Windows desktop runtime and deployment components. |
 | Win2D native components | `Microsoft.Graphics.Win2D 1.4.0` in `Directory.Packages.props` | MIT | GPU-accelerated Windows 2D rendering. |
 | AndroidX Startup runtime | `Xamarin.AndroidX.Startup.StartupRuntime 1.2.0.8` in `Directory.Packages.props` | Apache-2.0 | Android initialization runtime distributed with MOBAsmart. |
 | .NET / MAUI platform runtimes | Selected by the pinned .NET SDK and installed workloads | MIT and platform-specific notices | Framework/runtime files are supplied by Microsoft workloads and must be reviewed again when the SDK or workload changes. |
@@ -142,6 +169,6 @@ We are grateful to the open-source maintainers and standards authors whose work 
 
 ---
 
-**Last Updated:** 2026-07-19
+**Last Updated:** 2026-10-13
 **Scope:** Current direct dependencies and external interoperability surface  
 **License:** MIT License (see [LICENSE](../LICENSE))
