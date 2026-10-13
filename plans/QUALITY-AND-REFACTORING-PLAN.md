@@ -139,7 +139,7 @@ dependencies.
 | RF-08 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
 | RF-09 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Risk-critical behavior has non-decreasing coverage and mutation protection. |
 | RF-10 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Formatting drift fails CI without obscuring functional changes. |
-| RF-11 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
+| RF-11 | [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
 | RF-12 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Mobile session, discovery, runtime projection, synchronization, and upload concerns are separated. |
 | RF-13 | [#91](https://github.com/ahuelsmann/MOBAflow/issues/91) | Track-plan editor operations are platform-neutral and WinUI remains a thin input and rendering adapter. |
 | RF-14 | [#92](https://github.com/ahuelsmann/MOBAflow/issues/92) | Signal-box property changes flow through commands and ViewModels rather than direct control mutation. |
