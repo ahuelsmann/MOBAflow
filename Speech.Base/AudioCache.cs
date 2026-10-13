@@ -123,16 +123,21 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
     private async Task<FileStream> AcquireProcessLockAsync(CancellationToken cancellationToken)
     {
         var path = Path.Combine(_directory, LockName);
-        for (var attempt = 1; ; attempt++)
+        for (var attempt = 1; attempt < LockAttempts; attempt++)
         {
-            try { return new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
-            catch (IOException) when (attempt < LockAttempts)
+            try { return OpenLock(path); }
+            catch (IOException)
             {
                 // Another MOBAflow process holds the cache; its operations take milliseconds.
                 await Task.Delay(LockRetryDelay, cancellationToken).ConfigureAwait(false);
             }
         }
+        // The final attempt reports a lasting lock as IOException.
+        return OpenLock(path);
     }
+
+    private static FileStream OpenLock(string path) =>
+        new(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
 
     private async Task LoadAsync(CancellationToken cancellationToken)
     {
