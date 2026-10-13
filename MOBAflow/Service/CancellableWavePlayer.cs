@@ -20,6 +20,9 @@ internal sealed partial class CancellableWavePlayer(
 {
     private readonly Func<ReadOnlyMemory<byte>, IWavePlaybackSession> _createSession = createSession ?? (audio => new NativeSession(audio));
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+    // WinMM replaces playback process-wide; only the current speech session may stop it.
+    private static readonly Lock PlaybackGate = new();
+    private static IWavePlaybackSession? _activeSession;
 
     /// <inheritdoc />
     public async Task PlayAsync(ReadOnlyMemory<byte> waveAudio, CancellationToken cancellationToken = default)
@@ -27,26 +30,35 @@ internal sealed partial class CancellableWavePlayer(
         cancellationToken.ThrowIfCancellationRequested();
         var duration = WaveAudio.GetDuration(waveAudio.Span);
         using var session = _createSession(waveAudio);
-        var gate = new object();
-        using var registration = cancellationToken.Register(() =>
-        {
-            lock (gate) session.Stop();
-        });
+        using var registration = cancellationToken.Register(() => StopIfCurrent(session));
         try
         {
             await Task.Run(() =>
             {
-                lock (gate)
+                lock (PlaybackGate)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     session.Play();
+                    _activeSession = session;
                 }
             }, cancellationToken).ConfigureAwait(false);
             await Task.Delay(duration, _timeProvider, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
-            lock (gate) session.Stop();
+            StopIfCurrent(session);
+        }
+    }
+
+    private static void StopIfCurrent(IWavePlaybackSession session)
+    {
+        lock (PlaybackGate)
+        {
+            if (ReferenceEquals(_activeSession, session))
+            {
+                session.Stop();
+                _activeSession = null;
+            }
         }
     }
 

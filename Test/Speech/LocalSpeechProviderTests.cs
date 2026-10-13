@@ -108,14 +108,14 @@ internal sealed class LocalSpeechProviderTests
     }
 
     [Test]
-    public async Task Piper_RejectsVoiceDifferentFromConfiguredModel()
+    public async Task Piper_UsesConfiguredModelWhenSavedVoiceBelongsToAnotherProvider()
     {
         var runner = new FakeRunner();
         var result = await CreatePiper(runner).SynthesizeAsync(new SpeechRequest("Test", "unknown", "", 0, 100)).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(result.FailureKind, Is.EqualTo(SpeechFailureKind.InvalidRequest));
-            Assert.That(runner.Request, Is.Null);
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(runner.Request!.ModelPath, Is.EqualTo(_settings.Speech.Piper.ModelPath));
         }
     }
 
@@ -248,6 +248,58 @@ internal sealed class LocalSpeechProviderTests
         }
     }
 
+    [Test]
+    public async Task Piper_CorruptExecutableIsUnavailableEvenWhenAllConfiguredFilesExist()
+    {
+        var provider = new PiperSpeechProvider(_settings, NullLogger<PiperSpeechProvider>.Instance);
+        var capabilities = await provider.GetCapabilitiesAsync().ConfigureAwait(false);
+        Assert.That(capabilities.IsAvailable, Is.False);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task SystemSpeech_UsesProviderDefaultWhenSavedVoiceIsNoLongerInstalled(bool missingConfiguredDefault)
+    {
+        var provider = new SystemSpeechProvider(_settings);
+        var capabilities = await provider.GetCapabilitiesAsync().ConfigureAwait(false);
+        if (!capabilities.IsAvailable) Assert.Ignore(capabilities.Reason);
+        _settings.Speech.SystemSpeech.DefaultVoiceName = missingConfiguredDefault
+            ? "removed provider default" : capabilities.Voices[0].Name;
+        var result = await provider.SynthesizeAsync(new SpeechRequest(
+            "Next stop Central.", "voice from another provider", "", 0, 100)).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.True, result.Reason);
+            Assert.That(WaveAudio.GetDuration(result.WaveAudio.Span), Is.GreaterThan(TimeSpan.Zero));
+        }
+    }
+    [Test]
+    public async Task PiperProcessProbeStartsAndExitsWithoutSynthesisInput()
+    {
+        var executable = Environment.GetEnvironmentVariable("ComSpec")
+            ?? throw new InvalidOperationException("Windows command processor is unavailable.");
+        var probe = await new PiperProcessRunner().ProbeAsync(executable, TimeSpan.FromSeconds(5))
+            .WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        Assert.That(probe.Succeeded, Is.True);
+    }
+
+    [Test]
+    public async Task PiperProcessProbeAlreadyCancelledDoesNotStartTheExecutable()
+    {
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+        await Assert.CatchAsync<OperationCanceledException>(() => new PiperProcessRunner().ProbeAsync(
+            Path.Combine(_directory, "missing.exe"), TimeSpan.FromSeconds(5), cancellation.Token)).ConfigureAwait(false);
+    }
+
+    [TestCase(1)]
+    [TestCase(-1)]
+    public async Task PiperUnsuccessfulStartupProbeReportsUnavailable(int exitCode)
+    {
+        var provider = CreatePiper(new FakeRunner { ExitCode = exitCode });
+        var capabilities = await provider.GetCapabilitiesAsync().ConfigureAwait(false);
+        Assert.That(capabilities.IsAvailable, Is.False);
+    }
     private PiperSynthesisRequest CreateProcessRequest(string input, TimeSpan timeout) => new(
         Environment.GetEnvironmentVariable("ComSpec") ?? throw new InvalidOperationException("Windows command processor is unavailable."),
         _settings.Speech.Piper.ModelPath,
@@ -277,6 +329,11 @@ internal sealed class LocalSpeechProviderTests
         public CancellationToken Token { get; private set; }
         public int ExitCode { get; init; }
         public CancellationTokenSource? Cancel { get; init; }
+        public Task<PiperProcessResult> ProbeAsync(string executablePath, TimeSpan timeout, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new PiperProcessResult(ExitCode, string.Empty, string.Empty));
+        }
         public async Task<PiperProcessResult> SynthesizeAsync(PiperSynthesisRequest request, CancellationToken cancellationToken = default)
         {
             Request = request;

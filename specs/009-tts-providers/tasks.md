@@ -63,6 +63,13 @@ final focused regressions: 125 Windows and 84 portable passed. Sound line covera
 passes the 125 Windows regressions with NUnit3TestAdapter 6.3.1. CI completion and the T011 manual Light/Dark
 Settings check remain pending; the PR stays draft.
 
+Review follow-up (2026-10-13): all five findings are confirmed by failing regressions and addressed within
+T004-T012. Add a bounded Piper startup probe, reset provider health to pending on selection, discard stale
+check results and publish repeated completed results, render Unavailable as a warning/degraded operating state,
+use the selected provider's default for a stale voice, and guard process-wide speech playback ownership so older
+completion/cancellation cannot stop a newer announcement. Tests use controlled processes, SAPI WAV synthesis
+to memory, virtual time and fake playback sessions; no audible playback, desktop application or hardware run.
+Current-head CI/Sonar evidence is recorded in PR #250. T011 manual Light/Dark acceptance remains open.
 ## Slice 3 - Audio cache
 
 - [ ] T013 Add `AudioCache`: hashed key over provider id, provider options fingerprint, voice, language, rate, volume and text; WAV files plus index; least-recently-used eviction at the size limit (default 500 MB); corrupt entries dropped

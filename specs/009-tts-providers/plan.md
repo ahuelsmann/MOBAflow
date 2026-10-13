@@ -6,7 +6,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Approved; slice 1 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11). Slice 2 implemented in draft [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250); Sonar gate OK with zero OPEN/CONFIRMED findings on `7dbda9c5`; CI completion and manual UI acceptance pending. Slices 3-6 pending.
+**Status**: Approved; slice 1 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11). Slice 2 implemented in [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250); current CI/Sonar and review-fix verification are tracked in the PR. Manual UI acceptance remains pending. Slices 3-6 pending.
 
 **Input**: Feature specification from `/specs/009-tts-providers/spec.md`
 
@@ -128,6 +128,12 @@ shared-work rules above and stops audible playback: today's `WindowsSoundPlayer`
 needs a player that stops on cancellation (for example `SoundPlayer.Play()` plus `Stop()` on cancellation and a
 completion wait from the WAV duration), covered by a regression test.
 
+For slice 2, local provider availability includes a bounded Piper `--help` startup probe without synthesis.
+Changing providers resets the shell health display to pending. Checks publish the current provider's completed
+result even when its value repeats, and ignore results from a provider replaced during the check. A saved voice
+not offered by the selected provider uses that provider's configured/default voice; Piper uses its selected model.
+A newer speech playback session replaces the previous native waveform. Stop on cancellation or nominal
+completion applies only to the current session, guarded across host-player instances; older callers cannot stop it.
 ### Audio cache
 
 - Key: SHA-256 of provider id, a provider-supplied options fingerprint (for Piper: model, config, sentence silence,

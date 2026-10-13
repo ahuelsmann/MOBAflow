@@ -14,6 +14,9 @@ public interface IPiperProcessRunner
     Task<PiperProcessResult> SynthesizeAsync(
         PiperSynthesisRequest request,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Checks whether the executable starts successfully without synthesis.</summary>
+    Task<PiperProcessResult> ProbeAsync(string executablePath, TimeSpan timeout, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -88,26 +91,51 @@ public sealed class PiperProcessRunner(TimeProvider? timeProvider = null) : IPip
             process.StartInfo.ArgumentList.Add(request.ConfigPath);
         }
 
+        return await RunAsync(process, request.Text, request.Timeout, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<PiperProcessResult> ProbeAsync(string executablePath, TimeSpan timeout, CancellationToken cancellationToken = default)
+    {
+        using var process = new Process();
+        process.StartInfo = new ProcessStartInfo
+        {
+            FileName = executablePath,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        process.StartInfo.ArgumentList.Add("--help");
+        return await RunAsync(process, null, timeout, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<PiperProcessResult> RunAsync(Process process, string? text, TimeSpan timeout, CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         process.Start();
         using var cancellationRegistration = cancellationToken.Register(
             static state => TryKill((Process)state!),
             process);
 
-        await process.StandardInput.WriteLineAsync(request.Text.AsMemory(), cancellationToken).ConfigureAwait(false);
+        if (text is not null)
+        {
+            await process.StandardInput.WriteLineAsync(text.AsMemory(), cancellationToken).ConfigureAwait(false);
+        }
         process.StandardInput.Close();
 
         var standardOutputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
         var errorOutputTask = process.StandardError.ReadToEndAsync(cancellationToken);
         var exitedTask = process.WaitForExitAsync(cancellationToken);
-        var timeoutTask = Task.Delay(request.Timeout, _timeProvider, cancellationToken);
+        var timeoutTask = Task.Delay(timeout, _timeProvider, cancellationToken);
         var completedTask = await Task.WhenAny(exitedTask, timeoutTask).ConfigureAwait(false);
 
         if (completedTask != exitedTask)
         {
             cancellationToken.ThrowIfCancellationRequested();
             TryKill(process);
-            return new PiperProcessResult(-1, string.Empty, $"Piper timed out after {request.Timeout.TotalSeconds:0} seconds.");
+            return new PiperProcessResult(-1, string.Empty, $"Piper timed out after {timeout.TotalSeconds:0} seconds.");
         }
 
         await exitedTask.ConfigureAwait(false);

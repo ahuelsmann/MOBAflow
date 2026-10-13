@@ -214,12 +214,45 @@ internal sealed class SpeechOutputTests
         {
             Assert.That(health.IsSpeechServiceHealthy, Is.True);
             Assert.That(health.SpeechServiceStatus, Does.Contain("Ready"));
-            Assert.That(reported, Has.Count.EqualTo(2));
+            Assert.That(reported, Has.Count.EqualTo(3));
             Assert.That(reported[0], Is.False);
-            Assert.That(reported[1], Is.True);
+            Assert.That(reported[1], Is.False);
+            Assert.That(reported[2], Is.True);
             Assert.That(system.Requests, Is.Empty);
             Assert.That(piper.Requests, Is.Empty);
             Assert.That(player.PlayCount, Is.Zero);
+        }
+    }
+#endif
+#if WINDOWS
+    [Test]
+    public async Task HostHealthCheckDiscardsAResultForTheProviderSelectedBeforeTheAwait()
+    {
+        var settings = new AppSettings();
+        var completed = new TaskCompletionSource<SpeechCapabilities>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var system = new FakeProvider("system-speech") { CapabilityCheck = token => completed.Task.WaitAsync(token) };
+        var piper = new FakeProvider("piper") { Capabilities = new SpeechCapabilities([], true, true, false) };
+        var output = new SpeechOutput(settings, [system, piper], new FakePlayer(), NullLogger<SpeechOutput>.Instance);
+        using var health = new Moba.WinUI.Service.HealthCheckService(new SpeechHealthCheck(output),
+            NullLogger<Moba.WinUI.Service.HealthCheckService>.Instance,
+            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
+        var reported = new List<bool>();
+        health.HealthStatusChanged += (_, status) => reported.Add(status.IsHealthy);
+        var check = health.PerformHealthCheckAsync();
+        settings.Speech.ProviderId = "piper";
+        completed.SetResult(new SpeechCapabilities([], true, true));
+        await check.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(reported, Is.Empty);
+            Assert.That(health.SpeechServiceStatus, Does.Contain("Initializing"));
+        }
+        await health.PerformHealthCheckAsync().ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(reported, Has.Count.EqualTo(1));
+            Assert.That(reported.Single(), Is.False);
+            Assert.That(health.SpeechServiceStatus, Does.Contain("Unavailable"));
         }
     }
 #endif
@@ -230,10 +263,11 @@ internal sealed class SpeechOutputTests
         public bool IsLocal => true;
         public List<SpeechRequest> Requests { get; } = [];
         public SpeechCapabilities Capabilities { get; init; } = new([], true, true);
+        public Func<CancellationToken, Task<SpeechCapabilities>>? CapabilityCheck { get; init; }
         public SpeechResult Result { get; set; } = SpeechResult.Success([1]);
         public Func<SpeechRequest, CancellationToken, Task<SpeechResult>>? Synthesize { get; init; }
         public Task<SpeechCapabilities> GetCapabilitiesAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(Capabilities);
+            CapabilityCheck?.Invoke(cancellationToken) ?? Task.FromResult(Capabilities);
         public Task<SpeechResult> SynthesizeAsync(SpeechRequest request, CancellationToken cancellationToken = default)
         {
             Requests.Add(request);

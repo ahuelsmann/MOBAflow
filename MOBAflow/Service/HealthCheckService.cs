@@ -48,7 +48,7 @@ public partial class HealthCheckService : IDisposable
     public bool IsSpeechServiceHealthy { get; private set; }
 
     /// <summary>
-    /// Event raised when health status changes.
+    /// Event raised when a health check of the current provider completes.
     /// </summary>
     public event EventHandler<HealthStatusChangedEventArgs>? HealthStatusChanged;
 
@@ -93,15 +93,14 @@ public partial class HealthCheckService : IDisposable
     {
         Console.WriteLine("🔍 Performing health check...");
         _logger.LogDebug("Performing health check...");
-
+        var providerId = _speechHealthCheck.ProviderId;
         try
         {
-            // Check local Speech provider configuration.
             var isHealthy = await _speechHealthCheck.TestConnectivityAsync();
-
+            // Ignore a completed check for a provider that is no longer selected.
+            if (providerId != _speechHealthCheck.ProviderId) return;
             var previousStatus = SpeechServiceStatus;
             var previousHealthy = IsSpeechServiceHealthy;
-
             if (isHealthy)
             {
                 SpeechServiceStatus = "✅ Ready";
@@ -114,26 +113,28 @@ public partial class HealthCheckService : IDisposable
                 IsSpeechServiceHealthy = false;
                 Console.WriteLine("⚠️ Speech provider: Unavailable");
             }
-            // Notify if status changed
             if (SpeechServiceStatus != previousStatus || IsSpeechServiceHealthy != previousHealthy)
             {
                 Console.WriteLine($"📊 Health status changed: {SpeechServiceStatus}");
                 _logger.LogInformation("Health status changed: {Status}", SpeechServiceStatus);
-                OnHealthStatusChanged(new HealthStatusChangedEventArgs
-                {
-                    ServiceName = "Speech",
-                    IsHealthy = IsSpeechServiceHealthy,
-                    StatusMessage = SpeechServiceStatus
-                });
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Speech health check failed with exception: {ex.Message}");
             _logger.LogError(ex, "Speech health check failed with exception");
+            if (providerId != _speechHealthCheck.ProviderId) return;
             SpeechServiceStatus = "❌ Check Failed";
             IsSpeechServiceHealthy = false;
         }
+
+        // Publish every completed check, even when the value repeats: a provider switch resets the UI to pending.
+        OnHealthStatusChanged(new HealthStatusChangedEventArgs
+        {
+            ServiceName = "Speech",
+            IsHealthy = IsSpeechServiceHealthy,
+            StatusMessage = SpeechServiceStatus
+        });
     }
 
     /// <summary>

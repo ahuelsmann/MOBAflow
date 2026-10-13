@@ -109,7 +109,7 @@ public sealed class JourneyCounterProjectionTests
             if (e.PropertyName == nameof(MainWindowViewModel.SpeechStatusDisplayText)) updates++;
         };
         fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "piper";
-        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Is.EqualTo("Speech: Ready"));
+        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Is.EqualTo("Speech: Initializing..."));
 
         await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);
         fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "system-speech";

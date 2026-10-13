@@ -4,6 +4,9 @@ namespace Moba.Speech.Base;
 /// <summary>Checks the currently selected provider without synthesis or playback.</summary>
 public sealed class SpeechHealthCheck(SpeechOutput output)
 {
+    /// <summary>Gets the provider used by the current selection.</summary>
+    public string? ProviderId => output.ResolveProvider()?.Id;
+
     /// <summary>Checks availability through the same selection used by announcements.</summary>
     public async Task<bool> TestConnectivityAsync(CancellationToken cancellationToken = default)
     {

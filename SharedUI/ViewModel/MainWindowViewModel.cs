@@ -493,7 +493,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         if (e.PropertyName == nameof(SettingsPageViewModel.SelectedSpeechProviderId))
         {
-            OnPropertyChanged(nameof(SpeechStatusDisplayText));
+            UpdateHealthStatus("Initializing...");
         }
     }
 

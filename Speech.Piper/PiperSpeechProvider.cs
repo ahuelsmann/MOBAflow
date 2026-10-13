@@ -24,15 +24,28 @@ public sealed partial class PiperSpeechProvider(
     public bool IsLocal => true;
 
     /// <inheritdoc />
-    public Task<SpeechCapabilities> GetCapabilitiesAsync(CancellationToken cancellationToken = default)
+    public async Task<SpeechCapabilities> GetCapabilitiesAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var options = CaptureOptions();
         var voice = Path.GetFileNameWithoutExtension(options.ModelPath);
         var language = voice.Split('-')[0].Replace('_', '-');
-        return Task.FromResult(new SpeechCapabilities(
-            string.IsNullOrEmpty(voice) ? [] : [new SpeechVoice(voice, language)],
-            true, true, IsConfigured(options), "Piper executable or voice model is not configured."));
+        var available = false;
+        if (IsConfigured(options))
+        {
+            try
+            {
+                var probe = await _runner.ProbeAsync(options.ExecutablePath,
+                    TimeSpan.FromSeconds(Math.Clamp(options.TimeoutSeconds, 1, 5)), cancellationToken).ConfigureAwait(false);
+                available = probe.Succeeded;
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or IOException or ArgumentException or NotSupportedException or System.ComponentModel.Win32Exception or UnauthorizedAccessException or TimeoutException)
+            {
+                // A configured path does not establish that Piper can start. Keep native diagnostics private.
+            }
+        }
+        return new SpeechCapabilities(string.IsNullOrEmpty(voice) ? [] : [new SpeechVoice(voice, language)],
+            true, true, available, available ? string.Empty : "Piper executable or voice model is unavailable.");
     }
 
     /// <inheritdoc />
@@ -51,12 +64,7 @@ public sealed partial class PiperSpeechProvider(
             return SpeechResult.Failure(SpeechFailureKind.InvalidRequest, "Invalid speech text, rate or volume.");
         }
 
-        var voice = Path.GetFileNameWithoutExtension(options.ModelPath);
-        if (!string.IsNullOrEmpty(request.VoiceName) && !string.Equals(request.VoiceName, voice, StringComparison.OrdinalIgnoreCase))
-        {
-            return SpeechResult.Failure(SpeechFailureKind.InvalidRequest, "The requested Piper voice does not match the selected model.");
-        }
-
+        // The selected model owns the voice, including when settings retain another provider's voice name.
         var outputPath = Path.Combine(Path.GetTempPath(), $"mobaflow-piper-{Guid.NewGuid():N}.wav");
         try
         {

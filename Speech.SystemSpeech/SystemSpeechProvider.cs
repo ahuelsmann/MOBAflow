@@ -37,21 +37,20 @@ public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1304", Justification = "All installed voices are required; a culture filter would discard usable voices. The parameterless .NET implementation is culture-independent.")]
     private static System.Collections.ObjectModel.ReadOnlyCollection<InstalledVoice> GetAllVoices(SpeechSynthesizer synthesizer) => synthesizer.GetInstalledVoices();
 
-    private static bool TrySelectVoice(SpeechSynthesizer synthesizer, string voiceName, string language)
+    private static void SelectVoice(SpeechSynthesizer synthesizer, string voiceName, string defaultVoice, string language)
     {
-        if (!string.IsNullOrWhiteSpace(voiceName))
+        var voices = GetAllVoices(synthesizer).Where(voice => voice.Enabled).ToArray();
+        var selected = voices.FirstOrDefault(voice => string.Equals(voice.VoiceInfo.Name, voiceName, StringComparison.OrdinalIgnoreCase))
+            ?? voices.FirstOrDefault(voice => string.Equals(voice.VoiceInfo.Name, defaultVoice, StringComparison.OrdinalIgnoreCase));
+        if (selected is not null)
         {
-            if (!GetAllVoices(synthesizer).Any(voice => voice.Enabled && voice.VoiceInfo.Name == voiceName))
-            {
-                return false;
-            }
-            synthesizer.SelectVoice(voiceName);
+            synthesizer.SelectVoice(selected.VoiceInfo.Name);
         }
-        else if (!string.IsNullOrWhiteSpace(language))
+        else if (string.IsNullOrWhiteSpace(voiceName) && string.IsNullOrWhiteSpace(defaultVoice) && !string.IsNullOrWhiteSpace(language))
         {
             synthesizer.SelectVoiceByHints(VoiceGender.NotSet, VoiceAge.NotSet, 0, CultureInfo.GetCultureInfo(language));
         }
-        return true;
+        // An unavailable saved/default voice leaves SAPI's installed default selected.
     }
 
     /// <inheritdoc />
@@ -72,11 +71,7 @@ public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
                 using var synthesizer = new SpeechSynthesizer { Rate = request.Rate, Volume = (int)request.Volume };
                 using var stream = new MemoryStream();
                 synthesizer.SetOutputToWaveStream(stream);
-                var voiceName = string.IsNullOrWhiteSpace(request.VoiceName) ? defaultVoice : request.VoiceName;
-                if (!TrySelectVoice(synthesizer, voiceName, request.Language))
-                {
-                    return SpeechResult.Failure(SpeechFailureKind.InvalidRequest, "The requested Windows speech voice is not installed.");
-                }
+                SelectVoice(synthesizer, request.VoiceName, defaultVoice, request.Language);
                 var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                 synthesizer.SpeakCompleted += (_, args) =>
                 {
