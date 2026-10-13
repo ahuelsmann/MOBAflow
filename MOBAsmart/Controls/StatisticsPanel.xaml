@@ -4,9 +4,10 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
+    xmlns:mobile="clr-namespace:Moba.SharedUI.Mobile;assembly=SharedUI"
     xmlns:converters="clr-namespace:Moba.MAUI.Converters"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    x:DataType="local:MauiViewModel"
+    x:DataType="mobile:MauiViewModel"
     x:Name="StatisticsRoot">
 
     <ContentView.Resources>
