@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.ViewModel;
+namespace Moba.SharedUI.TrainControl;
 
 using Backend.Interface;
 
@@ -26,7 +26,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-using TrainControl;
+using ViewModel;
 
 /// <summary>
 /// ViewModel for TrainControlPage - provides locomotive drive control interface.
@@ -46,7 +46,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 {
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
-    private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
     private readonly IEventBus _eventBus;
@@ -59,7 +58,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private readonly LocomotiveRoster _locomotiveRoster;
     private readonly bool _useRemoteRuntimeSnapshots;
     private readonly bool _hybridRuntimeSnapshots;
-    private readonly TrainControlHost _trainControlHost;
+    private readonly TrainControlSettingsStore _settingsStore;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
     private readonly IFunctionAppearancePicker? _functionAppearancePicker;
     private readonly SpeedController _speedController = new(TimeProvider.System);
@@ -665,14 +664,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _functionAppearancePicker = functionAppearancePicker;
         _runtimeCommandGateway = runtimeCommandGateway;
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator ?? runtimeCommandGateway as IMobileRuntimeCoordinator;
-        _settingsService = settingsService;
         _projectContext = projectContext;
         _logger = logger;
         _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
         _useRemoteRuntimeSnapshots = options?.UseRemoteRuntimeSnapshots ?? useRemoteRuntimeSnapshots;
         _hybridRuntimeSnapshots = options?.HybridRuntimeSnapshots ?? false;
-        _trainControlHost = options?.Host ?? TrainControlHost.WinUi;
+        _settingsStore = new TrainControlSettingsStore(settingsService, options?.Host ?? TrainControlHost.WinUi, logger);
 
         // Doors start closed and the door button fully visible.
         IsDoorReleaseLocked = true;
@@ -971,7 +969,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        var savedId = GetHostTrainControlSettings(_settingsService.GetSettings()).SelectedLocomotiveFromProjectId;
+        var savedId = _settingsStore.SavedLocomotiveId;
         if (LocomotiveRoster.FindSelectionToRestore(ProjectLocomotives, savedId) is not { } selection)
         {
             return;
@@ -993,15 +991,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
     }
 
-    private TrainControlHostSettings GetHostTrainControlSettings(AppSettings settings) =>
-        _trainControlHost == TrainControlHost.Maui
-            ? settings.MauiTrainControlHost
-            : settings.WinUiTrainControlHost;
-
     private void PersistHostLocomotiveSelection(LocomotiveViewModel locomotive)
     {
-        var settings = _settingsService.GetSettings();
-        GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId = locomotive.Model.Id;
+        _settingsStore.RememberLocomotive(locomotive.Model.Id);
         QueueBackgroundTask(SaveTrainControlSettingsAsync(), "Save train control settings");
     }
 
@@ -1013,15 +1005,14 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _isRestoringLocomotive = true;
         try
         {
-            var settings = _settingsService.GetSettings();
-            var trainControl = settings.TrainControl;
+            var preferences = _settingsStore.Preferences;
 
-            RampStepSize = trainControl.SpeedRampStepSize;
-            RampIntervalMs = trainControl.SpeedRampIntervalMs;
-            SpeedSteps = trainControl.SpeedSteps;
+            RampStepSize = preferences.SpeedRampStepSize;
+            RampIntervalMs = preferences.SpeedRampIntervalMs;
+            SpeedSteps = preferences.SpeedSteps;
 
-            SelectedLocoSeries = trainControl.SelectedLocoSeries;
-            SelectedVmax = trainControl.SelectedVmax;
+            SelectedLocoSeries = preferences.SelectedLocoSeries;
+            SelectedVmax = preferences.SelectedVmax;
 
             TryRestoreSelectedLocomotiveFromProject();
             NotifyAllFunctionGlyphsChanged();
@@ -1035,60 +1026,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <summary>
     /// Saves locomotive series selection to persistent settings.
     /// </summary>
-    private async Task SaveLocoSeriesSettingsAsync()
-    {
-        try
-        {
-            var settings = _settingsService.GetSettings();
-            settings.TrainControl.SelectedLocoSeries = SelectedLocoSeries;
-            settings.TrainControl.SelectedVmax = SelectedVmax;
-
-            await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Failed to save locomotive series settings");
-        }
-    }
+    private Task SaveLocoSeriesSettingsAsync() => _settingsStore.SaveSeriesAsync(SelectedLocoSeries, SelectedVmax);
 
     /// <summary>
     /// Saves train control settings to persistent storage.
     /// </summary>
-    private async Task SaveSettingsAsync()
-    {
-        try
-        {
-            var settings = _settingsService.GetSettings();
-
-            settings.TrainControl.SpeedRampStepSize = (int)RampStepSize;
-            settings.TrainControl.SpeedRampIntervalMs = (int)RampIntervalMs;
-            settings.TrainControl.SpeedSteps = SpeedSteps;
-            if (SelectedLocomotiveFromProject?.Model != null)
-            {
-                GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId =
-                    SelectedLocomotiveFromProject.Model.Id;
-            }
-
-            await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
-
-            _logger?.LogInformation(
-                "Saved train control settings for host {Host}: LocomotiveId={LocoId}",
-                _trainControlHost,
-                GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Failed to save train control settings");
-        }
-    }
-
-    /// <summary>
-    /// Saves train control settings to persistent storage.
-    /// </summary>
-    private async Task SaveTrainControlSettingsAsync()
-    {
-        await SaveSettingsAsync().ConfigureAwait(false);
-    }
+    private Task SaveTrainControlSettingsAsync() =>
+        _settingsStore.SaveAsync(RampStepSize, RampIntervalMs, SpeedSteps, SelectedLocomotiveFromProject?.Model?.Id);
 
     /// <summary>
     /// Returns the locomotive for the current LocoAddress from the selected project or synced fleet snapshot.
@@ -2138,25 +2082,26 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        if (MainTrackCurrent == snapshot.MainCurrent
-            && ProgTrackCurrent == snapshot.ProgCurrent
-            && FilteredMainCurrent == snapshot.FilteredMainCurrent
-            && SupplyVoltage == snapshot.SupplyVoltage
-            && Temperature == snapshot.Temperature)
+        var current = new TrainControlTelemetry(
+            MainTrackCurrent,
+            ProgTrackCurrent,
+            FilteredMainCurrent,
+            SupplyVoltage,
+            Temperature,
+            PeakMainCurrent,
+            PeakTemperature);
+        if (TelemetryProjection.Apply(current, snapshot) is not { } telemetry)
         {
             return;
         }
 
-        MainTrackCurrent = snapshot.MainCurrent;
-        ProgTrackCurrent = snapshot.ProgCurrent;
-        FilteredMainCurrent = snapshot.FilteredMainCurrent;
-        SupplyVoltage = snapshot.SupplyVoltage;
-        Temperature = snapshot.Temperature;
-
-        if (snapshot.MainCurrent > PeakMainCurrent)
-            PeakMainCurrent = snapshot.MainCurrent;
-        if (snapshot.Temperature > PeakTemperature)
-            PeakTemperature = snapshot.Temperature;
+        MainTrackCurrent = telemetry.MainCurrent;
+        ProgTrackCurrent = telemetry.ProgCurrent;
+        FilteredMainCurrent = telemetry.FilteredMainCurrent;
+        SupplyVoltage = telemetry.SupplyVoltage;
+        Temperature = telemetry.Temperature;
+        PeakMainCurrent = telemetry.PeakMainCurrent;
+        PeakTemperature = telemetry.PeakTemperature;
 
         _logger?.LogDebug(
             "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +
