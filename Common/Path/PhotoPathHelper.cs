@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Common.Path;
 
+using System.Diagnostics.CodeAnalysis;
+
 using Path = System.IO.Path;
 
 /// <summary>
@@ -184,8 +186,8 @@ public static class PhotoPathHelper
         string category,
         Guid entityId,
         string extension,
-        out string? fullPath,
-        out string? storageRelativePath)
+        [NotNullWhen(true)] out string? fullPath,
+        [NotNullWhen(true)] out string? storageRelativePath)
     {
         ArgumentNullException.ThrowIfNull(baseDir);
 
