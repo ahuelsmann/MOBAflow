@@ -4,6 +4,8 @@ namespace Moba.MAUI.View;
 using Converters;
 
 using SharedUI.Interface;
+using SharedUI.Mobile;
+using SharedUI.TrainControl;
 using SharedUI.ViewModel;
 
 public partial class EnginePage

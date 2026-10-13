@@ -16,7 +16,7 @@ internal sealed partial class StationsPage
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<StationsPage>? _logger;
 
-    public MainWindowViewModel ViewModel { get; }
+    public StationsPageViewModel ViewModel { get; }
 
     private double _stationsExpandedWidth = 280;
     private double _platformsExpandedWidth = 280;
@@ -24,7 +24,7 @@ internal sealed partial class StationsPage
     private double _propertiesExpandedStarValue = 1;
 
     public StationsPage(
-        MainWindowViewModel viewModel,
+        StationsPageViewModel viewModel,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<StationsPage>? logger = null)
@@ -36,7 +36,6 @@ internal sealed partial class StationsPage
         InitializeComponent();
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
-        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

@@ -110,18 +110,19 @@ internal sealed partial class MainWindowViewModelSignalBoxTests : IDisposable
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object);
+        var stationEventBus1 = new Mock<IEventBus>().Object;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
             runtime.Object,
             gateway.Object,
-            new Mock<IEventBus>().Object,
+            stationEventBus1,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus1),
             locomotiveSession1,
-            new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             NullLogger<MainWindowViewModel>.Instance)
         {
             SelectedProject = new ProjectViewModel(project)

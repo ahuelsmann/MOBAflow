@@ -18,7 +18,7 @@ using Moba.SharedUI.Mobile;
 
 using Moba.SharedUI.Service;
 
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.TrainControl;
 
 using Moq;
 
@@ -805,8 +805,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             TestHubSessions.Create(appSettings, endpointLocator, healthService, runtimeHubRemoteClient),
             new MobileRuntimeProjection(runtimeMock.Object, projectContext, mobileRuntimeCoordinator),
             TestSolutionSynchronizers.Create(),
-            healthService,
-            new Mock<IPhotoCaptureService>().Object,
+            new MobilePhotoUploader(new Mock<IPhotoCaptureService>().Object, healthService, endpointLocator),
             new Mock<INetworkProfileChangeNotifier>().Object,
             NullLogger<MauiViewModel>.Instance,
             eventBus,

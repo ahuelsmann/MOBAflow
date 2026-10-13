@@ -18,7 +18,6 @@ using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Mobile;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
 
 using Moq;
 
@@ -474,8 +473,7 @@ internal sealed class MauiViewModelPerformanceTests
             TestHubSessions.Create(appSettings, endpointLocator, photoUploadMock.Object, runtimeHubRemoteClient),
             new MobileRuntimeProjection(mobaRuntimeMock.Object, mobileRuntimeCoordinator: mobileRuntimeCoordinator),
             TestSolutionSynchronizers.Create(),
-            photoUploadMock.Object,
-            new Mock<IPhotoCaptureService>().Object,
+            new MobilePhotoUploader(new Mock<IPhotoCaptureService>().Object, photoUploadMock.Object, endpointLocator),
             new Mock<INetworkProfileChangeNotifier>().Object,
             NullLogger<MauiViewModel>.Instance,
             eventBus,

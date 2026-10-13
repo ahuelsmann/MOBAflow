@@ -15,7 +15,7 @@ using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Mobile;
 using SharedUI.Service;
-using SharedUI.ViewModel;
+using SharedUI.TrainControl;
 using Sound;
 using Speech.Base;
 using View;
@@ -74,6 +74,7 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingleton<MobaflowEndpointLocator>();
         services.AddSingleton<IPhotoUploadService, PhotoUploadService>();
         services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
+        services.AddSingleton<MobilePhotoUploader>();
         services.AddSingleton<IPhotoUriResolver, MauiPhotoUriResolver>();
         services.AddSingleton<IRestApiClientRegistration, RestApiClientRegistrationService>();
         services.AddSingleton<INetworkProfileChangeNotifier, MauiNetworkProfileChangeNotifier>();
@@ -156,8 +157,7 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<MobaflowHubSession>(),
             sp.GetRequiredService<MobileRuntimeProjection>(),
             sp.GetRequiredService<MobileSolutionSynchronizer>(),
-            sp.GetRequiredService<IPhotoUploadService>(),
-            sp.GetRequiredService<IPhotoCaptureService>(),
+            sp.GetRequiredService<MobilePhotoUploader>(),
             sp.GetRequiredService<INetworkProfileChangeNotifier>(),
             sp.GetRequiredService<ILogger<MauiViewModel>>(),
             sp.GetRequiredService<IEventBus>(),
