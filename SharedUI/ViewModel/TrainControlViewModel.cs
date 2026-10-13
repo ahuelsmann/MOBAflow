@@ -505,7 +505,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    private Journey? _currentJourney;
+    public partial Journey? CurrentJourney { get; set; }
 
     /// <summary>
     /// Current station index in the journey (0-based).
@@ -529,7 +529,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    private int _currentStationIndex;
+    public partial int CurrentStationIndex { get; set; }
 
     // === Computed Properties for TimetableStopsControl ===
 
