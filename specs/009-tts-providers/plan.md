@@ -112,9 +112,10 @@ Names follow the `TrackLibrary.Base` / `TrackLibrary.PikoA` pattern; final names
 1. Build the request from the current settings and resolve the selected provider by id (FR-003, takes effect for
    the next call). An unknown or missing id selects the default provider `system-speech` and writes a diagnostic.
 2. **Cache hit**: play the cached WAV through `IWavePlayer`; no provider call (FR-006, SC-003).
-3. **Cache miss**: synthesise with the selected provider, store the audio in the cache, play it. Concurrent misses
-   for the same cache key share one synthesis (per-key single flight), so overlapping identical announcements cause
-   one provider call; different keys synthesise independently. Each caller observes its own cancellation token;
+3. **Cache miss**: synthesise with the selected provider, play it, and store the audio in the cache only after
+   successful playback; cancelled or failed playback stores nothing. Concurrent misses for the same cache key share
+   one synthesis (per-key single flight), which stays joinable until its callers have played and stored the audio, so
+   overlapping identical announcements cause one provider call; different keys synthesise independently. Each caller observes its own cancellation token;
    the shared synthesis owns a separate token. Cancelling one caller ends its wait and prevents its playback,
    fallback and deferred synthesis, while other active callers continue. When the last waiting caller cancels,
    cancel the shared synthesis and remove its in-progress entry so a later request can start again. Application
