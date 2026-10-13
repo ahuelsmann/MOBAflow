@@ -14,7 +14,7 @@ separation of concerns:
 flowchart TD
     WinUI["MOBAflow Desktop"] --> SharedUI
     MAUI["MOBAsmart"] --> SharedUI
-    SharedUI --> Runtime["Backend / IMobaRuntime"]
+    SharedUI --> Runtime["Backend / project runtimes"]
     Runtime --> Domain
     Runtime --> Z21["Z21 UDP"]
     WinUI <-->|"REST + SignalR"| API["MOBApi caches and bridge"]
@@ -217,15 +217,23 @@ ViewModels do not receive the complete `IMobaRuntime` or create their own gatewa
 The runtime split now covers the shared shell and the remaining
 Z21-driven shared ViewModels:
 
-```text
-MainWindowViewModel / TrainControlViewModel / MauiViewModel
-    ↓ read/lifecycle roles + IRuntimeCommandGateway
-Host-provided runtime adapters and command gateway
-    ↓
-IMobaRuntime (MobaRuntimeService)
-    ↓
-IZ21 / JourneyManager / WorkflowService
+```mermaid
+flowchart TD
+    VM["Shared ViewModels"] -->|"read state and lifecycle"| Roles["Narrow runtime roles"]
+    VM -->|"operator commands"| Gateway["IRuntimeCommandGateway"]
+    Roles --> Desktop["SelectedProjectRuntime / ProjectRuntimeHost"]
+    Gateway --> Desktop
+    Roles --> Mobile["MOBAsmart local runtime"]
+    Gateway --> Routing["MobileRuntimeCoordinator"]
+    Routing --> Mobile
+    Routing -->|"remote fallback"| API["MOBApi command queue"]
 ```
+
+On Windows, `ProjectRuntimeHost` owns the per-project runtimes and
+`SelectedProjectRuntime` exposes the selected one. On Android, the read roles
+resolve to the local runtime; the command coordinator chooses local or remote
+execution. The full `IMobaRuntime` contract is reserved for hosts, gateways and
+runtime services.
 
 **Responsibilities of `IMobaRuntime` / `MobaRuntimeService`:**
 
@@ -481,48 +489,73 @@ MOBApi/
 
 ### Z21 Feedback Flow
 
-```text
-Z21 Station (UDP broadcast on Port 21105)
-  ↓ (UDP packet)
-IZ21.ReceiveFeedback()
-  ↓
-IMobaRuntime (MobaRuntimeService)
-  ├─ JourneyManager processes feedback
-  ├─ Runtime state is updated
-  └─ MobaRuntimeSnapshot is published
-  ↓
-IMobaRuntime.SnapshotChanged
-  ↓
-MainWindowViewModel.ApplyRuntimeSnapshot()
-  ↓
-JourneyViewModel.UpdateFromRuntimeSnapshot()
-  └─ MOBAflow/MOBAsmart re-render
+```mermaid
+flowchart TD
+    Z21["Z21 UDP feedback, port 21105"] --> Pipeline["IZ21 / Z21EventPipeline"]
+    Pipeline --> Runtime["Project MobaRuntimeService"]
+    Runtime -->|"update journeys, counters and state"| Snapshot["Current snapshot / RuntimeSnapshotChangedEvent"]
+    Snapshot --> Bus["Project-scoped EventBus"]
+    Bus --> Host["ProjectRuntimeHost: all-project snapshots"]
+    Bus -->|"selected project only"| UI["Application EventBus / UiThreadEventBusDecorator"]
+    UI --> Projection["ViewModel snapshot projection"]
+    Projection --> Views["Journey and status bindings"]
 ```
+
+`MobaRuntimeService` updates `IRuntimeSnapshotProvider.Current` and publishes
+`RuntimeSnapshotChangedEvent`; `IMobaRuntime` has no `SnapshotChanged` event.
+[`ProjectRuntimeHost`](../Backend/Service/ProjectRuntimes/ProjectRuntimeHost.cs)
+subscribes to every project's bus and exposes all-project snapshot updates through
+`IProjectRuntimeSnapshots`. Only the selected project's bus forwards feedback to
+the application bus. Selecting another project publishes its current snapshot
+through `SelectedProjectRuntime`. The UI decorator dispatches EventBus subscribers
+to the UI thread; ViewModels apply snapshots without a second dispatch.
+MOBAsmart instead reads its local runtime and combines local, remote and cached
+state through the mobile components below.
 
 ### Command Execution Flow
 
-```text
-User clicks Button (MOBAflow/MOBAsmart)
-  ↓
-[RelayCommand] -> ViewModel Method
-  ↓
-IMobaRuntime (e.g. ConnectAsync, SetTrackPowerAsync, SetLocomotiveDriveAsync)
-  ↓
-IZ21 / JourneyManager / WorkflowExecutionCoordinator / WorkflowService as appropriate
-  ↓
-WorkflowValidator (mandatory execution gate)
-  ↓
-WorkflowEffectPlanner (dry run) OR ActionExecutor.ExecuteAsync() (live actions)
-  ├─ Set Track Power
-  ├─ Control Locomotive
-  ├─ Play Sound
-  └─ Speak Text
-  ↓
-IZ21 (UDP) or External Service
-  ↓
-Result -> UI State Update
-  └─ ObservableProperty change
+```mermaid
+flowchart TD
+    Input["User input / RelayCommand"] --> Recording["RecordingRuntimeCommandGateway"]
+    Recording --> Desktop["Windows: selected-project gateway"]
+    Desktop --> Runtime["Target project runtime roles"]
+    Recording --> Mobile["Android: MobileRuntimeCoordinator"]
+    Mobile -->|"local command route"| Local["Local runtime roles"]
+    Mobile -->|"remote session route"| Remote["MOBApi queue / desktop command dispatch"]
+    Remote --> Runtime
+    Runtime --> Services["Z21 / journey / workflow services"]
+    Local --> Services
 ```
+
+Every operator command enters through `IRuntimeCommandGateway`. The host owns
+recording and routing; ViewModels do not call `IMobaRuntime` directly. Hardware
+commands use the target runtime's Z21 connection. On Android, locomotive commands
+prefer the connected local Z21 and fall back to an active remote session; signal
+aspects prefer the active remote session. Track power, counters and raw turnout
+commands stay local. Workflow execution separately
+passes the mandatory `WorkflowValidator` gate before effect planning (dry run) or
+live action execution; ordinary connection and locomotive commands do not pass
+through that workflow pipeline. Resulting runtime snapshots refresh the UI.
+
+### MOBAsmart session and projection
+
+These platform-neutral components live in [`SharedUI/Mobile`](../SharedUI/Mobile)
+and are registered as singletons by
+[`MobaMauiServiceCollectionExtensions`](../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs):
+
+| Component | Responsibility and owned state |
+| --- | --- |
+| [`MobaflowHubSession`](../SharedUI/Mobile/MobaflowHubSession.cs) | REST health checks, client registration cadence and SignalR connect retries/forced reconnect. Returns connection outcomes; the caller applies UI state. A failed REST check alone does not close an already connected hub. |
+| [`MobileRuntimeProjection`](../SharedUI/Mobile/MobileRuntimeProjection.cs) | Holds the latest remote fleet and signal-box snapshots, including restored cache data. Filters to the selected project and chooses/merges live remote, synchronized project, cached and local runtime data. Persists remote snapshots through `IMobileSolutionStore`; restored fleet data starts as stale. |
+| [`MobileSolutionSynchronizer`](../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog imports, tracks whether the current session's catalog was applied, and delegates push, periodic and on-demand solution refresh to `ISolutionRemoteLoader`. On-demand refresh can load the phone's cache first. |
+| `MauiViewModel` | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
+
+`MobileSolutionStore` owns disk persistence; `SolutionSession` owns the loaded
+solution and selection. Projection data does not become a second editable
+solution or runtime. After the initial catalog is shown, periodic refresh takes
+over; session loss or a connection-toggle change resets the import flag. App
+shutdown cancels ongoing work and releases the ViewModel's subscriptions;
+`RuntimeHubRemoteClient` owns the underlying SignalR transport lifecycle.
 
 ---
 
@@ -737,4 +770,4 @@ The architecture supports:
 
 ---
 
-**Last Updated:** July 2026
+**Last Updated:** 2026-10-13 (runtime flows and mobile responsibilities checked against current source)

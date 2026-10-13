@@ -91,7 +91,13 @@ gh run view <run-id> --json headSha,status,conclusion,jobs
 Success, failure, skip, cancellation, queue and in-progress states are different outcomes.
 A skipped job does not prove its checks ran. For a slow job, compare step timestamps and safe logs with
 successful runs before assuming a hang. Avoid exposing secrets while reading/downloading logs.
-Quality currently runs the full matrix on PRs, including documentation-only PRs.
+Quality always runs repository consistency checks. Documentation-only PRs skip
+product build/test and mutation jobs. Code-relevant PRs run desktop, display and
+Common mutation checks; Domain mutation and firmware steps also depend on input
+paths. Android Release AAB runs only on manual dispatch with `validate_android=true`.
+Main pushes and manual runs enable the remaining scopes. See
+[Build Performance](BUILD-PERFORMANCE.md#ci-note) and
+[`Get-QualityChangeScope.ps1`](../scripts/Get-QualityChangeScope.ps1) for the exact selection.
 See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
 Create Draft PRs. Mark ready only after current-commit SonarCloud passes and remote issue results show zero

@@ -35,10 +35,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly MobaflowEndpointLocator _endpointLocator;
     private readonly MobaflowHubSession _hubSession;
     private readonly MobileRuntimeProjection _runtimeProjection;
+    private readonly MobileSolutionSynchronizer _solutionSynchronizer;
     private readonly IPhotoUploadService _photoUploadService;
     private readonly IPhotoCaptureService _photoCaptureService;
-    private readonly ISolutionRemoteLoader? _solutionRemoteLoader;
-    private readonly IMobileSolutionStore? _mobileSolutionStore;
     private readonly IRuntimeHubRemoteClient? _runtimeHubRemoteClient;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
@@ -78,13 +77,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <param name="endpointLocator">Finds and remembers the MOBApi endpoint on the LAN.</param>
     /// <param name="hubSession">MOBApi health check, client registration and runtime hub connection.</param>
     /// <param name="runtimeProjection">Locomotive fleet and signal-box data of the selected project.</param>
+    /// <param name="solutionSynchronizer">Brings MOBAflow's solution to the phone.</param>
     /// <param name="photoUploadService">Service used to upload captured photos to the server.</param>
     /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
     /// <param name="networkProfileChangeNotifier">Raises when device connectivity changes so cached LAN REST endpoints can be re-resolved.</param>
     /// <param name="logger">Logger for diagnostics.</param>
     /// <param name="eventBus">Event bus used to observe runtime and feedback changes.</param>
-    /// <param name="solutionRemoteLoader">Optional: syncs the MOBAflow solution from MOBApi into the local runtime.</param>
-    /// <param name="mobileSolutionStore">Optional: persists synced solution and signal-box data for offline use.</param>
     /// <param name="runtimeHubRemoteClient">Optional: SignalR client for remote runtime snapshots (MOBAsmart).</param>
     /// <param name="mobileRuntimeCoordinator">Optional: MOBAsmart hybrid local/remote runtime routing.</param>
     /// <param name="projectContext">Optional: synced MOBAflow solution for Control tab fleet list (MOBAsmart).</param>
@@ -100,13 +98,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         MobaflowEndpointLocator endpointLocator,
         MobaflowHubSession hubSession,
         MobileRuntimeProjection runtimeProjection,
+        MobileSolutionSynchronizer solutionSynchronizer,
         IPhotoUploadService photoUploadService,
         IPhotoCaptureService photoCaptureService,
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
         ILogger<MauiViewModel> logger,
         IEventBus eventBus,
-        ISolutionRemoteLoader? solutionRemoteLoader = null,
-        IMobileSolutionStore? mobileSolutionStore = null,
         IRuntimeHubRemoteClient? runtimeHubRemoteClient = null,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
         IProjectContext? projectContext = null,
@@ -122,6 +119,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(endpointLocator);
         ArgumentNullException.ThrowIfNull(hubSession);
         ArgumentNullException.ThrowIfNull(runtimeProjection);
+        ArgumentNullException.ThrowIfNull(solutionSynchronizer);
         ArgumentNullException.ThrowIfNull(photoUploadService);
         ArgumentNullException.ThrowIfNull(photoCaptureService);
         ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
@@ -136,12 +134,11 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _endpointLocator = endpointLocator;
         _hubSession = hubSession;
         _runtimeProjection = runtimeProjection;
+        _solutionSynchronizer = solutionSynchronizer;
         _photoUploadService = photoUploadService;
         _photoCaptureService = photoCaptureService;
         _networkProfileChangeNotifier = networkProfileChangeNotifier;
         _logger = logger;
-        _solutionRemoteLoader = solutionRemoteLoader;
-        _mobileSolutionStore = mobileSolutionStore;
         _runtimeHubRemoteClient = runtimeHubRemoteClient;
         _runtimeCommandGateway = runtimeCommandGateway;
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator;
@@ -545,7 +542,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _applicationLifetimeCts.Dispose();
         _initializationLock.Dispose();
         _refreshRestApiLock.Dispose();
-        _mobaflowCatalogSyncLock.Dispose();
         _mobaflowConnectCts?.Cancel();
         _mobaflowConnectCts?.Dispose();
         _mobaflowConnectCts = null;
@@ -675,13 +671,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 RunInBackground(_hubSession.RegisterClientWhenDueAsync(endpoint), "REST API client registration");
             }
 
-            if (reachable && _solutionRemoteLoader != null && _mobaflowInitialCatalogApplied)
+            if (reachable)
             {
                 RunInBackground(
-                    _solutionRemoteLoader.SyncIfNeededAsync(
-                        serverIp,
-                        serverPort,
-                        _applicationLifetimeCts.Token),
+                    _solutionSynchronizer.SyncIfNeededAsync(endpoint, _applicationLifetimeCts.Token),
                     "Solution sync from MOBApi");
             }
 
