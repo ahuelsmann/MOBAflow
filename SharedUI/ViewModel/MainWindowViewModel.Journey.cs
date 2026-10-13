@@ -52,21 +52,6 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Controls whether the Workflow Library panel is visible on StationsPage.
-    /// </summary>
-    private bool _isWorkflowLibraryVisible = true;
-
-    public bool IsWorkflowLibraryVisible
-    {
-        get => _isWorkflowLibraryVisible;
-        set
-        {
-            if (SetProperty(ref _isWorkflowLibraryVisible, value))
-                PersistLayoutState(layout => layout.StationsPage.IsWorkflowLibraryExpanded = value);
-        }
-    }
-
-    /// <summary>
     /// Gets or sets the search text used to filter journeys by name on the Journeys page.
     /// </summary>
     public string JourneySearchText
