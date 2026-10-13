@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) integrated through #257; slice 2b (Wagons) integrated through #264; slice 2c (Train composition) implemented with validation/review tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives integrated at 656bc630; wagons integrated at c4e427d0; train composition starts from main c4e427d084af05eb6db5c6196ffa529a0fd3ac4c on 2026-10-13
+**Evidence**: Settings integrated at bfe9b91d; locomotives integrated at 656bc630; wagons integrated at c4e427d0; train composition starts from main c4e427d084af05eb6db5c6196ffa529a0fd3ac4c; PR #272 synchronized with main 435a8ab7df1738bb09651b97ddc28a6fabf35d67 on 2026-10-13
 
 ## Purpose and scope
 
@@ -136,7 +136,9 @@ Refresh the base and update this plan from evidence after each integrated slice.
      members are removed; the runtime refresh helper remains in the shell for station/journey consumers.
      Session-owned train property tracking is preserved. Tests cover vehicle references, ordering and
      direction, duplicate prevention, project replacement, callback disposal, auto-save suppression,
-     layout persistence and shared host identity. Manual UI acceptance remains open.
+     layout persistence and shared host identity. The maintainer reported the UI check as unremarkable
+     on 2026-10-13 and authorized merge after fresh CI/Sonar verification. This records the reported
+     acceptance of slice 2c; it does not close the other slices or the programme-wide UI criteria.
 3. **Stations/journeys:** extract station/platform and journey/city presentation; keep canonical
    project/journey selection in the session. Move ItemClicked/page commands and auto-save tracking
    with their owners. Classify solution/project UI and signal/journey commands without changing
