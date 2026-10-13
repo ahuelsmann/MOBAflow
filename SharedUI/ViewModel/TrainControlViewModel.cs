@@ -2137,25 +2137,26 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        if (MainTrackCurrent == snapshot.MainCurrent
-            && ProgTrackCurrent == snapshot.ProgCurrent
-            && FilteredMainCurrent == snapshot.FilteredMainCurrent
-            && SupplyVoltage == snapshot.SupplyVoltage
-            && Temperature == snapshot.Temperature)
+        var current = new TrainControlTelemetry(
+            MainTrackCurrent,
+            ProgTrackCurrent,
+            FilteredMainCurrent,
+            SupplyVoltage,
+            Temperature,
+            PeakMainCurrent,
+            PeakTemperature);
+        if (TelemetryProjection.Apply(current, snapshot) is not { } telemetry)
         {
             return;
         }
 
-        MainTrackCurrent = snapshot.MainCurrent;
-        ProgTrackCurrent = snapshot.ProgCurrent;
-        FilteredMainCurrent = snapshot.FilteredMainCurrent;
-        SupplyVoltage = snapshot.SupplyVoltage;
-        Temperature = snapshot.Temperature;
-
-        if (snapshot.MainCurrent > PeakMainCurrent)
-            PeakMainCurrent = snapshot.MainCurrent;
-        if (snapshot.Temperature > PeakTemperature)
-            PeakTemperature = snapshot.Temperature;
+        MainTrackCurrent = telemetry.MainCurrent;
+        ProgTrackCurrent = telemetry.ProgCurrent;
+        FilteredMainCurrent = telemetry.FilteredMainCurrent;
+        SupplyVoltage = telemetry.SupplyVoltage;
+        Temperature = telemetry.Temperature;
+        PeakMainCurrent = telemetry.PeakMainCurrent;
+        PeakTemperature = telemetry.PeakTemperature;
 
         _logger?.LogDebug(
             "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +
