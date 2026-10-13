@@ -28,6 +28,7 @@
     <!-- Reuse backend contracts that also exercise Common recording models and signal mappings. -->
     <Compile Include="..\..\Test\Backend\Recording*.cs" Link="Backend\%(Filename)%(Extension)" />
     <Compile Include="..\..\Test\Backend\MultiplexerCommandResolverTests.cs" Link="Backend\MultiplexerCommandResolverTests.cs" />
+    <Compile Include="..\..\Test\Speech\SpeechSettingsTests.cs" Link="Speech\SpeechSettingsTests.cs" />
     <Using Include="Moba.Domain" />
     <Using Include="NUnit.Framework" />
   </ItemGroup>

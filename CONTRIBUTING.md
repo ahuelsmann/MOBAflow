@@ -80,7 +80,8 @@ change with no observable difference in behavior. Do not force tests to reject e
 The active test groups are `Domain` and `Common`. Their test projects include the same files as
 the regular test suite; new tests under `Test/Domain/` and `Test/Common/` are included automatically.
 The Common group also runs the existing Backend tests `Recording*.cs` and
-`MultiplexerCommandResolverTests.cs` to verify shared Common contracts.
+`MultiplexerCommandResolverTests.cs` to verify shared Common contracts, and
+`Test/Speech/SpeechSettingsTests.cs` to verify the Common speech settings.
 It runs on Windows in CI because existing tests also cover Windows-specific photo paths.
 The Common configuration limits parallel Stryker test processes to four.
 This does not yet enable mutation testing of Backend production code.
@@ -88,27 +89,21 @@ Other groups are still marked as planned in [mutation-lanes.json](MutationTest/m
 and are not currently protected by Stryker.
 
 ```powershell
-# Run each lane's ordinary tests first, on Windows for the Common lane.
-dotnet test MutationTest/Domain.MutationTests.csproj -c Debug
-if ($LASTEXITCODE -ne 0) { throw "Domain baseline tests failed." }
-dotnet test MutationTest/Common/Common.MutationTests.csproj -c Debug
-if ($LASTEXITCODE -ne 0) { throw "Common baseline tests failed." }
 dotnet tool restore
 if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
-Push-Location MutationTest
-try {
-    dotnet stryker --skip-version-check
-    if ($LASTEXITCODE -ne 0) { throw "Domain mutation testing failed." }
-    dotnet stryker --config-file stryker-common-config.json --skip-version-check
-    if ($LASTEXITCODE -ne 0) { throw "Common mutation testing failed." }
-}
-finally {
-    Pop-Location
-}
+./scripts/Test-MutationLaneCoverage.ps1
+# Each output directory must be new. Choose a different path for a later run.
+./scripts/Invoke-MutationLane.ps1 -LaneName domain -OutputPath artifacts/mutation/domain-local
+./scripts/Invoke-MutationLane.ps1 -LaneName common -OutputPath artifacts/mutation/common-local
 ```
 
-A mutation score is valid only with a passing ordinary test baseline. CI currently starts
-Stryker directly after restore; it has no separate ordinary-test step in either mutation job.
+A mutation score is valid only with a passing ordinary test baseline. The same runner is used
+locally and in CI: it checks effective MSBuild `Compile` items against the active registry,
+runs the ordinary tests, rejects skipped/failed/empty runs, then runs Stryker. It requires a fresh
+JSON report for the correct production project, all registered test files, the same test cases as
+the baseline, and completed mutant statuses with at least one mutant executed against tests.
+Missing files, filters, stale reports and unexecuted mutations fail the job. A test that does not
+cover a particular mutant is not forced to run against it; Stryker keeps its coverage-based selection.
 See [Build Performance](docs/BUILD-PERFORMANCE.md#active-mutation-lanes) for job selection.
 The quality pipeline runs selected groups and archives the HTML/JSON reports. The minimum scores
 are 90% for `Domain` and initially 63% for `Common`. The Common threshold is a baseline safeguard,

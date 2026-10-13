@@ -123,7 +123,11 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Validate mutation test lane registry
+      - name: Test mutation inclusion and execution guards
+        shell: pwsh
+        run: ./scripts/Test-MutationGuards.Tests.ps1
+
+      - name: Validate mutation lane registry and effective test host inputs
         shell: pwsh
         run: ./scripts/Test-MutationLaneCoverage.ps1
 
@@ -291,19 +295,19 @@ jobs:
         shell: pwsh
         run: |
           dotnet tool restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet restore MutationTest/Common/Common.MutationTests.csproj
 
       - name: Run Common mutation tests
         shell: pwsh
-        working-directory: MutationTest
-        run: dotnet stryker --config-file stryker-common-config.json --skip-version-check
+        run: ./scripts/Invoke-MutationLane.ps1 -LaneName common -OutputPath artifacts/mutation/common
 
       - name: Archive Common mutation report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: common-mutation-${{ github.run_number }}
-          path: MutationTest/StrykerOutput/**/reports/*
+          path: artifacts/mutation/common/**
           if-no-files-found: warn
           retention-days: 90
 
@@ -559,18 +563,18 @@ jobs:
         shell: pwsh
         run: |
           dotnet tool restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet restore MutationTest/Domain.MutationTests.csproj
 
       - name: Run Domain mutation tests
         shell: pwsh
-        working-directory: MutationTest
-        run: dotnet stryker --skip-version-check
+        run: ./scripts/Invoke-MutationLane.ps1 -LaneName domain -OutputPath artifacts/mutation/domain
 
       - name: Archive Domain mutation report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: domain-mutation-${{ github.run_number }}
-          path: MutationTest/StrykerOutput/**/reports/*
+          path: artifacts/mutation/domain/**
           if-no-files-found: warn
           retention-days: 90
