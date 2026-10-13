@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Sound;
+namespace Moba.Speech.Piper;
 
 using System.Globalization;
 using System.Text.RegularExpressions;

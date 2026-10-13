@@ -85,9 +85,10 @@ public static class OperatingStateEvaluator
                 issues.Add("REST API not reachable");
             }
 
-            if (input.SpeechHealthStatus.Contains("Failed", StringComparison.OrdinalIgnoreCase))
+            if (input.SpeechHealthStatus.Contains("Failed", StringComparison.OrdinalIgnoreCase) ||
+                input.SpeechHealthStatus.Contains("Unavailable", StringComparison.OrdinalIgnoreCase))
             {
-                issues.Add("Piper TTS unavailable");
+                issues.Add("Speech provider unavailable");
             }
 
             if (issues.Count > 0)

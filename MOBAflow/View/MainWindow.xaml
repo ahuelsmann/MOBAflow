@@ -350,17 +350,17 @@
                     Background="Transparent"
                     BorderThickness="0">
                     <DropDownButton.Content>
-                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.SettingsPage.SelectedSpeechEngine, Mode=OneWay}" />
+                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.SettingsPage.SelectedSpeechProviderName, Mode=OneWay}" />
                     </DropDownButton.Content>
                     <DropDownButton.Flyout>
                         <MenuFlyout>
                             <MenuFlyoutItem
-                                Command="{x:Bind ViewModel.SettingsPage.SelectSpeechEngineCommand}"
-                                CommandParameter="System Speech (Windows SAPI)"
+                                Command="{x:Bind ViewModel.SettingsPage.SelectSpeechProviderCommand}"
+                                CommandParameter="system-speech"
                                 Text="System Speech (Windows SAPI)" />
                             <MenuFlyoutItem
-                                Command="{x:Bind ViewModel.SettingsPage.SelectSpeechEngineCommand}"
-                                CommandParameter="Piper TTS"
+                                Command="{x:Bind ViewModel.SettingsPage.SelectSpeechProviderCommand}"
+                                CommandParameter="piper"
                                 Text="Piper TTS" />
                         </MenuFlyout>
                     </DropDownButton.Flyout>

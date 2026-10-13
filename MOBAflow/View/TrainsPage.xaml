@@ -208,15 +208,15 @@
                             Margin="0,0,0,8"
                             PlaceholderText="Search passenger wagons..."
                             QueryIcon="Find"
-                            Text="{x:Bind ViewModel.PassengerWagonSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{x:Bind ViewModel.WagonsPage.PassengerWagonSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                         <ListView
                             x:Name="PassengerWagonLibraryListView"
                             Grid.Row="1"
                             CanDragItems="True"
                             DragItemsStarting="PassengerWagonLibraryListView_DragItemsStarting"
-                            ItemsSource="{x:Bind ViewModel.FilteredPassengerWagonLibrary, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.SelectedPassengerWagon, Mode=TwoWay}"
+                            ItemsSource="{x:Bind ViewModel.WagonsPage.FilteredPassengerWagonLibrary, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.WagonsPage.SelectedPassengerWagon, Mode=TwoWay}"
                             SelectionMode="Single">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodel:PassengerWagonViewModel">
@@ -268,15 +268,15 @@
                             Margin="0,0,0,8"
                             PlaceholderText="Search goods wagons..."
                             QueryIcon="Find"
-                            Text="{x:Bind ViewModel.GoodsWagonSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{x:Bind ViewModel.WagonsPage.GoodsWagonSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                         <ListView
                             x:Name="GoodsWagonLibraryListView"
                             Grid.Row="1"
                             CanDragItems="True"
                             DragItemsStarting="GoodsWagonLibraryListView_DragItemsStarting"
-                            ItemsSource="{x:Bind ViewModel.FilteredGoodsWagonLibrary, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.SelectedGoodsWagon, Mode=TwoWay}"
+                            ItemsSource="{x:Bind ViewModel.WagonsPage.FilteredGoodsWagonLibrary, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.WagonsPage.SelectedGoodsWagon, Mode=TwoWay}"
                             SelectionMode="Single">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodel:GoodsWagonViewModel">
