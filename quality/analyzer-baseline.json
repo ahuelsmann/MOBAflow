@@ -2469,7 +2469,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1003",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
       "count": 1
     },
     {
@@ -2609,28 +2609,28 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.BackgroundService.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
       "count": 5
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
       "count": 2
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MauiViewModel.TabUpdates.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.TabUpdates.cs",
       "count": 1
     },
     {
@@ -2749,7 +2749,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
       "count": 1
     },
     {
@@ -2903,14 +2903,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MauiViewModel.Session.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.Session.cs",
       "count": 3
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
       "count": 1
     },
     {
@@ -3022,28 +3022,28 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.BackgroundService.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
       "count": 8
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
       "count": 4
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MauiViewModel.TabUpdates.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.TabUpdates.cs",
       "count": 1
     },
     {
@@ -3141,14 +3141,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
       "count": 2
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
       "count": 2
     },
     {
@@ -3274,21 +3274,21 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/MauiViewModel.ControlTab.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.ControlTab.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/MauiViewModel.Session.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.Session.cs",
       "count": 1
     },
     {
@@ -3337,7 +3337,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
       "count": 1
     },
     {
@@ -3365,7 +3365,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
       "count": 1
     },
     {
@@ -3645,21 +3645,21 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
       "count": 19
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
       "count": 1
     },
     {

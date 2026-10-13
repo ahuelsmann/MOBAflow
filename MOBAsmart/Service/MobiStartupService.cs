@@ -3,6 +3,7 @@
 namespace Moba.MAUI.Service;
 
 using SharedUI.Interface;
+using SharedUI.Mobile;
 using SharedUI.ViewModel;
 
 /// <summary>
