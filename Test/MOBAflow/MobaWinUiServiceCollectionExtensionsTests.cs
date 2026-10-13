@@ -241,6 +241,35 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         return services.BuildServiceProvider();
     }
 
+    [Test]
+    public async Task SpeechServicesShareOneOutputAndContainerDisposalCancelsItsSynthesis()
+    {
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var speaker = new SpeechOutputTests.FakeProvider("system-speech")
+        {
+            Synthesize = async (_, token) =>
+            {
+                started.SetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, token).ConfigureAwait(false);
+                return SpeechResult.Success(TestWaveAudio.Create([1]));
+            }
+        };
+        var player = new SpeechOutputTests.FakePlayer();
+        var provider = CreateValidatorServiceProvider(services =>
+        {
+            services.RemoveAll<ISpeechProvider>();
+            services.AddSingleton<ISpeechProvider>(speaker);
+            services.AddSingleton<IWavePlayer>(player);
+        });
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var output = provider.GetRequiredService<ISpeechOutput>();
+        Assert.That(output, Is.SameAs(provider.GetRequiredService<SpeechOutput>()));
+        var speech = output.SpeakAsync("Shutdown through production DI");
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        await provider.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        await Assert.CatchAsync<OperationCanceledException>(() => speech).ConfigureAwait(false);
+        Assert.That(player.PlayCount, Is.Zero);
+    }
     private static ServiceProvider CreateValidatorServiceProvider(Action<IServiceCollection>? configure = null)
     {
         var services = new ServiceCollection();
@@ -259,6 +288,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         // Last-registration-wins keeps production DI intact while preventing a
         // headless runner from touching DispatcherQueue during ViewModel creation.
         services.AddSingleton(Moq.Mock.Of<IUiDispatcher>());
+        services.AddSingleton(TestSpeechCache.Empty());
         configure?.Invoke(services);
 
         return services.BuildServiceProvider();

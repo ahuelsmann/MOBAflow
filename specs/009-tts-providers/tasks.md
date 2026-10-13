@@ -4,7 +4,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Approved; slice 1 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11). Slice 2 implemented in draft [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250); Sonar gate OK with zero OPEN/CONFIRMED findings on `7dbda9c5`; CI completion and manual UI acceptance pending. Slices 3-6 pending.
+**Status**: Approved; slices 1 and 2 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) and [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250), after prerequisite #207 merged. Slice 3 cache implementation in progress. T011 manual UI acceptance and slices 4-6 remain pending.
 
 Input: [spec.md](spec.md), [plan.md](plan.md).
 
@@ -72,8 +72,8 @@ to memory, virtual time and fake playback sessions; no audible playback, desktop
 Current-head CI/Sonar evidence is recorded in PR #250. T011 manual Light/Dark acceptance remains open.
 ## Slice 3 - Audio cache
 
-- [ ] T013 Add `AudioCache`: hashed key over provider id, provider options fingerprint, voice, language, rate, volume and text; WAV files plus index; least-recently-used eviction at the size limit (default 500 MB); corrupt entries dropped
-- [ ] T014 Use the cache in `SpeechOutput` (hit plays without a provider call, miss stores the result, concurrent identical misses share one synthesis); keep caller cancellation separate from the shared synthesis token, cancel/remove the shared work when its last waiter cancels, and cancel shared work on shutdown; cancelled callers neither play audio nor initiate fallback or deferred synthesis; expose size and clear service APIs (UI in T022/T023)
+- [X] T013 Add `AudioCache`: hashed key over provider id, provider options fingerprint, voice, language, rate, volume and text; WAV files plus index; least-recently-used eviction at the size limit (default 500 MB); corrupt entries dropped
+- [X] T014 Use the cache in `SpeechOutput` (hit plays without a provider call, miss stores the result, concurrent identical misses share one synthesis); keep caller cancellation separate from the shared synthesis token, cancel/remove the shared work when its last waiter cancels, and cancel shared work on shutdown; cancelled callers neither play audio nor initiate fallback or deferred synthesis; expose size and clear service APIs (UI in T022/T023)
 - [ ] T015 Tests for hit, miss, key and provider-option changes, least-recently-used eviction, concurrent identical requests, corrupt files and clear; cover one waiter cancelling while another completes with one provider call, all waiters cancelling the provider, a new request after cancellation, shutdown during shared synthesis and no playback/fallback/deferred synthesis for cancelled callers; run suites for validation
 - [ ] T016 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 

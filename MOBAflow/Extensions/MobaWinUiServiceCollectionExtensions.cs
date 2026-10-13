@@ -93,6 +93,14 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<ISpeechProvider, PiperSpeechProvider>();
         services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
         services.AddSingleton<IWavePlayer, CancellableWavePlayer>();
+        services.AddSingleton<IAudioCache>(sp =>
+        {
+            var settings = sp.GetRequiredService<AppSettings>();
+            return new AudioCache(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MOBAflow", "SpeechCache"),
+                () => settings.Speech.CacheSizeLimitMegabytes * 1024L * 1024,
+                sp.GetService<TimeProvider>() ?? TimeProvider.System);
+        });
         services.AddSingleton<SpeechOutput>();
         services.AddSingleton<ISpeechOutput>(sp => sp.GetRequiredService<SpeechOutput>());
 

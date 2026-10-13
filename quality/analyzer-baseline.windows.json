@@ -1810,104 +1810,6 @@
     {
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Behavior/WorkflowDropBehavior.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Controls/FunctionSymbolPickerWindow.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Controls/SignalBox/SignalBoxCanvasControl.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Service/CityService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Service/FeatureTogglePageProvider.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Service/ViessmannSignalService.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Service/WinUiAppStartupService.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/View/EventManagerPage.xaml.cs",
-      "count": 3
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/View/JourneysPage.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/View/SettingsPage.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/View/StationsPage.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/View/TrainControlPage.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/View/TrainsPage.xaml.cs",
-      "count": 3
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/View/WorkflowsPage.xaml.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0005",
       "path": "MOBAflow/App.xaml.cs",
       "count": 1
@@ -3933,6 +3835,20 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Speech/PiperPronunciationNormalizerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/Speech/AudioCacheTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/Speech/CachedSpeechOutputTests.cs",
       "count": 1
     },
     {

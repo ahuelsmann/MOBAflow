@@ -23,7 +23,7 @@ internal sealed class SpeechOutputTests
         var logger = new Mock<ILogger<SpeechOutput>>();
         logger.Setup(value => value.IsEnabled(LogLevel.Warning)).Returns(true);
         var player = new FakePlayer();
-        var output = new SpeechOutput(settings, [provider], player, logger.Object);
+        using var output = new SpeechOutput(settings, [provider], player, logger.Object, TestSpeechCache.Empty());
 
         var result = await output.SpeakAsync("Next stop Central.").ConfigureAwait(false);
 
@@ -44,7 +44,7 @@ internal sealed class SpeechOutputTests
         var system = new FakeProvider("system-speech");
         var piper = new FakeProvider("piper");
         var player = new FakePlayer();
-        var output = new SpeechOutput(settings, [system, piper], player, NullLogger<SpeechOutput>.Instance);
+        using var output = new SpeechOutput(settings, [system, piper], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         var announcements = new AnnouncementService(output);
 
         await announcements.GenerateAndSpeakAnnouncementAsync("Next stop {StationName}.",
@@ -72,7 +72,7 @@ internal sealed class SpeechOutputTests
     {
         var provider = new FakeProvider("system-speech") { Result = SpeechResult.Failure(failure, "Speech unavailable.") };
         var player = new FakePlayer();
-        var output = new SpeechOutput(new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance);
+        using var output = new SpeechOutput(new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         await new AnnouncementService(output).GenerateAndSpeakAnnouncementAsync("Next stop Central.", new Station(), 1)
             .ConfigureAwait(false);
         Assert.That(player.PlayCount, Is.Zero);
@@ -91,7 +91,7 @@ internal sealed class SpeechOutputTests
             }
         };
         var player = new FakePlayer();
-        var output = new SpeechOutput(new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance);
+        using var output = new SpeechOutput(new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         await Assert.CatchAsync<OperationCanceledException>(() => output.SpeakAsync("Test", cancellation.Token))
             .ConfigureAwait(false);
         Assert.That(player.PlayCount, Is.Zero);
@@ -101,7 +101,7 @@ internal sealed class SpeechOutputTests
     public async Task MissingDefaultProvider_ReturnsUnavailableWithoutPlaying()
     {
         var player = new FakePlayer();
-        var output = new SpeechOutput(new AppSettings(), [], player, NullLogger<SpeechOutput>.Instance);
+        using var output = new SpeechOutput(new AppSettings(), [], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         var result = await output.SpeakAsync("Test").ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
@@ -117,7 +117,7 @@ internal sealed class SpeechOutputTests
         {
             Synthesize = (_, _) => throw new InvalidOperationException("raw SDK detail")
         };
-        var output = new SpeechOutput(new AppSettings(), [provider], new FakePlayer(), NullLogger<SpeechOutput>.Instance);
+        using var output = new SpeechOutput(new AppSettings(), [provider], new FakePlayer(), NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         var failedSynthesis = await output.SpeakAsync("Test").ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
@@ -127,8 +127,8 @@ internal sealed class SpeechOutputTests
         var player = new Mock<IWavePlayer>();
         player.Setup(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new IOException("raw playback detail"));
-        output = new SpeechOutput(new AppSettings(), [new FakeProvider("system-speech")], player.Object, NullLogger<SpeechOutput>.Instance);
-        var failedPlayback = await output.SpeakAsync("Test").ConfigureAwait(false);
+        using var playbackOutput = new SpeechOutput(new AppSettings(), [new FakeProvider("system-speech")], player.Object, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
+        var failedPlayback = await playbackOutput.SpeakAsync("Test").ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(failedPlayback.FailureKind, Is.EqualTo(SpeechFailureKind.Failed));
@@ -141,7 +141,7 @@ internal sealed class SpeechOutputTests
     {
         var provider = new FakeProvider("system-speech");
         var player = new FakePlayer();
-        var output = new SpeechOutput(new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance);
+        using var output = new SpeechOutput(new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         var result = await output.SpeakAsync(" ").ConfigureAwait(false);
         Assert.That(result.FailureKind, Is.EqualTo(SpeechFailureKind.InvalidRequest));
         using var cancellation = new CancellationTokenSource();
@@ -160,11 +160,13 @@ internal sealed class SpeechOutputTests
         var settings = new AppSettings();
         var system = new FakeProvider("system-speech");
         var piper = new FakeProvider("piper") { Capabilities = new SpeechCapabilities([], true, true, false) };
-        var health = new SpeechHealthCheck(new SpeechOutput(settings, [system, piper], new FakePlayer(), NullLogger<SpeechOutput>.Instance));
+        using var output = new SpeechOutput(settings, [system, piper], new FakePlayer(), NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
+        var health = new SpeechHealthCheck(output);
         Assert.That(await health.TestConnectivityAsync().ConfigureAwait(false), Is.True);
         settings.Speech.ProviderId = "piper";
         Assert.That(await health.TestConnectivityAsync().ConfigureAwait(false), Is.False);
-        var missing = new SpeechHealthCheck(new SpeechOutput(settings, [], new FakePlayer(), NullLogger<SpeechOutput>.Instance));
+        using var missingOutput = new SpeechOutput(settings, [], new FakePlayer(), NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
+        var missing = new SpeechHealthCheck(missingOutput);
         Assert.That(await missing.TestConnectivityAsync().ConfigureAwait(false), Is.False);
     }
 
@@ -194,7 +196,7 @@ internal sealed class SpeechOutputTests
             Capabilities = new SpeechCapabilities([], true, true, false, "Model missing.")
         };
         var player = new FakePlayer();
-        var output = new SpeechOutput(settings, [system, piper], player, NullLogger<SpeechOutput>.Instance);
+        using var output = new SpeechOutput(settings, [system, piper], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         using var health = new Moba.WinUI.Service.HealthCheckService(new SpeechHealthCheck(output),
             NullLogger<Moba.WinUI.Service.HealthCheckService>.Instance,
             new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
@@ -232,7 +234,7 @@ internal sealed class SpeechOutputTests
         var completed = new TaskCompletionSource<SpeechCapabilities>(TaskCreationOptions.RunContinuationsAsynchronously);
         var system = new FakeProvider("system-speech") { CapabilityCheck = token => completed.Task.WaitAsync(token) };
         var piper = new FakeProvider("piper") { Capabilities = new SpeechCapabilities([], true, true, false) };
-        var output = new SpeechOutput(settings, [system, piper], new FakePlayer(), NullLogger<SpeechOutput>.Instance);
+        using var output = new SpeechOutput(settings, [system, piper], new FakePlayer(), NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         using var health = new Moba.WinUI.Service.HealthCheckService(new SpeechHealthCheck(output),
             NullLogger<Moba.WinUI.Service.HealthCheckService>.Instance,
             new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
@@ -260,28 +262,31 @@ internal sealed class SpeechOutputTests
     {
         public string Id => id;
         public string DisplayName => id;
+        public string OptionsFingerprint { get; set; } = "default";
+        PreparedSpeechSynthesis ISpeechProvider.PrepareSynthesis(SpeechRequest request) => new(OptionsFingerprint, token => SynthesizeAsync(request, token));
         public bool IsLocal => true;
         public List<SpeechRequest> Requests { get; } = [];
         public SpeechCapabilities Capabilities { get; init; } = new([], true, true);
         public Func<CancellationToken, Task<SpeechCapabilities>>? CapabilityCheck { get; init; }
-        public SpeechResult Result { get; set; } = SpeechResult.Success([1]);
+        public SpeechResult Result { get; set; } = SpeechResult.Success(TestWaveAudio.Create([1]));
         public Func<SpeechRequest, CancellationToken, Task<SpeechResult>>? Synthesize { get; init; }
         public Task<SpeechCapabilities> GetCapabilitiesAsync(CancellationToken cancellationToken = default) =>
             CapabilityCheck?.Invoke(cancellationToken) ?? Task.FromResult(Capabilities);
         public Task<SpeechResult> SynthesizeAsync(SpeechRequest request, CancellationToken cancellationToken = default)
         {
-            Requests.Add(request);
+            lock (Requests) { Requests.Add(request); }
             return Synthesize?.Invoke(request, cancellationToken) ?? Task.FromResult(Result);
         }
     }
 
     internal sealed class FakePlayer : IWavePlayer
     {
-        public int PlayCount { get; private set; }
+        private int _playCount;
+        public int PlayCount => Volatile.Read(ref _playCount);
         public Task PlayAsync(ReadOnlyMemory<byte> waveAudio, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            PlayCount++;
+            Interlocked.Increment(ref _playCount);
             return Task.CompletedTask;
         }
     }

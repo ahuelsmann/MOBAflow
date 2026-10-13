@@ -54,7 +54,19 @@ public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
     }
 
     /// <inheritdoc />
-    public async Task<SpeechResult> SynthesizeAsync(SpeechRequest request, CancellationToken cancellationToken = default)
+    public PreparedSpeechSynthesis PrepareSynthesis(SpeechRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var defaultVoice = settings.Speech.SystemSpeech.DefaultVoiceName;
+        return new PreparedSpeechSynthesis(SpeechCacheKey.Fingerprint([defaultVoice]),
+            token => SynthesizeAsync(request, defaultVoice, token));
+    }
+
+    /// <inheritdoc />
+    public Task<SpeechResult> SynthesizeAsync(SpeechRequest request, CancellationToken cancellationToken = default) =>
+        PrepareSynthesis(request).SynthesizeAsync(cancellationToken);
+
+    private static async Task<SpeechResult> SynthesizeAsync(SpeechRequest request, string defaultVoice, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
@@ -63,7 +75,6 @@ public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
             return SpeechResult.Failure(SpeechFailureKind.InvalidRequest, "Invalid speech text, rate or volume.");
         }
 
-        var defaultVoice = settings.Speech.SystemSpeech.DefaultVoiceName;
         try
         {
             return await Task.Run(async () =>

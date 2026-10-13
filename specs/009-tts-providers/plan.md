@@ -6,7 +6,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Approved; slice 1 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11). Slice 2 implemented in [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250); current CI/Sonar and review-fix verification are tracked in the PR. Manual UI acceptance remains pending. Slices 3-6 pending.
+**Status**: Approved; slices 1 and 2 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) and [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250), after prerequisite #207 merged. Slice 3 cache implementation in progress. T011 manual UI acceptance and slices 4-6 remain pending.
 
 **Input**: Feature specification from `/specs/009-tts-providers/spec.md`
 
@@ -31,7 +31,7 @@ voice names.
 and one options section per provider. Audio cache as WAV files plus a small index in the MOBAflow application data
 folder. Azure key in the Windows credential store; Azure region and voice in the app settings.
 
-**Testing**: NUnit and Moq; fake providers and a fake clock/file system for the cache; existing
+**Testing**: NUnit and Moq; fake providers and a clock for cache eviction; owned temporary directories for atomic WAV/index persistence and corruption tests; cache service doubles for I/O failure and waiter cancellation; existing
 `SpeakerEngineFactoryTests`, `PiperSpeechEngineTest`, `SystemSpeechEngineTest`, `AnnouncementServiceTests` and
 `MobaBackendServiceCollectionExtensionsTests` are moved or replaced.
 
@@ -97,7 +97,8 @@ Names follow the `TrackLibrary.Base` / `TrackLibrary.PikoA` pattern; final names
 
 - `ISpeechProvider`: `Id`, `DisplayName`, `IsLocal`, `GetCapabilitiesAsync`, and
   `SynthesizeAsync(SpeechRequest, CancellationToken)` returning `SpeechResult`. Providers return audio; they never
-  play it (FR-005).
+  play it (FR-005). `PrepareSynthesis(request)` captures a non-secret options fingerprint and the synthesis operation
+  before cache lookup, so later settings changes cannot relabel audio from the captured options.
 - `SpeechResult`: WAV audio on success, or a failure kind (`Unavailable`, `InvalidRequest`, `Failed`) with a
   display-safe reason. Expected failures are results, not exceptions.
 - `SpeechCapabilities`: voices with language, and whether rate and volume are supported.
@@ -143,7 +144,21 @@ completion applies only to the current session, guarded across host-player insta
 - WAV files plus an index with size and last-use time; at the size limit (default 500 MB) the entries not played for
   the longest time are removed first (least recently used), so frequently repeated announcements stay cached. A
   corrupt or missing file is dropped and synthesised again.
-- `GetSizeAsync` and `ClearAsync` back the Settings size display and the "Clear cache" command.
+- `IAudioCache.GetSizeAsync` and `ClearAsync`, also exposed by `SpeechOutput`, back the later Settings size display and
+  the "Clear cache" command. The host registers one cache below `%LOCALAPPDATA%/MOBAflow/SpeechCache`; the size limit
+  is `Speech.CacheSizeLimitMegabytes` (500 MiB by default, zero disables storage). The limit covers retained WAV bytes.
+- WAV/index replacement is atomic. A clear increments an in-memory generation: earlier in-progress synthesis can
+  finish playback but cannot refill the cleared cache. Requests after clear use a new shared-flight generation.
+  A cache I/O failure is diagnosed without raw filesystem details and does not silence an otherwise valid announcement.
+- Successful playback updates last-use time. Provider fingerprints include effective Piper executable/model/config
+  paths, pronunciation options and sentence silence; System Speech includes its
+  configured default voice. Availability is excluded, so a cached announcement remains usable when the provider
+  cannot start. Replacing model contents at the same configured path requires clearing the cache. Request text uses
+  Unicode canonical normalization in both synthesis and cache identity.
+- Host service disposal cancels caller waits, shared synthesis and playback, then awaits their completion.
+- The WinUI host enables unsafe blocks for generated C#/WinRT interop of disposable cache/output services; no
+  handwritten unsafe speech code or UI dependency is added to `Speech.Base`. Exact analyzer snapshots retire the
+  resolved WinRT configuration diagnostics and record only the two source-suppressed NUnit reflection fixtures.
 
 ### Pending synthesis
 
