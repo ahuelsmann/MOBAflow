@@ -2,7 +2,7 @@
 
 **Scope:** current repository structure, app boundaries, runtime behavior,
 persisted data, integrations and build entry points.
-**Last reviewed:** 2026-07-20
+**Last reviewed:** 2026-10-13 (runtime boundaries, mobile services and dependency documentation)
 
 ## Products
 
@@ -41,7 +41,7 @@ plans/                  Standalone project, quality, refactoring and roadmap pla
 flowchart TD
     WinUI["MOBAflow Desktop"] --> SharedUI
     Android["MOBAsmart"] --> SharedUI
-    SharedUI --> Runtime["IMobaRuntime / MobaRuntimeService"]
+    SharedUI --> Runtime["Runtime roles / command gateway"]
     Runtime --> Z21["Roco Z21 via UDP"]
     Runtime --> Domain
     Runtime --> Sound
@@ -100,8 +100,22 @@ also connects to `/runtime-hub` and the MOBApi REST surface:
 - signal-box/domain state prefers the active MOBAflow session; and
 - cached solution/fleet/signal-box data is used while reconnecting.
 
-`MobileRuntimeCoordinator`, `RuntimeHubRemoteClient`, `SolutionRemoteLoader` and
-`MobileSolutionStore` implement this behavior.
+The mobile responsibilities are split into:
+
+| Component | Current responsibility |
+| --- | --- |
+| `MobileRuntimeCoordinator` | Routes operator commands to the local Z21 or the remote desktop runtime. |
+| [`MobaflowHubSession`](../SharedUI/Mobile/MobaflowHubSession.cs) | Checks REST health, registers the phone and manages hub connection retries/reconnect outcomes. |
+| [`MobileRuntimeProjection`](../SharedUI/Mobile/MobileRuntimeProjection.cs) | Owns the last remote fleet/signal-box data, filters it to the selected project and combines live, synchronized, cached and local sources. |
+| [`MobileSolutionSynchronizer`](../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog import and coordinates push, periodic and on-demand solution refresh, including cache fallback. |
+| `RuntimeHubRemoteClient`, `SolutionRemoteLoader`, `MobileSolutionStore` | Provide SignalR transport, REST solution loading and persistent mobile cache respectively. |
+
+These services are application singletons. `MauiViewModel` keeps UI projection,
+subscriptions, the health-check loop and cancellation ownership. `SolutionSession`
+remains the owner of the loaded solution and project selection. Session loss or a
+connection-toggle change resets the initial-import flag; shutdown cancels work
+and releases subscriptions. See [the architecture flows](ARCHITECTURE.md#-data-flow)
+for the state and lifecycle boundaries.
 
 ## Persisted model
 

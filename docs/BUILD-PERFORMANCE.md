@@ -156,15 +156,19 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 `.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
-`main`, manual runs and every other change run all enabled jobs; Android additionally
-requires the manual `validate_android` input.
+`main` and manual runs classify all scopes as enabled. Other PR changes enable
+desktop, display and Common mutation jobs; Domain mutation and ESP32 firmware
+steps also depend on their input paths. Android runs only with the manual
+`validate_android` input. A skipped check is not evidence that tests ran.
 
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
-only when `MOBAdisplay/esp32/` changes. Domain mutation testing runs only when
+when `MOBAdisplay/esp32/` changes or an unknown input path requires them. The
+Common mutation job runs for every code-relevant PR. Domain mutation testing runs when
 `Domain/`, its linked tests and fixture data (`Test/TestFile/`), `MutationTest/`
 or the .NET build configuration change. A path outside the known .NET areas,
-such as a workflow, a script or a new top-level folder, runs both. The jobs keep their required check names;
+such as a workflow, a script or a new top-level folder, enables both firmware
+and Domain mutation testing. The jobs keep their required check names;
 skipped steps and a skipped job count as successful.
 `scripts/Get-QualityChangeScope.Tests.ps1` checks these rules, including every
 source and copied fixture input of the mutation project.
@@ -214,15 +218,50 @@ Run the same checks locally after producing a Release Cobertura report:
 ./scripts/Test-MutationLaneCoverage.ps1
 ```
 
-The mutation lane registry is `MutationTest/mutation-lanes.json`. It fails when
-a test fixture is added outside a registered lane. Lanes marked `planned` are
-visible but do not yet claim mutation coverage. The `architecture` lane has
-no production project: its tests read project files and sources, so code
-mutations do not exercise them. The active Domain lane runs in
-CI with a 60 percent break threshold:
+### Active mutation lanes
+
+[`mutation-lanes.json`](../MutationTest/mutation-lanes.json) registers every test
+fixture. Lanes marked `planned` do not claim mutation coverage. The `architecture`
+lane has no production project: its tests read project files and sources, so
+production-code mutations do not exercise them.
+
+| Active lane | Test project | Stryker configuration | Break threshold | CI selection / runner |
+| --- | --- | --- | --- | --- |
+| Domain | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% | Domain/test/fixture or mutation/build inputs; Linux |
+| Common | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% | Every code-relevant PR; Windows |
+
+Both run on main pushes and manual Quality runs. Common uses Windows because
+its existing fixtures include Windows-specific photo paths. Its concurrency is
+limited to four test processes. The Common lane includes selected Backend test
+fixtures for Common contracts; it does not mutate Backend production code.
+Thresholds come from the configuration files; the Common minimum is a baseline
+safeguard, not a target for test quality.
+
+Run the ordinary tests successfully before interpreting a mutation score. Use
+Windows for a local run of both lanes and stop on any failed command:
 
 ```powershell
+dotnet test MutationTest/Domain.MutationTests.csproj -c Debug
+if ($LASTEXITCODE -ne 0) { throw "Domain baseline tests failed." }
+dotnet test MutationTest/Common/Common.MutationTests.csproj -c Debug
+if ($LASTEXITCODE -ne 0) { throw "Common baseline tests failed." }
 dotnet tool restore
-Set-Location MutationTest
-dotnet stryker --skip-version-check
+if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
+Push-Location MutationTest
+try {
+    dotnet stryker --skip-version-check
+    if ($LASTEXITCODE -ne 0) { throw "Domain mutation testing failed." }
+    dotnet stryker --config-file stryker-common-config.json --skip-version-check
+    if ($LASTEXITCODE -ne 0) { throw "Common mutation testing failed." }
+}
+finally {
+    Pop-Location
+}
 ```
+
+For a Domain-only run on Linux, omit the Common test and Stryker command. Run
+Stryker and ordinary builds/tests sequentially: Stryker recreates shared
+intermediate files. CI currently restores each mutation test project and starts
+Stryker directly; neither mutation job has a separate ordinary-test prerequisite.
+This local prerequisite is not yet enforced as a separate CI step. A successful
+job alone does not validate a score if its initial tests failed.

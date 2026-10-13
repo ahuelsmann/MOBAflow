@@ -3,7 +3,7 @@
 **Observed**: 2026-09-25; main 2b65379fb4f4c6cb23394ea9d44467c6801f027f.
 Read-only configuration/API/log review. No settings changed, jobs retried or cancelled.
 
-## Workflow matrix
+## Workflow matrix (initial observation, 2026-09-25)
 | Workflow | Trigger | Jobs / runner | Timeout | Permissions |
 | --- | --- | --- | --- | --- |
 | Quality | main push, every PR, manual | Instructions Linux; Desktop Windows; Display Linux; Android Windows; Mutation Linux | 5/60/45/60/20 min | contents:read |
@@ -15,7 +15,13 @@ Read-only configuration/API/log review. No settings changed, jobs retried or can
 Additional hosted checks: CodeQL default setup (Actions, C/C++, C#, JS/TS, Python),
 SonarCloud external analysis, Dependabot, dependency submission, Copilot and Pages system workflow.
 Source: [.github/workflows](../../.github/workflows).
-Quality's full matrix currently runs for documentation, shared .NET, WinUI and Android changes alike.
+At the initial 2026-09-25 observation, Quality ran its full matrix for documentation,
+shared .NET, WinUI and Android changes alike. This is historical evidence, not the
+current selection rule. As of 2026-10-13, documentation-only PRs run repository
+consistency checks and skip product/mutation jobs; code-relevant PRs run desktop,
+display and Common mutation checks, with path selection for Domain mutation and
+ESP32 firmware. Android AAB is manual-only (`validate_android=true`). See the
+[current CI reference](../../docs/BUILD-PERFORMANCE.md#ci-note).
 Governance runs only for its configured PR paths; a successful issues-event run is not PR artifact validation.
 
 ## Observed runs
