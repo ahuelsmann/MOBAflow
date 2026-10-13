@@ -58,18 +58,7 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         {
             // An existing entry (stored by another waiter or found by a recheck) only records this playback.
             var stored = _entries.ContainsKey(key) && File.Exists(AudioPath(key));
-            if (!stored)
-            {
-                // New audio is written only for the current generation and within the limit.
-                if (generation != Generation) return;
-                if (audio.Length > Limit())
-                {
-                    // A lowered limit still applies, although this audio is not retained.
-                    if (Trim(protectedKey: null)) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
-                    return;
-                }
-                await WriteAtomicAsync(key + ".wav", audio, cancellationToken).ConfigureAwait(false);
-            }
+            if (!stored && !await TryWriteNewAudioAsync(key, audio, generation, cancellationToken).ConfigureAwait(false)) return;
             try
             {
                 // The WAV is in place: record it even if the caller cancels now.
@@ -85,6 +74,20 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
                 throw;
             }
         }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Writes new audio only for the current generation and within the limit.</summary>
+    private async Task<bool> TryWriteNewAudioAsync(string key, ReadOnlyMemory<byte> audio, long generation, CancellationToken cancellationToken)
+    {
+        if (generation != Generation) return false;
+        if (audio.Length > Limit())
+        {
+            // A lowered limit still applies, although this audio is not retained.
+            if (Trim(protectedKey: null)) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+            return false;
+        }
+        await WriteAtomicAsync(key + ".wav", audio, cancellationToken).ConfigureAwait(false);
+        return true;
     }
 
     /// <inheritdoc />
