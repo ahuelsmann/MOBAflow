@@ -460,11 +460,18 @@ internal class IoService : IIoService
     {
         try
         {
-            var targetCategory = NormalizePhotoCategory(category);
-            var baseDir = GetPhotoBaseDir();
-            var fileExtension = Path.GetExtension(sourceFilePath);
-            var relativePath = PhotoPathHelper.ToStorageRelativePath(targetCategory, entityId, fileExtension);
-            var destinationPath = PhotoPathHelper.ToFullPath(baseDir, relativePath);
+            // The destination must stay under the photo storage root; unknown categories are rejected.
+            if (!PhotoPathHelper.TryBuildPhotoUploadFullPath(
+                    GetPhotoBaseDir(),
+                    category,
+                    entityId,
+                    Path.GetExtension(sourceFilePath),
+                    out var destinationPath,
+                    out var relativePath))
+            {
+                return null;
+            }
+
             var categoryFolder = Path.GetDirectoryName(destinationPath);
 
             if (string.IsNullOrWhiteSpace(categoryFolder))
@@ -488,11 +495,6 @@ internal class IoService : IIoService
         await using var source = new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, useAsync: true);
         await using var destination = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize, useAsync: true);
         await source.CopyToAsync(destination);
-    }
-
-    private static string NormalizePhotoCategory(string category)
-    {
-        return PhotoPathHelper.NormalizeCategory(category);
     }
 
     /// <summary>
