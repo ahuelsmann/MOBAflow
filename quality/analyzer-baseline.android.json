@@ -2693,13 +2693,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 2
     },
@@ -2833,13 +2826,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "SharedUI/Service/SignalBoxRuntimeSync.cs",
       "count": 2
     },
@@ -2961,13 +2947,6 @@
       "ruleId": "CA1307",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
       "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1307",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 4
     },
     {
       "project": "SharedUI",
@@ -3094,13 +3073,6 @@
       "ruleId": "CA1848",
       "path": "SharedUI/Service/MobileSolutionStore.cs",
       "count": 10
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3246,13 +3218,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
       "path": "SharedUI/Service/SolutionRemoteLoader.cs",
       "count": 4
     },
@@ -3269,13 +3234,6 @@
       "ruleId": "CA1873",
       "path": "SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs",
       "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
