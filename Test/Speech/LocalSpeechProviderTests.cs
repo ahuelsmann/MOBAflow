@@ -137,6 +137,24 @@ internal sealed class LocalSpeechProviderTests
     }
 
     [Test]
+    public void SystemSpeech_FingerprintFollowsTheWindowsDefaultVoiceOnlyWithoutAConfiguredVoice()
+    {
+        _settings.Speech.SystemSpeech.DefaultVoiceName = string.Empty;
+        var windowsDefault = "voice-a";
+        var provider = new SystemSpeechProvider(_settings, () => windowsDefault);
+        var implicitVoice = new SpeechRequest("Test", "", "", 0, 100);
+        var explicitVoice = new SpeechRequest("Test", "Configured voice", "", 0, 100);
+        var implicitBefore = provider.PrepareSynthesis(implicitVoice).OptionsFingerprint;
+        var explicitBefore = provider.PrepareSynthesis(explicitVoice).OptionsFingerprint;
+        windowsDefault = "voice-b";
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.PrepareSynthesis(implicitVoice).OptionsFingerprint, Is.Not.EqualTo(implicitBefore));
+            Assert.That(provider.PrepareSynthesis(explicitVoice).OptionsFingerprint, Is.EqualTo(explicitBefore));
+        }
+    }
+
+    [Test]
     public async Task SystemSpeech_InvalidOptionsAndCancellationAreReportedBeforeSynthesis()
     {
         var provider = new SystemSpeechProvider(_settings);

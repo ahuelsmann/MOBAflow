@@ -166,7 +166,8 @@ completion applies only to the current session, guarded across host-player insta
   joinable while any caller still plays or stores it, so an identical request during that playback reuses its audio
   instead of calling the provider again. Each successful playback of a cached entry updates its last-use time.
   Provider fingerprints include effective Piper executable/model/config paths, pronunciation options and sentence
-  silence; System Speech includes its configured default voice. A result a provider marks as not cacheable is played
+  silence; System Speech includes its configured default voice and, when no voice is configured, the Windows default
+  SAPI voice token, so changing the Windows default voice synthesizes again. A result a provider marks as not cacheable is played
   but not stored: System Speech does so when a requested voice is missing and a substitute speaks, so installing the
   voice later synthesizes again. Availability is excluded, so a cached announcement remains usable when the provider
   cannot start. Replacing model contents at the same configured path requires clearing the cache. Request text uses

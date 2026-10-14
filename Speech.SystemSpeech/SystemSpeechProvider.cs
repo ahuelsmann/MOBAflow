@@ -3,12 +3,18 @@ namespace Moba.Speech.SystemSpeech;
 
 using Base;
 using Common.Configuration;
+using Microsoft.Win32;
 using System.Globalization;
 using System.Speech.Synthesis;
 
 /// <summary>Windows SAPI synthesis to memory. The provider never opens an audio device.</summary>
-public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
+/// <param name="settings">Current speech settings.</param>
+/// <param name="windowsDefaultVoice">Reads the Windows default SAPI voice token; defaults to the registry.</param>
+public sealed class SystemSpeechProvider(AppSettings settings, Func<string>? windowsDefaultVoice = null) : ISpeechProvider
 {
+    private const string VoicesKey = @"Software\Microsoft\Speech\Voices";
+    private readonly Func<string> _windowsDefaultVoice = windowsDefaultVoice ?? ReadWindowsDefaultVoice;
+
     /// <inheritdoc />
     public string Id => "system-speech";
     /// <inheritdoc />
@@ -66,8 +72,28 @@ public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
     {
         ArgumentNullException.ThrowIfNull(request);
         var defaultVoice = settings.Speech.SystemSpeech.DefaultVoiceName;
-        return new PreparedSpeechSynthesis(SpeechCacheKey.Fingerprint([defaultVoice]),
+        // Without a configured voice SAPI speaks with the Windows default voice; changing it must miss the cache.
+        var implicitVoice = string.IsNullOrWhiteSpace(request.VoiceName) && string.IsNullOrWhiteSpace(defaultVoice)
+            ? _windowsDefaultVoice()
+            : string.Empty;
+        return new PreparedSpeechSynthesis(SpeechCacheKey.Fingerprint([defaultVoice, implicitVoice]),
             token => SynthesizeAsync(request, defaultVoice, token));
+    }
+
+    /// <summary>The SAPI default voice token, per user with the machine-wide value as fallback; empty if unreadable.</summary>
+    private static string ReadWindowsDefaultVoice()
+    {
+        try
+        {
+            using var user = Registry.CurrentUser.OpenSubKey(VoicesKey);
+            if (user?.GetValue("DefaultTokenId") is string userVoice && userVoice.Length > 0) return userVoice;
+            using var machine = Registry.LocalMachine.OpenSubKey(VoicesKey);
+            return machine?.GetValue("DefaultTokenId") as string ?? string.Empty;
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or IOException or UnauthorizedAccessException)
+        {
+            return string.Empty;
+        }
     }
 
     /// <inheritdoc />
