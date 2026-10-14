@@ -56,14 +56,14 @@ Use reliable deploy when fast deploy behaves inconsistently on a device.
 
 **Clean Release AAB:**
 
-The .NET SDK band from `global.json` (10.0.4xx, at least 10.0.401) and the MAUI Android workload are
+The .NET SDK band from `global.json` (10.0.4xx, at least 10.0.402) and the MAUI Android workload are
 prerequisites. The workload set version is pinned in the install command, not in `global.json`: a
 `workloadVersion` there would fail every build, including desktop-only builds, on machines without that
 workload set. Install the pinned set explicitly instead of relying on `--skip-manifest-update`.
 From a clean checkout, run the install, restore, publish, and bundle validation defined in CI:
 
 ```powershell
-dotnet workload install maui-android --version 10.0.401.1
+dotnet workload install maui-android --version 10.0.402
 dotnet restore MOBAsmart/MOBAsmart.csproj `
   --property:Configuration=Release `
   --force-evaluate
@@ -135,10 +135,10 @@ dispatch Quality with `validate_android=true` against the task branch:
 gh workflow run quality.yml --ref <task-branch> -f validate_android=true
 ```
 
-The job installs and verifies workload set 10.0.401.1, publishes the Release AAB,
+The job installs and verifies workload set 10.0.402, publishes the Release AAB,
 enforces the Android analyzer baseline and validates/archives the bundle. It does
 not deploy to a device or publish a GitHub Release. The SDK follows the agreed
-10.0.4xx feature-band policy in `global.json`: patches at least 10.0.401 are allowed,
+10.0.4xx feature-band policy in `global.json`: patches at least 10.0.402 are allowed,
 so this is a feature-band pin rather than an exact SDK patch pin. Mobile tests
 remain an explicit opt-in graph with `IncludeMobaSmartTests=true`.
 
