@@ -13,7 +13,7 @@ using Moba.MAUI.Service;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.Mobile;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.TrainControl;
 
 /// <summary>
 /// Tests for MOBAsmart DI extension methods and startup validation.

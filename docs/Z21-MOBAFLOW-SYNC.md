@@ -77,7 +77,7 @@ solution does not contain; MOBAflow runs it in that project's runtime only.
 [`RuntimeSnapshotRemoteFilter`](../Common/Runtime/RuntimeSnapshotRemoteFilter.cs) strips
 `LocomotiveStates` before MOBApi / SignalR transport. Mobile clients read locomotive feedback
 from their **local Z21 connection** when connected
-([`TrainControlViewModel`](../SharedUI/ViewModel/TrainControlViewModel.cs), hybrid mode).
+([`TrainControlViewModel`](../SharedUI/TrainControl/TrainControlViewModel.cs), hybrid mode).
 
 Each snapshot names its project (`ProjectId`). MOBApi keeps the latest snapshot of every
 project and sends a remote only the snapshots of the project it registered for

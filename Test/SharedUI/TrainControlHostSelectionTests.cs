@@ -8,7 +8,7 @@ using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.TrainControl;
 
 using Moq;
 

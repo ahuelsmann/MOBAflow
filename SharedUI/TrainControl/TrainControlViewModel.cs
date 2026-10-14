@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.ViewModel;
+namespace Moba.SharedUI.TrainControl;
 
 using Backend.Interface;
 
@@ -26,6 +26,8 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
+using ViewModel;
+
 /// <summary>
 /// ViewModel for TrainControlPage - provides locomotive drive control interface.
 /// Implements a "digital throttle" similar to the Roco Z21 app hand controller.
@@ -44,7 +46,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 {
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
-    private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
     private readonly IEventBus _eventBus;
@@ -54,37 +55,21 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private bool _isApplyingRuntimeLocomotiveState;
     private bool _disposed;
     private bool _updatesPaused;
-    private IReadOnlyList<LocomotiveFleetSnapshot>? _pendingLocomotiveFleet;
-    private IReadOnlyList<LocomotiveFleetSnapshot>? _lastAppliedLocomotiveFleet;
+    private readonly LocomotiveRoster _locomotiveRoster;
     private readonly bool _useRemoteRuntimeSnapshots;
     private readonly bool _hybridRuntimeSnapshots;
-    private readonly TrainControlHost _trainControlHost;
+    private readonly TrainControlSettingsStore _settingsStore;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
     private readonly IFunctionAppearancePicker? _functionAppearancePicker;
-    private CancellationTokenSource? _sendDriveCommandDebounceCts;
-
-    private const int SendDriveCommandDebounceMs = 75;
+    private readonly SpeedController _speedController = new(TimeProvider.System);
+    private readonly FunctionPanel _functionPanel = new(TimeProvider.System);
 
     // Snapshot function bits are ignored while an explicit all-off reset is in flight, or briefly
     // after a local function command so decoder/snapshot races do not fight the UI.
-    private bool _suppressSnapshotFunctionState;
-    private CancellationTokenSource? _allFunctionsOffCts;
-    private int _functionControlVersion;
     private int _previousLocoAddressForFunctionCache;
-    private readonly Dictionary<int, uint> _locomotiveFunctionStateCache = [];
-    private readonly Dictionary<int, Dictionary<int, DateTimeOffset>> _lastLocalFunctionCommandAt = [];
-    private readonly Dictionary<int, DateTimeOffset> _lastLocalDriveCommandAt = [];
     private MobaRuntimeSnapshot? _lastRemoteRuntimeSnapshot;
-    private static readonly TimeSpan FunctionCommandGracePeriod = TimeSpan.FromSeconds(3);
-    private static readonly TimeSpan DriveCommandGracePeriod = TimeSpan.FromSeconds(3);
     private int _previousSpeed;
-    private CancellationTokenSource? _doorReleaseBlinkCts;
-
-    private const string SignalWhiteHex = "#8A8A8A";
-    private const string SignalGreenHex = "#06D6A0";
-    private const string SignalYellowHex = "#FFD700";
-    private const string SignalRedHex = "#E63946";
-    private const string SignalGrayHex = "#888888";  // Neutral gray for inactive state (visible in both light/dark)
+    private readonly BrakeAndDoorState _brakeAndDoor = new(TimeProvider.System);
 
     // === DCC Speed Steps Configuration ===
 
@@ -143,7 +128,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     partial void OnSelectedLocomotiveFromProjectChanged(LocomotiveViewModel? value)
     {
-        SyncLocomotivePickerSelection();
+        LocomotiveRoster.SyncPickerSelection(ProjectLocomotives, SelectedLocomotiveFromProject?.Model.Id);
 
         if (value != null)
         {
@@ -283,7 +268,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
     [NotifyCanExecuteChangedFor(nameof(ToggleBrakeCommand))]
     [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
-    private bool _isParkingBrakeEnabled;
+    public partial bool IsParkingBrakeEnabled { get; set; }
 
     /// <summary>
     /// Door release locked (doors closed): Icon DoorClose. When released (doors open), speed cannot be increased.
@@ -296,7 +281,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(IsBrakeButtonEnabled))]
     [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
     [NotifyCanExecuteChangedFor(nameof(ToggleBrakeCommand))]
-    private bool _isDoorReleaseLocked = true;
+    public partial bool IsDoorReleaseLocked { get; set; }
 
     /// <summary>
     /// During the 5-second transition phase the button blinks yellow (color + opacity change).
@@ -306,68 +291,71 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(DoorReleaseButtonColorHex))]
     [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
     [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
-    private bool _isDoorReleaseBlinking;
+    public partial bool IsDoorReleaseBlinking { get; set; }
 
     /// <summary>
     /// Opacity of the door release button: alternating 1.0 / 0.35 during blinking, otherwise 1.0.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorOpacity))]
-    private double _doorReleaseBlinkOpacity = 1.0;
+    public partial double DoorReleaseBlinkOpacity { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorColorHex))]
     [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorIconColorHex))]
     [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorOpacity))]
-    private bool _isDoorBlocked;
+    public partial bool IsDoorBlocked { get; set; }
 
     /// <summary>
     /// Target state of door release after the 5-second blink phase expires.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDoorCloseIconVisible))]
-    private bool _isDoorReleaseLockedNext;
+    public partial bool IsDoorReleaseLockedNext { get; set; }
 
     /// <summary>
     /// True = show DoorClose icon, False = DoorOpen icon (for ContentTemplate binding).
     /// </summary>
-    public bool IsDoorCloseIconVisible => (IsDoorReleaseBlinking && IsDoorReleaseLockedNext) || (!IsDoorReleaseBlinking && IsDoorReleaseLocked);
+    public bool IsDoorCloseIconVisible =>
+        BrakeAndDoorState.IsDoorCloseIconVisible(IsDoorReleaseBlinking, IsDoorReleaseLockedNext, IsDoorReleaseLocked);
 
     /// <summary>
     /// Background color of brake button: green = released, red = applied.
     /// </summary>
-    public string BrakeButtonColorHex => IsParkingBrakeEnabled ? SignalRedHex : SignalGreenHex;
+    public string BrakeButtonColorHex => BrakeAndDoorState.GetBrakeButtonColor(IsParkingBrakeEnabled);
 
     /// <summary>
     /// Brake button: apply always possible (sets speed to 0). Release only when door release ended (doors closed).
     /// </summary>
-    public bool IsBrakeButtonEnabled => !IsParkingBrakeEnabled || IsDoorReleaseLocked;
+    public bool IsBrakeButtonEnabled => BrakeAndDoorState.IsBrakeButtonEnabled(IsParkingBrakeEnabled, IsDoorReleaseLocked);
 
     /// <summary>
     /// Segoe Fluent glyph for brake: Pause (applied) or Play (released).
     /// </summary>
-    public string BrakeButtonGlyph => IsParkingBrakeEnabled ? "\uE72E" : "\uE102";
+    public string BrakeButtonGlyph => BrakeAndDoorState.GetBrakeButtonGlyph(IsParkingBrakeEnabled);
 
     /// <summary>
     /// Background color of door release button: white when not relevant, green when released, red when locked, yellow when blinking.
     /// </summary>
-    public string DoorReleaseButtonColorHex => !IsParkingBrakeEnabled ? SignalWhiteHex : IsDoorReleaseBlinking ? SignalYellowHex : (!IsDoorReleaseLocked && SpeedKmh == 0 ? SignalGreenHex : SignalRedHex);
+    public string DoorReleaseButtonColorHex =>
+        BrakeAndDoorState.GetDoorButtonColor(IsParkingBrakeEnabled, IsDoorReleaseBlinking, IsDoorReleaseLocked, SpeedKmh);
 
-    public string DoorBlockedIndicatorColorHex => IsDoorBlocked ? SignalYellowHex : SignalWhiteHex;
+    public string DoorBlockedIndicatorColorHex => BrakeAndDoorState.GetDoorBlockedColor(IsDoorBlocked);
 
-    public string DoorBlockedIndicatorIconColorHex => IsDoorBlocked ? SignalRedHex : SignalGrayHex;
+    public string DoorBlockedIndicatorIconColorHex => BrakeAndDoorState.GetDoorBlockedIconColor(IsDoorBlocked);
 
     public double DoorBlockedIndicatorOpacity => IsDoorBlocked ? DoorReleaseBlinkOpacity : 1.0;
 
     /// <summary>
     /// Door release button only clickable when brake applied, 0 km/h, and not during blinking.
     /// </summary>
-    public bool IsDoorReleaseButtonEnabled => IsParkingBrakeEnabled && SpeedKmh == 0 && !IsDoorReleaseBlinking;
+    public bool IsDoorReleaseButtonEnabled =>
+        BrakeAndDoorState.IsDoorButtonEnabled(IsParkingBrakeEnabled, SpeedKmh, IsDoorReleaseBlinking);
 
     /// <summary>
     /// Speed may only be increased when brake released and doors closed (door release locked).
     /// </summary>
-    private bool CanIncreaseSpeed => !IsParkingBrakeEnabled && IsDoorReleaseLocked;
+    private bool CanIncreaseSpeed => BrakeAndDoorState.CanIncreaseSpeed(IsParkingBrakeEnabled, IsDoorReleaseLocked);
 
     // === Function button symbols (F0–F31) – per-locomotive PNG asset filenames, from Domain.Locomotive.FunctionSymbols ===
 
@@ -488,8 +476,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [ObservableProperty]
     private bool _isRamping;
 
-    private CancellationTokenSource? _rampCancellationTokenSource;
-
     // === Journey & Station Information (for Timetable Display) ===
 
     private readonly IProjectContext? _projectContext;
@@ -518,7 +504,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    private Journey? _currentJourney;
+    public partial Journey? CurrentJourney { get; set; }
 
     /// <summary>
     /// Current station index in the journey (0-based).
@@ -542,203 +528,105 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    private int _currentStationIndex;
+    public partial int CurrentStationIndex { get; set; }
 
     // === Computed Properties for TimetableStopsControl ===
 
-    private const string StationPlaceholder = "\u2014";
+    private StationDisplay PreviousStation => JourneyStationProjection.Previous(CurrentJourney, CurrentStationIndex);
+
+    private StationDisplay CurrentStation => JourneyStationProjection.Current(CurrentJourney, CurrentStationIndex);
+
+    private StationDisplay NextStation => JourneyStationProjection.Next(CurrentJourney, CurrentStationIndex);
 
     /// <summary>
     /// Provides TimetableStopsControl with the previous station name, using a placeholder when none.
     /// </summary>
-    public string PreviousStationName => GetPreviousStation()?.Name ?? StationPlaceholder;
+    public string PreviousStationName => PreviousStation.Name;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station arrival time.
     /// </summary>
-    public string PreviousStationArrival => ResolveArrivalText(GetPreviousStation());
+    public string PreviousStationArrival => PreviousStation.Arrival;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station departure time.
     /// </summary>
-    public string PreviousStationDeparture => ResolveDepartureText(GetPreviousStation());
+    public string PreviousStationDeparture => PreviousStation.Departure;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station track value.
     /// </summary>
-    public string PreviousStationTrack => ResolveTimetableDetailText(GetPreviousStation());
+    public string PreviousStationTrack => PreviousStation.Track;
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no previous station.
     /// </summary>
-    public bool PreviousStationHasValue => GetPreviousStation() != null;
+    public bool PreviousStationHasValue => PreviousStation.HasValue;
 
     /// <summary>
     /// Used by TimetableStopsControl to choose the previous station exit direction icon.
     /// </summary>
-    public bool PreviousStationIsExitOnLeft => GetPreviousStation()?.IsExitOnLeft ?? false;
+    public bool PreviousStationIsExitOnLeft => PreviousStation.IsExitOnLeft;
 
     /// <summary>
     /// Provides TimetableStopsControl with the current station name, using a placeholder when none.
     /// </summary>
-    public string CurrentStationName => GetCurrentStation()?.Name ?? StationPlaceholder;
+    public string CurrentStationName => CurrentStation.Name;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the current station arrival time.
     /// </summary>
-    public string CurrentStationArrival => ResolveArrivalText(GetCurrentStation());
+    public string CurrentStationArrival => CurrentStation.Arrival;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the current station departure time.
     /// </summary>
-    public string CurrentStationDeparture => ResolveDepartureText(GetCurrentStation());
+    public string CurrentStationDeparture => CurrentStation.Departure;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the current station track value.
     /// </summary>
-    public string CurrentStationTrack => ResolveTimetableDetailText(GetCurrentStation());
+    public string CurrentStationTrack => CurrentStation.Track;
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no current station.
     /// </summary>
-    public bool CurrentStationHasValue => GetCurrentStation() != null;
+    public bool CurrentStationHasValue => CurrentStation.HasValue;
 
     /// <summary>
     /// Used by TimetableStopsControl to choose the current station exit direction icon.
     /// </summary>
-    public bool CurrentStationIsExitOnLeft => GetCurrentStation()?.IsExitOnLeft ?? false;
+    public bool CurrentStationIsExitOnLeft => CurrentStation.IsExitOnLeft;
 
     /// <summary>
     /// Provides TimetableStopsControl with the next station name, using a placeholder when none.
     /// </summary>
-    public string NextStationName => GetNextStation()?.Name ?? StationPlaceholder;
+    public string NextStationName => NextStation.Name;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the next station arrival time.
     /// </summary>
-    public string NextStationArrival => ResolveArrivalText(GetNextStation());
+    public string NextStationArrival => NextStation.Arrival;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the next station departure time.
     /// </summary>
-    public string NextStationDeparture => ResolveDepartureText(GetNextStation());
+    public string NextStationDeparture => NextStation.Departure;
 
     /// <summary>
     /// Used by TimetableStopsControl to display the next station track value.
     /// </summary>
-    public string NextStationTrack => ResolveTimetableDetailText(GetNextStation());
+    public string NextStationTrack => NextStation.Track;
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no next station.
     /// </summary>
-    public bool NextStationHasValue => GetNextStation() != null;
+    public bool NextStationHasValue => NextStation.HasValue;
 
     /// <summary>
     /// Used by TimetableStopsControl to choose the next station exit direction icon.
     /// </summary>
-    public bool NextStationIsExitOnLeft => GetNextStation()?.IsExitOnLeft ?? false;
-
-    private Station? GetPreviousStation()
-    {
-        if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
-        {
-            return null;
-        }
-
-        var currentIndex = Math.Clamp(CurrentStationIndex, 0, CurrentJourney.Stations.Count);
-        return currentIndex <= 0
-            ? null
-            : CurrentJourney.Stations[currentIndex - 1];
-    }
-
-    private Station? GetCurrentStation()
-    {
-        if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
-            return null;
-
-        if (CurrentStationIndex < 0 || CurrentStationIndex >= CurrentJourney.Stations.Count)
-        {
-            return null;
-        }
-
-        return CurrentJourney.Stations[CurrentStationIndex];
-    }
-
-    private Station? GetNextStation()
-    {
-        if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
-            return null;
-
-        var nextIndex = CurrentStationIndex + 1;
-        if (nextIndex < 0 || nextIndex >= CurrentJourney.Stations.Count)
-        {
-            return null;
-        }
-
-        return CurrentJourney.Stations[nextIndex];
-    }
-
-    private string ResolveArrivalText(Station? station)
-    {
-        if (station == null)
-        {
-            return StationPlaceholder;
-        }
-
-        return station.Arrival?.ToString("HH:mm") ?? StationPlaceholder;
-    }
-
-    private string ResolveDepartureText(Station? station)
-    {
-        if (station == null)
-        {
-            return StationPlaceholder;
-        }
-
-        return station.Departure?.ToString("HH:mm") ?? StationPlaceholder;
-    }
-
-    private string ResolveTimetableDetailText(Station? station)
-    {
-        if (station == null)
-        {
-            return StationPlaceholder;
-        }
-
-        return ResolvePlatformText(station);
-    }
-
-    private Workflow? ResolveWorkflow(Guid workflowId)
-    {
-        var selectedProjectWorkflow = _projectContext?.SelectedProject?.Model.Workflows.FirstOrDefault(workflow => workflow.Id == workflowId);
-        if (selectedProjectWorkflow != null)
-        {
-            return selectedProjectWorkflow;
-        }
-
-        return _projectContext?.SolutionViewModel?.Projects
-            .SelectMany(project => project.Model.Workflows)
-            .FirstOrDefault(workflow => workflow.Id == workflowId);
-    }
-
-    private static string ResolvePlatformText(Station? station)
-    {
-        if (station == null)
-        {
-            return StationPlaceholder;
-        }
-
-        if (station.PlatformId.HasValue)
-        {
-            var platform = station.Platforms.FirstOrDefault(platform => platform.Id == station.PlatformId.Value);
-            if (platform != null)
-            {
-                return platform.Number.ToString();
-            }
-        }
-
-        return station.Platforms.FirstOrDefault()?.Number.ToString() ?? StationPlaceholder;
-    }
+    public bool NextStationIsExitOnLeft => NextStation.IsExitOnLeft;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TrainControlViewModel"/> class that implements the digital throttle UI.
@@ -772,17 +660,21 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(eventBus);
         _runtimeSnapshots = runtimeSnapshots;
+        _locomotiveRoster = new LocomotiveRoster(runtimeSnapshots, projectContext);
         _functionAppearancePicker = functionAppearancePicker;
         _runtimeCommandGateway = runtimeCommandGateway;
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator ?? runtimeCommandGateway as IMobileRuntimeCoordinator;
-        _settingsService = settingsService;
         _projectContext = projectContext;
         _logger = logger;
         _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
         _useRemoteRuntimeSnapshots = options?.UseRemoteRuntimeSnapshots ?? useRemoteRuntimeSnapshots;
         _hybridRuntimeSnapshots = options?.HybridRuntimeSnapshots ?? false;
-        _trainControlHost = options?.Host ?? TrainControlHost.WinUi;
+        _settingsStore = new TrainControlSettingsStore(settingsService, options?.Host ?? TrainControlHost.WinUi, logger);
+
+        // Doors start closed and the door button fully visible.
+        IsDoorReleaseLocked = true;
+        DoorReleaseBlinkOpacity = 1.0;
 
         LoadTrainControlSettings();
 
@@ -830,11 +722,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         if (_updatesPaused)
         {
-            if (e.Fleet.Count > 0)
-            {
-                _pendingLocomotiveFleet = e.Fleet;
-            }
-
+            _locomotiveRoster.DeferFleet(e.Fleet);
             return;
         }
 
@@ -853,47 +741,17 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
                 return;
             }
 
-            IReadOnlyList<LocomotiveViewModel> sourceItems;
             if (fleetOverride is { Count: > 0 })
             {
-                sourceItems = fleetOverride
-                    .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
-                    .Select(CreateLocomotiveViewModelFromFleetSnapshot)
-                    .ToList();
-            }
-            else if (_runtimeSnapshots.Current.LocomotiveFleet.Count > 0)
-            {
-                sourceItems = _runtimeSnapshots.Current.LocomotiveFleet
-                    .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
-                    .Select(CreateLocomotiveViewModelFromFleetSnapshot)
-                    .ToList();
-            }
-            else
-            {
-                sourceItems = _projectContext?.SelectedProject?.Locomotives
-                    ?? (IReadOnlyList<LocomotiveViewModel>)[];
-            }
-
-            if (fleetOverride is { Count: > 0 })
-            {
-                var orderedFleet = fleetOverride
-                    .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
-                    .ToList();
-                if (_lastAppliedLocomotiveFleet is not null
-                    && LocomotiveFleetSnapshotComparer.OrderedContentEquals(orderedFleet, _lastAppliedLocomotiveFleet))
+                if (_locomotiveRoster.MergeFleet(ProjectLocomotives, fleetOverride) is { } merge)
                 {
-                    return;
+                    ApplyFleetMerge(merge);
                 }
 
-                ApplyFleetItemsInPlace(orderedFleet);
-                _lastAppliedLocomotiveFleet = orderedFleet;
                 return;
             }
 
-            ProjectLocomotives = sourceItems.Count == 0
-                ? []
-                : new ObservableCollection<LocomotiveViewModel>(sourceItems);
-            _lastAppliedLocomotiveFleet = null;
+            ProjectLocomotives = _locomotiveRoster.BuildItems();
             OnPropertyChanged(nameof(HasProjectLocomotives));
             OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
             OnPropertyChanged(nameof(LocomotiveTitle));
@@ -914,63 +772,18 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
     }
 
-    private void ApplyFleetItemsInPlace(IReadOnlyList<LocomotiveFleetSnapshot> fleet)
+    private void ApplyFleetMerge(LocomotiveRosterMerge merge)
     {
-        var ordered = fleet
-            .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
-
-        var existingById = ProjectLocomotives.ToDictionary(item => item.Model.Id);
-        var snapshotById = ordered.ToDictionary(item => item.LocomotiveId);
-
-        for (var index = ProjectLocomotives.Count - 1; index >= 0; index--)
-        {
-            var existing = ProjectLocomotives[index];
-            if (snapshotById.ContainsKey(existing.Model.Id))
-            {
-                continue;
-            }
-
-            ProjectLocomotives.RemoveAt(index);
-        }
-
-        var collectionChanged = ProjectLocomotives.Count != ordered.Count;
-        var metadataChanged = false;
-
-        for (var index = 0; index < ordered.Count; index++)
-        {
-            var snapshot = ordered[index];
-            if (existingById.TryGetValue(snapshot.LocomotiveId, out var existing))
-            {
-                if (!existing.MatchesFleetSnapshot(snapshot))
-                {
-                    existing.ApplyFleetSnapshot(snapshot);
-                    metadataChanged = true;
-                }
-
-                if (!ReferenceEquals(ProjectLocomotives[index], existing))
-                {
-                    collectionChanged = true;
-                }
-
-                continue;
-            }
-
-            ProjectLocomotives.Insert(index, CreateLocomotiveViewModelFromFleetSnapshot(snapshot));
-            collectionChanged = true;
-            metadataChanged = true;
-        }
-
-        if (collectionChanged)
+        if (merge.CollectionChanged)
         {
             OnPropertyChanged(nameof(HasProjectLocomotives));
             OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
             OnPropertyChanged(nameof(LocomotiveTitle));
             TryRestoreSelectedLocomotiveFromProject();
-            SyncLocomotivePickerSelection();
+            LocomotiveRoster.SyncPickerSelection(ProjectLocomotives, SelectedLocomotiveFromProject?.Model.Id);
         }
 
-        if (metadataChanged && GetCurrentLocomotive() != null)
+        if (merge.MetadataChanged && GetCurrentLocomotive() != null)
         {
             NotifyAllFunctionAppearanceChanged();
         }
@@ -980,16 +793,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         OnPropertyChanged(nameof(HasProjectLocomotives));
         OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
-        SyncLocomotivePickerSelection();
-    }
-
-    private void SyncLocomotivePickerSelection()
-    {
-        var selectedId = SelectedLocomotiveFromProject?.Model.Id;
-        foreach (var locomotive in ProjectLocomotives)
-        {
-            locomotive.IsPickerSelected = selectedId.HasValue && locomotive.Model.Id == selectedId.Value;
-        }
+        LocomotiveRoster.SyncPickerSelection(ProjectLocomotives, SelectedLocomotiveFromProject?.Model.Id);
     }
 
     /// <summary>
@@ -1014,10 +818,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     public void ResumeUpdates()
     {
         _updatesPaused = false;
-        if (_pendingLocomotiveFleet is { Count: > 0 })
+        if (_locomotiveRoster.TakePendingFleet() is { } pendingFleet)
         {
-            var pendingFleet = _pendingLocomotiveFleet;
-            _pendingLocomotiveFleet = null;
             RefreshLocomotiveList(pendingFleet);
         }
 
@@ -1050,16 +852,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         DetachObservedProjectLocomotives();
         DetachObservedJourney();
-        CancelRamp();
-        _doorReleaseBlinkCts?.Cancel();
-        _doorReleaseBlinkCts?.Dispose();
-        _doorReleaseBlinkCts = null;
-        _sendDriveCommandDebounceCts?.Cancel();
-        _sendDriveCommandDebounceCts?.Dispose();
-        _sendDriveCommandDebounceCts = null;
-        _allFunctionsOffCts?.Cancel();
-        _allFunctionsOffCts?.Dispose();
-        _allFunctionsOffCts = null;
+        _speedController.Dispose();
+        _brakeAndDoor.Dispose();
+        _functionPanel.Dispose();
     }
 
     /// <summary>
@@ -1169,24 +964,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     private void TryRestoreSelectedLocomotiveFromProject()
     {
-        if (ProjectLocomotives.Count == 0 || SelectedLocomotiveFromProject != null)
+        if (SelectedLocomotiveFromProject != null)
         {
             return;
         }
 
-        var settings = _settingsService.GetSettings();
-        var savedId = GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId;
-        var match = savedId.HasValue
-            ? ProjectLocomotives.FirstOrDefault(l => l.Model.Id == savedId.Value)
-            : null;
-
-        var usedFallback = match == null;
-        if (match == null)
-        {
-            match = ProjectLocomotives[0];
-        }
-
-        if (match == null)
+        var savedId = _settingsStore.SavedLocomotiveId;
+        if (LocomotiveRoster.FindSelectionToRestore(ProjectLocomotives, savedId) is not { } selection)
         {
             return;
         }
@@ -1194,28 +978,22 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _isRestoringLocomotive = true;
         try
         {
-            SelectedLocomotiveFromProject = match;
+            SelectedLocomotiveFromProject = selection.Locomotive;
         }
         finally
         {
             _isRestoringLocomotive = false;
         }
 
-        if (!savedId.HasValue || usedFallback)
+        if (selection.IsFallback)
         {
-            PersistHostLocomotiveSelection(match);
+            PersistHostLocomotiveSelection(selection.Locomotive);
         }
     }
 
-    private TrainControlHostSettings GetHostTrainControlSettings(AppSettings settings) =>
-        _trainControlHost == TrainControlHost.Maui
-            ? settings.MauiTrainControlHost
-            : settings.WinUiTrainControlHost;
-
     private void PersistHostLocomotiveSelection(LocomotiveViewModel locomotive)
     {
-        var settings = _settingsService.GetSettings();
-        GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId = locomotive.Model.Id;
+        _settingsStore.RememberLocomotive(locomotive.Model.Id);
         QueueBackgroundTask(SaveTrainControlSettingsAsync(), "Save train control settings");
     }
 
@@ -1227,15 +1005,14 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _isRestoringLocomotive = true;
         try
         {
-            var settings = _settingsService.GetSettings();
-            var trainControl = settings.TrainControl;
+            var preferences = _settingsStore.Preferences;
 
-            RampStepSize = trainControl.SpeedRampStepSize;
-            RampIntervalMs = trainControl.SpeedRampIntervalMs;
-            SpeedSteps = trainControl.SpeedSteps;
+            RampStepSize = preferences.SpeedRampStepSize;
+            RampIntervalMs = preferences.SpeedRampIntervalMs;
+            SpeedSteps = preferences.SpeedSteps;
 
-            SelectedLocoSeries = trainControl.SelectedLocoSeries;
-            SelectedVmax = trainControl.SelectedVmax;
+            SelectedLocoSeries = preferences.SelectedLocoSeries;
+            SelectedVmax = preferences.SelectedVmax;
 
             TryRestoreSelectedLocomotiveFromProject();
             NotifyAllFunctionGlyphsChanged();
@@ -1249,60 +1026,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <summary>
     /// Saves locomotive series selection to persistent settings.
     /// </summary>
-    private async Task SaveLocoSeriesSettingsAsync()
-    {
-        try
-        {
-            var settings = _settingsService.GetSettings();
-            settings.TrainControl.SelectedLocoSeries = SelectedLocoSeries;
-            settings.TrainControl.SelectedVmax = SelectedVmax;
-
-            await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Failed to save locomotive series settings");
-        }
-    }
+    private Task SaveLocoSeriesSettingsAsync() => _settingsStore.SaveSeriesAsync(SelectedLocoSeries, SelectedVmax);
 
     /// <summary>
     /// Saves train control settings to persistent storage.
     /// </summary>
-    private async Task SaveSettingsAsync()
-    {
-        try
-        {
-            var settings = _settingsService.GetSettings();
-
-            settings.TrainControl.SpeedRampStepSize = (int)RampStepSize;
-            settings.TrainControl.SpeedRampIntervalMs = (int)RampIntervalMs;
-            settings.TrainControl.SpeedSteps = SpeedSteps;
-            if (SelectedLocomotiveFromProject?.Model != null)
-            {
-                GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId =
-                    SelectedLocomotiveFromProject.Model.Id;
-            }
-
-            await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
-
-            _logger?.LogInformation(
-                "Saved train control settings for host {Host}: LocomotiveId={LocoId}",
-                _trainControlHost,
-                GetHostTrainControlSettings(settings).SelectedLocomotiveFromProjectId);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Failed to save train control settings");
-        }
-    }
-
-    /// <summary>
-    /// Saves train control settings to persistent storage.
-    /// </summary>
-    private async Task SaveTrainControlSettingsAsync()
-    {
-        await SaveSettingsAsync().ConfigureAwait(false);
-    }
+    private Task SaveTrainControlSettingsAsync() =>
+        _settingsStore.SaveAsync(RampStepSize, RampIntervalMs, SpeedSteps, SelectedLocomotiveFromProject?.Model?.Id);
 
     /// <summary>
     /// Returns the locomotive for the current LocoAddress from the selected project or synced fleet snapshot.
@@ -1343,25 +1073,15 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         return LocomotiveFunctionAppearanceResolver.GetGlyph(GetCurrentLocomotive(), functionIndex);
     }
 
-    /// <summary>
-    /// Returns true when the stored value is a non-empty PNG asset filename.
-    /// Filters out Segoe MDL2 codepoint strings from earlier versions.
-    /// </summary>
-    private static bool IsValidAssetReference(string? value) =>
-        LocomotiveFunctionAppearanceResolver.IsValidAssetReference(value);
-
     private string GetFunctionColor(int functionIndex)
     {
         if (functionIndex < 0 || functionIndex > 31)
         {
-            return SignalGrayHex;
+            return TrainControlSignalColors.Gray;
         }
 
         return LocomotiveFunctionAppearanceResolver.GetColor(GetCurrentLocomotive(), functionIndex);
     }
-
-    private static bool IsValidHexColor(string? value) =>
-        LocomotiveFunctionAppearanceResolver.IsValidHexColor(value);
 
     /// <summary>
     /// Sets the PNG asset filename for the specified function (0–31) for the current locomotive (LocoAddress)
@@ -1370,70 +1090,26 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <param name="functionIndex">Funktionsindex 0–31 (F0–F31).</param>
     /// <param name="glyph">PNG asset filename relative to Assets/FunctionSymbols/ (e.g. "headlight.png").</param>
     /// <returns>True, wenn gespeichert; False, wenn keine passende Lok im Projekt.</returns>
-    public bool SetFunctionSymbol(int functionIndex, string glyph)
+    public bool SetFunctionSymbol(int functionIndex, string glyph) =>
+        EditCurrentLocomotiveAppearance(locomotive => FunctionPanel.SetSymbol(locomotive, functionIndex, glyph));
+
+    public bool SetFunctionAppearance(int functionIndex, string? glyph, string? colorHex) =>
+        EditCurrentLocomotiveAppearance(locomotive => FunctionPanel.SetAppearance(locomotive, functionIndex, glyph, colorHex));
+
+    public bool ClearFunctionAppearance(int functionIndex) =>
+        EditCurrentLocomotiveAppearance(locomotive => FunctionPanel.ClearAppearance(locomotive, functionIndex));
+
+    /// <summary>
+    /// Applies an appearance edit to the current locomotive (LocoAddress), refreshes the buttons and saves the
+    /// solution. False when the index is invalid or no locomotive with this address exists in the project.
+    /// </summary>
+    private bool EditCurrentLocomotiveAppearance(Func<Locomotive, bool> edit)
     {
-        if (functionIndex < 0 || functionIndex > 31 || string.IsNullOrEmpty(glyph))
-            return false;
-        var loco = GetCurrentLocomotive();
-        if (loco == null)
-            return false;
-        loco.FunctionSymbols ??= new List<string>();
-        while (loco.FunctionSymbols.Count <= functionIndex)
-            loco.FunctionSymbols.Add(string.Empty);
-        loco.FunctionSymbols[functionIndex] = glyph;
-        NotifyAllFunctionAppearanceChanged();
-        QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
-        return true;
-    }
-
-    public bool SetFunctionAppearance(int functionIndex, string? glyph, string? colorHex)
-    {
-        if (functionIndex < 0 || functionIndex > 31)
-            return false;
-
-        var loco = GetCurrentLocomotive();
-        if (loco == null)
-            return false;
-
-        if (!string.IsNullOrEmpty(glyph))
+        var locomotive = GetCurrentLocomotive();
+        if (locomotive == null || !edit(locomotive))
         {
-            loco.FunctionSymbols ??= new List<string>();
-            while (loco.FunctionSymbols.Count <= functionIndex)
-                loco.FunctionSymbols.Add(string.Empty);
-            loco.FunctionSymbols[functionIndex] = glyph;
-        }
-
-        if (IsValidHexColor(colorHex))
-        {
-            loco.FunctionColors ??= new List<string>();
-            while (loco.FunctionColors.Count <= functionIndex)
-                loco.FunctionColors.Add(string.Empty);
-            loco.FunctionColors[functionIndex] = colorHex!;
-        }
-
-        NotifyAllFunctionAppearanceChanged();
-        QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
-        return true;
-    }
-
-    public bool ClearFunctionAppearance(int functionIndex)
-    {
-        if (functionIndex < 0 || functionIndex > 31)
             return false;
-
-        var loco = GetCurrentLocomotive();
-        if (loco == null)
-            return false;
-
-        loco.FunctionSymbols ??= new List<string>();
-        while (loco.FunctionSymbols.Count <= functionIndex)
-            loco.FunctionSymbols.Add(string.Empty);
-        loco.FunctionSymbols[functionIndex] = "none";
-
-        loco.FunctionColors ??= new List<string>();
-        while (loco.FunctionColors.Count <= functionIndex)
-            loco.FunctionColors.Add(string.Empty);
-        loco.FunctionColors[functionIndex] = "none";
+        }
 
         NotifyAllFunctionAppearanceChanged();
         QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
@@ -1559,20 +1235,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
     }
 
-    private static LocomotiveViewModel CreateLocomotiveViewModelFromFleetSnapshot(LocomotiveFleetSnapshot snapshot)
-    {
-        return new LocomotiveViewModel(new Locomotive
-        {
-            Id = snapshot.LocomotiveId,
-            Name = snapshot.Name,
-            DigitalAddress = snapshot.DigitalAddress,
-            PhotoPath = snapshot.PhotoPath,
-            FunctionSymbols = snapshot.FunctionSymbols?.ToList(),
-            FunctionColors = snapshot.FunctionColors?.ToList(),
-            FunctionLabels = snapshot.FunctionLabels?.ToList()
-        });
-    }
-
     private void OnZ21ConnectionChanged(bool isConnected)
     {
         RefreshLocomotiveCommandCanExecute();
@@ -1630,7 +1292,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             SaveFunctionStatesToCache(_previousLocoAddressForFunctionCache);
             CancelAllFunctionsOffOperation();
-            _suppressSnapshotFunctionState = false;
+            _functionPanel.SuppressSnapshotBits = false;
             RestoreFunctionStatesForAddress(value);
         }
 
@@ -1698,24 +1360,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        _sendDriveCommandDebounceCts?.Cancel();
-        _sendDriveCommandDebounceCts?.Dispose();
-        _sendDriveCommandDebounceCts = new CancellationTokenSource();
-        var token = _sendDriveCommandDebounceCts.Token;
-        _ = DebouncedSendDriveCommandAsync(token);
-    }
-
-    private async Task DebouncedSendDriveCommandAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await Task.Delay(SendDriveCommandDebounceMs, cancellationToken).ConfigureAwait(false);
-            QueueBackgroundTask(SendDriveCommandAsync(), "Send drive command");
-        }
-        catch (OperationCanceledException)
-        {
-            // Superseded by a newer speed change.
-        }
+        _speedController.QueueDrive(() => QueueBackgroundTask(SendDriveCommandAsync(), "Send drive command"));
     }
 
     /// <summary>
@@ -1748,11 +1393,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
 
         // Cancel any existing ramp operation
-        CancelRamp();
-
+        var token = _speedController.BeginRamp();
         var targetSpeed = Speed;
-        _rampCancellationTokenSource = new CancellationTokenSource();
-        var token = _rampCancellationTokenSource.Token;
 
         try
         {
@@ -1795,51 +1437,23 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     }
 
     /// <summary>
-    /// Gradually changes speed from current to target value.
+    /// Gradually changes speed from current to target value; every step updates the bound speed and sends it.
     /// </summary>
-    /// <param name="fromSpeed">Starting speed</param>
-    /// <param name="toSpeed">Target speed</param>
-    /// <param name="direction">Direction to use for commands</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    private async Task RampSpeedAsync(int fromSpeed, int toSpeed, bool direction, CancellationToken cancellationToken)
-    {
-        var currentSpeed = fromSpeed;
-        var stepSize = (int)Math.Clamp(RampStepSize, 1, 20);
-        var intervalMs = (int)Math.Clamp(RampIntervalMs, 50, 500);
-        var step = toSpeed > fromSpeed ? stepSize : -stepSize;
-
-        while (currentSpeed != toSpeed)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Calculate next speed
-            currentSpeed = step > 0 ? Math.Min(currentSpeed + stepSize, toSpeed) : Math.Max(currentSpeed - stepSize, toSpeed);
-
-            // Update the Speed property (this triggers UI update but NOT another ramp)
-            _skipSpeedChangeHandler = true;
-            Speed = currentSpeed;
-            _skipSpeedChangeHandler = false;
-
-            // Send command to Z21
-            await SendLocomotiveDriveAsync(LocoAddress, currentSpeed, direction);
-
-            // Wait before next step
-            if (currentSpeed != toSpeed)
+    private Task RampSpeedAsync(int fromSpeed, int toSpeed, bool direction, CancellationToken cancellationToken) =>
+        _speedController.RampAsync(
+            fromSpeed,
+            toSpeed,
+            RampStepSize,
+            RampIntervalMs,
+            async speed =>
             {
-                await Task.Delay(intervalMs, cancellationToken);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Cancels any ongoing ramp operation.
-    /// </summary>
-    private void CancelRamp()
-    {
-        _rampCancellationTokenSource?.Cancel();
-        _rampCancellationTokenSource?.Dispose();
-        _rampCancellationTokenSource = null;
-    }
+                // Update the Speed property (this triggers UI update but NOT another ramp)
+                _skipSpeedChangeHandler = true;
+                Speed = speed;
+                _skipSpeedChangeHandler = false;
+                await SendLocomotiveDriveAsync(LocoAddress, speed, direction).ConfigureAwait(true);
+            },
+            cancellationToken);
 
     private bool _skipSpeedChangeHandler;
 
@@ -1980,13 +1594,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     public async Task TurnOffAllFunctionsAsync(bool resetUi = true)
     {
-        var uiResetVersion = _functionControlVersion;
-        CancelAllFunctionsOffOperation();
-        _allFunctionsOffCts = new CancellationTokenSource();
-        var token = _allFunctionsOffCts.Token;
-
         // Suppress decoder function bits before touching UI so snapshots cannot re-enable keys mid-reset.
-        _suppressSnapshotFunctionState = true;
+        var (uiResetVersion, token) = _functionPanel.BeginAllFunctionsOff();
 
         try
         {
@@ -2016,7 +1625,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
         finally
         {
-            _suppressSnapshotFunctionState = false;
+            _functionPanel.SuppressSnapshotBits = false;
         }
     }
 
@@ -2054,7 +1663,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private bool ShouldApplySnapshotFunctionBits()
     {
-        if (_suppressSnapshotFunctionState)
+        if (_functionPanel.SuppressSnapshotBits)
         {
             return false;
         }
@@ -2067,18 +1676,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         return true;
     }
 
-    private void InvalidatePendingFunctionUiResets()
-    {
-        _functionControlVersion++;
-        CancelAllFunctionsOffOperation();
-    }
+    private void InvalidatePendingFunctionUiResets() => _functionPanel.InvalidatePendingResets();
 
-    private void CancelAllFunctionsOffOperation()
-    {
-        _allFunctionsOffCts?.Cancel();
-        _allFunctionsOffCts?.Dispose();
-        _allFunctionsOffCts = null;
-    }
+    private void CancelAllFunctionsOffOperation() => _functionPanel.CancelAllFunctionsOff();
 
     private void ResetFunctionUiStates(int uiResetVersion, CancellationToken token)
     {
@@ -2087,7 +1687,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             for (int i = 0; i < Functions.Count; i++)
             {
                 token.ThrowIfCancellationRequested();
-                if (uiResetVersion != _functionControlVersion)
+                if (!_functionPanel.IsResetCurrent(uiResetVersion))
                 {
                     return;
                 }
@@ -2142,7 +1742,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
                 continue;
             }
 
-            _locomotiveFunctionStateCache[address] = locomotiveState.Functions;
+            _functionPanel.RememberBits(address, locomotiveState.Functions);
         }
     }
 
@@ -2150,7 +1750,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         if (address != LocoAddress)
         {
-            _locomotiveFunctionStateCache[address] = snapshotFunctions;
+            _functionPanel.RememberBits(address, snapshotFunctions);
             return;
         }
 
@@ -2161,17 +1761,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
-        {
-            if (ShouldPreserveLocalFunctionCommand(address, functionIndex))
-            {
-                continue;
-            }
-
-            SetFunctionState(functionIndex, (snapshotFunctions & (1u << functionIndex)) != 0);
-        }
-
-        _locomotiveFunctionStateCache[address] = GetFunctionBitmask();
+        ApplyFunctionBits(_functionPanel.MergeSnapshotBits(address, GetFunctionBitmask(), snapshotFunctions));
+        _functionPanel.RememberBits(address, GetFunctionBitmask());
     }
 
     private uint GetFunctionBitmask()
@@ -2195,7 +1786,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        _locomotiveFunctionStateCache[address] = GetFunctionBitmask();
+        _functionPanel.RememberBits(address, GetFunctionBitmask());
     }
 
     private void RestoreFunctionStatesForAddress(int address)
@@ -2210,11 +1801,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         if (snapshot.LocomotiveStates.TryGetValue(address, out var runtimeState))
         {
             ApplyFunctionBits(runtimeState.Functions);
-            _locomotiveFunctionStateCache[address] = runtimeState.Functions;
+            _functionPanel.RememberBits(address, runtimeState.Functions);
             return;
         }
 
-        if (_locomotiveFunctionStateCache.TryGetValue(address, out var cached))
+        if (_functionPanel.TryGetRememberedBits(address, out var cached))
         {
             ApplyFunctionBits(cached);
             return;
@@ -2240,80 +1831,16 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         return _runtimeSnapshots.Current;
     }
 
-    private void MarkLocalFunctionCommand(int address, int functionIndex)
-    {
-        if (address < 1 || functionIndex is < 0 or > 31)
-        {
-            return;
-        }
-
-        if (!_lastLocalFunctionCommandAt.TryGetValue(address, out var perFunction))
-        {
-            perFunction = [];
-            _lastLocalFunctionCommandAt[address] = perFunction;
-        }
-
-        perFunction[functionIndex] = DateTimeOffset.UtcNow;
-    }
+    private void MarkLocalFunctionCommand(int address, int functionIndex) =>
+        _functionPanel.MarkLocalFunction(address, functionIndex);
 
     private async Task SendLocomotiveDriveAsync(int address, int speed, bool forward)
     {
-        MarkLocalDriveCommand(address);
+        _speedController.MarkLocalDrive(address);
         await _runtimeCommandGateway.SetLocomotiveDriveAsync(address, speed, forward, CancellationToken.None);
     }
 
-    private void MarkLocalDriveCommand(int address)
-    {
-        if (address < 1)
-        {
-            return;
-        }
-
-        _lastLocalDriveCommandAt[address] = DateTimeOffset.UtcNow;
-    }
-
-    private bool ShouldPreserveLocalDriveCommand(int address)
-    {
-        if (address < 1)
-        {
-            return false;
-        }
-
-        if (!_lastLocalDriveCommandAt.TryGetValue(address, out var commandedAt))
-        {
-            return false;
-        }
-
-        if (DateTimeOffset.UtcNow - commandedAt.ToUniversalTime() > DriveCommandGracePeriod)
-        {
-            _lastLocalDriveCommandAt.Remove(address);
-            return false;
-        }
-
-        return true;
-    }
-
-    private bool ShouldPreserveLocalFunctionCommand(int address, int functionIndex)
-    {
-        if (functionIndex is < 0 or > 31)
-        {
-            return false;
-        }
-
-        if (!_lastLocalFunctionCommandAt.TryGetValue(address, out var perFunction)
-            || !perFunction.TryGetValue(functionIndex, out var commandedAt))
-        {
-            return false;
-        }
-
-        if (DateTimeOffset.UtcNow - commandedAt.ToUniversalTime() > FunctionCommandGracePeriod)
-        {
-            perFunction.Remove(functionIndex);
-            return false;
-        }
-
-        return true;
-    }
+    private bool ShouldPreserveLocalDriveCommand(int address) => _speedController.ShouldPreserveLocalDrive(address);
 
     /// <summary>
     /// Apply brake (speed to 0, then brake on) or release (only when doors closed).
@@ -2350,8 +1877,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         IsDoorReleaseLockedNext = !IsDoorReleaseLocked;
         var isClosingDoor = IsDoorReleaseLockedNext;
-        var blockingDelaySeconds = isClosingDoor ? Random.Shared.Next(0, 61) : 0;
-        var transitionDelay = TimeSpan.FromSeconds(5 + blockingDelaySeconds);
+        var blockingDelaySeconds = isClosingDoor ? _brakeAndDoor.NextClosingBlockSeconds() : 0;
 
         if (!isClosingDoor)
         {
@@ -2360,55 +1886,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         IsDoorReleaseBlinking = true;
         DoorReleaseBlinkOpacity = 1.0;
-        if (_doorReleaseBlinkCts is not null)
-        {
-            await _doorReleaseBlinkCts.CancelAsync().ConfigureAwait(true);
-        }
+        var completed = await _brakeAndDoor
+            .RunDoorTransitionAsync(isClosingDoor, blockingDelaySeconds, SetDoorReleaseBlinkOpacity, SetDoorBlocked)
+            .ConfigureAwait(true);
 
-        _doorReleaseBlinkCts = new CancellationTokenSource();
-        var token = _doorReleaseBlinkCts.Token;
-        var blinkHigh = true;
-
-        async Task RunBlinkLoopAsync()
-        {
-            const int intervalMs = 400;
-            var totalMs = (int)transitionDelay.TotalMilliseconds;
-            for (var elapsed = 0; elapsed < totalMs && !token.IsCancellationRequested; elapsed += intervalMs)
-            {
-                try
-                {
-                    await Task.Delay(intervalMs, token);
-                }
-                catch (OperationCanceledException)
-                {
-                    return;
-                }
-
-                blinkHigh = !blinkHigh;
-                var opacity = blinkHigh ? 1.0 : 0.35;
-                if (_uiDispatcher != null)
-                    _uiDispatcher.InvokeOnUi(() => DoorReleaseBlinkOpacity = opacity);
-                else
-                    DoorReleaseBlinkOpacity = opacity;
-            }
-        }
-
-        try
-        {
-            if (isClosingDoor)
-            {
-                await Task.WhenAll(
-                    RunDoorBlockingTimerAsync(blockingDelaySeconds, token),
-                    RunBlinkLoopAsync());
-            }
-            else
-            {
-                await Task.WhenAll(
-                    Task.Delay(TimeSpan.FromSeconds(5), token),
-                    RunBlinkLoopAsync());
-            }
-        }
-        catch (OperationCanceledException)
+        if (!completed)
         {
             if (_uiDispatcher != null)
                 _uiDispatcher.InvokeOnUi(() => { DoorReleaseBlinkOpacity = 1.0; IsDoorReleaseBlinking = false; IsDoorBlocked = false; });
@@ -2442,11 +1924,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _logger?.LogDebug("Türfreigabe {State}", IsDoorReleaseLocked ? "gesperrt" : "freigegeben");
     }
 
-    private async Task RunDoorBlockingTimerAsync(int blockingDelaySeconds, CancellationToken cancellationToken)
+    private void SetDoorReleaseBlinkOpacity(double opacity)
     {
-        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-        SetDoorBlocked(true);
-        await Task.Delay(TimeSpan.FromSeconds(blockingDelaySeconds), cancellationToken);
+        if (_uiDispatcher != null)
+            _uiDispatcher.InvokeOnUi(() => DoorReleaseBlinkOpacity = opacity);
+        else
+            DoorReleaseBlinkOpacity = opacity;
     }
 
     private void SetDoorBlocked(bool value)
@@ -2599,25 +2082,26 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        if (MainTrackCurrent == snapshot.MainCurrent
-            && ProgTrackCurrent == snapshot.ProgCurrent
-            && FilteredMainCurrent == snapshot.FilteredMainCurrent
-            && SupplyVoltage == snapshot.SupplyVoltage
-            && Temperature == snapshot.Temperature)
+        var current = new TrainControlTelemetry(
+            MainTrackCurrent,
+            ProgTrackCurrent,
+            FilteredMainCurrent,
+            SupplyVoltage,
+            Temperature,
+            PeakMainCurrent,
+            PeakTemperature);
+        if (TelemetryProjection.Apply(current, snapshot) is not { } telemetry)
         {
             return;
         }
 
-        MainTrackCurrent = snapshot.MainCurrent;
-        ProgTrackCurrent = snapshot.ProgCurrent;
-        FilteredMainCurrent = snapshot.FilteredMainCurrent;
-        SupplyVoltage = snapshot.SupplyVoltage;
-        Temperature = snapshot.Temperature;
-
-        if (snapshot.MainCurrent > PeakMainCurrent)
-            PeakMainCurrent = snapshot.MainCurrent;
-        if (snapshot.Temperature > PeakTemperature)
-            PeakTemperature = snapshot.Temperature;
+        MainTrackCurrent = telemetry.MainCurrent;
+        ProgTrackCurrent = telemetry.ProgCurrent;
+        FilteredMainCurrent = telemetry.FilteredMainCurrent;
+        SupplyVoltage = telemetry.SupplyVoltage;
+        Temperature = telemetry.Temperature;
+        PeakMainCurrent = telemetry.PeakMainCurrent;
+        PeakTemperature = telemetry.PeakTemperature;
 
         _logger?.LogDebug(
             "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +

@@ -10,7 +10,7 @@ using Service;
 
 using SharedUI.Interface;
 using SharedUI.Mobile;
-using SharedUI.ViewModel;
+using SharedUI.TrainControl;
 
 using View;
 
