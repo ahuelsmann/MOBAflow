@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.ViewModel;
+namespace Moba.SharedUI.Mobile;
 
 using Backend.Interface;
 
@@ -15,11 +15,11 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Mobile;
-
 using Service;
 
 using System.Collections.ObjectModel;
+
+using ViewModel;
 
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.
@@ -36,25 +36,18 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly MobaflowHubSession _hubSession;
     private readonly MobileRuntimeProjection _runtimeProjection;
     private readonly MobileSolutionSynchronizer _solutionSynchronizer;
-    private readonly IPhotoUploadService _photoUploadService;
-    private readonly IPhotoCaptureService _photoCaptureService;
+    private readonly MobilePhotoUploader _photoUploader;
     private readonly IRuntimeHubRemoteClient? _runtimeHubRemoteClient;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
-    private readonly IBackgroundService? _backgroundService;
+    private readonly MobileAppLifecycle _appLifecycle;
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
     private readonly ILogger<MauiViewModel> _logger;
     private readonly IEventBus _eventBus;
     private readonly List<Guid> _eventBusSubscriptions = [];
 
-    private readonly object _networkChangeDebounceLock = new();
-    private CancellationTokenSource? _networkChangeDebounceCts;
-
     /// <summary>Cancels long-running background loops when the host app is shutting down.</summary>
     private readonly CancellationTokenSource _applicationLifetimeCts = new();
-
-    /// <summary>Coalesces rapid platform connectivity notifications before re-running REST discovery.</summary>
-    private const int NetworkChangeDebounceMilliseconds = 750;
 
     private readonly SemaphoreSlim _initializationLock = new(1, 1);
     private readonly SemaphoreSlim _refreshRestApiLock = new(1, 1);
@@ -62,7 +55,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private Task? _startupDiscoveryTask;
     private Task? _restApiHealthCheckTask;
     private bool _isApplyingLoadedSettings;
-    private bool _isStopping;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
@@ -78,8 +70,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <param name="hubSession">MOBApi health check, client registration and runtime hub connection.</param>
     /// <param name="runtimeProjection">Locomotive fleet and signal-box data of the selected project.</param>
     /// <param name="solutionSynchronizer">Brings MOBAflow's solution to the phone.</param>
-    /// <param name="photoUploadService">Service used to upload captured photos to the server.</param>
-    /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
+    /// <param name="photoUploader">Takes a photo and uploads it to MOBAflow.</param>
     /// <param name="networkProfileChangeNotifier">Raises when device connectivity changes so cached LAN REST endpoints can be re-resolved.</param>
     /// <param name="logger">Logger for diagnostics.</param>
     /// <param name="eventBus">Event bus used to observe runtime and feedback changes.</param>
@@ -99,8 +90,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         MobaflowHubSession hubSession,
         MobileRuntimeProjection runtimeProjection,
         MobileSolutionSynchronizer solutionSynchronizer,
-        IPhotoUploadService photoUploadService,
-        IPhotoCaptureService photoCaptureService,
+        MobilePhotoUploader photoUploader,
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
         ILogger<MauiViewModel> logger,
         IEventBus eventBus,
@@ -120,8 +110,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(hubSession);
         ArgumentNullException.ThrowIfNull(runtimeProjection);
         ArgumentNullException.ThrowIfNull(solutionSynchronizer);
-        ArgumentNullException.ThrowIfNull(photoUploadService);
-        ArgumentNullException.ThrowIfNull(photoCaptureService);
+        ArgumentNullException.ThrowIfNull(photoUploader);
         ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(eventBus);
@@ -135,14 +124,13 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _hubSession = hubSession;
         _runtimeProjection = runtimeProjection;
         _solutionSynchronizer = solutionSynchronizer;
-        _photoUploadService = photoUploadService;
-        _photoCaptureService = photoCaptureService;
+        _photoUploader = photoUploader;
         _networkProfileChangeNotifier = networkProfileChangeNotifier;
         _logger = logger;
         _runtimeHubRemoteClient = runtimeHubRemoteClient;
         _runtimeCommandGateway = runtimeCommandGateway;
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator;
-        _backgroundService = backgroundService;
+        _appLifecycle = new MobileAppLifecycle(backgroundService, TimeProvider.System, logger);
         _eventBus = eventBus;
         _projectContext = projectContext;
 
@@ -315,29 +303,11 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         _ = sender;
         _ = e;
-        CancellationToken token;
-        lock (_networkChangeDebounceLock)
-        {
-            _networkChangeDebounceCts?.Cancel();
-            _networkChangeDebounceCts?.Dispose();
-            _networkChangeDebounceCts = new CancellationTokenSource();
-            token = _networkChangeDebounceCts.Token;
-        }
-
-        RunInBackground(RunDebouncedNetworkChangeAsync(token), "Debounced network profile handling");
+        RunInBackground(_appLifecycle.OnNetworkChangedAsync(HandleNetworkChangeAsync), "Debounced network profile handling");
     }
 
-    private async Task RunDebouncedNetworkChangeAsync(CancellationToken cancellationToken)
+    private async Task HandleNetworkChangeAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            await Task.Delay(NetworkChangeDebounceMilliseconds, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-
         try
         {
             if (!IsMobaflowConnectionEnabled)
@@ -494,14 +464,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// </summary>
     public void NotifyApplicationStopping()
     {
-        if (_isStopping)
+        if (!_appLifecycle.BeginStopping())
         {
             return;
         }
 
-        _isStopping = true;
-
-        RunInBackground(StopBackgroundServiceAsync(), "Stop foreground background service on shutdown");
+        RunInBackground(_appLifecycle.StopBackgroundServiceAsync(), "Stop foreground background service on shutdown");
 
         try
         {
@@ -514,13 +482,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         _networkProfileChangeNotifier.NetworkProfilePossiblyChanged -= OnNetworkProfilePossiblyChanged;
         _networkProfileChangeNotifier.StopListening();
-
-        lock (_networkChangeDebounceLock)
-        {
-            _networkChangeDebounceCts?.Cancel();
-            _networkChangeDebounceCts?.Dispose();
-            _networkChangeDebounceCts = null;
-        }
 
         foreach (var subscriptionId in _eventBusSubscriptions)
         {
@@ -539,6 +500,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         }
 
         NotifyApplicationStopping();
+        _appLifecycle.Dispose();
         _applicationLifetimeCts.Dispose();
         _initializationLock.Dispose();
         _refreshRestApiLock.Dispose();
@@ -1182,57 +1144,15 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             PhotoUploadSuccess = false;
             PhotoUploadStatus = null;
 
-            var localPath = await _photoCaptureService.CapturePhotoAsync().ConfigureAwait(false);
-            if (string.IsNullOrEmpty(localPath))
-            {
-                PhotoUploadStatus = "Capture cancelled or not available.";
-                return;
-            }
-
-            // Use current REST API endpoint when already known (e.g. when status was green); only run discovery when missing
-            string? ip = null;
-            int? port = null;
-            if (!string.IsNullOrWhiteSpace(RestApiIpAddress) && RestApiPort > 0)
-            {
-                ip = RestApiIpAddress.Trim();
-                port = RestApiPort;
-            }
-            if (string.IsNullOrEmpty(ip) || !port.HasValue)
-            {
-                var discovered = await _endpointLocator
-                    .FindAsync(ToDiscoveryAnchor(Z21IpAddress), _applicationLifetimeCts.Token)
-                    .ConfigureAwait(false);
-                ip = discovered?.IpAddress;
-                port = discovered?.Port;
-            }
-
-            if (string.IsNullOrEmpty(ip) || !port.HasValue)
-            {
-                PhotoUploadStatus = "⚠️ REST server not found\n\n" +
-                                    "• Is MOBAflow (PC) running with\n  \"Auto-start REST API\" enabled?\n" +
-                                    "• Are phone and PC on the same Wi‑Fi?\n" +
-                                    "• Try again in a moment (discovery\n  runs automatically).\n\n" +
-                                    "Server must listen on port 5001.";
-                return;
-            }
-
-            // ✅ Upload photo WITHOUT entityId - WinUI will assign it to the currently selected item
-            var tempId = Guid.NewGuid(); // Temporary ID for filename only
-            var (success, serverPhotoPath, error) = await _photoUploadService.UploadPhotoAsync(ip, port.Value, localPath, "latest", tempId).ConfigureAwait(false);
-            if (success)
-            {
-                PhotoUploadSuccess = true;
-                PhotoUploadStatus = serverPhotoPath ?? "Uploaded successfully.";
-                await _endpointLocator.RememberReachableAddressAsync(ip).ConfigureAwait(false);
-            }
-            else
-            {
-                PhotoUploadStatus = error ?? "Upload failed.";
-            }
-        }
-        catch (Exception ex)
-        {
-            PhotoUploadStatus = $"Error: {ex.Message}";
+            // Use the endpoint already known (e.g. when the status is green); only search the LAN without one.
+            var knownEndpoint = string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0
+                ? null
+                : new MobaflowEndpoint(RestApiIpAddress.Trim(), RestApiPort);
+            var result = await _photoUploader
+                .CaptureAndUploadAsync(knownEndpoint, ToDiscoveryAnchor(Z21IpAddress), _applicationLifetimeCts.Token)
+                .ConfigureAwait(false);
+            PhotoUploadSuccess = result.Success;
+            PhotoUploadStatus = result.Status;
         }
         finally
         {

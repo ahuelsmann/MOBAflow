@@ -159,7 +159,7 @@
                         Margin="0,0,0,8"
                         PlaceholderText="Search workflows..."
                         QueryIcon="Find"
-                        Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        Text="{x:Bind ViewModel.WorkflowLibrary.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                     <ScrollViewer
                         Grid.Row="1"
@@ -173,7 +173,7 @@
                             <ListView
                                 CanDragItems="True"
                                 DragItemsStarting="WorkflowListView_DragItemsStarting"
-                                ItemsSource="{x:Bind ViewModel.FilteredWorkflows, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.WorkflowLibrary.FilteredWorkflows, Mode=OneWay}"
                                 SelectionMode="Single">
                                 <ListView.ItemTemplate>
                                     <DataTemplate x:DataType="viewmodel:WorkflowViewModel">

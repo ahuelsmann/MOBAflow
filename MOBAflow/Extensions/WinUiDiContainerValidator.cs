@@ -9,6 +9,7 @@ using Common.Events;
 using Microsoft.Extensions.DependencyInjection;
 
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.TrainControl;
 using Moba.SharedUI.ViewModel;
 
 /// <summary>

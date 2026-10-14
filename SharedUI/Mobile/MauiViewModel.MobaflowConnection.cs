@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.SharedUI.ViewModel;
+namespace Moba.SharedUI.Mobile;
 
 using Common.Events;
 
@@ -13,8 +13,6 @@ using Domain;
 using Interface;
 
 using Microsoft.Extensions.Logging;
-
-using Mobile;
 
 /// <summary>
 /// MOBAsmart MOBAflow connection toggle and coordinator synchronization.
@@ -368,7 +366,7 @@ public sealed partial class MauiViewModel
     private Task OnRuntimeHubSolutionUpdatedAsync(DateTimeOffset updatedAt)
     {
         _ = updatedAt;
-        if (IsMobaflowConnectionEnabled && GetRestApiEndpoint() is { } endpoint)
+        if (IsMobaflowConnectionEnabled && ToRestApiEndpoint(RestApiIpAddress, RestApiPort) is { } endpoint)
         {
             RunInBackground(
                 _solutionSynchronizer.SyncAfterPushAsync(endpoint, _applicationLifetimeCts.Token),
@@ -379,10 +377,10 @@ public sealed partial class MauiViewModel
     }
 
     /// <summary>The MOBApi endpoint shown on the MOBAflow card; null until one is known.</summary>
-    private MobaflowEndpoint? GetRestApiEndpoint() =>
-        string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0
+    private static MobaflowEndpoint? ToRestApiEndpoint(string? ipAddress, int port) =>
+        string.IsNullOrWhiteSpace(ipAddress) || port <= 0
             ? null
-            : new MobaflowEndpoint(RestApiIpAddress, RestApiPort);
+            : new MobaflowEndpoint(ipAddress, port);
 
     /// <summary>
     /// One-time catalog import (signals + locomotives) after a MOBAflow session is established.
@@ -393,7 +391,7 @@ public sealed partial class MauiViewModel
         var imported = await _solutionSynchronizer
             .ImportInitialCatalogAsync(
                 () => IsMobaflowConnectionEnabled,
-                GetRestApiEndpoint,
+                () => ToRestApiEndpoint(RestApiIpAddress, RestApiPort),
                 RequestInitialRuntimeSnapshotAsync,
                 _applicationLifetimeCts.Token)
             .ConfigureAwait(false);
@@ -437,7 +435,7 @@ public sealed partial class MauiViewModel
         var synced = await _solutionSynchronizer
             .RequestSyncAsync(
                 (_projectContext?.SelectedProject?.Locomotives.Count ?? 0) > 0,
-                IsMobaflowConnectionEnabled ? GetRestApiEndpoint() : null,
+                IsMobaflowConnectionEnabled ? ToRestApiEndpoint(RestApiIpAddress, RestApiPort) : null,
                 cancellationToken)
             .ConfigureAwait(false);
         if (!synced)

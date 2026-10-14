@@ -328,6 +328,24 @@ runtime services.
   MainWindowViewModel dependencies. The superseded Train partial is removed; the shell retains
   its runtime-refresh helper for station/journey editors until their own extraction.
 
+**Station and platform presentation (RF-24 slice 3a):**
+
+- The host owns one StationsPageViewModel for StationsPage, reading ISolutionSession directly.
+  It owns station/platform selection, properties, CRUD and panel expansion, sharing the existing
+  layout widths and settings. The Stations shell partial is removed and the architecture guard
+  rejects shell dependencies in StationsPage.
+- The page owns property tracking for its selected project-station and platform wrappers. Selection,
+  project/solution replacement, collection removal and disposal detach previous tracking and
+  collection subscriptions. A platform refresh also detaches discarded platform wrappers.
+  The session still owns persistence and updates the current runtime snapshot for model edits.
+- One WorkflowLibraryViewModel is registered through host DI and shared by the station workflow
+  library and the shell's existing workflow surfaces. Search uses the same library state through
+  both access paths. Runtime services, execution context and EventBus are composed in the host;
+  workflow behavior stays in the existing editor. Remaining workflow presentation is a later slice.
+- StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
+  unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
+  central layout persistence remains planned. The shell retains the journey runtime-refresh helper.
+
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
@@ -576,6 +594,25 @@ passes the mandatory `WorkflowValidator` gate before effect planning (dry run) o
 live action execution; ordinary connection and locomotive commands do not pass
 through that workflow pipeline. Resulting runtime snapshots refresh the UI.
 
+### Train control
+
+[`TrainControlViewModel`](../SharedUI/TrainControl/TrainControlViewModel.cs) binds the MOBAflow Train
+Control page and the MOBAsmart Engines/Control tabs. It coordinates platform-neutral collaborators in
+[`SharedUI/TrainControl`](../SharedUI/TrainControl), which take `TimeProvider` where timing matters:
+
+| Component | Responsibility |
+| --- | --- |
+| [`LocomotiveRoster`](../SharedUI/TrainControl/LocomotiveRoster.cs) | Locomotive list source (live fleet, runtime fleet, project), in-place fleet merge, paused updates and selection restore. |
+| [`SpeedController`](../SharedUI/TrainControl/SpeedController.cs) | 75 ms drive debounce, speed ramp and the grace period in which a local drive command wins over snapshots. |
+| [`FunctionPanel`](../SharedUI/TrainControl/FunctionPanel.cs) | Function bits per address, local function grace period, snapshot merge, all-functions-off and appearance edits. |
+| [`BrakeAndDoorState`](../SharedUI/TrainControl/BrakeAndDoorState.cs) | Parking brake and door release rules and the timed door transition. |
+| [`JourneyStationProjection`](../SharedUI/TrainControl/JourneyStationProjection.cs) | Previous, current and next stop of the selected journey. |
+| [`TelemetryProjection`](../SharedUI/TrainControl/TelemetryProjection.cs) | Command station readings and peaks. |
+| [`TrainControlSettingsStore`](../SharedUI/TrainControl/TrainControlSettingsStore.cs) | Ramp, speed steps, series/Vmax and the per-host (WinUI/MAUI) selected locomotive. |
+
+The ViewModel keeps the bound properties, commands and the UI-thread continuations of ramps and the
+door transition; host differences stay explicit through `TrainControlViewModelOptions`.
+
 ### MOBAsmart session and projection
 
 These platform-neutral components live in [`SharedUI/Mobile`](../SharedUI/Mobile)
@@ -584,10 +621,13 @@ and are registered as singletons by
 
 | Component | Responsibility and owned state |
 | --- | --- |
+| [`MobaflowEndpointLocator`](../SharedUI/Mobile/MobaflowEndpointLocator.cs) | Finds MOBApi on the LAN, anchored on the subnet of the selected project's Z21: startup retries, periodic rediscovery cadence and health-check delays. Remembers found and reachable addresses in the settings. |
 | [`MobaflowHubSession`](../SharedUI/Mobile/MobaflowHubSession.cs) | REST health checks, client registration cadence and SignalR connect retries/forced reconnect. Returns connection outcomes; the caller applies UI state. A failed REST check alone does not close an already connected hub. |
 | [`MobileRuntimeProjection`](../SharedUI/Mobile/MobileRuntimeProjection.cs) | Holds the latest remote fleet and signal-box snapshots, including restored cache data. Filters to the selected project and chooses/merges live remote, synchronized project, cached and local runtime data. Persists remote snapshots through `IMobileSolutionStore`; restored fleet data starts as stale. |
 | [`MobileSolutionSynchronizer`](../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog imports, tracks whether the current session's catalog was applied, and delegates push, periodic and on-demand solution refresh to `ISolutionRemoteLoader`. On-demand refresh can load the phone's cache first. |
-| `MauiViewModel` | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
+| [`MobilePhotoUploader`](../SharedUI/Mobile/MobilePhotoUploader.cs) | Takes a photo, uploads it to the known or discovered MOBApi endpoint and returns the result with its status text. |
+| [`MobileAppLifecycle`](../SharedUI/Mobile/MobileAppLifecycle.cs) | Android foreground-service keep-alive (syncs run in order), network-change debounce and the stopping state. Created and disposed by `MauiViewModel`. |
+| [`MauiViewModel`](../SharedUI/Mobile/MauiViewModel.cs) | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
 
 `MobileSolutionStore` owns disk persistence; `SolutionSession` owns the loaded
 solution and selection. Projection data does not become a second editable
@@ -635,7 +675,7 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `SettingsPageViewModel`, `TrainsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;

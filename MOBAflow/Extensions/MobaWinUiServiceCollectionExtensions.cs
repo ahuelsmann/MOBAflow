@@ -28,6 +28,7 @@ using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.Shell;
+using SharedUI.TrainControl;
 using SharedUI.ViewModel;
 using Sound;
 using Speech.Base;
@@ -351,6 +352,19 @@ public static class MobaWinUiServiceCollectionExtensions
                     throw new InvalidOperationException(result.Reason);
                 }
             }));
+        services.AddSingleton(sp => new WorkflowLibraryViewModel(
+            sp.GetRequiredService<ISolutionSession>(),
+            sp.GetService<IDialogService>(),
+            new WorkflowValidator(),
+            sp.GetRequiredService<ILogger<WorkflowLibraryViewModel>>(),
+            new WorkflowLibraryRuntimeServices
+            {
+                WorkflowService = sp.GetRequiredService<IWorkflowService>(),
+                TraceStore = sp.GetRequiredService<IWorkflowTraceStore>(),
+                ExecutionContext = sp.GetRequiredService<ActionExecutionContext>(),
+                EventBus = sp.GetRequiredService<IEventBus>()
+            }));
+        services.AddSingleton<StationsPageViewModel>();
         services.AddSingleton<TrainsPageViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
@@ -362,16 +376,13 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<SettingsPageViewModel>(),
             sp.GetRequiredService<TrainsPageViewModel>(),
+            sp.GetRequiredService<StationsPageViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
-            sp.GetRequiredService<ActionExecutionContext>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
             sp.GetRequiredService<ICityService>(),
             sp.GetRequiredService<ISettingsService>(),
-            loggerFactory: sp.GetRequiredService<ILoggerFactory>(),
             dialogService: sp.GetService<IDialogService>(),
-            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
-            workflowService: sp.GetRequiredService<IWorkflowService>(),
-            workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));
+            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>()));
 
         services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
         services.AddTransient<InterlockingControlViewModel>();

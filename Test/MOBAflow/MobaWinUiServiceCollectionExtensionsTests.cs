@@ -225,6 +225,38 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         Assert.That(trains.SelectedTrain, Is.SameAs(provider.GetRequiredService<ISolutionSession>().SelectedProject!.Trains.Single()));
     }
 
+    [Test]
+    public async Task StationEditorSharesHostSessionLayoutAndWorkflowLibraryWithTheShell()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        using var assertions = Assert.EnterMultipleScope();
+        var stations = provider.GetRequiredService<StationsPageViewModel>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        var library = provider.GetRequiredService<WorkflowLibraryViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(shell.StationsPage, Is.SameAs(stations));
+            Assert.That(stations.WorkflowLibrary, Is.SameAs(library));
+            Assert.That(shell.WorkflowLibrary, Is.SameAs(library));
+            Assert.That(stations.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
+        }
+        shell.SelectedProject = new ProjectViewModel(new Project());
+        stations.AddProjectStationCommand.Execute(null);
+        Assert.That(stations.SelectedProjectStation,
+            Is.SameAs(provider.GetRequiredService<ISolutionSession>().SelectedProject!.Stations.Single()));
+        var searchNotifications = 0;
+        shell.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.WorkflowSearchText)) searchNotifications++;
+        };
+        library.SearchText = "Station filter";
+        Assert.That(shell.WorkflowSearchText, Is.EqualTo("Station filter"));
+        shell.WorkflowSearchText = "Shell filter";
+        Assert.That(library.SearchText, Is.EqualTo("Shell filter"));
+        Assert.That(searchNotifications, Is.EqualTo(2));
+    }
+
     private static ServiceProvider CreatePlatformServiceProvider()
     {
         var services = new ServiceCollection();

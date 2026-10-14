@@ -192,21 +192,22 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             .Callback<Action>(action => action());
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcher.Object, mobaRuntime.Object);
+        var stationEventBus1 = eventBus;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
             mobaRuntime.Object,
             mobaRuntime.Object,
             new LocalRuntimeCommandGateway(mobaRuntime.Object),
-            eventBus,
+            stationEventBus1,
             uiDispatcher.Object,
             TestSettingsPages.Create(appSettings, uiDispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntime.Object, null),
-            locomotiveSession1,
-            new ActionExecutionContext
+            _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntime.Object, new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
-            },
+            }, stationEventBus1),
+            locomotiveSession1,
             NullLogger<MainWindowViewModel>.Instance);
     }
 

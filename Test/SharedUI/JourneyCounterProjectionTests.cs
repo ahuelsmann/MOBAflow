@@ -245,18 +245,19 @@ public sealed class JourneyCounterProjectionTests
             io.Setup(service => service.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((true, "projection-test.json", null));
             Settings.Counter.CountOfFeedbackPoints = 7;
             var locomotiveSession1 = TestSolutionSessions.Create(solution ?? new Solution { Projects = [new Project()] }, dispatcher.Object, Runtime.Object, io.Object);
+            var stationEventBus1 = _eventBus;
             ViewModel = new MainWindowViewModel(
                 new LayoutColumnWidthsViewModel(),
                 Runtime.Object,
                 Runtime.Object,
                 Runtime.Object,
                 Gateway.Object,
-                _eventBus,
+                stationEventBus1,
                 dispatcher.Object,
                 TestSettingsPages.Create(Settings, dispatcher.Object),
                 _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object),
+                _rollingStockPages.GetStationsPage(locomotiveSession1, Runtime.Object, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, stationEventBus1),
                 locomotiveSession1,
-                new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
                 NullLogger<MainWindowViewModel>.Instance);
         }
 
