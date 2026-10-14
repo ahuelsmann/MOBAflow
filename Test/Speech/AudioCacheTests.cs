@@ -311,6 +311,21 @@ internal sealed class AudioCacheTests
     }
 
     [Test]
+    public async Task StoreRemovesOrphansLeftByAnotherProcess()
+    {
+        using var cache = new AudioCache(_directory, () => 1000, _clock);
+        Assert.That((await cache.TryGetAsync(Key("first lookup")).ConfigureAwait(false)).Audio, Is.Null);
+        var orphan = Path.Combine(_directory, Key("other process") + ".wav");
+        await File.WriteAllBytesAsync(orphan, TestWaveAudio.Create([1])).ConfigureAwait(false);
+        await cache.StoreAsync(Key("stored"), TestWaveAudio.Create([2]), cache.Generation).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(File.Exists(orphan), Is.False);
+            Assert.That((await cache.TryGetAsync(Key("stored")).ConfigureAwait(false)).Audio, Is.Not.Null);
+        }
+    }
+
+    [Test]
     public async Task ChangingLimitEvictsExistingEntriesAndOversizedAudioIsNotStored()
     {
         long limit = 1000;

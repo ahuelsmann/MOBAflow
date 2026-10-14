@@ -420,6 +420,51 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
     }
 
     [Test]
+    public async Task SubstituteVoiceAudioIsPlayedButNotCached()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech")
+        {
+            Synthesize = (_, _) => Task.FromResult(SpeechResult.Success(TestWaveAudio.Create([1]), isCacheable: false))
+        };
+        var player = new SpeechOutputTests.FakePlayer();
+        var output = CreateOutput(provider, player);
+        await using var lifetime = output.ConfigureAwait(false);
+        await output.SpeakAsync("Missing voice").ConfigureAwait(false);
+        await output.SpeakAsync("Missing voice").ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(player.PlayCount, Is.EqualTo(2));
+            Assert.That(provider.Requests, Has.Count.EqualTo(2));
+            Assert.That(await output.GetCacheSizeAsync().ConfigureAwait(false), Is.Zero);
+        }
+    }
+
+    [Test]
+    public async Task ShutdownCancelsAndWaitsForCacheOperations()
+    {
+        var cancelled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cache = new Mock<IAudioCache>();
+        cache.Setup(value => value.GetSizeAsync(It.IsAny<CancellationToken>()))
+            .Returns(async (CancellationToken token) =>
+            {
+                await using var registration = token.Register(() => cancelled.TrySetResult()).ConfigureAwait(false);
+                await release.Task.ConfigureAwait(false);
+                token.ThrowIfCancellationRequested();
+                return 0L;
+            });
+        var output = CreateOutput(new SpeechOutputTests.FakeProvider("system-speech"), new SpeechOutputTests.FakePlayer(), cache: cache.Object);
+        var size = output.GetCacheSizeAsync();
+        var disposing = output.DisposeAsync().AsTask();
+        await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        Assert.That(disposing.IsCompleted, Is.False);
+        release.SetResult();
+        await disposing.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        await Assert.CatchAsync<OperationCanceledException>(() => size).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => output.ClearCacheAsync()).ConfigureAwait(false);
+    }
+
+    [Test]
     public async Task FailedLookupKeepsTheGenerationFromBeforeAConcurrentClear()
     {
         var provider = new SpeechOutputTests.FakeProvider("system-speech");

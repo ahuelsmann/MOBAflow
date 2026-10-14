@@ -56,6 +56,8 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         _ = WaveAudio.GetDuration(audio.Span);
         await UseAsync(async () =>
         {
+            // Another process may have stopped between writing a WAV and indexing it; stores are rare, so rescan here.
+            Sweep(cancellationToken);
             // An existing entry (stored by another waiter or found by a recheck) only records this playback.
             var stored = _entries.ContainsKey(key) && File.Exists(AudioPath(key));
             if (!stored && !await TryWriteNewAudioAsync(key, audio, generation, cancellationToken).ConfigureAwait(false)) return;

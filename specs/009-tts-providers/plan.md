@@ -150,7 +150,8 @@ completion applies only to the current session, guarded across host-player insta
   is `Speech.CacheSizeLimitMegabytes` (500 MiB by default, zero disables storage). The limit covers retained WAV bytes.
 - WAV/index replacement is atomic. A lock file serializes cache operations across MOBAflow processes; each operation
   reloads the index under that lock. Unindexed WAVs or temporary files left by an interrupted write are removed on the
-  first operation of a process, after a failed index update, and whenever the size is read or the cache is cleared.
+  first operation of a process, after a failed index update, before every store (which also covers a write another
+  process left unfinished), and whenever the size is read or the cache is cleared.
   A clear increments the generation stored in the index and, once deletion starts, completes regardless of
   cancellation: earlier in-progress synthesis, also in another process, can finish playback but cannot refill the
   cleared cache. A lookup returns the generation read under the same lock as its miss; a failed lookup uses the
@@ -163,13 +164,16 @@ completion applies only to the current session, guarded across host-player insta
 - Synthesized audio is stored only after it has played successfully, with that playback as its last-use time, so the
   cache never exceeds its limit and unheard audio never displaces played audio. A completed shared synthesis stays
   joinable while any caller still plays or stores it, so an identical request during that playback reuses its audio
-  instead of calling the provider again. Each successful playback of a cached entry updates its last-use time. Provider fingerprints include effective Piper executable/model/config
-  paths, pronunciation options and sentence silence; System Speech includes its
-  configured default voice. Availability is excluded, so a cached announcement remains usable when the provider
+  instead of calling the provider again. Each successful playback of a cached entry updates its last-use time.
+  Provider fingerprints include effective Piper executable/model/config paths, pronunciation options and sentence
+  silence; System Speech includes its configured default voice. A result a provider marks as not cacheable is played
+  but not stored: System Speech does so when a requested voice is missing and a substitute speaks, so installing the
+  voice later synthesizes again. Availability is excluded, so a cached announcement remains usable when the provider
   cannot start. Replacing model contents at the same configured path requires clearing the cache. Request text uses
   Unicode canonical normalization in both synthesis and cache identity.
 - Host service disposal cancels caller waits, shared synthesis and playback, then awaits their completion.
-  `SpeechOutput` is only asynchronously disposable, so no caller can return before that wait.
+  `SpeechOutput` is only asynchronously disposable, so no caller can return before that wait; cache size and clear
+  operations are cancelled and awaited the same way before dependent services are disposed.
 - The WinUI host enables unsafe blocks for generated C#/WinRT interop of disposable cache/output services; no
   handwritten unsafe speech code or UI dependency is added to `Speech.Base`. Exact analyzer snapshots retire the
   resolved WinRT configuration diagnostics and record only the two source-suppressed NUnit reflection fixtures.

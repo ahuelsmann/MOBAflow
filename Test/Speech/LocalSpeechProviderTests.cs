@@ -131,6 +131,7 @@ internal sealed class LocalSpeechProviderTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.IsSuccess, Is.True, result.Reason);
+            Assert.That(result.IsCacheable, Is.True);
             Assert.That(WaveAudio.GetDuration(result.WaveAudio.Span), Is.GreaterThan(TimeSpan.Zero));
         }
     }
@@ -270,6 +271,8 @@ internal sealed class LocalSpeechProviderTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.IsSuccess, Is.True, result.Reason);
+            // A substitute voice speaks; caching it would keep replaying it after the requested voice is installed.
+            Assert.That(result.IsCacheable, Is.False);
             Assert.That(WaveAudio.GetDuration(result.WaveAudio.Span), Is.GreaterThan(TimeSpan.Zero));
         }
     }

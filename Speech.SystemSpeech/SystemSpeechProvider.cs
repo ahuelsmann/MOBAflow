@@ -37,7 +37,8 @@ public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1304", Justification = "All installed voices are required; a culture filter would discard usable voices. The parameterless .NET implementation is culture-independent.")]
     private static System.Collections.ObjectModel.ReadOnlyCollection<InstalledVoice> GetAllVoices(SpeechSynthesizer synthesizer) => synthesizer.GetInstalledVoices();
 
-    private static void SelectVoice(SpeechSynthesizer synthesizer, string voiceName, string defaultVoice, string language)
+    /// <summary>Selects the voice; returns false when a requested voice is missing and a substitute speaks instead.</summary>
+    private static bool SelectVoice(SpeechSynthesizer synthesizer, string voiceName, string defaultVoice, string language)
     {
         var voices = GetAllVoices(synthesizer).Where(voice => voice.Enabled).ToArray();
         var selected = voices.FirstOrDefault(voice => string.Equals(voice.VoiceInfo.Name, voiceName, StringComparison.OrdinalIgnoreCase))
@@ -45,12 +46,19 @@ public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
         if (selected is not null)
         {
             synthesizer.SelectVoice(selected.VoiceInfo.Name);
+            return string.IsNullOrWhiteSpace(voiceName) ||
+                string.Equals(selected.VoiceInfo.Name, voiceName, StringComparison.OrdinalIgnoreCase);
         }
-        else if (string.IsNullOrWhiteSpace(voiceName) && string.IsNullOrWhiteSpace(defaultVoice) && !string.IsNullOrWhiteSpace(language))
+        if (string.IsNullOrWhiteSpace(voiceName) && string.IsNullOrWhiteSpace(defaultVoice))
         {
-            synthesizer.SelectVoiceByHints(VoiceGender.NotSet, VoiceAge.NotSet, 0, CultureInfo.GetCultureInfo(language));
+            if (!string.IsNullOrWhiteSpace(language))
+            {
+                synthesizer.SelectVoiceByHints(VoiceGender.NotSet, VoiceAge.NotSet, 0, CultureInfo.GetCultureInfo(language));
+            }
+            return true;
         }
         // An unavailable saved/default voice leaves SAPI's installed default selected.
+        return false;
     }
 
     /// <inheritdoc />
@@ -82,7 +90,7 @@ public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
                 using var synthesizer = new SpeechSynthesizer { Rate = request.Rate, Volume = (int)request.Volume };
                 using var stream = new MemoryStream();
                 synthesizer.SetOutputToWaveStream(stream);
-                SelectVoice(synthesizer, request.VoiceName, defaultVoice, request.Language);
+                var requestedVoice = SelectVoice(synthesizer, request.VoiceName, defaultVoice, request.Language);
                 var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                 synthesizer.SpeakCompleted += (_, args) =>
                 {
@@ -96,7 +104,8 @@ public sealed class SystemSpeechProvider(AppSettings settings) : ISpeechProvider
                 await completed.Task.ConfigureAwait(false);
                 cancellationToken.ThrowIfCancellationRequested();
                 synthesizer.SetOutputToNull();
-                return SpeechResult.Success(stream.ToArray());
+                // Substitute-voice audio is not cached, so installing the requested voice later takes effect.
+                return SpeechResult.Success(stream.ToArray(), requestedVoice);
             }, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

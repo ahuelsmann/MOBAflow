@@ -42,23 +42,20 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async Task<SpeechResult> SpeakAsync(string text, CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        BeginCall();
-        try
-        {
-            using var call = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdown.Token);
-            return await SpeakCoreAsync(text, call.Token).ConfigureAwait(false);
-        }
-        finally { EndCall(); }
-    }
+    public Task<SpeechResult> SpeakAsync(string text, CancellationToken cancellationToken = default) =>
+        TrackAsync(token => SpeakCoreAsync(text, token), cancellationToken);
 
     /// <summary>Returns retained WAV bytes for the later Settings size display.</summary>
-    public Task<long> GetCacheSizeAsync(CancellationToken cancellationToken = default) => _cache.GetSizeAsync(cancellationToken);
+    public Task<long> GetCacheSizeAsync(CancellationToken cancellationToken = default) =>
+        TrackAsync(token => _cache.GetSizeAsync(token), cancellationToken);
 
     /// <summary>Clears cached audio; older syntheses cannot refill the cleared generation.</summary>
-    public Task ClearCacheAsync(CancellationToken cancellationToken = default) => _cache.ClearAsync(cancellationToken);
+    public async Task ClearCacheAsync(CancellationToken cancellationToken = default) =>
+        await TrackAsync(async token =>
+        {
+            await _cache.ClearAsync(token).ConfigureAwait(false);
+            return true;
+        }, cancellationToken).ConfigureAwait(false);
 
     /// <summary>Cancels and awaits synthesis and playback. Shutdown is asynchronous only, so callers cannot skip the wait.</summary>
     public ValueTask DisposeAsync() => new(BeginShutdown());
@@ -85,7 +82,9 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
             // of synthesizing again. Only audio that played successfully enters the cache.
             return await _synthesis.RunAsync(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{lookup.Generation}:{key}"),
                 token => SynthesizeSharedAsync(key, prepared, token),
-                result => PlayAsync(result, () => _cache.StoreAsync(key, result.WaveAudio, lookup.Generation, cancellationToken), cancellationToken),
+                result => PlayAsync(result, () => result.IsCacheable
+                    ? _cache.StoreAsync(key, result.WaveAudio, lookup.Generation, cancellationToken)
+                    : Task.CompletedTask, cancellationToken),
                 cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
@@ -131,6 +130,19 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
     {
         try { await operation().ConfigureAwait(false); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { CacheUnavailable(_logger); }
+    }
+
+    /// <summary>Counts the operation for shutdown, which cancels it and waits before dependent services are disposed.</summary>
+    private async Task<T> TrackAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        BeginCall();
+        try
+        {
+            using var call = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdown.Token);
+            return await operation(call.Token).ConfigureAwait(false);
+        }
+        finally { EndCall(); }
     }
 
     private void BeginCall()
