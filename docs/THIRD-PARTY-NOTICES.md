@@ -77,16 +77,16 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `CommunityToolkit.WinUI.Controls.ColorPicker` | `8.2.251219` | `MOBAflow` | WinUI color picker. |
 | `CommunityToolkit.WinUI.Controls.Sizers` | `8.2.251219` | `MOBAflow` | WinUI grid splitters. |
 | `coverlet.collector` | `10.1.0` | `Test` | Test coverage collection. |
-| `Microsoft.AspNetCore.SignalR.Client` | `10.0.12` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
+| `Microsoft.AspNetCore.SignalR.Client` | `10.0.13` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
 | `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.6.0` | `MOBAflow` | Optional Azure App Configuration source. |
 | `Microsoft.CodeAnalysis.CSharp` | `5.9.0` | `Test` | C# parsing for architecture tests. |
-| `Microsoft.Extensions.DependencyInjection` | `10.0.12` | `MutationTest`, `MutationTest/Common`, `Test` | Dependency injection container. |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `10.0.12` | `Backend` | Dependency injection contracts. |
-| `Microsoft.Extensions.Http` | `10.0.12` | `MOBAsmart` | HTTP client registration. |
-| `Microsoft.Extensions.Logging` | `10.0.12` | `MutationTest/Common`, `Test` | Logging services. |
-| `Microsoft.Extensions.Logging.Abstractions` | `10.0.12` | `Backend`, `Common`, `SharedUI`, `Sound` | Logging contracts. |
-| `Microsoft.Extensions.Logging.Console` | `10.0.12` | `Test` | Console logging output. |
-| `Microsoft.Extensions.Options` | `10.0.12` | `Sound` | Typed configuration options. |
+| `Microsoft.Extensions.DependencyInjection` | `10.0.13` | `MutationTest`, `MutationTest/Common`, `Test` | Dependency injection container. |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `10.0.13` | `Backend` | Dependency injection contracts. |
+| `Microsoft.Extensions.Http` | `10.0.13` | `MOBAsmart` | HTTP client registration. |
+| `Microsoft.Extensions.Logging` | `10.0.13` | `MutationTest/Common`, `Test` | Logging services. |
+| `Microsoft.Extensions.Logging.Abstractions` | `10.0.13` | `Backend`, `Common`, `SharedUI`, `Sound` | Logging contracts. |
+| `Microsoft.Extensions.Logging.Console` | `10.0.13` | `Test` | Console logging output. |
+| `Microsoft.Extensions.Options` | `10.0.13` | `Sound` | Typed configuration options. |
 | `Microsoft.Graphics.Win2D` | `1.4.0` | `MOBAflow` | Windows GPU-accelerated 2D rendering. |
 | `Microsoft.Maui.Controls` | `10.0.110` | `MOBAsmart` | Android MAUI UI framework. |
 | `Microsoft.NET.Test.Sdk` | `18.10.1` | `MutationTest`, `MutationTest/Common`, `Test` | Test execution host. |
