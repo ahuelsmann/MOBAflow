@@ -66,7 +66,11 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
         var provider = ResolveProvider();
         if (provider is null) return ReportFailure(SpeechResult.Failure(SpeechFailureKind.Unavailable, "No speech provider is available."));
         var speech = _settings.Speech;
-        var request = new SpeechRequest(text.Normalize(), speech.VoiceName, speech.Language, speech.Rate, speech.Volume);
+        if (!TryNormalize(text, out var normalized))
+        {
+            return ReportFailure(SpeechResult.Failure(SpeechFailureKind.InvalidRequest, "Speech text contains invalid characters."));
+        }
+        var request = new SpeechRequest(normalized, speech.VoiceName, speech.Language, speech.Rate, speech.Volume);
         try
         {
             var prepared = provider.PrepareSynthesis(request);
@@ -91,6 +95,21 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
         catch (Exception ex) when (ex is InvalidOperationException or IOException or ArgumentException or NotSupportedException or System.ComponentModel.Win32Exception or UnauthorizedAccessException or TimeoutException or System.Runtime.InteropServices.COMException)
         {
             return ReportFailure(SpeechResult.Failure(SpeechFailureKind.Failed, "Speech synthesis or playback failed."));
+        }
+    }
+
+    /// <summary>Canonical normalization; user text with an unpaired UTF-16 surrogate cannot be normalized.</summary>
+    private static bool TryNormalize(string text, out string normalized)
+    {
+        try
+        {
+            normalized = text.Normalize();
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            normalized = string.Empty;
+            return false;
         }
     }
 

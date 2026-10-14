@@ -144,6 +144,22 @@ internal sealed class SpeechOutputTests
     }
 
     [Test]
+    public async Task TextThatCannotBeNormalized_ReturnsInvalidRequestWithoutSynthesis()
+    {
+        var provider = new FakeProvider("system-speech");
+        var player = new FakePlayer();
+        var output = new SpeechOutput(new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
+        await using var outputLifetime = output.ConfigureAwait(false);
+        var result = await output.SpeakAsync("Next stop \uD800 Central.").ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.FailureKind, Is.EqualTo(SpeechFailureKind.InvalidRequest));
+            Assert.That(provider.Requests, Is.Empty);
+            Assert.That(player.PlayCount, Is.Zero);
+        }
+    }
+
+    [Test]
     public async Task EmptyTextAndAlreadyCancelled_DoNotSynthesizeOrPlay()
     {
         var provider = new FakeProvider("system-speech");
