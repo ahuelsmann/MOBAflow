@@ -333,6 +333,26 @@ internal sealed class PhotoPathContractTests
     }
 
     [Test]
+    public void FilesystemRootAsStorageRoot_KeepsPathsUnderTheRoot()
+    {
+        var root = Path.GetPathRoot(_root.FullName)!;
+        var photo = Path.Combine(root, "photos", "locomotives", "abc.jpg");
+
+        var built = PhotoPathHelper.TryBuildPhotoUploadFullPath(
+            root, "locomotives", EntityId, ".jpg", out var fullPath, out var relative);
+        var resolved = PhotoPathHelper.TryGetStorageRelativePath(root, photo, out var storageRelative);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(built, Is.True);
+            Assert.That(fullPath, Is.EqualTo(Path.Combine(root, "locomotives", $"{EntityId}.jpg")));
+            Assert.That(relative, Is.EqualTo($"photos/locomotives/{EntityId}.jpg"));
+            Assert.That(resolved, Is.True);
+            Assert.That(storageRelative, Is.EqualTo("photos/locomotives/abc.jpg"));
+        }
+    }
+
+    [Test]
     public void TryBuildPhotoUploadFullPath_RejectsNullStorageRoot()
     {
         var exception = Assert.Throws<ArgumentNullException>(() =>

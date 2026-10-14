@@ -83,8 +83,8 @@ public static class PhotoPathHelper
         if (string.IsNullOrWhiteSpace(fullPath) || !Path.IsPathRooted(fullPath))
             return false;
 
-        var normalizedBaseDir = Path.GetFullPath(baseDir)
-            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        // Keeps the separator of a filesystem root (C:\ or /); "C:" alone would mean the drive's current directory.
+        var normalizedBaseDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(baseDir));
         var normalizedFullPath = Path.GetFullPath(fullPath);
         var candidate = Path.GetRelativePath(normalizedBaseDir, normalizedFullPath);
 
@@ -218,8 +218,8 @@ public static class PhotoPathHelper
 
     private static bool IsPathUnderDirectory(string baseDir, string fullPath)
     {
-        var normalizedBaseDir = Path.GetFullPath(baseDir)
-            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        // Keeps the separator of a filesystem root (C:\ or /); "C:" alone would mean the drive's current directory.
+        var normalizedBaseDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(baseDir));
         var normalizedFullPath = Path.GetFullPath(fullPath);
         var relative = Path.GetRelativePath(normalizedBaseDir, normalizedFullPath);
 
