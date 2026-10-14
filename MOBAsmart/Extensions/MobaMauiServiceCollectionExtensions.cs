@@ -15,7 +15,7 @@ using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Mobile;
 using SharedUI.Service;
-using SharedUI.ViewModel;
+using SharedUI.TrainControl;
 using Sound;
 using Speech.Base;
 using View;

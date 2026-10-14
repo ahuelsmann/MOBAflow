@@ -2,7 +2,7 @@
 namespace Moba.MAUI.View;
 
 using SharedUI.Mobile;
-using SharedUI.ViewModel;
+using SharedUI.TrainControl;
 
 public partial class ControlPage
 {
