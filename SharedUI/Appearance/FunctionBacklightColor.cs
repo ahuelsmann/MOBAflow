@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Display;
+namespace Moba.SharedUI.Appearance;
 
 /// <summary>
 /// Platform-neutral colors for locomotive function buttons (F0-F31).
@@ -17,7 +17,7 @@ public static class FunctionBacklightColor
     }
 
     /// <summary>Resolved function button colors for one visual state.</summary>
-    public readonly record struct Appearance(
+    public readonly record struct ButtonAppearance(
         uint BackgroundArgb,
         uint PrimaryTextArgb,
         uint SecondaryTextArgb);
@@ -31,15 +31,15 @@ public static class FunctionBacklightColor
     /// <summary>
     /// Resolves background and text colors for a function button in the given theme.
     /// </summary>
-    public static Appearance Resolve(bool isOn, string? hexColor, AppearanceTheme theme)
+    public static ButtonAppearance Resolve(bool isOn, string? hexColor, AppearanceTheme theme)
     {
         var accent = ParseHexColor(hexColor);
 
         if (!isOn)
         {
             return theme == AppearanceTheme.Dark
-                ? new Appearance(0xFF2C2C2C, 0xFFFFFFFF, 0xFFB8B8B8)
-                : new Appearance(0xFFEEEEEE, 0xFF212121, 0xFF616161);
+                ? new ButtonAppearance(0xFF2C2C2C, 0xFFFFFFFF, 0xFFB8B8B8)
+                : new ButtonAppearance(0xFFEEEEEE, 0xFF212121, 0xFF616161);
         }
 
         var canvas = theme == AppearanceTheme.Dark
@@ -60,38 +60,16 @@ public static class FunctionBacklightColor
         var primaryText = luminance > 0.58 ? 0xFF121212u : 0xFFFFFFFFu;
         var secondaryText = luminance > 0.58 ? 0xFF3D3D3Du : 0xFFE8E8E8u;
 
-        return new Appearance(
+        return new ButtonAppearance(
             0xFF000000u | ((uint)background.R << 16) | ((uint)background.G << 8) | background.B,
             primaryText,
             secondaryText);
     }
 
-    private static (byte R, byte G, byte B) ParseHexColor(string? hexColor)
-    {
-        if (string.IsNullOrWhiteSpace(hexColor))
-        {
-            return DecomposeRgb(FallbackGrayArgb);
-        }
-
-        var hex = hexColor.TrimStart('#');
-        if (hex.Length == 6)
-        {
-            return (
-                Convert.ToByte(hex[..2], 16),
-                Convert.ToByte(hex.Substring(2, 2), 16),
-                Convert.ToByte(hex.Substring(4, 2), 16));
-        }
-
-        if (hex.Length == 8)
-        {
-            return (
-                Convert.ToByte(hex.Substring(2, 2), 16),
-                Convert.ToByte(hex.Substring(4, 2), 16),
-                Convert.ToByte(hex.Substring(6, 2), 16));
-        }
-
-        return DecomposeRgb(FallbackGrayArgb);
-    }
+    private static (byte R, byte G, byte B) ParseHexColor(string? hexColor) =>
+        HexColor.TryParseRgb(hexColor, out var red, out var green, out var blue)
+            ? (red, green, blue)
+            : DecomposeRgb(FallbackGrayArgb);
 
     private static (byte R, byte G, byte B) DecomposeRgb(uint argb)
     {

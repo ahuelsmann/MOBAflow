@@ -150,6 +150,55 @@ registered as planned, and their production projects are mutated. Document concr
 technical limits. An integration test need not kill a mutant individually; registration
 alone also does not prove effectiveness.
 
+### Next expansion sequence
+
+Continue with small, independently validated increments rather than treating Common's
+aggregate mutation score as solution-wide protection. The registry currently activates
+Domain/Common only; do not relabel another lane until its host and full run are verified.
+
+| Increment | Priority contracts | Required delivery evidence |
+| --- | --- | --- |
+| Close the current Common contracts | Command rejection reasons, deployment ownership and cleanup after copy failure | Focused tests, full Common mutations, unchanged analyzer baseline and explicit residual cases |
+| Activate Backend mutations | Runtime commands, Z21 receive/ordering, discovery cancellation and recording mappings | Dedicated portable host reusing existing fakes, discovered tests, full project baseline and actual CI execution |
+| Activate API mutations | Admission/queue bounds, project isolation, snapshot preservation and bootstrap failure paths | Real registration paths, controlled inputs/owned processes where required, full API baseline and CI execution |
+| Activate SharedUI mutations | Train control, settings, project switches and stale asynchronous responses | Platform-neutral behavior tests through existing runtime interfaces, full SharedUI baseline and CI execution |
+| Expand remaining lanes | Sound/display/rendering first by measured risk; then Windows/Android-specific behavior | Appropriate target/platform runs and explicit limits; never claim .NET mutation protection for ESP32 firmware |
+
+Inspect the latest per-file line/branch report before selecting the next contract.
+Large uncovered areas include train-control/settings ViewModels, runtime API handling,
+Z21 receive/discovery and UDP transport. Prioritize harmful state transitions and failure
+paths, not simply the largest file or easily asserted labels. Classify the new CI/test-host
+mechanisms through the existing Spec Kit/RF-09 governance before implementation.
+
+Every newly activated lane must include its relevant fixtures/helpers and mutate the
+production assembly they exercise. Verify discovery and a complete report before raising
+its measured CI floor. Keep planned lanes visible; do not enable a misleading global
+"all protected" claim while they remain inactive.
+
+### Comparable coverage evidence
+
+Keep portable, Windows and Android measurements separate. A portable combined
+unit/integration result excludes WinUI/Android and is neither a whole-solution result
+nor a unit-only percentage. Reliable unit/integration classification is a separate
+prerequisite for a unit-only metric.
+
+Release coverage requires portable PDB symbols, as the quality pipeline already uses.
+An empty report with zero instrumented lines is an invalid measurement, not 0% coverage.
+For a portable local measurement from the worktree root:
+
+```powershell
+dotnet test Test/Test.csproj -c Release -f net10.0 -p:TargetFrameworks=net10.0 `
+    -p:DebugType=portable -p:DebugSymbols=true `
+    --collect "XPlat Code Coverage" --settings Test/coverlet.runsettings `
+    --results-directory artifacts/coverage-portable
+```
+
+Record commit/source scope, target, test discovery/skips, measured lines/branches and
+symbol/exclusion settings in the delivery evidence. Keep per-project results alongside
+the aggregate. Missing Sonar coverage metrics are unavailable data, not zero; use the
+validated local/CI coverage artifact until report import is verified. Treat changes to
+Sonar reporting as a separate CI work item, not permission for local Sonar code analysis.
+
 ## Targets and regression protection
 
 Original Common milestones: 60%, 70%, 80%, measured in full runs. At the baseline

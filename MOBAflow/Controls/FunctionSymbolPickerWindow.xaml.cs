@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls;
 
+using Moba.SharedUI.Appearance;
+
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -208,12 +210,7 @@ internal sealed partial class FunctionSymbolPickerWindow : Window
     private static bool TryParseHexColor(string? value, out Color color)
     {
         color = default;
-        if (string.IsNullOrWhiteSpace(value) || value.Length != 7 || value[0] != '#')
-            return false;
-
-        if (!byte.TryParse(value.AsSpan(1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var r) ||
-            !byte.TryParse(value.AsSpan(3, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var g) ||
-            !byte.TryParse(value.AsSpan(5, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var b))
+        if (!HexColor.IsStoredForm(value) || !HexColor.TryParseRgb(value, out var r, out var g, out var b))
             return false;
 
         color = Color.FromArgb(255, r, g, b);

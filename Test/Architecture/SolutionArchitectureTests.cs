@@ -32,6 +32,8 @@ internal sealed partial class SolutionArchitectureTests
         "CommunityToolkit.Maui",
     ];
 
+    private static readonly string[] CommonPresentationNamespaces = ["Moba.Common.Display"];
+
     /// <summary>The only project allowed to use each platform UI framework.</summary>
     private static readonly Dictionary<string, string> UiFrameworkOwners = new(StringComparer.Ordinal)
     {
@@ -155,6 +157,23 @@ internal sealed partial class SolutionArchitectureTests
             violations,
             Is.Empty,
             "Namespace rule: every namespace declared in a project starts with that project's root namespace. "
+            + "Violations: " + string.Join("; ", violations));
+    }
+
+    [Test]
+    public void Common_DeclaresNoPresentationNamespaces()
+    {
+        var common = LoadSolutionProjects().Single(project => project.Name == "Common");
+        var violations = ReadNamespaceDeclarations(common)
+            .Where(declaration => CommonPresentationNamespaces.Any(
+                presentation => IsBelow(declaration.Namespace, presentation)))
+            .Select(declaration => $"{declaration.File}: namespace {declaration.Namespace}")
+            .ToList();
+
+        Assert.That(
+            violations,
+            Is.Empty,
+            "Common rule: presentation helpers live in SharedUI or the host that uses them, not in Common. "
             + "Violations: " + string.Join("; ", violations));
     }
 

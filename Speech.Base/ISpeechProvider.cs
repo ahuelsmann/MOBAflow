@@ -12,6 +12,8 @@ public interface ISpeechProvider
     bool IsLocal { get; }
     /// <summary>Returns current voices, option support and availability.</summary>
     Task<SpeechCapabilities> GetCapabilitiesAsync(CancellationToken cancellationToken = default);
+    /// <summary>Captures non-secret options and synthesis before an asynchronous cache lookup.</summary>
+    PreparedSpeechSynthesis PrepareSynthesis(SpeechRequest request);
     /// <summary>Synthesizes audio or returns a display-safe failure. Caller cancellation propagates.</summary>
     Task<SpeechResult> SynthesizeAsync(SpeechRequest request, CancellationToken cancellationToken = default);
 }

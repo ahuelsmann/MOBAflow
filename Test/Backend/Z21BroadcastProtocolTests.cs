@@ -4,7 +4,6 @@ namespace Moba.Test.Backend;
 
 using Moba.Backend.Model;
 using Moba.Backend.Protocol;
-using Moba.Common.Z21;
 
 /// <summary>
 /// Verifies Z21 LAN broadcast prerequisites documented in docs/z21-lan-protokoll.pdf v1.13.
@@ -12,16 +11,43 @@ using Moba.Common.Z21;
 [TestFixture]
 internal sealed class Z21BroadcastProtocolTests
 {
+    /// <summary>Max subscribed locomotive addresses per client without the all-loco-info flag (protocol v1.13).</summary>
+    private const int MaxSubscribedLocomotiveAddresses = 16;
+
+    // Independent protocol v1.13 literals, so a changed or dropped production flag fails these tests.
+    private const uint SpecDrivingFlag = 0x0000_0001;
+    private const uint SpecRbusFlag = 0x0000_0002;
+    private const uint SpecSystemStateFlag = 0x0000_0100;
+    private const uint SpecAllLocoInfoFlag = 0x0001_0000;
+    private const uint SpecMobaFlowBasicFlags = 0x0000_0103;
+
+    /// <summary>LAN_SET_BROADCASTFLAGS: length 8, header 0x50, flags 0x00000103 little-endian.</summary>
+    private static readonly byte[] SpecBasicBroadcastFlagsPacket = [0x08, 0x00, 0x50, 0x00, 0x03, 0x01, 0x00, 0x00];
+
+    [Test]
+    public void BroadcastFlags_MatchProtocolSpecificationLiterals()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Z21Protocol.BroadcastFlags.Driving, Is.EqualTo(SpecDrivingFlag));
+            Assert.That(Z21Protocol.BroadcastFlags.Rbus, Is.EqualTo(SpecRbusFlag));
+            Assert.That(Z21Protocol.BroadcastFlags.SystemState, Is.EqualTo(SpecSystemStateFlag));
+            Assert.That(Z21Protocol.BroadcastFlags.AllLocoInfo, Is.EqualTo(SpecAllLocoInfoFlag));
+            Assert.That(Z21Protocol.BroadcastFlags.Basic, Is.EqualTo(SpecMobaFlowBasicFlags),
+                "MOBAflow basic subscription is driving + R-Bus + system state, without all-loco-info.");
+        }
+    }
+
     [Test]
     public void MobaFlowBasicBroadcastFlags_IncludesDrivingButNotAllLocoInfo()
     {
         Assert.Multiple(() =>
         {
             Assert.That(
-                Z21BroadcastRequirements.MobaFlowBasicBroadcastFlags & Z21BroadcastRequirements.DrivingBroadcastFlag,
+                Z21Protocol.BroadcastFlags.Basic & Z21Protocol.BroadcastFlags.Driving,
                 Is.Not.Zero);
             Assert.That(
-                Z21BroadcastRequirements.MobaFlowBasicBroadcastFlags & Z21BroadcastRequirements.AllLocoInfoBroadcastFlag,
+                Z21Protocol.BroadcastFlags.Basic & Z21Protocol.BroadcastFlags.AllLocoInfo,
                 Is.Zero);
         });
     }
@@ -30,17 +56,16 @@ internal sealed class Z21BroadcastProtocolTests
     public void BuildBroadcastFlagsBasic_MatchesMobaFlowBasicFlags()
     {
         var packet = Z21Command.BuildBroadcastFlagsBasic();
-        var flags = BitConverter.ToUInt32(packet, 4);
 
-        Assert.That(flags, Is.EqualTo(Z21BroadcastRequirements.MobaFlowBasicBroadcastFlags));
+        Assert.That(packet, Is.EqualTo(SpecBasicBroadcastFlagsPacket));
     }
 
     [Test]
     public void LocoInfoBroadcast_RequiresPerAddressSubscription_UnlessAllLocoInfoFlag()
     {
         var simulator = new Z21BroadcastSimulator();
-        simulator.SetClientBroadcastFlags("clientA", Z21BroadcastRequirements.DrivingBroadcastFlag);
-        simulator.SetClientBroadcastFlags("clientB", Z21BroadcastRequirements.DrivingBroadcastFlag);
+        simulator.SetClientBroadcastFlags("clientA", Z21Protocol.BroadcastFlags.Driving);
+        simulator.SetClientBroadcastFlags("clientB", Z21Protocol.BroadcastFlags.Driving);
 
         simulator.SubscribeLocomotive("clientA", address: 3);
         simulator.PublishLocoDriveChanged(address: 3, speed: 40, forward: true);
@@ -56,7 +81,7 @@ internal sealed class Z21BroadcastProtocolTests
         var simulator = new Z21BroadcastSimulator();
         simulator.SetClientBroadcastFlags(
             "clientB",
-            Z21BroadcastRequirements.DrivingBroadcastFlag | Z21BroadcastRequirements.AllLocoInfoBroadcastFlag);
+            Z21Protocol.BroadcastFlags.Driving | Z21Protocol.BroadcastFlags.AllLocoInfo);
 
         simulator.PublishLocoDriveChanged(address: 7, speed: 10, forward: false);
 
@@ -67,15 +92,15 @@ internal sealed class Z21BroadcastProtocolTests
     public void LocoSubscription_IsLimitedToSixteenAddresses()
     {
         var simulator = new Z21BroadcastSimulator();
-        simulator.SetClientBroadcastFlags("clientA", Z21BroadcastRequirements.DrivingBroadcastFlag);
+        simulator.SetClientBroadcastFlags("clientA", Z21Protocol.BroadcastFlags.Driving);
 
-        for (var address = 1; address <= Z21BroadcastRequirements.MaxSubscribedLocomotiveAddresses; address++)
+        for (var address = 1; address <= MaxSubscribedLocomotiveAddresses; address++)
         {
             Assert.That(simulator.SubscribeLocomotive("clientA", address), Is.True);
         }
 
         Assert.That(
-            simulator.SubscribeLocomotive("clientA", Z21BroadcastRequirements.MaxSubscribedLocomotiveAddresses + 1),
+            simulator.SubscribeLocomotive("clientA", MaxSubscribedLocomotiveAddresses + 1),
             Is.False);
     }
 
@@ -83,7 +108,7 @@ internal sealed class Z21BroadcastProtocolTests
     public void TurnoutInfoBroadcast_ReachesClientsWithDrivingFlag()
     {
         var simulator = new Z21BroadcastSimulator();
-        simulator.SetClientBroadcastFlags("clientA", Z21BroadcastRequirements.DrivingBroadcastFlag);
+        simulator.SetClientBroadcastFlags("clientA", Z21Protocol.BroadcastFlags.Driving);
         simulator.SetClientBroadcastFlags("clientB", 0);
 
         simulator.PublishTurnoutChanged(functionAddress: 4, outputPosition: true);
@@ -157,7 +182,7 @@ internal sealed class Z21BroadcastProtocolTests
                 _locoSubscriptions[clientId] = set;
             }
 
-            if (set.Count >= Z21BroadcastRequirements.MaxSubscribedLocomotiveAddresses)
+            if (set.Count >= MaxSubscribedLocomotiveAddresses)
             {
                 return false;
             }
@@ -173,12 +198,12 @@ internal sealed class Z21BroadcastProtocolTests
 
             foreach (var (clientId, flags) in _clientFlags)
             {
-                if ((flags & Z21BroadcastRequirements.DrivingBroadcastFlag) == 0)
+                if ((flags & Z21Protocol.BroadcastFlags.Driving) == 0)
                 {
                     continue;
                 }
 
-                var receivesAll = (flags & Z21BroadcastRequirements.AllLocoInfoBroadcastFlag) != 0;
+                var receivesAll = (flags & Z21Protocol.BroadcastFlags.AllLocoInfo) != 0;
                 var subscribed = _locoSubscriptions.TryGetValue(clientId, out var set) && set.Contains(address);
                 if (!receivesAll && !subscribed)
                 {
@@ -196,7 +221,7 @@ internal sealed class Z21BroadcastProtocolTests
 
             foreach (var (clientId, flags) in _clientFlags)
             {
-                if ((flags & Z21BroadcastRequirements.DrivingBroadcastFlag) == 0)
+                if ((flags & Z21Protocol.BroadcastFlags.Driving) == 0)
                 {
                     continue;
                 }

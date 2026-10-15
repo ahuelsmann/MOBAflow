@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Test.Common;
+namespace Moba.Test.SharedUI;
 
-using Moba.Common.Display;
+using Moba.SharedUI.Appearance;
 
 /// <summary>
 /// Tests for function button appearance used by MOBAsmart and MOBAflow.
@@ -99,8 +99,8 @@ internal sealed class FunctionBacklightColorTests
         [Values] FunctionBacklightColor.AppearanceTheme theme)
     {
         var expected = theme == FunctionBacklightColor.AppearanceTheme.Dark
-            ? new FunctionBacklightColor.Appearance(0xFF5A5A5A, 0xFFFFFFFF, 0xFFE8E8E8)
-            : new FunctionBacklightColor.Appearance(0xFFC9C9C9, 0xFF121212, 0xFF3D3D3D);
+            ? new FunctionBacklightColor.ButtonAppearance(0xFF5A5A5A, 0xFFFFFFFF, 0xFFE8E8E8)
+            : new FunctionBacklightColor.ButtonAppearance(0xFFC9C9C9, 0xFF121212, 0xFF3D3D3D);
 
         using (Assert.EnterMultipleScope())
         {
@@ -121,7 +121,7 @@ internal sealed class FunctionBacklightColorTests
         string accent, FunctionBacklightColor.AppearanceTheme theme,
         uint background, uint primaryText, uint secondaryText)
     {
-        var expected = new FunctionBacklightColor.Appearance(background, primaryText, secondaryText);
+        var expected = new FunctionBacklightColor.ButtonAppearance(background, primaryText, secondaryText);
 
         Assert.That(FunctionBacklightColor.Resolve(true, accent, theme), Is.EqualTo(expected));
     }
@@ -138,6 +138,16 @@ internal sealed class FunctionBacklightColorTests
             Assert.That(FunctionBacklightColor.Resolve(true, "#FF12AB34", theme), Is.EqualTo(expected));
             Assert.That(FunctionBacklightColor.ToArgb(true, "#12AB34", theme), Is.EqualTo(expected.BackgroundArgb));
         }
+    }
+
+    [TestCase("#ZZZZZZ")]
+    [TestCase("#12AB3G")]
+    [TestCase("GG12AB34")]
+    public void Resolve_FallsBackToGrayForInvalidHexDigits(string accent)
+    {
+        var gray = FunctionBacklightColor.Resolve(true, "#808080", FunctionBacklightColor.AppearanceTheme.Dark);
+
+        Assert.That(FunctionBacklightColor.Resolve(true, accent, FunctionBacklightColor.AppearanceTheme.Dark), Is.EqualTo(gray));
     }
 
     private static double GetLuminance(uint argb)

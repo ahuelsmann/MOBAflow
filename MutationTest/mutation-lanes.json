@@ -3,6 +3,7 @@
     {
       "name": "domain",
       "status": "active",
+      "stryker-config": "MutationTest/stryker-config.json",
       "test-directories": ["Test/Domain"],
       "test-files": [
         "Test/Unit/DomainDefaultsTests.cs",
@@ -25,6 +26,7 @@
     {
       "name": "common",
       "status": "active",
+      "stryker-config": "MutationTest/stryker-common-config.json",
       "test-directories": ["Test/Common"],
       "test-files": [
         "Test/Backend/MultiplexerCommandResolverTests.cs",
@@ -96,9 +98,12 @@
     },
     {
       "name": "speech-base",
-      "status": "planned",
+      "status": "active",
+      "stryker-config": "MutationTest/stryker-speech-base-config.json",
       "test-directories": [],
       "test-files": [
+        "Test/Speech/AudioCacheTests.cs",
+        "Test/Speech/CachedSpeechOutputTests.cs",
         "Test/Speech/SpeechOutputTests.cs",
         "Test/Speech/WaveAudioTests.cs"
       ],
