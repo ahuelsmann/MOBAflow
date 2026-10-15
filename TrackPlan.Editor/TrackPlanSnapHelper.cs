@@ -23,65 +23,97 @@ public sealed class TrackPlanSnapHelper(SegmentPlacementGeometry geometry)
         SnapResult? best = null;
         var bestDistance = double.MaxValue;
         var rigidGroup = movingGroup != null && movingGroup.Count > 1 && movingGroup.Contains(movingSegment.Segment.No);
-        var movingPorts = _geometry.GetAllPortWorldPositions(movingSegment);
 
-        foreach (var (sourcePort, sourceX, sourceY, _) in movingPorts)
+        foreach (var (sourcePort, sourceX, sourceY, _) in _geometry.GetAllPortWorldPositions(movingSegment))
         {
             if (IsPortConnected(connections, movingSegment.Segment.No, sourcePort))
                 continue;
 
-            foreach (var other in allSegments)
+            foreach (var target in GetOpenTargetPorts(movingSegment, allSegments, connections, excludeSegmentId, movingGroup))
             {
-                if (other.Segment.No == movingSegment.Segment.No || other.Segment.No == excludeSegmentId)
+                var distance = Distance(sourceX, sourceY, target.X, target.Y);
+                if (distance >= distanceThresholdMm || distance >= bestDistance)
                     continue;
-                if (movingGroup != null && movingGroup.Contains(other.Segment.No))
+
+                var candidate = TryAlign(movingSegment, sourcePort, target, rigidGroup, rigidGroupAngleToleranceDegrees);
+                if (candidate == null)
                     continue;
 
-                foreach (var (targetPort, targetX, targetY, _) in _geometry.GetAllPortWorldPositions(other))
-                {
-                    if (IsPortConnected(connections, other.Segment.No, targetPort))
-                        continue;
-
-                    var deltaX = targetX - sourceX;
-                    var deltaY = targetY - sourceY;
-                    var distance = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-                    if (distance >= distanceThresholdMm || distance >= bestDistance)
-                        continue;
-
-                    var desiredOutwardAngle = NormalizeAngle(_geometry.GetPortOutwardWorldAngleDegrees(other, targetPort) + 180);
-                    PlacedSegment candidate;
-
-                    if (rigidGroup)
-                    {
-                        var currentOutwardAngle = _geometry.GetPortOutwardWorldAngleDegrees(movingSegment, sourcePort);
-                        if (GetAngleDeltaDegrees(currentOutwardAngle, desiredOutwardAngle) > rigidGroupAngleToleranceDegrees)
-                            continue;
-
-                        var (translatedX, translatedY, translatedRotation) = _geometry.TranslatePlacementForPort(
-                            movingSegment,
-                            sourcePort,
-                            targetX,
-                            targetY);
-                        candidate = movingSegment.WithPosition(translatedX, translatedY, translatedRotation);
-                    }
-                    else
-                    {
-                        var (originX, originY, rotationDegrees) = _geometry.GetPlacementForPort(
-                            movingSegment.Segment,
-                            sourcePort,
-                            targetX,
-                            targetY,
-                            desiredOutwardAngle);
-                        candidate = movingSegment.WithPosition(originX, originY, rotationDegrees);
-                    }
-
-                    bestDistance = distance;
-                    best = new SnapResult(candidate, sourcePort, other.Segment.No, targetPort, distance);
-                }
+                bestDistance = distance;
+                best = new SnapResult(candidate, sourcePort, target.Segment.Segment.No, target.Port, distance);
             }
         }
 
         return best;
+    }
+
+    private sealed record SnapTarget(PlacedSegment Segment, string Port, double X, double Y);
+
+    private IEnumerable<SnapTarget> GetOpenTargetPorts(
+        PlacedSegment movingSegment,
+        IReadOnlyList<PlacedSegment> allSegments,
+        IReadOnlyList<PortConnection> connections,
+        Guid? excludeSegmentId,
+        IReadOnlySet<Guid>? movingGroup)
+    {
+        foreach (var other in allSegments)
+        {
+            if (other.Segment.No == movingSegment.Segment.No
+                || other.Segment.No == excludeSegmentId
+                || (movingGroup != null && movingGroup.Contains(other.Segment.No)))
+            {
+                continue;
+            }
+
+            foreach (var (targetPort, targetX, targetY, _) in _geometry.GetAllPortWorldPositions(other))
+            {
+                if (!IsPortConnected(connections, other.Segment.No, targetPort))
+                    yield return new SnapTarget(other, targetPort, targetX, targetY);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Placement of the moving segment that joins <paramref name="sourcePort"/> to the target port, or <c>null</c>
+    /// when a rigid group cannot be translated onto the target without rotating.
+    /// </summary>
+    private PlacedSegment? TryAlign(
+        PlacedSegment movingSegment,
+        string sourcePort,
+        SnapTarget target,
+        bool rigidGroup,
+        double rigidGroupAngleToleranceDegrees)
+    {
+        var desiredOutwardAngle = NormalizeAngle(_geometry.GetPortOutwardWorldAngleDegrees(target.Segment, target.Port) + 180);
+
+        if (rigidGroup)
+        {
+            var currentOutwardAngle = _geometry.GetPortOutwardWorldAngleDegrees(movingSegment, sourcePort);
+            if (GetAngleDeltaDegrees(currentOutwardAngle, desiredOutwardAngle) > rigidGroupAngleToleranceDegrees)
+                return null;
+
+            var (translatedX, translatedY, translatedRotation) = _geometry.TranslatePlacementForPort(
+                movingSegment,
+                sourcePort,
+                target.X,
+                target.Y);
+            return movingSegment.WithPosition(translatedX, translatedY, translatedRotation);
+        }
+
+        var (originX, originY, rotationDegrees) = _geometry.GetPlacementForPort(
+            movingSegment.Segment,
+            sourcePort,
+            target.X,
+            target.Y,
+            desiredOutwardAngle);
+        return movingSegment.WithPosition(originX, originY, rotationDegrees);
+    }
+
+    private static double Distance(double x1, double y1, double x2, double y2)
+    {
+        var deltaX = x2 - x1;
+        var deltaY = y2 - y1;
+        return Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
     }
 
     private static bool IsPortConnected(IReadOnlyList<PortConnection> connections, Guid segmentId, string portName)
