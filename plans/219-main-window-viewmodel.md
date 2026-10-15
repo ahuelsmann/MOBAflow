@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slices 1, 2a, 2b, 2c and 3a integrated through #248, #257, #264, #272 and #282; slice 3b (Journeys/cities) implemented with validation tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15, verified against github/main on 2026-10-15.
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main d4d3d2b1d4f263a5b9dfed2d1585d9b4b3c5c136 on 2026-10-15.
 
 ## Purpose and scope
 
@@ -55,8 +55,8 @@ observations, not coverage or quality metrics. The Settings, rolling-stock and j
 | Counter, Diagnostics, HealthStatus, RestApiStatus and SyncDiagnostics partials | Focused counter/diagnostic/status projections using existing runtime query contracts and EventBus | Counter errors and reset result, filters, health/API status, sync state and project isolation |
 | [LayoutPanels](../SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs), 337 lines; [SettingsPageViewModel.Layout](../SharedUI/ViewModel/SettingsPageViewModel.Layout.cs), extracted from the settings layout partial; [GridColumnResizeBehavior](../MOBAflow/Behavior/GridColumnResizeBehavior.cs):474 onwards | One layout persistence service; reuse LayoutColumnWidthsViewModel | Panel expansion, section usage/order, setting keys, star-column values and intentionally fixed pixels |
 
-[MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs) constructs
-WorkflowLibraryViewModel and subscribes to session/runtime/status/photo events. It also owns project
+[MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs) shares the host-owned
+WorkflowLibraryViewModel through StationsPage and subscribes to session/runtime/status/photo events. It also owns project
 CRUD and shutdown coordination outside the named extraction partials. Journey/city state is extracted in 3b.
 [MobaWinUiServiceCollectionExtensions](../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs)
 registers session/context aliases and constructs the shell. The extraction must update this actual
@@ -133,7 +133,7 @@ Refresh the base and update this plan from evidence after each integrated slice.
      train/vehicle selection, search, train CRUD, composition insertion/removal/reordering and persisted
      panel expansion. TrainsPage receives this focused DI instance, sharing the existing locomotive
      and wagon editors, session and column widths. The Train partial and its shell selection/layout
-     members are removed; the runtime refresh helper remains in the shell for station/journey consumers.
+     members are removed; the remaining station/journey runtime refresh helper is removed in 3b below.
      Session-owned train property tracking is preserved. Tests cover vehicle references, ordering and
      direction, duplicate prevention, project replacement, callback disposal, auto-save suppression,
      layout persistence and shared host identity. The maintainer reported the UI check as unremarkable
@@ -193,6 +193,31 @@ Rollback is a revert to the preceding validated slice; do not retain a parallel 
 | Connect/disconnect, track power, feedback simulation, raw turnout and operating-state commands | Classify and extract focused control/status collaborators in slice 5; operator mutations keep the injected gateway, lifecycle stays with the host/session. |
 | SetSignalAspect and ordered ApplySignalBoxElementChange | Signal-box editor collaborator in slice 6's final shell audit. Preserve configuration-update/command/save order and the gateway; no signal behavior changes in 3b. |
 | Remaining page layout and GridColumnResizeBehavior shell lookup | Slice 6's single persistence boundary; keep serialized keys and star-column semantics. |
+
+## Slice 3b local validation (2026-10-15)
+
+The source is synchronized with main `d4d3d2b1d4f263a5b9dfed2d1585d9b4b3c5c136`.
+Both full Release test graphs were rebuilt with `-m:1 -t:Rebuild -p:MobaAnalyzerGate=true
+-p:UseSharedCompilation=false`; the Windows graph includes the active WinUI pages and normal
+MOBApi build/copy dependency. The exact analyzer gates match 3,333 diagnostics in 1,151 groups
+(portable) and 2,493 in 953 groups (Windows). The portable baseline only removes or decreases
+diagnostics made obsolete by extraction; no new diagnostic group or increased count is accepted.
+
+After all builds completed, full Release suites ran sequentially with `--no-build --no-restore`:
+2,694 portable tests passed with one counted bundled-photo skip; 2,809 Windows tests passed with
+no counted skips. The explicit sustained-refresh test is outside the ordinary suites. Fifteen
+new page regressions extend the existing JourneyCounterProjectionTests fixture; actual-host DI
+also verifies shared editor/session/layout identity, the existing reset-all counter command,
+injected journey-reset routing and shutdown unsubscription. Documentation links (469), instruction
+consistency, secrets, diff and line-ending checks pass. The implementing draft PR owns current
+remote CI/Sonar evidence; local checks do not establish a remote gate result.
+
+The installed SDK's workload set 10.0.402 has missing manifests (`MSB4242`). Portable/Windows
+checks used the process-local `MSBuildEnableWorkloadResolver=false` property because those graphs
+need no Android workload; analyzer and XAML gates remain enabled. The Android Release build is
+blocked by that missing workload installation, so Android compilation and its analyzer gate are
+not claimed. No machine-wide repair/install was performed. Manual Light/Dark/High Contrast,
+accessibility and app/device checks remain open; no application or hardware was started.
 
 ## Validation strategy
 
