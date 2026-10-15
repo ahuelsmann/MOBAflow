@@ -525,7 +525,8 @@ internal sealed class AudioCacheTests
             var lookup = cache.TryGetAsync(Key("locked until retries expire"), cancellation.Token);
             try
             {
-                await Assert.ThrowsAsync<IOException>(() => lookup.WaitAsync(TimeSpan.FromSeconds(10))).ConfigureAwait(false);
+                // Real file-lock retries need scheduling/I/O headroom in the full suite; this bounds hangs, not retry latency.
+                await Assert.ThrowsAsync<IOException>(() => lookup.WaitAsync(TimeSpan.FromSeconds(30))).ConfigureAwait(false);
             }
             finally
             {
