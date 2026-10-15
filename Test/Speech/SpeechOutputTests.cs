@@ -171,8 +171,11 @@ internal sealed class SpeechOutputTests
         var output = new SpeechOutput(new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         await using var outputLifetime = output.ConfigureAwait(false);
         var result = await output.SpeakAsync(" ").ConfigureAwait(false);
-        Assert.That(result.FailureKind, Is.EqualTo(SpeechFailureKind.InvalidRequest));
-        Assert.That(result.Reason, Is.Not.Empty);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.FailureKind, Is.EqualTo(SpeechFailureKind.InvalidRequest));
+            Assert.That(result.Reason, Is.Not.Empty);
+        }
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync().ConfigureAwait(false);
         await Assert.CatchAsync<OperationCanceledException>(() => output.SpeakAsync("Test", cancellation.Token)).ConfigureAwait(false);
