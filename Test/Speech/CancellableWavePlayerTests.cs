@@ -101,7 +101,7 @@ internal sealed partial class CancellableWavePlayerTests
             await oldCancellation.CancelAsync().ConfigureAwait(false);
             await newCancellation.CancelAsync().ConfigureAwait(false);
             try { await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false); }
-            catch (OperationCanceledException) { }
+            catch (Exception ex) when (ex is OperationCanceledException or Moba.Speech.Base.WavePlaybackInterruptedException) { }
         }
     }
 
