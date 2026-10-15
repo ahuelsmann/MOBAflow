@@ -65,12 +65,12 @@ public sealed class WorkflowEffectPlanner : IWorkflowEffectPlanner
         if (action.Announcement == null)
             return Invalid("announcement", "Announcement action requires an announcement payload.");
 
+        // Station, index and rendered text exist only in the owning invocation; the handler builds that request.
         return Valid(
             action.Type,
             WorkflowEffectCategory.SpeechOutput,
             "Speak the configured or journey-provided announcement.",
-            "audio-output:default",
-            new WorkflowAnnouncementEffectRequest(action.Id, action.Name, action.Announcement.Message));
+            "audio-output:default");
     }
 
     private static WorkflowActionPlan PlanScript(WorkflowAction action)

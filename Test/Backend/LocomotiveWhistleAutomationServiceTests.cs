@@ -8,50 +8,83 @@ using global::Moba.Common.Events;
 using global::Moba.Domain;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
-using Moq;
+using Moba.Test.Helpers;
+using Moba.Test.Mocks;
+using Moba.Test.TestData;
+using System.Threading.Channels;
 
 internal sealed class LocomotiveWhistleAutomationServiceTests
 {
     [Test]
     public async Task CounterFilteredActivation_StillReachesRawWhistleConsumer()
     {
-        var z21 = new Mock<IZ21>();
-        using var counters = new InPortCounterService(z21.Object, new AppSettings
-        {
-            Counter = { CountOfFeedbackPoints = 1, UseTimerFilter = true, TimerIntervalSeconds = 3600 }
-        });
+        // Both consumers are fed by the real receive path: R-Bus packets -> Z21 -> counter and shared bus.
+        var clock = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
         var bus = new EventBus(NullLogger<EventBus>.Instance);
-        var onCalls = 0;
-        var offCalls = 0;
-        var offs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var gateway = new Mock<ILocomotiveFunctionCommandGateway>();
-        gateway.SetupGet(value => value.IsConnected).Returns(true);
-        gateway.Setup(value => value.SetFunctionAsync(12, 2, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .Returns<int, int, bool, CancellationToken>((_, _, on, _) =>
+        using var udp = new FakeUdpClientWrapper();
+        var z21 = new Z21(udp, bus);
+        try
+        {
+            using var counters = new InPortCounterService(z21, new AppSettings
             {
-                if (on) Interlocked.Increment(ref onCalls);
-                else if (Interlocked.Increment(ref offCalls) == 1) offs.TrySetResult();
-                return Task.CompletedTask;
+                Counter = { CountOfFeedbackPoints = 5, UseTimerFilter = true, TimerIntervalSeconds = 3600 }
+            }, clock);
+            var counted = 0;
+            counters.Counted += (_, _) => Interlocked.Increment(ref counted);
+            var gateway = new RecordingGateway();
+            using var whistles = new LocomotiveWhistleAutomationService(bus, gateway,
+                NullLogger<LocomotiveWhistleAutomationService>.Instance, clock);
+            var locomotive = new Locomotive { DigitalAddress = 12 };
+            whistles.Activate(new Project
+            {
+                Locomotives = [locomotive],
+                LocomotiveWhistleRules = [new() { LocomotiveId = locomotive.Id, InPort = 5, FunctionIndex = 2, ActiveDurationMilliseconds = 1000 }]
             });
-        using var whistles = new LocomotiveWhistleAutomationService(bus, gateway.Object,
-            NullLogger<LocomotiveWhistleAutomationService>.Instance);
-        var locomotive = new Locomotive { DigitalAddress = 12 };
-        whistles.Activate(new Project
+
+            // Subscribed after the whistle service, so a recorded event has already been handed to it.
+            var rawFeedback = Channel.CreateUnbounded<int>();
+            bus.Subscribe<FeedbackReceivedEvent>(feedback => rawFeedback.Writer.TryWrite(feedback.InPort));
+            var released = Z21Packets.RBusFeedbackInPort5.ToArray();
+            released[5] = 0;
+            (int, int, bool) on = (12, 2, true);
+            (int, int, bool) off = (12, 2, false);
+
+            udp.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
+            var firstRaw = await NextAsync(rawFeedback.Reader).ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(firstRaw, Is.EqualTo(5));
+                Assert.That(gateway.Commands, Is.EqualTo(new[] { on }));
+            }
+            clock.Advance(TimeSpan.FromSeconds(1));
+            Assert.That(gateway.Commands, Is.EqualTo(new[] { on, off }));
+
+            udp.RaiseReceived(released);
+            udp.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
+            var secondRaw = await NextAsync(rawFeedback.Reader).ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(secondRaw, Is.EqualTo(5));
+                Assert.That(gateway.Commands, Is.EqualTo(new[] { on, off, on }));
+            }
+            clock.Advance(TimeSpan.FromSeconds(1));
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(gateway.Commands, Is.EqualTo(new[] { on, off, on, off }));
+                Assert.That(counters.GetSnapshot().Single(counter => counter.InPort == 5).Count, Is.EqualTo(1UL));
+                Assert.That(counted, Is.EqualTo(1));
+                Assert.That(rawFeedback.Reader.TryRead(out _), Is.False);
+            }
+        }
+        finally
         {
-            Locomotives = [locomotive],
-            LocomotiveWhistleRules = [new() { LocomotiveId = locomotive.Id, InPort = 1, FunctionIndex = 2, ActiveDurationMilliseconds = 1 }]
-        });
-        InPortCounterServiceTests.Raise(z21, 1);
-        InPortCounterServiceTests.Raise(z21, 1);
-        bus.Publish(new FeedbackReceivedEvent(1));
-        await offs.Task.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(counters.GetSnapshot().Single().Count, Is.EqualTo(1UL));
-            Assert.That(onCalls, Is.EqualTo(1));
-            Assert.That(offCalls, Is.EqualTo(1));
+            await z21.DisposeAsync().ConfigureAwait(false);
         }
     }
+
+    private static Task<int> NextAsync(ChannelReader<int> reader) =>
+        reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5));
 
     [Test]
     public async Task HandleFeedbackAsync_SendsDelayedMomentaryFunction()

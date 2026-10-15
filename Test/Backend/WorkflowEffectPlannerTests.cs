@@ -87,6 +87,8 @@ internal sealed class WorkflowEffectPlannerTests
             Assert.That(result.Effect.Resources[0].Access, Is.EqualTo(WorkflowResourceAccess.ExclusiveWrite));
             if (action.Type == ActionType.ChangeJourneyStop)
                 Assert.That(result.Request, Is.Null, "Stop transitions stay in shared domain logic.");
+            else if (action.Type == ActionType.Announcement)
+                Assert.That(result.Request, Is.Null, "Announcement requests need the invocation's station context.");
             else
                 Assert.That(result.Request!.ActionId, Is.EqualTo(action.Id));
         });

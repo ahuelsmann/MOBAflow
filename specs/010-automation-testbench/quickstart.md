@@ -29,6 +29,27 @@ applied (CA1062 12 to 8, CA1848 12 to 3, CA1873 group removed); the guard then m
 This is an analyzer/compile check, not a Release AAB, device or hardware acceptance.
 Current-head CI/Sonar evidence is recorded in the PR after execution; old green checks are not reused.
 
+## Review corrections (2026-10-15)
+
+An independent review of `6dad974e` found that the filtered-counter whistle regression drove a mocked `IZ21` and published
+a separate bus event by hand, so it did not connect the counter, raw feedback and whistle. It now feeds two real R-Bus
+activations (with a release between them) through `FakeUdpClientWrapper` and `Z21` into one shared `EventBus`.
+`InPortCounterService` and `LocomotiveWhistleAutomationService` share a `ManualTimeProvider`: the count stays 1 under the
+timer filter, both raw `FeedbackReceivedEvent`s reach the bus, and each activation produces its own whistle on/off pair.
+The planner no longer attaches a context-free announcement request; announcements, like journey-stop transitions, have a
+null plan `Request` because station, index and rendered text exist only in the owning invocation. Handlers and the
+production adapter are unchanged.
+
+Fresh local evidence for the corrected tree, in this order:
+
+- Android Release `-t:Rebuild -m:1` analyzer graph: 0 errors, 11 SARIF files; guard matches 1,577 diagnostics in 573 groups.
+- Portable Release rebuild: guard matches 3,320 diagnostics in 1,154 groups. The first build found CA2000 and NUnit2045 in
+  the new test; both were fixed in source, not accepted into the baseline.
+- Windows Release `--no-incremental` build: guard matches 2,493 diagnostics in 953 groups.
+- Focused whistle, Z21, counter, planner, handler, workflow, DI, end-to-end and architecture fixtures:
+  **261 tests passed, 0 failures, 0 skips** on both Release `net10.0` and `net10.0-windows10.0.22621.0`.
+  Backend, SharedUI, MOBApi and MOBAflow compiled in these Release graphs.
+
 ## Foundation slice evidence (2026-10-14/15)
 
 Dedicated branch `codex/issue-35-automation-testbench`, base `7c1d92422c0cbf675fddc03a8979990957733d15`.
@@ -38,7 +59,7 @@ T005-T008 model contracts remain a separate foundation slice before any executab
 
 Existing handlers now send typed, validated execution requests through `IWorkflowEffectAdapter`.
 `ProductionWorkflowEffectAdapter` owns file probes, process/audio/speech and Z21 output. Pure signal/template resolution
-and journey stop transitions remain shared. Serialized plans exclude executable requests and script formatting omits
+and journey stop transitions remain shared; the announcement handler builds its request from the invocation context. Serialized plans exclude executable requests and script formatting omits
 arguments/paths. This does not implement the future safe trace or an isolated factory.
 
 Final local verification on 2026-10-15: portable Release run discovered/executed **169 tests, 0 failures, 0 skips**.
@@ -57,7 +78,7 @@ The initial SDK workload resolver failed with MSB4242 (missing .NET 10.0.402 wor
 | Ordered/awaited actions, stop-change context and cancellation | WorkflowSequenceExecutionTests, WorkflowServiceTests, WorkflowExecutionCoordinatorTests |
 | Source-local FIFO, context built after predecessor, other journey remains independent | WorkflowExecutionCoordinatorTests, JourneyEventPlanTests, JourneyEventPlanAcceptanceTests |
 | Seeds/persistence/filtering and independent counts | InPortCounterServiceTests, PersistentInPortCounterTests |
-| Filtered counted feedback still reaches raw whistle consumer; coalescing/function-off | LocomotiveWhistleAutomationServiceTests |
+| Real R-Bus receive path: filtered count with raw feedback and whistle per activation; coalescing/function-off | LocomotiveWhistleAutomationServiceTests |
 | Real DI override/idempotence and fake Z21 transport chain | MobaBackendServiceCollectionExtensionsTests, WorkflowExecutionEndToEndTests |
 
 The full focused filter is reproducible from the repository root:
