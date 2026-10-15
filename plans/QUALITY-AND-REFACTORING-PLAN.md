@@ -143,7 +143,7 @@ dependencies.
 | RF-12 | [#242](https://github.com/ahuelsmann/MOBAflow/issues/242) | Mobile session, discovery, runtime projection, synchronization, and upload concerns are separated. |
 | RF-13 | [#91](https://github.com/ahuelsmann/MOBAflow/issues/91) | Track-plan editor operations are platform-neutral and WinUI remains a thin input and rendering adapter. |
 | RF-14 | [#92](https://github.com/ahuelsmann/MOBAflow/issues/92) | Signal-box property changes flow through commands and ViewModels rather than direct control mutation. |
-| RF-15 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Unused synchronous and unsafe path abstractions are removed or hardened. |
+| RF-15 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) | Unused synchronous and unsafe path abstractions are removed or hardened. |
 | RF-16 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical workflows pass accessibility, keyboard, contrast, and theme acceptance. |
 | RF-17 | [#116](https://github.com/ahuelsmann/MOBAflow/issues/116) | Repository guidance and executable engineering gates describe the same rules. |
 | RF-18 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical throughput, load, telemetry, recovery, and endurance behavior is measured. |
@@ -247,21 +247,10 @@ collaborators are described in
 
 ### RF-15: Remove or harden latent legacy services
 
-Sequence:
-
-1. reconcile current references and issue #36 ownership before changing display
-   sender code; consume its cutover rather than repeating feature-owned work;
-2. remove an unreferenced synchronous sender only after all required behavior
-   uses `IFrameSender.SendFrameAsync`;
-3. remove an unused photo-storage abstraction or route every remaining path
-   through `PhotoPathHelper` with canonical-root containment;
-4. add traversal cases for parent segments, rooted paths, alternate separators,
-   and encoded edge cases before retaining any path abstraction;
-5. remove duplicate utilities only after reference and behavior checks.
-
-Acceptance anchor: no required caller depends on the removed synchronous path;
-remaining path operations cannot escape their configured root; relevant
-behavior and failure tests pass; no product behavior from issue #36 is absorbed.
+Delivered without a child issue. `IFrameSender` exposes only `SendFrameAsync`; the unused photo-storage
+service was removed and desktop photo saves go through `PhotoPathHelper` with root containment and
+traversal tests ([#280](https://github.com/ahuelsmann/MOBAflow/pull/280)); function-button colours use one
+shared hex parser ([#287](https://github.com/ahuelsmann/MOBAflow/pull/287)).
 
 ### RF-16: Accessibility and themes
 
