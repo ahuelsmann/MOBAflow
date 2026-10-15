@@ -14,6 +14,30 @@ internal sealed class Z21BroadcastProtocolTests
     /// <summary>Max subscribed locomotive addresses per client without the all-loco-info flag (protocol v1.13).</summary>
     private const int MaxSubscribedLocomotiveAddresses = 16;
 
+    // Independent protocol v1.13 literals, so a changed or dropped production flag fails these tests.
+    private const uint SpecDrivingFlag = 0x0000_0001;
+    private const uint SpecRbusFlag = 0x0000_0002;
+    private const uint SpecSystemStateFlag = 0x0000_0100;
+    private const uint SpecAllLocoInfoFlag = 0x0001_0000;
+    private const uint SpecMobaFlowBasicFlags = 0x0000_0103;
+
+    /// <summary>LAN_SET_BROADCASTFLAGS: length 8, header 0x50, flags 0x00000103 little-endian.</summary>
+    private static readonly byte[] SpecBasicBroadcastFlagsPacket = [0x08, 0x00, 0x50, 0x00, 0x03, 0x01, 0x00, 0x00];
+
+    [Test]
+    public void BroadcastFlags_MatchProtocolSpecificationLiterals()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Z21Protocol.BroadcastFlags.Driving, Is.EqualTo(SpecDrivingFlag));
+            Assert.That(Z21Protocol.BroadcastFlags.Rbus, Is.EqualTo(SpecRbusFlag));
+            Assert.That(Z21Protocol.BroadcastFlags.SystemState, Is.EqualTo(SpecSystemStateFlag));
+            Assert.That(Z21Protocol.BroadcastFlags.AllLocoInfo, Is.EqualTo(SpecAllLocoInfoFlag));
+            Assert.That(Z21Protocol.BroadcastFlags.Basic, Is.EqualTo(SpecMobaFlowBasicFlags),
+                "MOBAflow basic subscription is driving + R-Bus + system state, without all-loco-info.");
+        }
+    }
+
     [Test]
     public void MobaFlowBasicBroadcastFlags_IncludesDrivingButNotAllLocoInfo()
     {
@@ -32,9 +56,8 @@ internal sealed class Z21BroadcastProtocolTests
     public void BuildBroadcastFlagsBasic_MatchesMobaFlowBasicFlags()
     {
         var packet = Z21Command.BuildBroadcastFlagsBasic();
-        var flags = BitConverter.ToUInt32(packet, 4);
 
-        Assert.That(flags, Is.EqualTo(Z21Protocol.BroadcastFlags.Basic));
+        Assert.That(packet, Is.EqualTo(SpecBasicBroadcastFlagsPacket));
     }
 
     [Test]

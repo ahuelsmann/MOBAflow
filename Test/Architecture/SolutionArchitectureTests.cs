@@ -32,9 +32,9 @@ internal sealed partial class SolutionArchitectureTests
         "CommunityToolkit.Maui",
     ];
 
-    /// <summary>The only project allowed to use each platform UI framework.</summary>
     private static readonly string[] CommonPresentationNamespaces = ["Moba.Common.Display"];
 
+    /// <summary>The only project allowed to use each platform UI framework.</summary>
     private static readonly Dictionary<string, string> UiFrameworkOwners = new(StringComparer.Ordinal)
     {
         ["WinUI"] = "MOBAflow",
