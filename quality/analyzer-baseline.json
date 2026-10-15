@@ -4359,6 +4359,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Common/HexColorTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Common/InMemorySinkTests.cs",
       "count": 1
     },
@@ -5263,6 +5270,20 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Sound/NullSoundPlayerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Speech/AudioCacheTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Speech/CachedSpeechOutputTests.cs",
       "count": 1
     },
     {

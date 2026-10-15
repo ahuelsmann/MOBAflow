@@ -22,11 +22,23 @@ internal sealed class SpeechSettingsTests
         }
     }
 
+    [TestCase(500, 500)]
+    [TestCase(0, 0)]
+    [TestCase(-1, 0)]
+    public void CacheSizeLimitClampsNegativeValuesAndDefaultsTo500(int configured, int expected)
+    {
+        var settings = new AppSettings();
+        Assert.That(settings.Speech.CacheSizeLimitMegabytes, Is.EqualTo(500));
+        settings.Speech.CacheSizeLimitMegabytes = configured;
+        Assert.That(settings.Speech.CacheSizeLimitMegabytes, Is.EqualTo(expected));
+    }
+
     [Test]
     public void NewOptions_RoundTripWithoutRemovedFields()
     {
         var settings = new AppSettings();
         settings.Speech.ProviderId = "piper";
+        settings.Speech.CacheSizeLimitMegabytes = 25;
         settings.Speech.Rate = 2;
         settings.Speech.Volume = 55;
         settings.Speech.Piper.ModelPath = "test.onnx";
@@ -37,6 +49,7 @@ internal sealed class SpeechSettingsTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(restored.Speech.ProviderId, Is.EqualTo("piper"));
+            Assert.That(restored.Speech.CacheSizeLimitMegabytes, Is.EqualTo(25));
             Assert.That(restored.Speech.Rate, Is.EqualTo(2));
             Assert.That(restored.Speech.Volume, Is.EqualTo(55));
             Assert.That(restored.Speech.Piper.ModelPath, Is.EqualTo("test.onnx"));

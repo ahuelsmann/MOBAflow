@@ -72,6 +72,8 @@ public class SpeechSettings
 {
     /// <summary>Provider selected for the next announcement.</summary>
     public string ProviderId { get; set; } = "system-speech";
+    /// <summary>Maximum retained speech WAV size in MiB; zero disables storage.</summary>
+    public int CacheSizeLimitMegabytes { get; set => field = Math.Max(0, value); } = 500;
     /// <summary>Speech rate from -10 to 10.</summary>
     public int Rate { get; set; } = -1;
     /// <summary>Speech volume from 0 to 100.</summary>

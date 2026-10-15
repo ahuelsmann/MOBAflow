@@ -66,32 +66,10 @@ public static class FunctionBacklightColor
             secondaryText);
     }
 
-    private static (byte R, byte G, byte B) ParseHexColor(string? hexColor)
-    {
-        if (string.IsNullOrWhiteSpace(hexColor))
-        {
-            return DecomposeRgb(FallbackGrayArgb);
-        }
-
-        var hex = hexColor.TrimStart('#');
-        if (hex.Length == 6)
-        {
-            return (
-                Convert.ToByte(hex[..2], 16),
-                Convert.ToByte(hex.Substring(2, 2), 16),
-                Convert.ToByte(hex.Substring(4, 2), 16));
-        }
-
-        if (hex.Length == 8)
-        {
-            return (
-                Convert.ToByte(hex.Substring(2, 2), 16),
-                Convert.ToByte(hex.Substring(4, 2), 16),
-                Convert.ToByte(hex.Substring(6, 2), 16));
-        }
-
-        return DecomposeRgb(FallbackGrayArgb);
-    }
+    private static (byte R, byte G, byte B) ParseHexColor(string? hexColor) =>
+        HexColor.TryParseRgb(hexColor, out var red, out var green, out var blue)
+            ? (red, green, blue)
+            : DecomposeRgb(FallbackGrayArgb);
 
     private static (byte R, byte G, byte B) DecomposeRgb(uint argb)
     {

@@ -77,6 +77,17 @@ provider ID and shared request options on each call. Local providers synthesize 
 an audio device; MOBAflow's cancellable WAV player owns audible playback. `Sound` keeps sound effects and
 no longer references `System.Speech`. Android registers `NullSpeechOutput` and includes no Windows provider.
 
+The Windows host shares one `AudioCache` below `%LOCALAPPDATA%/MOBAflow/SpeechCache`. It stores WAV files and an
+atomic index under SHA-256 keys; request text and provider options are absent from file names and the index.
+The default WAV limit is 500 MiB (`Speech.CacheSizeLimitMegabytes`); least recently played entries are evicted, and
+synthesized audio is stored only after successful playback. The limit also applies before cache hits. A lock file
+serializes cache access across MOBAflow processes, which reload the index for every operation.
+Providers prepare a synthesis snapshot before cache lookup. Identical concurrent misses share one provider call,
+which stays joinable until its audio has played and been stored, while each caller owns its wait and playback
+cancellation. The last cancelled waiter cancels the shared synthesis;
+host disposal cancels and awaits synthesis and playback. Clearing the cache invalidates writes from older work.
+Cache size/clear services are available; their Settings controls, Azure, fallback and deferred synthesis follow in later slices.
+
 ### Track-plan dependency rule
 
 Track-plan code follows an explicit inward dependency direction:

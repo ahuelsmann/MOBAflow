@@ -3,6 +3,19 @@
 **Source Issue**: #35
 **Status**: First foundation slice implemented; the scenario runner and desktop feature remain unimplemented.
 
+## Main synchronization (2026-10-15)
+
+PR #288 retains its published foundation commit `7e7c26bb` and merges main
+`d4d3d2b1d4f263a5b9dfed2d1585d9b4b3c5c136` without rewriting history. Architecture and analyzer baseline merged
+automatically; the existing effect-boundary reductions remain CA1062=8, CA1848=3 and CA1873=0.
+No additional product behavior or backlog task is introduced by synchronization.
+The refreshed focused portable run includes the original workflow/journey/counter/DI anchors plus AudioCacheTests,
+CachedSpeechOutputTests and SpeechOutputTests: **231 tests passed, 0 failures, 0 skips**.
+The same 231 tests passed in Release with 0 failures/skips. Named SharedUI and MOBApi Debug builds passed with zero warnings/errors.
+The portable Release analyzer build passed; the retained baseline matches 3,327 diagnostics in 1,155 groups without further edits.
+Current-head CI/Sonar evidence is recorded in the PR after execution; old green checks are not reused.
+The process-local workload-resolver workaround and the separate Windows/Android/manual gates below still apply.
+
 ## Foundation slice evidence (2026-10-14/15)
 
 Dedicated branch `codex/issue-35-automation-testbench`, base `7c1d92422c0cbf675fddc03a8979990957733d15`.
