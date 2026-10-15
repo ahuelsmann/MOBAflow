@@ -5,16 +5,25 @@
 
 ## Main synchronization (2026-10-15)
 
-PR #288 retains its published foundation commit `7e7c26bb` and merges main
-`d4d3d2b1d4f263a5b9dfed2d1585d9b4b3c5c136` without rewriting history. Architecture and analyzer baseline merged
-automatically; the existing effect-boundary reductions remain CA1062=8, CA1848=3 and CA1873=0.
+PR #288 retains its published foundation commit `7e7c26bb` and the earlier merge `4371fc2f` of main `d4d3d2b1`, then
+merges main `6e7c6116551b3abae547aa7499d3a861e0f2ca85` (#281, #267, #296, #295) without rewriting history.
+Both merges were conflict-free. Against main the code, test and baseline diff is still the original 18-file foundation;
+the only baseline change remains the effect-boundary reductions CA1062 12 to 8, CA1848 12 to 3 and CA1873 6 to 0.
 No additional product behavior or backlog task is introduced by synchronization.
-The refreshed focused portable run includes the original workflow/journey/counter/DI anchors plus AudioCacheTests,
-CachedSpeechOutputTests and SpeechOutputTests: **231 tests passed, 0 failures, 0 skips**.
-The same 231 tests passed in Release with 0 failures/skips. Named SharedUI and MOBApi Debug builds passed with zero warnings/errors.
-The portable Release analyzer build passed; the retained baseline matches 3,327 diagnostics in 1,155 groups without further edits.
-Current-head CI/Sonar evidence is recorded in the PR after execution; old green checks are not reused.
-The process-local workload-resolver workaround and the separate Windows/Android/manual gates below still apply.
+
+Local evidence on the merged tree (SDK 10.0.402 with installed workloads; no workload-resolver workaround was needed):
+
+- Portable Release analyzer rebuild: baseline matches 3,320 diagnostics in 1,154 groups (main 3,339/1,155 minus those reductions).
+- Windows Release analyzer build with `--no-incremental`: 2,493 diagnostics in 953 groups, unchanged from main.
+- The focused fixtures below plus every `*ArchitectureTests` fixture: **232 tests passed, 0 failures, 0 skips** on both
+  Release `net10.0` and `net10.0-windows10.0.22621.0`.
+- Named Backend, SharedUI and MOBApi Debug builds had 0 warnings/errors; MOBAflow compiled in the Windows Release test graph.
+  MOBAsmart compiled with `-c FastDebug` (0 errors, 45 existing warnings). This is a compile check, not a Release AAB.
+
+Open Android gate: `quality/analyzer-baseline.android.json` still records the pre-change WorkflowActionHandlers counts
+(CA1062 12, CA1848 12, CA1873 6) for Backend `net10.0`, the compilation that now yields 8/3/0. The manual-only Android
+Release job was not run locally or in CI and is expected to report these fixed diagnostics; that baseline is left unchanged
+pending an explicit decision. Current-head CI/Sonar evidence is recorded in the PR after execution; old green checks are not reused.
 
 ## Foundation slice evidence (2026-10-14/15)
 
@@ -63,8 +72,9 @@ dotnet build MOBApi/MOBApi.csproj -v minimal
 
 Use only test-owned definitions and fakes. No real/shipped/example solution was read, generated or edited.
 No app/device/process-script execution was used for these tests. Complete private-runtime zero-I/O acceptance,
-deterministic scheduling/joined disposal, Windows suite/desktop compilation and authorized manual UI acceptance remain open.
-Each implementation PR stays draft; review/CI/Sonar are separate from local test evidence. No ready marking or merge is authorized.
+deterministic scheduling/joined disposal and authorized manual UI acceptance remain open; the focused Windows run and
+desktop compilation are recorded in the main synchronization above. Each implementation PR stays draft until current-head
+CI/Sonar and an independent review pass; ready marking and merge go only through the central serial merge queue.
 
 ## Planning-only structural checks
 
