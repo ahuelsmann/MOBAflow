@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Controls;
 
-using Moba.Common.Display;
+using Moba.SharedUI.Appearance;
 using Moba.MAUI.Converters;
 using Moba.SharedUI.ViewModel;
 using System.ComponentModel;

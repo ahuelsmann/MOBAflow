@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls;
 
-using Common.Display;
+using SharedUI.Appearance;
 
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
