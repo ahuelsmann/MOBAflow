@@ -444,7 +444,7 @@ jobs:
       - name: Install pinned MAUI Android workload
         shell: pwsh
         run: |
-          $expectedWorkloadVersion = '10.0.401.1'
+          $expectedWorkloadVersion = '10.0.402'
           dotnet workload install maui-android --version $expectedWorkloadVersion
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $actualWorkloadVersion = dotnet workload --version
