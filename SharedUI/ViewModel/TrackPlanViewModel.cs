@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 using Service;
 
-using TrackLibrary.PikoA;
+using TrackPlan.Editor;
 
 /// <summary>
 /// ViewModel for the track-plan editor page.
@@ -317,9 +317,8 @@ public sealed partial class TrackPlanViewModel : ObservableObject
             return "No selection";
         }
 
-        var entry = PikoACatalog.All.FirstOrDefault(candidate => candidate.SegmentType == selected.Segment.GetType());
-        var code = entry?.Code ?? selected.Segment.GetType().Name;
-        var displayName = entry?.DisplayName ?? code;
+        var code = _editorService.Catalog.GetCode(selected.Segment);
+        var displayName = _editorService.Catalog.GetDisplayName(selected.Segment);
         var connectionCount = _editorService.Connections.Count(connection =>
             connection.SourceSegment == selected.Segment.No || connection.TargetSegment == selected.Segment.No);
         return $"{code}{Environment.NewLine}{displayName}{Environment.NewLine}{Environment.NewLine}"

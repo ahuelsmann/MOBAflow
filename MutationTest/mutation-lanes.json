@@ -64,7 +64,10 @@
       "name": "track-plan-renderer",
       "status": "planned",
       "test-directories": ["Test/TrackPlanRenderer"],
-      "production-projects": ["TrackPlan.Renderer/TrackPlan.Renderer.csproj"]
+      "production-projects": [
+        "TrackPlan.Renderer/TrackPlan.Renderer.csproj",
+        "TrackPlan.Editor/TrackPlan.Editor.csproj"
+      ]
     },
     {
       "name": "track-library-piko-a",

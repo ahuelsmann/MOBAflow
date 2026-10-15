@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackLibrary.PikoA;
+namespace Moba.TrackPlan.Editor;
+
+using TrackLibrary.Base;
 
 public static class TrackPlanValidationHelper
 {
@@ -22,15 +24,17 @@ public static class TrackPlanValidationHelper
         IReadOnlyList<ConnectedGroup> ConnectedGroups);
 
     public static ValidationAnalysis Analyze(
+        SegmentPlacementGeometry geometry,
         IReadOnlyList<PlacedSegment> segments,
         IReadOnlyList<PortConnection> connections,
         double overlapThresholdMm = 1.0)
     {
+        ArgumentNullException.ThrowIfNull(geometry);
         ArgumentNullException.ThrowIfNull(segments);
         ArgumentNullException.ThrowIfNull(connections);
 
         var openPorts = segments
-            .SelectMany(segment => SegmentPortGeometry.GetAllPortWorldPositions(segment)
+            .SelectMany(segment => geometry.GetAllPortWorldPositions(segment)
                 .Where(port => !IsPortConnected(connections, segment.Segment.No, port.PortName))
                 .Select(port => new OpenPort(segment.Segment.No, port.PortName, port.X, port.Y)))
             .ToList();
@@ -62,7 +66,7 @@ public static class TrackPlanValidationHelper
             }
         }
 
-        var connectedGroups = BuildConnectedGroups(segments, connections);
+        var connectedGroups = BuildConnectedGroups(geometry, segments, connections);
         return new ValidationAnalysis(openPorts, overlappingPorts, connectedGroups);
     }
 
@@ -74,17 +78,19 @@ public static class TrackPlanValidationHelper
     /// is idempotent.
     /// </summary>
     public static IReadOnlyList<PortConnection> FindImplicitConnections(
+        SegmentPlacementGeometry geometry,
         IReadOnlyList<PlacedSegment> segments,
         IReadOnlyList<PortConnection> connections,
         double overlapThresholdMm = 1.0,
         double angleToleranceDegrees = 2.0)
     {
+        ArgumentNullException.ThrowIfNull(geometry);
         ArgumentNullException.ThrowIfNull(segments);
         ArgumentNullException.ThrowIfNull(connections);
 
         var segmentsById = segments.ToDictionary(s => s.Segment.No);
         var openPorts = segments
-            .SelectMany(segment => SegmentPortGeometry.GetAllPortWorldPositions(segment)
+            .SelectMany(segment => geometry.GetAllPortWorldPositions(segment)
                 .Where(port => !IsPortConnected(connections, segment.Segment.No, port.PortName))
                 .Select(port => (SegmentId: segment.Segment.No, port.PortName, port.X, port.Y)))
             .ToList();
@@ -114,8 +120,8 @@ public static class TrackPlanValidationHelper
                 if (distance >= bestDistance)
                     continue;
 
-                var leftAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(segmentsById[left.SegmentId], left.PortName);
-                var rightAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(segmentsById[right.SegmentId], right.PortName);
+                var leftAngle = geometry.GetPortOutwardWorldAngleDegrees(segmentsById[left.SegmentId], left.PortName);
+                var rightAngle = geometry.GetPortOutwardWorldAngleDegrees(segmentsById[right.SegmentId], right.PortName);
                 var expectedOpposite = NormalizeAngle(rightAngle + 180);
                 if (AngleDelta(leftAngle, expectedOpposite) > angleToleranceDegrees)
                     continue;
@@ -150,7 +156,7 @@ public static class TrackPlanValidationHelper
         return Math.Abs(delta);
     }
 
-    private static IReadOnlyList<ConnectedGroup> BuildConnectedGroups(IReadOnlyList<PlacedSegment> segments, IReadOnlyList<PortConnection> connections)
+    private static IReadOnlyList<ConnectedGroup> BuildConnectedGroups(SegmentPlacementGeometry geometry, IReadOnlyList<PlacedSegment> segments, IReadOnlyList<PortConnection> connections)
     {
         var byId = segments.ToDictionary(segment => segment.Segment.No);
         var remaining = new HashSet<Guid>(byId.Keys);
@@ -184,13 +190,13 @@ public static class TrackPlanValidationHelper
                 }
             }
 
-            groups.Add(CreateGroupBounds(ids, byId));
+            groups.Add(CreateGroupBounds(geometry, ids, byId));
         }
 
         return groups;
     }
 
-    private static ConnectedGroup CreateGroupBounds(IReadOnlyCollection<Guid> ids, IReadOnlyDictionary<Guid, PlacedSegment> byId)
+    private static ConnectedGroup CreateGroupBounds(SegmentPlacementGeometry geometry, IReadOnlyCollection<Guid> ids, IReadOnlyDictionary<Guid, PlacedSegment> byId)
     {
         double minX = double.MaxValue;
         double minY = double.MaxValue;
@@ -200,8 +206,8 @@ public static class TrackPlanValidationHelper
         foreach (var id in ids)
         {
             var placed = byId[id];
-            var path = SegmentLocalPathBuilder.GetPath(placed.Segment);
-            var (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(path);
+            var path = geometry.GetPath(placed.Segment);
+            var (localMinX, localMinY, localMaxX, localMaxY) = TrackPathGeometry.GetBounds(path);
             var angleRad = placed.RotationDegrees * Math.PI / 180;
             var cos = Math.Cos(angleRad);
             var sin = Math.Sin(angleRad);

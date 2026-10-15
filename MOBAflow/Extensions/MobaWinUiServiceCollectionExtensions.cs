@@ -34,7 +34,9 @@ using Sound;
 using Speech.Base;
 using Speech.Piper;
 using Speech.SystemSpeech;
+using TrackLibrary.Base;
 using TrackLibrary.PikoA;
+using TrackPlan.Editor;
 using View;
 
 /// <summary>
@@ -271,6 +273,8 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingletonWithInterface<UdpDisplayDeviceClient, IDisplayDeviceClient>();
         services.AddTransient<FrameLoopScheduler>();
 
+        services.AddSingleton<ITrackCatalog, PikoATrackCatalog>();
+        services.AddSingleton<SegmentPlacementGeometry>();
         services.AddSingleton<EditableTrackPlan>();
         services.AddSingleton<TrackPlanInteractionService>();
         services.AddSingleton<ITrackFeedbackLookup>(sp => sp.GetRequiredService<EditableTrackPlan>());

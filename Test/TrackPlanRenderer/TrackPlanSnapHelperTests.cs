@@ -2,6 +2,8 @@
 namespace Moba.Test.TrackPlanRenderer;
 
 using Moba.TrackLibrary.PikoA;
+using Moba.TrackPlan.Editor;
+using Moba.Test.Helpers;
 
 [TestFixture]
 internal class TrackPlanSnapHelperTests
@@ -12,19 +14,19 @@ internal class TrackPlanSnapHelperTests
         var target = new PlacedSegment(new G62(), 0, 0, 0);
         var moving = new PlacedSegment(new G62(), 61.88, 5, 37);
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(moving, new[] { target }, Array.Empty<PortConnection>());
+        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target }, Array.Empty<PortConnection>());
 
         Assert.That(snap, Is.Not.Null);
         Assert.That(snap!.SourcePort, Is.EqualTo("PortA"));
         Assert.That(snap.TargetPort, Is.EqualTo("PortB"));
 
-        var sourcePort = SegmentPortGeometry.GetPortWorldPosition(snap.Placed, snap.SourcePort);
-        var targetPort = SegmentPortGeometry.GetPortWorldPosition(target, snap.TargetPort);
+        var sourcePort = TrackPlanTestGeometry.PikoA.GetPortWorldPosition(snap.Placed, snap.SourcePort);
+        var targetPort = TrackPlanTestGeometry.PikoA.GetPortWorldPosition(target, snap.TargetPort);
         Assert.That(sourcePort.X, Is.EqualTo(targetPort.X).Within(0.001));
         Assert.That(sourcePort.Y, Is.EqualTo(targetPort.Y).Within(0.001));
 
-        var sourceOutwardAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(snap.Placed, snap.SourcePort);
-        var targetOutwardAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(target, snap.TargetPort);
+        var sourceOutwardAngle = TrackPlanTestGeometry.PikoA.GetPortOutwardWorldAngleDegrees(snap.Placed, snap.SourcePort);
+        var targetOutwardAngle = TrackPlanTestGeometry.PikoA.GetPortOutwardWorldAngleDegrees(target, snap.TargetPort);
         Assert.That(GetAngleDeltaDegrees(sourceOutwardAngle, targetOutwardAngle), Is.EqualTo(180).Within(0.001));
     }
 
@@ -38,7 +40,7 @@ internal class TrackPlanSnapHelperTests
             new PortConnection(target.Segment.No, "PortB", Guid.NewGuid(), "PortA")
         };
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(moving, new[] { target }, connections);
+        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target }, connections);
 
         Assert.That(snap, Is.Null);
     }
@@ -53,7 +55,7 @@ internal class TrackPlanSnapHelperTests
             new PortConnection(moving.Segment.No, "PortA", Guid.NewGuid(), "PortA")
         };
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(moving, new[] { target }, connections);
+        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target }, connections);
 
         Assert.That(snap, Is.Null);
     }
@@ -70,7 +72,7 @@ internal class TrackPlanSnapHelperTests
         };
         var movingGroup = new HashSet<Guid> { moving.Segment.No, partner.Segment.No };
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(moving, new[] { target, partner }, connections, movingGroup: movingGroup);
+        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target, partner }, connections, movingGroup: movingGroup);
 
         Assert.That(snap, Is.Not.Null);
         Assert.That(snap!.SourcePort, Is.EqualTo("PortA"));
@@ -92,7 +94,7 @@ internal class TrackPlanSnapHelperTests
         };
         var movingGroup = new HashSet<Guid> { moving.Segment.No, partner.Segment.No };
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(moving, new[] { target, partner }, connections, movingGroup: movingGroup);
+        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target, partner }, connections, movingGroup: movingGroup);
 
         Assert.That(snap, Is.Null);
     }

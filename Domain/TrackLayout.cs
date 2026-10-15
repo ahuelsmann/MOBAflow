@@ -2,36 +2,6 @@
 namespace Moba.Domain;
 
 /// <summary>
-/// Identifies one connector exposed by a track definition.
-/// Connector geometry is owned by the providing track library.
-/// </summary>
-public sealed record ConnectorDefinition(string Id, string Name);
-
-/// <summary>
-/// Library-neutral description of a purchasable track template.
-/// </summary>
-public sealed record TrackDefinition(
-    string LibraryId,
-    string TemplateId,
-    string DisplayName,
-    string Category,
-    IReadOnlyList<ConnectorDefinition> Connectors);
-
-/// <summary>
-/// Extension point implemented by every installed track library.
-/// </summary>
-public interface ITrackLibrary
-{
-    string LibraryId { get; }
-
-    string DisplayName { get; }
-
-    IReadOnlyList<TrackDefinition> Definitions { get; }
-
-    bool TryGetDefinition(string templateId, out TrackDefinition definition);
-}
-
-/// <summary>
 /// Read-only lookup used by runtime integrations to project feedback onto a layout.
 /// This prevents Z21-facing code from depending on a concrete editor implementation.
 /// </summary>

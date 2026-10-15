@@ -46,44 +46,6 @@ public static class SegmentLocalPathBuilder
         };
     }
 
-    /// <summary>Returns the bounding box of the path (MinX, MinY, MaxX, MaxY) in mm.</summary>
-    public static (double MinX, double MinY, double MaxX, double MaxY) GetBounds(IReadOnlyList<PathCommand> path)
-    {
-        double minX = 0, minY = 0, maxX = 0, maxY = 0;
-        double x = 0, y = 0;
-        var hasPoint = false;
-
-        foreach (var cmd in path)
-        {
-            if (cmd is MoveTo move)
-            {
-                x = move.X;
-                y = move.Y;
-            }
-            else if (cmd is LineTo line)
-            {
-                x = line.X;
-                y = line.Y;
-            }
-            else if (cmd is ArcTo arc)
-            {
-                x = arc.EndX;
-                y = arc.EndY;
-            }
-
-            hasPoint = true;
-            minX = Math.Min(minX, x);
-            minY = Math.Min(minY, y);
-            maxX = Math.Max(maxX, x);
-            maxY = Math.Max(maxY, y);
-        }
-
-        if (!hasPoint)
-            return (0, 0, 1, 1);
-
-        return (minX, minY, maxX, maxY);
-    }
-
     private static IReadOnlyList<PathCommand> GetStraightPath(double length)
     {
         return [new LineTo(length, 0)];

@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/298
 **Spec Kit**: Not applicable - structural refactoring; the persisted `TrackPlanDocument` format is unchanged
-**Status**: Planned; implementation starts with slice 1 after this plan is integrated
+**Status**: Active; plan integrated through #299; slice 1 (#300) and slice 2 in review
 
 ## Purpose and scope
 
@@ -70,7 +70,9 @@ files and extends the track-plan architecture tests for the boundary it creates.
    `ConnectorDefinition`, `TrackPlanDocumentMapper`, `LayoutService`, `GraphService`, unused DI registrations,
    `TrackPlan.Renderer.TrackPlan` and the fluent builder after reference checks; adapt tests that only exercised
    them. Architecture rule: `Domain` has no layout model besides `TrackPlanDocument`.
-2. **Editor project and geometry interface.** Create `TrackPlan.Editor`, move the editable plan, placement,
+2. **Editor project and catalogue interface.** `ITrackCatalog` and `SegmentPort` in `TrackLibrary.Base` (ports, path,
+   code, display name, segment creation) implemented by `PikoATrackCatalog`; it replaces the unused
+   `ISegmentGeometryProvider`, `PikoATrackLibrary` and `Domain.ITrackLibrary`. Create `TrackPlan.Editor`, move the editable plan, placement,
    interaction, snapping, index, validation, scene builder and editor document; Piko A implements the geometry
    interface; update references (SharedUI, MOBAflow, Test, `Moba.slnx`) and the documented dependency table.
    Architecture rules: catalogue projects reference no editor project; the editor references no catalogue.

@@ -4,6 +4,7 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
+using TrackLibrary.Base;
 using TrackLibrary.PikoA;
 
 using Windows.Foundation;
@@ -28,7 +29,7 @@ internal static class TrackPreviewSymbol
     {
         var segment = entry.CreateInstance();
         var pathCommands = SegmentLocalPathBuilder.GetPath(segment);
-        var (minX, minY, maxX, maxY) = SegmentLocalPathBuilder.GetBounds(pathCommands);
+        var (minX, minY, maxX, maxY) = TrackPathGeometry.GetBounds(pathCommands);
 
         var rangeX = Math.Max(1, maxX - minX);
         var rangeY = Math.Max(1, maxY - minY);

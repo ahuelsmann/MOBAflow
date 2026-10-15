@@ -9,14 +9,15 @@ that model to the Piko A geometry and neutral renderer libraries.
 | Project | Responsibility |
 | --- | --- |
 | `Domain` | Persisted `TrackPlanDocument`, segment and connection data |
-| `TrackLibrary.Base` | Track-piece abstractions and shared path geometry |
-| `TrackLibrary.PikoA` | Piko A catalog, editable plan, snapping and spatial lookup |
+| `TrackLibrary.Base` | Track-piece abstractions, shared path geometry and the `ITrackCatalog` contract |
+| `TrackLibrary.PikoA` | Piko A catalog geometry (`PikoATrackCatalog`) |
+| `TrackPlan.Editor` | Catalogue-neutral editable plan, placement geometry, snapping, spatial lookup, validation and render scene |
 | `TrackPlan.Renderer` | Platform-neutral rendering and SVG export primitives |
 | `Backend/Service/TrackPlan` | Projects feedback and timer state onto the track plan |
 | `MOBAflow/View/TrackPlanPage` | WinUI editor, gestures, commands and Win2D drawing |
 
-The neutral renderer must not depend on a concrete track catalog. Catalog
-geometry flows from `TrackLibrary.PikoA` through adapters into the renderer.
+The neutral renderer and editor must not depend on a concrete track catalog. Catalog
+geometry reaches the editor through `ITrackCatalog`; MOBAflow registers `PikoATrackCatalog`.
 
 ## Current editor features
 
@@ -38,7 +39,7 @@ catalogs are not currently implemented.
 
 The active editor plan is synchronized with the selected project through
 `TrackPlanSolutionBinder`. `TrackPlanEditorDocument` translates between the
-editable Piko A representation and the platform-neutral domain document.
+editable plan and the platform-neutral domain document using the configured catalogue.
 
 Do not persist WinUI or Win2D objects. Coordinates, catalog identifiers,
 rotations, ports and connections belong in the domain document.

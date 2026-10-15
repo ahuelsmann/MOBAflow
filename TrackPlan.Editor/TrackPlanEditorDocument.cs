@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackLibrary.PikoA;
+namespace Moba.TrackPlan.Editor;
 
-using Base;
+using TrackLibrary.Base;
 
 using Domain;
 
@@ -9,8 +9,8 @@ public sealed class TrackPlanEditorDocument
 {
     public int Version { get; init; } = 1;
 
-    /// <summary>Library represented by this PIKO editor document.</summary>
-    public string LibraryId { get; init; } = PikoATrackLibrary.Id;
+    /// <summary>Track catalogue of this document; empty means the editor's catalogue.</summary>
+    public string LibraryId { get; init; } = string.Empty;
 
     public double? OffsetX { get; init; }
 
@@ -23,38 +23,43 @@ public sealed class TrackPlanEditorDocument
     public List<PortConnection> Connections { get; init; } = [];
 
     public static TrackPlanEditorDocument FromEditableTrackPlan(
+        ITrackCatalog catalog,
         EditableTrackPlan plan,
         double? offsetX = null,
         double? offsetY = null,
         double? zoomFactor = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        return FromData(plan.Segments, plan.Connections, offsetX, offsetY, zoomFactor);
+        return FromData(catalog, plan.Segments, plan.Connections, offsetX, offsetY, zoomFactor);
     }
 
     public static TrackPlanEditorDocument FromData(
+        ITrackCatalog catalog,
         IEnumerable<PlacedSegment> placements,
         IEnumerable<PortConnection> connections,
         double? offsetX = null,
         double? offsetY = null,
         double? zoomFactor = null)
     {
+        ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(placements);
         ArgumentNullException.ThrowIfNull(connections);
 
         return new TrackPlanEditorDocument
         {
+            LibraryId = catalog.LibraryId,
             OffsetX = offsetX,
             OffsetY = offsetY,
             ZoomFactor = zoomFactor,
-            Segments = placements.Select(CreateSegmentSnapshot).ToList(),
+            Segments = placements.Select(placed => CreateSegmentSnapshot(catalog, placed)).ToList(),
             Connections = connections.ToList()
         };
     }
 
-    public (List<PlacedSegment> Placements, List<PortConnection> Connections) ToEditableTrackPlanData()
+    public (List<PlacedSegment> Placements, List<PortConnection> Connections) ToEditableTrackPlanData(ITrackCatalog catalog)
     {
-        var placements = Segments.Select(segment => CreatePlacedSegment(segment, LibraryId)).ToList();
+        ArgumentNullException.ThrowIfNull(catalog);
+        var placements = Segments.Select(segment => CreatePlacedSegment(catalog, segment, LibraryId)).ToList();
         return (placements, Connections.ToList());
     }
 
@@ -102,7 +107,7 @@ public sealed class TrackPlanEditorDocument
         return new TrackPlanEditorDocument
         {
             Version = document.Version,
-            LibraryId = string.IsNullOrWhiteSpace(document.LibraryId) ? PikoATrackLibrary.Id : document.LibraryId,
+            LibraryId = document.LibraryId,
             OffsetX = document.OffsetX,
             OffsetY = document.OffsetY,
             ZoomFactor = document.ZoomFactor,
@@ -122,17 +127,13 @@ public sealed class TrackPlanEditorDocument
         };
     }
 
-    private static TrackPlanEditorSegment CreateSegmentSnapshot(PlacedSegment placed)
+    private static TrackPlanEditorSegment CreateSegmentSnapshot(ITrackCatalog catalog, PlacedSegment placed)
     {
-        var entry = PikoACatalog.All.FirstOrDefault(c => c.SegmentType == placed.Segment.GetType());
-        if (entry == null)
-            throw new InvalidOperationException($"No catalog entry found for segment type {placed.Segment.GetType().Name}.");
-
         return new TrackPlanEditorSegment
         {
             Id = placed.Segment.No,
-            Code = entry.Code,
-            LibraryId = PikoATrackLibrary.Id,
+            Code = catalog.GetCode(placed.Segment),
+            LibraryId = catalog.LibraryId,
             X = placed.X,
             Y = placed.Y,
             RotationDegrees = placed.RotationDegrees,
@@ -140,19 +141,17 @@ public sealed class TrackPlanEditorDocument
         };
     }
 
-    private static PlacedSegment CreatePlacedSegment(TrackPlanEditorSegment segmentSnapshot, string documentLibraryId)
+    private static PlacedSegment CreatePlacedSegment(ITrackCatalog catalog, TrackPlanEditorSegment segmentSnapshot, string documentLibraryId)
     {
         var libraryId = string.IsNullOrWhiteSpace(segmentSnapshot.LibraryId)
-            ? (string.IsNullOrWhiteSpace(documentLibraryId) ? PikoATrackLibrary.Id : documentLibraryId)
+            ? (string.IsNullOrWhiteSpace(documentLibraryId) ? catalog.LibraryId : documentLibraryId)
             : segmentSnapshot.LibraryId;
-        if (!string.Equals(libraryId, PikoATrackLibrary.Id, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"Track library '{libraryId}' is not available in the PIKO editor.");
+        if (!string.Equals(libraryId, catalog.LibraryId, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Track library '{libraryId}' is not available in the editor catalogue '{catalog.LibraryId}'.");
 
-        var entry = PikoACatalog.All.FirstOrDefault(c => string.Equals(c.Code, segmentSnapshot.Code, StringComparison.OrdinalIgnoreCase));
-        if (entry == null)
+        if (!catalog.TryCreateSegment(segmentSnapshot.Code, out var segment))
             throw new InvalidOperationException($"Unknown track code '{segmentSnapshot.Code}'.");
 
-        var segment = (Segment)Activator.CreateInstance(entry.SegmentType)!;
         segment.No = segmentSnapshot.Id;
         return new PlacedSegment(segment, segmentSnapshot.X, segmentSnapshot.Y, segmentSnapshot.RotationDegrees, segmentSnapshot.InPort);
     }

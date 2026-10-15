@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>Moba.TrackPlan.Editor</RootNamespace>
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Library</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Description>Catalogue-neutral track-plan editor: editable plan, placement geometry, snapping, validation and render scene.</Description>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Domain\Domain.csproj" />
+        <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
+        <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
+    </ItemGroup>
+</Project>
