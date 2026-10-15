@@ -15,11 +15,12 @@ public enum SpeechFailureKind
 /// <summary>WAV bytes on success, or an expected failure with a display-safe reason.</summary>
 public sealed class SpeechResult
 {
-    private SpeechResult(ReadOnlyMemory<byte> waveAudio, SpeechFailureKind? failureKind, string reason)
+    private SpeechResult(ReadOnlyMemory<byte> waveAudio, SpeechFailureKind? failureKind, string reason, bool isCacheable)
     {
         WaveAudio = waveAudio;
         FailureKind = failureKind;
         Reason = reason;
+        IsCacheable = isCacheable;
     }
 
     /// <summary>Generated WAV data, empty on failure or when speech is disabled.</summary>
@@ -30,12 +31,19 @@ public sealed class SpeechResult
     public SpeechFailureKind? FailureKind { get; }
     /// <summary>Display-safe explanation, empty on success.</summary>
     public string Reason { get; }
-    /// <summary>Creates a successful result.</summary>
-    public static SpeechResult Success(byte[] waveAudio)
+    /// <summary>
+    /// Whether the audio may be cached. False when the provider could not honor the requested options, for example a
+    /// missing voice, so restoring them later synthesizes again instead of replaying the substitute.
+    /// </summary>
+    public bool IsCacheable { get; }
+    /// <summary>Creates a successful, cacheable result.</summary>
+    public static SpeechResult Success(byte[] waveAudio) => Success(waveAudio, isCacheable: true);
+    /// <summary>Creates a successful result that may be marked as not cacheable.</summary>
+    public static SpeechResult Success(byte[] waveAudio, bool isCacheable)
     {
         ArgumentNullException.ThrowIfNull(waveAudio);
-        return new SpeechResult(waveAudio, null, string.Empty);
+        return new SpeechResult(waveAudio, null, string.Empty, isCacheable);
     }
     /// <summary>Creates a failure without audio.</summary>
-    public static SpeechResult Failure(SpeechFailureKind kind, string reason) => new(ReadOnlyMemory<byte>.Empty, kind, reason);
+    public static SpeechResult Failure(SpeechFailureKind kind, string reason) => new(ReadOnlyMemory<byte>.Empty, kind, reason, isCacheable: false);
 }

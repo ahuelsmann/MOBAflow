@@ -4,7 +4,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Approved; slice 1 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11). Slice 2 implemented in draft [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250); Sonar gate OK with zero OPEN/CONFIRMED findings on `7dbda9c5`; CI completion and manual UI acceptance pending. Slices 3-6 pending.
+**Status**: Approved; slices 1 and 2 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) and [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250), after prerequisite #207 merged. Slice 3 implemented in draft [PR #278](https://github.com/ahuelsmann/MOBAflow/pull/278); current CI/Sonar evidence is tracked in that PR. T011 manual UI acceptance and slices 4-6 remain pending.
 
 Input: [spec.md](spec.md), [plan.md](plan.md).
 
@@ -72,10 +72,27 @@ to memory, virtual time and fake playback sessions; no audible playback, desktop
 Current-head CI/Sonar evidence is recorded in PR #250. T011 manual Light/Dark acceptance remains open.
 ## Slice 3 - Audio cache
 
-- [ ] T013 Add `AudioCache`: hashed key over provider id, provider options fingerprint, voice, language, rate, volume and text; WAV files plus index; least-recently-used eviction at the size limit (default 500 MB); corrupt entries dropped
-- [ ] T014 Use the cache in `SpeechOutput` (hit plays without a provider call, miss stores the result, concurrent identical misses share one synthesis); keep caller cancellation separate from the shared synthesis token, cancel/remove the shared work when its last waiter cancels, and cancel shared work on shutdown; cancelled callers neither play audio nor initiate fallback or deferred synthesis; expose size and clear service APIs (UI in T022/T023)
-- [ ] T015 Tests for hit, miss, key and provider-option changes, least-recently-used eviction, concurrent identical requests, corrupt files and clear; cover one waiter cancelling while another completes with one provider call, all waiters cancelling the provider, a new request after cancellation, shutdown during shared synthesis and no playback/fallback/deferred synthesis for cancelled callers; run suites for validation
-- [ ] T016 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
+- [X] T013 Add `AudioCache`: hashed key over provider id, provider options fingerprint, voice, language, rate, volume and text; WAV files plus index; least-recently-used eviction at the size limit (default 500 MB); corrupt entries dropped
+- [X] T014 Use the cache in `SpeechOutput` (hit plays without a provider call, miss stores the result, concurrent identical misses share one synthesis); keep caller cancellation separate from the shared synthesis token, cancel/remove the shared work when its last waiter cancels, and cancel shared work on shutdown; cancelled callers neither play audio nor initiate fallback or deferred synthesis; expose size and clear service APIs (UI in T022/T023)
+- [X] T015 Tests for hit, miss, key and provider-option changes, least-recently-used eviction, concurrent identical requests, corrupt files and clear; cover one waiter cancelling while another completes with one provider call, all waiters cancelling the provider, a new request after cancellation, shutdown during shared synthesis and no playback/fallback/deferred synthesis for cancelled callers; run suites for validation
+- [X] T016 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
+
+Slice 3 local validation (2026-10-13, synchronized with main through #259 / `28fafa8e`): full portable Release
+suite 2,561 passed, one reported bundled-photo skip; full Windows Release suite 2,673 passed, zero reported skips.
+The explicit sustained-refresh acceptance test was not run. Complete WinUI/Windows Release graph and Android
+Release compile; the Android follow-up uses `RunAOTCompilation=false` for compilation/analyzer validation, not
+AOT/bundle acceptance. Android references only `Speech.Base`, without Windows providers or `System.Speech`.
+Exact portable/Windows/Android analyzer gates match. Only the two source-suppressed NUnit reflection fixtures
+are added to the portable/Windows snapshots; 21 resolved WinRT unsafe-code configuration diagnostics are retired.
+Tests cover persistent files/index, keys and captured options, LRU, corrupt/missing data, provider switching,
+availability-independent hits, size/clear APIs, clear during active synthesis, independent waiter cancellation,
+retry after the last waiter cancels, and shutdown through production DI. Mutation lane coverage, internal links,
+Spec Kit governance, secrets and line endings pass. T016 is verified by the draft PR and SonarCloud analysis of
+`18b1655f` on 2026-10-13: quality gate OK and zero OPEN/CONFIRMED findings. The S6618 follow-up uses invariant
+`string.Create`; 39 final portable cache/output regressions pass, and the exact portable analyzer gate matches.
+The PR remains draft as requested; its latest CI/Sonar evidence must be rechecked before review. UI controls,
+Azure, fallback and deferred synthesis remain
+in later slices; no desktop application, hardware or paid cloud synthesis was started.
 
 ## Slice 4 - Azure provider and fallback
 

@@ -131,7 +131,26 @@ internal sealed class LocalSpeechProviderTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.IsSuccess, Is.True, result.Reason);
+            Assert.That(result.IsCacheable, Is.True);
             Assert.That(WaveAudio.GetDuration(result.WaveAudio.Span), Is.GreaterThan(TimeSpan.Zero));
+        }
+    }
+
+    [Test]
+    public void SystemSpeech_FingerprintFollowsTheWindowsDefaultVoiceOnlyWithoutAConfiguredVoice()
+    {
+        _settings.Speech.SystemSpeech.DefaultVoiceName = string.Empty;
+        var windowsDefault = "voice-a";
+        var provider = new SystemSpeechProvider(_settings, () => windowsDefault);
+        var implicitVoice = new SpeechRequest("Test", "", "", 0, 100);
+        var explicitVoice = new SpeechRequest("Test", "Configured voice", "", 0, 100);
+        var implicitBefore = provider.PrepareSynthesis(implicitVoice).OptionsFingerprint;
+        var explicitBefore = provider.PrepareSynthesis(explicitVoice).OptionsFingerprint;
+        windowsDefault = "voice-b";
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.PrepareSynthesis(implicitVoice).OptionsFingerprint, Is.Not.EqualTo(implicitBefore));
+            Assert.That(provider.PrepareSynthesis(explicitVoice).OptionsFingerprint, Is.EqualTo(explicitBefore));
         }
     }
 
@@ -270,6 +289,8 @@ internal sealed class LocalSpeechProviderTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.IsSuccess, Is.True, result.Reason);
+            // A substitute voice speaks; caching it would keep replaying it after the requested voice is installed.
+            Assert.That(result.IsCacheable, Is.False);
             Assert.That(WaveAudio.GetDuration(result.WaveAudio.Span), Is.GreaterThan(TimeSpan.Zero));
         }
     }
@@ -299,6 +320,75 @@ internal sealed class LocalSpeechProviderTests
         var provider = CreatePiper(new FakeRunner { ExitCode = exitCode });
         var capabilities = await provider.GetCapabilitiesAsync().ConfigureAwait(false);
         Assert.That(capabilities.IsAvailable, Is.False);
+    }
+    [Test]
+    public async Task PiperPreparedSynthesisKeepsCapturedModelAndPronunciationOptions()
+    {
+        var runner = new FakeRunner();
+        var provider = CreatePiper(runner);
+        _settings.Speech.Piper.SentenceSilenceSeconds = 0.4;
+        _settings.Speech.Piper.PronunciationReplacements["Central"] = "Captured";
+        var model = _settings.Speech.Piper.ModelPath;
+        var prepared = provider.PrepareSynthesis(new SpeechRequest("Central", "", "", 0, 100));
+        _settings.Speech.Piper.ModelPath = Path.Combine(_directory, "changed.onnx");
+        _settings.Speech.Piper.PronunciationReplacements["Central"] = "Changed";
+        _settings.Speech.Piper.SentenceSilenceSeconds = 0.9;
+        var result = await prepared.SynthesizeAsync().ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(runner.Request!.ModelPath, Is.EqualTo(model));
+            Assert.That(runner.Request.Text, Is.EqualTo("Captured"));
+            Assert.That(runner.Request.SentenceSilenceSeconds, Is.EqualTo(0.4));
+        }
+    }
+
+    [Test]
+    public void PiperFingerprintChangesForEverySynthesisAffectingOption()
+    {
+        var provider = CreatePiper(new FakeRunner());
+        var request = new SpeechRequest("Test", "", "", 0, 100);
+        var fingerprints = new List<string> { provider.PrepareSynthesis(request).OptionsFingerprint };
+        _settings.Speech.Piper.SentenceSilenceSeconds = 0.8;
+        fingerprints.Add(provider.PrepareSynthesis(request).OptionsFingerprint);
+        _settings.Speech.Piper.EnablePronunciationNormalization = false;
+        fingerprints.Add(provider.PrepareSynthesis(request).OptionsFingerprint);
+        _settings.Speech.Piper.PronunciationReplacements["Central"] = "Centre";
+        fingerprints.Add(provider.PrepareSynthesis(request).OptionsFingerprint);
+        _settings.Speech.Piper.ModelPath = Path.Combine(_directory, "changed-model.onnx");
+        fingerprints.Add(provider.PrepareSynthesis(request).OptionsFingerprint);
+        _settings.Speech.Piper.ConfigPath = Path.Combine(_directory, "config.json");
+        File.WriteAllText(_settings.Speech.Piper.ConfigPath, "config");
+        fingerprints.Add(provider.PrepareSynthesis(request).OptionsFingerprint);
+        _settings.Speech.Piper.ExecutablePath = Path.Combine(_directory, "other.exe");
+        fingerprints.Add(provider.PrepareSynthesis(request).OptionsFingerprint);
+        Assert.That(fingerprints.Distinct().Count(), Is.EqualTo(fingerprints.Count));
+        var latest = fingerprints[^1];
+        _settings.Speech.Piper.TimeoutSeconds = 120;
+        _settings.Speech.Piper.EnableAudioDiagnostics = true;
+        Assert.That(provider.PrepareSynthesis(request).OptionsFingerprint, Is.EqualTo(latest));
+    }
+
+    [Test]
+    public void PiperFingerprintIsIndependentOfProviderAvailabilitySoCachedAudioRemainsUsable()
+    {
+        var provider = CreatePiper(new FakeRunner());
+        var request = new SpeechRequest("Test", "", "", 0, 100);
+        var available = provider.PrepareSynthesis(request).OptionsFingerprint;
+        File.Delete(_settings.Speech.Piper.ExecutablePath);
+        File.Delete(_settings.Speech.Piper.ModelPath);
+        Assert.That(provider.PrepareSynthesis(request).OptionsFingerprint, Is.EqualTo(available));
+    }
+
+    [Test]
+    public void SystemSpeechFingerprintTracksConfiguredDefaultVoice()
+    {
+        var provider = new SystemSpeechProvider(_settings);
+        var request = new SpeechRequest("Test", "", "", 0, 100);
+        var first = provider.PrepareSynthesis(request);
+        _settings.Speech.SystemSpeech.DefaultVoiceName = "Other voice";
+        var second = provider.PrepareSynthesis(request);
+        Assert.That(first.OptionsFingerprint, Is.Not.EqualTo(second.OptionsFingerprint));
     }
     private PiperSynthesisRequest CreateProcessRequest(string input, TimeSpan timeout) => new(
         Environment.GetEnvironmentVariable("ComSpec") ?? throw new InvalidOperationException("Windows command processor is unavailable."),
