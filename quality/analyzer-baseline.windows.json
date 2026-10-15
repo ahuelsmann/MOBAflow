@@ -3183,6 +3183,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Domain/RailroadStateTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Domain/SignalBoxPlanTests.cs",
       "count": 1
     },
@@ -3191,20 +3198,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Domain/SolutionLoadFailureTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Domain/TrackLayoutTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Domain/TrackPlanDocumentMapperTests.cs",
       "count": 1
     },
     {
@@ -5318,13 +5311,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0007",
-      "path": "Test/Domain/TrackLayoutTests.cs",
-      "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0007",
       "path": "Test/Helpers/FeedbackPacketGenerator.cs",
       "count": 1
     },
@@ -5809,7 +5795,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
       "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
-      "count": 9
+      "count": 8
     },
     {
       "project": "Test",
@@ -6312,22 +6298,15 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
+      "path": "Test/Domain/RailroadStateTests.cs",
+      "count": 7
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2056",
       "path": "Test/Domain/SignalBoxPlanTests.cs",
       "count": 9
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/TrackLayoutTests.cs",
-      "count": 14
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/TrackPlanDocumentMapperTests.cs",
-      "count": 5
     },
     {
       "project": "Test",

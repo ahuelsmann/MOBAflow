@@ -37,7 +37,7 @@ catalogs are not currently implemented.
 ## Persistence
 
 The active editor plan is synchronized with the selected project through
-`TrackPlanSolutionBinder`. `TrackPlanDocumentMapper` translates between the
+`TrackPlanSolutionBinder`. `TrackPlanEditorDocument` translates between the
 editable Piko A representation and the platform-neutral domain document.
 
 Do not persist WinUI or Win2D objects. Coordinates, catalog identifiers,

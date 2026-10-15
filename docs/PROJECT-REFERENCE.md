@@ -234,7 +234,7 @@ See [issue #132](https://github.com/ahuelsmann/MOBAflow/issues/132).
 ## Track plan
 
 `Domain.TrackPlanDocument` is the persisted neutral format.
-`TrackPlanDocumentMapper` maps it to the editable Piko A representation.
+`TrackPlanEditorDocument` (`FromDomainDocument`/`ToDomainDocument`) maps it to the editable Piko A representation.
 `TrackPlanSolutionBinder` keeps the selected project and editor synchronized.
 
 The dependency direction is:

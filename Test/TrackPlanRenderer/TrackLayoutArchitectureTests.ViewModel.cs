@@ -8,7 +8,6 @@ using global::Moba.SharedUI.Interface;
 using global::Moba.SharedUI.Service;
 using global::Moba.SharedUI.ViewModel;
 using global::Moba.TrackLibrary.PikoA;
-using global::Moba.TrackPlan.Renderer;
 
 using Microsoft.Extensions.Logging;
 
@@ -99,7 +98,6 @@ internal sealed partial class TrackLayoutArchitectureTests
             new SelectionService(),
             new UndoRedoService<TrackPlanEditorDocument>());
         var viewModel = new TrackPlanViewModel(
-            new TrackPlan(),
             editorService,
             dialogService ?? Mock.Of<IDialogService>(),
             new AppSettings(),

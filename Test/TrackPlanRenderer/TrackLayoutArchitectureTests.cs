@@ -28,32 +28,6 @@ internal sealed partial class TrackLayoutArchitectureTests
     }
 
     [Test]
-    public void TrackPlanDocumentMapper_RoundTripsLegacyDocumentWithPikoDefault()
-    {
-        var first = Guid.NewGuid();
-        var second = Guid.NewGuid();
-        var legacy = new TrackPlanDocument
-        {
-            Version = 1,
-            LibraryId = string.Empty,
-            Segments =
-            [
-                new TrackPlanSegment { Id = first, Code = "G231", X = 0, Y = 0 },
-                new TrackPlanSegment { Id = second, Code = "G231", X = 230.93, Y = 0 }
-            ],
-            Connections = [new TrackPlanConnection { SourceSegment = first, SourcePort = "PortB", TargetSegment = second, TargetPort = "PortA" }]
-        };
-
-        var layout = TrackPlanDocumentMapper.ToLayout(legacy);
-        var persisted = TrackPlanDocumentMapper.ToDocument(layout);
-
-        Assert.That(layout.Tracks, Has.Count.EqualTo(2));
-        Assert.That(layout.Connections, Has.Count.EqualTo(1));
-        Assert.That(persisted.Version, Is.EqualTo(2));
-        Assert.That(persisted.LibraryId, Is.EqualTo(PikoATrackLibrary.Id));
-    }
-
-    [Test]
     public void EditorDocument_RejectsUnknownInheritedLibrary()
     {
         var document = new TrackPlanEditorDocument
@@ -68,24 +42,14 @@ internal sealed partial class TrackLayoutArchitectureTests
     }
 
     [Test]
-    public void GraphAndUndoRedoServices_KeepTopologyAndHistoryOutOfUi()
+    public void UndoRedoService_KeepsHistoryOutOfUi()
     {
-        var first = new TrackInstance(Guid.NewGuid(), "piko-a", "G231", 0, 0, 0);
-        var second = new TrackInstance(Guid.NewGuid(), "piko-a", "G231", 230.93, 0, 0);
-        var layout = new Layout();
-        var layoutService = new LayoutService();
-        layoutService.Place(layout, first);
-        layoutService.Place(layout, second);
-        layoutService.Connect(layout, new Connection(first.Id, "PortB", second.Id, "PortA"));
-
-        var group = new GraphService().GetConnectedGroup(layout, first.Id);
         var history = new UndoRedoService<string>();
         history.Record("before");
 
         bool undone = history.TryUndo("after", out var previous);
         bool redone = history.TryRedo(previous, out var next);
 
-        Assert.That(group, Is.EquivalentTo(new[] { first.Id, second.Id }));
         Assert.That(undone, Is.True);
         Assert.That(previous, Is.EqualTo("before"));
         Assert.That(redone, Is.True);
@@ -105,7 +69,6 @@ internal sealed partial class TrackLayoutArchitectureTests
             new SelectionService(),
             new UndoRedoService<TrackPlanEditorDocument>());
         var viewModel = new TrackPlanViewModel(
-            new TrackPlan(),
             editorService,
             Mock.Of<IDialogService>(),
             new AppSettings(),
@@ -335,17 +298,6 @@ internal sealed partial class TrackLayoutArchitectureTests
     }
 
     [Test]
-    public void TrackLibraryRegistry_ResolvesDefinitionsByPersistedLibraryId()
-    {
-        var registry = new TrackLibraryRegistry([new PikoATrackLibrary()]);
-
-        var definition = registry.ResolveDefinition(PikoATrackLibrary.Id, "G231");
-
-        Assert.That(definition.TemplateId, Is.EqualTo("G231"));
-        Assert.That(() => registry.ResolveDefinition("missing", "G231"), Throws.InvalidOperationException);
-    }
-
-    [Test]
     public void SpatialIndex_ReturnsLocalCandidates_ForTenThousandTracks()
     {
         var plan = new EditableTrackPlan();
@@ -464,7 +416,7 @@ internal sealed partial class TrackLayoutArchitectureTests
     {
         Assert.That(
             typeof(TrackPlanRailroadStateProjector).Assembly,
-            Is.EqualTo(typeof(LayoutService).Assembly));
+            Is.EqualTo(typeof(global::Moba.Backend.Z21).Assembly));
     }
 
     [Test]

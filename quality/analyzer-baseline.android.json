@@ -578,20 +578,6 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "Backend/Service/TrackPlan/GraphService.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "Backend/Service/TrackPlan/LayoutService.cs",
-      "count": 5
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "CA1826",
       "path": "Backend/FeedbackResult.cs",
       "count": 1
@@ -1665,13 +1651,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1716",
       "path": "Domain/Enum/ActionType.cs",
-      "count": 1
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1724",
-      "path": "Domain/TrackLayout.cs",
       "count": 1
     },
     {
@@ -3997,13 +3976,6 @@
       "ruleId": "CA1305",
       "path": "TrackPlan.Renderer/PlacedTrackPlanSvgRenderer.cs",
       "count": 10
-    },
-    {
-      "project": "TrackPlan.Renderer",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1724",
-      "path": "TrackPlan.Renderer/TrackPlan.cs",
-      "count": 1
     },
     {
       "project": "TrackPlan.Renderer",
