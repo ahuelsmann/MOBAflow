@@ -101,6 +101,8 @@
       "status": "planned",
       "test-directories": [],
       "test-files": [
+        "Test/Speech/AudioCacheTests.cs",
+        "Test/Speech/CachedSpeechOutputTests.cs",
         "Test/Speech/SpeechOutputTests.cs",
         "Test/Speech/WaveAudioTests.cs"
       ],

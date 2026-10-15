@@ -35,6 +35,8 @@ internal sealed partial class CancellableWavePlayer(
         {
             await Task.Run(() => StartSession(session, cancellationToken), cancellationToken).ConfigureAwait(false);
             await Task.Delay(duration, _timeProvider, cancellationToken).ConfigureAwait(false);
+            // A newer session replaces WinMM playback process-wide; this one was then only partly heard.
+            if (!IsCurrent(session)) throw new WavePlaybackInterruptedException();
         }
         finally
         {
@@ -51,6 +53,11 @@ internal sealed partial class CancellableWavePlayer(
             _activeSession = session;
         }
     }
+    private static bool IsCurrent(IWavePlaybackSession session)
+    {
+        lock (PlaybackGate) { return ReferenceEquals(_activeSession, session); }
+    }
+
     private static void StopIfCurrent(IWavePlaybackSession session)
     {
         lock (PlaybackGate)

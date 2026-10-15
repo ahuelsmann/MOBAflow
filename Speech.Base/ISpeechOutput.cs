@@ -11,6 +11,9 @@ public interface ISpeechOutput
 /// <summary>Plays synthesized WAV data with cancellation throughout audible playback.</summary>
 public interface IWavePlayer
 {
-    /// <summary>Completes when playback finishes; cancellation stops audible playback.</summary>
+    /// <summary>
+    /// Completes when playback finishes; cancellation stops audible playback. Throws
+    /// <see cref="WavePlaybackInterruptedException"/> when a newer playback replaced this one before it finished.
+    /// </summary>
     Task PlayAsync(ReadOnlyMemory<byte> waveAudio, CancellationToken cancellationToken = default);
 }
