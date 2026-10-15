@@ -200,16 +200,22 @@ public partial class FunctionToggleView
     private void ApplyVisualState()
     {
         var label = GetEffectiveLabel();
+        var effectiveDescription = GetEffectiveDescription();
+        var isOn = GetEffectiveIsOn();
+        if (_appliedLabel != label || _appliedDescription != effectiveDescription || _appliedIsOn != isOn)
+        {
+            var accessibility = string.IsNullOrWhiteSpace(effectiveDescription)
+                ? label
+                : $"{label}, {effectiveDescription}";
+            SemanticProperties.SetDescription(this, $"Toggle function {accessibility}, {(isOn ? "On" : "Off")}");
+        }
+
         if (_appliedLabel != label)
         {
             FunctionKeyLabel.Text = label;
-            var description = GetEffectiveDescription();
-            var accessibility = string.IsNullOrWhiteSpace(description) ? label : $"{label}, {description}";
-            SemanticProperties.SetDescription(this, $"Toggle function {accessibility}");
             _appliedLabel = label;
         }
 
-        var effectiveDescription = GetEffectiveDescription();
         if (_appliedDescription != effectiveDescription)
         {
             DescriptionLabel.Text = effectiveDescription;
@@ -217,7 +223,6 @@ public partial class FunctionToggleView
             _appliedDescription = effectiveDescription;
         }
 
-        var isOn = GetEffectiveIsOn();
         var backlightColorHex = GetEffectiveBacklightColorHex();
         var theme = GetAppearanceTheme();
         if (_appliedIsOn != isOn || _appliedBacklightColorHex != backlightColorHex || _appliedTheme != theme)
