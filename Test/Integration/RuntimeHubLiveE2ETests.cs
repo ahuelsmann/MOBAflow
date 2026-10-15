@@ -186,9 +186,10 @@ internal sealed class RuntimeHubLiveE2ETests
     public async Task SolutionPut_Should_NotifyRemoteWithoutProject()
     {
         var solutionUpdated = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        await using var remoteHub = new HubConnectionBuilder()
+        var remoteHub = new HubConnectionBuilder()
             .WithUrl($"{BaseUrl}/runtime-hub")
             .Build();
+        await using var remoteHubLifetime = remoteHub.ConfigureAwait(false);
         // A one-argument handler only matches when the server keeps the cancellation token off the wire.
         remoteHub.On<string>(nameof(IRuntimeHubRemoteCallbacks.SolutionUpdated), updatedAt =>
         {
