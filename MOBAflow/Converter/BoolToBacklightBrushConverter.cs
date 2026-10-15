@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 
-using Moba.Common.Display;
+using Moba.SharedUI.Appearance;
 using Moba.WinUI.View;
 
 using Windows.UI;
