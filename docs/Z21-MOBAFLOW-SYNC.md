@@ -19,8 +19,8 @@ LAN specification. The specification is not redistributed in this repository.
 ## Z21 LAN broadcasts (what the central station actually shares)
 
 Broadcast flags are set **per client** (IP + port) via `LAN_SET_BROADCASTFLAGS` and must be
-re-applied after every connect. Constants live in
-[`Common/Z21/Z21BroadcastRequirements.cs`](../Common/Z21/Z21BroadcastRequirements.cs).
+re-applied after every connect. Constants live in `Z21Protocol.BroadcastFlags`
+([`Backend/Protocol/Z21Protocol.cs`](../Backend/Protocol/Z21Protocol.cs)).
 
 MOBAflow subscribes with `Driving | Rbus | SystemState` (not `AllLocoInfo`).
 

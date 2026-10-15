@@ -522,13 +522,6 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "CA1724",
-      "path": "Backend/Z21.Commands.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Backend/Data/MasterDataStore.cs",
       "count": 1
@@ -1412,8 +1405,8 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Common/Configuration/GridSplitterLayoutSettings.cs",
-      "count": 4
+      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "count": 1
     },
     {
       "project": "Common",
@@ -1447,8 +1440,8 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/GridSplitterLayoutSettings.cs",
-      "count": 4
+      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "count": 1
     },
     {
       "project": "Common",
