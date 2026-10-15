@@ -100,6 +100,14 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-LineEndings.Tests.ps1
 
+      - name: Validate localization resources
+        shell: pwsh
+        run: ./scripts/Test-LocalizationResources.ps1
+
+      - name: Test localization resource guards
+        shell: pwsh
+        run: ./scripts/Test-LocalizationResources.Tests.ps1
+
       - name: Test Quality change scope classification
         shell: pwsh
         run: ./scripts/Get-QualityChangeScope.Tests.ps1

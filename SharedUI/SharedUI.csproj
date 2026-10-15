@@ -5,6 +5,7 @@
         <OutputType>Library</OutputType>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <NeutralLanguage>en-US</NeutralLanguage>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     </PropertyGroup>

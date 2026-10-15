@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <DefaultLanguage>en-US</DefaultLanguage>
+    </PropertyGroup>
     <!-- Project Identity -->
     <PropertyGroup>
         <RootNamespace>Moba.WinUI</RootNamespace>

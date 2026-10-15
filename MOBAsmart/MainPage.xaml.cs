@@ -20,12 +20,14 @@ public partial class CounterPage
     public CounterPage(
         MauiViewModel viewModel,
         ISettingsService settingsService,
-        AppSettings settings)
+        AppSettings settings,
+        Controls.LanguageSettingsView languageSettingsView)
     {
         _viewModel = viewModel;
         _settingsService = settingsService;
         _settings = settings;
         InitializeComponent();
+        LanguageSettingsHost.Content = languageSettingsView;
         BindingContext = _viewModel;
         ConnectionHeader.BindingContext = _viewModel;
         ConnectionHeader.ThemeSwitchToggled += (_, e) => ThemeSwitch_Toggled(ConnectionHeader.ThemeSwitchControl, e);

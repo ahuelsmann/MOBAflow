@@ -8,8 +8,12 @@ applyTo: 'MOBAflow/**/*.xaml,MOBAflow/**/*.cs'
 
 ## UI Language
 
-- All user-visible strings in MOBAflow must be **English** (labels, headers, buttons, tooltips, dialogs, empty states, status text).
-- Hardcode English strings inline in XAML and ViewModels; there is no localization framework (no `.resw`/`.resx`).
+- English is the complete source and fallback language for UI resources. Localized labels, headers, buttons,
+  tooltips, dialogs, empty states, status text and accessibility names follow the selected UI language.
+- Use stable resource keys in the specified localization scope: WinUI `x:Uid` with `.resw` property resources,
+  and a platform-neutral UI service for dynamic text. Translate complete templates with matching placeholders.
+  Do not independently translate shared text in two catalogues. Uncovered areas remain English until a later slice;
+  consult `specs/011-ui-localization/coverage.md` before expanding scope.
 - Domain defaults and shipped sample data (`data.json`, `solution.json`) must also use English for user-visible fields.
 - **Exception:** TTS/announcement text and voice selection are user-configurable in Settings and may use any language the user chooses.
 

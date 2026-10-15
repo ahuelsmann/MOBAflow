@@ -39,7 +39,7 @@ internal class SettingsService : ISettingsService
         LoadSettingsSync();
     }
 
-    private static string ResolveSettingsFilePath()
+    internal static string ResolveSettingsFilePath()
     {
 #if DEBUG
         if (Debugger.IsAttached)
@@ -89,6 +89,7 @@ internal class SettingsService : ISettingsService
         _settings.Application.AutoStartWebApp = source.Application.AutoStartWebApp;
         _settings.Application.IsDarkMode = source.Application.IsDarkMode;
         _settings.Application.UseSystemTheme = source.Application.UseSystemTheme;
+        _settings.Application.UiLanguage = source.Application.UiLanguage;
 
         _settings.Z21.AutoConnectRetryIntervalSeconds = source.Z21.AutoConnectRetryIntervalSeconds;
         _settings.Z21.SystemStatePollingIntervalSeconds = source.Z21.SystemStatePollingIntervalSeconds;

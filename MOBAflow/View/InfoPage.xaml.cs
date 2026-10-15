@@ -2,15 +2,17 @@
 namespace Moba.WinUI.View;
 
 using System.Reflection;
+using SharedUI.Localization;
 
 internal sealed partial class InfoPage
 {
-    public InfoPage()
+    public InfoPage(IUiLocalizer text)
     {
+        VersionText = text.Format("Version", CreateVersionText());
         InitializeComponent();
     }
 
-    public string VersionText { get; } = CreateVersionText();
+    public string VersionText { get; }
 
     private static string CreateVersionText()
     {
@@ -22,6 +24,6 @@ internal sealed partial class InfoPage
             ? infoVersion.Split('+')[0]
             : $"{assembly.GetName().Version?.Major ?? 0}.{assembly.GetName().Version?.Minor ?? 0}";
 
-        return $"Version {version}";
+        return version;
     }
 }

@@ -13,6 +13,9 @@ using Microsoft.Maui.Storage;
 using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
+using SharedUI.Localization;
+using SharedUI.ViewModel;
+using System.Globalization;
 using SharedUI.Mobile;
 using SharedUI.Service;
 using SharedUI.TrainControl;
@@ -46,7 +49,16 @@ public static class MobaMauiServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<AppSettings>();
+        services.AddSingleton(_ => new AppSettings
+        {
+            Application = new ApplicationSettings
+            {
+                UiLanguage = UiLanguagePolicy.ReadSavedPreference(SettingsService.GetSettingsFilePath())
+            }
+        });
+        services.AddSingleton<IUiLocalizer>(_ => new UiLocalizer(CultureInfo.CurrentUICulture));
+        services.AddSingleton<LanguageSettingsViewModel>();
+        services.AddTransient<Moba.MAUI.Controls.LanguageSettingsView>();
         services.AddSingleton<InPortCounterService>(sp => new InPortCounterService(
             sp.GetRequiredService<IZ21>(), sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<InPortCounterService>>(),

@@ -94,8 +94,10 @@ Do not assume every directory is an active project or discover projects inside `
   `SetProperty` and nested `PropertyChanged` propagation required by auto-save and computed properties.
 - Keep theme-dependent WinUI brushes in `ThemeResource`; use existing MAUI theme resources/bindings on Android.
   Domain/display color values (for example ARGB LED pixels) are data, adapted to brushes at the UI boundary.
-- Keep user-visible UI text, domain defaults and shipped master/sample data in English. TTS/announcement content
-  and voice remain user-configurable. Do not translate user-authored content as part of unrelated edits.
+- Keep English as the complete source and fallback language for UI resources. Visible UI text follows the selected
+  language within the specified localization scope; uncovered areas remain English until a later slice.
+  Domain defaults and shipped master/sample data remain English. User-authored content and TTS/announcement
+  content, language and voice stay independent of UI language. See `specs/011-ui-localization/coverage.md` for scope.
 - Persist resizable star columns as `*ColumnStarValue`; use pixels only for intentionally fixed columns.
   When changing XAML files, ensure active pages remain included in XAML compilation; do not hide compiler errors
   by adding `<Page Remove="..."/>` for an active page.

@@ -21,13 +21,15 @@ public class SettingsService : ISettingsService
     public SettingsService(AppSettings settings)
     {
         _settings = settings;
-        _settingsFilePath = Path.Combine(FileSystem.AppDataDirectory, "appsettings.json");
+        _settingsFilePath = GetSettingsFilePath();
 
         // ✅ DON'T block constructor - settings will be loaded in App.xaml.cs
         _isLoaded = false;
     }
 
     #region Application Settings
+
+    internal static string GetSettingsFilePath() => Path.Combine(FileSystem.AppDataDirectory, "appsettings.json");
 
     /// <summary>
     /// Loads settings from appsettings.json file in app data directory.
@@ -91,6 +93,7 @@ public class SettingsService : ISettingsService
                     _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
                     _settings.Application.IsDarkMode = loadedSettings.Application.IsDarkMode;
                     _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
+                    _settings.Application.UiLanguage = loadedSettings.Application.UiLanguage;
                     _settings.Counter.CountOfFeedbackPoints = loadedFeedbackPointCount;
                     _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;

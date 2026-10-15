@@ -10,6 +10,40 @@ using System.Text.Json;
 [TestFixture]
 internal sealed class SettingsServiceTests
 {
+    [TestCase("system")]
+    [TestCase("en-US")]
+    [TestCase("de-DE")]
+    public async Task UiLanguageSaveReloadPreservesSpeechAndOtherPreferences(string language)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "mobaflow-language-settings-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "appsettings.json");
+        try
+        {
+            var settings = new AppSettings();
+            var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
+            settings.Application.UiLanguage = language;
+            settings.Application.LastSolutionPath = "user-solution.json";
+            settings.Speech.Language = "fr-FR";
+            settings.Speech.TestMessage = "User announcement";
+            await service.SaveSettingsAsync(settings);
+            var loaded = new AppSettings();
+            _ = new SettingsService(loaded, NullLogger<SettingsService>.Instance, path);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(loaded.Application.UiLanguage, Is.EqualTo(language));
+                Assert.That(loaded.Application.LastSolutionPath, Is.EqualTo("user-solution.json"));
+                Assert.That(loaded.Speech.Language, Is.EqualTo("fr-FR"));
+                Assert.That(loaded.Speech.TestMessage, Is.EqualTo("User announcement"));
+            }
+        }
+        finally
+        {
+            File.Delete(path);
+            Directory.Delete(directory);
+        }
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public async Task SaveAndReset_DoNotPersistGlobalZ21Endpoint(bool reset)

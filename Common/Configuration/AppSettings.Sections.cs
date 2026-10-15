@@ -123,6 +123,9 @@ public class SystemSpeechSettings
 /// </summary>
 public class ApplicationSettings
 {
+    /// <summary>Local UI language preference; System follows the OS UI language after restart.</summary>
+    public string UiLanguage { get; set => field = UiLanguagePreference.Normalize(value); } = UiLanguagePreference.System;
+
     /// <summary>
     /// Dark mode enabled (true = Dark theme, false = Light theme).
     /// Default: true (Dark mode).

@@ -26,6 +26,8 @@ using Serilog;
 using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
+using SharedUI.Localization;
+using System.Globalization;
 using SharedUI.Service;
 using SharedUI.Shell;
 using SharedUI.TrainControl;
@@ -56,6 +58,8 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(configuration);
         services.Configure<AppSettings>(configuration);
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
+        services.AddSingleton<IUiLocalizer>(_ => new UiLocalizer(CultureInfo.CurrentUICulture));
+        services.AddSingleton<LanguageSettingsViewModel>();
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
         return services;
@@ -416,7 +420,8 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<RestApiStatusService>(),
             sp.GetRequiredService<RestApiProcessService>(),
             sp.GetRequiredService<ILogger<WindowActivationService>>(),
-            sp.GetRequiredService<ILogger<MainWindow>>()));
+            sp.GetRequiredService<ILogger<MainWindow>>(),
+            sp.GetRequiredService<IUiLocalizer>()));
 
         return services;
     }

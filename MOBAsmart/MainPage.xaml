@@ -14,6 +14,7 @@
             HorizontalOptions="Fill"
             Spacing="8">
             <controls:ConnectionStatusPanel x:Name="ConnectionHeader" />
+            <ContentView x:Name="LanguageSettingsHost" />
 
             <!--  System Stats Card (when connected)  -->
             <Border
