@@ -29,6 +29,25 @@ using Moq;
 internal sealed class MobaWinUiServiceCollectionExtensionsTests
 {
     [Test]
+    public void ConfigurationRegistersSharedLanguageServicesWithoutPlatformViewConstruction()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+            new Dictionary<string, string?> { ["Application:UiLanguage"] = "de-DE" }).Build();
+        var services = new ServiceCollection();
+        services.AddMobaWinUiConfiguration(configuration);
+        services.AddSingleton(Mock.Of<ISettingsService>());
+        using var provider = services.BuildServiceProvider();
+        var text = provider.GetRequiredService<Moba.SharedUI.Localization.IUiLocalizer>();
+        var viewModel = provider.GetRequiredService<LanguageSettingsViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<Moba.SharedUI.Localization.IUiLocalizer>(), Is.SameAs(text));
+            Assert.That(viewModel.SelectedChoice?.Value, Is.EqualTo("de-DE"));
+            Assert.That(provider.GetRequiredService<LanguageSettingsViewModel>(), Is.SameAs(viewModel));
+        }
+    }
+
+    [Test]
     public void AddMobaWinUiPlatformServices_RegistersUiDispatcherAndEventBus()
     {
         var provider = CreatePlatformServiceProvider();

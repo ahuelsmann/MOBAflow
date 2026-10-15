@@ -5,8 +5,7 @@ using Moba.Common.Configuration;
 using Moba.SharedUI.Localization;
 using System.Globalization;
 
-[TestFixture]
-internal sealed class UiLocalizerTests
+internal sealed partial class SettingsPageViewModelTests
 {
     [TestCase("system", "de-AT", "de-DE")]
     [TestCase("system", "de-CH", "de-DE")]
@@ -26,7 +25,7 @@ internal sealed class UiLocalizerTests
     public void ResourceLookupUsesTranslationOrCompleteEnglishFallback(string culture, string expected)
     {
         var text = new UiLocalizer(CultureInfo.GetCultureInfo(culture));
-        Assert.That(text.Get("LanguageTitle"), Is.EqualTo(expected));
+        Assert.That(text.GetText("LanguageTitle"), Is.EqualTo(expected));
     }
 
     [TestCase("en-US", "12.5", "10/14/2026")]
@@ -49,7 +48,7 @@ internal sealed class UiLocalizerTests
     public void UnknownKeyIsDetectedBeforeAVisibleKeyCanEscape()
     {
         var text = new UiLocalizer(CultureInfo.GetCultureInfo("en-US"));
-        Assert.Throws<InvalidOperationException>(() => text.Get("UnregisteredKey"));
+        Assert.Throws<InvalidOperationException>(() => text.GetText("UnregisteredKey"));
     }
 
     [TestCase("{\"Application\":{\"UiLanguage\":\"de-DE\"}}", "de-DE")]

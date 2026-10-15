@@ -9,7 +9,7 @@ public interface IUiLocalizer
     /// <summary>The language/display culture fixed for the current app session.</summary>
     CultureInfo Culture { get; }
     /// <summary>Returns translated text with complete English fallback.</summary>
-    string Get(string key);
+    string GetText(string key);
     /// <summary>Formats a complete UI template in this session's display culture.</summary>
     string Format(string key, params object[] arguments);
 }

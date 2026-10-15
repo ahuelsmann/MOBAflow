@@ -100,7 +100,7 @@ subagent only read official web documentation. No unresolved technical clarifica
 
 ## Validation Strategy
 
-- **Automated**: `Test/SharedUI/UiLocalizerTests.cs`, `LanguageSettingsViewModelTests.cs`,
+- **Automated**: `Test/SharedUI/SettingsPageViewModelTests.Localization.cs`, `SettingsPageViewModelTests.Language.cs`,
   relevant existing settings/default tests; isolated resource fixtures for missing/duplicate/empty
   keys, malformed/different placeholders and stale output.
 - **Builds**: SharedUI, desktop and Android restore/FastDebug; full applicable Test targets

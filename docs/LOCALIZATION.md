@@ -57,7 +57,7 @@ alone does not make a language selectable. English remains the fallback.
 ## Validate the hosts
 
 Use [the validation guide](../specs/011-ui-localization/quickstart.md) for builds/tests and the
-manual matrix. Generated WinUI `resources.pri` and shared satellite assemblies must be shipped
+manual matrix. Generated WinUI `MOBAflow.pri` and shared satellite assemblies must be shipped
 with the host output. WinUI applies its MRTCore override before App XAML is initialized;
 Android applies resource UI culture before App/Shell/views. Only CurrentUICulture changes;
 CurrentCulture is retained and translated UI templates use explicit display culture.

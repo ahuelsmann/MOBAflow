@@ -13,7 +13,7 @@ public sealed class UiLocalizer(CultureInfo culture) : IUiLocalizer
     public CultureInfo Culture { get; } = culture ?? throw new ArgumentNullException(nameof(culture));
 
     /// <inheritdoc />
-    public string Get(string key)
+    public string GetText(string key)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         return Resources.GetString(key, Culture)
@@ -21,5 +21,5 @@ public sealed class UiLocalizer(CultureInfo culture) : IUiLocalizer
     }
 
     /// <inheritdoc />
-    public string Format(string key, params object[] arguments) => string.Format(Culture, Get(key), arguments);
+    public string Format(string key, params object[] arguments) => string.Format(Culture, GetText(key), arguments);
 }

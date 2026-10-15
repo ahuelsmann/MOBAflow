@@ -51,3 +51,23 @@ function Get-UiProjection([Collections.Generic.Dictionary[string, string]] $Cata
     $lines.Add('</root>')
     return [string]::Join("`r`n", $lines) + "`r`n"
 }
+
+function Test-UiLiteralCoverage([string] $Content, [object[]] $Mapping,
+    [Collections.Generic.Dictionary[string, string]] $Catalogue, [string] $RelativePath) {
+    $document = [System.Xml.Linq.XDocument]::Parse($Content)
+    $attributes = @($document.Descendants().Attributes() | Where-Object {
+        $_.Name.LocalName -in @('Text', 'Content', 'Header', 'AutomationProperties.Name') -and
+        -not $_.Value.StartsWith('{', [StringComparison]::Ordinal)
+    })
+    foreach ($attribute in $attributes) {
+        $uid = $attribute.Parent.Attribute('{http://schemas.microsoft.com/winfx/2006/xaml}Uid')
+        if (-not $uid) { throw "Unlocalized XAML text in $RelativePath" }
+        $property = if ($attribute.Name.LocalName -eq 'AutomationProperties.Name') {
+            '[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name'
+        } else { $attribute.Name.LocalName }
+        $target = $uid.Value + '.' + $property
+        $entry = @($Mapping | Where-Object { $_.Target -ceq $target })
+        if ($entry.Count -ne 1) { throw "Unmapped XAML property: $target" }
+        if ($Catalogue[$entry[0].Key] -cne $attribute.Value) { throw "Stale English XAML default: $target" }
+    }
+}

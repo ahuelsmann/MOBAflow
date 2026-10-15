@@ -2,17 +2,18 @@
 
 Source issue: [#140](https://github.com/ahuelsmann/MOBAflow/issues/140).
 Baseline: `7c1d92422c0cbf675fddc03a8979990957733d15` (2026-10-14).
-Inventory below describes scope, not completed implementation or manual acceptance.
+Integration base: `d4d3d2b1d4f263a5b9dfed2d1585d9b4b3c5c136` (2026-10-15).
+Rows distinguish implemented scope from still-pending manual acceptance.
 
 | Platform/surface | Files | Scope | Delivery/acceptance |
 | --- | --- | --- | --- |
-| Desktop navigation | `MOBAflow/Service/NavigationItemFactory.cs`, `NavigationRegistration.cs` | Page titles/tooltips; preserve tags and custom badge suffixes | Slice 1; pending |
-| Desktop UI language | `MOBAflow/View/SettingsPage.xaml`, new language area | Language heading, choices, save/restart/error text and accessible names only | Slice 1; pending |
-| Desktop Info | `MOBAflow/View/InfoPage.xaml`, `.xaml.cs` | All prose, headings, links/accessibility names; version/product/URLs invariant | Slice 1; pending |
-| Desktop Help | `MOBAflow/View/HelpPage.xaml`, `.xaml.cs` | View chrome and contents navigation; embedded/remote article bodies excluded | Slice 1; pending |
-| Android tabs | `MOBAsmart/Controls/AppBottomTabBar.xaml` | Four labels and accessible names; tab IDs/routing invariant | Slice 1; pending |
-| Android UI language | new `MOBAsmart/Controls/LanguageSettingsView.xaml`, hosted by `MOBAsmart/MainPage.xaml` | New self-contained settings area, not Counter behavior | Slice 1; pending |
-| Shared dynamic text | new `SharedUI/Localization/`, new language ViewModel | Language save/restart/error templates; numeric/date formatting contract | Slice 1; pending |
+| Desktop navigation | `MOBAflow/Service/NavigationItemFactory.cs`, `NavigationRegistration.cs` | Page titles/tooltips; preserve tags and custom badge suffixes | Slice 1 implemented; manual acceptance pending |
+| Desktop UI language | `MOBAflow/View/SettingsPage.xaml`, new language area | Language heading, choices, save/restart/error text and accessible names only | Slice 1 implemented; manual acceptance pending |
+| Desktop Info | `MOBAflow/View/InfoPage.xaml`, `.xaml.cs` | All prose, headings, links/accessibility names; version/product/URLs invariant | Slice 1 implemented; manual acceptance pending |
+| Desktop Help | `MOBAflow/View/HelpPage.xaml`, `.xaml.cs` | View chrome and contents navigation; embedded/remote article bodies excluded | Slice 1 implemented; manual acceptance pending |
+| Android tabs | `MOBAsmart/Controls/AppBottomTabBar.xaml` | Four labels and accessible names; tab IDs/routing invariant | Slice 1 implemented; manual acceptance pending |
+| Android UI language | new `MOBAsmart/Controls/LanguageSettingsView.xaml`, hosted by `MOBAsmart/MainPage.xaml` | New self-contained settings area, not Counter behavior | Slice 1 implemented; manual acceptance pending |
+| Shared dynamic text | new `SharedUI/Localization/`, new language ViewModel | Language save/restart/error templates; numeric/date formatting contract | Slice 1 implemented; manual acceptance pending |
 | Desktop shell body | `MOBAflow/View/MainWindow.xaml`, related status/command partials | Menus, operational statuses, command dialogs | Follow-up in #140 |
 | Other desktop Settings | `MOBAflow/View/SettingsPage.xaml`, `.xaml.cs`, `.Layout.cs`, `SharedUI/ViewModel/SettingsPageViewModel*` | Existing connection, display, speech, feature toggles/layout and reset sections | Follow-up in #140; speech coordination with #136 |
 | Desktop pages | `MOBAflow/View/OverviewPage.xaml`, `SolutionPage.xaml`, `StationsPage.xaml`, `LocomotivesPage.xaml`, `GoodsWagonPage.xaml`, `PassengerWagonPage.xaml`, `TrainsPage.xaml` | Page bodies, dialogs, templates and corresponding shared ViewModels | Follow-up in #140 |
@@ -23,3 +24,39 @@ Inventory below describes scope, not completed implementation or manual acceptan
 Each included surface must be checked for static text, dynamic text, full templates,
 tooltips, accessible names, error/empty/status states, formatting and user-data boundaries.
 Only update a row to implemented when resource and build checks exist; record manual acceptance separately.
+
+## Local evidence (2026-10-15)
+
+- SharedUI build passed; 109 source keys, 2 languages and 52 WinUI property targets validated.
+- Resource-tool tests: 14 isolated cases passed, including missing/duplicate/empty keys,
+  malformed/different placeholders, unknown references, stale projection and unlocalized/stale XAML defaults.
+- Desktop FastDebug compilation passed with zero warnings/errors. Normal Windows Release
+  test graph passed, including API dependency build/copy, XAML and PRI generation.
+- Portable analyzer baseline matches 3346 diagnostics in 1156 groups; Windows baseline
+  matches 2493 diagnostics in 953 groups. Existing baselines were not expanded.
+- Full portable suite: 2712 passed, no failures. TRX records two NotExecuted results:
+  `ResolvePhotoBaseDirectory_WhenBundledPhotosExist_ReturnsAppBaseDirectory` and
+  explicitly excluded `SustainedRefresh_MeetsAcceptanceThresholds` (runner summary counts one skip).
+- Full Windows suite: 2830 passed, no failures; TRX records the explicitly excluded
+  `SustainedRefresh_MeetsAcceptanceThresholds` as NotExecuted. Latest focused Windows
+  language/settings/DI rerun: 64 passed, including both IO-error and access-denied retry cases.
+- Android FastDebug compilation passed serially (`-m:1`), 45 XC0025 warnings in existing
+  controls/pages, zero errors. No new LanguageSettingsView warning. This is not an AAB or device check.
+- `MOBAflow.pri` was dumped using the existing SDK MakePri tool; LanguageTitle and InfoTagline
+  contain both EN-US and DE-DE candidates. The German SharedUI satellite DLL is in desktop output.
+- Instruction consistency, Spec Kit governance, text endings and changed-file secrets checks passed locally.
+
+The initial local SDK workload-manifest failure was no longer present on the later Android
+restore/build; this task performed no machine-wide SDK/workload repair or installation.
+Parallel local build attempts had output-lock/debug-symbol collisions; serial builds passed.
+
+## Open acceptance/publication gates
+
+No desktop or Android app was launched. Full process restart, system-language startup,
+long-text/font scaling, keyboard/focus, screenreader and Light/Dark acceptance remain open
+under T022/T026. No hardware or paid service was used. #140 remains open for these checks
+and the explicitly listed follow-up page slices.
+
+Draft-PR CI/Sonar evidence is pending publication. A passing local build does not establish
+PR readiness. Require green current-head checks and zero OPEN/CONFIRMED PR issues; do not
+mark Ready or merge without separate authorization.

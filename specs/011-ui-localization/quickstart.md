@@ -9,7 +9,7 @@ root. These commands do not launch apps.
 ```powershell
 scripts/Test-LocalizationResources.ps1
 scripts/Test-LocalizationResources.Tests.ps1
-dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~UiLocalizerTests|FullyQualifiedName~LanguageSettingsViewModelTests"
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~SettingsPageViewModelTests"
 dotnet build SharedUI/SharedUI.csproj
 dotnet restore MOBAflow/MOBAflow.csproj
 dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore -p:BuildMOBApiDependency=false -p:CopyMOBApiToOutput=false

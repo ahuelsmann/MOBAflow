@@ -22,8 +22,8 @@ function Reset-Fixture {
     & "$PSScriptRoot/Update-LocalizationResources.ps1" -RepositoryRoot $fixture | Out-Null
 }
 
-function Assert-Rejected([string] $Expected) {
-    try { & "$PSScriptRoot/Test-LocalizationResources.ps1" -RepositoryRoot $fixture -SourceFiles @('fixture.xaml') | Out-Null }
+function Assert-Rejected([string] $Expected, [string[]] $Files = @('fixture.xaml')) {
+    try { & "$PSScriptRoot/Test-LocalizationResources.ps1" -RepositoryRoot $fixture -SourceFiles $Files | Out-Null }
     catch {
         if ($_.Exception.Message -notlike "*$Expected*") { throw "Expected '$Expected', got '$($_.Exception.Message)'" }
         return
@@ -78,6 +78,20 @@ try {
     Reset-Fixture
     [IO.File]::WriteAllText((Join-Path $cataloguePath 'WinUiResourceMap.json'), '[{"Key":"Missing","Target":"Greeting.Text"}]')
     Assert-Rejected 'Unknown mapped key'; $passed++
+
+    Reset-Fixture
+    $viewDirectory = Join-Path $fixture 'MOBAflow/View'
+    $null = New-Item -ItemType Directory -Path $viewDirectory -Force
+    $viewPath = Join-Path $viewDirectory 'InfoPage.xaml'
+    [IO.File]::WriteAllText($viewPath, '<Page><TextBlock Text="Hello" /></Page>')
+    Assert-Rejected 'Unlocalized XAML text' @('MOBAflow/View/InfoPage.xaml'); $passed++
+
+    [IO.File]::WriteAllText($viewPath, '<Page xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><TextBlock x:Uid="Greeting" Text="Old text" /></Page>')
+    Assert-Rejected 'Stale English XAML default' @('MOBAflow/View/InfoPage.xaml'); $passed++
+
+    [IO.File]::WriteAllText($viewPath, '<Page xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><TextBlock x:Uid="Greeting" Text="Hello" /></Page>')
+    & "$PSScriptRoot/Test-LocalizationResources.ps1" -RepositoryRoot $fixture -SourceFiles @('MOBAflow/View/InfoPage.xaml') | Out-Null
+    $passed++
 
     Write-Output "Localization resource tooling: $passed isolated cases passed."
 }

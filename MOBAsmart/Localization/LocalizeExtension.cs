@@ -14,7 +14,7 @@ public sealed class LocalizeExtension : IMarkupExtension<string>
     public string Key { get; set; } = string.Empty;
 
     /// <inheritdoc />
-    public string ProvideValue(IServiceProvider serviceProvider) => new UiLocalizer(CultureInfo.CurrentUICulture).Get(Key);
+    public string ProvideValue(IServiceProvider serviceProvider) => new UiLocalizer(CultureInfo.CurrentUICulture).GetText(Key);
 
     object IMarkupExtension.ProvideValue(IServiceProvider serviceProvider) => ProvideValue(serviceProvider);
 }

@@ -47,6 +47,6 @@ load synchronously; mobile settings currently load later. Preference must preced
 without blocking async work. NavigationItemFactory centralizes desktop labels; MainPage.xaml
 is CounterPage and hosts mobile settings. Use a new control, not a Counter extraction.
 
-Build output must contain fresh resources.pri and shared satellite assemblies. Microsoft's MAUI
+Build output must contain the host PRI (`MOBAflow.pri`) and shared satellite assemblies. Microsoft's MAUI
 guide warns culture behavior varies by platform; unit checks do not replace authorized Android
 runtime/long-text acceptance. No hardware or paid provider is needed.

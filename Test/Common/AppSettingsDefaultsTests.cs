@@ -30,8 +30,11 @@ internal class AppSettingsDefaultsTests
         settings.Application.UiLanguage = value;
         settings.Speech.Language = "fr-FR";
         var restored = JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(settings))!;
-        Assert.That(restored.Application.UiLanguage, Is.EqualTo(value));
-        Assert.That(restored.Speech.Language, Is.EqualTo("fr-FR"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(restored.Application.UiLanguage, Is.EqualTo(value));
+            Assert.That(restored.Speech.Language, Is.EqualTo("fr-FR"));
+        }
     }
 
     [Test]

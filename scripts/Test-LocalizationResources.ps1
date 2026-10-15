@@ -30,7 +30,10 @@ if ($SourceFiles.Count -eq 0) {
 }
 foreach ($relative in $SourceFiles) {
     $content = [IO.File]::ReadAllText((Join-Path $root $relative))
-    foreach ($match in [regex]::Matches($content, '(?:\.Get|\.Format)\("(?<key>[A-Za-z][A-Za-z0-9_]*)"\s*(?=[,)])|\{l:Localize (?<key>[A-Za-z][A-Za-z0-9_]*)\}')) {
+    if ($relative -in @('MOBAflow/View/InfoPage.xaml', 'MOBAflow/View/HelpPage.xaml')) {
+        Test-UiLiteralCoverage $content $mapping $source $relative
+    }
+    foreach ($match in [regex]::Matches($content, '(?:\.GetText|\.Format)\("(?<key>[A-Za-z][A-Za-z0-9_]*)"\s*(?=[,)])|\{l:Localize (?<key>[A-Za-z][A-Za-z0-9_]*)\}')) {
         $key = $match.Groups['key'].Value
         if (-not $source.ContainsKey($key)) { throw "Unknown used key '$key' in $relative" }
     }

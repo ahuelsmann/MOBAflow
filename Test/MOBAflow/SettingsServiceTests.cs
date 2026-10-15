@@ -26,7 +26,7 @@ internal sealed class SettingsServiceTests
             settings.Application.LastSolutionPath = "user-solution.json";
             settings.Speech.Language = "fr-FR";
             settings.Speech.TestMessage = "User announcement";
-            await service.SaveSettingsAsync(settings);
+            await service.SaveSettingsAsync(settings).ConfigureAwait(false);
             var loaded = new AppSettings();
             _ = new SettingsService(loaded, NullLogger<SettingsService>.Instance, path);
             using (Assert.EnterMultipleScope())

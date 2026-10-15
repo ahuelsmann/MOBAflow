@@ -131,11 +131,11 @@ public sealed class NavigationItemFactory
         return panel;
     }
 
+    private string GetTitle(PageMetadata page) => _text.GetText("Nav_" + page.Tag);
+
     /// <summary>
     /// Creates a badge Border element.
     /// </summary>
-    private string GetTitle(PageMetadata page) => _text.Get("Nav_" + page.Tag);
-
     private static Border CreateBadge(string label)
     {
         var isPreviewBadge = label.Equals("Preview", StringComparison.OrdinalIgnoreCase);

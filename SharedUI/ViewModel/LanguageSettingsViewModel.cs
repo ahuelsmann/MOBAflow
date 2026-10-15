@@ -17,22 +17,25 @@ public sealed partial class LanguageSettingsViewModel : ObservableObject
     /// <summary>Creates language presentation state using existing app settings persistence.</summary>
     public LanguageSettingsViewModel(AppSettings settings, ISettingsService persistence, IUiLocalizer text)
     {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(persistence);
+        ArgumentNullException.ThrowIfNull(text);
         _settings = settings;
         _persistence = persistence;
         _text = text;
-        Choices = [new(UiLanguagePreference.System, text.Get("LanguageSystem")),
+        Choices = [new(UiLanguagePreference.System, text.GetText("LanguageSystem")),
             new(UiLanguagePreference.English, "English"), new(UiLanguagePreference.German, "Deutsch")];
-        _selectedChoice = Choices.First(choice => choice.Value == settings.Application.UiLanguage);
+        SelectedChoice = Choices.First(choice => choice.Value == settings.Application.UiLanguage);
     }
 
     /// <summary>Available app-local preferences; language names are shown in their native form.</summary>
     public IReadOnlyList<LanguageChoice> Choices { get; }
 
     [ObservableProperty]
-    private LanguageChoice? _selectedChoice;
+    public partial LanguageChoice? SelectedChoice { get; set; }
 
     [ObservableProperty]
-    private string _message = string.Empty;
+    public partial string Message { get; set; } = string.Empty;
 
     /// <summary>Persists only the UI preference and leaves the active language unchanged.</summary>
     [RelayCommand]
@@ -43,13 +46,18 @@ public sealed partial class LanguageSettingsViewModel : ObservableObject
         _settings.Application.UiLanguage = SelectedChoice.Value;
         try
         {
-            await _persistence.SaveSettingsAsync(_settings);
-            Message = _text.Get("LanguageRestart");
+            await _persistence.SaveSettingsAsync(_settings).ConfigureAwait(true);
+            Message = _text.GetText("LanguageRestart");
         }
-        catch (Exception)
+        catch (IOException)
         {
             _settings.Application.UiLanguage = previous;
-            Message = _text.Get("LanguageSaveFailed");
+            Message = _text.GetText("LanguageSaveFailed");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _settings.Application.UiLanguage = previous;
+            Message = _text.GetText("LanguageSaveFailed");
         }
     }
 }

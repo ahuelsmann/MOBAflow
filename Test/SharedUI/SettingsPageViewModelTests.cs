@@ -11,7 +11,7 @@ using System.Diagnostics.CodeAnalysis;
 
 [TestFixture]
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit creates this fixture through reflection.")]
-internal sealed class SettingsPageViewModelTests
+internal sealed partial class SettingsPageViewModelTests
 {
     private static readonly string[] ExpectedLanguages = ["de_DE", "en_US"];
     private static readonly string[] ExpectedVoices = ["en_US-test-low"];

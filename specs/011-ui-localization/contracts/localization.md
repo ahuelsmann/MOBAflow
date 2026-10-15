@@ -4,9 +4,9 @@ Source issue: [#140](https://github.com/ahuelsmann/MOBAflow/issues/140).
 
 ## Shared boundary
 
-IUiLocalizer in `SharedUI/Localization/` exposes startup `CultureInfo Culture`, Get(key) and
+IUiLocalizer in `SharedUI/Localization/` exposes startup `CultureInfo Culture`, GetText(key) and
 Format(key, arguments). No WinUI/MAUI/transport types cross the boundary.
-Get resolves translation then English fallback for known keys. Unknown/empty English source
+GetText resolves translation then English fallback for known keys. Unknown/empty English source
 is a development failure caught by checks, never a user-visible key. Format uses active display
 culture and supports reordered positional arguments; never concatenate sentence fragments or
 feed formatted text into protocols/persistence.

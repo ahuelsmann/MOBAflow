@@ -9,8 +9,7 @@ using Moq;
 using System.Globalization;
 using System.Text.Json;
 
-[TestFixture]
-internal sealed class LanguageSettingsViewModelTests
+internal sealed partial class SettingsPageViewModelTests
 {
     [TestCase("system")]
     [TestCase("en-US")]
@@ -29,7 +28,7 @@ internal sealed class LanguageSettingsViewModelTests
         var viewModel = new LanguageSettingsViewModel(settings, persistence.Object, text);
         viewModel.SelectedChoice = viewModel.Choices.Single(choice => choice.Value == preference);
 
-        await viewModel.SaveCommand.ExecuteAsync(null);
+        await viewModel.SaveCommand.ExecuteAsync(null).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
@@ -42,28 +41,34 @@ internal sealed class LanguageSettingsViewModelTests
         Assert.That(JsonSerializer.Serialize(settings), Is.EqualTo(before));
     }
 
-    [Test]
-    public async Task FailedSaveRestoresPreferenceAndCanBeRetriedInTheActiveLanguage()
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task FailedSaveRestoresPreferenceAndCanBeRetriedInTheActiveLanguage(bool accessDenied)
     {
         var settings = new AppSettings();
         var text = new UiLocalizer(CultureInfo.GetCultureInfo("de-DE"));
         var persistence = new Mock<ISettingsService>();
         persistence.SetupSequence(service => service.SaveSettingsAsync(settings))
-            .ThrowsAsync(new IOException("private path must not be displayed"))
+            .ThrowsAsync(accessDenied
+                ? new UnauthorizedAccessException("private path must not be displayed")
+                : new IOException("private path must not be displayed"))
             .Returns(Task.CompletedTask);
         var viewModel = new LanguageSettingsViewModel(settings, persistence.Object, text);
         viewModel.SelectedChoice = viewModel.Choices.Single(choice => choice.Value == "en-US");
 
-        await viewModel.SaveCommand.ExecuteAsync(null);
+        await viewModel.SaveCommand.ExecuteAsync(null).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(settings.Application.UiLanguage, Is.EqualTo("system"));
-            Assert.That(viewModel.Message, Is.EqualTo(text.Get("LanguageSaveFailed")));
+            Assert.That(viewModel.Message, Is.EqualTo(text.GetText("LanguageSaveFailed")));
             Assert.That(viewModel.Message, Does.Not.Contain("private path"));
         }
-        await viewModel.SaveCommand.ExecuteAsync(null);
-        Assert.That(settings.Application.UiLanguage, Is.EqualTo("en-US"));
-        Assert.That(viewModel.Message, Is.EqualTo(text.Get("LanguageRestart")));
+        await viewModel.SaveCommand.ExecuteAsync(null).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings.Application.UiLanguage, Is.EqualTo("en-US"));
+            Assert.That(viewModel.Message, Is.EqualTo(text.GetText("LanguageRestart")));
+        }
     }
 
     [Test]
