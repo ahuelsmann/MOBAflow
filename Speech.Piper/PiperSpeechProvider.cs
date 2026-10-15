@@ -49,11 +49,31 @@ public sealed partial class PiperSpeechProvider(
     }
 
     /// <inheritdoc />
-    public async Task<SpeechResult> SynthesizeAsync(SpeechRequest request, CancellationToken cancellationToken = default)
+    public PreparedSpeechSynthesis PrepareSynthesis(SpeechRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        cancellationToken.ThrowIfCancellationRequested();
         var options = CaptureOptions();
+        var values = new List<string>
+        {
+            options.ExecutablePath, options.ModelPath, options.ConfigPath,
+            Math.Clamp(options.SentenceSilenceSeconds, 0, 2).ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+            options.EnablePronunciationNormalization ? "1" : "0"
+        };
+        foreach (var pair in options.PronunciationReplacements)
+        {
+            values.Add(pair.Key);
+            values.Add(pair.Value);
+        }
+        return new PreparedSpeechSynthesis(SpeechCacheKey.Fingerprint(values), token => SynthesizeAsync(request, options, token));
+    }
+
+    /// <inheritdoc />
+    public Task<SpeechResult> SynthesizeAsync(SpeechRequest request, CancellationToken cancellationToken = default) =>
+        PrepareSynthesis(request).SynthesizeAsync(cancellationToken);
+
+    private async Task<SpeechResult> SynthesizeAsync(SpeechRequest request, PiperSpeechSettings options, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         if (!IsConfigured(options))
         {
             return SpeechResult.Failure(SpeechFailureKind.Unavailable, "Piper executable or voice model is not configured.");
