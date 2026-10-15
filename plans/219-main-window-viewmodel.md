@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slices 1, 2a, 2b, 2c and 3a integrated through #248, #257, #264, #272 and #282; slice 3b (Journeys/cities) implemented with validation tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main d4d3d2b1d4f263a5b9dfed2d1585d9b4b3c5c136 on 2026-10-15.
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main 6e7c6116551b3abae547aa7499d3a861e0f2ca85 on 2026-10-15.
 
 ## Purpose and scope
 
@@ -196,27 +196,32 @@ Rollback is a revert to the preceding validated slice; do not retain a parallel 
 
 ## Slice 3b local validation (2026-10-15)
 
-The source is synchronized with main `d4d3d2b1d4f263a5b9dfed2d1585d9b4b3c5c136`.
+The source is synchronized with main `6e7c6116551b3abae547aa7499d3a861e0f2ca85`.
 Both full Release test graphs were rebuilt with `-m:1 -t:Rebuild -p:MobaAnalyzerGate=true
 -p:UseSharedCompilation=false`; the Windows graph includes the active WinUI pages and normal
-MOBApi build/copy dependency. The exact analyzer gates match 3,333 diagnostics in 1,151 groups
+MOBApi build/copy dependency. The exact analyzer gates match 3,326 diagnostics in 1,150 groups
 (portable) and 2,493 in 953 groups (Windows). The portable baseline only removes or decreases
 diagnostics made obsolete by extraction; no new diagnostic group or increased count is accepted.
 
 After all builds completed, full Release suites ran sequentially with `--no-build --no-restore`:
-2,694 portable tests passed with one counted bundled-photo skip; 2,809 Windows tests passed with
-no counted skips. The explicit sustained-refresh test is outside the ordinary suites. Fifteen
-new page regressions extend the existing JourneyCounterProjectionTests fixture; actual-host DI
+2,758 portable tests passed with no counted skips; 2,872 Windows tests passed with
+no counted skips. The explicit sustained-refresh test is outside the ordinary suites. Seventeen
+page regression cases extend the existing JourneyCounterProjectionTests fixture; actual-host DI
 also verifies shared editor/session/layout identity, the existing reset-all counter command,
-injected journey-reset routing and shutdown unsubscription. Documentation links (469), instruction
+injected journey-reset routing and shutdown unsubscription. Documentation links (472), instruction
 consistency, secrets, diff and line-ending checks pass. The implementing draft PR owns current
 remote CI/Sonar evidence; local checks do not establish a remote gate result.
 
-The installed SDK's workload set 10.0.402 has missing manifests (`MSB4242`). Portable/Windows
-checks used the process-local `MSBuildEnableWorkloadResolver=false` property because those graphs
-need no Android workload; analyzer and XAML gates remain enabled. The Android Release build is
-blocked by that missing workload installation, so Android compilation and its analyzer gate are
-not claimed. No machine-wide repair/install was performed. Manual Light/Dark/High Contrast,
+The selection regression follows the documented WinUI event order: ItemClick precedes
+SelectionChanged when item clicks and selection are enabled together. The focused regression
+failed before the fix because the properties object and title were cleared, then passed after
+the fix for both event orders. The selected journey remains owned by the session, while the
+clicked journey's properties survive its selection notification and old station tracking is detached.
+
+Portable/Windows checks used the process-local `MSBuildEnableWorkloadResolver=false` property;
+analyzer and XAML gates remain enabled. The existing SDK 10.0.402 workloads are now installed.
+Android FastDebug compilation passed; Android Release, its analyzer gate and AAB validation
+remain unverified. No machine-wide repair/install was performed. Manual Light/Dark/High Contrast,
 accessibility and app/device checks remain open; no application or hardware was started.
 
 ## Validation strategy

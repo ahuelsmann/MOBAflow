@@ -138,6 +138,31 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         VerifyNoSavesOrRuntimeUpdates();
     }
 
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ClickingAnotherJourneyPreservesItsPropertiesAcrossSelectionChange(bool clickBeforeSelection)
+    {
+        var oldStation = _page.SelectedJourney!.Stations[0];
+        var nextJourney = _page.SelectedProject!.Journeys[1];
+        _page.SelectedStation = oldStation;
+        _page.JourneysPageItemClickedCommand.Execute(oldStation);
+
+        // WinUI raises ItemClick before SelectionChanged; also tolerate the reverse order.
+        // https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/listview-and-gridview#item-selection-and-interaction
+        if (clickBeforeSelection) _page.JourneysPageItemClickedCommand.Execute(nextJourney);
+        _session.SelectedJourney = nextJourney;
+        if (!clickBeforeSelection) _page.JourneysPageItemClickedCommand.Execute(nextJourney);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(_page.SelectedJourney, Is.SameAs(nextJourney));
+        Assert.That(_session.SelectedJourney, Is.SameAs(nextJourney));
+        Assert.That(_page.SelectedStation, Is.Null);
+        Assert.That(_page.JourneysPageSelectedObject, Is.SameAs(nextJourney));
+        Assert.That(_page.JourneysPagePropertiesTitle, Is.EqualTo("Journey Properties"));
+        oldStation.Name = "Detached station";
+        VerifyNoSavesOrRuntimeUpdates();
+    }
+
     [Test]
     public void StationAndJourneyEditsAutoSaveAndRefreshTheCurrentRuntime()
     {

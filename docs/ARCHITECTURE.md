@@ -350,11 +350,12 @@ runtime services.
 
 - The host owns one JourneysPageViewModel shared by JourneysPage, the shell reset command,
   EventManager status and deferred city-library loading. Its required dependencies are the
-  session, runtime connection, command gateway, UI dispatcher, city/settings services,
+  session, command gateway, UI dispatcher, city/settings services,
   shared layout widths and logger. The Journey shell partial and city members are removed.
 - The session keeps canonical project/journey selection and journey property tracking.
   The page owns journey/station CRUD, city search/loading, ItemClicked properties, selected
-  station tracking and panel expansion. Project changes select the first journey through
+  station tracking and panel expansion. A clicked journey remains the properties object when
+  WinUI subsequently updates the canonical selection. Project changes select the first journey through
   the session; journey/project/solution changes, station refresh and disposal detach obsolete
   station wrappers and collection subscriptions. Disposal does not remove session-owned journey tracking.
 - Journey reset uses the injected IRuntimeCommandGateway. Runtime snapshot projection remains

@@ -129,7 +129,7 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     {
         if (_observedJourney is not null) _observedJourney.Stations.CollectionChanged -= OnStationsChanged;
         SelectedStation = null;
-        JourneysPageSelectedObject = null;
+        if (!ReferenceEquals(JourneysPageSelectedObject, journey)) JourneysPageSelectedObject = null;
         _observedJourney = journey;
         if (journey is not null) journey.Stations.CollectionChanged += OnStationsChanged;
         // The session owns journey property tracking, including auto-save and runtime refresh.
