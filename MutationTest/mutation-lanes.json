@@ -98,7 +98,8 @@
     },
     {
       "name": "speech-base",
-      "status": "planned",
+      "status": "active",
+      "stryker-config": "MutationTest/stryker-speech-base-config.json",
       "test-directories": [],
       "test-files": [
         "Test/Speech/AudioCacheTests.cs",
