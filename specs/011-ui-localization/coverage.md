@@ -51,7 +51,7 @@ The initial local SDK workload-manifest failure was no longer present on the lat
 restore/build; this task performed no machine-wide SDK/workload repair or installation.
 Parallel local build attempts had output-lock/debug-symbol collisions; serial builds passed.
 
-## Open acceptance/publication gates
+## Acceptance and publication evidence
 
 No desktop or Android app was launched. Full process restart, system-language startup,
 long-text/font scaling, keyboard/focus, screenreader and Light/Dark acceptance remain open
@@ -63,15 +63,27 @@ and the explicitly listed follow-up page slices.
 [Sonar PR analysis](https://sonarcloud.io/dashboard?id=ahuelsmann_MOBAflow2&pullRequest=294)
 are the authoritative publication evidence; verify the current head SHA before relying on them.
 
-Analysis of `fb806e6c9536afd377c5949f0a4ad5ee1bc17dc1` passed the Sonar quality gate
-with zero OPEN/CONFIRMED issues. This confirms the correction of the initial HelpPage S1192
-finding. CodeQL, instruction consistency, Spec Kit validation and Domain mutation tests passed
-on that commit. Windows, Common mutation and Display checks were still running at the snapshot.
-Android Release AAB and the issue-event-only traceability job were explicitly skipped in the draft.
+Verified publication snapshot: `2e9035d28920d664b468f74c33b279237d81bc4f`, based on
+`877cd41eec29917ac2bba2318f7205391bd9358a` (2026-10-15).
 
-The subsequent integration of main's speech-cache fix changes the PR head. Its fresh checks
-must finish before publication evidence T024/T027 can be completed; the earlier Sonar result
-does not establish the result of that new head.
+- [Quality run 38733685767](https://github.com/ahuelsmann/MOBAflow/actions/runs/38733685767)
+  passed Windows desktop build/tests/coverage (2834 tests passed, zero failures/skips), unchanged
+  portable/Windows analyzer baselines, Common and Domain mutation tests, Display protocol/parser/
+  firmware and repository instruction/resource checks.
+- [Spec Kit run 38733685750](https://github.com/ahuelsmann/MOBAflow/actions/runs/38733685750)
+  passed artifact validation. The issue-event-only traceability job was skipped.
+- [CodeQL run 38733681290](https://github.com/ahuelsmann/MOBAflow/actions/runs/38733681290)
+  passed all five language analyses and its aggregate check.
+- SonarCloud check on this exact SHA passed; the quality-gate API returned OK and the PR issue
+  query returned zero OPEN/CONFIRMED issues. The initial HelpPage S1192 finding is corrected.
+- Android Release AAB was explicitly skipped because the PR remains draft. Local Android
+  FastDebug compilation above does not replace the Release/AAB or device checks.
+- No review threads existed at this snapshot. Earlier superseded Windows/Common runs were
+  cancelled by subsequent pushes and are not counted as passing evidence.
+
+This snapshot completes publication evidence T024/T027. Subsequent commits, including evidence
+updates, require fresh current-head CI/Sonar verification before handoff; retain the exact snapshot
+above rather than attributing its results to a later commit.
 
 A passing local build or quality gate alone does not establish PR readiness. Require green
 current-head checks and zero OPEN/CONFIRMED PR issues. Keep the PR draft; no merge is authorized.

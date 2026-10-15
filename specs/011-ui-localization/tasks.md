@@ -6,7 +6,7 @@
 [GitHub issue](https://github.com/ahuelsmann/MOBAflow/issues/140)
 **Prerequisites**: spec, clarified scope, plan, research, model, contracts and coverage.
 **Tests**: Meaningful regression and resource-tool fixture tests are required by this specification.
-**Status**: Slice 1 implemented and locally validated; manual acceptance and publication gates remain separate.
+**Status**: Slice 1 implemented; local and draft-PR publication evidence recorded in coverage.md. Manual acceptance remains open; recheck CI/Sonar after subsequent commits.
 
 ## Phase 1: Analysis and setup
 
@@ -58,7 +58,7 @@ and fresh projection pass. Contributor follows documented single-source workflow
 
 - [ ] T022 Perform authorized manual matrix from `specs/011-ui-localization/quickstart.md`: themes, keyboard, accessible names, restart and desktop 200%/Android >=1.5 text scale; keep unchecked until actually executed (FR-010; SC-001, SC-005).
 - [x] T023 Run secrets, line-ending/staged, instruction, governance and diff/link checks on changed paths in `AGENTS.md`, `.github/instructions/`, `.specify/` and `specs/011-ui-localization/`; remove temporary constitution sync comment before commit.
-- [ ] T024 Publish task branch and draft PR linked to #140; record current-commit CI/Sonar results in `specs/011-ui-localization/coverage.md` without ready/merge or premature issue closure.
+- [x] T024 Publish task branch and draft PR linked to #140; record current-commit CI/Sonar results in `specs/011-ui-localization/coverage.md` without ready/merge or premature issue closure.
 - [x] T025 Converge `specs/011-ui-localization/tasks.md` against implemented scope; keep manual, unavailable checks and #140 follow-up coverage explicit.
 
 ## Dependencies and implementation strategy
@@ -100,8 +100,8 @@ These are scheduling opportunities, not authorization to start extra agents or c
 
 Assessment on 2026-10-15: 12 functional requirements, 5 success criteria, 10 acceptance
 scenarios, 6 design decisions and all 6 constitution principles checked. No missing or
-contradictory product behavior found within Slice 1. Two partial evidence gaps remain;
-this is not a claim that the manual acceptance or publication gates have passed.
+contradictory product behavior found within Slice 1. The initial manual and publication evidence
+gaps are tracked below. Publication evidence is now recorded; manual acceptance remains open.
 
 - [ ] T026 Complete the still-pending T022 manual matrix in `specs/011-ui-localization/quickstart.md` and record host restart/system-language, themes, font scaling, keyboard and screenreader results in `coverage.md` after explicit app-launch authorization per SC-001/SC-005/FR-010 (partial, HIGH).
-- [ ] T027 Complete T024 publication evidence in `specs/011-ui-localization/coverage.md`: draft PR, current-head required CI, green SonarCloud at the same SHA and zero OPEN/CONFIRMED issues per Constitution VI (partial, MEDIUM).
+- [x] T027 Complete T024 publication evidence in `specs/011-ui-localization/coverage.md`: draft PR, current-head required CI, green SonarCloud at the same SHA and zero OPEN/CONFIRMED issues per Constitution VI (verified snapshot in coverage.md; Android Release explicitly skipped while draft).
