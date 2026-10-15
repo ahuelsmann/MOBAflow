@@ -2,6 +2,7 @@
 namespace Moba.Test.TrackLibrary.PikoA;
 
 using Moba.TrackLibrary.PikoA;
+using Moba.TrackPlan.Editor;
 
 /// <summary>
 /// Tests for <see cref="EditableTrackPlan"/> graph operations: grouping, feedback lookup and segment lifecycle.

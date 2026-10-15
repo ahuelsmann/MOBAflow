@@ -571,20 +571,6 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "Backend/Service/TrackPlan/GraphService.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "Backend/Service/TrackPlan/LayoutService.cs",
-      "count": 5
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "CA1826",
       "path": "Backend/FeedbackResult.cs",
       "count": 1
@@ -1658,13 +1644,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1716",
       "path": "Domain/Enum/ActionType.cs",
-      "count": 1
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1724",
-      "path": "Domain/TrackLayout.cs",
       "count": 1
     },
     {
@@ -4562,6 +4541,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Domain/RailroadStateTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Domain/SignalBoxPlanTests.cs",
       "count": 1
     },
@@ -4570,20 +4556,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Domain/SolutionLoadFailureTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Domain/TrackLayoutTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Domain/TrackPlanDocumentMapperTests.cs",
       "count": 1
     },
     {
@@ -5276,6 +5248,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/TrackLibrary.PikoA/PikoACatalogGeometryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/TrackPlanRenderer/PathToSvgConverterTests.cs",
       "count": 1
     },
@@ -5290,7 +5269,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
+      "path": "Test/TrackPlanRenderer/SvgExporterTests.cs",
       "count": 1
     },
     {
@@ -5648,13 +5627,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1852",
       "path": "Test/TrackPlanRenderer/PlacedTrackPlanEditorTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1852",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
       "count": 1
     },
     {
@@ -6522,13 +6494,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "Test/Domain/TrackLayoutTests.cs",
-      "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
       "path": "Test/Helpers/FeedbackPacketGenerator.cs",
       "count": 1
     },
@@ -6991,15 +6956,8 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
       "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
-      "count": 9
+      "count": 8
     },
     {
       "project": "Test",
@@ -7084,13 +7042,6 @@
       "ruleId": "NUnit2046",
       "path": "Test/SharedUI/RestApiRecentEndpointHistoryTests.cs",
       "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2046",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -7488,22 +7439,15 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
+      "path": "Test/Domain/RailroadStateTests.cs",
+      "count": 7
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2056",
       "path": "Test/Domain/SignalBoxPlanTests.cs",
       "count": 9
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/TrackLayoutTests.cs",
-      "count": 14
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/TrackPlanDocumentMapperTests.cs",
-      "count": 5
     },
     {
       "project": "Test",
@@ -7719,13 +7663,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
       "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
       "count": 6
     },
@@ -7844,27 +7781,6 @@
     {
       "project": "TrackLibrary.PikoA",
       "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "TrackLibrary.PikoA/TrackPlan.cs",
-      "count": 2
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "TrackLibrary.PikoA/TrackPlanEditorDocument.cs",
-      "count": 2
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1003",
-      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
       "ruleId": "CA1014",
       "path": "<no-location>",
       "count": 1
@@ -7873,127 +7789,71 @@
       "project": "TrackLibrary.PikoA",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1034",
       "path": "TrackLibrary.PikoA/SegmentLocalPathBuilder.cs",
       "count": 4
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
-      "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/SegmentPortGeometry.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/TrackPlanInteractionService.cs",
+      "ruleId": "CA1002",
+      "path": "TrackPlan.Editor/TrackPlanEditorDocument.cs",
       "count": 2
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "TrackPlan.Editor/EditableTrackPlan.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/TrackPlanSnapHelper.cs",
+      "path": "TrackPlan.Editor/EditableTrackPlan.cs",
       "count": 1
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/SegmentLocalPathBuilder.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/SegmentPortGeometry.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/TrackPlan.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1305",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
+      "path": "TrackPlan.Editor/TrackPlanInteractionService.cs",
       "count": 2
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "TrackPlan.Editor/TrackPlanSnapHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackPlan.Editor",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
+      "count": 4
+    },
+    {
+      "project": "TrackPlan.Editor",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "TrackPlan.Editor/EditableTrackPlan.cs",
+      "count": 4
+    },
+    {
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
-      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
+      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
       "count": 2
     },
     {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1860",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
-      "count": 23
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
+      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
       "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0028",
-      "path": "TrackLibrary.PikoA/TrackPlan.cs",
-      "count": 2
     },
     {
       "project": "TrackPlan.Renderer",
@@ -8022,13 +7882,6 @@
       "ruleId": "CA1305",
       "path": "TrackPlan.Renderer/PlacedTrackPlanSvgRenderer.cs",
       "count": 10
-    },
-    {
-      "project": "TrackPlan.Renderer",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1724",
-      "path": "TrackPlan.Renderer/TrackPlan.cs",
-      "count": 1
     },
     {
       "project": "TrackPlan.Renderer",

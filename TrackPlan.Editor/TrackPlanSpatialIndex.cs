@@ -1,17 +1,19 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackLibrary.PikoA;
+namespace Moba.TrackPlan.Editor;
 
 /// <summary>Uniform-grid spatial index for editor candidate queries in world millimetres.</summary>
 public sealed class TrackPlanSpatialIndex
 {
     private readonly EditableTrackPlan _plan;
+    private readonly SegmentPlacementGeometry _geometry;
     private readonly Dictionary<(int X, int Y), Dictionary<Guid, PlacedSegment>> _cells = [];
     private readonly Dictionary<Guid, HashSet<(int X, int Y)>> _cellsBySegmentId = [];
     private bool _handledDetailedMutation;
 
-    public TrackPlanSpatialIndex(EditableTrackPlan plan, double cellSizeMm = 100)
+    public TrackPlanSpatialIndex(EditableTrackPlan plan, SegmentPlacementGeometry geometry, double cellSizeMm = 100)
     {
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
+        _geometry = geometry ?? throw new ArgumentNullException(nameof(geometry));
         CellSizeMm = cellSizeMm > 0 ? cellSizeMm : throw new ArgumentOutOfRangeException(nameof(cellSizeMm));
         _plan.PlanMutated += OnPlanMutated;
         _plan.PlanChanged += OnPlanChanged;
@@ -72,7 +74,7 @@ public sealed class TrackPlanSpatialIndex
 
     private void Add(PlacedSegment placed)
     {
-        var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed);
+        var ports = _geometry.GetAllPortWorldPositions(placed);
         var segmentCells = new HashSet<(int X, int Y)>();
         for (var cellX = ToCell(ports.Min(port => port.X)); cellX <= ToCell(ports.Max(port => port.X)); cellX++)
         for (var cellY = ToCell(ports.Min(port => port.Y)); cellY <= ToCell(ports.Max(port => port.Y)); cellY++)
