@@ -289,7 +289,7 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
     }
 
     /// <summary>A WAV is one byte array; larger sizes come from a corrupt index and could overflow the total.</summary>
-    private static bool IsPossibleSize(long size) => size is >= 0 and <= Array.MaxLength;
+    private static bool IsPossibleSize(long size) => size >= 0 && size <= Array.MaxLength;
 
     private static bool IsValidKey(string key) => key.Length == 64 && key.All(char.IsAsciiHexDigit);
 
