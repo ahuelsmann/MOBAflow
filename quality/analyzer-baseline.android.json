@@ -314,7 +314,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 12
+      "count": 8
     },
     {
       "project": "Backend",
@@ -664,7 +664,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 12
+      "count": 3
     },
     {
       "project": "Backend",
@@ -833,13 +833,6 @@
       "ruleId": "CA1873",
       "path": "Backend/Service/ProjectValidator.cs",
       "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 6
     },
     {
       "project": "Backend",
