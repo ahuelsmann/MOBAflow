@@ -54,6 +54,19 @@ internal sealed class SolutionControllerTests
     }
 
     [Test]
+    public async Task PutSolution_NotifiesAllRemotesOfTheNewSolutionTimestamp()
+    {
+        var remotes = new Mock<IRuntimeHubCallbacks>();
+        var controller = CreateController(_cache, IPAddress.Loopback, remotes: remotes);
+        SetRequestBody(controller, ValidSolutionJson);
+
+        await controller.PutSolution(CancellationToken.None).ConfigureAwait(false);
+
+        Assert.That(_cache.TryGet(out var entry), Is.True);
+        remotes.Verify(remote => remote.SolutionUpdated(entry.UpdatedAt.ToString("O")), Times.Once);
+    }
+
+    [Test]
     public void GetSolution_ReturnsNotFound_WhenCacheEmpty()
     {
         var controller = CreateController(_cache, IPAddress.Loopback);
@@ -123,11 +136,14 @@ internal sealed class SolutionControllerTests
     private static SolutionController CreateController(
         ISolutionCache cache,
         IPAddress remoteIp,
-        IRuntimeSnapshotCache? snapshots = null)
+        IRuntimeSnapshotCache? snapshots = null,
+        Mock<IRuntimeHubCallbacks>? remotes = null)
     {
-        var remotes = new Mock<IRuntimeHubCallbacks>();
+        // Only the group of all remotes is set up; a broadcast to any other group would fail.
         var hubClients = new Mock<IHubClients<IRuntimeHubCallbacks>>();
-        hubClients.Setup(clients => clients.Group(RuntimeHub.RuntimeRemoteGroup)).Returns(remotes.Object);
+        hubClients
+            .Setup(clients => clients.Group(RuntimeHub.RuntimeRemoteGroup))
+            .Returns((remotes ?? new Mock<IRuntimeHubCallbacks>()).Object);
 
         var hubContext = new Mock<IHubContext<RuntimeHub, IRuntimeHubCallbacks>>();
         hubContext.Setup(context => context.Clients).Returns(hubClients.Object);

@@ -59,7 +59,7 @@ public interface IRuntimeHubRemoteCallbacks
 }
 
 /// <summary>
-/// Every call the hub can send. Host and remotes share one hub connection type, and a strongly typed hub has
-/// exactly one client type; each side handles only the callbacks of its own role.
+/// Every call the hub can send. Host and remotes connect to the same hub, and a strongly typed hub has exactly one
+/// client type; each side handles only the callbacks of its own role.
 /// </summary>
 public interface IRuntimeHubCallbacks : IRuntimeHubHostCallbacks, IRuntimeHubRemoteCallbacks;
