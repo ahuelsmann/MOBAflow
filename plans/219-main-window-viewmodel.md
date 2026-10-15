@@ -34,7 +34,7 @@ The maintainer authorized the Settings slice on 2026-10-11. It starts from integ
 existing shell/composition, WinUI page bindings/navigation, grid-column persistence,
 MonitorPageViewModel and Android shutdown lookup remain named residuals; 3b removes the EventManagerViewModel shell dependency.
 PostStartupInitializationService already uses the session and is not a shell exception.
-SettingsPage, LocomotivesPage, PassengerWagonPage, GoodsWagonPage, TrainsPage and StationsPage reject shell dependencies even while other pages remain allowed.
+SettingsPage, LocomotivesPage, PassengerWagonPage, GoodsWagonPage, TrainsPage, StationsPage and JourneysPage reject shell dependencies even while other pages remain allowed.
 The remaining core retains selected-project projections, operating state and shutdown;
 ISolutionSession owns the solution and canonical selection, and operator commands stay on
 IRuntimeCommandGateway. Settings extraction changes neither boundary.
