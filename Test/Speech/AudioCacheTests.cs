@@ -347,6 +347,42 @@ internal sealed class AudioCacheTests
     }
 
     [Test]
+    public async Task HitWhoseFileExceedsTheLimitIsDroppedInsteadOfServed()
+    {
+        using var cache = new AudioCache(_directory, () => 1000, _clock);
+        var key = Key("grown");
+        await cache.StoreAsync(key, TestWaveAudio.Create([1]), cache.Generation).ConfigureAwait(false);
+        var path = Path.Combine(_directory, key + ".wav");
+        await File.WriteAllBytesAsync(path, TestWaveAudio.Create(new short[1000])).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That((await cache.TryGetAsync(key).ConfigureAwait(false)).Audio, Is.Null);
+            Assert.That(File.Exists(path), Is.False);
+            Assert.That(await cache.GetSizeAsync().ConfigureAwait(false), Is.Zero);
+        }
+    }
+
+    [Test]
+    public async Task UnderstatedIndexSizeIsCorrectedAndEnforcedBeforeServingAHit()
+    {
+        var small = TestWaveAudio.Create([1]);
+        var larger = TestWaveAudio.Create(new short[10]);
+        var limit = small.Length + larger.Length - 1L;
+        using var cache = new AudioCache(_directory, () => limit, _clock);
+        await cache.StoreAsync(Key("older"), small, cache.Generation).ConfigureAwait(false);
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        await cache.StoreAsync(Key("grown"), small, cache.Generation).ConfigureAwait(false);
+        await File.WriteAllBytesAsync(Path.Combine(_directory, Key("grown") + ".wav"), larger).ConfigureAwait(false);
+        var hit = await cache.TryGetAsync(Key("grown")).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(hit.Audio?.ToArray(), Is.EqualTo(larger));
+            Assert.That(File.Exists(Path.Combine(_directory, Key("older") + ".wav")), Is.False);
+            Assert.That(await cache.GetSizeAsync().ConfigureAwait(false), Is.EqualTo(larger.Length));
+        }
+    }
+
+    [Test]
     public async Task ChangingLimitEvictsExistingEntriesAndOversizedAudioIsNotStored()
     {
         long limit = 1000;
