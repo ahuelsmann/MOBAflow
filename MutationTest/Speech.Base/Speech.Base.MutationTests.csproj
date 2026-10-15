@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Moba.Test</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Speech.Base/Speech.Base.csproj" />
+    <!-- AnnouncementService integration in the existing portable SpeechOutput fixture. -->
+    <ProjectReference Include="../../Backend/Backend.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../Test/Speech/AudioCacheTests.cs" Link="Speech/AudioCacheTests.cs" />
+    <Compile Include="../../Test/Speech/CachedSpeechOutputTests.cs" Link="Speech/CachedSpeechOutputTests.cs" />
+    <Compile Include="../../Test/Speech/SpeechOutputTests.cs" Link="Speech/SpeechOutputTests.cs" />
+    <Compile Include="../../Test/Speech/WaveAudioTests.cs" Link="Speech/WaveAudioTests.cs" />
+    <Compile Include="../../Test/Speech/TestSpeechCache.cs" Link="Speech/TestSpeechCache.cs" />
+    <Compile Include="../../Test/MOBAdisplay/ManualTimeProvider.cs" Link="Helpers/ManualTimeProvider.cs" />
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+</Project>

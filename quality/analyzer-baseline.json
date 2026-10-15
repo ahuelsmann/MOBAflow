@@ -522,13 +522,6 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "CA1724",
-      "path": "Backend/Z21.Commands.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Backend/Data/MasterDataStore.cs",
       "count": 1
@@ -1276,10 +1269,10 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "Common/Display/FunctionBacklightColor.cs",
+      "path": "SharedUI/Appearance/FunctionBacklightColor.cs",
       "count": 1
     },
     {
@@ -1398,8 +1391,8 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Common/Configuration/GridSplitterLayoutSettings.cs",
-      "count": 4
+      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "count": 1
     },
     {
       "project": "Common",
@@ -1433,8 +1426,8 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/GridSplitterLayoutSettings.cs",
-      "count": 4
+      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "count": 1
     },
     {
       "project": "Common",
@@ -3750,7 +3743,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1515",
-      "path": "Test/Common/LedMatrix5x5StateTests.cs",
+      "path": "Test/SharedUI/LedMatrix5x5StateTests.cs",
       "count": 1
     },
     {
@@ -3813,7 +3806,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1707",
-      "path": "Test/Common/LedMatrix5x5StateTests.cs",
+      "path": "Test/SharedUI/LedMatrix5x5StateTests.cs",
       "count": 5
     },
     {
@@ -4331,21 +4324,21 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/FunctionBacklightColorTests.cs",
+      "path": "Test/SharedUI/FunctionBacklightColorTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/GaugeThemeAppearanceTests.cs",
+      "path": "Test/SharedUI/GaugeThemeAppearanceTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/HexColorTests.cs",
+      "path": "Test/SharedUI/HexColorTests.cs",
       "count": 1
     },
     {
@@ -4366,7 +4359,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/KsSignalAspectNamesTests.cs",
+      "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 2
     },
     {
@@ -4380,7 +4373,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/LocomotiveFunctionAppearanceResolverTests.cs",
+      "path": "Test/SharedUI/LocomotiveFunctionAppearanceResolverTests.cs",
       "count": 1
     },
     {
@@ -4409,13 +4402,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Common/MobApiEndpointTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Common/MobileBackgroundKeepAlivePolicyTests.cs",
       "count": 1
     },
     {
@@ -4472,13 +4458,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Common/RestApiDiscoveryCandidateBuilderTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Common/RestApiRecentEndpointHistoryTests.cs",
       "count": 1
     },
     {
@@ -5003,6 +4982,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/MobileBackgroundKeepAlivePolicyTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/MobilePhotoUploaderTests.cs",
       "count": 1
     },
@@ -5074,6 +5060,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/RestApiRecentEndpointHistoryTests.cs",
       "count": 1
     },
     {
@@ -5284,6 +5277,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/TrackLibrary.PikoA/EditableTrackPlanOperationsTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/TrackLibrary.PikoA/PikoACatalogGeometryTests.cs",
       "count": 1
     },
     {
@@ -6417,14 +6417,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "Test/Common/KsSignalAspectNamesTests.cs",
+      "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "Test/Common/LocomotiveFunctionAppearanceResolverTests.cs",
+      "path": "Test/SharedUI/LocomotiveFunctionAppearanceResolverTests.cs",
       "count": 1
     },
     {
@@ -6732,7 +6732,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/GaugeThemeAppearanceTests.cs",
+      "path": "Test/SharedUI/GaugeThemeAppearanceTests.cs",
       "count": 1
     },
     {
@@ -6746,14 +6746,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/KsSignalAspectNamesTests.cs",
+      "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 15
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/LocomotiveFunctionAppearanceResolverTests.cs",
+      "path": "Test/SharedUI/LocomotiveFunctionAppearanceResolverTests.cs",
       "count": 1
     },
     {
@@ -6783,13 +6783,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/Common/PhotoPathHelperTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Common/RestApiRecentEndpointHistoryTests.cs",
-      "count": 3
     },
     {
       "project": "Test",
@@ -6935,6 +6928,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
+      "path": "Test/SharedUI/RestApiRecentEndpointHistoryTests.cs",
+      "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2045",
       "path": "Test/SharedUI/RuntimeJsonSerializerTests.cs",
       "count": 3
     },
@@ -7061,13 +7061,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2046",
-      "path": "Test/Common/RestApiRecentEndpointHistoryTests.cs",
-      "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2046",
       "path": "Test/Integration/WorkflowExecutionEndToEndTests.cs",
       "count": 2
     },
@@ -7077,6 +7070,13 @@
       "ruleId": "NUnit2046",
       "path": "Test/MOBAdisplay/SkiaFrameRendererTests.cs",
       "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2046",
+      "path": "Test/SharedUI/RestApiRecentEndpointHistoryTests.cs",
+      "count": 3
     },
     {
       "project": "Test",
@@ -7383,7 +7383,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/LedMatrix5x5StateTests.cs",
+      "path": "Test/SharedUI/LedMatrix5x5StateTests.cs",
       "count": 4
     },
     {

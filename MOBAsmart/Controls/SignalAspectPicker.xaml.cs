@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Controls;
 
-using Common.Display;
+using SharedUI.Appearance;
 using Common.Multiplex;
 
 using Domain;
