@@ -140,6 +140,16 @@ internal sealed class FunctionBacklightColorTests
         }
     }
 
+    [TestCase("#ZZZZZZ")]
+    [TestCase("#12AB3G")]
+    [TestCase("GG12AB34")]
+    public void Resolve_FallsBackToGrayForInvalidHexDigits(string accent)
+    {
+        var gray = FunctionBacklightColor.Resolve(true, "#808080", FunctionBacklightColor.AppearanceTheme.Dark);
+
+        Assert.That(FunctionBacklightColor.Resolve(true, accent, FunctionBacklightColor.AppearanceTheme.Dark), Is.EqualTo(gray));
+    }
+
     private static double GetLuminance(uint argb)
     {
         static double Channel(uint value)
