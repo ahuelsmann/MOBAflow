@@ -197,14 +197,15 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         VerifyNoSavesOrRuntimeUpdates();
     }
 
-    [Test]
-    public void JourneySwitchObservesSessionSelectionAndDetachesPreviousStationAndJourney()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void JourneySwitchObservesSessionSelectionAndDetachesPreviousStationAndJourney(bool showJourneyProperties)
     {
         using var assertions = Assert.EnterMultipleScope();
         var old = _page.SelectedJourney!;
         var station = old.Stations[0];
         _page.SelectedStation = station;
-        _page.JourneysPageItemClickedCommand.Execute(station);
+        _page.JourneysPageItemClickedCommand.Execute(showJourneyProperties ? old : station);
         _session.SelectedJourney = _page.SelectedProject!.Journeys[1];
         ClearInvocations();
         old.Name = "Old journey";
@@ -216,6 +217,31 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         VerifyNoSavesOrRuntimeUpdates();
         _page.SelectedJourney!.Name = "Current journey";
         Assert.That(SavedProject().Journeys[1].Name, Is.EqualTo("Current journey"));
+    }
+
+    [Test]
+    public void ProjectSwitchPublishesTheNewItemsSourceBeforeItsJourneySelection()
+    {
+        // ListView ignores a SelectedItem outside its current Items collection.
+        // https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/listview-and-gridview#single-selection
+        var boundJourneys = _page.SelectedProject!.Journeys;
+        var selectionsOutsideItemsSource = new List<JourneyViewModel>();
+        _page.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(JourneysPageViewModel.SelectedProject))
+                boundJourneys = _page.SelectedProject!.Journeys;
+            if (args.PropertyName == nameof(JourneysPageViewModel.SelectedJourney)
+                && _page.SelectedJourney is { } journey && !boundJourneys.Contains(journey))
+                selectionsOutsideItemsSource.Add(journey);
+        };
+
+        var next = _session.AddProject(new Project { Journeys = [new Journey { Name = "Next" }] });
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(selectionsOutsideItemsSource, Is.Empty,
+            "The ListView cannot select a journey before its ItemsSource contains it.");
+        Assert.That(boundJourneys, Is.SameAs(next.Journeys));
+        Assert.That(_session.SelectedJourney, Is.SameAs(next.Journeys[0]));
     }
 
     [Test]

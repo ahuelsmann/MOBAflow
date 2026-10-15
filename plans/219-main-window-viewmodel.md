@@ -204,8 +204,8 @@ MOBApi build/copy dependency. The exact analyzer gates match 3,326 diagnostics i
 diagnostics made obsolete by extraction; no new diagnostic group or increased count is accepted.
 
 After all builds completed, full Release suites ran sequentially with `--no-build --no-restore`:
-2,758 portable tests passed with no counted skips; 2,872 Windows tests passed with
-no counted skips. The explicit sustained-refresh test is outside the ordinary suites. Seventeen
+2,760 portable tests passed with no counted skips; 2,874 Windows tests passed with
+no counted skips. The explicit sustained-refresh test is outside the ordinary suites. Nineteen
 page regression cases extend the existing JourneyCounterProjectionTests fixture; actual-host DI
 also verifies shared editor/session/layout identity, the existing reset-all counter command,
 injected journey-reset routing and shutdown unsubscription. Documentation links (472), instruction
@@ -217,6 +217,9 @@ SelectionChanged when item clicks and selection are enabled together. The focuse
 failed before the fix because the properties object and title were cleared, then passed after
 the fix for both event orders. The selected journey remains owned by the session, while the
 clicked journey's properties survive its selection notification and old station tracking is detached.
+The project-switch regression also failed before restoring the original notification order:
+the page now publishes the new project/items source before selecting its first journey.
+Programmatic journey switches test clearing both old station and old journey properties.
 
 Portable/Windows checks used the process-local `MSBuildEnableWorkloadResolver=false` property;
 analyzer and XAML gates remain enabled. The existing SDK 10.0.402 workloads are now installed.

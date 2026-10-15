@@ -103,9 +103,9 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         if (e.PropertyName == nameof(ISolutionSession.SelectedProject))
         {
             ObserveProject(SelectedProject);
-            SelectedJourney = SelectedProject?.Journeys.FirstOrDefault();
             OnPropertyChanged(nameof(SelectedProject));
             OnPropertyChanged(nameof(FilteredJourneys));
+            SelectedJourney = SelectedProject?.Journeys.FirstOrDefault();
         }
         else if (e.PropertyName == nameof(ISolutionSession.SelectedJourney))
         {

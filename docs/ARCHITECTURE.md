@@ -355,8 +355,9 @@ runtime services.
 - The session keeps canonical project/journey selection and journey property tracking.
   The page owns journey/station CRUD, city search/loading, ItemClicked properties, selected
   station tracking and panel expansion. A clicked journey remains the properties object when
-  WinUI subsequently updates the canonical selection. Project changes select the first journey through
-  the session; journey/project/solution changes, station refresh and disposal detach obsolete
+  WinUI subsequently updates the canonical selection. Project changes publish the new items source
+  before selecting its first journey through the session; journey/project/solution changes,
+  station refresh and disposal detach obsolete
   station wrappers and collection subscriptions. Disposal does not remove session-owned journey tracking.
 - Journey reset uses the injected IRuntimeCommandGateway. Runtime snapshot projection remains
   in the shell until the counter/status slice; no runtime lifecycle or routing is introduced.
