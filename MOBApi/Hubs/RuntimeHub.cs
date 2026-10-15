@@ -12,7 +12,7 @@ using Moba.MOBApi.Service;
 /// SignalR hub for MOBAflow runtime snapshots and remote control commands. Every project has its own runtime:
 /// a remote registers for one project, receives only that project's snapshots and commands only that runtime.
 /// </summary>
-public sealed class RuntimeHub : Hub
+public sealed class RuntimeHub : Hub<IRuntimeHubCallbacks>, IRuntimeHubHostMethods, IRuntimeHubRemoteMethods
 {
     /// <summary>All remotes; solution updates go to every remote regardless of its project.</summary>
     public const string RuntimeRemoteGroup = "runtime-remote";
@@ -83,17 +83,15 @@ public sealed class RuntimeHub : Hub
 
         if (_snapshotCache.TryGet(project, out var entry))
         {
-            await Clients.Caller.SendAsync(RuntimeHubMethods.SnapshotUpdated, entry.Json).ConfigureAwait(false);
+            await Clients.Caller.SnapshotUpdated(entry.Json).ConfigureAwait(false);
         }
 
         if (_solutionCache.TryGet(out var solutionEntry) && !string.IsNullOrWhiteSpace(solutionEntry.SourcePath))
         {
-            await Clients.Caller
-                .SendAsync(RuntimeHubMethods.SolutionUpdated, solutionEntry.UpdatedAt.ToString("O"))
-                .ConfigureAwait(false);
+            await Clients.Caller.SolutionUpdated(solutionEntry.UpdatedAt.ToString("O")).ConfigureAwait(false);
         }
 
-        await Clients.Caller.SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational(project)).ConfigureAwait(false);
+        await Clients.Caller.SessionStateChanged(BuildSessionOperational(project)).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -113,8 +111,8 @@ public sealed class RuntimeHub : Hub
         }
 
         var group = Clients.Group(ProjectGroup(entry.ProjectId));
-        await group.SendAsync(RuntimeHubMethods.SnapshotUpdated, entry.Json).ConfigureAwait(false);
-        await group.SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational(entry.ProjectId)).ConfigureAwait(false);
+        await group.SnapshotUpdated(entry.Json).ConfigureAwait(false);
+        await group.SessionStateChanged(BuildSessionOperational(entry.ProjectId)).ConfigureAwait(false);
         _broadcastMetrics.RecordSnapshotBroadcast(System.Text.Encoding.UTF8.GetByteCount(entry.Json));
     }
 
@@ -139,8 +137,7 @@ public sealed class RuntimeHub : Hub
                     SignalId = parsedSignalId,
                     SignalAspect = parsedAspect
                 },
-                RuntimeHubMethods.ExecuteSetSignalAspect,
-                [project.ToString(), parsedSignalId.ToString(), parsedAspect.ToString()])
+                host => host.ExecuteSetSignalAspect(project.ToString(), parsedSignalId.ToString(), parsedAspect.ToString()))
             .ConfigureAwait(false);
     }
 
@@ -156,8 +153,7 @@ public sealed class RuntimeHub : Hub
                     Speed = speed,
                     Forward = forward
                 },
-                RuntimeHubMethods.ExecuteSetLocomotiveDrive,
-                [project.ToString(), address, speed, forward])
+                host => host.ExecuteSetLocomotiveDrive(project.ToString(), address, speed, forward))
             .ConfigureAwait(false);
     }
 
@@ -173,8 +169,7 @@ public sealed class RuntimeHub : Hub
                     FunctionIndex = functionIndex,
                     FunctionIsOn = isOn
                 },
-                RuntimeHubMethods.ExecuteSetLocomotiveFunction,
-                [project.ToString(), address, functionIndex, isOn])
+                host => host.ExecuteSetLocomotiveFunction(project.ToString(), address, functionIndex, isOn))
             .ConfigureAwait(false);
     }
 
@@ -201,7 +196,7 @@ public sealed class RuntimeHub : Hub
     /// <summary>
     /// Validates a command and forwards it to MOBAflow; without a connected host the command waits in the queue.
     /// </summary>
-    private async Task AdmitAsync(RuntimeCommandEnvelope command, string hostMethod, object?[] hostArguments)
+    private async Task AdmitAsync(RuntimeCommandEnvelope command, Func<IRuntimeHubHostCallbacks, Task> forwardToHost)
     {
         var validation = _commandAdmission.Validate(command);
         if (!validation.IsAccepted)
@@ -212,7 +207,7 @@ public sealed class RuntimeHub : Hub
         var hostId = _hostRegistry.HostConnectionId;
         if (!string.IsNullOrEmpty(hostId))
         {
-            await Clients.Client(hostId).SendCoreAsync(hostMethod, hostArguments).ConfigureAwait(false);
+            await forwardToHost(Clients.Client(hostId)).ConfigureAwait(false);
             return;
         }
 
@@ -239,7 +234,7 @@ public sealed class RuntimeHub : Hub
     private async Task BroadcastSessionStateAsync(Guid projectId)
     {
         await Clients.Group(ProjectGroup(projectId))
-            .SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational(projectId))
+            .SessionStateChanged(BuildSessionOperational(projectId))
             .ConfigureAwait(false);
     }
 }

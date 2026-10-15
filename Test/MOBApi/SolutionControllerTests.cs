@@ -125,15 +125,11 @@ internal sealed class SolutionControllerTests
         IPAddress remoteIp,
         IRuntimeSnapshotCache? snapshots = null)
     {
-        var clientProxy = new Mock<IClientProxy>();
-        clientProxy
-            .Setup(proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var remotes = new Mock<IRuntimeHubCallbacks>();
+        var hubClients = new Mock<IHubClients<IRuntimeHubCallbacks>>();
+        hubClients.Setup(clients => clients.Group(RuntimeHub.RuntimeRemoteGroup)).Returns(remotes.Object);
 
-        var hubClients = new Mock<IHubClients>();
-        hubClients.Setup(clients => clients.Group("runtime-remote")).Returns(clientProxy.Object);
-
-        var hubContext = new Mock<IHubContext<RuntimeHub>>();
+        var hubContext = new Mock<IHubContext<RuntimeHub, IRuntimeHubCallbacks>>();
         hubContext.Setup(context => context.Clients).Returns(hubClients.Object);
 
         var controller = new SolutionController(cache, snapshots ?? new RuntimeSnapshotCache(), hubContext.Object)
