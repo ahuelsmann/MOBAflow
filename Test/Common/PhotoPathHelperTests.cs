@@ -173,6 +173,7 @@ internal class PhotoPathHelperTests
     {
         var bundledBase = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var photosDir = Path.Combine(bundledBase, "photos");
+        using var photosLock = BundledPhotosDirectoryLock.Acquire(photosDir);
         var createdDirectory = !Directory.Exists(photosDir);
         if (createdDirectory)
         {

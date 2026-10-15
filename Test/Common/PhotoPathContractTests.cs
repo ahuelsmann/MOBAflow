@@ -432,6 +432,7 @@ internal sealed class PhotoPathContractTests
     {
         var appBase = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var photosRoot = Path.Combine(appBase, "photos");
+        using var photosLock = BundledPhotosDirectoryLock.Acquire(photosRoot);
         var rootExisted = Directory.Exists(photosRoot);
         var ownedFolder = Path.Combine(photosRoot, $"photo-contract-{Guid.NewGuid():N}");
         Directory.CreateDirectory(ownedFolder);

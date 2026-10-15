@@ -26,7 +26,8 @@ try {
     & (Join-Path $PSScriptRoot 'Test-TestRunResults.ps1') -Path $baselinePaths
     Push-Location (Split-Path -Parent $inputs.ConfigPath)
     try {
-        & dotnet stryker --config-file $inputs.ConfigPath --skip-version-check --output $outputRoot
+        # Stryker writes its log below the output root only with --log-to-file; CI archives that directory.
+        & dotnet stryker --config-file $inputs.ConfigPath --skip-version-check --log-to-file --output $outputRoot
         if ($LASTEXITCODE -ne 0) { throw "Stryker failed for mutation lane '$LaneName' (exit $LASTEXITCODE)." }
     }
     finally { Pop-Location }
