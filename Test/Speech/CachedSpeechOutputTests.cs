@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Speech;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
 using Moba.Speech.Base;
@@ -31,8 +32,9 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
 
     public void Dispose() => _cache?.Dispose();
 
-    private SpeechOutput CreateOutput(SpeechOutputTests.FakeProvider provider, IWavePlayer player, AppSettings? settings = null, IAudioCache? cache = null) =>
-        new(settings ?? new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance, cache ?? _cache);
+    private SpeechOutput CreateOutput(SpeechOutputTests.FakeProvider provider, IWavePlayer player, AppSettings? settings = null,
+        IAudioCache? cache = null, ILogger<SpeechOutput>? logger = null) =>
+        new(settings ?? new AppSettings(), [provider], player, logger ?? NullLogger<SpeechOutput>.Instance, cache ?? _cache);
 
     [Test]
     public async Task IdenticalAnnouncementUsesCacheAndStillPlaysEveryTime()
@@ -72,7 +74,9 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
             .ThrowsAsync(accessDenied ? new UnauthorizedAccessException("Private disk detail") : new IOException("Private disk detail"));
         var provider = new SpeechOutputTests.FakeProvider("system-speech");
         var player = new SpeechOutputTests.FakePlayer();
-        var output = CreateOutput(provider, player, cache: cache.Object);
+        var logger = new Mock<ILogger<SpeechOutput>>();
+        logger.Setup(value => value.IsEnabled(LogLevel.Warning)).Returns(true);
+        var output = CreateOutput(provider, player, cache: cache.Object, logger: logger.Object);
         await using var lifetime = output.ConfigureAwait(false);
         var result = await output.SpeakAsync("Cached despite metadata failure").ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
@@ -85,6 +89,59 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
         }
         cache.Verify(value => value.MarkPlayedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(value => value.StoreAsync(It.IsAny<string>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        VerifyCacheWarningWithoutPrivateDetails(logger);
+    }
+
+    [Test]
+    public async Task CancellationAfterCacheHitDoesNotStartPlaybackOrRecordIt()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var cache = new Mock<IAudioCache>();
+        cache.Setup(value => value.TryGetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string _, CancellationToken _) =>
+            {
+                await cancellation.CancelAsync().ConfigureAwait(false);
+                return new AudioCacheLookup(TestWaveAudio.Create([1]), 0);
+            });
+        var player = new Mock<IWavePlayer>();
+        player.Setup(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var output = CreateOutput(provider, player.Object, cache: cache.Object);
+        await using var lifetime = output.ConfigureAwait(false);
+        await Assert.CatchAsync<OperationCanceledException>(() => output.SpeakAsync("Cancelled hit", cancellation.Token)
+            .WaitAsync(TimeSpan.FromSeconds(10))).ConfigureAwait(false);
+        player.Verify(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()), Times.Never);
+        cache.Verify(value => value.MarkPlayedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(provider.Requests, Is.Empty);
+    }
+
+    [TestCase(false, false)]
+    [TestCase(false, true)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public async Task CancelledPlaybackDoesNotRecordAudioEvenIfThePlayerReturns(bool cacheHit, bool interrupted)
+    {
+        using var cancellation = new CancellationTokenSource();
+        var audio = TestWaveAudio.Create([1]);
+        var cache = new Mock<IAudioCache>();
+        cache.Setup(value => value.TryGetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AudioCacheLookup(cacheHit ? audio : (ReadOnlyMemory<byte>?)null, 0));
+        var player = new Mock<IWavePlayer>();
+        player.Setup(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
+            .Returns(async (ReadOnlyMemory<byte> _, CancellationToken _) =>
+            {
+                await cancellation.CancelAsync().ConfigureAwait(false);
+                if (interrupted) throw new WavePlaybackInterruptedException();
+            });
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var output = CreateOutput(provider, player.Object, cache: cache.Object);
+        await using var lifetime = output.ConfigureAwait(false);
+        await Assert.CatchAsync<OperationCanceledException>(() => output.SpeakAsync("Cancelled playback", cancellation.Token)
+            .WaitAsync(TimeSpan.FromSeconds(10))).ConfigureAwait(false);
+        player.Verify(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()), Times.Once);
+        cache.Verify(value => value.MarkPlayedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        cache.Verify(value => value.StoreAsync(It.IsAny<string>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(provider.Requests, Has.Count.EqualTo(cacheHit ? 0 : 1));
     }
 
     [Test]
@@ -381,19 +438,32 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
         Assert.That(provider.Requests, Has.Count.EqualTo(2));
     }
 
-    [Test]
-    public async Task CacheIoFailureDoesNotSilenceAnnouncementOrExposeRawError()
+    [TestCase(false, false)]
+    [TestCase(false, true)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public async Task CacheIoFailureDoesNotSilenceAnnouncementOrExposeRawError(bool lookupFailure, bool accessDenied)
     {
-        var cache = new Moq.Mock<IAudioCache>();
-        cache.Setup(value => value.TryGetAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new IOException("Private disk detail"));
-        cache.Setup(value => value.StoreAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<ReadOnlyMemory<byte>>(), Moq.It.IsAny<long>(), Moq.It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new IOException("Private disk detail"));
-        cache.Setup(value => value.MarkPlayedAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new UnauthorizedAccessException("Private disk detail"));
+        Exception error = accessDenied ? new UnauthorizedAccessException("Private disk detail") : new IOException("Private disk detail");
+        var cache = new Mock<IAudioCache>();
+        if (lookupFailure)
+        {
+            cache.Setup(value => value.TryGetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(error);
+            cache.Setup(value => value.StoreAsync(It.IsAny<string>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+        }
+        else
+        {
+            cache.Setup(value => value.TryGetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new AudioCacheLookup((ReadOnlyMemory<byte>?)null, 0));
+            cache.Setup(value => value.StoreAsync(It.IsAny<string>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(error);
+        }
+        var logger = new Mock<ILogger<SpeechOutput>>();
+        logger.Setup(value => value.IsEnabled(LogLevel.Warning)).Returns(true);
         var provider = new SpeechOutputTests.FakeProvider("system-speech");
         var player = new SpeechOutputTests.FakePlayer();
-        var output = CreateOutput(provider, player, cache: cache.Object);
+        var output = CreateOutput(provider, player, cache: cache.Object, logger: logger.Object);
         await using var outputLifetime = output.ConfigureAwait(false);
         var result = await (output.SpeakAsync("Still speaks")).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
@@ -402,6 +472,14 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
             Assert.That(result.Reason, Does.Not.Contain("Private disk detail"));
             Assert.That(player.PlayCount, Is.EqualTo(1));
         }
+        VerifyCacheWarningWithoutPrivateDetails(logger);
+    }
+
+    private static void VerifyCacheWarningWithoutPrivateDetails(Mock<ILogger<SpeechOutput>> logger)
+    {
+        logger.Verify(value => value.Log(LogLevel.Warning, It.Is<EventId>(eventId => eventId.Id == 3),
+            It.Is<It.IsAnyType>((state, _) => state != null && !state.ToString()!.Contains("Private disk detail", StringComparison.Ordinal)),
+            It.Is<Exception?>(error => error == null), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.AtLeastOnce);
     }
     [Test]
     public async Task CacheHitPlaysEvenWhenProviderHasBecomeUnavailable()

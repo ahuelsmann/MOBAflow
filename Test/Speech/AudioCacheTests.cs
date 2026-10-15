@@ -515,6 +515,31 @@ internal sealed class AudioCacheTests
     }
 
     [Test]
+    public async Task ExhaustedLockRetriesReportIoFailureAndReleaseTheInstance()
+    {
+        using var cache = new AudioCache(_directory, () => 1000, _clock);
+        Directory.CreateDirectory(_directory);
+        using var cancellation = new CancellationTokenSource();
+        using (new FileStream(Path.Combine(_directory, "cache.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+        {
+            var lookup = cache.TryGetAsync(Key("locked until retries expire"), cancellation.Token);
+            try
+            {
+                await Assert.ThrowsAsync<IOException>(() => lookup.WaitAsync(TimeSpan.FromSeconds(10))).ConfigureAwait(false);
+            }
+            finally
+            {
+                // A regressed, unbounded retry must also finish before the cache and its gate are disposed.
+                await cancellation.CancelAsync().ConfigureAwait(false);
+                try { await lookup.ConfigureAwait(false); }
+                catch (Exception ex) when (ex is IOException or OperationCanceledException) { }
+            }
+        }
+        var recovered = await cache.TryGetAsync(Key("after retry exhaustion")).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        Assert.That(recovered.Audio, Is.Null);
+    }
+
+    [Test]
     public async Task SweepingKeepsUnrelatedFilesWhileRemovingOwnedOrphanAudio()
     {
         Directory.CreateDirectory(_directory);
