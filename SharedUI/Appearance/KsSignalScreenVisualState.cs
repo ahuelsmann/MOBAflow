@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Common.Display;
+namespace Moba.SharedUI.Appearance;
 
 /// <summary>
 /// Lamp color for a single LED on the shared Ks signal screen grid.

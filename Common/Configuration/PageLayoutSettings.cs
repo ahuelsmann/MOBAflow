@@ -54,24 +54,3 @@ public class PageLayoutSettings
     /// </summary>
     public DateTime LastModified { get; set; } = DateTime.UtcNow;
 }
-
-/// <summary>
-/// Represents GridSplitter-specific layout settings for persistence.
-/// </summary>
-public class GridSplitterLayoutSettings
-{
-    /// <summary>
-    /// Gets or sets the column widths by column name.
-    /// </summary>
-    public Dictionary<string, double> ColumnWidths { get; set; } = new();
-
-    /// <summary>
-    /// Gets or sets the expanded/collapsed states by column name.
-    /// </summary>
-    public Dictionary<string, bool> ColumnExpandedStates { get; set; } = new();
-
-    /// <summary>
-    /// Gets or sets the splitter positions by splitter name.
-    /// </summary>
-    public Dictionary<string, double> SplitterPositions { get; set; } = new();
-}

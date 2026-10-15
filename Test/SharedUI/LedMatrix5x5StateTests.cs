@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Tests.Common;
 
-using Moba.Common.Display;
+using Moba.SharedUI.Appearance;
 
 [TestFixture]
 public sealed class LedMatrix5x5StateTests

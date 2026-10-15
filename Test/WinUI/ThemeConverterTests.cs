@@ -4,7 +4,7 @@
 
 namespace Moba.Test.WinUI;
 
-using Moba.Common.Display;
+using Moba.SharedUI.Appearance;
 using Moba.WinUI.Converter;
 
 [TestFixture]
