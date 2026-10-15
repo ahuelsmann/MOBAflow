@@ -117,7 +117,17 @@ public sealed partial class SpeechOutput : ISpeechOutput, IAsyncDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (!result.IsSuccess) return ReportFailure(result);
-        await _player.PlayAsync(result.WaveAudio, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _player.PlayAsync(result.WaveAudio, cancellationToken).ConfigureAwait(false);
+        }
+        catch (WavePlaybackInterruptedException)
+        {
+            // A newer announcement took over playback: the call still succeeded, but partly heard audio is not
+            // recorded as played or stored.
+            cancellationToken.ThrowIfCancellationRequested();
+            return result;
+        }
         cancellationToken.ThrowIfCancellationRequested();
         await UseCacheAsync(recordPlayback).ConfigureAwait(false);
         return result;

@@ -420,6 +420,27 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
     }
 
     [Test]
+    public async Task PlaybackInterruptedByANewerAnnouncementSucceedsWithoutCaching()
+    {
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var player = new Mock<IWavePlayer>();
+        player.SetupSequence(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new WavePlaybackInterruptedException())
+            .Returns(Task.CompletedTask);
+        var output = CreateOutput(provider, player.Object);
+        await using var lifetime = output.ConfigureAwait(false);
+        var interrupted = await output.SpeakAsync("Interrupted").ConfigureAwait(false);
+        var sizeAfterInterruption = await output.GetCacheSizeAsync().ConfigureAwait(false);
+        await output.SpeakAsync("Interrupted").ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(interrupted.IsSuccess, Is.True);
+            Assert.That(sizeAfterInterruption, Is.Zero);
+            Assert.That(provider.Requests, Has.Count.EqualTo(2));
+        }
+    }
+
+    [Test]
     public async Task SubstituteVoiceAudioIsPlayedButNotCached()
     {
         var provider = new SpeechOutputTests.FakeProvider("system-speech")

@@ -179,7 +179,7 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         var index = File.Exists(indexPath) ? await ReadIndexAsync(indexPath, cancellationToken).ConfigureAwait(false) : null;
         _entries = index?.Entries is null
             ? new(StringComparer.Ordinal)
-            : new(index.Entries.Where(pair => IsValidKey(pair.Key) && pair.Value is not null && pair.Value.Size >= 0), StringComparer.Ordinal);
+            : new(index.Entries.Where(pair => IsValidKey(pair.Key) && pair.Value is not null && IsPossibleSize(pair.Value.Size)), StringComparer.Ordinal);
         Interlocked.Exchange(ref _generation, Math.Max(Generation, index?.Generation ?? 0));
         if (!_swept) Sweep(cancellationToken);
     }
@@ -287,6 +287,9 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         try { _ = WaveAudio.GetDuration(audio); return true; }
         catch (InvalidDataException) { return false; }
     }
+
+    /// <summary>A WAV is one byte array; larger sizes come from a corrupt index and could overflow the total.</summary>
+    private static bool IsPossibleSize(long size) => size is >= 0 and <= Array.MaxLength;
 
     private static bool IsValidKey(string key) => key.Length == 64 && key.All(char.IsAsciiHexDigit);
 

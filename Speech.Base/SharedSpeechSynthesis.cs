@@ -67,7 +67,7 @@ internal sealed class SharedSpeechSynthesis(CancellationToken shutdownToken)
         }
         finally
         {
-            flight.Dispose();
+            await flight.DisposeAsync().ConfigureAwait(false);
             lock (_gate) { _running.Remove(flight); }
         }
     }
@@ -87,10 +87,11 @@ internal sealed class SharedSpeechSynthesis(CancellationToken shutdownToken)
         if (cancel) await flight.CancelAsync().ConfigureAwait(false);
     }
 
-    private sealed class Flight : IDisposable
+    private sealed class Flight : IAsyncDisposable
     {
         private readonly Lock _gate = new();
         private readonly CancellationTokenSource _cancellation;
+        private Task _cancelling = Task.CompletedTask;
         private bool _disposed;
 
         internal Flight(CancellationToken shutdownToken)
@@ -106,17 +107,25 @@ internal sealed class SharedSpeechSynthesis(CancellationToken shutdownToken)
 
         internal Task CancelAsync()
         {
-            lock (_gate) { return _disposed ? Task.CompletedTask : _cancellation.CancelAsync(); }
+            lock (_gate)
+            {
+                if (_disposed) return Task.CompletedTask;
+                return _cancelling = _cancellation.CancelAsync();
+            }
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
+            Task cancelling;
             lock (_gate)
             {
                 if (_disposed) return;
                 _disposed = true;
-                _cancellation.Dispose();
+                cancelling = _cancelling;
             }
+            // Disposing a token source is not safe while CancelAsync still runs its callbacks.
+            await cancelling.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+            _cancellation.Dispose();
         }
     }
 }

@@ -326,6 +326,27 @@ internal sealed class AudioCacheTests
     }
 
     [Test]
+    public async Task ImpossibleIndexSizesAreDroppedInsteadOfOverflowingTheTotal()
+    {
+        Directory.CreateDirectory(_directory);
+        var audio = TestWaveAudio.Create([1]);
+        var valid = Key("valid");
+        await File.WriteAllBytesAsync(Path.Combine(_directory, valid + ".wav"), audio).ConfigureAwait(false);
+        var huge = long.MaxValue / 2 + 1;
+        var index = "{\"Generation\":0,\"Entries\":{" +
+            "\"" + Key("first huge") + "\":{\"Size\":" + huge + ",\"LastPlayedAt\":\"2026-10-15T00:00:00+00:00\"}," +
+            "\"" + Key("second huge") + "\":{\"Size\":" + huge + ",\"LastPlayedAt\":\"2026-10-15T00:00:00+00:00\"}," +
+            "\"" + valid + "\":{\"Size\":" + audio.Length + ",\"LastPlayedAt\":\"2026-10-15T00:00:00+00:00\"}}}";
+        await File.WriteAllTextAsync(Path.Combine(_directory, "index.json"), index).ConfigureAwait(false);
+        using var cache = new AudioCache(_directory, () => 1000, _clock);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That((await cache.TryGetAsync(valid).ConfigureAwait(false)).Audio, Is.Not.Null);
+            Assert.That(await cache.GetSizeAsync().ConfigureAwait(false), Is.EqualTo(audio.Length));
+        }
+    }
+
+    [Test]
     public async Task ChangingLimitEvictsExistingEntriesAndOversizedAudioIsNotStored()
     {
         long limit = 1000;
