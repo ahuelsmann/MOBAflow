@@ -6,9 +6,10 @@
 
 **Status**: Design #241 and 70-task backlog/consistency analysis #245 integrated. Foundation implementation started on 2026-10-14.
 
-Revalidated GitHub merge state and source contracts against main `7c1d92422c0cbf675fddc03a8979990957733d15`;
-draft PR #288 has since been synchronized by merge with main `6e7c6116551b3abae547aa7499d3a861e0f2ca85`.
-The dedicated worktree is `C:/Users/andre/.codex/worktrees/a957/MOBAflow`, branch `codex/issue-35-automation-testbench`.
+Implementation started from main `7c1d92422c0cbf675fddc03a8979990957733d15`, where GitHub merge state and source
+contracts were revalidated (historical initial base). Draft PR #288 on branch `codex/issue-35-automation-testbench`
+publishes the foundation as commit `7e7c26bb` and integrates later main changes by merge; its current base and validation
+evidence are recorded in the [validation guide](../specs/010-automation-testbench/quickstart.md).
 The first draft slice covers the shared effect adapter and production regressions. Scheduler ownership, complete private
 runtime, model/persistence, comparisons and desktop acceptance remain open. Per-slice current-head CI/Sonar, zero unresolved
 PR issues, independent review and explicit app-launch/manual approval remain separate gates; ready marking and merge

@@ -19,10 +19,9 @@ before scheduler/private graph/UI work. Definition tasks T005-T008 remain a sepa
 RF-24/#219 and #141 do not block this work. No real/shipped/example solution, app launch or hardware work is authorized.
 The Constitution Check below was revalidated against current AGENTS.md: no exception is introduced by this slice.
 
-On 2026-10-15, PR #288 synchronizes main `d4d3d2b1d4f263a5b9dfed2d1585d9b4b3c5c136` and then
-`6e7c6116551b3abae547aa7499d3a861e0f2ca85` by conflict-free merges, preserving published foundation commit `7e7c26bb`.
-The effect-boundary scope/task completion remains unchanged; validation is rerun against the integrated mutation guards,
-command contracts, Speech lane and SharedUI moves with the retained analyzer reductions. See [quickstart.md](quickstart.md).
+PR #288 preserves published foundation commit `7e7c26bb` and integrates later main changes by merge without rewriting
+history; the effect-boundary scope and task completion remain unchanged. Its current base and validation evidence are
+recorded only in [quickstart.md](quickstart.md).
 
 **Input**: Feature specification from `specs/010-automation-testbench/spec.md`.
 
