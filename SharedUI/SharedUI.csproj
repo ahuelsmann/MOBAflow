@@ -17,6 +17,6 @@
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\MOBAdisplay\MOBAdisplay.csproj" />
         <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
-        <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+        <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
     </ItemGroup>
 </Project>

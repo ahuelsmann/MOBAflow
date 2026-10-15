@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackLibrary.PikoA;
+namespace Moba.TrackPlan.Editor;
 
-using Base;
+using TrackLibrary.Base;
 
 /// <summary>
 /// A placed track segment on the editable track plan.

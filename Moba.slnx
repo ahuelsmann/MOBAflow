@@ -34,5 +34,6 @@
   <Project Path="Test/Test.csproj" />
   <Project Path="TrackLibrary.Base/TrackLibrary.Base.csproj" />
   <Project Path="TrackLibrary.PikoA/TrackLibrary.PikoA.csproj" />
+  <Project Path="TrackPlan.Editor/TrackPlan.Editor.csproj" />
   <Project Path="TrackPlan.Renderer/TrackPlan.Renderer.csproj" />
 </Solution>

@@ -12,15 +12,13 @@ using Microsoft.Extensions.Logging;
 
 using Service;
 
-using TrackPlan.Renderer;
-using TrackLibrary.PikoA;
+using TrackPlan.Editor;
 
 /// <summary>
-/// ViewModel wrapper for <see cref="TrackPlan"/> used by the track plan editor UI.
+/// ViewModel for the track-plan editor page.
 /// </summary>
-public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWrapper<TrackPlan>
+public sealed partial class TrackPlanViewModel : ObservableObject
 {
-    private readonly TrackPlan _model;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly IDialogService _dialogService;
@@ -32,25 +30,21 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
     /// <summary>
     /// Initializes a new instance of the <see cref="TrackPlanViewModel"/> class.
     /// </summary>
-    /// <param name="model">The track plan domain model.</param>
     /// <param name="settings">Application settings (layout persistence).</param>
     /// <param name="settingsService">Settings service for persisting layout changes.</param>
     /// <param name="logger">Logger for persistence failures.</param>
     public TrackPlanViewModel(
-        TrackPlan model,
         TrackPlanEditorService editorService,
         IDialogService dialogService,
         AppSettings settings,
         ISettingsService settingsService,
         ILogger<TrackPlanViewModel> logger)
     {
-        ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(editorService);
         ArgumentNullException.ThrowIfNull(dialogService);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(logger);
-        _model = model;
         _editorService = editorService;
         _dialogService = dialogService;
         _settings = settings;
@@ -60,11 +54,6 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
         _isPropertiesExpanded = _settings.Layout.TrackPlanPage.IsPropertiesExpanded;
         _editorService.StateChanged += OnEditorStateChanged;
     }
-
-    /// <summary>
-    /// Gets the underlying track plan domain model.
-    /// </summary>
-    public TrackPlan Model => _model;
 
     /// <summary>Selected track identity, independent of a concrete UI control.</summary>
     public Guid? SelectedTrackId => _editorService.SelectedTrackId;
@@ -328,9 +317,8 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
             return "No selection";
         }
 
-        var entry = PikoACatalog.All.FirstOrDefault(candidate => candidate.SegmentType == selected.Segment.GetType());
-        var code = entry?.Code ?? selected.Segment.GetType().Name;
-        var displayName = entry?.DisplayName ?? code;
+        var code = _editorService.Catalog.GetCode(selected.Segment);
+        var displayName = _editorService.Catalog.GetDisplayName(selected.Segment);
         var connectionCount = _editorService.Connections.Count(connection =>
             connection.SourceSegment == selected.Segment.No || connection.TargetSegment == selected.Segment.No);
         return $"{code}{Environment.NewLine}{displayName}{Environment.NewLine}{Environment.NewLine}"

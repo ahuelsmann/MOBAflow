@@ -5,7 +5,7 @@ using Base;
 
 /// <summary>
 /// Generates path geometry for track segments in local coordinates (Port A = origin, angle 0 = +X).
-/// Uses the same formulas as TrackPlanSvgRenderer for consistent display.
+/// Shared by the editor scene, SVG export and the toolbox preview for consistent display.
 /// </summary>
 public static class SegmentLocalPathBuilder
 {
@@ -24,7 +24,6 @@ public static class SegmentLocalPathBuilder
     /// <summary>
     /// Returns the path commands for a segment in local coordinates.
     /// Start point is always (0, 0) = Port A.
-    /// Uses the same formulas as TrackPlanSvgRenderer.
     /// </summary>
     public static IReadOnlyList<PathCommand> GetPath(Segment segment)
     {
@@ -45,44 +44,6 @@ public static class SegmentLocalPathBuilder
             K30 k30 => GetCrossingPath(k30.ArcInDegree, k30.LengthInMm),
             _ => throw new NotSupportedException($"No local path geometry registered for segment type '{segment.GetType().Name}'.")
         };
-    }
-
-    /// <summary>Returns the bounding box of the path (MinX, MinY, MaxX, MaxY) in mm.</summary>
-    public static (double MinX, double MinY, double MaxX, double MaxY) GetBounds(IReadOnlyList<PathCommand> path)
-    {
-        double minX = 0, minY = 0, maxX = 0, maxY = 0;
-        double x = 0, y = 0;
-        var hasPoint = false;
-
-        foreach (var cmd in path)
-        {
-            if (cmd is MoveTo move)
-            {
-                x = move.X;
-                y = move.Y;
-            }
-            else if (cmd is LineTo line)
-            {
-                x = line.X;
-                y = line.Y;
-            }
-            else if (cmd is ArcTo arc)
-            {
-                x = arc.EndX;
-                y = arc.EndY;
-            }
-
-            hasPoint = true;
-            minX = Math.Min(minX, x);
-            minY = Math.Min(minY, y);
-            maxX = Math.Max(maxX, x);
-            maxY = Math.Max(maxY, y);
-        }
-
-        if (!hasPoint)
-            return (0, 0, 1, 1);
-
-        return (minX, minY, maxX, maxY);
     }
 
     private static IReadOnlyList<PathCommand> GetStraightPath(double length)
