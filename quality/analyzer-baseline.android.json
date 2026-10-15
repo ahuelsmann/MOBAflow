@@ -3789,101 +3789,66 @@
       "count": 1
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "TrackLibrary.PikoA/TrackPlanEditorDocument.cs",
+      "path": "TrackPlan.Editor/TrackPlanEditorDocument.cs",
       "count": 2
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1003",
-      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
+      "path": "TrackPlan.Editor/EditableTrackPlan.cs",
       "count": 1
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
-      "ruleId": "CA1014",
-      "path": "<no-location>",
+      "ruleId": "CA1034",
+      "path": "TrackPlan.Editor/EditableTrackPlan.cs",
       "count": 1
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/SegmentLocalPathBuilder.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/SegmentPortGeometry.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/TrackPlanInteractionService.cs",
+      "path": "TrackPlan.Editor/TrackPlanInteractionService.cs",
       "count": 2
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/TrackPlanSnapHelper.cs",
+      "path": "TrackPlan.Editor/TrackPlanSnapHelper.cs",
       "count": 1
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
+      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
       "count": 4
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
+      "path": "TrackPlan.Editor/EditableTrackPlan.cs",
       "count": 4
     },
     {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/SegmentLocalPathBuilder.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/SegmentPortGeometry.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
-      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
+      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
       "count": 2
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
+      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
       "count": 4
     },
     {

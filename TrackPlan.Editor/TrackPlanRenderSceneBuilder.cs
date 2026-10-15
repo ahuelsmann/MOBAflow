@@ -1,18 +1,20 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackLibrary.PikoA;
+namespace Moba.TrackPlan.Editor;
 
 using Moba.TrackPlan.Renderer;
 
-/// <summary>Adapts Piko A placements to the library-neutral renderer scene.</summary>
+/// <summary>Adapts editor placements to the library-neutral renderer scene.</summary>
 public static class TrackPlanRenderSceneBuilder
 {
     public static TrackPlanRenderScene Build(
+        SegmentPlacementGeometry geometry,
         IReadOnlyList<PlacedSegment> placements,
         IReadOnlySet<Guid>? selectedTrackIds = null,
         IReadOnlyDictionary<Guid, double>? feedbackIntensities = null,
         IReadOnlyList<TrackPlanValidationMarker>? validationMarkers = null,
         bool includePorts = false)
     {
+        ArgumentNullException.ThrowIfNull(geometry);
         ArgumentNullException.ThrowIfNull(placements);
 
         var items = placements.Select(placement => new TrackPlanRenderItem(
@@ -21,7 +23,7 @@ public static class TrackPlanRenderSceneBuilder
             placement.X,
             placement.Y,
             placement.RotationDegrees,
-            SegmentLocalPathBuilder.GetPath(placement.Segment),
+            geometry.GetPath(placement.Segment),
             placement.Segment.GetType().Name,
             selectedTrackIds?.Contains(placement.Segment.No) ?? false,
             feedbackIntensities?.TryGetValue(placement.Segment.No, out var intensity) == true
@@ -30,7 +32,7 @@ public static class TrackPlanRenderSceneBuilder
 
         var ports = includePorts
             ? placements
-                .SelectMany(SegmentPortGeometry.GetAllPortWorldPositions)
+                .SelectMany(geometry.GetAllPortWorldPositions)
                 .Select(port => new TrackPlanPortMarker(port.X, port.Y, port.PortName))
                 .ToList()
             : [];

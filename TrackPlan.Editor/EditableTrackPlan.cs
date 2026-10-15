@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackLibrary.PikoA;
+namespace Moba.TrackPlan.Editor;
 
-using Base;
+using TrackLibrary.Base;
 using Domain;
 
 /// <summary>
@@ -185,9 +185,10 @@ public sealed class EditableTrackPlan : ITrackFeedbackLookup
     /// oder manuellem Platzieren ohne Snap sichtbar aneinanderliegende Gleise als unverbunden gelten.
     /// </summary>
     /// <returns>Anzahl der neu angelegten Verbindungen.</returns>
-    public int HealImplicitConnections(double overlapThresholdMm = 1.0, double angleToleranceDegrees = 2.0)
+    public int HealImplicitConnections(SegmentPlacementGeometry geometry, double overlapThresholdMm = 1.0, double angleToleranceDegrees = 2.0)
     {
         var implicitConnections = TrackPlanValidationHelper.FindImplicitConnections(
+            geometry,
             _segments, _connections, overlapThresholdMm, angleToleranceDegrees);
 
         if (implicitConnections.Count == 0)

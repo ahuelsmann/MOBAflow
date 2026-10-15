@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using TrackLibrary.PikoA;
+using TrackPlan.Editor;
 
 using View;
 
@@ -88,7 +88,9 @@ internal static class NavigationRegistration
         services.AddSingleton(serviceProvider => new TrackPlanPage(
             serviceProvider.GetRequiredService<TrackPlanPageViewModels>(),
             serviceProvider.GetRequiredService<MainWindowViewModel>(),
-            serviceProvider.GetRequiredService<EditableTrackPlan>(),
+            new TrackPlanPageEditor(
+                serviceProvider.GetRequiredService<EditableTrackPlan>(),
+                serviceProvider.GetRequiredService<SegmentPlacementGeometry>()),
             serviceProvider.GetRequiredService<TrackPlanFeedbackHighlighter>(),
             serviceProvider.GetRequiredService<AppSettings>(),
             serviceProvider.GetService<ISettingsService>(),

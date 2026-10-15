@@ -55,6 +55,7 @@
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
         <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+        <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
         <ProjectReference Include="..\Sound\Sound.csproj" />
         <ProjectReference Include="..\MOBAdisplay\MOBAdisplay.csproj" />
         <ProjectReference Include="..\MOBApi\MOBApi.csproj" />
