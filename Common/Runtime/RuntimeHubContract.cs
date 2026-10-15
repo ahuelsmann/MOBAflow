@@ -62,4 +62,11 @@ public interface IRuntimeHubRemoteCallbacks
 /// Every call the hub can send. Host and remotes connect to the same hub, and a strongly typed hub has exactly one
 /// client type; each side handles only the callbacks of its own role.
 /// </summary>
-public interface IRuntimeHubCallbacks : IRuntimeHubHostCallbacks, IRuntimeHubRemoteCallbacks;
+public interface IRuntimeHubCallbacks : IRuntimeHubHostCallbacks, IRuntimeHubRemoteCallbacks
+{
+    /// <summary>
+    /// Sends <see cref="IRuntimeHubRemoteCallbacks.SolutionUpdated"/> and stops when <paramref name="cancellationToken"/>
+    /// is cancelled. SignalR passes a trailing token to the send instead of the wire, so remotes receive one argument.
+    /// </summary>
+    Task SolutionUpdated(string updatedAtIso, CancellationToken cancellationToken);
+}

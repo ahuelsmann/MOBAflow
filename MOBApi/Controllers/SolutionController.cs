@@ -101,7 +101,7 @@ public class SolutionController : ControllerBase
 
         await _hubContext.Clients
             .Group(RuntimeHub.RuntimeRemoteGroup)
-            .SolutionUpdated(entry.UpdatedAt.ToString("O"))
+            .SolutionUpdated(entry.UpdatedAt.ToString("O"), cancellationToken)
             .ConfigureAwait(false);
 
         return Ok(BuildMetaResponse(entry));

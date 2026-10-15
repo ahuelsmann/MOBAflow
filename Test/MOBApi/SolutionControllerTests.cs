@@ -59,11 +59,13 @@ internal sealed class SolutionControllerTests
         var remotes = new Mock<IRuntimeHubCallbacks>();
         var controller = CreateController(_cache, IPAddress.Loopback, remotes: remotes);
         SetRequestBody(controller, ValidSolutionJson);
+        using var request = new CancellationTokenSource();
 
-        await controller.PutSolution(CancellationToken.None).ConfigureAwait(false);
+        await controller.PutSolution(request.Token).ConfigureAwait(false);
 
         Assert.That(_cache.TryGet(out var entry), Is.True);
-        remotes.Verify(remote => remote.SolutionUpdated(entry.UpdatedAt.ToString("O")), Times.Once);
+        // The broadcast is cancelled together with the request.
+        remotes.Verify(remote => remote.SolutionUpdated(entry.UpdatedAt.ToString("O"), request.Token), Times.Once);
     }
 
     [Test]

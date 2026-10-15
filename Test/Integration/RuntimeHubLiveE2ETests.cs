@@ -182,6 +182,30 @@ internal sealed class RuntimeHubLiveE2ETests
         Assert.That(emptyPending.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NoContent));
     }
 
+    [Test]
+    public async Task SolutionPut_Should_NotifyRemoteWithoutProject()
+    {
+        var solutionUpdated = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var remoteHub = new HubConnectionBuilder()
+            .WithUrl($"{BaseUrl}/runtime-hub")
+            .Build();
+        // A one-argument handler only matches when the server keeps the cancellation token off the wire.
+        remoteHub.On<string>(nameof(IRuntimeHubRemoteCallbacks.SolutionUpdated), updatedAt =>
+        {
+            solutionUpdated.TrySetResult(updatedAt);
+            return Task.CompletedTask;
+        });
+        await remoteHub.StartAsync().ConfigureAwait(false);
+        await remoteHub
+            .InvokeAsync(nameof(IRuntimeHubRemoteMethods.RegisterRemote), "e2e-solution-client", string.Empty)
+            .ConfigureAwait(false);
+
+        await PublishSolutionAsync().ConfigureAwait(false);
+
+        var updatedAt = await solutionUpdated.Task.WaitAsync(StepTimeout).ConfigureAwait(false);
+        Assert.That(DateTimeOffset.TryParse(updatedAt, System.Globalization.CultureInfo.InvariantCulture, out _), Is.True, updatedAt);
+    }
+
     /// <summary>Synchronizes a solution that contains <see cref="ProjectId"/>; commands name known projects only.</summary>
     private async Task PublishSolutionAsync()
     {
