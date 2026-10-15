@@ -36,8 +36,9 @@ using Sound;
 using Speech.Base;
 using Speech.Piper;
 using Speech.SystemSpeech;
+using TrackLibrary.Base;
 using TrackLibrary.PikoA;
-using TrackPlan.Renderer;
+using TrackPlan.Editor;
 using View;
 
 /// <summary>
@@ -276,16 +277,13 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingletonWithInterface<UdpDisplayDeviceClient, IDisplayDeviceClient>();
         services.AddTransient<FrameLoopScheduler>();
 
-        services.AddSingleton<TrackPlan>();
+        services.AddSingleton<ITrackCatalog, PikoATrackCatalog>();
+        services.AddSingleton<SegmentPlacementGeometry>();
         services.AddSingleton<EditableTrackPlan>();
         services.AddSingleton<TrackPlanInteractionService>();
         services.AddSingleton<ITrackFeedbackLookup>(sp => sp.GetRequiredService<EditableTrackPlan>());
         services.AddSingleton<RailroadState>();
         services.AddSingleton<TrackPlanRailroadStateProjector>();
-        services.AddSingleton<ITrackLibrary, PikoATrackLibrary>();
-        services.AddSingleton<TrackLibraryRegistry>();
-        services.AddSingleton<LayoutService>();
-        services.AddSingleton<GraphService>();
         services.AddSingleton<SelectionService>();
         services.AddSingleton<UndoRedoService<TrackPlanEditorDocument>>();
         services.AddSingleton<TrackPlanEditorService>();
@@ -293,7 +291,6 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<TrackPlanFeedbackHighlighter>();
 
         services.AddSingleton(sp => new TrackPlanViewModel(
-            sp.GetRequiredService<TrackPlan>(),
             sp.GetRequiredService<TrackPlanEditorService>(),
             sp.GetRequiredService<IDialogService>(),
             sp.GetRequiredService<AppSettings>(),

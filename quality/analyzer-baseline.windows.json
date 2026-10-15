@@ -2336,7 +2336,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
-      "path": "Test/Common/LedMatrix5x5StateTests.cs",
+      "path": "Test/SharedUI/LedMatrix5x5StateTests.cs",
       "count": 1
     },
     {
@@ -2399,7 +2399,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1707",
-      "path": "Test/Common/LedMatrix5x5StateTests.cs",
+      "path": "Test/SharedUI/LedMatrix5x5StateTests.cs",
       "count": 5
     },
     {
@@ -2917,21 +2917,21 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/FunctionBacklightColorTests.cs",
+      "path": "Test/SharedUI/FunctionBacklightColorTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/GaugeThemeAppearanceTests.cs",
+      "path": "Test/SharedUI/GaugeThemeAppearanceTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/HexColorTests.cs",
+      "path": "Test/SharedUI/HexColorTests.cs",
       "count": 1
     },
     {
@@ -2952,7 +2952,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/KsSignalAspectNamesTests.cs",
+      "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 2
     },
     {
@@ -2966,7 +2966,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/LocomotiveFunctionAppearanceResolverTests.cs",
+      "path": "Test/SharedUI/LocomotiveFunctionAppearanceResolverTests.cs",
       "count": 1
     },
     {
@@ -2995,13 +2995,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Common/MobApiEndpointTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Common/MobileBackgroundKeepAlivePolicyTests.cs",
       "count": 1
     },
     {
@@ -3058,13 +3051,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Common/RestApiDiscoveryCandidateBuilderTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Common/RestApiRecentEndpointHistoryTests.cs",
       "count": 1
     },
     {
@@ -3183,6 +3169,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Domain/RailroadStateTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Domain/SignalBoxPlanTests.cs",
       "count": 1
     },
@@ -3191,20 +3184,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Domain/SolutionLoadFailureTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Domain/TrackLayoutTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Domain/TrackPlanDocumentMapperTests.cs",
       "count": 1
     },
     {
@@ -3645,6 +3624,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/MobileBackgroundKeepAlivePolicyTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/MobilePhotoUploaderTests.cs",
       "count": 1
     },
@@ -3716,6 +3702,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/RestApiRecentEndpointHistoryTests.cs",
       "count": 1
     },
     {
@@ -3960,6 +3953,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/TrackLibrary.PikoA/PikoACatalogGeometryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/TrackPlanRenderer/PathToSvgConverterTests.cs",
       "count": 1
     },
@@ -3974,7 +3974,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
+      "path": "Test/TrackPlanRenderer/SvgExporterTests.cs",
       "count": 1
     },
     {
@@ -4353,13 +4353,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1852",
       "path": "Test/TrackPlanRenderer/PlacedTrackPlanEditorTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1852",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
       "count": 1
     },
     {
@@ -5213,14 +5206,14 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0005",
-      "path": "Test/Common/KsSignalAspectNamesTests.cs",
+      "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0005",
-      "path": "Test/Common/LocomotiveFunctionAppearanceResolverTests.cs",
+      "path": "Test/SharedUI/LocomotiveFunctionAppearanceResolverTests.cs",
       "count": 1
     },
     {
@@ -5313,13 +5306,6 @@
       "ruleId": "IDE0007",
       "path": "Test/Common/MultiplexerHelperTests.cs",
       "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0007",
-      "path": "Test/Domain/TrackLayoutTests.cs",
-      "count": 4
     },
     {
       "project": "Test",
@@ -5542,7 +5528,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/GaugeThemeAppearanceTests.cs",
+      "path": "Test/SharedUI/GaugeThemeAppearanceTests.cs",
       "count": 1
     },
     {
@@ -5556,14 +5542,14 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/KsSignalAspectNamesTests.cs",
+      "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 15
     },
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/LocomotiveFunctionAppearanceResolverTests.cs",
+      "path": "Test/SharedUI/LocomotiveFunctionAppearanceResolverTests.cs",
       "count": 1
     },
     {
@@ -5593,13 +5579,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/Common/PhotoPathHelperTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Common/RestApiRecentEndpointHistoryTests.cs",
-      "count": 3
     },
     {
       "project": "Test",
@@ -5745,6 +5724,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
+      "path": "Test/SharedUI/RestApiRecentEndpointHistoryTests.cs",
+      "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2045",
       "path": "Test/SharedUI/RuntimeJsonSerializerTests.cs",
       "count": 3
     },
@@ -5801,15 +5787,8 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
       "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
-      "count": 9
+      "count": 8
     },
     {
       "project": "Test",
@@ -5892,13 +5871,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2046",
-      "path": "Test/Common/RestApiRecentEndpointHistoryTests.cs",
-      "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2046",
       "path": "Test/Integration/WorkflowExecutionEndToEndTests.cs",
       "count": 2
     },
@@ -5913,8 +5885,8 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2046",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
-      "count": 1
+      "path": "Test/SharedUI/RestApiRecentEndpointHistoryTests.cs",
+      "count": 3
     },
     {
       "project": "Test",
@@ -6221,7 +6193,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/LedMatrix5x5StateTests.cs",
+      "path": "Test/SharedUI/LedMatrix5x5StateTests.cs",
       "count": 4
     },
     {
@@ -6312,22 +6284,15 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
+      "path": "Test/Domain/RailroadStateTests.cs",
+      "count": 7
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2056",
       "path": "Test/Domain/SignalBoxPlanTests.cs",
       "count": 9
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/TrackLayoutTests.cs",
-      "count": 14
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/TrackPlanDocumentMapperTests.cs",
-      "count": 5
     },
     {
       "project": "Test",
@@ -6565,13 +6530,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/TrackPlanRenderer/PlacedTrackPlanEditorTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/TrackPlanRenderer/RendererTests.cs",
       "count": 1
     },
     {

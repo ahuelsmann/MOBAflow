@@ -4,19 +4,18 @@ namespace Moba.TrackLibrary.PikoA;
 using Base;
 
 /// <summary>
-/// Helper class for calculating port positions for track segments.
-/// Returns port coordinates in local segment coordinates (Port A = origin, angle 0 = +X).
+/// Piko A connector tables in local segment coordinates (mm, degrees).
 /// </summary>
-public static class SegmentPortGeometry
+internal static class SegmentPortGeometry
 {
-    /// <summary>Port position in local coordinates (X, Y) and orientation angle (degrees).</summary>
-    public sealed record PortInfo(string PortName, double LocalX, double LocalY, double LocalAngleDegrees);
+    private sealed record PortInfo(string PortName, double LocalX, double LocalY, double LocalAngleDegrees);
 
-    /// <summary>
-    /// Calculates the port positions for a segment in local coordinates.
-    /// Port A is at the origin, angle 0 = positive X direction.
-    /// </summary>
-    public static IReadOnlyList<PortInfo> GetPorts(Segment segment)
+    public static IReadOnlyList<SegmentPort> GetPorts(Segment segment) =>
+        GetPortTable(segment)
+            .Select(port => new SegmentPort(port.PortName, port.LocalX, port.LocalY, port.LocalAngleDegrees, IsStartPort(segment, port.PortName)))
+            .ToList();
+
+    private static IReadOnlyList<PortInfo> GetPortTable(Segment segment)
     {
         return segment switch
         {
@@ -35,106 +34,6 @@ public static class SegmentPortGeometry
             K30 k30 => GetK30Ports(k30.LengthInMm, k30.ArcInDegree),
             _ => throw new NotSupportedException($"No port geometry registered for segment type '{segment.GetType().Name}'.")
         };
-    }
-
-    /// <summary>Transforms a local position to world coordinates.</summary>
-    public static (double Wx, double Wy) ToWorld(double x, double y, double segmentX, double segmentY, double rotationDegrees)
-    {
-        var r = rotationDegrees * Math.PI / 180;
-        var cos = Math.Cos(r);
-        var sin = Math.Sin(r);
-        return (
-            segmentX + x * cos - y * sin,
-            segmentY + x * sin + y * cos
-        );
-    }
-
-    /// <summary>Calculates the world position of a port for a PlacedSegment.</summary>
-    public static (double X, double Y, double AngleDegrees) GetPortWorldPosition(PlacedSegment placed, string portName)
-    {
-        var ports = GetPorts(placed.Segment);
-        var port = ports.FirstOrDefault(p => p.PortName == portName);
-        if (port == null)
-            return (placed.X, placed.Y, placed.RotationDegrees);
-
-        var (wx, wy) = ToWorld(port.LocalX, port.LocalY, placed.X, placed.Y, placed.RotationDegrees);
-        var angle = placed.RotationDegrees + port.LocalAngleDegrees;
-        return (wx, wy, angle);
-    }
-
-    /// <summary>Calculates all port world positions for a PlacedSegment. Default is entry port A.</summary>
-    public static IReadOnlyList<(string PortName, double X, double Y, double AngleDegrees)> GetAllPortWorldPositions(PlacedSegment placed)
-    {
-        var ports = GetPorts(placed.Segment);
-        var result = new List<(string, double, double, double)>();
-        foreach (var p in ports)
-        {
-            var (wx, wy) = ToWorld(p.LocalX, p.LocalY, placed.X, placed.Y, placed.RotationDegrees);
-            result.Add((p.PortName, wx, wy, placed.RotationDegrees + p.LocalAngleDegrees));
-        }
-
-        return result;
-    }
-
-    public static PortInfo? GetPort(Segment segment, string portName)
-    {
-        return GetPorts(segment).FirstOrDefault(p => p.PortName == portName);
-    }
-
-    public static double GetPortOutwardLocalAngleDegrees(Segment segment, string portName)
-    {
-        var port = GetPort(segment, portName);
-        if (port == null)
-            return 0;
-
-        var angle = port.LocalAngleDegrees;
-        if (IsStartPort(segment, portName))
-            angle += 180;
-
-        return NormalizeAngle(angle);
-    }
-
-    public static double GetPortOutwardWorldAngleDegrees(PlacedSegment placed, string portName)
-    {
-        return NormalizeAngle(placed.RotationDegrees + GetPortOutwardLocalAngleDegrees(placed.Segment, portName));
-    }
-
-    public static (double X, double Y, double RotationDegrees) GetPlacementForPort(
-        Segment segment,
-        string portName,
-        double worldX,
-        double worldY,
-        double desiredOutwardAngleDegrees)
-    {
-        var port = GetPort(segment, portName);
-        if (port == null)
-            return (worldX, worldY, NormalizeAngle(desiredOutwardAngleDegrees));
-
-        var rotationDegrees = NormalizeAngle(desiredOutwardAngleDegrees - GetPortOutwardLocalAngleDegrees(segment, portName));
-        var r = rotationDegrees * Math.PI / 180;
-        var cos = Math.Cos(r);
-        var sin = Math.Sin(r);
-        var originX = worldX - (port.LocalX * cos - port.LocalY * sin);
-        var originY = worldY - (port.LocalX * sin + port.LocalY * cos);
-        return (originX, originY, rotationDegrees);
-    }
-
-    public static (double X, double Y, double RotationDegrees) TranslatePlacementForPort(
-        PlacedSegment placed,
-        string portName,
-        double worldX,
-        double worldY)
-    {
-        var port = GetPort(placed.Segment, portName);
-        if (port == null)
-            return (worldX, worldY, placed.RotationDegrees);
-
-        var r = placed.RotationDegrees * Math.PI / 180;
-        var cos = Math.Cos(r);
-        var sin = Math.Sin(r);
-        var originX = worldX - (port.LocalX * cos - port.LocalY * sin);
-        var originY = worldY - (port.LocalX * sin + port.LocalY * cos);
-        return (originX, originY, placed.RotationDegrees);
     }
 
     private static IReadOnlyList<PortInfo> GetStraightPorts(double length)
@@ -340,14 +239,5 @@ public static class SegmentPortGeometry
             return true;
 
         return segment is DKW or K15 or K30 && portName == "PortC";
-    }
-
-    private static double NormalizeAngle(double degrees)
-    {
-        while (degrees >= 360)
-            degrees -= 360;
-        while (degrees < 0)
-            degrees += 360;
-        return degrees;
     }
 }

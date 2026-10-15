@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Converters;
 
-using Moba.Common.Display;
+using Moba.SharedUI.Appearance;
 
 using System.Globalization;
 
