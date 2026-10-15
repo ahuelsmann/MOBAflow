@@ -78,7 +78,9 @@ internal sealed partial class CancellableWavePlayerTests
             else
             {
                 clock.Clock.Advance(Moba.Speech.Base.WaveAudio.GetDuration(oldAudio));
-                await first.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+                // The older playback was replaced, so it reports the interruption instead of a full playback.
+                await Assert.ThrowsAsync<Moba.Speech.Base.WavePlaybackInterruptedException>(
+                    () => first.WaitAsync(TimeSpan.FromSeconds(10))).ConfigureAwait(false);
             }
             using (Assert.EnterMultipleScope())
             {
@@ -99,7 +101,7 @@ internal sealed partial class CancellableWavePlayerTests
             await oldCancellation.CancelAsync().ConfigureAwait(false);
             await newCancellation.CancelAsync().ConfigureAwait(false);
             try { await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false); }
-            catch (OperationCanceledException) { }
+            catch (Exception ex) when (ex is OperationCanceledException or Moba.Speech.Base.WavePlaybackInterruptedException) { }
         }
     }
 

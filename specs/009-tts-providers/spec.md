@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-08
 
-**Status**: Approved; slice 1 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11). Slice 2 implemented in [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250); current CI/Sonar and review-fix verification are tracked in the PR. Manual UI acceptance remains pending. Slices 3-6 pending.
+**Status**: Approved; slices 1 and 2 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) and [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250), after prerequisite #207 merged. Slice 3 implemented in draft [PR #278](https://github.com/ahuelsmann/MOBAflow/pull/278); current CI/Sonar evidence is tracked in that PR. T011 manual UI acceptance and slices 4-6 remain pending.
 
 **Spec Kit**: Required
 

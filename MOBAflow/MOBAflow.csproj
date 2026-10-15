@@ -11,6 +11,8 @@
         <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</Platform>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <UseWinUI>true</UseWinUI>
+        <!-- C#/WinRT generates interop helpers for disposable speech services. -->
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
         <GenerateAppxManifest>false</GenerateAppxManifest>
         <ApplicationManifest>app.manifest</ApplicationManifest>
