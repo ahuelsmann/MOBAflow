@@ -49,18 +49,18 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
             Remove(key);
             return (null, true);
         }
-        var changed = false;
-        if (info.Length != entry.Size)
-        {
-            _entries[key] = entry with { Size = info.Length };
-            // This entry is about to play and fits the limit, so other audio makes room for its actual size.
-            Trim(protectedKey: key);
-            changed = true;
-        }
+        // The bounded file is validated first, so a corrupt WAV never makes valid audio give way.
         var audio = await File.ReadAllBytesAsync(info.FullName, cancellationToken).ConfigureAwait(false);
-        if (IsValidWave(audio)) return (audio, changed);
-        Remove(key);
-        return (null, true);
+        if (!IsValidWave(audio))
+        {
+            Remove(key);
+            return (null, true);
+        }
+        if (audio.Length == entry.Size) return (audio, false);
+        _entries[key] = entry with { Size = audio.Length };
+        // This entry is about to play and fits the limit, so other audio makes room for its actual size.
+        Trim(protectedKey: key);
+        return (audio, true);
     }
 
     /// <inheritdoc />

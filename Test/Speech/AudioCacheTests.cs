@@ -383,6 +383,23 @@ internal sealed class AudioCacheTests
     }
 
     [Test]
+    public async Task CorruptGrownHitIsDroppedWithoutEvictingValidAudio()
+    {
+        var small = TestWaveAudio.Create([1]);
+        var limit = small.Length * 2L + 10;
+        using var cache = new AudioCache(_directory, () => limit, _clock);
+        await cache.StoreAsync(Key("older"), small, cache.Generation).ConfigureAwait(false);
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        await cache.StoreAsync(Key("corrupt"), small, cache.Generation).ConfigureAwait(false);
+        await File.WriteAllBytesAsync(Path.Combine(_directory, Key("corrupt") + ".wav"), new byte[small.Length + 20]).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That((await cache.TryGetAsync(Key("corrupt")).ConfigureAwait(false)).Audio, Is.Null);
+            Assert.That((await cache.TryGetAsync(Key("older")).ConfigureAwait(false)).Audio, Is.Not.Null);
+        }
+    }
+
+    [Test]
     public async Task ChangingLimitEvictsExistingEntriesAndOversizedAudioIsNotStored()
     {
         long limit = 1000;
