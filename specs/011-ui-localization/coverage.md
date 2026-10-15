@@ -2,7 +2,7 @@
 
 Source issue: [#140](https://github.com/ahuelsmann/MOBAflow/issues/140).
 Baseline: `7c1d92422c0cbf675fddc03a8979990957733d15` (2026-10-14).
-Integration base: `d4d3d2b1d4f263a5b9dfed2d1585d9b4b3c5c136` (2026-10-15).
+Integration base: `e9d2ef5e5daf2c9701822dedb549ea2cc1afba5c` (2026-10-15).
 Rows distinguish implemented scope from still-pending manual acceptance.
 
 | Platform/surface | Files | Scope | Delivery/acceptance |
@@ -57,6 +57,16 @@ long-text/font scaling, keyboard/focus, screenreader and Light/Dark acceptance r
 under T022/T026. No hardware or paid service was used. #140 remains open for these checks
 and the explicitly listed follow-up page slices.
 
-Draft-PR CI/Sonar evidence is pending publication. A passing local build does not establish
-PR readiness. Require green current-head checks and zero OPEN/CONFIRMED PR issues; do not
-mark Ready or merge without separate authorization.
+[Draft PR #294](https://github.com/ahuelsmann/MOBAflow/pull/294) is published. Its
+[current checks](https://github.com/ahuelsmann/MOBAflow/pull/294/checks) and
+[Sonar PR analysis](https://sonarcloud.io/dashboard?id=ahuelsmann_MOBAflow2&pullRequest=294)
+are the authoritative publication evidence; verify the current head SHA before relying on them.
+
+Initial analysis of `64f72749b94c3d3aad9b1e982689f7a5c47623d7` passed its quality gate but
+reported one OPEN S1192 issue in HelpPage. The repeated Welcome topic identifier was replaced
+with a constant; a fresh analysis must confirm zero OPEN/CONFIRMED issues for the correction.
+Other required checks were still running at that snapshot. Android Release AAB and the
+issue-event-only traceability job were explicitly skipped in the draft run.
+
+A passing local build or quality gate alone does not establish PR readiness. Require green
+current-head checks and zero OPEN/CONFIRMED PR issues. Keep the PR draft; no merge is authorized.

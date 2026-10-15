@@ -14,6 +14,7 @@ using SharedUI.Localization;
 
 internal sealed partial class HelpPage : INavigationParameterReceiver
 {
+    private const string WelcomeTopic = "Welcome";
     private readonly Dictionary<TreeViewNode, string> _sections = [];
     private readonly AppSettings _settings;
     private readonly IUiLocalizer _text;
@@ -194,7 +195,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
     {
         // Getting Started
         var gettingStarted = new TreeViewNode { Content = LocalizeTopic("Getting Started"), IsExpanded = true };
-        AddSection(gettingStarted, "Welcome");
+        AddSection(gettingStarted, WelcomeTopic);
         AddSection(gettingStarted, "Installation");
         AddSection(gettingStarted, "Z21 Connection");
         AddSection(gettingStarted, "First Ride");
@@ -243,7 +244,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
         AddSection(troubleshooting, "Feedback Points Missing");
         NavigationTreeView.RootNodes.Add(troubleshooting);
 
-        ShowContent("Welcome");
+        ShowContent(WelcomeTopic);
     }
 
     private void AddSection(TreeViewNode parent, string topic)
@@ -264,7 +265,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
     private string LocalizeTopic(string topic) => topic switch
     {
         "Getting Started" => _text.GetText("Help_GettingStarted"),
-        "Welcome" => _text.GetText("Help_Welcome"),
+        WelcomeTopic => _text.GetText("Help_Welcome"),
         "Installation" => _text.GetText("Help_Installation"),
         "Z21 Connection" => _text.GetText("Help_Z21Connection"),
         "First Ride" => _text.GetText("Help_FirstRide"),
@@ -304,7 +305,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
         var content = section switch
         {
             // Getting Started
-            "Welcome" => """
+            WelcomeTopic => """
                 Welcome to MOBAflow - Your control center for model railways!
 
                 MOBAflow connects directly to your Roco/Fleischmann Z21 digital command station and offers:
