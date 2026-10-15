@@ -2,7 +2,7 @@
 
 Source issue: [#140](https://github.com/ahuelsmann/MOBAflow/issues/140).
 Baseline: `7c1d92422c0cbf675fddc03a8979990957733d15` (2026-10-14).
-Integration base: `e9d2ef5e5daf2c9701822dedb549ea2cc1afba5c` (2026-10-15).
+Integration base: `877cd41eec29917ac2bba2318f7205391bd9358a` (2026-10-15).
 Rows distinguish implemented scope from still-pending manual acceptance.
 
 | Platform/surface | Files | Scope | Delivery/acceptance |
@@ -45,6 +45,7 @@ Only update a row to implemented when resource and build checks exist; record ma
 - `MOBAflow.pri` was dumped using the existing SDK MakePri tool; LanguageTitle and InfoTagline
   contain both EN-US and DE-DE candidates. The German SharedUI satellite DLL is in desktop output.
 - Instruction consistency, Spec Kit governance, text endings and changed-file secrets checks passed locally.
+- After integrating main's speech-cache fix, 70 portable cache/settings tests passed with no skips.
 
 The initial local SDK workload-manifest failure was no longer present on the later Android
 restore/build; this task performed no machine-wide SDK/workload repair or installation.
@@ -62,11 +63,15 @@ and the explicitly listed follow-up page slices.
 [Sonar PR analysis](https://sonarcloud.io/dashboard?id=ahuelsmann_MOBAflow2&pullRequest=294)
 are the authoritative publication evidence; verify the current head SHA before relying on them.
 
-Initial analysis of `64f72749b94c3d3aad9b1e982689f7a5c47623d7` passed its quality gate but
-reported one OPEN S1192 issue in HelpPage. The repeated Welcome topic identifier was replaced
-with a constant; a fresh analysis must confirm zero OPEN/CONFIRMED issues for the correction.
-Other required checks were still running at that snapshot. Android Release AAB and the
-issue-event-only traceability job were explicitly skipped in the draft run.
+Analysis of `fb806e6c9536afd377c5949f0a4ad5ee1bc17dc1` passed the Sonar quality gate
+with zero OPEN/CONFIRMED issues. This confirms the correction of the initial HelpPage S1192
+finding. CodeQL, instruction consistency, Spec Kit validation and Domain mutation tests passed
+on that commit. Windows, Common mutation and Display checks were still running at the snapshot.
+Android Release AAB and the issue-event-only traceability job were explicitly skipped in the draft.
+
+The subsequent integration of main's speech-cache fix changes the PR head. Its fresh checks
+must finish before publication evidence T024/T027 can be completed; the earlier Sonar result
+does not establish the result of that new head.
 
 A passing local build or quality gate alone does not establish PR readiness. Require green
 current-head checks and zero OPEN/CONFIRMED PR issues. Keep the PR draft; no merge is authorized.
