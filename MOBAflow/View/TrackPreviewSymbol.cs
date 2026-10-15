@@ -10,7 +10,7 @@ using Windows.Foundation;
 
 /// <summary>
 /// Creates preview symbols for Piko A track types in the toolbox.
-/// Uses <see cref="SegmentLocalPathBuilder"/> – same geometry as TrackPlanSvgRenderer.
+/// Uses <see cref="SegmentLocalPathBuilder"/> – same geometry as the editor canvas.
 /// </summary>
 internal static class TrackPreviewSymbol
 {

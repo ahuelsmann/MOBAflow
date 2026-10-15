@@ -5,7 +5,7 @@ using Base;
 
 /// <summary>
 /// Generates path geometry for track segments in local coordinates (Port A = origin, angle 0 = +X).
-/// Uses the same formulas as TrackPlanSvgRenderer for consistent display.
+/// Shared by the editor scene, SVG export and the toolbox preview for consistent display.
 /// </summary>
 public static class SegmentLocalPathBuilder
 {
@@ -24,7 +24,6 @@ public static class SegmentLocalPathBuilder
     /// <summary>
     /// Returns the path commands for a segment in local coordinates.
     /// Start point is always (0, 0) = Port A.
-    /// Uses the same formulas as TrackPlanSvgRenderer.
     /// </summary>
     public static IReadOnlyList<PathCommand> GetPath(Segment segment)
     {

@@ -154,7 +154,7 @@ public sealed class EditableTrackPlan : ITrackFeedbackLookup
     }
 
     /// <summary>
-    /// Loads a track plan from placements and connections (e.g. from TrackPlanSvgRenderer.Render).
+    /// Loads a track plan from placements and connections (e.g. from a stored editor document).
     /// </summary>
     public void LoadFromPlacements(IReadOnlyList<PlacedSegment> placements, IReadOnlyList<PortConnection> connections)
     {
