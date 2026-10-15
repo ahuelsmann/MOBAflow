@@ -1,12 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Editor;
 
-public static class TrackPlanSnapHelper
+public sealed class TrackPlanSnapHelper(SegmentPlacementGeometry geometry)
 {
+    private readonly SegmentPlacementGeometry _geometry = geometry ?? throw new ArgumentNullException(nameof(geometry));
+
     public sealed record SnapResult(PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort, double DistanceMm);
 
-    public static SnapResult? FindBestSnap(
-        SegmentPlacementGeometry geometry,
+    public SnapResult? FindBestSnap(
         PlacedSegment movingSegment,
         IReadOnlyList<PlacedSegment> allSegments,
         IReadOnlyList<PortConnection> connections,
@@ -15,7 +16,6 @@ public static class TrackPlanSnapHelper
         double distanceThresholdMm = 22.5,
         double rigidGroupAngleToleranceDegrees = 1.0)
     {
-        ArgumentNullException.ThrowIfNull(geometry);
         ArgumentNullException.ThrowIfNull(movingSegment);
         ArgumentNullException.ThrowIfNull(allSegments);
         ArgumentNullException.ThrowIfNull(connections);
@@ -23,7 +23,7 @@ public static class TrackPlanSnapHelper
         SnapResult? best = null;
         var bestDistance = double.MaxValue;
         var rigidGroup = movingGroup != null && movingGroup.Count > 1 && movingGroup.Contains(movingSegment.Segment.No);
-        var movingPorts = geometry.GetAllPortWorldPositions(movingSegment);
+        var movingPorts = _geometry.GetAllPortWorldPositions(movingSegment);
 
         foreach (var (sourcePort, sourceX, sourceY, _) in movingPorts)
         {
@@ -37,7 +37,7 @@ public static class TrackPlanSnapHelper
                 if (movingGroup != null && movingGroup.Contains(other.Segment.No))
                     continue;
 
-                foreach (var (targetPort, targetX, targetY, _) in geometry.GetAllPortWorldPositions(other))
+                foreach (var (targetPort, targetX, targetY, _) in _geometry.GetAllPortWorldPositions(other))
                 {
                     if (IsPortConnected(connections, other.Segment.No, targetPort))
                         continue;
@@ -48,16 +48,16 @@ public static class TrackPlanSnapHelper
                     if (distance >= distanceThresholdMm || distance >= bestDistance)
                         continue;
 
-                    var desiredOutwardAngle = NormalizeAngle(geometry.GetPortOutwardWorldAngleDegrees(other, targetPort) + 180);
+                    var desiredOutwardAngle = NormalizeAngle(_geometry.GetPortOutwardWorldAngleDegrees(other, targetPort) + 180);
                     PlacedSegment candidate;
 
                     if (rigidGroup)
                     {
-                        var currentOutwardAngle = geometry.GetPortOutwardWorldAngleDegrees(movingSegment, sourcePort);
+                        var currentOutwardAngle = _geometry.GetPortOutwardWorldAngleDegrees(movingSegment, sourcePort);
                         if (GetAngleDeltaDegrees(currentOutwardAngle, desiredOutwardAngle) > rigidGroupAngleToleranceDegrees)
                             continue;
 
-                        var (translatedX, translatedY, translatedRotation) = geometry.TranslatePlacementForPort(
+                        var (translatedX, translatedY, translatedRotation) = _geometry.TranslatePlacementForPort(
                             movingSegment,
                             sourcePort,
                             targetX,
@@ -66,7 +66,7 @@ public static class TrackPlanSnapHelper
                     }
                     else
                     {
-                        var (originX, originY, rotationDegrees) = geometry.GetPlacementForPort(
+                        var (originX, originY, rotationDegrees) = _geometry.GetPlacementForPort(
                             movingSegment.Segment,
                             sourcePort,
                             targetX,

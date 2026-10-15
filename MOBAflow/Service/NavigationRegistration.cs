@@ -88,8 +88,9 @@ internal static class NavigationRegistration
         services.AddSingleton(serviceProvider => new TrackPlanPage(
             serviceProvider.GetRequiredService<TrackPlanPageViewModels>(),
             serviceProvider.GetRequiredService<MainWindowViewModel>(),
-            serviceProvider.GetRequiredService<EditableTrackPlan>(),
-            serviceProvider.GetRequiredService<SegmentPlacementGeometry>(),
+            new TrackPlanPageEditor(
+                serviceProvider.GetRequiredService<EditableTrackPlan>(),
+                serviceProvider.GetRequiredService<SegmentPlacementGeometry>()),
             serviceProvider.GetRequiredService<TrackPlanFeedbackHighlighter>(),
             serviceProvider.GetRequiredService<AppSettings>(),
             serviceProvider.GetService<ISettingsService>(),

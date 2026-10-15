@@ -83,8 +83,7 @@ public sealed partial class TrackPlanPage
     internal TrackPlanPage(
         TrackPlanPageViewModels viewModels,
         MainWindowViewModel mainViewModel,
-        EditableTrackPlan plan,
-        SegmentPlacementGeometry geometry,
+        TrackPlanPageEditor editor,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
         AppSettings settings,
         ISettingsService? settingsService = null,
@@ -94,8 +93,9 @@ public sealed partial class TrackPlanPage
         ViewModel = viewModels.TrackPlan;
         InterlockingViewModel = viewModels.Interlocking;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
-        _plan = plan ?? throw new ArgumentNullException(nameof(plan));
-        _geometry = geometry ?? throw new ArgumentNullException(nameof(geometry));
+        ArgumentNullException.ThrowIfNull(editor);
+        _plan = editor.Plan;
+        _geometry = editor.Geometry;
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
         _settings = settings;
         _settingsService = settingsService;
@@ -1730,3 +1730,10 @@ public sealed partial class TrackPlanPage
 internal sealed record TrackPlanPageViewModels(
     TrackPlanViewModel TrackPlan,
     InterlockingControlViewModel Interlocking);
+
+/// <summary>
+/// Editor model and catalogue geometry drawn and edited by the physical plan page.
+/// </summary>
+internal sealed record TrackPlanPageEditor(
+    EditableTrackPlan Plan,
+    SegmentPlacementGeometry Geometry);

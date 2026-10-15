@@ -12,12 +12,14 @@ public sealed class TrackPlanInteractionService
     private readonly EditableTrackPlan _plan;
     private readonly SegmentPlacementGeometry _geometry;
     private readonly TrackPlanSpatialIndex _spatialIndex;
+    private readonly TrackPlanSnapHelper _snapHelper;
 
     public TrackPlanInteractionService(EditableTrackPlan plan, SegmentPlacementGeometry geometry)
     {
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _geometry = geometry ?? throw new ArgumentNullException(nameof(geometry));
         _spatialIndex = new TrackPlanSpatialIndex(_plan, _geometry);
+        _snapHelper = new TrackPlanSnapHelper(_geometry);
     }
 
     public TrackPlanSnapHelper.SnapResult? FindBestSnap(
@@ -29,8 +31,7 @@ public sealed class TrackPlanInteractionService
             .SelectMany(port => _spatialIndex.Query(port.X, port.Y, 25))
             .Distinct()
             .ToList();
-        return TrackPlanSnapHelper.FindBestSnap(
-            _geometry,
+        return _snapHelper.FindBestSnap(
             movingSegment,
             candidates,
             _plan.Connections,

@@ -14,7 +14,7 @@ internal class TrackPlanSnapHelperTests
         var target = new PlacedSegment(new G62(), 0, 0, 0);
         var moving = new PlacedSegment(new G62(), 61.88, 5, 37);
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target }, Array.Empty<PortConnection>());
+        var snap = new TrackPlanSnapHelper(TrackPlanTestGeometry.PikoA).FindBestSnap(moving, new[] { target }, Array.Empty<PortConnection>());
 
         Assert.That(snap, Is.Not.Null);
         Assert.That(snap!.SourcePort, Is.EqualTo("PortA"));
@@ -40,7 +40,7 @@ internal class TrackPlanSnapHelperTests
             new PortConnection(target.Segment.No, "PortB", Guid.NewGuid(), "PortA")
         };
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target }, connections);
+        var snap = new TrackPlanSnapHelper(TrackPlanTestGeometry.PikoA).FindBestSnap(moving, new[] { target }, connections);
 
         Assert.That(snap, Is.Null);
     }
@@ -55,7 +55,7 @@ internal class TrackPlanSnapHelperTests
             new PortConnection(moving.Segment.No, "PortA", Guid.NewGuid(), "PortA")
         };
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target }, connections);
+        var snap = new TrackPlanSnapHelper(TrackPlanTestGeometry.PikoA).FindBestSnap(moving, new[] { target }, connections);
 
         Assert.That(snap, Is.Null);
     }
@@ -72,7 +72,7 @@ internal class TrackPlanSnapHelperTests
         };
         var movingGroup = new HashSet<Guid> { moving.Segment.No, partner.Segment.No };
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target, partner }, connections, movingGroup: movingGroup);
+        var snap = new TrackPlanSnapHelper(TrackPlanTestGeometry.PikoA).FindBestSnap(moving, new[] { target, partner }, connections, movingGroup: movingGroup);
 
         Assert.That(snap, Is.Not.Null);
         Assert.That(snap!.SourcePort, Is.EqualTo("PortA"));
@@ -94,7 +94,7 @@ internal class TrackPlanSnapHelperTests
         };
         var movingGroup = new HashSet<Guid> { moving.Segment.No, partner.Segment.No };
 
-        var snap = TrackPlanSnapHelper.FindBestSnap(TrackPlanTestGeometry.PikoA, moving, new[] { target, partner }, connections, movingGroup: movingGroup);
+        var snap = new TrackPlanSnapHelper(TrackPlanTestGeometry.PikoA).FindBestSnap(moving, new[] { target, partner }, connections, movingGroup: movingGroup);
 
         Assert.That(snap, Is.Null);
     }

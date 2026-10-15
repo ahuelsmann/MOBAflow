@@ -164,36 +164,42 @@ public static class TrackPlanValidationHelper
 
         while (remaining.Count > 0)
         {
-            var seed = remaining.First();
-            var ids = new HashSet<Guid>();
-            var queue = new Queue<Guid>();
-            queue.Enqueue(seed);
-            ids.Add(seed);
-            remaining.Remove(seed);
-
-            while (queue.Count > 0)
-            {
-                var current = queue.Dequeue();
-                foreach (var connection in connections)
-                {
-                    Guid? neighbor = null;
-                    if (connection.SourceSegment == current)
-                        neighbor = connection.TargetSegment;
-                    else if (connection.TargetSegment == current)
-                        neighbor = connection.SourceSegment;
-
-                    if (neighbor.HasValue && byId.ContainsKey(neighbor.Value) && ids.Add(neighbor.Value))
-                    {
-                        queue.Enqueue(neighbor.Value);
-                        remaining.Remove(neighbor.Value);
-                    }
-                }
-            }
-
+            var ids = CollectConnectedGroup(remaining.First(), connections, byId);
+            remaining.ExceptWith(ids);
             groups.Add(CreateGroupBounds(geometry, ids, byId));
         }
 
         return groups;
+    }
+
+    private static HashSet<Guid> CollectConnectedGroup(
+        Guid seed,
+        IReadOnlyList<PortConnection> connections,
+        Dictionary<Guid, PlacedSegment> byId)
+    {
+        var ids = new HashSet<Guid> { seed };
+        var queue = new Queue<Guid>();
+        queue.Enqueue(seed);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var neighbor in connections.Select(connection => GetNeighbor(connection, current)))
+            {
+                if (neighbor is Guid id && byId.ContainsKey(id) && ids.Add(id))
+                    queue.Enqueue(id);
+            }
+        }
+
+        return ids;
+    }
+
+    private static Guid? GetNeighbor(PortConnection connection, Guid segmentId)
+    {
+        if (connection.SourceSegment == segmentId)
+            return connection.TargetSegment;
+
+        return connection.TargetSegment == segmentId ? connection.SourceSegment : null;
     }
 
     private static ConnectedGroup CreateGroupBounds(SegmentPlacementGeometry geometry, IReadOnlyCollection<Guid> ids, IReadOnlyDictionary<Guid, PlacedSegment> byId)

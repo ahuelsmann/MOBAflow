@@ -143,9 +143,7 @@ public sealed class TrackPlanEditorDocument
 
     private static PlacedSegment CreatePlacedSegment(ITrackCatalog catalog, TrackPlanEditorSegment segmentSnapshot, string documentLibraryId)
     {
-        var libraryId = string.IsNullOrWhiteSpace(segmentSnapshot.LibraryId)
-            ? (string.IsNullOrWhiteSpace(documentLibraryId) ? catalog.LibraryId : documentLibraryId)
-            : segmentSnapshot.LibraryId;
+        var libraryId = FirstNonBlank(segmentSnapshot.LibraryId, documentLibraryId) ?? catalog.LibraryId;
         if (!string.Equals(libraryId, catalog.LibraryId, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"Track library '{libraryId}' is not available in the editor catalogue '{catalog.LibraryId}'.");
 
@@ -154,6 +152,14 @@ public sealed class TrackPlanEditorDocument
 
         segment.No = segmentSnapshot.Id;
         return new PlacedSegment(segment, segmentSnapshot.X, segmentSnapshot.Y, segmentSnapshot.RotationDegrees, segmentSnapshot.InPort);
+    }
+
+    private static string? FirstNonBlank(string? first, string? second)
+    {
+        if (!string.IsNullOrWhiteSpace(first))
+            return first;
+
+        return string.IsNullOrWhiteSpace(second) ? null : second;
     }
 }
 
