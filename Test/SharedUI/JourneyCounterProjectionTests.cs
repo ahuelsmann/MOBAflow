@@ -16,7 +16,7 @@ using Moq;
 
 /// <summary>Checks the desktop/shared projection against authoritative runtime snapshots and command routing.</summary>
 [TestFixture]
-public sealed class JourneyCounterProjectionTests
+public sealed partial class JourneyCounterProjectionTests
 {
     [Test]
     public async Task CounterSnapshot_PreservesUnsignedPrecisionAndTimingInDisplayedStatistics()
@@ -157,7 +157,8 @@ public sealed class JourneyCounterProjectionTests
         var journey = CreateJourney("Regional");
         journey.IsActive = true;
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
-        using var editor = new EventManagerViewModel(fixture.ViewModel);
+        using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
+            fixture.ViewModel.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
         fixture.Runtime.Invocations.Clear();
 
         editor.Events.Single().Count = 9;
@@ -200,7 +201,8 @@ public sealed class JourneyCounterProjectionTests
         var second = CreateJourney("Second");
         var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [first, second] }] });
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
-        using var editor = new EventManagerViewModel(fixture.ViewModel);
+        using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
+            fixture.ViewModel.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
         fixture.ViewModel.CurrentSolutionPath = "projection-test.json";
         editor.Events.Single().CountText = "25";
         fixture.Runtime.Invocations.Clear();
@@ -253,10 +255,10 @@ public sealed class JourneyCounterProjectionTests
                 Runtime.Object,
                 Gateway.Object,
                 stationEventBus1,
-                dispatcher.Object,
                 TestSettingsPages.Create(Settings, dispatcher.Object),
                 _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object),
                 _rollingStockPages.GetStationsPage(locomotiveSession1, Runtime.Object, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, stationEventBus1),
+                _rollingStockPages.GetJourneysPage(locomotiveSession1, Runtime.Object, Gateway.Object, dispatcher.Object),
                 locomotiveSession1,
                 NullLogger<MainWindowViewModel>.Instance);
         }

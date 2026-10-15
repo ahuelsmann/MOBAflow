@@ -357,6 +357,7 @@ public static class MobaWinUiServiceCollectionExtensions
                 EventBus = sp.GetRequiredService<IEventBus>()
             }));
         services.AddSingleton<StationsPageViewModel>();
+        services.AddSingleton<JourneysPageViewModel>();
         services.AddSingleton<TrainsPageViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
@@ -365,13 +366,12 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<ITrafficMonitor>(),
             sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<SettingsPageViewModel>(),
             sp.GetRequiredService<TrainsPageViewModel>(),
             sp.GetRequiredService<StationsPageViewModel>(),
+            sp.GetRequiredService<JourneysPageViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
-            sp.GetRequiredService<ICityService>(),
             sp.GetRequiredService<ISettingsService>(),
             dialogService: sp.GetService<IDialogService>(),
             projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>()));

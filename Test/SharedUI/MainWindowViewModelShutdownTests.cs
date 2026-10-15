@@ -189,13 +189,13 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
             mobaRuntimeMock.Object,
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             stationEventBus1,
-            uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null),
             _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntimeMock.Object, new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
             }, stationEventBus1, dialog?.Object),
+            _rollingStockPages.GetJourneysPage(locomotiveSession1, mobaRuntimeMock.Object, new LocalRuntimeCommandGateway(mobaRuntimeMock.Object), uiDispatcherMock.Object),
             locomotiveSession1,
             loggerMock.Object,
             dialogService: dialog?.Object);

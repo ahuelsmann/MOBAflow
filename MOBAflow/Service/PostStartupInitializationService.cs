@@ -9,6 +9,7 @@ using Common.Events;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
+using SharedUI.ViewModel;
 
 using System.Diagnostics;
 
@@ -24,6 +25,7 @@ internal class PostStartupInitializationService
     private readonly IEventBus _eventBus;
     private readonly HealthCheckService _healthCheckService;
     private readonly MainWindow _mainWindow;
+    private readonly JourneysPageViewModel _journeysPage;
     private readonly AppSettings _appSettings;
     private readonly MasterDataStore _masterDataStore;
     private readonly RestApiProcessService _restApiProcessService;
@@ -33,6 +35,7 @@ internal class PostStartupInitializationService
         IEventBus eventBus,
         HealthCheckService healthCheckService,
         MainWindow mainWindow,
+        JourneysPageViewModel journeysPage,
         AppSettings appSettings,
         MasterDataStore masterDataStore,
         RestApiProcessService restApiProcessService,
@@ -41,6 +44,7 @@ internal class PostStartupInitializationService
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _healthCheckService = healthCheckService;
         _mainWindow = mainWindow;
+        _journeysPage = journeysPage;
         _appSettings = appSettings;
         _masterDataStore = masterDataStore ?? throw new ArgumentNullException(nameof(masterDataStore));
         _restApiProcessService = restApiProcessService;
@@ -107,7 +111,7 @@ internal class PostStartupInitializationService
     /// <summary>
     /// Loads the central master data file (Cities + Locomotives) into the <see cref="MasterDataStore"/>,
     /// initializes the TrainClassLibrary from the same file and refreshes the City Library
-    /// in the MainWindowViewModel so that the Journeys page shows the loaded cities.
+    /// in the journey editor so that the Journeys page shows the loaded cities.
     /// </summary>
     private async Task InitializeMasterDataAsync(CancellationToken cancellationToken)
     {
@@ -128,9 +132,9 @@ internal class PostStartupInitializationService
             // Refresh City Library in UI after master data has been loaded
             try
             {
-                await _mainWindow.ViewModel.LoadCityLibraryAsync().ConfigureAwait(false);
+                await _journeysPage.LoadCityLibraryAsync().ConfigureAwait(false);
                 _logger.LogInformation("[PostStartup] City Library refreshed: {Cities} cities",
-                    _mainWindow.ViewModel.CityLibrary.Count);
+                    _journeysPage.CityLibrary.Count);
             }
             catch (Exception ex)
             {

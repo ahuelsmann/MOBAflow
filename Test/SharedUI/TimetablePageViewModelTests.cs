@@ -722,10 +722,10 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
             runtime.Object,
             new LocalRuntimeCommandGateway(runtime.Object),
             stationEventBus1,
-            dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
             _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, stationEventBus1),
+            _rollingStockPages.GetJourneysPage(locomotiveSession1, runtime.Object, new LocalRuntimeCommandGateway(runtime.Object), dispatcher.Object),
             locomotiveSession1,
             Mock.Of<ILogger<MainWindowViewModel>>());
         var evaluation = new StubEvaluationService(evaluationResult ?? new TimetableEvaluationResult([]));

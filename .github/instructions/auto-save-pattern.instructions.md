@@ -9,9 +9,10 @@ Model wrappers must notify when persistent values change. See the Name property 
 and raises PropertyChanged. Preserve nested propagation and computed-property notifications.
 
 Selection/project changes must detach obsolete subscriptions and attach current ones.
-Use [journey selection and save filtering](../../SharedUI/ViewModel/MainWindowViewModel.SolutionAutoSave.cs)
-as a concrete reference: the journey hook receives oldValue and newValue, detaches the former and attaches
-the latter. The save handler suppresses bulk-load saves, filters transient state and observes errors.
+Use [journey station selection](../../SharedUI/ViewModel/JourneysPageViewModel.cs) and
+[session save filtering](../../SharedUI/Service/SolutionSession.cs) as concrete references: the station hook
+receives oldValue and newValue, detaches the former and attaches the latter. The session tracks the canonical
+journey, suppresses bulk-load saves, filters transient state and observes errors.
 Do not assume every existing selection hook already follows the same lifecycle.
 
 For nested changes, inspect [WorkflowViewModel](../../SharedUI/ViewModel/WorkflowViewModel.cs).

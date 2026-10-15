@@ -118,10 +118,10 @@ internal sealed partial class MainWindowViewModelSignalBoxTests : IDisposable
             runtime.Object,
             gateway.Object,
             stationEventBus1,
-            dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
             _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus1),
+            _rollingStockPages.GetJourneysPage(locomotiveSession1, runtime.Object, gateway.Object, dispatcher.Object),
             locomotiveSession1,
             NullLogger<MainWindowViewModel>.Instance)
         {
