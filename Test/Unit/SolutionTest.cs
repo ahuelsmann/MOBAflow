@@ -9,7 +9,7 @@ internal class SolutionTest
     [SetUp]
     public void Setup()
     {
-        _testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestFile\solution.json");
+        _testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestFile", "solution.json");
 
         Assert.That(File.Exists(_testFile), Is.True,
             $"Test file solution.json not found: {_testFile}");
