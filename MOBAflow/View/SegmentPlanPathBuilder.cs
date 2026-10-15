@@ -8,6 +8,8 @@ using Microsoft.UI.Xaml.Shapes;
 
 using TrackLibrary.PikoA;
 
+using TrackPlan.Editor;
+
 using Windows.Foundation;
 using Windows.UI;
 

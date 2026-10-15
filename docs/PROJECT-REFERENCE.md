@@ -25,8 +25,9 @@ MOBAflow/               Windows WinUI app
 MOBAsmart/              Android MAUI app
 MOBApi/                 REST and SignalR host
 MOBAdisplay/            RGB565 rendering, UDP transport and firmware prototypes
-TrackLibrary.Base/      Shared track geometry contracts
-TrackLibrary.PikoA/     Piko A catalog and editable track-plan implementation
+TrackLibrary.Base/      Shared track geometry and catalogue contracts (ITrackCatalog)
+TrackLibrary.PikoA/     Piko A catalogue geometry
+TrackPlan.Editor/       Catalogue-neutral editable track plan, snapping, validation and render scene
 TrackPlan.Renderer/     Platform-neutral render and SVG primitives
 Test/                   NUnit test project
 MutationTest/           Focused Stryker.NET lanes
@@ -234,18 +235,19 @@ See [issue #132](https://github.com/ahuelsmann/MOBAflow/issues/132).
 ## Track plan
 
 `Domain.TrackPlanDocument` is the persisted neutral format.
-`TrackPlanDocumentMapper` maps it to the editable Piko A representation.
+`TrackPlanEditorDocument` (`FromDomainDocument`/`ToDomainDocument`) maps it to the editable plan, using the
+`ITrackCatalog` of the configured catalogue (Piko A).
 `TrackPlanSolutionBinder` keeps the selected project and editor synchronized.
 
 The dependency direction is:
 
 ```text
-TrackLibrary.Base -> TrackPlan.Renderer
-TrackLibrary.PikoA -> adapters/editor
-MOBAflow -> Win2D input and drawing
+TrackLibrary.Base -> TrackPlan.Renderer -> TrackPlan.Editor
+TrackLibrary.Base -> TrackLibrary.PikoA (implements ITrackCatalog)
+MOBAflow -> composes the catalogue, Win2D input and drawing
 ```
 
-Vendor-specific geometry must not be added to the neutral renderer.
+Vendor-specific geometry must not be added to the neutral renderer or editor.
 
 ## Display pipeline
 

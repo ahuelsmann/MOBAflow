@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackLibrary.PikoA;
+namespace Moba.TrackPlan.Editor;
 
 /// <summary>
 /// Platform-neutral editor interaction boundary for snapping and connection mutations.
@@ -10,12 +10,16 @@ public sealed class TrackPlanInteractionService
     public sealed record SnapPreview(IReadOnlySet<(double X, double Y)> HighlightedPorts);
     public sealed record DragSelection(Guid SelectedSegmentId, PlacedSegment Placement, IReadOnlySet<Guid> MovingGroup);
     private readonly EditableTrackPlan _plan;
+    private readonly SegmentPlacementGeometry _geometry;
     private readonly TrackPlanSpatialIndex _spatialIndex;
+    private readonly TrackPlanSnapHelper _snapHelper;
 
-    public TrackPlanInteractionService(EditableTrackPlan plan)
+    public TrackPlanInteractionService(EditableTrackPlan plan, SegmentPlacementGeometry geometry)
     {
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
-        _spatialIndex = new TrackPlanSpatialIndex(_plan);
+        _geometry = geometry ?? throw new ArgumentNullException(nameof(geometry));
+        _spatialIndex = new TrackPlanSpatialIndex(_plan, _geometry);
+        _snapHelper = new TrackPlanSnapHelper(_geometry);
     }
 
     public TrackPlanSnapHelper.SnapResult? FindBestSnap(
@@ -23,11 +27,11 @@ public sealed class TrackPlanInteractionService
         Guid? excludeSegmentId = null,
         IReadOnlySet<Guid>? movingGroup = null)
     {
-        var candidates = SegmentPortGeometry.GetAllPortWorldPositions(movingSegment)
+        var candidates = _geometry.GetAllPortWorldPositions(movingSegment)
             .SelectMany(port => _spatialIndex.Query(port.X, port.Y, 25))
             .Distinct()
             .ToList();
-        return TrackPlanSnapHelper.FindBestSnap(
+        return _snapHelper.FindBestSnap(
             movingSegment,
             candidates,
             _plan.Connections,
@@ -84,7 +88,7 @@ public sealed class TrackPlanInteractionService
 
         foreach (var placed in _spatialIndex.Query(worldX, worldY, toleranceMm))
         {
-            var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed);
+            var ports = _geometry.GetAllPortWorldPositions(placed);
             for (var index = 0; index < ports.Count; index++)
             {
                 var (_, x, y, _) = ports[index];
@@ -113,7 +117,7 @@ public sealed class TrackPlanInteractionService
     {
         ArgumentNullException.ThrowIfNull(movingSegment);
         var highlights = new HashSet<(double X, double Y)>();
-        var movingPorts = SegmentPortGeometry.GetAllPortWorldPositions(movingSegment);
+        var movingPorts = _geometry.GetAllPortWorldPositions(movingSegment);
         foreach (var source in movingPorts)
         {
             if (IsConnected(movingSegment.Segment.No, source.PortName))
@@ -122,7 +126,7 @@ public sealed class TrackPlanInteractionService
             {
                 if (candidate.Segment.No == movingSegment.Segment.No || (movingGroup?.Contains(candidate.Segment.No) ?? false))
                     continue;
-                foreach (var target in SegmentPortGeometry.GetAllPortWorldPositions(candidate))
+                foreach (var target in _geometry.GetAllPortWorldPositions(candidate))
                 {
                     if (IsConnected(candidate.Segment.No, target.PortName) || Distance(source.X, source.Y, target.X, target.Y) >= thresholdMm)
                         continue;

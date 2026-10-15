@@ -7,7 +7,7 @@ using SharedUI.Interface;
 using Domain;
 using Moba.SharedUI.Service;
 using System.ComponentModel;
-using TrackLibrary.PikoA;
+using TrackPlan.Editor;
 
 /// <summary>
 /// Singleton bridge between the shared <see cref="EditableTrackPlan"/> (singleton in DI)
@@ -85,7 +85,7 @@ public sealed class TrackPlanSolutionBinder
             return;
 
         project.TrackPlan = TrackPlanEditorDocument
-            .FromEditableTrackPlan(_plan)
+            .FromEditableTrackPlan(_editorService.Catalog, _plan)
             .ToDomainDocument();
     }
 
@@ -131,7 +131,7 @@ public sealed class TrackPlanSolutionBinder
 
             var (placements, connections) = TrackPlanEditorDocument
                 .FromDomainDocument(project.TrackPlan)
-                .ToEditableTrackPlanData();
+                .ToEditableTrackPlanData(_editorService.Catalog);
             _plan.LoadFromPlacements(placements, connections);
         }
         finally
