@@ -115,6 +115,33 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
         Assert.That(provider.Requests, Is.Empty);
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task AlreadyCancelledCacheCommandsDoNotReachStorageAndCanBeRetried(bool clear)
+    {
+        var cache = new Mock<IAudioCache>();
+        cache.Setup(value => value.GetSizeAsync(It.IsAny<CancellationToken>())).ReturnsAsync(123L);
+        cache.Setup(value => value.ClearAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var output = CreateOutput(new SpeechOutputTests.FakeProvider("system-speech"), new SpeechOutputTests.FakePlayer(), cache: cache.Object);
+        await using var lifetime = output.ConfigureAwait(false);
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+        var command = clear ? output.ClearCacheAsync(cancellation.Token) : output.GetCacheSizeAsync(cancellation.Token);
+        await Assert.CatchAsync<OperationCanceledException>(() => command.WaitAsync(TimeSpan.FromSeconds(10))).ConfigureAwait(false);
+        cache.Verify(value => value.ClearAsync(It.IsAny<CancellationToken>()), Times.Never);
+        cache.Verify(value => value.GetSizeAsync(It.IsAny<CancellationToken>()), Times.Never);
+        if (clear)
+        {
+            await output.ClearCacheAsync().ConfigureAwait(false);
+            cache.Verify(value => value.ClearAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+        else
+        {
+            Assert.That(await output.GetCacheSizeAsync().ConfigureAwait(false), Is.EqualTo(123));
+            cache.Verify(value => value.GetSizeAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+    }
+
     [TestCase(false, false)]
     [TestCase(false, true)]
     [TestCase(true, false)]
@@ -367,6 +394,56 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
     }
 
     [Test]
+    public async Task SharedCancellationResourcesStayOpenUntilTheirCallbackHasFinished()
+    {
+        using var releaseCallback = new ManualResetEventSlim();
+        var callbackStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var providerReturned = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var ready = new TaskCompletionSource<(WaitHandle Handle, CancellationTokenRegistration Registration)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completed = new TaskCompletionSource<SpeechResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var provider = new SpeechOutputTests.FakeProvider("system-speech")
+        {
+            Synthesize = async (_, token) =>
+            {
+                var registration = token.Register(() =>
+                {
+                    callbackStarted.TrySetResult();
+                    // Cancellation callbacks are synchronous; hold this one at an explicitly controlled boundary.
+                    if (!releaseCallback.Wait(TimeSpan.FromSeconds(10))) throw new TimeoutException("Cancellation callback was not released.");
+                });
+                ready.TrySetResult((token.WaitHandle, registration));
+                try { return await completed.Task.ConfigureAwait(false); }
+                finally { providerReturned.TrySetResult(); }
+            }
+        };
+        var output = CreateOutput(provider, new SpeechOutputTests.FakePlayer(), cache: TestSpeechCache.Empty());
+        using var cancellation = new CancellationTokenSource();
+        var speech = output.SpeakAsync("Cancellation callback still running", cancellation.Token);
+        var resources = await ready.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        using var registration = resources.Registration;
+        using var handle = resources.Handle;
+        try
+        {
+            await cancellation.CancelAsync().ConfigureAwait(false);
+            await callbackStarted.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            completed.TrySetResult(SpeechResult.Success(TestWaveAudio.Create([1])));
+            await providerReturned.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            var stopping = output.DisposeAsync().AsTask();
+            await Assert.ThrowsAsync<TimeoutException>(() => stopping.WaitAsync(TimeSpan.FromSeconds(1))).ConfigureAwait(false);
+            Assert.That(handle.SafeWaitHandle.IsClosed, Is.False);
+        }
+        finally
+        {
+            releaseCallback.Set();
+            completed.TrySetResult(SpeechResult.Success(TestWaveAudio.Create([1])));
+            try { await speech.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false); }
+            catch (OperationCanceledException) { }
+            await output.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        }
+        Assert.That(handle.SafeWaitHandle.IsClosed, Is.True);
+    }
+
+    [Test]
     public async Task ShutdownStopsPlaybackIncludingCacheHits()
     {
         var provider = new SpeechOutputTests.FakeProvider("system-speech");
@@ -448,17 +525,23 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
             Result = SpeechResult.Failure(SpeechFailureKind.Unavailable, "Unavailable.")
         };
         var player = new SpeechOutputTests.FakePlayer();
-        var output = CreateOutput(provider, player);
+        var logger = new Mock<ILogger<SpeechOutput>>();
+        logger.Setup(value => value.IsEnabled(LogLevel.Warning)).Returns(true);
+        var output = CreateOutput(provider, player, logger: logger.Object);
         await using var outputLifetime = output.ConfigureAwait(false);
-        await (output.SpeakAsync("Retry")).ConfigureAwait(false);
+        var failure = await output.SpeakAsync("Retry").ConfigureAwait(false);
         provider.Result = SpeechResult.Success(TestWaveAudio.Create([1]));
         await (output.SpeakAsync("Retry")).ConfigureAwait(false);
         await (output.SpeakAsync("Retry")).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
+            Assert.That(failure.FailureKind, Is.EqualTo(SpeechFailureKind.Unavailable));
             Assert.That(provider.Requests, Has.Count.EqualTo(2));
             Assert.That(player.PlayCount, Is.EqualTo(2));
         }
+        logger.Verify(value => value.Log(LogLevel.Warning, It.Is<EventId>(eventId => eventId.Id == 2),
+            It.IsAny<It.IsAnyType>(), It.Is<Exception?>(error => error == null),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [Test]
