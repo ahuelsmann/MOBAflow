@@ -4366,6 +4366,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Common/HexColorTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Common/InMemorySinkTests.cs",
       "count": 1
     },
