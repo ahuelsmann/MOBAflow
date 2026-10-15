@@ -8,7 +8,7 @@ using System.Text;
 /// Serializes tests that create or delete the bundled <c>photos</c> folder next to the test assembly.
 /// Stryker starts several test hosts from the same output directory, so <c>NonParallelizable</c> is not enough.
 /// </summary>
-internal sealed class BundledPhotosDirectoryLock : IDisposable
+internal sealed partial class BundledPhotosDirectoryLock : IDisposable
 {
     private static readonly TimeSpan AcquireTimeout = TimeSpan.FromSeconds(30);
     private readonly Mutex _mutex;
