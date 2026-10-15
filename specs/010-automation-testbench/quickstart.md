@@ -3,6 +3,28 @@
 **Source Issue**: #35
 **Status**: First foundation slice implemented; the scenario runner and desktop feature remain unimplemented.
 
+## Current main synchronization with RF-28 (2026-10-15)
+
+Merge `93b34020` integrates main `6888b0d9239bee3b623fbca0f6ae9d71fe7ec185` (#300, RF-28 slices 1 and 2) into the
+reviewed head `f34fc48f` without rewriting history. The merge was conflict-free; RF-28's layout-model removal and new
+`TrackPlan.Editor` project are taken unchanged. Against main the PR still changes the same 19 foundation, test and document
+files. Its only baseline changes remain the WorkflowActionHandlers reductions in the portable and Android baselines.
+Both review corrections below are retained. Local evidence on this merged tree:
+
+- Portable Release `-t:Rebuild -m:1`: 0 errors, 13 SARIF files including `TrackPlan.Editor`; guard matches 3,248
+  diagnostics in 1,133 groups.
+- Windows Release `--no-incremental`: 0 errors; guard matches 2,471 diagnostics in 947 groups, with no PR288 change to
+  the Windows baseline.
+- Android Release `MOBAsmart` `-t:Rebuild -m:1` with an initially empty SARIF root: 0 errors, 11 SARIF files (now including
+  `TrackPlan.Editor`, no longer `TrackLibrary.PikoA`); the strict guard matches 1,522 diagnostics in 556 groups.
+  This is an analyzer/compile check, not a Release AAB, device or hardware acceptance.
+- The focused fixtures below plus whistle, Z21, journey and every `*ArchitectureTests` fixture: **259 tests passed,
+  0 failures, 0 skips** on both Release `net10.0` and `net10.0-windows10.0.22621.0`; both review-correction tests ran
+  explicitly (8 of 8 cases on each target).
+
+Current-head CI and SonarCloud results are pending after the push and are not claimed here.
+The two sections below are the earlier, superseded evidence for main `6e7c6116`.
+
 ## Main synchronization (2026-10-15)
 
 PR #288 retains its published foundation commit `7e7c26bb` and the earlier merge `4371fc2f` of main `d4d3d2b1`, then
