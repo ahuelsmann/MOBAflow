@@ -290,6 +290,82 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
         await (Assert.ThrowsAsync<ObjectDisposedException>(() => output.SpeakAsync("After shutdown"))).ConfigureAwait(false);
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task ShutdownDrainsAbandonedSynthesisAfterItsLastCallerHasCancelled(bool lateFailure)
+    {
+        var started = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completed = new TaskCompletionSource<SpeechResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var providerReturned = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var provider = new SpeechOutputTests.FakeProvider("system-speech")
+        {
+            Synthesize = async (_, token) =>
+            {
+                started.TrySetResult(token);
+                try { return await completed.Task.ConfigureAwait(false); }
+                finally { providerReturned.TrySetResult(); }
+            }
+        };
+        var player = new SpeechOutputTests.FakePlayer();
+        var cache = TestSpeechCache.Empty();
+        var output = CreateOutput(provider, player, cache: cache);
+        using var cancellation = new CancellationTokenSource();
+        try
+        {
+            var speech = output.SpeakAsync("Abandoned cache miss", cancellation.Token);
+            var synthesisToken = await started.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            await cancellation.CancelAsync().ConfigureAwait(false);
+            await Assert.CatchAsync<OperationCanceledException>(() => speech.WaitAsync(TimeSpan.FromSeconds(10))).ConfigureAwait(false);
+            Assert.That(synthesisToken.IsCancellationRequested, Is.True);
+            var stopping = output.DisposeAsync().AsTask();
+            // No caller remains to keep shutdown pending: only the unfinished provider work can do that.
+            await Assert.ThrowsAsync<TimeoutException>(() => stopping.WaitAsync(TimeSpan.FromSeconds(1))).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (lateFailure) completed.TrySetException(new IOException("Late provider failure."));
+            else completed.TrySetResult(SpeechResult.Success(TestWaveAudio.Create([1])));
+            if (started.Task.IsCompletedSuccessfully)
+            {
+                await providerReturned.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            }
+            await output.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        }
+        Assert.That(player.PlayCount, Is.Zero);
+        Mock.Get(cache).Verify(value => value.StoreAsync(It.IsAny<string>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task CompletedSharedSynthesisClosesItsCancellationWaitHandle(bool synthesisFailure)
+    {
+        var handleReady = new TaskCompletionSource<WaitHandle>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var provider = new SpeechOutputTests.FakeProvider("system-speech")
+        {
+            Synthesize = (_, token) =>
+            {
+                handleReady.TrySetResult(token.WaitHandle);
+                return synthesisFailure
+                    ? Task.FromException<SpeechResult>(new IOException("Provider failed."))
+                    : Task.FromResult(SpeechResult.Success(TestWaveAudio.Create([1])));
+            }
+        };
+        var player = new SpeechOutputTests.FakePlayer();
+        var output = CreateOutput(provider, player, cache: TestSpeechCache.Empty());
+        await using var lifetime = output.ConfigureAwait(false);
+        var speech = output.SpeakAsync("Release shared cancellation resources");
+        // Also clean up a handle leaked by an injected mutation, after checking production ownership.
+        using var handle = await handleReady.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        var result = await speech.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        await output.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.EqualTo(!synthesisFailure));
+            Assert.That(player.PlayCount, Is.EqualTo(synthesisFailure ? 0 : 1));
+            Assert.That(handle.SafeWaitHandle.IsClosed, Is.True);
+        }
+    }
+
     [Test]
     public async Task ShutdownStopsPlaybackIncludingCacheHits()
     {
