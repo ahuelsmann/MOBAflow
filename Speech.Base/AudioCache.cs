@@ -29,24 +29,38 @@ public sealed class AudioCache(string directory, Func<long> sizeLimitBytes, Time
         return await UseAsync(async () =>
         {
             // A lowered limit applies before a hit is served; zero disables the cache.
-            var changed = Trim(protectedKey: null);
-            byte[]? audio = null;
-            if (_entries.ContainsKey(key))
-            {
-                var path = AudioPath(key);
-                audio = File.Exists(path)
-                    ? await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false)
-                    : null;
-                if (audio is null || !IsValidWave(audio))
-                {
-                    audio = null;
-                    Remove(key);
-                    changed = true;
-                }
-            }
-            if (changed) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
+            var trimmed = Trim(protectedKey: null);
+            var (audio, entryChanged) = await ReadHitAsync(key, cancellationToken).ConfigureAwait(false);
+            if (trimmed || entryChanged) await SaveIndexAsync(CancellationToken.None).ConfigureAwait(false);
             return new AudioCacheLookup(audio is null ? (ReadOnlyMemory<byte>?)null : audio, Generation);
         }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Reads an indexed WAV after checking its actual length, so an understated index entry or a grown file cannot
+    /// serve audio beyond the size limit or allocate an unexpectedly large file.
+    /// </summary>
+    private async Task<(byte[]? Audio, bool Changed)> ReadHitAsync(string key, CancellationToken cancellationToken)
+    {
+        if (!_entries.TryGetValue(key, out var entry)) return (null, false);
+        var info = new FileInfo(AudioPath(key));
+        if (!info.Exists || info.Length > Limit() || !IsPossibleSize(info.Length))
+        {
+            Remove(key);
+            return (null, true);
+        }
+        // The bounded file is validated first, so a corrupt WAV never makes valid audio give way.
+        var audio = await File.ReadAllBytesAsync(info.FullName, cancellationToken).ConfigureAwait(false);
+        if (!IsValidWave(audio))
+        {
+            Remove(key);
+            return (null, true);
+        }
+        if (audio.Length == entry.Size) return (audio, false);
+        _entries[key] = entry with { Size = audio.Length };
+        // This entry is about to play and fits the limit, so other audio makes room for its actual size.
+        Trim(protectedKey: key);
+        return (audio, true);
     }
 
     /// <inheritdoc />
