@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Configuration;
+namespace Moba.SharedUI.Mobile;
+
+using Common.Configuration;
 
 /// <summary>
 /// Maintains a bounded, de-duplicated list of recently successful REST API host IPs for faster LAN discovery.

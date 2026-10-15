@@ -1,12 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.TrainControl;
 
+using Appearance;
+
 using Backend.Interface;
 
 using Common.Configuration;
 
 using Common.Runtime;
-using Common.Display;
 using Common.Events;
 using Common.Extension;
 
