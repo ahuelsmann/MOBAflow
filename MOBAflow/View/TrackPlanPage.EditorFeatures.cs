@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Input;
 
 using System.Diagnostics;
 
-using TrackLibrary.PikoA;
+using TrackPlan.Editor;
 using TrackPlan.Renderer;
 
 using Windows.System;
@@ -262,7 +262,7 @@ public sealed partial class TrackPlanPage
             return;
         }
 
-        var scene = TrackPlanRenderSceneBuilder.Build(_plan.Segments);
+        var scene = TrackPlanRenderSceneBuilder.Build(_geometry, _plan.Segments);
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene, showGrid: _showGrid);
         var path = Path.Combine(Path.GetTempPath(), "trackplan-current.html");
         new SvgExporter().Export(svg, path);

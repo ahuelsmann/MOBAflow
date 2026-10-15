@@ -47,11 +47,12 @@ this table, so it is the single source of these rules.
 | `Speech.SystemSpeech` | `Moba.Speech.SystemSpeech` | `Speech.Base` |
 | `Backend` | `Moba.Backend` | `Common`, `Domain`, `Sound`, `Speech.Base` |
 | `TrackPlan.Renderer` | `Moba.TrackPlan.Renderer` | `TrackLibrary.Base` |
-| `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base`, `Domain`, `TrackPlan.Renderer` |
+| `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base` |
+| `TrackPlan.Editor` | `Moba.TrackPlan.Editor` | `Domain`, `TrackLibrary.Base`, `TrackPlan.Renderer` |
 | `MOBAdisplay` | `Moba.Display` | `Domain` |
 | `MOBApi` | `Moba.MOBApi` | `Common` |
-| `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackLibrary.PikoA` |
-| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
+| `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackPlan.Editor` |
+| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `TrackPlan.Editor`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
 | `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound`, `Speech.Base` |
 
 Further rules:
@@ -92,10 +93,12 @@ Cache size/clear services are available; their Settings controls, Azure, fallbac
 
 Track-plan code follows an explicit inward dependency direction:
 
-`TrackLibrary.Base contracts → TrackPlan.Renderer → platform adapters`
+`TrackLibrary.Base contracts → TrackPlan.Renderer, TrackPlan.Editor → platform adapters`
 
-`TrackLibrary.PikoA` implements catalogue-specific geometry and may depend on
-`TrackLibrary.Base`; the neutral renderer must never reference Piko A. Win2D
+`TrackLibrary.PikoA` implements catalogue-specific geometry (`ITrackCatalog`) and may depend only on
+`TrackLibrary.Base`. `TrackPlan.Editor` owns the editable plan, placement geometry, snapping,
+validation and render scene and reaches the catalogue only through `ITrackCatalog`; neither the
+renderer nor the editor references Piko A. Win2D
 conversion stays in the Windows host. Runtime projection of EventBus feedback,
 timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`.
 `Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs` protects these rules.

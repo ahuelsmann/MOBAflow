@@ -4,6 +4,8 @@ namespace Moba.Test.TrackPlanRenderer;
 using Moba.Domain;
 
 using Moba.TrackLibrary.PikoA;
+using Moba.TrackPlan.Editor;
+using Moba.Test.Helpers;
 
 using TrackPlan.Renderer;
 
@@ -21,8 +23,8 @@ internal class PlacedTrackPlanEditorTests
         plan.AddSegment(second);
         plan.AddConnection(first.Segment.No, "PortB", second.Segment.No, "PortA");
 
-        var document = TrackPlanEditorDocument.FromEditableTrackPlan(plan, 125, 75, 1.5);
-        var (placements, connections) = document.ToEditableTrackPlanData();
+        var document = TrackPlanEditorDocument.FromEditableTrackPlan(TrackPlanTestGeometry.Catalog, plan, 125, 75, 1.5);
+        var (placements, connections) = document.ToEditableTrackPlanData(TrackPlanTestGeometry.Catalog);
 
         Assert.That(document.OffsetX, Is.EqualTo(125));
         Assert.That(document.OffsetY, Is.EqualTo(75));
@@ -87,8 +89,8 @@ internal class PlacedTrackPlanEditorTests
         plan.AddSegment(first);
         plan.AddSegment(second);
 
-        var document = TrackPlanEditorDocument.FromEditableTrackPlan(plan);
-        var (placements, _) = document.ToEditableTrackPlanData();
+        var document = TrackPlanEditorDocument.FromEditableTrackPlan(TrackPlanTestGeometry.Catalog, plan);
+        var (placements, _) = document.ToEditableTrackPlanData(TrackPlanTestGeometry.Catalog);
 
         Assert.That(placements.First(p => p.Segment.No == first.Segment.No).InPort, Is.EqualTo(12));
         Assert.That(placements.First(p => p.Segment.No == second.Segment.No).InPort, Is.Null);
@@ -104,7 +106,7 @@ internal class PlacedTrackPlanEditorTests
         plan.AddSegment(second);
         plan.AddConnection(first.Segment.No, "PortB", second.Segment.No, "PortA");
 
-        var editorDoc = TrackPlanEditorDocument.FromEditableTrackPlan(plan, 125, 75, 1.5);
+        var editorDoc = TrackPlanEditorDocument.FromEditableTrackPlan(TrackPlanTestGeometry.Catalog, plan, 125, 75, 1.5);
         TrackPlanDocument domainDoc = editorDoc.ToDomainDocument();
         TrackPlanEditorDocument restored = TrackPlanEditorDocument.FromDomainDocument(domainDoc);
 
@@ -128,7 +130,7 @@ internal class PlacedTrackPlanEditorTests
             new(new WR(), 100, 40, 15)
         };
 
-        var scene = TrackPlanRenderSceneBuilder.Build(placements, includePorts: true);
+        var scene = TrackPlanRenderSceneBuilder.Build(TrackPlanTestGeometry.PikoA, placements, includePorts: true);
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene, trackOpacity: 0.65, showGrid: true);
 
@@ -144,6 +146,7 @@ internal class PlacedTrackPlanEditorTests
     {
         var placement = new PlacedSegment(new G62(), 0, 0, 0);
         var scene = TrackPlanRenderSceneBuilder.Build(
+            TrackPlanTestGeometry.PikoA,
             [placement],
             new HashSet<Guid> { placement.Segment.No },
             new Dictionary<Guid, double> { [placement.Segment.No] = 0.5 },

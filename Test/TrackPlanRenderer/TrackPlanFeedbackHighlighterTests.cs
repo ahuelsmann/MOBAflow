@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Events;
 using Moba.SharedUI.Service;
 using Moba.TrackLibrary.PikoA;
+using Moba.TrackPlan.Editor;
 
 [TestFixture]
 internal class TrackPlanFeedbackHighlighterTests
