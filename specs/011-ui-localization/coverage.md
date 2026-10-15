@@ -2,7 +2,7 @@
 
 Source issue: [#140](https://github.com/ahuelsmann/MOBAflow/issues/140).
 Baseline: `7c1d92422c0cbf675fddc03a8979990957733d15` (2026-10-14).
-Integration base after review corrections: `6888b0d9239bee3b623fbca0f6ae9d71fe7ec185` (2026-10-15).
+Integration base at local review-fix validation: `6888b0d9239bee3b623fbca0f6ae9d71fe7ec185` (2026-10-15).
 Rows distinguish implemented scope from still-pending manual acceptance.
 
 | Platform/surface | Files | Scope | Delivery/acceptance |
