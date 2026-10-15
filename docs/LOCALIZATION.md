@@ -42,7 +42,8 @@ scripts/Test-LineEndings.ps1 -Path SharedUI/Localization/UiStrings.resx,SharedUI
 ```
 
 The Quality workflow runs catalogue and tool-fixture checks. It rejects duplicate, missing or
-empty keys, malformed/different placeholders, unknown referenced keys and stale projections.
+empty keys, missing translator context, references to absent template arguments in comments,
+malformed/different placeholders, unknown referenced keys and stale projections.
 The checker scans explicitly listed Slice 1 sources plus registered navigation tags; when
 adding a new surface, extend that source list and coverage row rather than claiming whole-app coverage.
 

@@ -30,7 +30,7 @@ Independent test: fake store validates save/reload/failure, active language rema
 
 - [x] T009 [US1] Add `Test/SharedUI/SettingsPageViewModelTests.Language.cs` for selection/save/retry, rollback after failed save, unchanged speech/solution/undo and active language (FR-002, FR-003, FR-009, FR-012).
 - [x] T010 [US1] Implement `SharedUI/ViewModel/LanguageSettingsViewModel.cs` using Toolkit commands/properties, existing ISettingsService and active IUiLocalizer; no automatic restart (FR-002, FR-003, FR-012).
-- [x] T011 [US1] Preserve UiLanguage on load/save in `MOBAflow/Service/SettingsService.cs`, `MOBAsmart/Service/SettingsService.cs`; extend `Test/MOBAflow/SettingsServiceTests.cs` and `Test/Common/AppSettingsDefaultsTests.cs` for roundtrip/default boundaries (FR-002, FR-009).
+- [x] T011 [US1] Preserve UiLanguage on load/save in `MOBAflow/Service/SettingsService.cs`, `MOBAsmart/Service/SettingsService.cs`; extend `Test/MOBAflow/SettingsServiceTests.cs` and `Test/Common/AppSettingsDefaultsTests.cs` for roundtrip/default boundaries and actual Windows write failures, rollback and retry (FR-002, FR-009, FR-012).
 - [x] T012 [US1] Apply saved language before covered view/resource construction in `MOBAflow/App.xaml.cs` and `MOBAsmart/MauiProgram.cs`; register localizer/ViewModel in both existing service extensions; use existing settings path, UI culture only and WinUI PrimaryLanguageOverride (FR-002, FR-003, FR-004, FR-009).
 - [x] T013 [US1] Add isolated language settings area in `MOBAflow/View/SettingsPage.xaml`, new `MOBAsmart/Controls/LanguageSettingsView.xaml`/`.xaml.cs`, and its host in `MOBAsmart/MainPage.xaml`; no speech settings or Counter behavior changes (FR-001, FR-002, FR-003, FR-010, FR-012).
 
@@ -94,14 +94,15 @@ These are scheduling opportunities, not authorization to start extra agents or c
 | FR-009 | T003, T008, T009, T011, T012, T015-T018 |
 | FR-010 | T013, T015-T017, T022 |
 | FR-011 | T002, T021 |
-| FR-012 | T009, T010, T013 |
+| FR-012 | T009-T011, T013 |
 
 ## Phase 7: Convergence
 
 Assessment on 2026-10-15: 12 functional requirements, 5 success criteria, 10 acceptance
 scenarios, 6 design decisions and all 6 constitution principles checked. No missing or
-contradictory product behavior found within Slice 1. The initial manual and publication evidence
-gaps are tracked below. Publication evidence is now recorded; manual acceptance remains open.
+contradictory product behavior was identified by the initial convergence inspection. The later
+Claude review found a Windows save-failure gap and misleading translator context; corrections
+and regression evidence are recorded in coverage.md. Manual acceptance remains open.
 
 - [ ] T026 Complete the still-pending T022 manual matrix in `specs/011-ui-localization/quickstart.md` and record host restart/system-language, themes, font scaling, keyboard and screenreader results in `coverage.md` after explicit app-launch authorization per SC-001/SC-005/FR-010 (partial, HIGH).
 - [x] T027 Complete T024 publication evidence in `specs/011-ui-localization/coverage.md`: draft PR, current-head required CI, green SonarCloud at the same SHA and zero OPEN/CONFIRMED issues per Constitution VI (verified snapshot in coverage.md; Android Release explicitly skipped while draft).

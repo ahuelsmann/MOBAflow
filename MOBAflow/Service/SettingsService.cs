@@ -220,6 +220,7 @@ internal class SettingsService : ISettingsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save settings");
+            throw;
         }
         finally
         {

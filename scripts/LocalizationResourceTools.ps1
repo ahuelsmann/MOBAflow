@@ -12,6 +12,11 @@ function Read-UiCatalogue([string] $Path) {
         if (-not $node.Element('comment') -or [string]::IsNullOrWhiteSpace($node.Element('comment').Value)) {
             throw "Missing translation context: $key"
         }
+        $indexes = @((Get-UiPlaceholderSignature $value $key) -split ',' | Where-Object { $_ -ne '' })
+        foreach ($match in [regex]::Matches($node.Element('comment').Value, '(?<!\{)\{(?<index>\d+)[^{}]*\}(?!\})')) {
+            $index = ([int]$match.Groups['index'].Value).ToString([Globalization.CultureInfo]::InvariantCulture)
+            if ($index -notin $indexes) { throw "Unknown translation context placeholder: $key {$index}" }
+        }
     }
     return ,$entries
 }

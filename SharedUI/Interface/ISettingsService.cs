@@ -26,8 +26,8 @@ public interface ISettingsService
     Task LoadSettingsAsync();
 
     /// <summary>
-    /// Saves the provided settings to appsettings.json.
-    /// Uses atomic write to prevent data corruption during save.
+    /// Saves the provided settings to persistent storage.
+    /// Completes successfully only after writing succeeds; storage failures propagate to the caller.
     /// </summary>
     /// <param name="settings">AppSettings instance to persist.</param>
     Task SaveSettingsAsync(AppSettings settings);

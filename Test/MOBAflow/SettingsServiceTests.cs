@@ -4,12 +4,90 @@ namespace Moba.Test.MOBAflow;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
+using Moba.SharedUI.Localization;
+using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Service;
+using System.Globalization;
 using System.Text.Json;
 
 [TestFixture]
 internal sealed class SettingsServiceTests
 {
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task UiLanguageWriteFailureRestoresSavedPreferenceAndAllowsRetry(bool readOnly)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "mobaflow-language-save-error-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "appsettings.json");
+        try
+        {
+            var settings = new AppSettings();
+            var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
+            settings.Application.UiLanguage = UiLanguagePreference.German;
+            settings.Speech.Language = "fr-FR";
+            await service.SaveSettingsAsync(settings).ConfigureAwait(false);
+            var savedJson = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+            var text = new UiLocalizer(CultureInfo.GetCultureInfo("de-DE"));
+            var viewModel = new LanguageSettingsViewModel(settings, service, text);
+            viewModel.SelectedChoice = viewModel.Choices.Single(choice => choice.Value == UiLanguagePreference.English);
+
+            FileStream? lockedFile = null;
+            try
+            {
+                if (readOnly)
+                    File.SetAttributes(path, FileAttributes.ReadOnly);
+                else
+                    lockedFile = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+
+                await Assert.ThrowsAsync(readOnly ? typeof(UnauthorizedAccessException) : typeof(IOException),
+                    () => service.SaveSettingsAsync(settings)).ConfigureAwait(false);
+                await viewModel.SaveCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (lockedFile is not null) await lockedFile.DisposeAsync().ConfigureAwait(false);
+                File.SetAttributes(path, FileAttributes.Normal);
+            }
+
+            var unchangedJson = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(settings.Application.UiLanguage, Is.EqualTo(UiLanguagePreference.German));
+                Assert.That(viewModel.Message, Is.EqualTo(text.GetText("LanguageSaveFailed")));
+                Assert.That(unchangedJson, Is.EqualTo(savedJson));
+                Assert.That(text.Culture.Name, Is.EqualTo("de-DE"));
+            }
+
+            // An unrelated save must not silently persist the rejected language selection.
+            settings.Application.LastSolutionPath = "another-solution.json";
+            await service.SaveSettingsAsync(settings).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            var loaded = new AppSettings();
+            _ = new SettingsService(loaded, NullLogger<SettingsService>.Instance, path);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(loaded.Application.UiLanguage, Is.EqualTo(UiLanguagePreference.German));
+                Assert.That(loaded.Application.LastSolutionPath, Is.EqualTo("another-solution.json"));
+            }
+
+            await viewModel.SaveCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            await service.LoadSettingsAsync().ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(settings.Application.UiLanguage, Is.EqualTo(UiLanguagePreference.English));
+                Assert.That(settings.Speech.Language, Is.EqualTo("fr-FR"));
+                Assert.That(viewModel.Message, Is.EqualTo(text.GetText("LanguageRestart")));
+                Assert.That(text.Culture.Name, Is.EqualTo("de-DE"));
+            }
+        }
+        finally
+        {
+            if (File.Exists(path)) File.SetAttributes(path, FileAttributes.Normal);
+            File.Delete(path);
+            Directory.Delete(directory);
+        }
+    }
+
     [TestCase("system")]
     [TestCase("en-US")]
     [TestCase("de-DE")]

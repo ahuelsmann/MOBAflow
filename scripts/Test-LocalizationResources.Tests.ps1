@@ -51,6 +51,27 @@ try {
     Assert-Rejected 'Empty resource: Greeting'; $passed++
 
     Reset-Fixture
+    $xml = [IO.File]::ReadAllText($path).Replace('<comment>Greeting label</comment>', '')
+    [IO.File]::WriteAllText($path, $xml)
+    Assert-Rejected 'Missing translation context: Greeting'; $passed++
+
+    Reset-Fixture
+    $xml = [IO.File]::ReadAllText($path).Replace('Greeting label', 'Version {0} is an unchanged technical version identifier.')
+    [IO.File]::WriteAllText($path, $xml)
+    Assert-Rejected 'Unknown translation context placeholder: Greeting'; $passed++
+
+    Reset-Fixture
+    $xml = [IO.File]::ReadAllText($path).Replace('0 number, 1 date', '{2} is a number')
+    [IO.File]::WriteAllText($path, $xml)
+    Assert-Rejected 'Unknown translation context placeholder: Template'; $passed++
+
+    Reset-Fixture
+    $xml = [IO.File]::ReadAllText($path).Replace('0 number, 1 date', '{0} is a number; {1} is a date. {{units}} are literal braces.')
+    [IO.File]::WriteAllText($path, $xml)
+    & "$PSScriptRoot/Test-LocalizationResources.ps1" -RepositoryRoot $fixture -SourceFiles @('fixture.xaml') | Out-Null
+    $passed++
+
+    Reset-Fixture
     Write-FixtureCatalogue 'UiStrings.de-DE.resx' 'Hallo' '{1} {2}'
     Assert-Rejected 'Placeholder mismatch: Template'; $passed++
 
