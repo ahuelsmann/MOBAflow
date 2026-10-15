@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/290
 **Spec Kit**: Not applicable - structural refactoring; the only persisted-format change is the internal feature-toggle collection, loaded with defaults per repository policy
-**Status**: Planned; implementation starts with slice 1 after this plan is integrated
+**Status**: Active; plan integrated through #291, slice 1 (display helpers) in review
 
 ## Purpose and scope
 
@@ -33,8 +33,8 @@ Consumers were counted from `using` directives and type references on main `1d45
 | --- | --- | --- |
 | `Display/FunctionBacklightColor`, `HexColor`, `LocomotiveFunctionAppearanceResolver` | SharedUI, MOBAflow, MOBAsmart | `SharedUI` (function-button appearance) |
 | `Display/KsSignalAspectNames`, `KsSignalScreenLayout`, `KsSignalScreenVisualState` | MOBAflow, MOBAsmart | `SharedUI` |
-| `Display/GaugeThemeAppearance` | MOBAsmart | MOBAsmart |
-| `Display/LedMatrix5x5State` | MOBAflow | MOBAflow |
+| `Display/GaugeThemeAppearance` | MOBAsmart | `SharedUI` (keeps its tests in the portable suite) |
+| `Display/LedMatrix5x5State` | MOBAflow | `SharedUI` (keeps its tests in the portable suite) |
 | `Configuration/AppSettings.Sections`: `LayoutSettings` and page layout classes, `TabVisibilitySettings`, `FeatureToggleSettings`; `FeatureToggleRegistry`, `SettingsPageLayoutSettings`, `GridSplitterLayoutSettings` (`PageLayoutSettings`, `ColumnState`) | SharedUI ViewModels, MOBAflow views/services, MOBAsmart tab host | `SharedUI` UI settings |
 | `Navigation/IFeatureTogglePageProvider`, `NavigationCategory` | SharedUI, MOBAflow | `SharedUI` (provider contract), MOBAflow (categories) |
 | `Configuration/TrainControlHost`, `TrainControlHostSettings` | SharedUI train control, both hosts | `SharedUI/TrainControl` |
@@ -73,8 +73,8 @@ Each slice is one PR (stacked when a slice depends on an unmerged one), deletes 
 change, updates analyzer baselines narrowly (moved diagnostics travel with their file) and adds or extends an
 RF-20 architecture rule for the boundary it creates.
 
-1. **Display appearance helpers.** Move `Common/Display` types to the owners above; architecture rule:
-   `Common` contains no `Display` namespace.
+1. **Display appearance helpers.** Move all `Common/Display` types to `SharedUI/Appearance`
+   (`Moba.SharedUI.Appearance`); architecture rule: `Common` contains no `Display` namespace.
 2. **UI settings and navigation.** Introduce the `SharedUI` settings root, move layout, tab visibility,
    feature toggles, `FeatureToggleRegistry` and navigation types, replace the per-page toggle properties
    with the keyed collection and update both `SettingsService` implementations and `WinUiConfigurationBuilder`.

@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
-using Moba.Common.Display;
+using Moba.SharedUI.Appearance;
 using Moba.Domain;
 
 public partial class ViewModel5x5 : ObservableObject

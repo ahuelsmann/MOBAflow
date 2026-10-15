@@ -1290,10 +1290,10 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "Common/Display/FunctionBacklightColor.cs",
+      "path": "SharedUI/Appearance/FunctionBacklightColor.cs",
       "count": 1
     },
     {
@@ -3771,7 +3771,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1515",
-      "path": "Test/Common/LedMatrix5x5StateTests.cs",
+      "path": "Test/SharedUI/LedMatrix5x5StateTests.cs",
       "count": 1
     },
     {
@@ -3834,7 +3834,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1707",
-      "path": "Test/Common/LedMatrix5x5StateTests.cs",
+      "path": "Test/SharedUI/LedMatrix5x5StateTests.cs",
       "count": 5
     },
     {
@@ -4352,21 +4352,21 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/FunctionBacklightColorTests.cs",
+      "path": "Test/SharedUI/FunctionBacklightColorTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/GaugeThemeAppearanceTests.cs",
+      "path": "Test/SharedUI/GaugeThemeAppearanceTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/HexColorTests.cs",
+      "path": "Test/SharedUI/HexColorTests.cs",
       "count": 1
     },
     {
@@ -4387,7 +4387,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/KsSignalAspectNamesTests.cs",
+      "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 2
     },
     {
@@ -4401,7 +4401,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/LocomotiveFunctionAppearanceResolverTests.cs",
+      "path": "Test/SharedUI/LocomotiveFunctionAppearanceResolverTests.cs",
       "count": 1
     },
     {
@@ -6452,14 +6452,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "Test/Common/KsSignalAspectNamesTests.cs",
+      "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "Test/Common/LocomotiveFunctionAppearanceResolverTests.cs",
+      "path": "Test/SharedUI/LocomotiveFunctionAppearanceResolverTests.cs",
       "count": 1
     },
     {
@@ -6774,7 +6774,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/GaugeThemeAppearanceTests.cs",
+      "path": "Test/SharedUI/GaugeThemeAppearanceTests.cs",
       "count": 1
     },
     {
@@ -6788,14 +6788,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/KsSignalAspectNamesTests.cs",
+      "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 15
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/LocomotiveFunctionAppearanceResolverTests.cs",
+      "path": "Test/SharedUI/LocomotiveFunctionAppearanceResolverTests.cs",
       "count": 1
     },
     {
@@ -7439,7 +7439,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/LedMatrix5x5StateTests.cs",
+      "path": "Test/SharedUI/LedMatrix5x5StateTests.cs",
       "count": 4
     },
     {
