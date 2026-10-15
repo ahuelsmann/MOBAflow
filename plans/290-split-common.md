@@ -41,7 +41,7 @@ Consumers were counted from `using` directives and type references on main `1d45
 | `Configuration/RestApiRecentEndpointHistory`, `Runtime/MobileBackgroundKeepAlivePolicy` | SharedUI | `SharedUI` |
 | `Platform/IPlatformCapability`, `GridSplitterLayoutSettings` class | none | remove |
 | `Z21/Z21BroadcastRequirements` | Backend tests only | remove; duplicates `Z21Protocol.BroadcastFlags` in Backend |
-| `Runtime/*` snapshots, `RemoteRuntimeCommands`, `RuntimeCommandValidator`, `RuntimeHubMethods`, `RuntimeJsonSerializer`, snapshot filter/merge helpers | Backend, SharedUI, MOBAflow, MOBAsmart, MOBApi | contracts project |
+| `Runtime/*` snapshots, `RemoteRuntimeCommands`, `RuntimeCommandValidator`, `RuntimeHubContract` (hub interfaces), `RuntimeJsonSerializer`, snapshot filter/merge helpers | Backend, SharedUI, MOBAflow, MOBAsmart, MOBApi | contracts project |
 | `Discovery/*` protocol types (`DiscoveryResponseParser`, `MobApiUdpDiscoveryResponder`, endpoint and candidate builders, `MobaApiRuntimeDeployment`, path resolver) | Backend, SharedUI, hosts, MOBApi | contracts project for wire format; host-specific discovery helpers to their owner |
 | `Events`, `Extension`, `IO`, `Path`, `Serilog`, `Validation`, `Recording`, `Multiplex`, neutral `AppSettings` sections | Backend and all hosts | stay in `Common` (re-checked in slice 5) |
 
