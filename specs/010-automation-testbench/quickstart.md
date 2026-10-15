@@ -1,11 +1,61 @@
 # Quickstart and Validation: Automation Testbench
 
 **Source Issue**: #35
-**Status**: Design validation guide. The feature and proposed new fixtures do not exist yet.
+**Status**: First foundation slice implemented; the scenario runner and desktop feature remain unimplemented.
 
-## Current planning change
+## Foundation slice evidence (2026-10-14/15)
 
-Work in the dedicated task worktree for the relevant planning slice (currently codex/issue-35-tasks-analysis). Read AGENTS.md/applicable guidance with required
+Dedicated branch `codex/issue-35-automation-testbench`, base `7c1d92422c0cbf675fddc03a8979990957733d15`.
+GitHub #241 and #245 are merged; all 16 requirements-quality checklist items are checked. No extension hooks exist.
+T001-T004 and T009-T010 cover revalidation, production characterization and the shared effect boundary.
+T005-T008 model contracts remain a separate foundation slice before any executable private graph.
+
+Existing handlers now send typed, validated execution requests through `IWorkflowEffectAdapter`.
+`ProductionWorkflowEffectAdapter` owns file probes, process/audio/speech and Z21 output. Pure signal/template resolution
+and journey stop transitions remain shared. Serialized plans exclude executable requests and script formatting omits
+arguments/paths. This does not implement the future safe trace or an isolated factory.
+
+Final local verification on 2026-10-15: portable Release run discovered/executed **169 tests, 0 failures, 0 skips**.
+The complete portable Release analyzer build passed; the strict baseline matches 3,324 diagnostics in 1,152 groups.
+Only three proven reductions in WorkflowActionHandlers were updated (CA1062 12 to 8, CA1848 12 to 3, CA1873 6 to 0);
+there are no new/increased accepted diagnostics, rule changes or threshold changes. Existing diagnostics remain tracked.
+Current-head CI/Sonar results are recorded in the draft PR and remain separate from this local evidence.
+The 46-test pre-change anchor run passed. The new isolation tests first failed compilation on the absent adapter contract.
+Named Debug builds of `SharedUI/SharedUI.csproj` and `MOBApi/MOBApi.csproj` passed with zero warnings/errors.
+The initial SDK workload resolver failed with MSB4242 (missing .NET 10.0.402 workload manifests). Portable checks used
+`MSBuildEnableWorkloadResolver=false` for that process only. This is not Windows or Android validation.
+
+| Production boundary | Executed fixture mapping |
+| --- | --- |
+| Shared payloads, effect requests, missing audio/script files, signal mapping and unconfigured display | WorkflowEffectPlannerTests, WorkflowActionHandlersTests, ActionExecutorTests, MultiplexerCommandResolverTests |
+| Ordered/awaited actions, stop-change context and cancellation | WorkflowSequenceExecutionTests, WorkflowServiceTests, WorkflowExecutionCoordinatorTests |
+| Source-local FIFO, context built after predecessor, other journey remains independent | WorkflowExecutionCoordinatorTests, JourneyEventPlanTests, JourneyEventPlanAcceptanceTests |
+| Seeds/persistence/filtering and independent counts | InPortCounterServiceTests, PersistentInPortCounterTests |
+| Filtered counted feedback still reaches raw whistle consumer; coalescing/function-off | LocomotiveWhistleAutomationServiceTests |
+| Real DI override/idempotence and fake Z21 transport chain | MobaBackendServiceCollectionExtensionsTests, WorkflowExecutionEndToEndTests |
+
+The full focused filter is reproducible from the repository root:
+
+```powershell
+$env:MSBuildEnableWorkloadResolver = 'false'
+$fixtures = @('WorkflowActionHandlersTests', 'WorkflowEffectPlannerTests', 'WorkflowSequenceExecutionTests',
+    'WorkflowExecutionCoordinatorTests', 'LocomotiveWhistleAutomationServiceTests', 'ActionExecutorTests',
+    'WorkflowServiceTests', 'JourneyEventPlan', 'InPortCounterServiceTests', 'PersistentInPortCounterTests',
+    'MultiplexerCommandResolverTests', 'WorkflowExecutionEndToEndTests', 'MobaBackendServiceCollectionExtensionsTests')
+$filter = ($fixtures | ForEach-Object { "FullyQualifiedName~$_" }) -join '|'
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter $filter -v minimal
+dotnet build SharedUI/SharedUI.csproj -v minimal
+dotnet build MOBApi/MOBApi.csproj -v minimal
+```
+
+Use only test-owned definitions and fakes. No real/shipped/example solution was read, generated or edited.
+No app/device/process-script execution was used for these tests. Complete private-runtime zero-I/O acceptance,
+deterministic scheduling/joined disposal, Windows suite/desktop compilation and authorized manual UI acceptance remain open.
+Each implementation PR stays draft; review/CI/Sonar are separate from local test evidence. No ready marking or merge is authorized.
+
+## Planning-only structural checks
+
+Work in the dedicated task worktree for the relevant slice (currently codex/issue-35-automation-testbench). Read AGENTS.md/applicable guidance with required
 pre-read secrets scans. Use global.json for SDK selection. No app launch, hardware action or example solution is required.
 
 For this documentation-only change: scan changed files, review diff/relative links and run the repository line-ending and
@@ -80,6 +130,6 @@ No hardware power/movement, flashing, Android deployment or public release is pa
 ## Next phase
 
 Review [plan.md](plan.md), [data-model.md](data-model.md), [contracts](contracts/isolated-runtime.md) and [tasks.md](tasks.md).
-Design #241 is merged. Task generation and read-only consistency analysis are complete as draft backlog work; integrate
-the reviewed backlog before executing the narrow slices. No implementation/acceptance task is checked off by this documentation step.
+Design #241 and backlog/analysis #245 are merged. Continue with the open foundation tasks before private graph execution;
+the first effect-boundary slice does not satisfy runner, comparison, persistence or desktop acceptance.
 CI/Sonar and future manual acceptance remain separate gates; this guide never claims them from document checks.

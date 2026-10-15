@@ -7,9 +7,52 @@ using global::Moba.Backend.Service;
 using global::Moba.Common.Events;
 using global::Moba.Domain;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Common.Configuration;
+using Moq;
 
 internal sealed class LocomotiveWhistleAutomationServiceTests
 {
+    [Test]
+    public async Task CounterFilteredActivation_StillReachesRawWhistleConsumer()
+    {
+        var z21 = new Mock<IZ21>();
+        using var counters = new InPortCounterService(z21.Object, new AppSettings
+        {
+            Counter = { CountOfFeedbackPoints = 1, UseTimerFilter = true, TimerIntervalSeconds = 3600 }
+        });
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
+        var onCalls = 0;
+        var offCalls = 0;
+        var offs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var gateway = new Mock<ILocomotiveFunctionCommandGateway>();
+        gateway.SetupGet(value => value.IsConnected).Returns(true);
+        gateway.Setup(value => value.SetFunctionAsync(12, 2, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns<int, int, bool, CancellationToken>((_, _, on, _) =>
+            {
+                if (on) Interlocked.Increment(ref onCalls);
+                else if (Interlocked.Increment(ref offCalls) == 1) offs.TrySetResult();
+                return Task.CompletedTask;
+            });
+        using var whistles = new LocomotiveWhistleAutomationService(bus, gateway.Object,
+            NullLogger<LocomotiveWhistleAutomationService>.Instance);
+        var locomotive = new Locomotive { DigitalAddress = 12 };
+        whistles.Activate(new Project
+        {
+            Locomotives = [locomotive],
+            LocomotiveWhistleRules = [new() { LocomotiveId = locomotive.Id, InPort = 1, FunctionIndex = 2, ActiveDurationMilliseconds = 1 }]
+        });
+        InPortCounterServiceTests.Raise(z21, 1);
+        InPortCounterServiceTests.Raise(z21, 1);
+        bus.Publish(new FeedbackReceivedEvent(1));
+        await offs.Task.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(counters.GetSnapshot().Single().Count, Is.EqualTo(1UL));
+            Assert.That(onCalls, Is.EqualTo(1));
+            Assert.That(offCalls, Is.EqualTo(1));
+        }
+    }
+
     [Test]
     public async Task HandleFeedbackAsync_SendsDelayedMomentaryFunction()
     {

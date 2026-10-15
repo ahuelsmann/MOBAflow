@@ -41,21 +41,23 @@ public sealed class WorkflowEffectPlanner : IWorkflowEffectPlanner
             action.Type,
             WorkflowEffectCategory.CommandStation,
             $"Send {bytes.Length} raw command byte(s) to the command station.",
-            "z21:command-station");
+            "z21:command-station",
+            new WorkflowCommandEffectRequest(action.Id, action.Name, bytes));
     }
 
     private static WorkflowActionPlan PlanAudio(WorkflowAction action)
     {
         if (action.Audio == null)
             return Invalid("audio", "Audio action requires an audio payload.");
-        if (!WorkflowActionParameterBinding.TryGetAudioFilePath(action, out _))
+        if (!WorkflowActionParameterBinding.TryGetAudioFilePath(action, out var filePath))
             return Invalid("audio.filePath", "Audio action requires a file path.");
 
         return Valid(
             action.Type,
             WorkflowEffectCategory.AudioOutput,
             "Play the configured audio file.",
-            "audio-output:default");
+            "audio-output:default",
+            new WorkflowAudioEffectRequest(action.Id, action.Name, filePath));
     }
 
     private static WorkflowActionPlan PlanAnnouncement(WorkflowAction action)
@@ -67,7 +69,8 @@ public sealed class WorkflowEffectPlanner : IWorkflowEffectPlanner
             action.Type,
             WorkflowEffectCategory.SpeechOutput,
             "Speak the configured or journey-provided announcement.",
-            "audio-output:default");
+            "audio-output:default",
+            new WorkflowAnnouncementEffectRequest(action.Id, action.Name, action.Announcement.Message));
     }
 
     private static WorkflowActionPlan PlanScript(WorkflowAction action)
@@ -81,7 +84,8 @@ public sealed class WorkflowEffectPlanner : IWorkflowEffectPlanner
             action.Type,
             WorkflowEffectCategory.ScriptProcess,
             "Run the configured PowerShell script.",
-            "process:powershell");
+            "process:powershell",
+            new WorkflowScriptEffectRequest(action.Id, action.Name, action.PowerShell.ScriptPath, action.PowerShell.Arguments));
     }
 
     private static WorkflowActionPlan PlanSignal(WorkflowAction action)
@@ -115,7 +119,8 @@ public sealed class WorkflowEffectPlanner : IWorkflowEffectPlanner
             action.Type,
             WorkflowEffectCategory.Signal,
             $"Select signal aspect {payload.SignalAspect}.",
-            resourceKey);
+            resourceKey,
+            new WorkflowSignalEffectRequest(action.Id, action.Name, payload.SignalAspect, command));
     }
 
     private static WorkflowActionPlan PlanDisplay(WorkflowAction action)
@@ -129,7 +134,8 @@ public sealed class WorkflowEffectPlanner : IWorkflowEffectPlanner
             action.Type,
             WorkflowEffectCategory.Display,
             "Update the selected train destination display.",
-            $"display:{displayDeviceId:D}");
+            $"display:{displayDeviceId:D}",
+            new WorkflowDisplayEffectRequest(action.Id, action.Name, displayDeviceId, action.TrainDestinationDisplay.ClearBeforeRender));
     }
 
     private static WorkflowActionPlan PlanJourneyTransition(WorkflowAction action)
@@ -151,14 +157,16 @@ public sealed class WorkflowEffectPlanner : IWorkflowEffectPlanner
         ActionType actionType,
         WorkflowEffectCategory category,
         string description,
-        string resourceKey) =>
+        string resourceKey,
+        WorkflowEffectRequest? request = null) =>
         new(
             [],
             new WorkflowPlannedEffect(
                 actionType,
                 category,
                 description,
-                [new WorkflowResourceDescriptor(resourceKey, category, WorkflowResourceAccess.ExclusiveWrite)]));
+                [new WorkflowResourceDescriptor(resourceKey, category, WorkflowResourceAccess.ExclusiveWrite)]))
+        { Request = request };
 
     private static WorkflowActionPlan Invalid(string fieldPath, string message) =>
         new([new WorkflowActionPlanningIssue(fieldPath, message)], null);

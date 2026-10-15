@@ -6,11 +6,65 @@ using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Domain;
 using Moba.Domain.Enum;
+using System.Text.Json;
 
 [TestFixture]
 internal sealed class WorkflowEffectPlannerTests
 {
     private readonly WorkflowEffectPlanner _planner = new();
+
+    [TestCase(ActionType.Command)]
+    [TestCase(ActionType.Audio)]
+    [TestCase(ActionType.Announcement)]
+    [TestCase(ActionType.ExecuteScript)]
+    [TestCase(ActionType.SelectSignalAspect)]
+    [TestCase(ActionType.TrainDestinationDisplay)]
+    [TestCase(ActionType.ChangeJourneyStop)]
+    public void Plan_MissingPayload_HasNoExecutableRequest(ActionType type)
+    {
+        var result = _planner.Plan(new WorkflowAction { Type = type });
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Request, Is.Null);
+            Assert.That(result.Effect, Is.Null);
+        }
+    }
+
+    [Test]
+    public void Plan_ScriptRequest_RemainsPrivateWhenPlanIsSerializedOrFormatted()
+    {
+        var action = new WorkflowAction
+        {
+            Type = ActionType.ExecuteScript,
+            PowerShell = new() { ScriptPath = "private-marker/script.ps1", Arguments = "argument-marker" }
+        };
+        var result = _planner.Plan(action);
+        var request = (WorkflowScriptEffectRequest)result.Request!;
+        var json = JsonSerializer.Serialize(result);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(request.ScriptPath, Is.EqualTo(action.PowerShell.ScriptPath));
+            Assert.That(request.Arguments, Is.EqualTo(action.PowerShell.Arguments));
+            Assert.That(json, Does.Not.Contain("private-marker").And.Not.Contain("argument-marker").And.Not.Contain("Request"));
+            Assert.That(request.ToString(), Does.Not.Contain("private-marker").And.Not.Contain("argument-marker"));
+        }
+    }
+
+    [Test]
+    public void Plan_InvalidSignalReference_HasNoExecutableRequest()
+    {
+        var result = _planner.Plan(new WorkflowAction
+        {
+            Type = ActionType.SelectSignalAspect,
+            SelectSignalAspect = new() { BaseAddress = 201, MultiplexerArticleNumber = "unknown" }
+        });
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Request, Is.Null);
+        }
+    }
 
     [TestCaseSource(nameof(SupportedActions))]
     public void Plan_SupportedAction_ReturnsSanitizedEffect(
@@ -31,6 +85,10 @@ internal sealed class WorkflowEffectPlannerTests
             Assert.That(result.Effect.Resources, Has.Count.EqualTo(1));
             Assert.That(result.Effect.Resources[0].Key, Is.EqualTo(expectedResourceKey));
             Assert.That(result.Effect.Resources[0].Access, Is.EqualTo(WorkflowResourceAccess.ExclusiveWrite));
+            if (action.Type == ActionType.ChangeJourneyStop)
+                Assert.That(result.Request, Is.Null, "Stop transitions stay in shared domain logic.");
+            else
+                Assert.That(result.Request!.ActionId, Is.EqualTo(action.Id));
         });
     }
 

@@ -6,7 +6,18 @@
 
 **Spec Kit**: Required
 
-**Status**: Design integrated through #241; [implementation tasks](tasks.md) and consistency analysis exist. Backlog review/integration remain.
+**Status**: Design #241 and backlog/consistency analysis #245 are integrated. Foundation implementation has started.
+
+Implementation revalidation on 2026-10-14: GitHub main and this dedicated worktree start at
+`7c1d92422c0cbf675fddc03a8979990957733d15`, branch `codex/issue-35-automation-testbench`.
+GitHub confirms #241 merged as `4fa6402cfd0a2011a1d519eed6526a62142ff006` and #245 as
+`7013de9a3b8143cffb082904fcfa7da540ff9948`; the accepted backlog PR contains the 26/26 consistency mapping.
+The 16-item requirements checklist is complete. No extension hooks are configured.
+Current factory still acquires a live connection lease; sequence execution still uses ordered actions and TimeProvider delays.
+Handlers still own environment probes. The first reviewable slice extracts their shared effect boundary (T009-T010),
+before scheduler/private graph/UI work. Definition tasks T005-T008 remain a separate foundation slice.
+RF-24/#219 and #141 do not block this work. No real/shipped/example solution, app launch or hardware work is authorized.
+The Constitution Check below was revalidated against current AGENTS.md: no exception is introduced by this slice.
 
 **Input**: Feature specification from `specs/010-automation-testbench/spec.md`.
 
@@ -25,7 +36,7 @@ Requirements clarified by merged [#233](https://github.com/ahuelsmann/MOBAflow/p
 
 ## Technical Context
 
-**Language/Version**: .NET 10/C#, repository defaults; SDK `10.0.401`, `latestPatch`, prerelease disabled in `global.json`.
+**Language/Version**: .NET 10/C#, repository defaults; SDK `10.0.402`, `latestPatch`, prerelease disabled in `global.json`.
 
 **Primary Dependencies**: Existing CommunityToolkit.Mvvm 8.4.2, System.Text.Json, NUnit 5 and Moq.
 Use framework `TimeProvider` and scheduler-native awaitables; no new package or automation framework.
@@ -35,7 +46,7 @@ Isolated execution has no UDP, REST/SignalR, process, filesystem, audio or displ
 Saving definitions remains ordinary solution persistence outside the execution graph.
 
 **Testing**: NUnit/Moq and existing doubles; portable behavior tests, Windows host/transition tests and desktop compile.
-This PR contains design documents only and requires structural checks, not .NET builds/tests.
+The original design PR was documentation only; implementation slices require affected production regressions and consumer builds.
 
 **Target Platforms**: Shared libraries `net10.0`; WinUI desktop `net10.0-windows10.0.22621.0`.
 Android UI, remote execution, device deployment and ESP32 firmware are outside the MVP.
@@ -192,15 +203,15 @@ Concrete integration points are in the [operator contract](contracts/operator-ui
 
 ## Delivery Sequence and Remaining Gates
 
-1. Review/integrate the generated [tasks.md](tasks.md); design #241 is merged and consistency analysis is complete. Recheck the current
-   integration base and resolve new cross-artifact findings before implementation.
+1. Design #241 and [tasks.md](tasks.md)/analysis #245 are merged. Recheck the current integration base and resolve new
+   cross-artifact findings at each slice; the first effect-boundary slice is documented in [quickstart.md](quickstart.md).
 2. Characterize production behavior; add shared effect requests and production adapter regression coverage.
 3. Prove owned deterministic scheduling/joined disposal, then compose isolated state and test zero I/O.
 4. Add controls, complete safe trace and pure comparisons; pass repeatability/timing/cancellation acceptance.
 5. Add persistence/schema roundtrips using temporary test-owned data; the maintainer owns the example solution.
 6. Add VM/page/awaited departure integration; compile desktop and perform authorized theme/accessibility checks.
 
-Use narrow draft PRs on tested integrated predecessors. G8/design integration are satisfied; backlog review/integration and each slice's
+Use narrow draft PRs on tested integrated predecessors. G7/backlog and G8/design integration are satisfied; each slice's
 tests/CI remain gates. RF-24/#219 and #141 are not additional hard dependencies. Recheck contracts before implementation.
 
 ## Validation Strategy

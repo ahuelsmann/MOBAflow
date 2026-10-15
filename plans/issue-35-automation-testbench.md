@@ -4,7 +4,13 @@
 
 **Spec Kit**: Required
 
-**Status**: Design #241 integrated; 70-task backlog proposed and consistency analysis complete. Backlog review/integration and implementation remain.
+**Status**: Design #241 and 70-task backlog/consistency analysis #245 integrated. Foundation implementation started on 2026-10-14.
+
+Revalidated GitHub merge state and source contracts against main `7c1d92422c0cbf675fddc03a8979990957733d15`.
+The dedicated worktree is `C:/Users/andre/.codex/worktrees/a957/MOBAflow`, branch `codex/issue-35-automation-testbench`.
+The first draft slice covers the shared effect adapter and production regressions. Scheduler ownership, complete private
+runtime, model/persistence, comparisons and desktop acceptance remain open. Per-slice current-head CI/Sonar, zero unresolved
+PR issues, review and explicit app-launch/manual approval remain separate gates; no merge or ready marking is authorized.
 
 ## Integrated baseline
 
@@ -36,7 +42,7 @@ Delete this standalone tracker after accepted feature completion; preserve Spec 
 | G4 | Schema version 4 confirmed on integrated base; add scenario definitions directly without migrations, legacy paths or example solution |
 | G5 | Dedicated codex task branch/worktree from verified main; pre-read and pre-publication secrets scanning required |
 | G6 | Issue #35 remains the source; design PR #241 and the task backlog/analysis supply traceability |
-| G7 | Requirements/design are integrated; 70 tasks and read-only consistency analysis exist. Backlog review/integration remain before implementation |
+| G7 | Satisfied: requirements/design and reviewed backlog/consistency analysis #245 are integrated; implementation may proceed |
 | G8 | Satisfied: #207 and #211 are merged; the existing live factory still needs the proposed isolated composition seam |
 
 RF-24/#219 and #141 are not additional hard prerequisites for #35. Do not modify other sessions' branches.
@@ -49,8 +55,8 @@ current-instant scheduling and joined disposal before enabling UI execution. Tar
 Persist definitions through normal solution saving, never runtime traces/results. Andreas creates the example solution;
 no real or shipped sample solution is read, created or edited by this work.
 
-1. Review and integrate the generated task backlog on merged design #241; recheck current source contracts and rerun
-   consistency analysis after substantive changes.
+1. The design/task backlog #241/#245 are integrated. Recheck current source contracts and rerun consistency analysis
+   after substantive changes; first-slice evidence is in the linked validation guide.
 2. Characterize existing behavior, introduce shared effects and prove production regressions.
 3. Prove deterministic scheduling/joined cleanup and isolated composition with zero external calls.
 4. Add runner/comparison, definition persistence and finally the page/awaited context-transition guard.
