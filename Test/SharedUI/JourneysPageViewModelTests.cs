@@ -59,7 +59,7 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         ClearInvocations();
     }
 
-    private JourneysPageViewModel CreatePage() => new(_session, _runtime.Object, _gateway.Object,
+    private JourneysPageViewModel CreatePage() => new(_session, _gateway.Object,
         _dispatcher.Object, _cities.Object, _persistence.Object, new LayoutColumnWidthsViewModel(),
         NullLogger<JourneysPageViewModel>.Instance);
 
@@ -82,13 +82,15 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         Assert.That(_session.SelectedJourney, Is.SameAs(journey));
         Assert.That(_page.SelectedProject!.Model.Journeys.Last(), Is.SameAs(journey.Model));
         Assert.That(SavedProject().Journeys, Has.Count.EqualTo(3));
+        _runtime.Verify(value => value.UpdateProjectAsync(_page.SelectedProject.Model, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        _runtime.Invocations.Clear();
         _page.DeleteJourneyCommand.Execute(null);
         Assert.That(_page.SelectedProject.Model.Journeys, Has.Count.EqualTo(2));
         Assert.That(_page.SelectedProject.Journeys, Has.Count.EqualTo(2));
         Assert.That(_session.SelectedJourney, Is.Null);
         Assert.That(_page.DeleteJourneyCommand.CanExecute(null), Is.False);
         Assert.That(SavedProject().Journeys, Has.Count.EqualTo(2));
-        _runtime.Verify(value => value.UpdateProjectAsync(_page.SelectedProject.Model, It.IsAny<CancellationToken>()), Times.AtLeast(2));
+        _runtime.Verify(value => value.UpdateProjectAsync(_page.SelectedProject.Model, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         _runtime.Verify(value => value.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

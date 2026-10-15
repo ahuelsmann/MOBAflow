@@ -117,8 +117,8 @@ public partial class MainWindowViewModel
 
     private void OnSessionSolutionLoaded(object? sender, EventArgs e)
     {
-        SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectCommand.NotifyCanExecuteChanged();
+        this.SaveSolutionCommand.NotifyCanExecuteChanged();
+        this.ConnectCommand.NotifyCanExecuteChanged();
     }
     #endregion
 

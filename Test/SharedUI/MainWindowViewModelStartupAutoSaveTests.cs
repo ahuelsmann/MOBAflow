@@ -237,7 +237,7 @@ internal partial class MainWindowViewModelShutdownTests
             {
                 Z21 = new Mock<IZ21>().Object
             }, stationEventBus1),
-            _rollingStockPages.GetJourneysPage(locomotiveSession1, runtime, new LocalRuntimeCommandGateway(runtime), dispatcher.Object),
+            _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtime), dispatcher.Object),
             locomotiveSession1,
             new Mock<ILogger<MainWindowViewModel>>().Object);
     }

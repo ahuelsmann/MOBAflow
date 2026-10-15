@@ -195,7 +195,7 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
             {
                 Z21 = new Mock<IZ21>().Object
             }, stationEventBus1, dialog?.Object),
-            _rollingStockPages.GetJourneysPage(locomotiveSession1, mobaRuntimeMock.Object, new LocalRuntimeCommandGateway(mobaRuntimeMock.Object), uiDispatcherMock.Object),
+            _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(mobaRuntimeMock.Object), uiDispatcherMock.Object),
             locomotiveSession1,
             loggerMock.Object,
             dialogService: dialog?.Object);

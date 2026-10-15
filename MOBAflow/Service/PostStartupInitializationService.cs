@@ -13,8 +13,6 @@ using SharedUI.ViewModel;
 
 using System.Diagnostics;
 
-using View;
-
 /// <summary>
 /// Defers non-critical initialization until after the main window is visible.
 /// This improves perceived startup time by deferring heavy operations (plugins, REST discovery, health checks).
@@ -23,8 +21,7 @@ internal class PostStartupInitializationService
 {
     private static readonly TimeSpan MinimumIndicatorDuration = TimeSpan.FromSeconds(1.5);
     private readonly IEventBus _eventBus;
-    private readonly HealthCheckService _healthCheckService;
-    private readonly MainWindow _mainWindow;
+    private readonly Action _initializeSpeechHealthChecks;
     private readonly JourneysPageViewModel _journeysPage;
     private readonly AppSettings _appSettings;
     private readonly MasterDataStore _masterDataStore;
@@ -33,8 +30,7 @@ internal class PostStartupInitializationService
 
     public PostStartupInitializationService(
         IEventBus eventBus,
-        HealthCheckService healthCheckService,
-        MainWindow mainWindow,
+        Action initializeSpeechHealthChecks,
         JourneysPageViewModel journeysPage,
         AppSettings appSettings,
         MasterDataStore masterDataStore,
@@ -42,8 +38,7 @@ internal class PostStartupInitializationService
         ILogger<PostStartupInitializationService> logger)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _healthCheckService = healthCheckService;
-        _mainWindow = mainWindow;
+        _initializeSpeechHealthChecks = initializeSpeechHealthChecks ?? throw new ArgumentNullException(nameof(initializeSpeechHealthChecks));
         _journeysPage = journeysPage;
         _appSettings = appSettings;
         _masterDataStore = masterDataStore ?? throw new ArgumentNullException(nameof(masterDataStore));
@@ -186,7 +181,7 @@ internal class PostStartupInitializationService
             cancellationToken.ThrowIfCancellationRequested();
             _logger.LogInformation("[PostStartup] Starting HealthCheckService");
             _eventBus.Publish(new PostStartupStatusEvent(true, "Starting health checks..."));
-            _mainWindow.InitializeHealthChecks(_healthCheckService);
+            _initializeSpeechHealthChecks();
             _logger.LogInformation("[PostStartup] HealthCheckService started");
         }
         catch (Exception ex)

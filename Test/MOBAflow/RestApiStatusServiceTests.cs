@@ -206,7 +206,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             {
                 Z21 = new Mock<IZ21>().Object
             }, stationEventBus1),
-            _rollingStockPages.GetJourneysPage(locomotiveSession1, mobaRuntime.Object, new LocalRuntimeCommandGateway(mobaRuntime.Object), uiDispatcher.Object),
+            _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(mobaRuntime.Object), uiDispatcher.Object),
             locomotiveSession1,
             NullLogger<MainWindowViewModel>.Instance);
     }

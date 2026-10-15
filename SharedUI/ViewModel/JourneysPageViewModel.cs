@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Backend.Interface;
 using Common.Configuration;
 using Common.Extension;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,7 +17,6 @@ using System.ComponentModel;
 public sealed partial class JourneysPageViewModel : ObservableObject, IDisposable
 {
     private readonly ISolutionSession _session;
-    private readonly IConnectionRuntime _runtimeConnection;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly ICityService _cityLibraryService;
@@ -33,13 +31,12 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     private bool _isCityLibraryVisible;
     private bool _isJourneyPropertiesExpanded;
 
-    public JourneysPageViewModel(ISolutionSession session, IConnectionRuntime runtimeConnection,
+    public JourneysPageViewModel(ISolutionSession session,
         IRuntimeCommandGateway runtimeCommandGateway, IUiDispatcher uiDispatcher, ICityService cityLibraryService,
         ISettingsService settingsService, LayoutColumnWidthsViewModel layoutColumnWidths,
         ILogger<JourneysPageViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(runtimeConnection);
         ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(cityLibraryService);
@@ -47,7 +44,6 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(logger);
         _session = session;
-        _runtimeConnection = runtimeConnection;
         _runtimeCommandGateway = runtimeCommandGateway;
         _uiDispatcher = uiDispatcher;
         _cityLibraryService = cityLibraryService;
@@ -174,7 +170,6 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         SelectedJourney = EntityEditorHelper.AddEntity(project.Model.Journeys, project.Journeys,
             () => new Journey { Name = "New Journey" },
             model => new JourneyViewModel(model, project.Model, _uiDispatcher));
-        RefreshProjectRuntimeSnapshot();
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
@@ -183,7 +178,6 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         if (SelectedProject is not { } project) return;
         EntityEditorHelper.DeleteEntity(SelectedJourney, project.Model.Journeys, project.Journeys,
             () => SelectedJourney = null);
-        RefreshProjectRuntimeSnapshot();
     }
 
     private bool CanDeleteJourney() => SelectedJourney != null;
@@ -259,13 +253,6 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         journey.Model.Stations.Add(new Station { Name = name, IsExitOnLeft = false });
         journey.RefreshStations();
         SelectedStation = journey.Stations.LastOrDefault();
-    }
-
-    private void RefreshProjectRuntimeSnapshot()
-    {
-        if (SelectedProject is { } project)
-            _runtimeConnection.UpdateProjectAsync(project.Model)
-                .Observe(ex => LogOperationFailed(_logger, "Update project runtime", ex));
     }
 
     private void PersistLayoutState(Action<LayoutSettings> apply)
