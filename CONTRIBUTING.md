@@ -77,7 +77,7 @@ change with no observable difference in behavior. Do not force tests to reject e
 
 ### Mutation testing with Stryker
 
-The active test groups are `Domain` and `Common`. Their test projects include the same files as
+The active test groups are `Domain`, `Common` and `Speech.Base`. Their test projects include the same files as
 the regular test suite; new tests under `Test/Domain/` and `Test/Common/` are included automatically.
 The Common group also runs the existing Backend tests `Recording*.cs` and
 `MultiplexerCommandResolverTests.cs` to verify shared Common contracts, and
@@ -85,6 +85,12 @@ The Common group also runs the existing Backend tests `Recording*.cs` and
 It runs on Windows in CI because existing tests also cover Windows-specific photo paths.
 The Common configuration limits parallel Stryker test processes to four.
 This does not yet enable mutation testing of Backend production code.
+The portable Speech.Base group runs `AudioCacheTests.cs`, `CachedSpeechOutputTests.cs`,
+`SpeechOutputTests.cs` and `WaveAudioTests.cs` against the entire `Speech.Base` assembly.
+It runs on Linux in every code-relevant PR, using fake providers and players rather than
+real speech engines or audio devices. Stryker concurrency is limited to four test processes.
+Windows-only host integration cases stay in the ordinary Windows suite; Piper and SystemSpeech
+production code remain separate planned lanes.
 Other groups are still marked as planned in [mutation-lanes.json](MutationTest/mutation-lanes.json)
 and are not currently protected by Stryker.
 
@@ -95,6 +101,7 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 # Each output directory must be new. Choose a different path for a later run.
 ./scripts/Invoke-MutationLane.ps1 -LaneName domain -OutputPath artifacts/mutation/domain-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName common -OutputPath artifacts/mutation/common-local
+./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
 ```
 
 A mutation score is valid only with a passing ordinary test baseline. The same runner is used
@@ -106,8 +113,10 @@ Missing files, filters, stale reports and unexecuted mutations fail the job. A t
 cover a particular mutant is not forced to run against it; Stryker keeps its coverage-based selection.
 See [Build Performance](docs/BUILD-PERFORMANCE.md#active-mutation-lanes) for job selection.
 The quality pipeline runs selected groups and archives the HTML/JSON reports. The minimum scores
-are 90% for `Domain` and initially 63% for `Common`. The Common threshold is a baseline safeguard,
-not a quality target: close meaningful gaps first, then raise the threshold as results improve.
+are 90% for `Domain`, initially 65% for `Speech.Base` and 63% for `Common`. The Speech.Base and
+Common thresholds are baseline safeguards, not quality targets: close meaningful gaps first,
+then raise the thresholds as results improve. Surviving mutations, including scheduling-only
+`ConfigureAwait` changes, remain in the report and score; the lane does not hide them with exclusions.
 Extending coverage to the rest of the solution remains separate, unfinished work.
 
 Run Stryker and regular `dotnet build`/`dotnet test` commands sequentially in the same worktree.

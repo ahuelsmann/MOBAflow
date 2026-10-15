@@ -157,14 +157,14 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main` and manual runs classify all scopes as enabled. Other PR changes enable
-desktop, display and Common mutation jobs; Domain mutation and ESP32 firmware
+desktop, display, Common and Speech.Base mutation jobs; Domain mutation and ESP32 firmware
 steps also depend on their input paths. Android runs only with the manual
 `validate_android` input. A skipped check is not evidence that tests ran.
 
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
 when `MOBAdisplay/esp32/` changes or an unknown input path requires them. The
-Common mutation job runs for every code-relevant PR. Domain mutation testing runs when
+Common and Speech.Base mutation jobs run for every code-relevant PR. Domain mutation testing runs when
 `Domain/`, its linked tests and fixture data (`Test/TestFile/`), `MutationTest/`
 or the .NET build configuration change. A path outside the known .NET areas,
 such as a workflow, a script or a new top-level folder, enables both firmware
@@ -232,16 +232,21 @@ test-case filters. Planned lanes remain explicitly outside the mutation guarante
 | --- | --- | --- | --- | --- |
 | Domain | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% | Domain/test/fixture or mutation/build inputs; Linux |
 | Common | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% | Every code-relevant PR; Windows |
+| Speech.Base | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% | Every code-relevant PR; Linux |
 
-Both run on main pushes and manual Quality runs. Common uses Windows because
+All three also run on main pushes and manual Quality runs. Common uses Windows because
 its existing fixtures include Windows-specific photo paths. Its concurrency is
 limited to four test processes. The Common lane includes selected Backend test
 fixtures for Common contracts and `SpeechSettingsTests.cs`; it does not mutate Backend production code.
-Thresholds come from the configuration files; the Common minimum is a baseline
-safeguard, not a target for test quality.
+Speech.Base mutates the entire assembly, including the audio cache, shared synthesis and WAV handling.
+Its four portable Speech fixtures use fake providers/players and four Stryker processes. Windows-only
+host integration cases and the separate Piper/SystemSpeech assemblies are outside this lane.
+Thresholds come from the configuration files; the Common and Speech.Base minimums are baseline
+safeguards, not targets for test quality. Speech.Base keeps scheduling-only `ConfigureAwait`
+mutants visible rather than excluding them to inflate the score.
 
 Run the ordinary tests successfully before interpreting a mutation score. Use
-Windows for a local run of both lanes and stop on any failed command:
+Windows for a local run of all lanes and stop on any failed command:
 
 ```powershell
 dotnet tool restore
@@ -249,9 +254,10 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 # Use new output directories; existing directories are rejected, not deleted.
 ./scripts/Invoke-MutationLane.ps1 -LaneName domain -OutputPath artifacts/mutation/domain-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName common -OutputPath artifacts/mutation/common-local
+./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
 ```
 
-For a Domain-only run on Linux, omit the Common test and Stryker command. Run
+On Linux, run the Domain and Speech.Base lanes; omit the Windows-specific Common lane. Run
 Stryker and ordinary builds/tests sequentially: Stryker recreates shared
 intermediate files. CI uses the same runner, which requires a nonempty, fully passing ordinary-test
 TRX baseline before starting Stryker. It validates the new JSON report's production root, registered

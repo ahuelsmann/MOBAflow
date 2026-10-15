@@ -87,6 +87,28 @@ try {
     [void] (Write-Fixture 'MutationTest/mutation-lanes.json' ($registry | ConvertTo-Json -Depth 8))
     Assert-Fails $laneGuard @{ RepositoryRoot = $fixture; RequireActive = $true } 'only planned is not active' 'only to planned'
 
+    # Activating Speech.Base must include its cache fixture and reference the actual production assembly.
+    [void] (Write-Fixture 'Test/Speech/AudioCacheTests.cs' '[TestFixture] class AudioCacheTests { [Test] void CacheTest() {} }')
+    [void] (Write-Fixture 'Speech.Base/Speech.Base.csproj' '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>')
+    $registry.lanes += @{
+        name = 'speech-base'; status = 'active'; 'test-directories' = @(); 'test-files' = @('Test/Speech/AudioCacheTests.cs');
+        'production-projects' = @('Speech.Base/Speech.Base.csproj'); 'stryker-config' = 'MutationTest/stryker-speech-base-config.json'
+    }
+    [void] (Write-Fixture 'MutationTest/mutation-lanes.json' ($registry | ConvertTo-Json -Depth 8))
+    [void] (Write-Fixture 'MutationTest/stryker-speech-base-config.json' (@{
+        'stryker-config' = @{ project = 'Speech.Base.csproj'; 'test-projects' = @('Speech.csproj');
+            'target-framework' = 'net10.0'; configuration = 'Debug' }
+    } | ConvertTo-Json -Depth 8))
+    $speechProject = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems></PropertyGroup><ItemGroup><ProjectReference Include="../Speech.Base/Speech.Base.csproj" />{0}</ItemGroup></Project>'
+    [void] (Write-Fixture 'MutationTest/Speech.csproj' ($speechProject -f ''))
+    $speechParameters = @{ RepositoryRoot = $fixture; LaneName = 'speech-base' }
+    Assert-Fails $laneGuard $speechParameters 'active Speech.Base host omits AudioCacheTests' 'Registered tests missing'
+    $speechCompile = '<Compile Include="../Test/Speech/AudioCacheTests.cs" />'
+    [void] (Write-Fixture 'MutationTest/Speech.csproj' ($speechProject -f $speechCompile))
+    Assert-Succeeds $laneGuard $speechParameters 'active Speech.Base host includes its cache fixture'
+    [void] (Write-Fixture 'MutationTest/Speech.csproj' (($speechProject -f $speechCompile).Replace('../Speech.Base/Speech.Base.csproj', '../Common/Common.csproj')))
+    Assert-Fails $laneGuard $speechParameters 'Speech.Base host references only Common' 'does not reference'
+
     $started = [datetime]::UtcNow.AddSeconds(-2)
     $passingBaseline = '<TestRun><TestDefinitions><UnitTest><TestMethod className="SettingsTests" name="SettingsTest" /></UnitTest></TestDefinitions><ResultSummary><Counters total="1" executed="1" passed="1" /></ResultSummary></TestRun>'
     $baseline = Write-Fixture 'baseline.trx' $passingBaseline
@@ -154,8 +176,10 @@ try {
     Assert-Fails $runGuard $parameters 'zero tests is not validation' 'Only 0 tests passed'
     Remove-Item -LiteralPath $parameters.ReportPath
     Assert-Fails $runGuard $parameters 'missing mutation report' 'does not exist'
-    Assert-Fails (Join-Path $PSScriptRoot 'Invoke-MutationLane.ps1') @{ LaneName = 'common'; OutputPath = $fixture } `
-        'runner rejects pre-existing outputs' 'already exists'
+    foreach ($lane in @('common', 'domain', 'speech-base')) {
+        Assert-Fails (Join-Path $PSScriptRoot 'Invoke-MutationLane.ps1') @{ LaneName = $lane; OutputPath = $fixture } `
+            "runner accepts $lane but rejects pre-existing outputs" 'already exists'
+    }
     Write-Host "Mutation guard self-tests passed ($checks checks)."
 }
 finally {

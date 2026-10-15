@@ -38,17 +38,77 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
     public async Task IdenticalAnnouncementUsesCacheAndStillPlaysEveryTime()
     {
         var provider = new SpeechOutputTests.FakeProvider("system-speech");
-        var player = new SpeechOutputTests.FakePlayer();
-        var output = CreateOutput(provider, player);
+        var original = provider.Result.WaveAudio.ToArray();
+        var played = new List<byte[]>();
+        var player = new Mock<IWavePlayer>();
+        player.Setup(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
+            .Callback((ReadOnlyMemory<byte> audio, CancellationToken _) => played.Add(audio.ToArray()))
+            .Returns(Task.CompletedTask);
+        var output = CreateOutput(provider, player.Object);
         await using var outputLifetime = output.ConfigureAwait(false);
         await (output.SpeakAsync("Next stop Central.")).ConfigureAwait(false);
-        await (output.SpeakAsync("Next stop Central.")).ConfigureAwait(false);
+        provider.Result = SpeechResult.Success(TestWaveAudio.Create([222]));
+        var cached = await output.SpeakAsync("Next stop Central.").ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(provider.Requests, Has.Count.EqualTo(1));
-            Assert.That(player.PlayCount, Is.EqualTo(2));
+            Assert.That(played, Has.Count.EqualTo(2));
+            Assert.That(played[0], Is.EqualTo(original));
+            Assert.That(played[1], Is.EqualTo(original));
+            Assert.That(cached.WaveAudio.ToArray(), Is.EqualTo(original));
             Assert.That(await (_cache.GetSizeAsync()).ConfigureAwait(false), Is.GreaterThan(0));
         }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task CachedPlaybackSucceedsWhenRecordingThePlaybackFails(bool accessDenied)
+    {
+        var audio = TestWaveAudio.Create([123]);
+        var cache = new Mock<IAudioCache>();
+        cache.Setup(value => value.TryGetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AudioCacheLookup(audio, 0));
+        cache.Setup(value => value.MarkPlayedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(accessDenied ? new UnauthorizedAccessException("Private disk detail") : new IOException("Private disk detail"));
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var player = new SpeechOutputTests.FakePlayer();
+        var output = CreateOutput(provider, player, cache: cache.Object);
+        await using var lifetime = output.ConfigureAwait(false);
+        var result = await output.SpeakAsync("Cached despite metadata failure").ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Reason, Is.Empty);
+            Assert.That(result.WaveAudio.ToArray(), Is.EqualTo(audio));
+            Assert.That(player.PlayCount, Is.EqualTo(1));
+            Assert.That(provider.Requests, Is.Empty);
+        }
+        cache.Verify(value => value.MarkPlayedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        cache.Verify(value => value.StoreAsync(It.IsAny<string>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task SharedSynthesisRechecksTheCacheBeforeCallingTheProvider()
+    {
+        var audio = TestWaveAudio.Create([321]);
+        var cache = new Mock<IAudioCache>();
+        cache.SetupSequence(value => value.TryGetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AudioCacheLookup((ReadOnlyMemory<byte>?)null, 0))
+            .ReturnsAsync(new AudioCacheLookup(audio, 0));
+        var provider = new SpeechOutputTests.FakeProvider("system-speech");
+        var player = new Mock<IWavePlayer>();
+        player.Setup(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var output = CreateOutput(provider, player.Object, cache: cache.Object);
+        await using var lifetime = output.ConfigureAwait(false);
+        var result = await output.SpeakAsync("Stored by another caller").ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.WaveAudio.ToArray(), Is.EqualTo(audio));
+            Assert.That(provider.Requests, Is.Empty);
+        }
+        player.Verify(value => value.PlayAsync(It.Is<ReadOnlyMemory<byte>>(bytes => bytes.ToArray().SequenceEqual(audio)), It.IsAny<CancellationToken>()), Times.Once);
+        cache.Verify(value => value.TryGetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     [Test]

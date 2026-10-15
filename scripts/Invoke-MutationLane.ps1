@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)] [ValidateSet('common', 'domain')] [string] $LaneName,
+    [Parameter(Mandatory)] [ValidateSet('common', 'domain', 'speech-base')] [string] $LaneName,
     [Parameter(Mandatory)] [string] $OutputPath
 )
 

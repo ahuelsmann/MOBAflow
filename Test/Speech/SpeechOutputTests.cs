@@ -111,6 +111,7 @@ internal sealed class SpeechOutputTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.FailureKind, Is.EqualTo(SpeechFailureKind.Unavailable));
+            Assert.That(result.Reason, Is.Not.Empty);
             Assert.That(player.PlayCount, Is.Zero);
         }
     }
@@ -129,6 +130,7 @@ internal sealed class SpeechOutputTests
         {
             Assert.That(failedSynthesis.FailureKind, Is.EqualTo(SpeechFailureKind.Failed));
             Assert.That(failedSynthesis.Reason, Does.Not.Contain("raw SDK detail"));
+            Assert.That(failedSynthesis.Reason, Is.Not.Empty);
         }
         var player = new Mock<IWavePlayer>();
         player.Setup(value => value.PlayAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
@@ -140,6 +142,7 @@ internal sealed class SpeechOutputTests
         {
             Assert.That(failedPlayback.FailureKind, Is.EqualTo(SpeechFailureKind.Failed));
             Assert.That(failedPlayback.Reason, Does.Not.Contain("raw playback detail"));
+            Assert.That(failedPlayback.Reason, Is.Not.Empty);
         }
     }
 
@@ -154,6 +157,7 @@ internal sealed class SpeechOutputTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.FailureKind, Is.EqualTo(SpeechFailureKind.InvalidRequest));
+            Assert.That(result.Reason, Is.Not.Empty);
             Assert.That(provider.Requests, Is.Empty);
             Assert.That(player.PlayCount, Is.Zero);
         }
@@ -168,6 +172,7 @@ internal sealed class SpeechOutputTests
         await using var outputLifetime = output.ConfigureAwait(false);
         var result = await output.SpeakAsync(" ").ConfigureAwait(false);
         Assert.That(result.FailureKind, Is.EqualTo(SpeechFailureKind.InvalidRequest));
+        Assert.That(result.Reason, Is.Not.Empty);
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync().ConfigureAwait(false);
         await Assert.CatchAsync<OperationCanceledException>(() => output.SpeakAsync("Test", cancellation.Token)).ConfigureAwait(false);
@@ -286,6 +291,39 @@ internal sealed class SpeechOutputTests
         }
     }
 #endif
+    [Test]
+    public void SpeechResultsPreserveAudioAndCacheabilityWithoutInventingAFailure()
+    {
+        var audio = TestWaveAudio.Create([123]);
+        var result = SpeechResult.Success(audio);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.FailureKind, Is.Null);
+            Assert.That(result.Reason, Is.Empty);
+            Assert.That(result.WaveAudio.ToArray(), Is.EqualTo(audio));
+            Assert.That(result.IsCacheable, Is.True);
+            Assert.That(SpeechResult.Success(audio, isCacheable: false).IsCacheable, Is.False);
+        }
+        Assert.Throws<ArgumentNullException>(() => SpeechResult.Success(null!));
+    }
+
+    [TestCase(SpeechFailureKind.Unavailable)]
+    [TestCase(SpeechFailureKind.InvalidRequest)]
+    [TestCase(SpeechFailureKind.Failed)]
+    public void FailureResultsNeverContainCacheableAudio(SpeechFailureKind kind)
+    {
+        var result = SpeechResult.Failure(kind, "Speech unavailable.");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.FailureKind, Is.EqualTo(kind));
+            Assert.That(result.Reason, Is.EqualTo("Speech unavailable."));
+            Assert.That(result.WaveAudio.IsEmpty, Is.True);
+            Assert.That(result.IsCacheable, Is.False);
+        }
+    }
+
     internal sealed class FakeProvider(string id) : ISpeechProvider
     {
         public string Id => id;
