@@ -5290,6 +5290,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/TrackLibrary.PikoA/PikoACatalogGeometryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/TrackPlanRenderer/PathToSvgConverterTests.cs",
       "count": 1
     },
