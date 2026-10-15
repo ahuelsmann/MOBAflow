@@ -41,6 +41,75 @@ internal sealed class WaveAudioTests
         BinaryPrimitives.WriteInt32LittleEndian(audio.AsSpan(4, 4), audio.Length - 8);
         Assert.That(WaveAudio.GetDuration(audio), Is.EqualTo(TimeSpan.FromMilliseconds(2)));
     }
+
+    [TestCase(0u, 0)]
+    [TestCase(100u, 12000)]
+    [TestCase(101u, 12000)]
+    [TestCase(uint.MaxValue, 12000)]
+    public void Volume_ClampsWithoutAmplifyingOrChangingTheHeader(uint volume, short expected)
+    {
+        var audio = TestWaveAudio.Create([12000, -12000]);
+        var header = audio.AsSpan(0, 44).ToArray();
+        WaveAudio.ApplyVolume(audio, volume);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(BinaryPrimitives.ReadInt16LittleEndian(audio.AsSpan(44, 2)), Is.EqualTo(expected));
+            Assert.That(BinaryPrimitives.ReadInt16LittleEndian(audio.AsSpan(46, 2)), Is.EqualTo(-expected));
+            Assert.That(audio.AsSpan(0, 44).ToArray(), Is.EqualTo(header));
+        }
+    }
+
+    [TestCase(0)]
+    [TestCase(11)]
+    [TestCase(12)]
+    [TestCase(36)]
+    public void TruncatedAudio_IsRejected(int length)
+    {
+        var audio = TestWaveAudio.Create([1])[..length];
+        Assert.Throws<InvalidDataException>(() => WaveAudio.GetDuration(audio));
+    }
+
+    [TestCase(0)]
+    [TestCase(8)]
+    public void InvalidContainerSignature_IsRejected(int offset)
+    {
+        var audio = TestWaveAudio.Create([1]);
+        audio[offset] = 0;
+        Assert.Throws<InvalidDataException>(() => WaveAudio.GetDuration(audio));
+    }
+
+    [TestCase(20, 3)]
+    [TestCase(28, 0)]
+    [TestCase(28, -1)]
+    [TestCase(32, 0)]
+    public void UnsupportedPcmFormat_IsRejected(int offset, int value)
+    {
+        var audio = TestWaveAudio.Create([1]);
+        if (offset == 28) BinaryPrimitives.WriteInt32LittleEndian(audio.AsSpan(offset, 4), value);
+        else BinaryPrimitives.WriteInt16LittleEndian(audio.AsSpan(offset, 2), (short)value);
+        Assert.Throws<InvalidDataException>(() => WaveAudio.GetDuration(audio));
+    }
+
+    [Test]
+    public void PartialSample_IsRejected()
+    {
+        var audio = TestWaveAudio.Create([1]);
+        BinaryPrimitives.WriteInt32LittleEndian(audio.AsSpan(40, 4), 1);
+        Assert.Throws<InvalidDataException>(() => WaveAudio.GetDuration(audio));
+    }
+
+    [Test]
+    public void EightBitPcm_HasDurationButCannotBeModifiedAsSixteenBitSamples()
+    {
+        var audio = TestWaveAudio.Create([1]);
+        BinaryPrimitives.WriteInt32LittleEndian(audio.AsSpan(28, 4), 1000);
+        BinaryPrimitives.WriteInt16LittleEndian(audio.AsSpan(32, 2), 1);
+        BinaryPrimitives.WriteInt16LittleEndian(audio.AsSpan(34, 2), 8);
+        Assert.That(WaveAudio.GetDuration(audio), Is.EqualTo(TimeSpan.FromMilliseconds(2)));
+        var original = audio.ToArray();
+        Assert.Throws<InvalidDataException>(() => WaveAudio.ApplyVolume(audio, 50));
+        Assert.That(audio, Is.EqualTo(original));
+    }
 }
 
 internal static class TestWaveAudio
