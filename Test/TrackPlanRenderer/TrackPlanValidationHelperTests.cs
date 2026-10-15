@@ -2,6 +2,8 @@
 namespace Moba.Test.TrackPlanRenderer;
 
 using Moba.TrackLibrary.PikoA;
+using Moba.TrackPlan.Editor;
+using Moba.Test.Helpers;
 
 [TestFixture]
 internal class TrackPlanValidationHelperTests
@@ -15,6 +17,7 @@ internal class TrackPlanValidationHelperTests
         var right = new PlacedSegment(new G62(), 61.88, 0, 0);
 
         var inferred = TrackPlanValidationHelper.FindImplicitConnections(
+            TrackPlanTestGeometry.PikoA,
             new[] { left, right },
             Array.Empty<PortConnection>());
 
@@ -36,6 +39,7 @@ internal class TrackPlanValidationHelperTests
         var right = new PlacedSegment(new G62(), 61.88 + 5, 0, 0); // 5 mm gap
 
         var inferred = TrackPlanValidationHelper.FindImplicitConnections(
+            TrackPlanTestGeometry.PikoA,
             new[] { left, right },
             Array.Empty<PortConnection>());
 
@@ -52,6 +56,7 @@ internal class TrackPlanValidationHelperTests
         var right = new PlacedSegment(new G62(), 61.88, 0, 90);
 
         var inferred = TrackPlanValidationHelper.FindImplicitConnections(
+            TrackPlanTestGeometry.PikoA,
             new[] { left, right },
             Array.Empty<PortConnection>());
 
@@ -68,7 +73,7 @@ internal class TrackPlanValidationHelperTests
             new PortConnection(left.Segment.No, "PortB", right.Segment.No, "PortA")
         };
 
-        var inferred = TrackPlanValidationHelper.FindImplicitConnections(new[] { left, right }, existing);
+        var inferred = TrackPlanValidationHelper.FindImplicitConnections(TrackPlanTestGeometry.PikoA, new[] { left, right }, existing);
 
         Assert.That(inferred, Is.Empty);
     }
@@ -80,15 +85,15 @@ internal class TrackPlanValidationHelperTests
         plan.AddSegment(new PlacedSegment(new G62(), 0, 0, 0));
         plan.AddSegment(new PlacedSegment(new G62(), 61.88, 0, 0));
 
-        var beforeAnalysis = TrackPlanValidationHelper.Analyze(plan.Segments, plan.Connections);
+        var beforeAnalysis = TrackPlanValidationHelper.Analyze(TrackPlanTestGeometry.PikoA, plan.Segments, plan.Connections);
         Assert.That(beforeAnalysis.OverlappingPorts, Has.Count.EqualTo(1));
 
-        var healed = plan.HealImplicitConnections();
+        var healed = plan.HealImplicitConnections(TrackPlanTestGeometry.PikoA);
 
         Assert.That(healed, Is.EqualTo(1));
         Assert.That(plan.Connections, Has.Count.EqualTo(1));
 
-        var afterAnalysis = TrackPlanValidationHelper.Analyze(plan.Segments, plan.Connections);
+        var afterAnalysis = TrackPlanValidationHelper.Analyze(TrackPlanTestGeometry.PikoA, plan.Segments, plan.Connections);
         Assert.That(afterAnalysis.OverlappingPorts, Is.Empty);
         Assert.That(afterAnalysis.ConnectedGroups, Has.Count.EqualTo(1));
     }
