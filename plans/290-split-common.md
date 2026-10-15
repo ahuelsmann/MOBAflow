@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/290
 **Spec Kit**: Not applicable - structural refactoring; the only persisted-format change is the internal feature-toggle collection, loaded with defaults per repository policy
-**Status**: Active; plan integrated through #291, slice 1 (display helpers) in review
+**Status**: Active; plan integrated through #291; slice 1 (display helpers) and slice 3 (host-specific and unused types) in review; slice 2 waits for RF-24 slice 6
 
 ## Purpose and scope
 
@@ -37,10 +37,10 @@ Consumers were counted from `using` directives and type references on main `1d45
 | `Display/LedMatrix5x5State` | MOBAflow | `SharedUI` (keeps its tests in the portable suite) |
 | `Configuration/AppSettings.Sections`: `LayoutSettings` and page layout classes, `TabVisibilitySettings`, `FeatureToggleSettings`; `FeatureToggleRegistry`, `SettingsPageLayoutSettings`, `GridSplitterLayoutSettings` (`PageLayoutSettings`, `ColumnState`) | SharedUI ViewModels, MOBAflow views/services, MOBAsmart tab host | `SharedUI` UI settings |
 | `Navigation/IFeatureTogglePageProvider`, `NavigationCategory` | SharedUI, MOBAflow | `SharedUI` (provider contract), MOBAflow (categories) |
-| `Configuration/TrainControlHost`, `TrainControlHostSettings` | SharedUI train control, both hosts | `SharedUI/TrainControl` |
+| `Configuration/TrainControlHost`, `TrainControlHostSettings` | SharedUI train control, both hosts | `SharedUI/TrainControl` (with the settings root in slice 2, because `AppSettings` holds them) |
 | `Configuration/RestApiRecentEndpointHistory`, `Runtime/MobileBackgroundKeepAlivePolicy` | SharedUI | `SharedUI` |
 | `Platform/IPlatformCapability`, `GridSplitterLayoutSettings` class | none | remove |
-| `Z21/Z21BroadcastRequirements` | Backend tests only | Backend (Z21 protocol) |
+| `Z21/Z21BroadcastRequirements` | Backend tests only | remove; duplicates `Z21Protocol.BroadcastFlags` in Backend |
 | `Runtime/*` snapshots, `RemoteRuntimeCommands`, `RuntimeCommandValidator`, `RuntimeHubMethods`, `RuntimeJsonSerializer`, snapshot filter/merge helpers | Backend, SharedUI, MOBAflow, MOBAsmart, MOBApi | contracts project |
 | `Discovery/*` protocol types (`DiscoveryResponseParser`, `MobApiUdpDiscoveryResponder`, endpoint and candidate builders, `MobaApiRuntimeDeployment`, path resolver) | Backend, SharedUI, hosts, MOBApi | contracts project for wire format; host-specific discovery helpers to their owner |
 | `Events`, `Extension`, `IO`, `Path`, `Serilog`, `Validation`, `Recording`, `Multiplex`, neutral `AppSettings` sections | Backend and all hosts | stay in `Common` (re-checked in slice 5) |
@@ -75,12 +75,16 @@ RF-20 architecture rule for the boundary it creates.
 
 1. **Display appearance helpers.** Move all `Common/Display` types to `SharedUI/Appearance`
    (`Moba.SharedUI.Appearance`); architecture rule: `Common` contains no `Display` namespace.
-2. **UI settings and navigation.** Introduce the `SharedUI` settings root, move layout, tab visibility,
-   feature toggles, `FeatureToggleRegistry` and navigation types, replace the per-page toggle properties
-   with the keyed collection and update both `SettingsService` implementations and `WinUiConfigurationBuilder`.
-   Tests: settings round trip on both hosts, missing-key defaults, toggle registry lookup.
-3. **Remaining host-specific and unused types.** Move train-control host settings, REST endpoint history,
-   mobile keep-alive policy and `Z21BroadcastRequirements` to their owners; remove unreferenced types.
+2. **UI settings and navigation.** Starts after RF-24 slice 6 (#219), which centralizes layout persistence
+   in one boundary; moving the layout types earlier would churn the shell partials RF-24 removes.
+   Introduce the `SharedUI` settings root, move layout, tab visibility, feature toggles,
+   `FeatureToggleRegistry`, navigation types and the train-control host settings, replace the per-page
+   toggle properties with the keyed collection and update both `SettingsService` implementations and
+   `WinUiConfigurationBuilder`. Tests: settings round trip on both hosts, missing-key defaults, toggle
+   registry lookup.
+3. **Remaining host-specific and unused types.** Move REST endpoint history and the mobile keep-alive policy
+   to `SharedUI/Mobile`; remove `Z21BroadcastRequirements` (tests use `Z21Protocol.BroadcastFlags`),
+   `IPlatformCapability` and the unused `GridSplitterLayoutSettings` class.
 4. **Contracts project.** Starts after #267 is integrated and #281 is integrated or rebased. Create
    `Contracts`, move runtime and discovery wire types, update project references (MOBApi, Backend, SharedUI,
    hosts, tests, mutation projects, `Moba.slnx`) and the architecture rules for allowed references.
