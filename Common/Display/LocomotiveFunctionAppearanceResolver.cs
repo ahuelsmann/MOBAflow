@@ -92,21 +92,5 @@ public static class LocomotiveFunctionAppearanceResolver
         !string.IsNullOrWhiteSpace(value)
         && value.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
 
-    public static bool IsValidHexColor(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value) || value.Length != 7 || value[0] != '#')
-        {
-            return false;
-        }
-
-        for (var i = 1; i < value.Length; i++)
-        {
-            if (!char.IsAsciiHexDigit(value[i]))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
+    public static bool IsValidHexColor(string? value) => HexColor.IsStoredForm(value);
 }
