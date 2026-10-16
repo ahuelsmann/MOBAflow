@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Editor;
 
-using TrackLibrary.Base;
-
 public static class TrackPlanValidationHelper
 {
     public sealed record OpenPort(Guid SegmentId, string PortName, double X, double Y);
@@ -34,8 +32,7 @@ public static class TrackPlanValidationHelper
         ArgumentNullException.ThrowIfNull(connections);
 
         var openPorts = segments
-            .SelectMany(segment => geometry.GetAllPortWorldPositions(segment)
-                .Where(port => !IsPortConnected(connections, segment.Segment.No, port.PortName))
+            .SelectMany(segment => geometry.GetOpenPortWorldPositions(segment, connections)
                 .Select(port => new OpenPort(segment.Segment.No, port.PortName, port.X, port.Y)))
             .ToList();
 
@@ -90,8 +87,7 @@ public static class TrackPlanValidationHelper
 
         var segmentsById = segments.ToDictionary(s => s.Segment.No);
         var openPorts = segments
-            .SelectMany(segment => geometry.GetAllPortWorldPositions(segment)
-                .Where(port => !IsPortConnected(connections, segment.Segment.No, port.PortName))
+            .SelectMany(segment => geometry.GetOpenPortWorldPositions(segment, connections)
                 .Select(port => (SegmentId: segment.Segment.No, port.PortName, port.X, port.Y)))
             .ToList();
 
@@ -122,8 +118,8 @@ public static class TrackPlanValidationHelper
 
                 var leftAngle = geometry.GetPortOutwardWorldAngleDegrees(segmentsById[left.SegmentId], left.PortName);
                 var rightAngle = geometry.GetPortOutwardWorldAngleDegrees(segmentsById[right.SegmentId], right.PortName);
-                var expectedOpposite = NormalizeAngle(rightAngle + 180);
-                if (AngleDelta(leftAngle, expectedOpposite) > angleToleranceDegrees)
+                var expectedOpposite = SegmentPlacementGeometry.NormalizeAngle(rightAngle + 180);
+                if (SegmentPlacementGeometry.AngleDeltaDegrees(leftAngle, expectedOpposite) > angleToleranceDegrees)
                     continue;
 
                 bestDistance = distance;
@@ -139,21 +135,6 @@ public static class TrackPlanValidationHelper
         }
 
         return result;
-    }
-
-    private static double NormalizeAngle(double degrees)
-    {
-        while (degrees >= 360) degrees -= 360;
-        while (degrees < 0) degrees += 360;
-        return degrees;
-    }
-
-    private static double AngleDelta(double leftDegrees, double rightDegrees)
-    {
-        var delta = NormalizeAngle(leftDegrees - rightDegrees);
-        if (delta > 180)
-            delta = 360 - delta;
-        return Math.Abs(delta);
     }
 
     private static IReadOnlyList<ConnectedGroup> BuildConnectedGroups(SegmentPlacementGeometry geometry, IReadOnlyList<PlacedSegment> segments, IReadOnlyList<PortConnection> connections)
@@ -202,49 +183,9 @@ public static class TrackPlanValidationHelper
         return connection.TargetSegment == segmentId ? connection.SourceSegment : null;
     }
 
-    private static ConnectedGroup CreateGroupBounds(SegmentPlacementGeometry geometry, IReadOnlyCollection<Guid> ids, IReadOnlyDictionary<Guid, PlacedSegment> byId)
+    private static ConnectedGroup CreateGroupBounds(SegmentPlacementGeometry geometry, IReadOnlyCollection<Guid> ids, Dictionary<Guid, PlacedSegment> byId)
     {
-        double minX = double.MaxValue;
-        double minY = double.MaxValue;
-        double maxX = double.MinValue;
-        double maxY = double.MinValue;
-
-        foreach (var id in ids)
-        {
-            var placed = byId[id];
-            var path = geometry.GetPath(placed.Segment);
-            var (localMinX, localMinY, localMaxX, localMaxY) = TrackPathGeometry.GetBounds(path);
-            var angleRad = placed.RotationDegrees * Math.PI / 180;
-            var cos = Math.Cos(angleRad);
-            var sin = Math.Sin(angleRad);
-
-            static double Tx(double ox, double lx, double ly, double cos, double sin) => ox + lx * cos - ly * sin;
-            static double Ty(double oy, double lx, double ly, double cos, double sin) => oy + lx * sin + ly * cos;
-
-            var corners = new[]
-            {
-                (Tx(placed.X, localMinX, localMinY, cos, sin), Ty(placed.Y, localMinX, localMinY, cos, sin)),
-                (Tx(placed.X, localMaxX, localMinY, cos, sin), Ty(placed.Y, localMaxX, localMinY, cos, sin)),
-                (Tx(placed.X, localMinX, localMaxY, cos, sin), Ty(placed.Y, localMinX, localMaxY, cos, sin)),
-                (Tx(placed.X, localMaxX, localMaxY, cos, sin), Ty(placed.Y, localMaxX, localMaxY, cos, sin))
-            };
-
-            foreach (var (x, y) in corners)
-            {
-                minX = Math.Min(minX, x);
-                minY = Math.Min(minY, y);
-                maxX = Math.Max(maxX, x);
-                maxY = Math.Max(maxY, y);
-            }
-        }
-
+        var (minX, minY, maxX, maxY) = geometry.GetContentBounds(ids.Select(id => byId[id]))!.Value;
         return new ConnectedGroup(ids.ToList(), minX, minY, maxX, maxY);
-    }
-
-    private static bool IsPortConnected(IReadOnlyList<PortConnection> connections, Guid segmentId, string portName)
-    {
-        return connections.Any(connection =>
-            (connection.SourceSegment == segmentId && connection.SourcePort == portName)
-            || (connection.TargetSegment == segmentId && connection.TargetPort == portName));
     }
 }
