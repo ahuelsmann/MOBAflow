@@ -5031,7 +5031,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
+      "path": "Test/SharedUI/NullFileServicesTests.cs",
       "count": 1
     },
     {
@@ -5640,13 +5640,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1852",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1852",
       "path": "Test/SharedUI/NullSettingsServiceTests.cs",
       "count": 2
     },
@@ -5753,13 +5746,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
       "path": "Test/MOBAdisplay/DisplayPayloadCodecTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
       "count": 1
     },
     {
@@ -6321,13 +6307,6 @@
       "ruleId": "CA2007",
       "path": "Test/SharedUI/MobileSolutionStoreTests.cs",
       "count": 7
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
-      "count": 13
     },
     {
       "project": "Test",
@@ -6909,13 +6888,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/SharedUI/MobileSolutionContextTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
-      "count": 4
     },
     {
       "project": "Test",
@@ -7622,13 +7594,6 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/MobileSolutionStoreTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
       "count": 1
     },
     {
