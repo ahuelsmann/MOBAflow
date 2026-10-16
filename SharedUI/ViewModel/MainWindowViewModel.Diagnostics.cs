@@ -6,6 +6,7 @@ using Backend.Service.Validation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 /// <summary>
 /// Shell-level, state-based project diagnostics. This is intentionally separate from the continuous
@@ -42,6 +43,24 @@ public sealed partial class MainWindowViewModel
 
     public string DiagnosticsSummary =>
         $"{DiagnosticErrorCount} errors, {DiagnosticWarningCount} warnings, {DiagnosticInformationCount} information";
+
+    /// <summary>Source coverage remains visible even when neutral Information rows are filtered out.</summary>
+    public string LocomotiveUsageCoverageSummary => LocomotivesPage.Usage.CoverageSummary;
+
+    private void InitializeLocomotiveUsageDiagnostics() =>
+        LocomotivesPage.Usage.PropertyChanged += OnLocomotiveUsageChanged;
+
+    private void OnLocomotiveUsageChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName == nameof(LocomotiveTrainUsageViewModel.Diagnostics))
+        {
+            if (LocomotivesPage.Usage.EditedResult is not null)
+                IsDiagnosticsExpanded = true;
+            RefreshProjectDiagnostics();
+        }
+        if (args.PropertyName == nameof(LocomotiveTrainUsageViewModel.CoverageSummary))
+            OnPropertyChanged(nameof(LocomotiveUsageCoverageSummary));
+    }
 
     partial void OnIsDiagnosticsExpandedChanged(bool value)
     {
@@ -80,6 +99,16 @@ public sealed partial class MainWindowViewModel
         // The Z21 assignment depends on the other projects of the solution.
         foreach (var diagnostic in Z21AssignmentDiagnostics.Analyze(SelectedProject?.Model, Solution.Projects))
             ProjectDiagnostics.Add(diagnostic);
+
+        var usage = LocomotivesPage.Usage;
+        foreach (var finding in usage.Diagnostics)
+        {
+            if (ProjectDiagnostics.Any(existing => existing.Id == finding.FindingId))
+                continue;
+            ProjectDiagnostics.Add(ProjectDiagnosticsService.FromLocomotiveTrainReference(finding,
+                finding.Location.Source == Backend.Interface.LocomotiveTrainSource.LoadedRuntimeDefinition
+                    ? usage.RuntimeObservation?.ObservedAtUtc : null));
+        }
 
         OnPropertyChanged(nameof(DiagnosticErrorCount));
         OnPropertyChanged(nameof(DiagnosticWarningCount));

@@ -4,6 +4,7 @@ namespace Moba.Test.MOBAflow;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
+using Moba.Backend.Service.ProjectRuntimes;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
@@ -28,6 +29,21 @@ using Moq;
 [TestFixture]
 internal sealed class MobaWinUiServiceCollectionExtensionsTests
 {
+    [Test]
+    public async Task UsageReaderAndProjection_ResolveTheExistingDesktopOwnerAndSharedPageInstance()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var lifetime = provider.ConfigureAwait(false);
+        var owner = provider.GetRequiredService<ProjectRuntimeHost>();
+        var usage = provider.GetRequiredService<LocomotiveTrainUsageViewModel>();
+
+        Assert.That(provider.GetRequiredService<ILocomotiveTrainRuntimeUsageReader>(), Is.SameAs(owner));
+        Assert.That(provider.GetRequiredService<IProjectRuntimeHost>(), Is.SameAs(owner));
+        Assert.That(provider.GetRequiredService<IProjectRuntimeSnapshots>(), Is.SameAs(owner));
+        Assert.That(provider.GetRequiredService<LocomotivesPageViewModel>().Usage, Is.SameAs(usage));
+        Assert.That(provider.GetRequiredService<MainWindowViewModel>().LocomotivesPage.Usage, Is.SameAs(usage));
+    }
+
     [Test]
     public void AddMobaWinUiPlatformServices_RegistersUiDispatcherAndEventBus()
     {

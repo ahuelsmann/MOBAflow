@@ -34,6 +34,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         LayoutColumnWidthsViewModel layoutColumnWidths,
         LocomotiveManagementViewModel management,
         ILogger<LocomotivesPageViewModel> logger,
+        LocomotiveTrainUsageViewModel usage,
         Action<string> showPhotoInExplorer)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -41,6 +42,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(management);
+        ArgumentNullException.ThrowIfNull(usage);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
@@ -51,6 +53,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         _showPhotoInExplorer = showPhotoInExplorer;
         LayoutColumnWidths = layoutColumnWidths;
         Management = management;
+        Usage = usage;
         _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage.IsListExpanded;
         _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage.IsPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
@@ -61,6 +64,12 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     public LayoutColumnWidthsViewModel LayoutColumnWidths { get; }
 
     public LocomotiveManagementViewModel Management { get; }
+
+    /// <summary>Read-only usage projection shared with the existing Messages area.</summary>
+    public LocomotiveTrainUsageViewModel Usage { get; }
+
+    /// <summary>Shows the current selection's uses without altering Delete or model commands.</summary>
+    public IAsyncRelayCommand ShowUsageCommand => Usage.ShowUsageCommand;
 
     public ProjectViewModel? SelectedProject => _session.SelectedProject;
 
@@ -131,6 +140,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
             _session.TrackChanges(newValue);
         }
         DeleteLocomotiveCommand.NotifyCanExecuteChanged();
+        Usage.SetTarget(SelectedProject?.Model, newValue?.Model.Id);
         RefreshManagement();
     }
 
@@ -193,6 +203,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         if (_disposed)
             return;
         _disposed = true;
+        Usage.Dispose();
         _session.PropertyChanged -= OnSessionPropertyChanged;
         _session.SolutionReplacing -= OnSolutionReplacing;
         // Shutdown may continue off the UI thread: release subscriptions without changing bound state.

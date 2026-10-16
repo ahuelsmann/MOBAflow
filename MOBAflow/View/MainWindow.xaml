@@ -198,7 +198,16 @@
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                 BorderThickness="0,1,0,0">
-                <ListView ItemsSource="{x:Bind ViewModel.VisibleProjectDiagnostics, Mode=OneWay}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock
+                        Margin="8,4"
+                        Text="{x:Bind ViewModel.LocomotiveUsageCoverageSummary, Mode=OneWay}"
+                        TextWrapping="Wrap" />
+                <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.VisibleProjectDiagnostics, Mode=OneWay}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Grid Padding="8,4">
@@ -214,7 +223,8 @@
                                 <TextBlock
                                     Grid.Column="1"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{Binding Source}" />
+                                    Text="{Binding Source}"
+                                    TextWrapping="Wrap" />
                                 <TextBlock
                                     Grid.Column="2"
                                     Text="{Binding Message}"
@@ -223,6 +233,7 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
+                </Grid>
             </Border>
         </Expander>
 

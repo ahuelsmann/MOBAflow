@@ -41,6 +41,24 @@ internal sealed class ProjectRuntimeHostTests
     }
 
     [Test]
+    public async Task UsageRead_RemovalInvalidatesReceipt_AndPreservesOtherSelectedOwner()
+    {
+        var inspected = new Project { Name = "Inspected" };
+        var other = new Project { Name = "Selected" };
+        await _host.LoadAsync([inspected, other]);
+        _host.SelectProject(other.Id);
+        var selected = _host.Selected;
+        var reader = (ILocomotiveTrainRuntimeUsageReader)_host;
+        var observation = await reader.ReadAsync(new(Guid.NewGuid(), inspected, inspected.Id));
+
+        await _host.RemoveAsync(inspected.Id);
+
+        Assert.That(await reader.IsCurrentAsync(observation), Is.EqualTo(LocomotiveTrainObservationValidity.Stale));
+        Assert.That(_host.Selected, Is.SameAs(selected));
+        Assert.That(_host.Runtimes, Has.Count.EqualTo(1));
+    }
+
+    [Test]
     public async Task Load_CreatesOneRuntimePerProject_AndFeedbackReachesOnlyItsProject()
     {
         var station = Project("Station", "192.168.0.111");
@@ -386,7 +404,8 @@ internal sealed class ProjectRuntimeHostTests
             _ => z21.Object);
         await using var registryLifetime = registry.ConfigureAwait(false);
         var host = new ProjectRuntimeHost(
-            new ProjectRuntimeFactory(registry, TestProjectRuntimeHost.CreateServices()), NullLogger<ProjectRuntimeHost>.Instance);
+            new ProjectRuntimeFactory(registry, TestProjectRuntimeHost.CreateServices()), NullLogger<ProjectRuntimeHost>.Instance,
+            new Moba.Backend.Service.Validation.LocomotiveTrainReferenceAnalyzer());
         await using var hostLifetime = host.ConfigureAwait(false);
         var project = Project("Station", "192.0.2.42");
         var locomotive = new Locomotive { DigitalAddress = 12 };

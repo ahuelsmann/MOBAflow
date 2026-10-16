@@ -29,6 +29,77 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
     }
 
     [Test]
+    public async Task UsageMessages_KeepSourcesSeparate_RepairWithoutDuplicates_AndShowCoverageDespiteFiltering()
+    {
+        var project = LocomotiveTrainUsageViewModelTests.CreateProject();
+        var runtimeDefinition = LocomotiveTrainUsageViewModelTests.CreateProject();
+        runtimeDefinition.Id = project.Id;
+        runtimeDefinition.Trains[0].Vehicles[0].VehicleId = project.Locomotives[0].Id;
+        runtimeDefinition.Locomotives.Clear();
+        var reader = LocomotiveTrainUsageViewModelTests.CompleteReader(runtimeDefinition);
+        var service = new ProjectDiagnosticsService(new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()),
+            new InterlockingDefinitionValidator(), new LocomotiveTrainReferenceAnalyzer());
+        var viewModel = CreateViewModel(new Solution { Projects = [project] }, service, reader.Object);
+
+        await viewModel.LocomotivesPage.Usage.QueryAsync(project, project.Locomotives[0].Id);
+        await viewModel.LocomotivesPage.Usage.QueryAsync(project, project.Locomotives[0].Id);
+
+        Assert.That(viewModel.ProjectDiagnostics, Has.Count.EqualTo(2));
+        Assert.That(viewModel.DiagnosticErrorCount, Is.EqualTo(1));
+        Assert.That(viewModel.DiagnosticInformationCount, Is.EqualTo(1));
+        Assert.That(viewModel.ProjectDiagnostics.Select(item => item.Location!.Source).Distinct().Count(), Is.EqualTo(2));
+        viewModel.ShowDiagnosticInformation = false;
+        Assert.That(viewModel.VisibleProjectDiagnostics, Has.Count.EqualTo(1));
+        Assert.That(viewModel.LocomotiveUsageCoverageSummary, Does.Contain("Retained definitions (B): Unknown"));
+        Assert.That(viewModel.LocomotiveUsageCoverageSummary, Does.Contain("Operational use (C): Unknown"));
+
+        runtimeDefinition.Locomotives.Add(new Locomotive { Id = project.Locomotives[0].Id });
+        await viewModel.LocomotivesPage.Usage.QueryAsync(project, project.Locomotives[0].Id);
+        Assert.That(viewModel.DiagnosticErrorCount, Is.Zero);
+        Assert.That(viewModel.ProjectDiagnostics, Has.Count.EqualTo(2));
+        Assert.That(viewModel.VisibleProjectDiagnostics, Is.Empty);
+    }
+
+    [Test]
+    public async Task UsageMessages_FailedRuntimeRefresh_RemovesOldCompleteRows()
+    {
+        var project = LocomotiveTrainUsageViewModelTests.CreateProject();
+        var reader = LocomotiveTrainUsageViewModelTests.CompleteReader(project);
+        var service = new ProjectDiagnosticsService(new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()),
+            new InterlockingDefinitionValidator(), new LocomotiveTrainReferenceAnalyzer());
+        var viewModel = CreateViewModel(new Solution { Projects = [project] }, service, reader.Object);
+        await viewModel.LocomotivesPage.Usage.QueryAsync(project, project.Locomotives[0].Id);
+        Assert.That(viewModel.ProjectDiagnostics, Has.Count.EqualTo(2));
+        reader.Setup(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((LocomotiveTrainUsageRequest request, CancellationToken _) =>
+                LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.QueryFailed));
+
+        await viewModel.LocomotivesPage.Usage.QueryAsync(project, project.Locomotives[0].Id);
+
+        Assert.That(viewModel.ProjectDiagnostics, Has.Count.EqualTo(1));
+        Assert.That(viewModel.ProjectDiagnostics[0].Location!.Source, Is.EqualTo(LocomotiveTrainSource.EditedProjectData));
+        Assert.That(viewModel.LocomotivesPage.Usage.CoverageSummary, Does.Contain("Query failed"));
+    }
+
+    [Test]
+    public void Diagnostics_RepairReplacesMissingReference_WithoutAccumulation()
+    {
+        var missingId = Guid.NewGuid();
+        var project = new Project { Trains = [new Train { Vehicles = [new Vehicle { VehicleId = missingId }] }] };
+        var diagnostics = new ProjectDiagnosticsService(
+            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()), new InterlockingDefinitionValidator(), new LocomotiveTrainReferenceAnalyzer());
+        var viewModel = CreateViewModel(new Solution { Projects = [project] }, diagnostics);
+        viewModel.RefreshProjectDiagnosticsCommand.Execute(null);
+        viewModel.RefreshProjectDiagnosticsCommand.Execute(null);
+
+        Assert.That(viewModel.DiagnosticErrorCount, Is.EqualTo(1));
+        Assert.That(viewModel.ProjectDiagnostics, Has.Count.EqualTo(1));
+        project.Locomotives.Add(new Locomotive { Id = missingId });
+        viewModel.RefreshProjectDiagnosticsCommand.Execute(null);
+        Assert.That(viewModel.ProjectDiagnostics, Is.Empty);
+    }
+
+    [Test]
     public void Diagnostics_CanBeFilteredBySeverity()
     {
         var project = new Project
@@ -46,7 +117,7 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
         };
         var diagnostics = new ProjectDiagnosticsService(
             new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()),
-            new InterlockingDefinitionValidator());
+            new InterlockingDefinitionValidator(), new LocomotiveTrainReferenceAnalyzer());
         var viewModel = CreateViewModel(new Solution { Projects = [project] }, diagnostics);
 
         Assert.Multiple(() =>
@@ -72,7 +143,7 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
         var project = new Project { Name = "Test" };
         var diagnostics = new ProjectDiagnosticsService(
             new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()),
-            new InterlockingDefinitionValidator());
+            new InterlockingDefinitionValidator(), new LocomotiveTrainReferenceAnalyzer());
         var viewModel = CreateViewModel(new Solution { Projects = [project] }, diagnostics);
 
         project.Interlocking.Blocks.Add(CreateBlockWithMissingClearObservation());
@@ -89,7 +160,7 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
     public void ProviderSwitchClearsThePreviousProvidersHealthResult(string previousStatus)
     {
         var diagnostics = new ProjectDiagnosticsService(
-            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()), new InterlockingDefinitionValidator());
+            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()), new InterlockingDefinitionValidator(), new LocomotiveTrainReferenceAnalyzer());
         var viewModel = CreateViewModel(new Solution(), diagnostics);
         viewModel.UpdateHealthStatus(previousStatus);
         viewModel.SettingsPage.SelectedSpeechProviderId = "piper";
@@ -105,7 +176,7 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
     public void UnavailableSpeechIsShownAsACompletedWarningInsteadOfInitializing()
     {
         var diagnostics = new ProjectDiagnosticsService(
-            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()), new InterlockingDefinitionValidator());
+            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()), new InterlockingDefinitionValidator(), new LocomotiveTrainReferenceAnalyzer());
         var viewModel = CreateViewModel(new Solution(), diagnostics);
         viewModel.UpdateHealthStatus("Unavailable");
         using (Assert.EnterMultipleScope())
@@ -126,7 +197,8 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
 
     private MainWindowViewModel CreateViewModel(
         Solution solution,
-        IProjectDiagnosticsService diagnostics)
+        IProjectDiagnosticsService diagnostics,
+        ILocomotiveTrainRuntimeUsageReader? usageReader = null)
     {
         var runtime = new Mock<IMobaRuntime>();
         runtime.SetupGet(candidate => candidate.Current).Returns(MobaRuntimeSnapshot.Empty);
@@ -149,7 +221,7 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
             stationEventBus1,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null, usageReader),
             _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus1),
             locomotiveSession1,
             new Mock<ILogger<MainWindowViewModel>>().Object,

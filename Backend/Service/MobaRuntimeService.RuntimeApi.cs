@@ -30,6 +30,43 @@ public sealed partial class MobaRuntimeService
             new EventId(3, nameof(LogStopLocomotiveFailed)),
             "Setting locomotive {Address} to speed 0 failed");
 
+    internal async Task<LocomotiveTrainRuntimeCapture?> CaptureLocomotiveTrainUsageAsync(
+        ILocomotiveTrainReferenceAnalyzer analyzer, Guid projectId, Guid? locomotiveId, CancellationToken cancellationToken)
+    {
+        await _projectActivationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var context = _activeProjectContext;
+            if (context?.ActiveProject.Id != projectId)
+                return null;
+            var definition = context.ActiveProject;
+            var result = analyzer.Analyze(definition, LocomotiveTrainSource.LoadedRuntimeDefinition, locomotiveId);
+            cancellationToken.ThrowIfCancellationRequested();
+            // Dispose replaces the context without taking the activation semaphore.
+            return ReferenceEquals(_activeProjectContext, context) && ReferenceEquals(context.ActiveProject, definition)
+                ? new(context, definition, result) : null;
+        }
+        finally
+        {
+            _projectActivationLock.Release();
+        }
+    }
+
+    internal async Task<bool> IsLocomotiveTrainUsageCurrentAsync(
+        LocomotiveTrainUsageReceipt receipt, CancellationToken cancellationToken)
+    {
+        await _projectActivationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return ReferenceEquals(_activeProjectContext, receipt.Context)
+                && ReferenceEquals(_activeProjectContext?.ActiveProject, receipt.Definition);
+        }
+        finally
+        {
+            _projectActivationLock.Release();
+        }
+    }
+
     /// <inheritdoc />
     public async Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
@@ -636,3 +673,6 @@ public sealed partial class MobaRuntimeService
         }
     }
 }
+
+internal sealed record LocomotiveTrainRuntimeCapture(
+    ActiveProjectContext Context, Project Definition, LocomotiveTrainReferenceResult Result);

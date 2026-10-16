@@ -21,6 +21,18 @@ using Moba.Speech.Base;
 internal sealed class MobaBackendServiceCollectionExtensionsTests
 {
     [Test]
+    public void UsageAnalyzer_IsShared_WithoutAddingADesktopOwnerReaderToCommonBackend()
+    {
+        using var provider = BuildServiceProvider();
+        var analyzer = provider.GetRequiredService<ILocomotiveTrainReferenceAnalyzer>();
+
+        Assert.That(analyzer, Is.InstanceOf<LocomotiveTrainReferenceAnalyzer>());
+        Assert.That(provider.GetRequiredService<ILocomotiveTrainReferenceAnalyzer>(), Is.SameAs(analyzer));
+        Assert.That(provider.GetService<ILocomotiveTrainRuntimeUsageReader>(), Is.Null);
+        Assert.That(provider.GetService<IProjectRuntimeHost>(), Is.Null);
+    }
+
+    [Test]
     public void AddMobaBackendServices_NullCollection_Throws()
     {
         IServiceCollection? services = null;

@@ -66,6 +66,25 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
     }
 
     [Test]
+    public async Task UsageRead_CannotUseAnOwnersUnrelatedActiveContext()
+    {
+        await using var fixture = new Moba.Test.Helpers.TestProjectRuntimeHost();
+        var project = new Project { Name = "Original context" };
+        await fixture.Host.LoadAsync([project]);
+        var owner = fixture.Host.Get(project.Id)!;
+        var otherContext = new Project { Name = "Another active project" };
+        await owner.Runtime.ActivateProjectAsync(otherContext);
+        var before = owner.Runtime.Current;
+
+        var observation = await ((ILocomotiveTrainRuntimeUsageReader)fixture.Host)
+            .ReadAsync(new(Guid.NewGuid(), project, project.Id));
+
+        Assert.That(observation.LoadedDefinitionCoverage.State, Is.EqualTo(LocomotiveTrainCoverageState.Unknown));
+        Assert.That(observation.LoadedDefinitionCoverage.Reason, Is.EqualTo(LocomotiveTrainCoverageReason.ContextMismatch));
+        Assert.That(owner.Runtime.Current, Is.SameAs(before), "The query must not reactivate the requested editor project.");
+    }
+
+    [Test]
     public async Task ActivateProjectAsync_ClonesProject_PreservingJourneyIds()
     {
         var z21Mock = CreateZ21Mock();

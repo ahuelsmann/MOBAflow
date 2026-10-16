@@ -125,6 +125,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsService = settingsService;
         _dialogService = dialogService;
         _projectDiagnosticsService = projectDiagnosticsService;
+        InitializeLocomotiveUsageDiagnostics();
 
         WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
 
@@ -455,6 +456,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         _isShuttingDown = true;
+        LocomotivesPage.Usage.PropertyChanged -= OnLocomotiveUsageChanged;
         _session.BeginShutdown();
         SettingsPage.PropertyChanged -= OnSettingsPagePropertyChanged;
         SettingsPage.FeedbackPointCountChanged -= OnFeedbackPointCountChanged;

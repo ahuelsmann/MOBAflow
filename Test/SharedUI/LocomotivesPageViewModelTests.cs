@@ -50,7 +50,8 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: _session);
         _explorer = new Mock<Action<string>>();
         _page = new LocomotivesPageViewModel(_session, _io.Object, _persistence.Object,
-            new LayoutColumnWidthsViewModel(), management, NullLogger<LocomotivesPageViewModel>.Instance, _explorer.Object);
+            new LayoutColumnWidthsViewModel(), management, NullLogger<LocomotivesPageViewModel>.Instance,
+            TestRollingStockPages.CreateUsage(_session), _explorer.Object);
     }
 
     [TearDown]
@@ -58,6 +59,25 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     {
         _page.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    [Test]
+    public async Task ShowUsage_ForwardsSelection_WithoutChangingDeleteOrSaving()
+    {
+        _page.AddLocomotiveCommand.Execute(null);
+        var selected = _page.SelectedLocomotive;
+        var deleteEnabled = _page.DeleteLocomotiveCommand.CanExecute(null);
+        _io.Invocations.Clear();
+
+        await _page.ShowUsageCommand.ExecuteAsync(null);
+
+        Assert.That(_page.Usage.EditedResult!.TargetState, Is.EqualTo(LocomotiveTrainTargetState.Exists));
+        Assert.That(_page.SelectedLocomotive, Is.SameAs(selected));
+        Assert.That(_page.DeleteLocomotiveCommand.CanExecute(null), Is.EqualTo(deleteEnabled));
+        _io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
+        _page.SelectedLocomotive = null;
+        Assert.That(_page.ShowUsageCommand.CanExecute(null), Is.False);
+        Assert.That(_page.Usage.Diagnostics, Is.Empty);
     }
 
     [Test]

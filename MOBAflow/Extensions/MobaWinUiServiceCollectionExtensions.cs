@@ -171,6 +171,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<ProjectRuntimeHost>();
         services.AddSingleton<IProjectRuntimeHost>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
         services.AddSingleton<IProjectRuntimeSnapshots>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
+        services.AddSingleton<ILocomotiveTrainRuntimeUsageReader>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
         services.AddSingleton<IMobaRuntime, SelectedProjectRuntime>();
         services.AddSingleton<IInterlockingRuntime, SelectedProjectInterlocking>();
     }
@@ -305,6 +306,7 @@ public static class MobaWinUiServiceCollectionExtensions
 
         services.AddSingleton<LayoutColumnWidthsViewModel>();
         services.AddSingleton<LocomotiveManagementViewModel>();
+        services.AddSingleton<LocomotiveTrainUsageViewModel>();
         services.AddSingleton(sp => new LocomotivesPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<IIoService>(),
@@ -312,6 +314,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<LocomotiveManagementViewModel>(),
             sp.GetRequiredService<ILogger<LocomotivesPageViewModel>>(),
+            sp.GetRequiredService<LocomotiveTrainUsageViewModel>(),
             showPhotoInExplorer: fullPath => System.Diagnostics.Process.Start(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
                 $"/select,\"{fullPath}\"")));
