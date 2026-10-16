@@ -13,8 +13,9 @@ assignment includes the delivery steps below unless explicitly limited.
 
 - Complete assigned work through planning, implementation, named builds/tests, draft PR, independent Claude CLI
   review, correction, current CI/Sonar verification, Ready and squash merge. Ordinary commits, pushes, PR updates,
-  team handovers and review-thread responses/resolution are included. Resolve findings only with evidence or an
-  explicit reason; never dismiss an unresolved defect to unblock integration.
+  team handovers and review-thread responses/resolution are included. Resolve a review finding by fixing it or
+  with evidence that it does not apply. A finding left unfixed needs a fresh independent Claude review that accepts
+  the evidence, or a human decision; the fixer or merger never dismisses it alone to unblock integration.
 - Do not ask again at a technical phase boundary. Requesting a draft as an intermediate deliverable does not
   cancel the standing mandate. Explicit "draft only", "no Ready/merge", pause, read-only restrictions, protected
   worktrees and excluded slices remain binding until the human specifically changes them.
@@ -29,7 +30,7 @@ assignment includes the delivery steps below unless explicitly limited.
 | Owner | Responsibility |
 | --- | --- |
 | Human | Product goals, priorities, material user-experience choices, fundamental architecture changes, new costs/external commitments and authorized practical acceptance |
-| Art Director | Clarify the outcome, coordinate the assigned team, complete planning/implementation, assess the result and hand it over |
+| Art Director | Clarify the outcome, own routine product decisions inside the assigned scope, coordinate the assigned team, complete planning/implementation, assess the result and hand it over |
 | Issue Master | Own final integration, arrange independent Claude reviews and fixes, verify evidence, issue permits and verify squash merges |
 | Head of Quality | Coordinate assigned quality work and advise delivery owners on relevant risks; preserve existing approval and integration ownership |
 | Communications Director | Coordinate assigned communication work and related design questions; preserve existing publication and integration limits |
@@ -64,8 +65,8 @@ mandate; they are not new human authority and cannot override stops.
   Private review is read-only; the reviewer posts no external review/approval/comment. Findings give priority,
   file/line, trigger, consequence and evidence; separate introduced defects from existing debt and preferences.
 - Compare live head/base after review. Changed source or comparison invalidates the snapshot: refresh affected
-  checks and obtain a fresh independent review. Assign confirmed fixes without another human approval. Keep
-  reviewer separate from fixer and merger.
+  checks and obtain a fresh independent review. Assign fixes for review findings without another human approval;
+  unfixed findings follow the standing-authority rule above. Keep reviewer separate from fixer and merger.
 - Resume coordination/fix sessions only when idle and assigned to the same task. Use the installed CLI message
   channel for callbacks, not a second writer resuming the master. The existing channel is
   `codex queue --thread <master-thread-id> --message <text>`. Verify CLI syntax; limit destinations to assigned
@@ -94,9 +95,13 @@ Verified on 2026-10-16 through Claude coordination and a two-turn Codex exchange
 
 The desktop-app conversation has a separate history and is not this CLI address. Do not use its ID, clone it or
 create a substitute. Update this contact definition only after an authorized handover and verified replacement.
-Record the active caller, target ID and open questions in the existing master handover.
+Issue Master's coordination record holds the active caller, target ID and open questions for this conversation.
 
-From the actual MOBAflow checkout on Windows, use the installed executable:
+The Antigravity project allows writes and has no sandbox: `--mode plan` is the only write guard, and the working
+directory bounds what Argon can read and what a mistake can change. Run agy from the caller's own task worktree or
+a clean worktree that no other writer uses, never from the shared checkout or another writer's worktree. Check
+`git status` there after each call and report unexpected changes instead of silently keeping or discarding them.
+On Windows, use the installed executable:
 
 ```powershell
 & "$env:LOCALAPPDATA\agy\bin\agy.exe" `
@@ -113,22 +118,26 @@ The full path also works when the shell's PATH predates installation. On another
 
 - Use only serial synchronous request/response. Prefix messages with `[Von: Codex]` or `[Von: Claude]` and identify
   the originating master in the message. Read
-  `response` and answer `An Codex:` / `An Claude:` questions in the same conversation. Coordinate the active caller
-  with the other masters and Claude before sending, then release the conversation after completion. The Head
-  starts no active callbacks, `claude`/`codex` calls, file inboxes or timers.
-- Keep `--mode plan` and real tool permissions narrow. Do not combine it with `--disable-slash-commands`, use
-  `--continue`, bypass permissions or silently substitute a conversation/model. Prompts and plan mode alone are
-  not enforced read-only boundaries. Allow more than 330 seconds for the outer process and wait without blocking
-  progress communication. After a timeout inspect ongoing execution before retrying; never duplicate a possibly
-  active request.
+  `response` and answer `An Codex:` / `An Claude:` questions in the same conversation. Before sending, register as
+  the active caller in Issue Master's coordination record; release the entry after completion. A caller that
+  cannot confirm it holds the conversation does not send. The Head starts no active callbacks, `claude`/`codex`
+  calls, file inboxes or timers.
+- Always pass `--mode plan`. Do not add `--disable-slash-commands`: agy then warns that plan mode has no effect.
+  Do not use `--continue`, bypass permissions or silently substitute a conversation/model. Prompts and plan mode
+  are not enforced read-only boundaries. Allow more than 330 seconds for the outer process and wait without
+  blocking progress communication. After a timeout inspect ongoing execution before retrying; never duplicate a
+  possibly active request.
 - Verify actual completion, model and response content. Exit zero or aggregate conversation counters alone do not
-  prove delivery of an answer. Supply only relevant context, with exact SHAs/evidence where applicable, and enforce
-  the active secrets-before-read policy in delegated work too. Never send credentials; distinguish observations
-  from assumptions.
+  prove delivery of an answer. Supply only relevant context, with exact SHAs/evidence where applicable.
+  Plan mode limits writes, not reads: Argon reads files in its working directory itself and sends that content to
+  Google. Repository scans do not cover untracked or ignored files, so make sure the working directory holds no
+  local secret-bearing files (for example user configuration, `.env` or key files) or scan them first under the
+  active secrets policy. Never send credentials in prompts; distinguish observations from assumptions.
 - Advice adds no universal review or approval gate and cannot replace tests, required practical acceptance or a
   fresh independent Claude PR review. It grants no new product, app, hardware, publication or merge authority.
-  Preserve the named writer and Issue Master's exclusive integration queue. The Head changes only its own task
-  worktrees/branches and submits assigned implementation as draft PRs.
+  Preserve the named writer and Issue Master's exclusive integration queue. The CLI contact is advisory only:
+  through it the Head does not implement, commit, push or open PRs. Implementation by the Head needs an explicit
+  human assignment, its own task worktree and Issue Master's integration queue.
 
 Sources (checked 2026-10-16): [Antigravity CLI headless mode](https://antigravity.google/docs/cli/headless/) and
 [resume](https://antigravity.google/docs/cli/commands/resume/) document explicit conversation IDs and the headless
@@ -140,11 +149,11 @@ Only Issue Master owns final integration: one active final synchronization/revie
 Independent implementation continues in separate worktrees. Do not refresh all waiting branches whenever `main`
 moves or arm competing automatic merges.
 
-Use existing coordination state, not a second queue. Before final synchronization and merge, secrets-scan/read
-the current state. Issue Master issues a one-use permit for exact PR/head/base and merger session after all
-gates pass. This is internal coordination, not user approval. Workers cannot self-issue/change permits. A null
-permit, mismatched owner/SHA, active stop or unreadable state blocks merge. The file is an agreement, not a
-server-enforced GitHub check.
+Use Issue Master's existing coordination record, not a second queue; it lives outside the repository. Before
+final synchronization and merge, secrets-scan/read its current state. Issue Master records there a one-use permit
+for exact PR/head/base and merger session after all gates pass. This is internal coordination, not user approval.
+Workers cannot self-issue/change permits. A null permit, mismatched owner/SHA, active stop or unreadable record
+blocks merge. The permit is an agreement, not a server-enforced GitHub check.
 
 Immediately before merge, verify live head/base, mergeability, current required checks, current-commit Sonar
 success and zero OPEN/CONFIRMED issues, independent Claude review, threads, real GitHub approval requirements,
