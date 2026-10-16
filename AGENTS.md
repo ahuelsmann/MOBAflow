@@ -24,6 +24,18 @@ on Windows and Linux.
   and any remaining limitation. English UI and commit-message rules do not constrain conversation language.
   Write answers for junior developers: explain unfamiliar terms briefly and make necessary next steps explicit.
 
+## Master coordination and standing mandate
+
+- A human-assigned implementation task includes planning, implementation, validation, a draft PR, independent
+  Claude CLI review, correction of confirmed findings, Ready and squash merge after all current gates pass.
+  Art Director and Issue Master organize these steps without repeated technical approvals. An explicit narrower
+  assignment, pause, no-merge instruction or excluded follow-up remains binding; do not infer new product work.
+- Art Director owns product decisions and delivery; Issue Master owns the single serial final integration queue.
+  They hand work over directly and may exchange task-related messages with their assigned team and Claude CLI
+  in both directions. The user does not relay messages, inspect code or administer PRs.
+- Follow [master coordination](.github/instructions/master-coordination.instructions.md) for ownership,
+  Claude review independence, merge evidence, automation and the decisions that still need the user.
+
 ## Repository policies
 
 - GitHub is the only Git host. Inspect `git remote -v` and branch tracking before synchronizing; use the configured

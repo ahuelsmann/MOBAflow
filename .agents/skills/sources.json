@@ -107,7 +107,7 @@
       "source": "https://github.com/mattpocock/skills/tree/c55ee46073ed923f86ce59a5eb3b6d895095d1b7/skills/engineering/code-review",
       "revision": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
       "license": ".agents/skills/mobaflow-code-review/LICENSE",
-      "localChanges": "Adapted for MOBAflow instructions, scoped validation, native available tools and explicit launch/hardware authorization; removed required delegation/foreign bootstrap and Bash loop dependency."
+      "localChanges": "Adapted for MOBAflow instructions, scoped validation, native available tools and explicit launch/hardware authorization; removed required delegation/foreign bootstrap and Bash loop dependency; routes PR reviews through fresh independent Claude CLI sessions under the shared master mandate."
     },
     {
       "name": "mobaflow-diagnosing-bugs",
