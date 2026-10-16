@@ -2,7 +2,7 @@
 
 **Source Issue**: https://github.com/ahuelsmann/MOBAflow/issues/306
 
-**Status**: Implemented bindings/projection; actual Light/Dark/keyboard app inspection remains open without launch authorization.
+**Status**: Implementation and the authorized focused desktop Light/Dark and keyboard acceptance of existing Messages were completed on product source 8e40f8a5. Actual observations and the broader checks not performed (manual reload/receipt-race, model editing, screen reader, 200-percent system font/DPI, Android/TalkBack and hardware) are recorded in the [quickstart](../quickstart.md).
 
 ## Read interaction
 

@@ -4,7 +4,7 @@
 
 **Input**: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md), [data-model.md](data-model.md), [runtime contract](contracts/runtime-query.md), [presentation contract](contracts/presentation.md), [quickstart.md](quickstart.md).
 
-**Status**: Implementation in progress after the explicit green handoff on 2026-10-16. Ingenieur is the sole author. Product/read-path, platform/DI and full regression checks have executable evidence; independent review, manual acceptance and publication gates remain separately tracked.
+**Status**: Implementation after the explicit green handoff on 2026-10-16 and the authorized focused desktop Light/Dark and keyboard acceptance were completed on product source 8e40f8a5. Ingenieur is the sole author. Actual evidence and the broader checks not performed (manual reload/receipt-race, model editing, screen reader, 200-percent system font/DPI, Android/TalkBack and hardware) are recorded in [quickstart.md](quickstart.md). Current-head CI/Sonar, independent review and final integration remain with Issue Master.
 
 **Tests**: Meaningful regression tests below use NUnit/Moq and existing fakes. No app/hardware launch without separate approval; documentation-only planning checks are distinct from product verification.
 
