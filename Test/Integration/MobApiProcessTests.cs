@@ -152,16 +152,16 @@ internal sealed class MobApiProcessTests
                 ])
                 .Build();
             var probe = new SignalRReconnectProbe(connection);
-            connection.On<string>(RuntimeHubMethods.SnapshotUpdated, snapshot =>
+            connection.On<string>(nameof(IRuntimeHubRemoteCallbacks.SnapshotUpdated), snapshot =>
                 probe._snapshots.Writer.TryWrite(snapshot));
             connection.Reconnected += async _ =>
             {
-                await connection.InvokeAsync(RuntimeHubMethods.RegisterRemote, ClientId, ProjectId.ToString());
+                await connection.InvokeAsync(nameof(IRuntimeHubRemoteMethods.RegisterRemote), ClientId, ProjectId.ToString());
                 probe._reconnected.TrySetResult();
             };
 
             await connection.StartAsync();
-            await connection.InvokeAsync(RuntimeHubMethods.RegisterRemote, ClientId, ProjectId.ToString());
+            await connection.InvokeAsync(nameof(IRuntimeHubRemoteMethods.RegisterRemote), ClientId, ProjectId.ToString());
             return probe;
         }
 
@@ -170,7 +170,7 @@ internal sealed class MobApiProcessTests
 
         public async Task<string> RegisterAndWaitForSnapshotAsync(string expectedSnapshot)
         {
-            await _connection.InvokeAsync(RuntimeHubMethods.RegisterRemote, ClientId, ProjectId.ToString());
+            await _connection.InvokeAsync(nameof(IRuntimeHubRemoteMethods.RegisterRemote), ClientId, ProjectId.ToString());
             return await WaitForSnapshotAsync(expectedSnapshot);
         }
 
