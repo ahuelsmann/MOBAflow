@@ -21,8 +21,8 @@ Counted on main `71830101`; "tests" counts construction sites in `Test/`.
 | Area | Hidden dependency today | Tests | Change |
 | --- | --- | --- | --- |
 | `Backend/Service/WorkflowActionHandlers.cs` (7 handlers) | optional `IWorkflowEffectAdapter`, each falls back to its own `ProductionWorkflowEffectAdapter`; optional loggers | 36 | adapter and logger required; DI registers `ProductionWorkflowEffectAdapter` once |
-| `WorkflowService`, `ActionExecutor`, `AnnouncementService` | optional loggers; optional `ISpeechOutput` | 25 | required; hosts without speech register the existing null speech output |
-| `WorkflowValidator`, `ProjectValidator` | `?? new WorkflowEffectPlanner()`, `?? new WorkflowValidator()` | 11 | required; DI registers both |
+| `WorkflowService`, `ActionExecutor`, `AnnouncementService` | two convenience `WorkflowService` constructors; `ActionExecutor.CreateWithDefaultHandlers`; optional loggers and event bus; optional `ISpeechOutput` | 25 | one constructor each, everything required; hosts without speech register the existing null speech output, so `IsSpeechOutputAvailable` (always true in both hosts) is removed |
+| `WorkflowValidator`, `ProjectValidator` | `?? new WorkflowEffectPlanner()`, `?? new WorkflowValidator()` | 11 | `ProjectValidator` requires `IWorkflowValidator`; `WorkflowValidator` uses the pure planner directly (see design decisions) |
 | `MobaRuntimeService` | two constructors; `?? new` for `InPortCounterService`, `JourneyManagerFactory`, `IZ21EndpointSource`; optional event bus, interlocking runtime, time provider | 9 | one constructor; every collaborator required and created by `ProjectRuntimeFactory`/DI; `_ownsInPortCounters` follows the factory's ownership instead of the fallback |
 | `JourneyManager`, `JourneyManagerDependencies`, `JourneyManagerFactory` | `?? new` for stop transitions, runtime state store, counters, execution coordinator, `ActionExecutionContext`; factory created with `logger: null` | 7 | dependencies record with required members; factory receives them from DI |
 | `PlatformManager` | `?? new ActionExecutionContext { Z21 = z21 }` | 0 | required `ActionExecutionContextFactory` |
@@ -42,6 +42,9 @@ Kept as is: value options with documented defaults (`RecorderOptions`, `Recordin
 
 - **Services versus values.** RF-25 targets services: types with behavior, I/O, time or external effects.
   Immutable option and limit records keep defaults because a default value is not a hidden collaborator.
+  Pure rules without state, I/O or time, such as `WorkflowEffectPlanner`, count as values: the action handlers
+  and `WorkflowValidator` use them directly. `WorkflowService` still receives `IWorkflowEffectPlanner` because
+  runtime tests replace it.
 - **Null objects in the host.** When a host lacks a capability (speech, file pickers on Android), it registers
   the existing null object. Constructors never decide that a capability is missing.
 - **One construction path.** Convenience constructors are removed rather than marked obsolete
