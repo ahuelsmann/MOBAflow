@@ -112,28 +112,24 @@ public static class MobaBackendServiceCollectionExtensions
         });
         services.TryAddSingleton<ActionExecutionContextFactory>();
         services.TryAddSingleton<IMobaRuntime>(sp => new MobaRuntimeService(
-            sp.GetRequiredService<IZ21>(),
-            sp.GetRequiredService<IWorkflowService>(),
-            sp.GetRequiredService<ActionExecutionContextFactory>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<ILogger<MobaRuntimeService>>(),
-            sp.GetService<IEventBus>(),
-            journeyManagerFactory: new JourneyManagerFactory(
-                sp.GetRequiredService<IZ21>(),
-                sp.GetRequiredService<IWorkflowService>(),
-                new JourneyManagerDependencies
-                {
-                    StopTransitionService = sp.GetRequiredService<IJourneyStopTransitionService>(),
-                    RuntimeStateStore = sp.GetRequiredService<IJourneyRuntimeStateStore>(),
-                    TimeProvider = sp.GetRequiredService<TimeProvider>(),
-                    EventBus = sp.GetService<IEventBus>(),
-                    InPortCounterService = sp.GetRequiredService<InPortCounterService>()
-                },
-                sp.GetService<ILogger<JourneyManager>>()),
-            timeProvider: sp.GetRequiredService<TimeProvider>(),
-            interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>(),
-            inPortCounterService: sp.GetRequiredService<InPortCounterService>(),
-            endpointSource: sp.GetService<IZ21EndpointSource>()));
+            new MobaRuntimeServiceDependencies
+            {
+                Z21 = sp.GetRequiredService<IZ21>(),
+                ExecutionContextFactory = sp.GetRequiredService<ActionExecutionContextFactory>(),
+                Settings = sp.GetRequiredService<AppSettings>(),
+                EventBus = sp.GetRequiredService<IEventBus>(),
+                JourneyManagerFactory = new JourneyManagerFactory(
+                    sp.GetRequiredService<IWorkflowService>(),
+                    sp.GetRequiredService<IJourneyStopTransitionService>(),
+                    sp.GetRequiredService<IJourneyRuntimeStateStore>(),
+                    sp.GetRequiredService<IEventBus>(),
+                    sp.GetRequiredService<TimeProvider>(),
+                    sp.GetRequiredService<ILogger<JourneyManager>>()),
+                InterlockingRuntime = sp.GetRequiredService<IInterlockingRuntime>(),
+                InPortCounterService = sp.GetRequiredService<InPortCounterService>(),
+                EndpointSource = sp.GetService<IZ21EndpointSource>()
+            },
+            sp.GetRequiredService<ILogger<MobaRuntimeService>>()));
         services.TryAddSingleton<IRuntimeSnapshotProvider>(sp => sp.GetRequiredService<IMobaRuntime>());
         services.TryAddSingleton<IConnectionRuntime>(sp => sp.GetRequiredService<IMobaRuntime>());
         services.TryAddSingleton<ITrafficMonitor>(sp => sp.GetRequiredService<IMobaRuntime>());

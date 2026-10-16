@@ -67,28 +67,24 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
             ? $"Z21 {Z21ConnectionRegistry.ToKey(project.Z21)} is already used by project '{owner}'"
             : null;
         var runtime = new MobaRuntimeService(
-            z21,
-            workflowService,
-            new ActionExecutionContextFactory(executionContext),
-            shared.Settings,
-            loggers.CreateLogger<MobaRuntimeService>(),
-            bus,
-            journeyManagerFactory: new JourneyManagerFactory(
-                z21,
-                workflowService,
-                new JourneyManagerDependencies
-                {
-                    StopTransitionService = shared.StopTransitionService,
-                    RuntimeStateStore = shared.RuntimeStateStore,
-                    TimeProvider = shared.TimeProvider,
-                    EventBus = bus,
-                    InPortCounterService = counters
-                },
-                loggers.CreateLogger<JourneyManager>()),
-            timeProvider: shared.TimeProvider,
-            interlockingRuntime: interlocking,
-            inPortCounterService: counters,
-            endpointSource: new ProjectZ21EndpointSource(project, unavailableReason));
+            new MobaRuntimeServiceDependencies
+            {
+                Z21 = z21,
+                ExecutionContextFactory = new ActionExecutionContextFactory(executionContext),
+                Settings = shared.Settings,
+                EventBus = bus,
+                JourneyManagerFactory = new JourneyManagerFactory(
+                    workflowService,
+                    shared.StopTransitionService,
+                    shared.RuntimeStateStore,
+                    bus,
+                    shared.TimeProvider,
+                    loggers.CreateLogger<JourneyManager>()),
+                InterlockingRuntime = interlocking,
+                InPortCounterService = counters,
+                EndpointSource = new ProjectZ21EndpointSource(project, unavailableReason)
+            },
+            loggers.CreateLogger<MobaRuntimeService>());
         var whistle = new LocomotiveWhistleAutomationService(
             bus,
             new MobaRuntimeLocomotiveFunctionCommandGateway(runtime),

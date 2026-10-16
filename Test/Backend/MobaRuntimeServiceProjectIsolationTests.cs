@@ -19,8 +19,12 @@ using Moq;
 /// so edits made after activation never leak into the running session and vice versa.
 /// </summary>
 [TestFixture]
-internal sealed class MobaRuntimeServiceProjectIsolationTests
+internal sealed partial class MobaRuntimeServiceProjectIsolationTests : IDisposable
 {
+    private readonly TestRuntimes _runtimes = new();
+
+    public void Dispose() => _runtimes.Dispose();
+
     [TestCase(21105, 21105, true)]
     [TestCase(21105, 21106, true)]
     [TestCase(21106, 21105, true)]
@@ -54,9 +58,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         var selected = new Project { Z21 = { IpAddress = "192.168.0.112" } };
         if (sameProjectId) selected.Id = active.Id;
         var z21 = CreateZ21Mock();
-        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
-            new ActionExecutionContextFactory(new ActionExecutionContext { Z21 = z21.Object }), new AppSettings(), Mock.Of<ILogger<MobaRuntimeService>>(),
-            endpointSource: new ProjectZ21EndpointSource(() => selected));
+        using var runtime = _runtimes.Create(z21.Object, new TestRuntimeOptions { EndpointSource = new ProjectZ21EndpointSource(() => selected) });
         await runtime.ActivateProjectAsync(active).ConfigureAwait(false);
 
         if (automatic) await runtime.StartAsync().ConfigureAwait(false);
@@ -408,27 +410,19 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(
+    private MobaRuntimeService CreateRuntime(
         IZ21 z21,
         IWorkflowService? workflowService = null,
         IEventBus? eventBus = null,
-        IInterlockingRuntime? interlockingRuntime = null)
-    {
-        var loggerMock = new Mock<ILogger<MobaRuntimeService>>();
-
-        return new MobaRuntimeService(
-            z21,
-            workflowService ?? Mock.Of<IWorkflowService>(),
-            new ActionExecutionContext { Z21 = z21 },
-            new AppSettings
-            {
-                // Disable auto-connect during tests to keep behavior deterministic.
-                Counter = new CounterSettings { CountOfFeedbackPoints = 3, UseTimerFilter = false }
-            },
-            loggerMock.Object,
-            eventBus,
-            interlockingRuntime: interlockingRuntime);
-    }
+        IInterlockingRuntime? interlockingRuntime = null) =>
+        _runtimes.Create(z21, new TestRuntimeOptions
+        {
+            WorkflowService = workflowService,
+            // Disable auto-connect during tests to keep behavior deterministic.
+            Settings = new AppSettings { Counter = new CounterSettings { CountOfFeedbackPoints = 3, UseTimerFilter = false } },
+            EventBus = eventBus,
+            InterlockingRuntime = interlockingRuntime
+        });
 
     private static (Mock<IWorkflowService> Service, TaskCompletionSource Started, TaskCompletionSource Cancelled)
         CreateBlockingWorkflowService()

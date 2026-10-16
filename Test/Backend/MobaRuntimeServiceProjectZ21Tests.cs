@@ -1,13 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
-using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
-
-using Microsoft.Extensions.Logging.Abstractions;
 
 using Moq;
 
@@ -18,8 +16,12 @@ using System.Net;
 /// project it runs and never searches the network.
 /// </summary>
 [TestFixture]
-internal sealed class MobaRuntimeServiceProjectZ21Tests
+internal sealed partial class MobaRuntimeServiceProjectZ21Tests : IDisposable
 {
+    private readonly TestRuntimes _runtimes = new();
+
+    public void Dispose() => _runtimes.Dispose();
+
     [Test]
     public async Task StartAsync_ConnectsToTheZ21OfTheActiveProject()
     {
@@ -61,16 +63,5 @@ internal sealed class MobaRuntimeServiceProjectZ21Tests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21)
-    {
-        var workflowMock = new Mock<IWorkflowService>();
-        var contextFactory = new ActionExecutionContextFactory(new ActionExecutionContext { Z21 = z21 });
-        return new MobaRuntimeService(
-            z21,
-            workflowMock.Object,
-            contextFactory,
-            new AppSettings(),
-            NullLogger<MobaRuntimeService>.Instance,
-            new EventBus(NullLogger<EventBus>.Instance));
-    }
+    private MobaRuntimeService CreateRuntime(IZ21 z21) => _runtimes.Create(z21);
 }
