@@ -68,3 +68,7 @@ The explicitly authorized Draft PR must link #306 and report these limits. Befor
 ## Final local gates
 
 Changed-file secrets and line endings passed for all 39 task files. Internal documentation links passed (492 links), Spec Kit PullRequest governance passed and git diff whitespace checks passed. No analyzer-baseline, dependency, configuration or schema file changed. Convergence appended T031/T032 for the two remaining acceptance/publication gaps; no extra product-code task was found.
+
+## Draft publication
+
+[Draft PR #309](https://github.com/ahuelsmann/MOBAflow/pull/309) was created against main 22346a7d523de58a6d97284f4afbace10d0c4969 from implementation commit 0a14bdc52f9d36a866b030859e108d1d271bb494 and attached to the implementation chat. The task branch now tracks its own github branch. GitHub CI/Sonar was pending at publication; no readiness or merge claim is made. Independent reviews remain pending; local self-checks do not substitute for those reviews. T028/T031 and T030/T032 therefore remain open.
