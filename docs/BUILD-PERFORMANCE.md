@@ -242,9 +242,10 @@ test-case filters. Planned lanes remain explicitly outside the mutation guarante
 | speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% |
 <!-- documentation-facts:mutation:end -->
 
-All three also run on main pushes and manual Quality runs. Common uses Windows because
-its existing fixtures include Windows-specific photo paths. Its concurrency is
-limited to four test processes. The Common lane includes selected Backend test
+Domain runs when its inputs change; Common and Speech.Base run for every code-relevant PR.
+All three also run on main pushes and manual Quality runs. Domain and Speech.Base run on
+Linux. Common uses Windows because its existing fixtures include Windows-specific
+photo paths. Its concurrency is limited to four test processes. The Common lane includes selected Backend test
 fixtures for Common contracts and `SpeechSettingsTests.cs`; it does not mutate Backend production code.
 Speech.Base mutates the entire assembly, including the audio cache, shared synthesis and WAV handling.
 Its four portable Speech fixtures use fake providers/players and four Stryker processes. Windows-only

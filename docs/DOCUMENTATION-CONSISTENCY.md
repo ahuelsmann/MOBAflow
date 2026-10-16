@@ -44,8 +44,9 @@ the base branch. Confirm the following before requiring the check:
 ## Boundaries and failure handling
 
 The workflow executes scripts/prompts from the base commit. PR files are only
-data; the model has no execution tools. A separate publishing job receives the
-repository-scoped App token after independent review. That token causes normal
+data and are checked out only for an enabled, trusted same-repository PR; fork
+and untrusted heads never reach the privileged runner. The model has no execution
+tools. A separate publishing job receives the repository-scoped App token after independent review. That token causes normal
 PR workflows to rerun, unlike an ordinary `GITHUB_TOKEN` push.
 
 An update must replace a unique existing passage and quote supplied source

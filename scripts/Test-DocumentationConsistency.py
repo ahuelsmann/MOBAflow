@@ -1,6 +1,8 @@
 """Offline regressions for documentation drift, model output and publication boundaries."""
 
 import json
+import os
+import re
 import subprocess
 import tempfile
 import unittest
@@ -11,7 +13,13 @@ import documentation_consistency as facts
 import run_documentation_consistency as runner
 
 
-class RepositoryFixture(unittest.TestCase):
+CONTROL_ROOT = Path(__file__).resolve().parent.parent
+WORKFLOW = CONTROL_ROOT / ".github/workflows/documentation-consistency.yml"
+
+
+class RepositoryFixture:
+    """Synthetic repository helpers shared by the test cases; this mixin defines no tests."""
+
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
@@ -65,7 +73,7 @@ class RepositoryFixture(unittest.TestCase):
             "content": "# Architecture\n\nThe desktop owner is NewOwner.\n"}]}
 
 
-class FactsTests(RepositoryFixture):
+class FactsTests(RepositoryFixture, unittest.TestCase):
     def test_inventory_uses_references_and_preserves_purpose(self):
         value = facts.package_table(self.root)
         self.assertIn("`SkiaSharp` | `1.0` | `App`", value)
@@ -126,8 +134,22 @@ class FactsTests(RepositoryFixture):
         self.assertFalse(facts.can_autofix(self.root, docs_head))
         self.assertIn("App/Owner.cs", facts.changed_paths(self.root, self.base, docs_head))
 
+    def test_purpose_rows_keep_extra_cells_and_ignore_malformed_rows(self):
+        rows = ("| `Kept` | `1` | `App` | Purpose with | a pipe |\n"
+                "| `Short` | `1` | missing purpose |\n"
+                "| Plain | `1` | `App` | Not a package cell |\n"
+                "| `Tick`ed` | `1` | `App` | Nested backtick |\n")
+        self.assertEqual({"Kept": "Purpose with | a pipe"}, facts.package_purposes(rows))
 
-class ProposalTests(RepositoryFixture):
+    def test_adversarial_purpose_row_is_parsed_in_linear_time(self):
+        # A row that never closes previously caused quadratic regex backtracking.
+        hostile = "| `SkiaSharp` | `1` | " + " |" * 60_000 + "x"
+        self.write(facts.PACKAGE_DOC, "# Notices\n\n" + hostile + "\n")
+        value = facts.package_table(self.root)
+        self.assertIn("New direct dependency", value)
+
+
+class ProposalTests(RepositoryFixture, unittest.TestCase):
     def test_source_grounded_replacement(self):
         changes = facts.validate_proposal(self.bundle(), self.proposal())
         self.assertIn("NewOwner", changes["docs/ARCHITECTURE.md"])
@@ -136,33 +158,56 @@ class ProposalTests(RepositoryFixture):
         self.assertEqual({}, facts.validate_proposal(self.bundle(), {"status": "consistent", "edits": []}))
 
     def test_uncertainty_blocks(self):
+        bundle = self.bundle()
         with self.assertRaisesRegex(ValueError, "could not establish"):
-            facts.validate_proposal(self.bundle(), {"status": "uncertain", "edits": []})
+            facts.validate_proposal(bundle, {"status": "uncertain", "edits": []})
 
     def test_source_quote_must_exist(self):
-        proposal = self.proposal()
+        bundle, proposal = self.bundle(), self.proposal()
         proposal["edits"][0]["evidence"][0]["quote"] = "invented API"
         with self.assertRaisesRegex(ValueError, "Evidence"):
-            facts.validate_proposal(self.bundle(), proposal)
+            facts.validate_proposal(bundle, proposal)
 
     def test_ambiguous_replacement_blocks(self):
-        bundle = self.bundle()
+        bundle, proposal = self.bundle(), self.proposal()
         bundle["documents"]["docs/ARCHITECTURE.md"] += " OldOwner"
         with self.assertRaisesRegex(ValueError, "unique"):
-            facts.validate_proposal(bundle, self.proposal())
+            facts.validate_proposal(bundle, proposal)
 
     def test_code_and_instruction_edits_block(self):
+        bundle = self.bundle()
         for name in ("App/Owner.cs", "AGENTS.md", "../README.md", ".github/workflows/quality.yml", "specs/011-x/spec.md", facts.PACKAGE_DOC):
             proposal = self.proposal()
             proposal["edits"][0]["path"] = name
             with self.subTest(name=name), self.assertRaisesRegex(ValueError, "allowed document"):
-                facts.validate_proposal(self.bundle(), proposal)
+                facts.validate_proposal(bundle, proposal)
 
     def test_generated_region_cannot_be_rewritten(self):
-        bundle = self.bundle()
+        bundle, proposal = self.bundle(), self.proposal()
         bundle["documents"]["docs/ARCHITECTURE.md"] = facts.START.format(name="x") + "\nOldOwner\n" + facts.END.format(name="x")
         with self.assertRaisesRegex(ValueError, "generated facts"):
-            facts.validate_proposal(bundle, self.proposal())
+            facts.validate_proposal(bundle, proposal)
+
+    def test_each_generated_region_is_protected_separately(self):
+        first = facts.START.format(name="a") + "\nA\n" + facts.END.format(name="a")
+        protected = facts.START.format(name="b") + "\nOldOwner\n" + facts.END.format(name="b")
+        second = facts.START.format(name="b") + "\nB\n" + facts.END.format(name="b")
+        bundle, proposal = self.bundle(), self.proposal()
+        bundle["documents"]["docs/ARCHITECTURE.md"] = first + "\nBetween\n" + protected
+        with self.assertRaisesRegex(ValueError, "generated facts"):
+            facts.validate_proposal(bundle, proposal)
+        bundle["documents"]["docs/ARCHITECTURE.md"] = first + "\nOldOwner\n" + second
+        changes = facts.validate_proposal(bundle, proposal)
+        self.assertEqual(first + "\nNewOwner\n" + second, changes["docs/ARCHITECTURE.md"])
+
+    def test_unterminated_markers_are_scanned_in_linear_time(self):
+        # Many unmatched openings previously caused superlinear regex backtracking.
+        hostile = (facts.MARKER_PREFIX + "x:start -->") * 4_000  # Below the document size limit.
+        self.assertEqual([], list(facts.generated_spans(hostile)))
+        bundle, proposal = self.bundle(), self.proposal()
+        bundle["documents"]["docs/ARCHITECTURE.md"] = "OldOwner\n" + hostile
+        changes = facts.validate_proposal(bundle, proposal)
+        self.assertTrue(changes["docs/ARCHITECTURE.md"].startswith("NewOwner\n"))
 
     def test_missing_link_blocks(self):
         with self.assertRaisesRegex(ValueError, "missing/outside"):
@@ -172,7 +217,7 @@ class ProposalTests(RepositoryFixture):
         facts.verify_links(self.root, {"docs/ARCHITECTURE.md": '[API](https://example.invalid)\n```text\n[demo](missing.md)\n```\n'})
 
 
-class BoundaryTests(RepositoryFixture):
+class BoundaryTests(RepositoryFixture, unittest.TestCase):
     def test_model_request_has_no_tools_or_credentials_in_input(self):
         response = {"status": "completed", "output": [{"type": "message", "content": [
             {"type": "output_text", "text": '{"status":"consistent","summary":"ok","edits":[]}'}]}]}
@@ -209,32 +254,34 @@ class BoundaryTests(RepositoryFixture):
         api = unittest.mock.Mock()
         api.call.return_value = {"state": "open", "head": {"sha": "another-head"}, "base": {"sha": self.base}}
         before = facts.text(self.root, "docs/ARCHITECTURE.md")
+        proposal = self.publication(self.base)
         with self.assertRaisesRegex(ValueError, "PR changed"):
-            runner.publish(self.root, self.publication(self.base), "owner/repo", 1, "fixture", api)
+            runner.publish(self.root, proposal, "owner/repo", 1, "fixture", api)
         self.assertEqual(before, facts.text(self.root, "docs/ARCHITECTURE.md"))
 
     def test_fork_blocks_before_writing(self):
         api = unittest.mock.Mock()
         api.call.return_value = {"state": "open", "head": {"sha": self.base, "repo": {"full_name": "fork/repo"}},
                                  "base": {"sha": self.base}, "author_association": "OWNER"}
+        proposal = self.publication(self.base)
         with self.assertRaisesRegex(ValueError, "same-repository"):
-            runner.publish(self.root, self.publication(self.base), "owner/repo", 1, "fixture", api)
+            runner.publish(self.root, proposal, "owner/repo", 1, "fixture", api)
 
     def test_main_branch_publication_blocks(self):
         api = unittest.mock.Mock()
         api.call.return_value = {"state": "open", "head": {"sha": self.base, "repo": {"full_name": "owner/repo"}, "ref": "main"},
                                  "base": {"sha": self.base}, "author_association": "OWNER"}
+        proposal = self.publication(self.base)
         with self.assertRaisesRegex(ValueError, "never main"):
-            runner.publish(self.root, self.publication(self.base), "owner/repo", 1, "fixture", api)
+            runner.publish(self.root, proposal, "owner/repo", 1, "fixture", api)
 
     def test_independent_review_failure_blocks_proposal(self):
         self.regenerate()
         self.write("App/Owner.cs", "public class NewOwner { public int Value; }\n")
         head = self.commit()
-        control = Path(__file__).resolve().parent.parent
         results = iter([self.proposal(), {"status": "inconsistent", "summary": "Wrong ownership", "findings": ["Mismatch"]}])
         with self.assertRaisesRegex(ValueError, "Independent"):
-            runner.assess(self.root, self.base, head, control, {}, model_call=lambda *args: next(results), scanner=lambda _: None)
+            runner.assess(self.root, self.base, head, CONTROL_ROOT, {}, model_call=lambda *args: next(results), scanner=lambda _: None)
 
     def test_independent_review_receives_candidate_without_writer_reasoning(self):
         self.regenerate()
@@ -246,7 +293,7 @@ class BoundaryTests(RepositoryFixture):
             if len(calls) == 1:
                 return self.proposal()
             return {"status": "consistent", "summary": "ok", "findings": []}
-        result = runner.assess(self.root, self.base, head, Path(__file__).resolve().parent.parent, {}, model_call=model, scanner=lambda _: None)
+        result = runner.assess(self.root, self.base, head, CONTROL_ROOT, {}, model_call=model, scanner=lambda _: None)
         self.assertIn("NewOwner", calls[1]["documents"]["docs/ARCHITECTURE.md"])
         self.assertNotIn("summary", calls[1])
         self.assertEqual(1, len(result["changes"]))
@@ -256,9 +303,9 @@ class BoundaryTests(RepositoryFixture):
         self.write("App/Owner.cs", "public class NewOwner { public int Value; }\n")
         head = self.commit()
         model = unittest.mock.Mock()
+        scanner = unittest.mock.Mock(side_effect=ValueError("scanner rejected input"))
         with self.assertRaisesRegex(ValueError, "scanner"):
-            runner.assess(self.root, self.base, head, Path(__file__).resolve().parent.parent, {},
-                          model_call=model, scanner=unittest.mock.Mock(side_effect=ValueError("scanner rejected input")))
+            runner.assess(self.root, self.base, head, CONTROL_ROOT, {}, model_call=model, scanner=scanner)
         model.assert_not_called()
 
     def test_scanner_failure_is_redacted(self):
@@ -300,6 +347,87 @@ class BoundaryTests(RepositoryFixture):
         self.assertNotEqual(head, commit)
         self.assertIn("--force-with-lease=refs/heads/task:" + head, commands[0])
         self.assertNotIn("fixture-secret", " ".join(commands[0]))
+
+
+class EligibilityTests(RepositoryFixture, unittest.TestCase):
+    """The workflow skips the head checkout for these cases, so the subject must stay unused."""
+
+    def pull_request(self, repository="owner/repo", association="OWNER"):
+        return {"head": {"sha": self.base, "repo": {"full_name": repository}}, "base": {"sha": self.base},
+                "author_association": association}
+
+    def event(self):
+        return {"pull_request": {"head": {"sha": self.base}, "base": {"sha": self.base}}}
+
+    def evaluate(self, environment, pr):
+        missing = self.root / "absent-subject"
+        with patch.dict(os.environ, environment, clear=True), patch.object(runner, "assess") as assess:
+            result = runner.assessment_result(missing, CONTROL_ROOT, self.event(), pr, "owner/repo")
+        return result, assess
+
+    def test_inactive_default_does_not_read_the_subject(self):
+        result, assess = self.evaluate({}, self.pull_request())
+        self.assertEqual("neutral", result["conclusion"])
+        assess.assert_not_called()
+
+    def test_fork_and_untrusted_authors_do_not_read_the_subject(self):
+        for pr in (self.pull_request(repository="fork/repo"), self.pull_request(association="CONTRIBUTOR")):
+            with self.subTest(pr=pr):
+                result, assess = self.evaluate({"DOCS_AI_ENABLED": "true"}, pr)
+                self.assertEqual("action_required", result["conclusion"])
+                self.assertEqual([], result["changes"])
+                assess.assert_not_called()
+
+    def test_trusted_pr_without_checked_out_subject_fails_closed(self):
+        environment = {"DOCS_AI_ENABLED": "true", "OPENAI_API_KEY": "fixture", "DOCS_AI_MODEL": "fixture"}
+        missing = self.root / "absent-subject"
+        with patch.dict(os.environ, environment, clear=True):
+            result = runner.assessment_result(missing, CONTROL_ROOT, self.event(), self.pull_request(), "owner/repo")
+        self.assertEqual("failure", result["conclusion"])
+        self.assertFalse(result["changes"])
+
+
+class WorkflowBoundaryTests(unittest.TestCase):
+    """Structural trust-boundary checks of the privileged target-event workflow."""
+
+    TRUSTED_GUARD = ("github.event.pull_request.head.repo.full_name == github.repository",
+                     "contains(fromJSON('[\"OWNER\", \"MEMBER\", \"COLLABORATOR\"]'), github.event.pull_request.author_association)")
+
+    @classmethod
+    def setUpClass(cls):
+        value = WORKFLOW.read_text(encoding="utf-8").replace("\r\n", "\n")
+        cls.steps = re.split(r"\n(?=      - name: )", value)[1:]
+
+    def checkouts(self):
+        return [step for step in self.steps if "uses: actions/checkout@" in step]
+
+    def test_every_checkout_drops_credentials(self):
+        self.assertEqual(4, len(self.checkouts()))
+        for step in self.checkouts():
+            with self.subTest(step=step.splitlines()[0]):
+                self.assertIn("persist-credentials: false", step)
+
+    def test_controls_use_the_trusted_default_checkout(self):
+        controls = [step for step in self.checkouts() if "path: controls" in step]
+        self.assertEqual(2, len(controls))
+        for step in controls:
+            self.assertNotIn("ref:", step)
+
+    def test_pr_heads_are_checked_out_only_for_trusted_same_repository_prs(self):
+        heads = [step for step in self.checkouts() if "github.event.pull_request.head" in step and "path: subject" in step]
+        self.assertEqual(2, len(heads))
+        for step in heads:
+            for guard in self.TRUSTED_GUARD:
+                with self.subTest(step=step.splitlines()[0], guard=guard):
+                    self.assertIn(guard, step)
+        assess = next(step for step in heads if "Check out subject as data" in step)
+        self.assertIn("vars.DOCS_AI_ENABLED == 'true'", assess)
+
+    def test_only_trusted_controls_are_executed(self):
+        commands = [line.strip() for step in self.steps for line in step.splitlines() if "python3" in line]
+        self.assertTrue(commands)
+        for command in commands:
+            self.assertTrue(command.startswith("python3 controls/scripts/"), command)
 
 
 if __name__ == "__main__":

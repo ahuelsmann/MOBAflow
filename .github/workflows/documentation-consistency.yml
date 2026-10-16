@@ -1,6 +1,8 @@
 name: Documentation consistency
 
 # Only base-branch control code executes. PR files are read as data, never imported or run.
+# The default checkout is the base branch; a PR head is fetched as data only for an enabled,
+# trusted same-repository PR. Fork and untrusted heads never reach this privileged runner.
 on:
   pull_request_target:
     branches: [main]
@@ -24,10 +26,13 @@ jobs:
       - name: Check out trusted controls
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
           path: controls
           persist-credentials: false
       - name: Check out subject as data
+        if: >-
+          vars.DOCS_AI_ENABLED == 'true'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -75,7 +80,6 @@ jobs:
       - name: Check out trusted controls
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
           path: controls
           persist-credentials: false
       - name: Load verified assessment
@@ -84,7 +88,10 @@ jobs:
           name: documentation-assessment-${{ github.run_id }}
           path: result
       - name: Check out assessed head for publication
-        if: needs.assess.outputs.publish == 'true'
+        if: >-
+          needs.assess.outputs.publish == 'true'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -102,7 +109,10 @@ jobs:
           tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP" gitleaks
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
       - name: Create repository-scoped writer token
-        if: needs.assess.outputs.publish == 'true'
+        if: >-
+          needs.assess.outputs.publish == 'true'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
         id: writer
         uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
         with:

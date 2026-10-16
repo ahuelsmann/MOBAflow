@@ -191,6 +191,51 @@ def save(path, value):
     path.write_text(json.dumps(value, indent=2), encoding="utf-8")
 
 
+def report(api, event, result_path):
+    result = json.loads(result_path.read_text()) if result_path.exists() else {}
+    conclusion = result.get("conclusion", "failure")
+    message = result.get("summary", "Documentation workflow did not complete; inspect its job log.")
+    api.call("/check-runs", {"name": CHECK_NAME, "head_sha": event["pull_request"]["head"]["sha"],
+             "status": "completed", "conclusion": conclusion,
+             "output": {"title": CHECK_NAME, "summary": message[:60_000]}})
+
+
+def publish_result(root, result_path, repository, number):
+    proposal = json.loads(result_path.read_text())
+    new_head = publish(root, proposal, repository, number, os.environ["DOCS_WRITE_TOKEN"])
+    proposal.update(conclusion="neutral", summary="Documentation updated to " + new_head + "; checks must run on the new head.")
+    save(result_path, proposal)
+
+
+def trusted_assessment(root, control, event, result):
+    head, base = result["head"], result["base"]
+    if head != event["pull_request"]["head"]["sha"] or base != event["pull_request"]["base"]["sha"]:
+        raise ValueError("Event is stale; rerun against the current PR head/base")
+    check_configuration(os.environ)
+    result.update(assess(root, base, head, control, os.environ))
+    if not result["changes"]:
+        result.update(conclusion="success", summary="Deterministic facts and independent semantic documentation review passed.")
+    elif not result["autofix"]:
+        raise ValueError("Documentation-only last commit still needs corrections; automatic rewriting is stopped")
+    else:
+        result.update(conclusion="action_required", summary="Verified documentation corrections are ready for publication.")
+
+
+def assessment_result(root, control, event, pr, repository):
+    head, base = pr["head"]["sha"], pr["base"]["sha"]
+    result = {"head": head, "base": base, "changes": [], "conclusion": "failure", "summary": "Assessment did not finish."}
+    try:
+        if os.environ.get("DOCS_AI_ENABLED") != "true":
+            result.update(conclusion="neutral", summary="AI documentation maintenance is not activated. Deterministic facts remain enforced by Quality.")
+        elif pr["head"]["repo"]["full_name"] != repository or pr["author_association"] not in TRUSTED_AUTHORS:
+            result.update(conclusion="action_required", summary="A maintainer must review documentation for this fork or untrusted PR; no AI credentials or writes were used.")
+        else:
+            trusted_assessment(root, control, event, result)
+    except (ValueError, RuntimeError, OSError, KeyError, subprocess.CalledProcessError) as error:
+        result.update(conclusion="failure", summary=str(error)[:1000])
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=("assess", "publish", "report"))
@@ -203,40 +248,13 @@ def main():
     repository = os.environ["GITHUB_REPOSITORY"]
     api = GitHub(repository, os.environ["GITHUB_TOKEN"])
     pr = api.call("/pulls/" + str(number))
-    head, base = pr["head"]["sha"], pr["base"]["sha"]
     if args.mode == "report":
-        result = json.loads(args.result.read_text()) if args.result.exists() else {}
-        conclusion = result.get("conclusion", "failure")
-        message = result.get("summary", "Documentation workflow did not complete; inspect its job log.")
-        api.call("/check-runs", {"name": CHECK_NAME, "head_sha": event["pull_request"]["head"]["sha"],
-                 "status": "completed", "conclusion": conclusion,
-                 "output": {"title": CHECK_NAME, "summary": message[:60_000]}})
+        report(api, event, args.result)
         return
     if args.mode == "publish":
-        proposal = json.loads(args.result.read_text())
-        new_head = publish(args.root, proposal, repository, number, os.environ["DOCS_WRITE_TOKEN"])
-        proposal.update(conclusion="neutral", summary="Documentation updated to " + new_head + "; checks must run on the new head.")
-        save(args.result, proposal)
+        publish_result(args.root, args.result, repository, number)
         return
-    result = {"head": head, "base": base, "changes": [], "conclusion": "failure", "summary": "Assessment did not finish."}
-    try:
-        if os.environ.get("DOCS_AI_ENABLED") != "true":
-            result.update(conclusion="neutral", summary="AI documentation maintenance is not activated. Deterministic facts remain enforced by Quality.")
-        elif pr["head"]["repo"]["full_name"] != repository or pr["author_association"] not in TRUSTED_AUTHORS:
-            result.update(conclusion="action_required", summary="A maintainer must review documentation for this fork or untrusted PR; no AI credentials or writes were used.")
-        else:
-            if head != event["pull_request"]["head"]["sha"] or base != event["pull_request"]["base"]["sha"]:
-                raise ValueError("Event is stale; rerun against the current PR head/base")
-            check_configuration(os.environ)
-            result.update(assess(args.root, base, head, args.control, os.environ))
-            if result["changes"]:
-                if not result["autofix"]:
-                    raise ValueError("Documentation-only last commit still needs corrections; automatic rewriting is stopped")
-                result.update(conclusion="action_required", summary="Verified documentation corrections are ready for publication.")
-            else:
-                result.update(conclusion="success", summary="Deterministic facts and independent semantic documentation review passed.")
-    except (ValueError, RuntimeError, OSError, KeyError, subprocess.CalledProcessError) as error:
-        result.update(conclusion="failure", summary=str(error)[:1000])
+    result = assessment_result(args.root, args.control, event, pr, repository)
     save(args.result, result)
     with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
         output.write("publish=" + str(bool(result["changes"]) and result["conclusion"] == "action_required").lower() + "\n")

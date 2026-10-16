@@ -10,8 +10,12 @@ from pathlib import Path, PurePosixPath
 
 PACKAGE_DOC = "docs/THIRD-PARTY-NOTICES.md"
 MUTATION_DOC = "docs/BUILD-PERFORMANCE.md"
-START = "<!-- documentation-facts:{name}:start -->"
-END = "<!-- documentation-facts:{name}:end -->"
+PACKAGE_CATALOG = "Directory.Packages.props"
+MUTATION_REGISTRY = "MutationTest/mutation-lanes.json"
+PROJECT_SUFFIX = ".csproj"
+MARKER_PREFIX = "<!-- documentation-facts:"
+START = MARKER_PREFIX + "{name}:start -->"
+END = MARKER_PREFIX + "{name}:end -->"
 MAX_CONTEXT_BYTES = 1_000_000
 MAX_DOCUMENT_BYTES = 200_000
 
@@ -78,12 +82,15 @@ def replace_region(value, name, replacement, table_header):
     return value[:location] + start + "\n" + replacement.rstrip() + "\n" + end + "\n" + tail[table.end():]
 
 
-def package_table(root):
-    versions = {item.attrib["Include"]: item.attrib["Version"]
-                for item in xml(root, "Directory.Packages.props").iter("PackageVersion")}
+def central_versions(root):
+    return {item.attrib["Include"]: item.attrib["Version"]
+            for item in xml(root, PACKAGE_CATALOG).iter("PackageVersion")}
+
+
+def package_references(root, versions):
     references = {}
     for name in tracked(root):
-        if not (name.endswith(".csproj") or name in ("Directory.Build.props", "Directory.Build.targets")):
+        if not (name.endswith(PROJECT_SUFFIX) or name in ("Directory.Build.props", "Directory.Build.targets")):
             continue
         for item in xml(root, name).iter("PackageReference"):
             package = item.attrib.get("Include")
@@ -91,11 +98,34 @@ def package_table(root):
                 continue  # Update changes metadata on an existing reference.
             if package not in versions:
                 raise ValueError("Package lacks a central version: " + package)
-            scope = str(PurePosixPath(name).parent) if name.endswith(".csproj") else "Build-wide via `" + name + "`"
+            scope = str(PurePosixPath(name).parent) if name.endswith(PROJECT_SUFFIX) else "Build-wide via `" + name + "`"
             references.setdefault(package, set()).add(scope)
-    value = text(root, PACKAGE_DOC)
-    purposes = {match[0]: match[1] for match in re.findall(
-        r"^\| `([^`]+)` \| `[^`]+` \| [^\n]*? \| ([^\n]+) \|$", value, re.M)}
+    return references
+
+
+def code_cell(cell):
+    """Return the value of a single inline-code table cell, or None."""
+    if len(cell) < 3 or not cell.startswith("`") or not cell.endswith("`") or "`" in cell[1:-1]:
+        return None
+    return cell[1:-1]
+
+
+def package_purposes(value):
+    # Split rows linearly: package, version, usage, then the purpose with any remaining cells.
+    purposes = {}
+    for line in value.split("\n"):
+        if not line.startswith("| ") or not line.endswith(" |"):
+            continue
+        cells = line[2:-2].split(" | ", 3)
+        if len(cells) == 4 and code_cell(cells[0]) and code_cell(cells[1]) and cells[3]:
+            purposes[code_cell(cells[0])] = cells[3]
+    return purposes
+
+
+def package_table(root):
+    versions = central_versions(root)
+    references = package_references(root, versions)
+    purposes = package_purposes(text(root, PACKAGE_DOC))
     rows = ["| Package | Version | Directly referenced in | Purpose |", "| --- | --- | --- | --- |"]
     for package in sorted(references, key=str.casefold):
         scope = ", ".join(item if item.startswith("Build-wide") else "`" + item + "`"
@@ -106,7 +136,7 @@ def package_table(root):
 
 
 def mutation_table(root):
-    lanes = json.loads(text(root, "MutationTest/mutation-lanes.json"))["lanes"]
+    lanes = json.loads(text(root, MUTATION_REGISTRY))["lanes"]
     configurations = [(name, json.loads(text(root, name))["stryker-config"])
                       for name in tracked(root) if re.fullmatch(r"MutationTest/stryker[^/]*\.json", name)]
     rows = ["| Active lane | Production project | Test project | Stryker configuration | Break threshold |",
@@ -137,8 +167,7 @@ def fact_updates(root):
         if updated != previous:
             changes[name] = updated
     # Native-component rows repeat central package versions outside the direct inventory.
-    versions = {item.attrib["Include"]: item.attrib["Version"]
-                for item in xml(root, "Directory.Packages.props").iter("PackageVersion")}
+    versions = central_versions(root)
     notices = changes.get(PACKAGE_DOC, text(root, PACKAGE_DOC))
     for package in ("SkiaSharp", "Microsoft.WindowsAppSDK", "Microsoft.Graphics.Win2D", "Xamarin.AndroidX.Startup.StartupRuntime"):
         notices = re.sub(r"`" + re.escape(package) + r" [^`]+` in `Directory.Packages.props`",
@@ -170,7 +199,7 @@ def can_autofix(root, head):
 
 def source_file(name):
     return name.endswith((".cs", ".csproj", ".props", ".targets", ".xaml", ".py", ".ps1", ".yml", ".yaml", ".ini", ".cpp", ".h", ".hpp", ".c")) or name in (
-        "global.json", "MutationTest/mutation-lanes.json", "MutationTest/stryker-config.json", "MutationTest/stryker-common-config.json",
+        "global.json", MUTATION_REGISTRY, "MutationTest/stryker-config.json", "MutationTest/stryker-common-config.json",
         "MutationTest/stryker-speech-base-config.json")
 
 
@@ -185,8 +214,8 @@ def context(root, base, head):
         "Backend/Protocol/Z21Protocol.cs", "Backend/Interface/IMobaRuntime.cs",
         "Backend/Service/ProjectRuntimes/ProjectRuntimeHost.cs",
         "SharedUI/Interface/IRuntimeCommandGateway.cs", ".github/workflows/quality.yml",
-        "scripts/Get-QualityChangeScope.ps1", "Directory.Packages.props",
-        "MutationTest/mutation-lanes.json", "MutationTest/stryker-config.json",
+        "scripts/Get-QualityChangeScope.ps1", PACKAGE_CATALOG,
+        MUTATION_REGISTRY, "MutationTest/stryker-config.json",
         "MutationTest/stryker-common-config.json", "MutationTest/stryker-speech-base-config.json",
     }
     # Include callers, interfaces and tests mentioning a changed source type/file stem.
@@ -208,37 +237,68 @@ def context(root, base, head):
     return bundle
 
 
-def validate_proposal(bundle, proposal):
+def generated_spans(value):
+    """Yield (start, end) of each marker-delimited generated region with linear string searches."""
+    position = 0
+    while True:
+        start = value.find(MARKER_PREFIX, position)
+        if start < 0:
+            return
+        opened = value.find(":start -->", start + len(MARKER_PREFIX))
+        if opened < 0:
+            return
+        closing = value.find(MARKER_PREFIX, opened + len(":start -->"))
+        if closing < 0:
+            return
+        end = value.find(":end -->", closing + len(MARKER_PREFIX))
+        if end < 0:
+            return
+        position = end + len(":end -->")
+        yield start, position
+
+
+def validate_status(proposal):
     if proposal["status"] not in ("consistent", "update_required", "uncertain"):
         raise ValueError("Unknown proposal status")
     if proposal["status"] == "uncertain":
         raise ValueError("AI could not establish documentation consistency")
-    edits = proposal["edits"]
-    if (proposal["status"] == "consistent") != (not edits):
+    if (proposal["status"] == "consistent") != (not proposal["edits"]):
         raise ValueError("Inconsistent proposal status")
+
+
+def validate_evidence(bundle, evidence_items):
+    if not evidence_items:
+        raise ValueError("Edit lacks source evidence")
+    for evidence in evidence_items:
+        source = bundle["sources"].get(evidence["path"], "")
+        if not evidence["quote"].strip() or evidence["quote"] not in source:
+            raise ValueError("Evidence does not match the supplied source")
+
+
+def apply_edit(bundle, documents, edit):
+    name, old, new = edit["path"], edit["old_text"], edit["new_text"]
+    if not editable(name) or name not in documents or not old.strip() or not new.strip():
+        raise ValueError("Proposal must update an existing allowed document")
+    document = documents[name]
+    if old == new or document.count(old) != 1:
+        raise ValueError("Edit must replace one unique passage")
+    validate_evidence(bundle, edit["evidence"])
+    # Generated facts are never controlled by AI, including cross-boundary replacements.
+    location = document.index(old)
+    if any(location < end and location + len(old) > start for start, end in generated_spans(document)):
+        raise ValueError("AI cannot edit generated facts")
+    if MARKER_PREFIX in new:
+        raise ValueError("AI cannot add generated-region markers")
+    documents[name] = document.replace(old, new, 1)
+    if len(documents[name].encode()) > MAX_DOCUMENT_BYTES:
+        raise ValueError("Updated document exceeds the size limit")
+
+
+def validate_proposal(bundle, proposal):
+    validate_status(proposal)
     documents = dict(bundle["documents"])
-    for edit in edits:
-        name, old, new = edit["path"], edit["old_text"], edit["new_text"]
-        if not editable(name) or name not in documents or not old.strip() or not new.strip():
-            raise ValueError("Proposal must update an existing allowed document")
-        if old == new or documents[name].count(old) != 1:
-            raise ValueError("Edit must replace one unique passage")
-        if not edit["evidence"]:
-            raise ValueError("Edit lacks source evidence")
-        for evidence in edit["evidence"]:
-            source = bundle["sources"].get(evidence["path"], "")
-            if not evidence["quote"].strip() or evidence["quote"] not in source:
-                raise ValueError("Evidence does not match the supplied source")
-        # Generated facts are never controlled by AI, including cross-boundary replacements.
-        for match in re.finditer(r"<!-- documentation-facts:.*?:start -->.*?<!-- documentation-facts:.*?:end -->", documents[name], re.S):
-            location = documents[name].index(old)
-            if location < match.end() and location + len(old) > match.start():
-                raise ValueError("AI cannot edit generated facts")
-        if "<!-- documentation-facts:" in new:
-            raise ValueError("AI cannot add generated-region markers")
-        documents[name] = documents[name].replace(old, new, 1)
-        if len(documents[name].encode()) > MAX_DOCUMENT_BYTES:
-            raise ValueError("Updated document exceeds the size limit")
+    for edit in proposal["edits"]:
+        apply_edit(bundle, documents, edit)
     return {name: value for name, value in documents.items() if value != bundle["documents"][name]}
 
 
