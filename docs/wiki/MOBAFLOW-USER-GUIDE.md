@@ -92,7 +92,9 @@ not save, delete, reset or operate the layout.
 The runtime result comes from the existing project's current loaded definition,
 even if that project is disconnected. Its observation time is shown. Missing
 locomotive references are errors; valid uses are neutral information. Choose
-**Show usage** again to refresh this comparison after changing data.
+**Show usage** again to capture a new comparison and observation time. The
+**Refresh** button in **Messages** refreshes project diagnostics but keeps the
+existing usage observation and its time; it does not run **Show usage** again.
 
 The coverage summary remains visible when Information rows are hidden. Normal
 project diagnostics also keep an Unknown coverage status visible independently of
@@ -103,7 +105,8 @@ in this slice**. A zero-reference result applies only to the source just read;
 it is not a claim that the locomotive is unused everywhere or safe to delete.
 Unavailable owners, unsupported remote queries and changed definitions remain
 explicitly unknown. Loading another solution or changing the selection clears
-the previous query.
+the previous query. Model changes also clear it without automatically starting
+another usage query. Choose **Show usage** again to inspect the changed data.
 
 ### Recorder
 
