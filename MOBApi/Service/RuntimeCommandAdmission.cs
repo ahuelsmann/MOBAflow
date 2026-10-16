@@ -2,7 +2,7 @@
 
 namespace Moba.MOBApi.Service;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 /// <summary>
 /// Outcome of admitting a remote runtime command.

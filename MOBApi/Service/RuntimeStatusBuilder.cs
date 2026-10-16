@@ -2,7 +2,7 @@
 
 namespace Moba.MOBApi.Service;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 /// <summary>
 /// Builds runtime sync diagnostics for GET /api/status.

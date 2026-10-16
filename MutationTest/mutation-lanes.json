@@ -39,6 +39,12 @@
       "production-projects": ["Common/Common.csproj"]
     },
     {
+      "name": "contracts",
+      "status": "planned",
+      "test-directories": ["Test/Contracts"],
+      "production-projects": ["Contracts/Contracts.csproj"]
+    },
+    {
       "name": "shared-ui",
       "status": "planned",
       "test-directories": ["Test/SharedUI"],

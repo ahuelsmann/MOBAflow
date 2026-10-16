@@ -1283,17 +1283,17 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/LocomotiveFleetSnapshotComparer.cs",
+      "path": "Contracts/Runtime/LocomotiveFleetSnapshotComparer.cs",
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/SignalBoxSnapshotMerge.cs",
+      "path": "Contracts/Runtime/SignalBoxSnapshotMerge.cs",
       "count": 1
     },
     {
