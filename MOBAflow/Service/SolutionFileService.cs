@@ -308,7 +308,7 @@ internal sealed class SolutionFileService : ISolutionIoService
 
         // Basic check: JSON files should start with '{' or '['
         var trimmed = content.TrimStart();
-        if (!trimmed.StartsWith("{") && !trimmed.StartsWith("["))
+        if (!trimmed.StartsWith('{') && !trimmed.StartsWith('['))
         {
             return $"File does not appear to be valid JSON: {filePath}";
         }

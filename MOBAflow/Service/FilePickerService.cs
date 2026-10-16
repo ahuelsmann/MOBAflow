@@ -10,6 +10,8 @@ using SharedUI.Interface;
 /// </summary>
 internal sealed class FilePickerService(WinUiWindowContext window) : IFilePickerService
 {
+    private const string JsonExtension = ".json";
+
     private readonly WinUiWindowContext _window = window ?? throw new ArgumentNullException(nameof(window));
 
     /// <summary>
@@ -23,7 +25,7 @@ internal sealed class FilePickerService(WinUiWindowContext window) : IFilePicker
             SettingsIdentifier = "MobaJsonPicker",
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             Title = "Select JSON File",
-            FileTypeChoices = { { "JSON Files (*.json)", new List<string> { ".json" } } }
+            FileTypeChoices = { { "JSON Files (*.json)", new List<string> { JsonExtension } } }
         };
 
         var result = await picker.PickSingleFileAsync();
@@ -38,7 +40,7 @@ internal sealed class FilePickerService(WinUiWindowContext window) : IFilePicker
             SettingsIdentifier = "MobaRecordingPicker",
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             Title = "Open MOBAflow Recording",
-            FileTypeChoices = { { "MOBAflow Recording (*.mobarecording.json)", new List<string> { ".json" } } }
+            FileTypeChoices = { { "MOBAflow Recording (*.mobarecording.json)", new List<string> { JsonExtension } } }
         };
 
         var result = await picker.PickSingleFileAsync();
@@ -53,10 +55,10 @@ internal sealed class FilePickerService(WinUiWindowContext window) : IFilePicker
             SettingsIdentifier = "MobaRecordingSaver",
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             SuggestedFileName = $"{suggestedFileName}.mobarecording",
-            DefaultFileExtension = ".json",
+            DefaultFileExtension = JsonExtension,
             ShowOverwritePrompt = true,
             Title = "Save MOBAflow Recording",
-            FileTypeChoices = { { "MOBAflow Recording (*.mobarecording.json)", new List<string> { ".json" } } }
+            FileTypeChoices = { { "MOBAflow Recording (*.mobarecording.json)", new List<string> { JsonExtension } } }
         };
 
         var result = await picker.PickSaveFileAsync();
@@ -73,10 +75,10 @@ internal sealed class FilePickerService(WinUiWindowContext window) : IFilePicker
             SettingsIdentifier = "MobaJsonSaver",
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             SuggestedFileName = suggestedFileName,
-            DefaultFileExtension = ".json",
+            DefaultFileExtension = JsonExtension,
             ShowOverwritePrompt = true,
             Title = "Save JSON File",
-            FileTypeChoices = { { "JSON Files (*.json)", new List<string> { ".json" } } }
+            FileTypeChoices = { { "JSON Files (*.json)", new List<string> { JsonExtension } } }
         };
 
         var result = await picker.PickSaveFileAsync();
