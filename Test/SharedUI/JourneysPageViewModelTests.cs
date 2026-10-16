@@ -312,10 +312,111 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         _page.AddStationCommand.Execute(null);
         var first = _page.SelectedJourney!.Stations[0];
         var last = _page.SelectedStation!;
+        _page.JourneysPageItemClickedCommand.Execute(last);
+        _page.SelectedJourney.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(JourneyViewModel.FilteredStations)) _page.SelectedStation = null;
+        };
         _page.SelectedJourney.MoveStationTo(last, 0);
+        // The drop handler restores list selection after WinUI resets the replaced ItemsSource.
+        _page.SelectedStation = last;
         Assert.That(_page.SelectedJourney.Stations[0], Is.SameAs(last));
         Assert.That(_page.SelectedJourney.Stations[1], Is.SameAs(first));
         Assert.That(SavedProject().Journeys[0].Stations[0].Id, Is.EqualTo(last.Model.Id));
+        Assert.That(_page.JourneysPageSelectedObject, Is.SameAs(last));
+        Assert.That(_page.JourneysPagePropertiesTitle, Is.EqualTo("Station Properties"));
+        ClearInvocations();
+        last.Name = "Reordered station";
+        Assert.That(SavedProject().Journeys[0].Stations[0].Name, Is.EqualTo(last.Name));
+        _runtime.Verify(value => value.UpdateProjectAsync(_page.SelectedProject!.Model, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ClickingAnotherStationTracksOnlyTheCurrentEditor(bool clickBeforeSelection)
+    {
+        _page.AddStationCommand.Execute(null);
+        var next = _page.SelectedStation!;
+        var old = _page.SelectedJourney!.Stations[0];
+        _page.SelectedStation = old;
+        _page.JourneysPageItemClickedCommand.Execute(old);
+        ClearInvocations();
+
+        if (clickBeforeSelection) _page.JourneysPageItemClickedCommand.Execute(next);
+        _page.SelectedStation = next;
+        if (!clickBeforeSelection) _page.JourneysPageItemClickedCommand.Execute(next);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(_page.JourneysPageSelectedObject, Is.SameAs(next));
+        old.Name = "Previous editor";
+        VerifyNoSavesOrRuntimeUpdates();
+        next.Name = "Current editor";
+        Assert.That(SavedProject().Journeys[0].Stations[1].Name, Is.EqualTo(next.Name));
+        _io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Once);
+        _runtime.Verify(value => value.UpdateProjectAsync(_page.SelectedProject!.Model, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void StationSearchPreservesTheOpenPropertiesEditorAndItsAutoSave(bool matchesSearch)
+    {
+        var journey = _page.SelectedJourney!;
+        var station = journey.Stations[0];
+        _page.SelectedStation = station;
+        _page.JourneysPageItemClickedCommand.Execute(station);
+        // Selector.OnItemsSourceChanged clears selection even when the item remains in the new list.
+        // https://github.com/microsoft/microsoft-ui-xaml/blob/8463f45162149de0ec3ad7df752596893fe3e13e/dxaml/xcp/dxaml/lib/Selector_Partial.cpp#L371-L395
+        journey.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(JourneyViewModel.FilteredStations)) _page.SelectedStation = null;
+        };
+        journey.StationSearchText = matchesSearch ? "Central" : "Missing";
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(journey.FilteredStations.Contains(station), Is.EqualTo(matchesSearch));
+        Assert.That(_page.SelectedStation, Is.Null);
+        Assert.That(_page.JourneysPageSelectedObject, Is.SameAs(station));
+        Assert.That(_page.JourneysPagePropertiesTitle, Is.EqualTo("Station Properties"));
+        ClearInvocations();
+        station.Name = "Edited in properties";
+        Assert.That(SavedProject().Journeys[0].Stations[0].Name, Is.EqualTo(station.Name));
+        _runtime.Verify(value => value.UpdateProjectAsync(_page.SelectedProject!.Model, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase("close-editor")]
+    [TestCase("other-properties")]
+    [TestCase("station")]
+    [TestCase("refresh")]
+    [TestCase("journey")]
+    [TestCase("project")]
+    [TestCase("solution")]
+    [TestCase("dispose")]
+    public async Task OpenStationEditorAfterSelectionResetDetachesAtItsOwnershipBoundary(string boundary)
+    {
+        _page.AddStationCommand.Execute(null);
+        var journey = _page.SelectedJourney!;
+        var station = journey.Stations[0];
+        _page.SelectedStation = station;
+        _page.JourneysPageItemClickedCommand.Execute(station);
+        _page.SelectedStation = null;
+        Assert.That(_page.JourneysPageSelectedObject, Is.SameAs(station));
+
+        switch (boundary)
+        {
+            case "close-editor": _page.JourneysPageItemClickedCommand.Execute(null); break;
+            case "other-properties": _page.JourneysPageItemClickedCommand.Execute(journey); break;
+            case "station": _page.SelectedStation = journey.Stations[1]; break;
+            case "refresh": journey.RefreshStations(); break;
+            case "journey": _session.SelectedJourney = _page.SelectedProject!.Journeys[1]; break;
+            case "project": _session.AddProject(new Project { Journeys = [new Journey()] }); break;
+            case "solution": await _session.NewSolutionAsync().ConfigureAwait(false); break;
+            case "dispose": _page.Dispose(); break;
+        }
+
+        if (boundary != "dispose") Assert.That(_page.JourneysPageSelectedObject, Is.Not.SameAs(station));
+        ClearInvocations();
+        station.Name = "Detached properties object";
+        VerifyNoSavesOrRuntimeUpdates();
     }
 
     [Test]

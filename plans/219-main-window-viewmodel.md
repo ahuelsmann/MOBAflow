@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slices 1, 2a, 2b, 2c and 3a integrated through #248, #257, #264, #272 and #282; slice 3b (Journeys/cities) implemented with validation tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main 6e7c6116551b3abae547aa7499d3a861e0f2ca85 on 2026-10-15.
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main fb63e8fde5f6aa299a3f3478560e7277f8661a90 on 2026-10-15.
 
 ## Purpose and scope
 
@@ -196,16 +196,16 @@ Rollback is a revert to the preceding validated slice; do not retain a parallel 
 
 ## Slice 3b local validation (2026-10-15)
 
-The source is synchronized with main `6e7c6116551b3abae547aa7499d3a861e0f2ca85`.
+The source is synchronized with main `fb63e8fde5f6aa299a3f3478560e7277f8661a90`.
 Both full Release test graphs were rebuilt with `-m:1 -t:Rebuild -p:MobaAnalyzerGate=true
 -p:UseSharedCompilation=false`; the Windows graph includes the active WinUI pages and normal
-MOBApi build/copy dependency. The exact analyzer gates match 3,326 diagnostics in 1,150 groups
-(portable) and 2,493 in 953 groups (Windows). The portable baseline only removes or decreases
+MOBApi build/copy dependency. The exact analyzer gates match 3,254 diagnostics in 1,129 groups
+(portable) and 2,471 in 947 groups (Windows). The portable baseline only removes or decreases
 diagnostics made obsolete by extraction; no new diagnostic group or increased count is accepted.
 
-After all builds completed, full Release suites ran sequentially with `--no-build --no-restore`:
-2,760 portable tests passed with no counted skips; 2,874 Windows tests passed with
-no counted skips. The explicit sustained-refresh test is outside the ordinary suites. Nineteen
+Full Release suites ran sequentially from the compiled outputs with `--no-build --no-restore`:
+2,793 portable tests passed with no counted skips; 2,874 Windows tests passed with
+no counted skips. The explicit sustained-refresh test is outside the ordinary suites. 31
 page regression cases extend the existing JourneyCounterProjectionTests fixture; actual-host DI
 also verifies shared editor/session/layout identity, the existing reset-all counter command,
 injected journey-reset routing and shutdown unsubscription. Documentation links (472), instruction
@@ -220,6 +220,15 @@ clicked journey's properties survive its selection notification and old station 
 The project-switch regression also failed before restoring the original notification order:
 the page now publishes the new project/items source before selecting its first journey.
 Programmatic journey switches test clearing both old station and old journey properties.
+
+The station editor regressions follow the [WinUI Selector implementation](https://github.com/microsoft/microsoft-ui-xaml/blob/8463f45162149de0ec3ad7df752596893fe3e13e/dxaml/xcp/dxaml/lib/Selector_Partial.cpp#L371-L395):
+replacing ItemsSource clears list selection. Ten focused reset/editor-lifetime cases failed before
+the fix. A valid open station editor now retains its properties and auto-save ownership through
+search and reordering, including when search hides that station. Selecting a different station,
+closing/replacing the editor, journey/project/solution changes, wrapper replacement and disposal
+detach its subscription.
+Both station-click event orders verify that the old station stops saving and the new one saves
+exactly once. The diagnosis uses source inspection and bounded tests without starting the app.
 
 Portable/Windows checks used the process-local `MSBuildEnableWorkloadResolver=false` property;
 analyzer and XAML gates remain enabled. The existing SDK 10.0.402 workloads are now installed.

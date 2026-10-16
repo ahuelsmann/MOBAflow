@@ -93,9 +93,23 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
 
     partial void OnSelectedStationChanged(StationViewModel? oldValue, StationViewModel? newValue)
     {
-        if (oldValue is not null) _session.UntrackChanges(oldValue);
-        if (ReferenceEquals(JourneysPageSelectedObject, oldValue)) JourneysPageSelectedObject = null;
-        if (newValue is not null && !_disposed) _session.TrackChanges(newValue);
+        if (oldValue is not null && !ReferenceEquals(JourneysPageSelectedObject, oldValue))
+            _session.UntrackChanges(oldValue);
+        if (JourneysPageSelectedObject is StationViewModel propertiesStation
+            && ((newValue is not null && !ReferenceEquals(propertiesStation, newValue))
+                || _observedJourney?.Stations.Contains(propertiesStation) != true))
+            JourneysPageSelectedObject = null;
+        // An ItemsSource reset clears list selection; a valid station editor still owns its subscription.
+        if (newValue is not null && !_disposed && !ReferenceEquals(JourneysPageSelectedObject, newValue))
+            _session.TrackChanges(newValue);
+    }
+
+    partial void OnJourneysPageSelectedObjectChanged(object? oldValue, object? newValue)
+    {
+        if (oldValue is StationViewModel oldStation && !ReferenceEquals(SelectedStation, oldStation))
+            _session.UntrackChanges(oldStation);
+        if (newValue is StationViewModel newStation && !_disposed && !ReferenceEquals(SelectedStation, newStation))
+            _session.TrackChanges(newStation);
     }
 
     private void OnSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -144,6 +158,9 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
 
     private void OnStationsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (JourneysPageSelectedObject is StationViewModel propertiesStation
+            && _observedJourney?.Stations.Contains(propertiesStation) != true)
+            JourneysPageSelectedObject = null;
         if (SelectedStation is { } station && _observedJourney?.Stations.Contains(station) != true)
             SelectedStation = null;
     }
@@ -310,6 +327,8 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         _session.SolutionReplacing -= OnSolutionReplacing;
         if (_observedProject is not null) _observedProject.Journeys.CollectionChanged -= OnJourneysChanged;
         if (_observedJourney is not null) _observedJourney.Stations.CollectionChanged -= OnStationsChanged;
+        if (JourneysPageSelectedObject is StationViewModel propertiesStation && !ReferenceEquals(SelectedStation, propertiesStation))
+            _session.UntrackChanges(propertiesStation);
         if (SelectedStation is { } station) _session.UntrackChanges(station);
     }
 
