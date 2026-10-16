@@ -800,7 +800,7 @@ Mitigation: RF-13/RF-14 gates, command-oriented ViewModels, renderer-neutral pre
 
 Risk: text editing can produce many valid property changes and therefore many file writes; overlapping writes could persist an older snapshot after a newer one or make save status misleading.
 
-Mitigation: validate before mutation, enqueue every accepted change on one ordered non-interactive save boundary, keep `Saving` visible until the newest requested write succeeds, retain `HasUnsavedChanges` on failure or missing path, and test rapid edits with delayed and failing `IIoService` implementations.
+Mitigation: validate before mutation, enqueue every accepted change on one ordered non-interactive save boundary, keep `Saving` visible until the newest requested write succeeds, retain `HasUnsavedChanges` on failure or missing path, and test rapid edits with delayed and failing `ISolutionIoService` implementations.
 
 ### Scope expansion into automation or dispatch
 

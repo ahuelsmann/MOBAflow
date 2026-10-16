@@ -15,12 +15,12 @@ using Sound;
 /// Creates workflow action models and their editor view models.
 /// </summary>
 public sealed class WorkflowActionViewModelFactory(
-    IIoService ioService,
+    IFilePickerService filePicker,
     ISoundPlayer? soundPlayer = null,
     ILogger<CommandViewModel>? commandLogger = null)
 {
     private readonly IReadOnlyDictionary<ActionType, WorkflowActionViewModelDescriptor> _descriptors =
-        WorkflowActionViewModelDescriptors.Create(ioService, soundPlayer, commandLogger);
+        WorkflowActionViewModelDescriptors.Create(filePicker, soundPlayer, commandLogger);
 
     public WorkflowAction CreateDefaultAction(ActionType actionType, uint number)
     {
@@ -73,7 +73,7 @@ internal sealed class WorkflowActionViewModelDescriptor(
 internal static class WorkflowActionViewModelDescriptors
 {
     public static IReadOnlyDictionary<ActionType, WorkflowActionViewModelDescriptor> Create(
-        IIoService ioService,
+        IFilePickerService filePicker,
         ISoundPlayer? soundPlayer,
         ILogger<CommandViewModel>? commandLogger)
     {
@@ -105,7 +105,7 @@ internal static class WorkflowActionViewModelDescriptors
                         FilePath = "sound.wav"
                     }
                 },
-                action => new AudioViewModel(action, ioService, soundPlayer)),
+                action => new AudioViewModel(action, filePicker, soundPlayer)),
             new(
                 ActionType.Command,
                 number => new WorkflowAction
