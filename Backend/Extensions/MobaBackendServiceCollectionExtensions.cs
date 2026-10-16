@@ -82,6 +82,9 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<AnnouncementService>();
         services.TryAddSingleton<IAnnouncementService>(sp => sp.GetRequiredService<AnnouncementService>());
         services.TryAddSingleton<IWorkflowEffectPlanner, WorkflowEffectPlanner>();
+        services.TryAddSingleton<IWorkflowEffectAdapter>(sp => new ProductionWorkflowEffectAdapter(
+            sp.GetService<IAnnouncementService>(), sp.GetRequiredService<IFileSystem>(),
+            sp.GetService<ILogger<ProductionWorkflowEffectAdapter>>()));
         services.TryAddSingleton<IWorkflowTraceStore, WorkflowTraceStore>();
         services.TryAddSingleton(sp => new WorkflowServiceDependencies
         {
