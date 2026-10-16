@@ -170,7 +170,8 @@ def can_autofix(root, head):
 
 def source_file(name):
     return name.endswith((".cs", ".csproj", ".props", ".targets", ".xaml", ".py", ".ps1", ".yml", ".yaml", ".ini", ".cpp", ".h", ".hpp", ".c")) or name in (
-        "global.json", "MutationTest/mutation-lanes.json", "MutationTest/stryker-config.json", "MutationTest/stryker-common-config.json")
+        "global.json", "MutationTest/mutation-lanes.json", "MutationTest/stryker-config.json", "MutationTest/stryker-common-config.json",
+        "MutationTest/stryker-speech-base-config.json")
 
 
 def context(root, base, head):
@@ -186,7 +187,7 @@ def context(root, base, head):
         "SharedUI/Interface/IRuntimeCommandGateway.cs", ".github/workflows/quality.yml",
         "scripts/Get-QualityChangeScope.ps1", "Directory.Packages.props",
         "MutationTest/mutation-lanes.json", "MutationTest/stryker-config.json",
-        "MutationTest/stryker-common-config.json",
+        "MutationTest/stryker-common-config.json", "MutationTest/stryker-speech-base-config.json",
     }
     # Include callers, interfaces and tests mentioning a changed source type/file stem.
     stems = {PurePosixPath(name).stem.split(".")[0] for name in paths if name.endswith(".cs")}
