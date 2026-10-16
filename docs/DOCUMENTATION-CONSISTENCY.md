@@ -61,7 +61,9 @@ the bot's commit. If the independent review still finds a problem, correct it
 manually. Forks and untrusted authors need maintainer review and receive no
 automatic writes or API calls. Missing enabled configuration, an oversized context,
 unavailable source evidence, API/scanner errors and incomplete/refused model output
-produce a failed or action-required result rather than a semantic pass.
+produce a failed or action-required result rather than a semantic pass. App values
+are checked before any API request; verified corrections whose token creation or
+publication fails are reported as failed, and cancelled runs post no result.
 
 The context limit is one megabyte; each of the two requests has an 8,000-token
 output cap and a timeout. No automatic API retries multiply charges. These limits

@@ -71,6 +71,12 @@ def check_configuration(environment):
         raise ValueError("Documentation AI is enabled but configuration is missing: " + ", ".join(missing))
 
 
+def check_publication_configuration(environment):
+    # The workflow passes only a presence flag; the App key never reaches the assessor.
+    if environment.get("DOCS_WRITER_CONFIGURED") != "true":
+        raise ValueError("Documentation AI is enabled but publishing configuration is missing: DOCS_APP_ID, DOCS_APP_PRIVATE_KEY")
+
+
 def call_model(bundle, prompt, schema, environment):
     check_configuration(environment)
     result = request_json("https://api.openai.com/v1/responses", environment["OPENAI_API_KEY"], {
@@ -191,10 +197,13 @@ def save(path, value):
     path.write_text(json.dumps(value, indent=2), encoding="utf-8")
 
 
-def report(api, event, result_path):
+def report(api, event, result_path, environment):
     result = json.loads(result_path.read_text()) if result_path.exists() else {}
     conclusion = result.get("conclusion", "failure")
     message = result.get("summary", "Documentation workflow did not complete; inspect its job log.")
+    # A ready assessment is stale if its writer token or publication step did not succeed.
+    if environment.get("PUBLICATION_EXPECTED") == "true" and environment.get("PUBLICATION_OUTCOME") != "success":
+        conclusion, message = "failure", "Verified documentation corrections were not published; inspect the publication job log."
     api.call("/check-runs", {"name": CHECK_NAME, "head_sha": event["pull_request"]["head"]["sha"],
              "status": "completed", "conclusion": conclusion,
              "output": {"title": CHECK_NAME, "summary": message[:60_000]}})
@@ -212,6 +221,7 @@ def trusted_assessment(root, control, event, result):
     if head != event["pull_request"]["head"]["sha"] or base != event["pull_request"]["base"]["sha"]:
         raise ValueError("Event is stale; rerun against the current PR head/base")
     check_configuration(os.environ)
+    check_publication_configuration(os.environ)
     result.update(assess(root, base, head, control, os.environ))
     if not result["changes"]:
         result.update(conclusion="success", summary="Deterministic facts and independent semantic documentation review passed.")
@@ -249,7 +259,7 @@ def main():
     api = GitHub(repository, os.environ["GITHUB_TOKEN"])
     pr = api.call("/pulls/" + str(number))
     if args.mode == "report":
-        report(api, event, args.result)
+        report(api, event, args.result, os.environ)
         return
     if args.mode == "publish":
         publish_result(args.root, args.result, repository, number)

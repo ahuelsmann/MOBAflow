@@ -378,13 +378,82 @@ class EligibilityTests(RepositoryFixture, unittest.TestCase):
                 self.assertEqual([], result["changes"])
                 assess.assert_not_called()
 
+    def test_missing_publishing_configuration_fails_before_model_requests(self):
+        environment = {"DOCS_AI_ENABLED": "true", "OPENAI_API_KEY": "fixture", "DOCS_AI_MODEL": "fixture",
+                       "DOCS_WRITER_CONFIGURED": "false"}
+        result, assess = self.evaluate(environment, self.pull_request())
+        self.assertEqual("failure", result["conclusion"])
+        self.assertIn("DOCS_APP_ID", result["summary"])
+        self.assertEqual(self.base, result["base"])
+        assess.assert_not_called()
+
     def test_trusted_pr_without_checked_out_subject_fails_closed(self):
-        environment = {"DOCS_AI_ENABLED": "true", "OPENAI_API_KEY": "fixture", "DOCS_AI_MODEL": "fixture"}
+        environment = {"DOCS_AI_ENABLED": "true", "OPENAI_API_KEY": "fixture", "DOCS_AI_MODEL": "fixture",
+                       "DOCS_WRITER_CONFIGURED": "true"}
         missing = self.root / "absent-subject"
         with patch.dict(os.environ, environment, clear=True):
             result = runner.assessment_result(missing, CONTROL_ROOT, self.event(), self.pull_request(), "owner/repo")
         self.assertEqual("failure", result["conclusion"])
         self.assertFalse(result["changes"])
+
+
+class ComparisonTests(RepositoryFixture, unittest.TestCase):
+    def diverged(self):
+        """Advance the base with a base-only file, then change another file on a branch behind it."""
+        self.write("Main/MainOnly.cs", "public class MainOnly { }\n")
+        base = self.commit()
+        subprocess.run(["git", "-C", str(self.root), "checkout", "-q", "-b", "feature", self.base], check=True)
+        self.write("App/Owner.cs", "public class NewOwner { public int Feature; }\n")
+        return base, self.commit()
+
+    def test_context_compares_the_pr_with_its_merge_base(self):
+        base, head = self.diverged()
+        bundle = facts.context(self.root, base, head)
+        self.assertEqual(["App/Owner.cs"], bundle["changed_paths"])
+        self.assertIn("public int Feature", bundle["diff"])
+        self.assertNotIn("MainOnly", bundle["diff"])
+
+    def test_assessment_keeps_the_live_base_for_staleness(self):
+        base, head = self.diverged()
+        def model(bundle, prompt, schema, environment):
+            if schema is runner.PROPOSAL_SCHEMA:
+                return {"status": "consistent", "summary": "ok", "edits": []}
+            return {"status": "consistent", "summary": "ok", "findings": []}
+        result = runner.assess(self.root, base, head, CONTROL_ROOT, {}, model_call=model, scanner=lambda _: None)
+        self.assertEqual((base, head), (result["base"], result["head"]))
+
+
+class ReportTests(RepositoryFixture, unittest.TestCase):
+    def post(self, result, environment):
+        path = self.root / "result.json"
+        path.unlink(missing_ok=True)
+        if result is not None:
+            path.write_text(json.dumps(result), encoding="utf-8")
+        api = unittest.mock.Mock()
+        runner.report(api, {"pull_request": {"head": {"sha": "event-head"}}}, path, environment)
+        _, payload = api.call.call_args.args
+        self.assertEqual("event-head", payload["head_sha"])
+        return payload["conclusion"], payload["output"]["summary"]
+
+    def ready(self):
+        return {"conclusion": "action_required", "summary": "Verified documentation corrections are ready for publication."}
+
+    def test_failed_or_skipped_expected_publication_is_reported_as_failure(self):
+        for outcome in ("failure", "skipped", ""):
+            with self.subTest(outcome=outcome):
+                conclusion, summary = self.post(self.ready(), {"PUBLICATION_EXPECTED": "true", "PUBLICATION_OUTCOME": outcome})
+                self.assertEqual("failure", conclusion)
+                self.assertNotIn("ready", summary)
+
+    def test_successful_publication_keeps_new_head_message(self):
+        published = {"conclusion": "neutral", "summary": "Documentation updated to abc; checks must run on the new head."}
+        conclusion, summary = self.post(published, {"PUBLICATION_EXPECTED": "true", "PUBLICATION_OUTCOME": "success"})
+        self.assertEqual(("neutral", published["summary"]), (conclusion, summary))
+
+    def test_unpublished_results_keep_their_conclusion(self):
+        inactive = {"conclusion": "neutral", "summary": "AI documentation maintenance is not activated."}
+        self.assertEqual(("neutral", inactive["summary"]), self.post(inactive, {"PUBLICATION_EXPECTED": "false"}))
+        self.assertEqual("failure", self.post(None, {})[0])
 
 
 class WorkflowBoundaryTests(unittest.TestCase):
@@ -395,8 +464,8 @@ class WorkflowBoundaryTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        value = WORKFLOW.read_text(encoding="utf-8").replace("\r\n", "\n")
-        cls.steps = re.split(r"\n(?=      - name: )", value)[1:]
+        cls.value = WORKFLOW.read_text(encoding="utf-8").replace("\r\n", "\n")
+        cls.steps = re.split(r"\n(?=      - name: )", cls.value)[1:]
 
     def checkouts(self):
         return [step for step in self.steps if "uses: actions/checkout@" in step]
@@ -422,6 +491,22 @@ class WorkflowBoundaryTests(unittest.TestCase):
                     self.assertIn(guard, step)
         assess = next(step for step in heads if "Check out subject as data" in step)
         self.assertIn("vars.DOCS_AI_ENABLED == 'true'", assess)
+
+    def test_cancelled_runs_post_no_report(self):
+        report = next(step for step in self.steps if "run_documentation_consistency.py report" in step)
+        self.assertIn("if: ${{ !cancelled() }}", report)
+        job = self.value.split("\n  publish-and-report:\n", 1)[1].split("\n    steps:", 1)[0]
+        self.assertIn("\n    if: ${{ !cancelled() }}", job)
+        self.assertNotIn("always()", job)
+        always = [step.splitlines()[0] for step in self.steps if "always()" in step.split("\n  publish-and-report:\n")[0]]
+        self.assertEqual(["      - name: Preserve assessment"], always)
+
+    def test_app_private_key_reaches_only_the_token_step(self):
+        key = "secrets.DOCS_APP_PRIVATE_KEY"
+        for step in self.steps:
+            if key in step and "create-github-app-token" not in step:
+                with self.subTest(step=step.splitlines()[0]):
+                    self.assertEqual(step.count(key), step.count(key + " != ''"))
 
     def test_only_trusted_controls_are_executed(self):
         commands = [line.strip() for step in self.steps for line in step.splitlines() if "python3" in line]

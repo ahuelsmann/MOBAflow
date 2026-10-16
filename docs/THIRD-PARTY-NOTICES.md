@@ -65,7 +65,7 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 
 ## Direct Package Inventory
 
-The following table was regenerated on 2026-10-14 from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and the `PackageReference` entries in tracked project files and build-wide props/targets.
+The following table is generated from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and the `PackageReference` entries in tracked project files and build-wide props/targets.
 Conditional references and all three mutation test hosts are included; this is a source inventory,
 not a resolved per-platform restore graph. Each package has its own row so its version and
 usage can be compared directly with those XML entries. Versions in this section must not be edited independently of the central package catalog.
@@ -159,7 +159,8 @@ Any new dependency with copyleft, commercial, or field-of-use restrictions shoul
 When adding or removing a direct dependency:
 
 1. Update the package inventory in `Directory.Packages.props` or the relevant project file.
-2. Reflect the change in this document, including version, usage scope, and purpose.
+2. Run `python scripts/documentation_consistency.py --write` to regenerate the version and usage columns;
+   Quality fails while they are stale. Review the purpose of every new package, which the generator flags.
 3. Re-check whether the package introduces new attribution or redistribution requirements.
 4. Keep `README.md` references in sync when user-facing build or dependency information changes.
 
@@ -171,6 +172,6 @@ We are grateful to the open-source maintainers and standards authors whose work 
 
 ---
 
-**Last Updated:** 2026-10-14
+**Last Updated:** 2026-10-16
 **Scope:** Current direct dependencies and external interoperability surface  
 **License:** MIT License (see [LICENSE](../LICENSE))

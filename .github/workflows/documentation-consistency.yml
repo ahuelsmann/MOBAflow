@@ -55,6 +55,8 @@ jobs:
           DOCS_AI_ENABLED: ${{ vars.DOCS_AI_ENABLED }}
           DOCS_AI_MODEL: ${{ vars.DOCS_AI_MODEL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Presence only: the App private key is passed solely to the separate token step.
+          DOCS_WRITER_CONFIGURED: ${{ vars.DOCS_APP_ID != '' && secrets.DOCS_APP_PRIVATE_KEY != '' }}
         run: >-
           python3 controls/scripts/run_documentation_consistency.py assess
           --root subject --control controls --result result/result.json
@@ -70,7 +72,8 @@ jobs:
   publish-and-report:
     name: Publish documentation result
     needs: assess
-    if: always()
+    # Report genuine upstream failures, but never post a result from a cancelled run.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -123,6 +126,7 @@ jobs:
           permission-contents: write
       - name: Publish bounded documentation commit
         if: needs.assess.outputs.publish == 'true'
+        id: publish
         env:
           GITHUB_TOKEN: ${{ github.token }}
           DOCS_WRITE_TOKEN: ${{ steps.writer.outputs.token }}
@@ -130,9 +134,11 @@ jobs:
           python3 controls/scripts/run_documentation_consistency.py publish
           --root subject --control controls --result result/result.json
       - name: Report on the exact assessed PR head
-        if: always()
+        if: ${{ !cancelled() }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          PUBLICATION_EXPECTED: ${{ needs.assess.outputs.publish }}
+          PUBLICATION_OUTCOME: ${{ steps.publish.outcome }}
         run: >-
           python3 controls/scripts/run_documentation_consistency.py report
           --root subject --control controls --result result/result.json

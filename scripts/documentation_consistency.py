@@ -191,6 +191,11 @@ def changed_paths(root, base, head):
     return git(root, "diff", "--name-only", "--no-renames", "-z", base, head).decode().rstrip("\0").split("\0")
 
 
+def merge_base(root, base, head):
+    # A PR behind its base must not present newer base commits as reversed PR changes.
+    return git(root, "merge-base", base, head).decode().strip()
+
+
 def can_autofix(root, head):
     # A bot-generated documentation-only commit cannot cause another automatic commit.
     latest = changed_paths(root, head + "^", head)
@@ -204,7 +209,8 @@ def source_file(name):
 
 
 def context(root, base, head):
-    paths = [name for name in changed_paths(root, base, head) if name]
+    since = merge_base(root, base, head)
+    paths = [name for name in changed_paths(root, since, head) if name]
     existing = set(tracked(root))
     # Include composition and ownership anchors even when only an implementation changed.
     anchors = {
@@ -230,7 +236,7 @@ def context(root, base, head):
         if name in paths or name in anchors or any(stem in value for stem in stems):
             sources[name] = value
     documents = {name: text(root, name) for name in sorted(existing) if editable(name)}
-    bundle = {"changed_paths": paths, "diff": git(root, "diff", "--no-ext-diff", base, head).decode("utf-8", errors="replace"),
+    bundle = {"changed_paths": paths, "diff": git(root, "diff", "--no-ext-diff", since, head).decode("utf-8", errors="replace"),
               "sources": sources, "documents": documents}
     if len(json.dumps(bundle).encode()) > MAX_CONTEXT_BYTES:
         raise ValueError("PR context exceeds the limit; manual documentation review is required")
