@@ -182,10 +182,11 @@ public static class MobaWinUiServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingletonWithInterface<IoService, IIoService>();
-        services.AddSingleton<ISolutionIoService>(sp => sp.GetRequiredService<IIoService>());
-        services.AddSingleton<IFilePickerService>(sp => sp.GetRequiredService<IIoService>());
-        services.AddSingleton<IPhotoStorageService>(sp => sp.GetRequiredService<IIoService>());
+        services.AddSingleton<WinUiWindowContext>();
+        services.AddSingleton<ISolutionIoService, SolutionFileService>();
+        services.AddSingleton<IFilePickerService, FilePickerService>();
+        services.AddSingleton<IPhotoStorageService, PhotoStorageService>();
+        services.AddSingleton<PhotoAssignmentService>();
         services.AddSingleton<IRecordingFileService, RecordingFileService>();
         services.AddSingletonWithInterface<PhotoHubClient, IPhotoHubClient>();
         services.AddSingleton<LocalMobApiClient>();
@@ -307,7 +308,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<LocomotiveManagementViewModel>();
         services.AddSingleton(sp => new LocomotivesPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
-            sp.GetRequiredService<IIoService>(),
+            sp.GetRequiredService<PhotoAssignmentService>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<LocomotiveManagementViewModel>(),
@@ -317,7 +318,7 @@ public static class MobaWinUiServiceCollectionExtensions
                 $"/select,\"{fullPath}\"")));
         services.AddSingleton(sp => new WagonsPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
-            sp.GetRequiredService<IIoService>(),
+            sp.GetRequiredService<PhotoAssignmentService>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<ILogger<WagonsPageViewModel>>(),
@@ -326,12 +327,14 @@ public static class MobaWinUiServiceCollectionExtensions
                 $"/select,\"{fullPath}\"")));
         services.AddSingleton(sp => new SolutionSession(
             sp.GetRequiredService<Solution>(),
-            sp.GetRequiredService<IIoService>(),
+            sp.GetRequiredService<ISolutionIoService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<IProjectRuntimeHost>(),
             sp.GetRequiredService<ILogger<SolutionSession>>(),
-            sp.GetRequiredService<ActionExecutionContext>().SoundPlayer,
-            sp.GetRequiredService<ILoggerFactory>()));
+            new SolutionViewModelServices(
+                sp.GetRequiredService<IFilePickerService>(),
+                sp.GetRequiredService<ActionExecutionContext>().SoundPlayer,
+                sp.GetRequiredService<ILoggerFactory>())));
         services.AddSingleton<ISolutionSession>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<SolutionSession>());
@@ -407,7 +410,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<NavigationService>(),
             sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<IIoService>(),
+            sp.GetRequiredService<WinUiWindowContext>(),
             sp.GetRequiredService<List<PageMetadata>>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<RestApiStatusService>(),

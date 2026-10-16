@@ -25,7 +25,7 @@ compatible solution files can be loaded. This prevents:
 - **`Common/Validation/JsonValidationService.cs`:** Central validation
   logic
 - **`Domain/Solution.cs`:** Schema version (`SchemaVersion` property)
-- **`MOBAflow/Service/IoService.cs`:** Validation before deserialization in the WinUI host
+- **`MOBAflow/Service/SolutionFileService.cs`:** Validation before deserialization in the WinUI host
 - **`Test/Common/JsonValidationServiceTests.cs`:** unit tests
 
 ### Flow
@@ -33,7 +33,7 @@ compatible solution files can be loaded. This prevents:
 ```text
 User opens .json file
     ↓
-IoService.LoadAsync()
+SolutionFileService.LoadAsync()
     ↓
 File.ReadAllTextAsync()
     ↓
@@ -242,7 +242,7 @@ var solution = JsonSerializer.Deserialize<Solution>(json);
 
 ## Error handling
 
-### In `IoService`
+### In `SolutionFileService`
 
 ```csharp
 public async Task<(Solution? solution, string? path, string? error)> LoadAsync()

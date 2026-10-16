@@ -22,10 +22,10 @@ internal static class TestSolutionSessions
         Solution solution,
         IUiDispatcher uiDispatcher,
         IConnectionRuntime runtimeConnection,
-        IIoService? ioService = null) =>
+        ISolutionIoService? solutionIo = null) =>
         new(
             solution,
-            ioService ?? new NullIoService(),
+            solutionIo ?? new NullSolutionIoService(),
             uiDispatcher,
             new SingleRuntimeProjectHost(runtimeConnection),
             NullLogger<SolutionSession>.Instance);
