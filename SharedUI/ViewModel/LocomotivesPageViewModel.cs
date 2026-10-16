@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Interface;
 using Microsoft.Extensions.Logging;
+using Service;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
@@ -19,7 +20,7 @@ public sealed record LocomotivePageAnalysis(LocomotiveManagementViewModel Manage
 public sealed partial class LocomotivesPageViewModel : ObservableObject, IDisposable
 {
     private readonly ISolutionSession _session;
-    private readonly IIoService _ioService;
+    private readonly PhotoAssignmentService _photos;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly ILogger<LocomotivesPageViewModel> _logger;
@@ -32,7 +33,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
 
     public LocomotivesPageViewModel(
         ISolutionSession session,
-        IIoService ioService,
+        PhotoAssignmentService photos,
         ISettingsService settingsService,
         LayoutColumnWidthsViewModel layoutColumnWidths,
         LocomotivePageAnalysis analysis,
@@ -40,7 +41,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         Action<string> showPhotoInExplorer)
     {
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(ioService);
+        ArgumentNullException.ThrowIfNull(photos);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(analysis);
@@ -49,7 +50,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
-        _ioService = ioService;
+        _photos = photos;
         _settings = settingsService.GetSettings();
         _settingsService = settingsService;
         _logger = logger;
@@ -233,11 +234,11 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     {
         var solution = _session.Solution;
         var project = SelectedProject?.Model;
-        var photoPath = await _ioService.BrowseForPhotoAsync().ConfigureAwait(true);
+        var photoPath = await _photos.PickPhotoAsync().ConfigureAwait(true);
         if (string.IsNullOrEmpty(photoPath)) return;
         if (_disposed || project is null || !ReferenceEquals(_session.Solution, solution) || !solution.Projects.Contains(project)) return;
 
-        var saved = await _ioService.SavePhotoAsync(photoPath, "locomotives", locomotive.Model.Id).ConfigureAwait(true);
+        var saved = await _photos.StorePhotoAsync(photoPath, "locomotives", locomotive.Model.Id).ConfigureAwait(true);
         if (_disposed || saved is null || !ReferenceEquals(_session.Solution, solution) || !solution.Projects.Contains(project)) return;
 
         if (locomotive.PhotoPath == saved)
@@ -258,7 +259,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     private void ShowLocomotivePhotoInExplorer(LocomotiveViewModel locomotive)
     {
         if (string.IsNullOrWhiteSpace(locomotive.PhotoPath)) return;
-        var fullPath = _ioService.GetPhotoFullPath(locomotive.PhotoPath);
+        var fullPath = _photos.GetPhotoFullPath(locomotive.PhotoPath);
         if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
         {
             LogPhotoMissing(_logger, fullPath);
