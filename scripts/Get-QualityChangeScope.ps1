@@ -51,6 +51,7 @@ $mutationInputPatterns = @(
 # area (workflows, scripts, repository configuration, new top-level folders) runs every job.
 $otherDotNetPatterns = @(
     '^Common/',
+    '^Contracts/',
     '^Backend/',
     '^SharedUI/',
     '^MOBAflow/',
@@ -60,6 +61,7 @@ $otherDotNetPatterns = @(
     '^Sound/',
     '^TrackLibrary\.Base/',
     '^TrackLibrary\.PikoA/',
+    '^TrackPlan\.Editor/',
     '^TrackPlan\.Renderer/',
     '^Test/',
     '^quality/',

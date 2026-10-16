@@ -3,7 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using Backend.Service;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

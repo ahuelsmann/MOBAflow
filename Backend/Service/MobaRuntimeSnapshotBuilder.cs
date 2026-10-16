@@ -2,7 +2,7 @@
 
 namespace Moba.Backend.Service;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 

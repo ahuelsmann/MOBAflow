@@ -2,7 +2,7 @@
 namespace Moba.SharedUI.Mobile;
 
 using Common.Events;
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 
