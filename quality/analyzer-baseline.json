@@ -601,7 +601,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Service/AnnouncementService.cs",
-      "count": 7
+      "count": 5
     },
     {
       "project": "Backend",
@@ -797,7 +797,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
       "path": "Backend/Service/AnnouncementService.cs",
-      "count": 4
+      "count": 2
     },
     {
       "project": "Backend",
@@ -4129,6 +4129,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/WorkflowActionHandlersTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/WorkflowConstructionTests.cs",
       "count": 1
     },
     {

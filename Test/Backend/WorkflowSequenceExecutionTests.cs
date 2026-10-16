@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Events;
@@ -21,11 +22,7 @@ internal sealed class WorkflowSequenceExecutionTests
             clock.Advance(TimeSpan.FromMilliseconds(275));
             throw new InvalidOperationException("Failure after some work");
         });
-        var service = new WorkflowService(executor, new WorkflowServiceDependencies
-        {
-            Validator = new WorkflowValidator(), EffectPlanner = new WorkflowEffectPlanner(),
-            TraceStore = trace, TimeProvider = clock
-        });
+        var service = new WorkflowService(executor, TestWorkflowServices.Dependencies(clock, trace));
 
         await service.ExecuteAsync(Request(new Workflow { Actions = [Command("Fail")] })).ConfigureAwait(false);
 
@@ -47,7 +44,7 @@ internal sealed class WorkflowSequenceExecutionTests
             ?? throw new InvalidOperationException("Test workflow could not be cloned.");
         var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
 
-        var result = await new WorkflowService(executor.Object).ExecuteAsync(Request(clone)).ConfigureAwait(false);
+        var result = await TestWorkflowServices.Workflow(executor.Object).ExecuteAsync(Request(clone)).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
@@ -65,7 +62,7 @@ internal sealed class WorkflowSequenceExecutionTests
         var workflow = new Workflow { Actions = [first, second] };
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var executor = new Executor((action, _, _) => action == first ? release.Task : Task.CompletedTask);
-        var run = new WorkflowService(executor).ExecuteAsync(Request(workflow));
+        var run = TestWorkflowServices.Workflow(executor).ExecuteAsync(Request(workflow));
         Assert.That(executor.Executed, Is.EqualTo(new[] { first.Id }));
         release.SetResult();
         var result = await run.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
@@ -84,7 +81,7 @@ internal sealed class WorkflowSequenceExecutionTests
         first.DelayAfterMs = 200;
         var second = Command("Second");
         var executor = new Executor();
-        var run = new WorkflowService(executor, clock).ExecuteAsync(Request(new Workflow { Actions = [first, second] }));
+        var run = TestWorkflowServices.Workflow(executor, clock).ExecuteAsync(Request(new Workflow { Actions = [first, second] }));
         Assert.That(clock.ScheduledTimerCount, Is.EqualTo(1));
         clock.Advance(TimeSpan.FromMilliseconds(199));
         Assert.That(executor.Executed, Is.EqualTo(new[] { first.Id }));
@@ -101,7 +98,7 @@ internal sealed class WorkflowSequenceExecutionTests
         first.DelayAfterMs = int.MaxValue;
         var workflow = new Workflow { Actions = [first, new WorkflowAction { Type = ActionType.Audio, Audio = new() { FilePath = "not-opened.wav" } }] };
         var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
-        var result = await new WorkflowService(executor.Object, clock).ExecuteAsync(Request(workflow) with { Mode = WorkflowRunMode.DryRun }).ConfigureAwait(false);
+        var result = await TestWorkflowServices.Workflow(executor.Object, clock).ExecuteAsync(Request(workflow) with { Mode = WorkflowRunMode.DryRun }).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
@@ -175,7 +172,7 @@ internal sealed class WorkflowSequenceExecutionTests
             }
             Assert.That(context.CurrentStation, Is.SameAs(ReferenceEquals(context.SourceEvent, firstEvent) ? firstStation : secondStation));
         });
-        var service = new WorkflowService(executor);
+        var service = TestWorkflowServices.Workflow(executor);
         var results = await Task.WhenAll(service.ExecuteAsync(Request(workflow, firstContext)), service.ExecuteAsync(Request(workflow, secondContext))).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
@@ -199,10 +196,10 @@ internal sealed class WorkflowSequenceExecutionTests
         var executor = new Executor(async (action, invocation, token) =>
         {
             if (action == change)
-                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, invocation, token).ConfigureAwait(false);
+                await TestWorkflowServices.ChangeJourneyStop().ExecuteAsync(action, invocation, token).ConfigureAwait(false);
             else observed = invocation.CurrentStation;
         });
-        var result = await new WorkflowService(executor).ExecuteAsync(Request(new Workflow { Actions = [change, Command("Observe")] }, context)).ConfigureAwait(false);
+        var result = await TestWorkflowServices.Workflow(executor).ExecuteAsync(Request(new Workflow { Actions = [change, Command("Observe")] }, context)).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
@@ -218,7 +215,7 @@ internal sealed class WorkflowSequenceExecutionTests
         var workflow = new Workflow { Actions = [Command("Run")] };
         var request = Request(workflow);
         request.Project.Workflows.Add(new Workflow());
-        var result = await new WorkflowService(new Executor()).ExecuteAsync(request).ConfigureAwait(false);
+        var result = await TestWorkflowServices.Workflow(new Executor()).ExecuteAsync(request).ConfigureAwait(false);
         Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
     }
 
@@ -228,7 +225,7 @@ internal sealed class WorkflowSequenceExecutionTests
         var request = Request(new Workflow { Actions = [Command("Run")] });
         request.Project.Workflows.Clear();
         var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
-        var result = await new WorkflowService(executor.Object).ExecuteAsync(request).ConfigureAwait(false);
+        var result = await TestWorkflowServices.Workflow(executor.Object).ExecuteAsync(request).ConfigureAwait(false);
         Assert.That(result.ValidationIssues.Select(issue => issue.Code), Does.Contain(WorkflowValidationCodes.MissingWorkflow));
         executor.VerifyNoOtherCalls();
     }
@@ -279,10 +276,8 @@ internal sealed class WorkflowSequenceExecutionTests
         Context = context ?? new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }
     };
 
-    private static WorkflowService CreateService(IActionExecutor executor, IWorkflowTraceStore trace) => new(executor, new WorkflowServiceDependencies
-    {
-        Validator = new WorkflowValidator(), EffectPlanner = new WorkflowEffectPlanner(), TraceStore = trace, TimeProvider = TimeProvider.System
-    });
+    private static WorkflowService CreateService(IActionExecutor executor, IWorkflowTraceStore trace) =>
+        new(executor, TestWorkflowServices.Dependencies(traceStore: trace));
 
     private sealed class Executor(Func<WorkflowAction, ActionExecutionContext, CancellationToken, Task>? execute = null) : IActionExecutor
     {
