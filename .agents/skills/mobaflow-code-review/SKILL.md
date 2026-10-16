@@ -7,6 +7,13 @@ description: Review a MOBAflow PR, branch or uncommitted diff against its requir
 Read [AGENTS.md](../../../AGENTS.md) and the relevant entries in the
 [instruction index](../../../.github/instructions/instructions-index.md).
 
+For a PR, follow [master coordination](../../../.github/instructions/master-coordination.instructions.md):
+Art Director or Issue Master arranges a fresh independent Claude CLI review. Coordination or implementation
+sessions and Codex self-review do not satisfy that gate. Every review session (PR, branch or local diff) is
+read-only. The standing mandate authorizes the master and a separately named fixer/merger to correct confirmed
+findings and integrate after current gates pass; it never authorizes the reviewer to edit, merge or approve
+its own review. Explicit narrower human restrictions remain binding.
+
 Establish the requested base and exact commit/diff. For a PR use its actual base;
 for work in progress include staged/unstaged changes when requested. Infer the base from
 the task/PR context; ask only if it cannot be established. An empty diff means no changes to review.
