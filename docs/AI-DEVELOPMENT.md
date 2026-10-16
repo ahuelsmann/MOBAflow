@@ -11,8 +11,8 @@ includes delivery through merge under the [standing master mandate](../.github/i
 unless explicitly limited. Art Director owns routine product decisions inside the assigned scope and its
 implementation, and hands work directly to Issue Master, the sole final integration coordinator. Technical
 transitions, confirmed fixes and ordinary PR administration do not need repeated human approval. Important
-product goals, priorities and material UX decisions, scope/architecture changes, new external commitments and
-explicitly required practical permissions or acceptance still go to the user.
+product goals, priorities and material UX decisions, scope expansion, fundamental architecture changes, new
+costs/external commitments and explicitly required practical permissions or acceptance still go to the user.
 
 PR reviews run in fresh independent Claude CLI sessions. Both masters communicate directly with Claude in both
 directions; coordination sessions do not count as review. Assigned work authorizes necessary team handovers,
