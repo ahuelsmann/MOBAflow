@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Speech;
 
-using Moba.Test.Helpers;
+using Moba.Backend.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
@@ -47,7 +47,7 @@ internal sealed class SpeechOutputTests
         var player = new FakePlayer();
         var output = new SpeechOutput(settings, [system, piper], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         await using var outputLifetime = output.ConfigureAwait(false);
-        var announcements = TestWorkflowServices.Announcements(output);
+        var announcements = new AnnouncementService(output, NullLogger<AnnouncementService>.Instance);
 
         await announcements.GenerateAndSpeakAnnouncementAsync("Next stop {StationName}.",
             new Station { Name = "Central" }, 1).ConfigureAwait(false);
@@ -76,7 +76,7 @@ internal sealed class SpeechOutputTests
         var player = new FakePlayer();
         var output = new SpeechOutput(new AppSettings(), [provider], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         await using var outputLifetime = output.ConfigureAwait(false);
-        await TestWorkflowServices.Announcements(output).GenerateAndSpeakAnnouncementAsync("Next stop Central.", new Station(), 1)
+        await new AnnouncementService(output, NullLogger<AnnouncementService>.Instance).GenerateAndSpeakAnnouncementAsync("Next stop Central.", new Station(), 1)
             .ConfigureAwait(false);
         Assert.That(player.PlayCount, Is.Zero);
     }
