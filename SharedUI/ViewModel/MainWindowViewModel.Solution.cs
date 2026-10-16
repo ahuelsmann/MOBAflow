@@ -120,6 +120,17 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Refreshes the runtime's snapshot of the selected project after an editor change, without re-activation.
+    /// </summary>
+    private void RefreshProjectRuntimeSnapshot()
+    {
+        if (SelectedProject is { } project)
+        {
+            ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(project.Model), "Update project runtime");
+        }
+    }
+
     private void OnSolutionReplacing(object? sender, EventArgs e) => ClearAllSelections();
 
     private void OnSessionSolutionLoaded(object? sender, EventArgs e)
@@ -222,10 +233,6 @@ public partial class MainWindowViewModel
         SelectedWorkflow = null;
         SelectedAction = null;
         WorkflowsPageSelectedObject = null;
-
-        // Wagons & Locomotives
-        SelectedTrain = null;
-        SelectedVehicle = null;
 
         // General
         CurrentSelectedObject = null;

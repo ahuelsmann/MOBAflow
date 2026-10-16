@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Backend.Service.ProjectRuntimes;
+using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
@@ -19,7 +20,7 @@ using Moq;
 /// </summary>
 internal sealed class TestProjectRuntimeHost : IAsyncDisposable
 {
-    public TestProjectRuntimeHost()
+    public TestProjectRuntimeHost(ILocomotiveTrainReferenceAnalyzer? analyzer = null)
     {
         Registry = new Z21ConnectionRegistry(
             () => new ForwardingEventBus(new EventBus(NullLogger<EventBus>.Instance), ApplicationBus),
@@ -29,9 +30,11 @@ internal sealed class TestProjectRuntimeHost : IAsyncDisposable
                 Z21s.Add(z21);
                 return z21.Object;
             });
+        Services = CreateServices();
         Host = new ProjectRuntimeHost(
-            new ProjectRuntimeFactory(Registry, CreateServices()),
-            NullLogger<ProjectRuntimeHost>.Instance);
+            new ProjectRuntimeFactory(Registry, Services),
+            NullLogger<ProjectRuntimeHost>.Instance,
+            analyzer ?? new LocomotiveTrainReferenceAnalyzer());
     }
 
     /// <summary>The application bus that receives the events of the selected project.</summary>
@@ -43,6 +46,8 @@ internal sealed class TestProjectRuntimeHost : IAsyncDisposable
     public Z21ConnectionRegistry Registry { get; }
 
     public ProjectRuntimeHost Host { get; }
+
+    public ProjectRuntimeServices Services { get; }
 
     /// <summary>A project with the given Z21 address; an empty address means no Z21 is assigned.</summary>
     public static Project Project(string name, string z21Address) =>

@@ -3,7 +3,7 @@ namespace Moba.SharedUI.Mobile;
 
 using Backend.Interface;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 

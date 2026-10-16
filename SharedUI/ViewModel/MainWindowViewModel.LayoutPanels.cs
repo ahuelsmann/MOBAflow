@@ -9,11 +9,6 @@ public partial class MainWindowViewModel
     private bool _isJourneyListExpanded = true;
     private bool _isStationListExpanded = true;
     private bool _isJourneyPropertiesExpanded = true;
-    private bool _isTrainsListExpanded = true;
-    private bool _isTrainsLocomotiveLibraryExpanded = true;
-    private bool _isTrainsPassengerLibraryExpanded = true;
-    private bool _isTrainsGoodsLibraryExpanded = true;
-    private bool _isTrainsPropertiesExpanded = true;
     private bool _isProjectListExpanded = true;
     private bool _isWorkflowListExpanded = true;
     private bool _isWorkflowActionsExpanded = true;
@@ -22,39 +17,6 @@ public partial class MainWindowViewModel
     private bool _isSignalBoxPropertiesExpanded = true;
     private bool _isMonitorTrafficExpanded = true;
     private bool _isMonitorActivityLogExpanded = true;
-    private bool _isStationsListExpanded = true;
-    private bool _isPlatformsListExpanded = true;
-    private bool _isStationsPropertiesExpanded = true;
-
-    public bool IsStationsListExpanded
-    {
-        get => _isStationsListExpanded;
-        set
-        {
-            if (SetProperty(ref _isStationsListExpanded, value))
-                PersistLayoutState(layout => layout.StationsPage.IsStationsListExpanded = value);
-        }
-    }
-
-    public bool IsPlatformsListExpanded
-    {
-        get => _isPlatformsListExpanded;
-        set
-        {
-            if (SetProperty(ref _isPlatformsListExpanded, value))
-                PersistLayoutState(layout => layout.StationsPage.IsPlatformsListExpanded = value);
-        }
-    }
-
-    public bool IsStationsPropertiesExpanded
-    {
-        get => _isStationsPropertiesExpanded;
-        set
-        {
-            if (SetProperty(ref _isStationsPropertiesExpanded, value))
-                PersistLayoutState(layout => layout.StationsPage.IsPropertiesExpanded = value);
-        }
-    }
 
     public bool IsMonitorTrafficExpanded
     {
@@ -103,56 +65,6 @@ public partial class MainWindowViewModel
         {
             if (SetProperty(ref _isJourneyPropertiesExpanded, value))
                 PersistLayoutState(layout => layout.JourneysPage.IsJourneyPropertiesExpanded = value);
-        }
-    }
-
-    public bool IsTrainsListExpanded
-    {
-        get => _isTrainsListExpanded;
-        set
-        {
-            if (SetProperty(ref _isTrainsListExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsTrainListExpanded = value);
-        }
-    }
-
-    public bool IsTrainsLocomotiveLibraryExpanded
-    {
-        get => _isTrainsLocomotiveLibraryExpanded;
-        set
-        {
-            if (SetProperty(ref _isTrainsLocomotiveLibraryExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsLocomotiveLibraryExpanded = value);
-        }
-    }
-
-    public bool IsTrainsPassengerLibraryExpanded
-    {
-        get => _isTrainsPassengerLibraryExpanded;
-        set
-        {
-            if (SetProperty(ref _isTrainsPassengerLibraryExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsPassengerLibraryExpanded = value);
-        }
-    }
-
-    public bool IsTrainsGoodsLibraryExpanded
-    {
-        get => _isTrainsGoodsLibraryExpanded;
-        set
-        {
-            if (SetProperty(ref _isTrainsGoodsLibraryExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsGoodsLibraryExpanded = value);
-        }
-    }
-
-    public bool IsTrainsPropertiesExpanded
-    {
-        get => _isTrainsPropertiesExpanded;
-        set
-        {
-            if (SetProperty(ref _isTrainsPropertiesExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsPropertiesExpanded = value);
         }
     }
 
@@ -235,13 +147,7 @@ public partial class MainWindowViewModel
         _isJourneyListExpanded = _settings.Layout.JourneysPage.IsJourneyListExpanded;
         _isStationListExpanded = _settings.Layout.JourneysPage.IsStationListExpanded;
         _isCityLibraryVisible = _settings.Layout.JourneysPage.IsCityLibraryExpanded;
-        _isWorkflowLibraryVisible = _settings.Layout.StationsPage.IsWorkflowLibraryExpanded;
         _isJourneyPropertiesExpanded = _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded;
-        _isTrainsListExpanded = _settings.Layout.TrainsPage.IsTrainListExpanded;
-        _isTrainsLocomotiveLibraryExpanded = _settings.Layout.TrainsPage.IsLocomotiveLibraryExpanded;
-        _isTrainsPassengerLibraryExpanded = _settings.Layout.TrainsPage.IsPassengerLibraryExpanded;
-        _isTrainsGoodsLibraryExpanded = _settings.Layout.TrainsPage.IsGoodsLibraryExpanded;
-        _isTrainsPropertiesExpanded = _settings.Layout.TrainsPage.IsPropertiesExpanded;
         _isProjectListExpanded = _settings.Layout.SolutionPage.IsProjectListExpanded;
         _isProjectPropertiesExpanded = _settings.Layout.SolutionPage.IsPropertiesExpanded;
         _isWorkflowListExpanded = _settings.Layout.WorkflowsPage.IsWorkflowListExpanded;
@@ -249,9 +155,6 @@ public partial class MainWindowViewModel
         _isWorkflowPropertiesExpanded = _settings.Layout.WorkflowsPage.IsPropertiesExpanded;
         _isSignalBoxToolboxExpanded = _settings.Layout.SignalBoxPage.IsToolboxExpanded;
         _isSignalBoxPropertiesExpanded = _settings.Layout.SignalBoxPage.IsPropertiesExpanded;
-        _isStationsListExpanded = _settings.Layout.StationsPage.IsStationsListExpanded;
-        _isPlatformsListExpanded = _settings.Layout.StationsPage.IsPlatformsListExpanded;
-        _isStationsPropertiesExpanded = _settings.Layout.StationsPage.IsPropertiesExpanded;
         _isMonitorTrafficExpanded = _settings.Layout.MonitorPage.IsTrafficExpanded;
         _isMonitorActivityLogExpanded = _settings.Layout.MonitorPage.IsActivityLogExpanded;
     }

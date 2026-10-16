@@ -19,6 +19,7 @@
   </Folder>
   <Project Path="Backend/Backend.csproj" />
   <Project Path="Common/Common.csproj" />
+  <Project Path="Contracts/Contracts.csproj" />
   <Project Path="Domain/Domain.csproj" />
   <Project Path="MOBAdisplay/MOBAdisplay.csproj" />
   <Project Path="MOBAflow/MOBAflow.csproj" />
@@ -27,9 +28,13 @@
     <Deploy Solution="Debug|*" />
   </Project>
   <Project Path="SharedUI/SharedUI.csproj" />
+  <Project Path="Speech.Base/Speech.Base.csproj" />
+  <Project Path="Speech.Piper/Speech.Piper.csproj" />
+  <Project Path="Speech.SystemSpeech/Speech.SystemSpeech.csproj" />
   <Project Path="Sound/Sound.csproj" />
   <Project Path="Test/Test.csproj" />
   <Project Path="TrackLibrary.Base/TrackLibrary.Base.csproj" />
   <Project Path="TrackLibrary.PikoA/TrackLibrary.PikoA.csproj" />
+  <Project Path="TrackPlan.Editor/TrackPlan.Editor.csproj" />
   <Project Path="TrackPlan.Renderer/TrackPlan.Renderer.csproj" />
 </Solution>

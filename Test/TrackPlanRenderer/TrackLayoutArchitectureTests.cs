@@ -9,6 +9,8 @@ using global::Moba.SharedUI.Interface;
 using global::Moba.SharedUI.Service;
 using global::Moba.SharedUI.ViewModel;
 using global::Moba.TrackLibrary.PikoA;
+using global::Moba.TrackPlan.Editor;
+using global::Moba.Test.Helpers;
 using global::Moba.TrackPlan.Renderer;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -16,41 +18,17 @@ using Moq;
 internal sealed partial class TrackLayoutArchitectureTests
 {
     [Test]
-    public void PikoATrackLibrary_ExposesStableDefinitionsAndConnectors()
+    public void PikoATrackCatalog_CreatesSegmentsByCodeWithStableConnectors()
     {
-        var library = new PikoATrackLibrary();
+        var catalog = new PikoATrackCatalog();
 
-        bool found = library.TryGetDefinition("WR", out var definition);
+        bool found = catalog.TryCreateSegment("WR", out var segment);
 
         Assert.That(found, Is.True);
-        Assert.That(definition.LibraryId, Is.EqualTo(PikoATrackLibrary.Id));
-        Assert.That(definition.Connectors.Select(connector => connector.Id), Does.Contain("PortC"));
-    }
-
-    [Test]
-    public void TrackPlanDocumentMapper_RoundTripsLegacyDocumentWithPikoDefault()
-    {
-        var first = Guid.NewGuid();
-        var second = Guid.NewGuid();
-        var legacy = new TrackPlanDocument
-        {
-            Version = 1,
-            LibraryId = string.Empty,
-            Segments =
-            [
-                new TrackPlanSegment { Id = first, Code = "G231", X = 0, Y = 0 },
-                new TrackPlanSegment { Id = second, Code = "G231", X = 230.93, Y = 0 }
-            ],
-            Connections = [new TrackPlanConnection { SourceSegment = first, SourcePort = "PortB", TargetSegment = second, TargetPort = "PortA" }]
-        };
-
-        var layout = TrackPlanDocumentMapper.ToLayout(legacy);
-        var persisted = TrackPlanDocumentMapper.ToDocument(layout);
-
-        Assert.That(layout.Tracks, Has.Count.EqualTo(2));
-        Assert.That(layout.Connections, Has.Count.EqualTo(1));
-        Assert.That(persisted.Version, Is.EqualTo(2));
-        Assert.That(persisted.LibraryId, Is.EqualTo(PikoATrackLibrary.Id));
+        Assert.That(catalog.LibraryId, Is.EqualTo(PikoATrackCatalog.Id));
+        Assert.That(catalog.GetCode(segment!), Is.EqualTo("WR"));
+        Assert.That(catalog.GetPorts(segment!).Select(port => port.Name), Does.Contain("PortC"));
+        Assert.That(catalog.TryCreateSegment("unknown", out _), Is.False);
     }
 
     [Test]
@@ -63,29 +41,19 @@ internal sealed partial class TrackLayoutArchitectureTests
         };
 
         Assert.That(
-            () => document.ToEditableTrackPlanData(),
+            () => document.ToEditableTrackPlanData(TrackPlanTestGeometry.Catalog),
             Throws.InvalidOperationException.With.Message.Contains("marklin-c"));
     }
 
     [Test]
-    public void GraphAndUndoRedoServices_KeepTopologyAndHistoryOutOfUi()
+    public void UndoRedoService_KeepsHistoryOutOfUi()
     {
-        var first = new TrackInstance(Guid.NewGuid(), "piko-a", "G231", 0, 0, 0);
-        var second = new TrackInstance(Guid.NewGuid(), "piko-a", "G231", 230.93, 0, 0);
-        var layout = new Layout();
-        var layoutService = new LayoutService();
-        layoutService.Place(layout, first);
-        layoutService.Place(layout, second);
-        layoutService.Connect(layout, new Connection(first.Id, "PortB", second.Id, "PortA"));
-
-        var group = new GraphService().GetConnectedGroup(layout, first.Id);
         var history = new UndoRedoService<string>();
         history.Record("before");
 
         bool undone = history.TryUndo("after", out var previous);
         bool redone = history.TryRedo(previous, out var next);
 
-        Assert.That(group, Is.EquivalentTo(new[] { first.Id, second.Id }));
         Assert.That(undone, Is.True);
         Assert.That(previous, Is.EqualTo("before"));
         Assert.That(redone, Is.True);
@@ -101,11 +69,11 @@ internal sealed partial class TrackLayoutArchitectureTests
         var settingsService = new Mock<ISettingsService>();
         using var editorService = new TrackPlanEditorService(
             plan,
-            new TrackPlanInteractionService(plan),
+            new TrackPlanInteractionService(plan, TrackPlanTestGeometry.PikoA),
+            TrackPlanTestGeometry.PikoA,
             new SelectionService(),
             new UndoRedoService<TrackPlanEditorDocument>());
         var viewModel = new TrackPlanViewModel(
-            new TrackPlan(),
             editorService,
             Mock.Of<IDialogService>(),
             new AppSettings(),
@@ -134,7 +102,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         var target = new PlacedSegment(new G231(), 0, 0, 0);
         plan.AddSegment(target);
         var moving = new PlacedSegment(new G231(), 230.93, 0, 0);
-        var service = new TrackPlanInteractionService(plan);
+        var service = new TrackPlanInteractionService(plan, TrackPlanTestGeometry.PikoA);
 
         service.AddWithSnap(new TrackPlanSnapHelper.SnapResult(moving, "PortA", target.Segment.No, "PortB", 0));
 
@@ -152,7 +120,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         plan.AddSegment(near);
         plan.AddSegment(far);
 
-        var hit = new TrackPlanInteractionService(plan).HitTest(115, 2);
+        var hit = new TrackPlanInteractionService(plan, TrackPlanTestGeometry.PikoA).HitTest(115, 2);
 
         Assert.That(hit?.Segment.No, Is.EqualTo(near.Segment.No));
     }
@@ -166,7 +134,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         plan.AddSegment(first);
         plan.AddSegment(second);
         plan.AddConnection(first.Segment.No, "PortB", second.Segment.No, "PortA");
-        var service = new TrackPlanInteractionService(plan);
+        var service = new TrackPlanInteractionService(plan, TrackPlanTestGeometry.PikoA);
 
         var selection = service.SelectForDrag(115, 0);
         Assert.That(selection, Is.Not.Null);
@@ -183,7 +151,7 @@ internal sealed partial class TrackLayoutArchitectureTests
     public void SpatialIndex_RefreshesAfterPlanMutation()
     {
         var plan = new EditableTrackPlan();
-        var index = new TrackPlanSpatialIndex(plan);
+        var index = new TrackPlanSpatialIndex(plan, TrackPlanTestGeometry.PikoA);
         var segment = new PlacedSegment(new G231(), 500, 0, 0);
 
         plan.AddSegment(segment);
@@ -202,7 +170,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         var second = new PlacedSegment(new G231(), 230.93, 0, 0);
         plan.AddSegment(first);
         plan.AddSegment(second);
-        var index = new TrackPlanSpatialIndex(plan);
+        var index = new TrackPlanSpatialIndex(plan, TrackPlanTestGeometry.PikoA);
 
         plan.AddConnection(first.Segment.No, "PortB", second.Segment.No, "PortA");
         plan.MoveGroup(new HashSet<Guid> { first.Segment.No, second.Segment.No }, 500, 0);
@@ -220,7 +188,7 @@ internal sealed partial class TrackLayoutArchitectureTests
     {
         var placement = new PlacedSegment(new G231(), 12, 34, 15);
 
-        var scene = TrackPlanRenderSceneBuilder.Build([placement]);
+        var scene = TrackPlanRenderSceneBuilder.Build(TrackPlanTestGeometry.PikoA, [placement]);
 
         Assert.That(scene.Items, Has.Count.EqualTo(1));
         Assert.That(scene.Items[0].Id, Is.EqualTo(placement.Segment.No));
@@ -235,7 +203,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         var selected = new HashSet<Guid> { placement.Segment.No };
         var feedback = new Dictionary<Guid, double> { [placement.Segment.No] = 2 };
 
-        var scene = TrackPlanRenderSceneBuilder.Build([placement], selected, feedback);
+        var scene = TrackPlanRenderSceneBuilder.Build(TrackPlanTestGeometry.PikoA, [placement], selected, feedback);
 
         Assert.Multiple(() =>
         {
@@ -252,7 +220,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         var target = new PlacedSegment(new G231(), 0, 0, 0);
         var moving = new PlacedSegment(new G231(), 230.93, 0, 0);
         plan.AddSegment(target);
-        var preview = new TrackPlanInteractionService(plan).GetSnapPreview(moving);
+        var preview = new TrackPlanInteractionService(plan, TrackPlanTestGeometry.PikoA).GetSnapPreview(moving);
 
         Assert.That(preview.HighlightedPorts, Is.Not.Empty);
     }
@@ -335,24 +303,13 @@ internal sealed partial class TrackLayoutArchitectureTests
     }
 
     [Test]
-    public void TrackLibraryRegistry_ResolvesDefinitionsByPersistedLibraryId()
-    {
-        var registry = new TrackLibraryRegistry([new PikoATrackLibrary()]);
-
-        var definition = registry.ResolveDefinition(PikoATrackLibrary.Id, "G231");
-
-        Assert.That(definition.TemplateId, Is.EqualTo("G231"));
-        Assert.That(() => registry.ResolveDefinition("missing", "G231"), Throws.InvalidOperationException);
-    }
-
-    [Test]
     public void SpatialIndex_ReturnsLocalCandidates_ForTenThousandTracks()
     {
         var plan = new EditableTrackPlan();
         for (var index = 0; index < 10_000; index++)
             plan.AddSegment(new PlacedSegment(new G231(), index * 250, 0, 0));
 
-        var spatialIndex = new TrackPlanSpatialIndex(plan);
+        var spatialIndex = new TrackPlanSpatialIndex(plan, TrackPlanTestGeometry.PikoA);
         var candidates = spatialIndex.Query(1_250_000, 0, 30);
 
         Assert.That(candidates, Is.Not.Empty);
@@ -366,7 +323,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         for (var index = 0; index < 10_000; index++)
             plan.AddSegment(new PlacedSegment(new G231(), index * 250, 0, 0));
 
-        var service = new TrackPlanInteractionService(plan);
+        var service = new TrackPlanInteractionService(plan, TrackPlanTestGeometry.PikoA);
         var selection = service.SelectForDrag(1_250_115, 0);
         Assert.That(selection, Is.Not.Null);
 
@@ -464,7 +421,19 @@ internal sealed partial class TrackLayoutArchitectureTests
     {
         Assert.That(
             typeof(TrackPlanRailroadStateProjector).Assembly,
-            Is.EqualTo(typeof(LayoutService).Assembly));
+            Is.EqualTo(typeof(global::Moba.Backend.Z21).Assembly));
+    }
+
+    [Test]
+    public void EditorSelectionAndHistory_AreOwnedByEditorAssembly()
+    {
+        var editorAssembly = typeof(EditableTrackPlan).Assembly;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(typeof(SelectionService).Assembly, Is.EqualTo(editorAssembly));
+            Assert.That(typeof(UndoRedoService<>).Assembly, Is.EqualTo(editorAssembly));
+        }
     }
 
     [Test]
@@ -498,7 +467,12 @@ internal sealed partial class TrackLayoutArchitectureTests
             "DisconnectButton.Click",
             "DeleteButton.Click",
             "RotateLeftButton.Click",
-            "RotateRightButton.Click"
+            "RotateRightButton.Click",
+            "Math.Cos(",
+            "Math.Sin(",
+            "TrackPathGeometry.GetBounds(",
+            "bool IsPortConnected(",
+            "static double NormalizeAngle("
         ];
 
         using (Assert.EnterMultipleScope())

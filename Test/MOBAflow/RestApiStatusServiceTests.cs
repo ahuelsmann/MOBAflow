@@ -7,7 +7,7 @@ using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -192,22 +192,22 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             .Callback<Action>(action => action());
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcher.Object, mobaRuntime.Object);
+        var stationEventBus1 = eventBus;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
             mobaRuntime.Object,
             mobaRuntime.Object,
             new LocalRuntimeCommandGateway(mobaRuntime.Object),
-            eventBus,
+            stationEventBus1,
             uiDispatcher.Object,
             TestSettingsPages.Create(appSettings, uiDispatcher.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
-            locomotiveSession1,
-            new ActionExecutionContext
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntime.Object, null),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntime.Object, new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
-            },
+            }, stationEventBus1),
+            locomotiveSession1,
             NullLogger<MainWindowViewModel>.Instance);
     }
 

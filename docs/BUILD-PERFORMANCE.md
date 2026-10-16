@@ -56,14 +56,14 @@ Use reliable deploy when fast deploy behaves inconsistently on a device.
 
 **Clean Release AAB:**
 
-The .NET SDK band from `global.json` (10.0.4xx, at least 10.0.401) and the MAUI Android workload are
+The .NET SDK band from `global.json` (10.0.4xx, at least 10.0.402) and the MAUI Android workload are
 prerequisites. The workload set version is pinned in the install command, not in `global.json`: a
 `workloadVersion` there would fail every build, including desktop-only builds, on machines without that
 workload set. Install the pinned set explicitly instead of relying on `--skip-manifest-update`.
 From a clean checkout, run the install, restore, publish, and bundle validation defined in CI:
 
 ```powershell
-dotnet workload install maui-android --version 10.0.401.1
+dotnet workload install maui-android --version 10.0.402
 dotnet restore MOBAsmart/MOBAsmart.csproj `
   --property:Configuration=Release `
   --force-evaluate
@@ -135,10 +135,10 @@ dispatch Quality with `validate_android=true` against the task branch:
 gh workflow run quality.yml --ref <task-branch> -f validate_android=true
 ```
 
-The job installs and verifies workload set 10.0.401.1, publishes the Release AAB,
+The job installs and verifies workload set 10.0.402, publishes the Release AAB,
 enforces the Android analyzer baseline and validates/archives the bundle. It does
 not deploy to a device or publish a GitHub Release. The SDK follows the agreed
-10.0.4xx feature-band policy in `global.json`: patches at least 10.0.401 are allowed,
+10.0.4xx feature-band policy in `global.json`: patches at least 10.0.402 are allowed,
 so this is a feature-band pin rather than an exact SDK patch pin. Mobile tests
 remain an explicit opt-in graph with `IncludeMobaSmartTests=true`.
 
@@ -157,14 +157,14 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main` and manual runs classify all scopes as enabled. Other PR changes enable
-desktop, display and Common mutation jobs; Domain mutation and ESP32 firmware
+desktop, display, Common and Speech.Base mutation jobs; Domain mutation and ESP32 firmware
 steps also depend on their input paths. Android runs only with the manual
 `validate_android` input. A skipped check is not evidence that tests ran.
 
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
 when `MOBAdisplay/esp32/` changes or an unknown input path requires them. The
-Common mutation job runs for every code-relevant PR. Domain mutation testing runs when
+Common and Speech.Base mutation jobs run for every code-relevant PR. Domain mutation testing runs when
 `Domain/`, its linked tests and fixture data (`Test/TestFile/`), `MutationTest/`
 or the .NET build configuration change. A path outside the known .NET areas,
 such as a workflow, a script or a new top-level folder, enables both firmware
@@ -229,47 +229,49 @@ Run the same checks locally after producing a Release Cobertura report:
 [`mutation-lanes.json`](../MutationTest/mutation-lanes.json) registers every test
 fixture. Lanes marked `planned` do not claim mutation coverage. The `architecture`
 lane has no production project: its tests read project files and sources, so
-production-code mutations do not exercise them.
+production-code mutations do not exercise them. Active lanes additionally declare their Stryker
+configuration. The registry guard evaluates each configured host's actual MSBuild `Compile` items
+and production reference; registration alone is not enough. It rejects missing active fixtures and
+test-case filters. Planned lanes remain explicitly outside the mutation guarantee.
 
 <!-- documentation-facts:mutation:start -->
 | Active lane | Production project | Test project | Stryker configuration | Break threshold |
 | --- | --- | --- | --- | --- |
 | domain | `Domain/Domain.csproj` | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% |
 | common | `Common/Common.csproj` | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% |
+| speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% |
 <!-- documentation-facts:mutation:end -->
 
-Both run on main pushes and manual Quality runs. Common uses Windows because
+All three also run on main pushes and manual Quality runs. Common uses Windows because
 its existing fixtures include Windows-specific photo paths. Its concurrency is
 limited to four test processes. The Common lane includes selected Backend test
-fixtures for Common contracts; it does not mutate Backend production code.
-Thresholds come from the configuration files; the Common minimum is a baseline
-safeguard, not a target for test quality.
+fixtures for Common contracts and `SpeechSettingsTests.cs`; it does not mutate Backend production code.
+Speech.Base mutates the entire assembly, including the audio cache, shared synthesis and WAV handling.
+Its four portable Speech fixtures use fake providers/players and four Stryker processes. Windows-only
+host integration cases and the separate Piper/SystemSpeech assemblies are outside this lane.
+Thresholds come from the configuration files; the Common and Speech.Base minimums are baseline
+safeguards, not targets for test quality. Speech.Base keeps scheduling-only `ConfigureAwait`
+mutants visible rather than excluding them to inflate the score.
 
 Run the ordinary tests successfully before interpreting a mutation score. Use
-Windows for a local run of both lanes and stop on any failed command:
+Windows for a local run of all lanes and stop on any failed command:
 
 ```powershell
-dotnet test MutationTest/Domain.MutationTests.csproj -c Debug
-if ($LASTEXITCODE -ne 0) { throw "Domain baseline tests failed." }
-dotnet test MutationTest/Common/Common.MutationTests.csproj -c Debug
-if ($LASTEXITCODE -ne 0) { throw "Common baseline tests failed." }
 dotnet tool restore
 if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
-Push-Location MutationTest
-try {
-    dotnet stryker --skip-version-check
-    if ($LASTEXITCODE -ne 0) { throw "Domain mutation testing failed." }
-    dotnet stryker --config-file stryker-common-config.json --skip-version-check
-    if ($LASTEXITCODE -ne 0) { throw "Common mutation testing failed." }
-}
-finally {
-    Pop-Location
-}
+# Use new output directories; existing directories are rejected, not deleted.
+./scripts/Invoke-MutationLane.ps1 -LaneName domain -OutputPath artifacts/mutation/domain-local
+./scripts/Invoke-MutationLane.ps1 -LaneName common -OutputPath artifacts/mutation/common-local
+./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
 ```
 
-For a Domain-only run on Linux, omit the Common test and Stryker command. Run
+On Linux, run the Domain and Speech.Base lanes; omit the Windows-specific Common lane. Run
 Stryker and ordinary builds/tests sequentially: Stryker recreates shared
-intermediate files. CI currently restores each mutation test project and starts
-Stryker directly; neither mutation job has a separate ordinary-test prerequisite.
-This local prerequisite is not yet enforced as a separate CI step. A successful
-job alone does not validate a score if its initial tests failed.
+intermediate files. CI uses the same runner, which requires a nonempty, fully passing ordinary-test
+TRX baseline before starting Stryker. It validates the new JSON report's production root, registered
+test files, test-case names/count and final mutant statuses. At least one mutant must actually have
+run against tests; all-ignored, compile-error-only or uncovered-only reports cannot pass. Surviving
+and uncovered mutants remain visible and subject to the unchanged Stryker score thresholds.
+The jobs archive the baseline, report and Stryker logs below `artifacts/mutation/<lane>/`, including
+on failure. `scripts/Test-MutationGuards.Tests.ps1` tests rejection paths in the Windows quality job.
+Intentional job skips retain the path-selection rules above and are not execution evidence.

@@ -28,10 +28,15 @@ using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.Shell;
+using SharedUI.TrainControl;
 using SharedUI.ViewModel;
 using Sound;
+using Speech.Base;
+using Speech.Piper;
+using Speech.SystemSpeech;
+using TrackLibrary.Base;
 using TrackLibrary.PikoA;
-using TrackPlan.Renderer;
+using TrackPlan.Editor;
 using View;
 
 /// <summary>
@@ -40,7 +45,7 @@ using View;
 public static class MobaWinUiServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers configuration, AppSettings, SpeechOptions, and Serilog logging.
+    /// Registers configuration, AppSettings, and Serilog logging.
     /// </summary>
     public static IServiceCollection AddMobaWinUiConfiguration(
         this IServiceCollection services,
@@ -52,7 +57,6 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(configuration);
         services.Configure<AppSettings>(configuration);
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
-        services.Configure<SpeechOptions>(configuration.GetSection("Speech"));
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
         return services;
@@ -82,18 +86,25 @@ public static class MobaWinUiServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers speaker engine factory and the configured engine singleton.
+    /// Registers local synthesis providers and the shared speech output.
     /// </summary>
     public static IServiceCollection AddMobaWinUiSpeechServices(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<ISpeakerEngineRegistration, PiperSpeakerEngineRegistration>();
-        services.AddSingleton<ISpeakerEngineRegistration, SystemSpeechEngineRegistration>();
-        services.AddSingleton<SpeakerEngineFactory>();
-        services.AddSingleton<ISpeakerEngineFactory>(sp => sp.GetRequiredService<SpeakerEngineFactory>());
-        services.AddSingleton<ISpeakerEngine>(sp =>
-            sp.GetRequiredService<SpeakerEngineFactory>().CreateEngineFromOptions());
+        services.AddSingleton<ISpeechProvider, PiperSpeechProvider>();
+        services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
+        services.AddSingleton<IWavePlayer, CancellableWavePlayer>();
+        services.AddSingleton<IAudioCache>(sp =>
+        {
+            var settings = sp.GetRequiredService<AppSettings>();
+            return new AudioCache(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MOBAflow", "SpeechCache"),
+                () => settings.Speech.CacheSizeLimitMegabytes * 1024L * 1024,
+                sp.GetService<TimeProvider>() ?? TimeProvider.System);
+        });
+        services.AddSingleton<SpeechOutput>();
+        services.AddSingleton<ISpeechOutput>(sp => sp.GetRequiredService<SpeechOutput>());
 
         return services;
     }
@@ -109,7 +120,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddMobaWinUiProjectRuntimes();
         services.AddMobaBackendServices();
         services.AddSingleton(sp => new AnnouncementService(
-            sp.GetRequiredService<ISpeakerEngineFactory>(),
+            sp.GetRequiredService<ISpeechOutput>(),
             sp.GetRequiredService<ILogger<AnnouncementService>>()));
 
         return services;
@@ -160,6 +171,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<ProjectRuntimeHost>();
         services.AddSingleton<IProjectRuntimeHost>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
         services.AddSingleton<IProjectRuntimeSnapshots>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
+        services.AddSingleton<ILocomotiveTrainRuntimeUsageReader>(sp => sp.GetRequiredService<ProjectRuntimeHost>());
         services.AddSingleton<IMobaRuntime, SelectedProjectRuntime>();
         services.AddSingleton<IInterlockingRuntime, SelectedProjectInterlocking>();
     }
@@ -262,16 +274,13 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingletonWithInterface<UdpDisplayDeviceClient, IDisplayDeviceClient>();
         services.AddTransient<FrameLoopScheduler>();
 
-        services.AddSingleton<TrackPlan>();
+        services.AddSingleton<ITrackCatalog, PikoATrackCatalog>();
+        services.AddSingleton<SegmentPlacementGeometry>();
         services.AddSingleton<EditableTrackPlan>();
         services.AddSingleton<TrackPlanInteractionService>();
         services.AddSingleton<ITrackFeedbackLookup>(sp => sp.GetRequiredService<EditableTrackPlan>());
         services.AddSingleton<RailroadState>();
         services.AddSingleton<TrackPlanRailroadStateProjector>();
-        services.AddSingleton<ITrackLibrary, PikoATrackLibrary>();
-        services.AddSingleton<TrackLibraryRegistry>();
-        services.AddSingleton<LayoutService>();
-        services.AddSingleton<GraphService>();
         services.AddSingleton<SelectionService>();
         services.AddSingleton<UndoRedoService<TrackPlanEditorDocument>>();
         services.AddSingleton<TrackPlanEditorService>();
@@ -279,7 +288,6 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<TrackPlanFeedbackHighlighter>();
 
         services.AddSingleton(sp => new TrackPlanViewModel(
-            sp.GetRequiredService<TrackPlan>(),
             sp.GetRequiredService<TrackPlanEditorService>(),
             sp.GetRequiredService<IDialogService>(),
             sp.GetRequiredService<AppSettings>(),
@@ -298,12 +306,14 @@ public static class MobaWinUiServiceCollectionExtensions
 
         services.AddSingleton<LayoutColumnWidthsViewModel>();
         services.AddSingleton<LocomotiveManagementViewModel>();
+        services.AddSingleton<LocomotiveTrainUsageViewModel>();
         services.AddSingleton(sp => new LocomotivesPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<IIoService>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
-            sp.GetRequiredService<LocomotiveManagementViewModel>(),
+            new LocomotivePageAnalysis(sp.GetRequiredService<LocomotiveManagementViewModel>(),
+                sp.GetRequiredService<LocomotiveTrainUsageViewModel>()),
             sp.GetRequiredService<ILogger<LocomotivesPageViewModel>>(),
             showPhotoInExplorer: fullPath => System.Diagnostics.Process.Start(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
@@ -336,9 +346,26 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetService<IFeatureTogglePageProvider>(),
             speechTestAction: async message =>
             {
-                var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
-                await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
+                var result = await sp.GetRequiredService<ISpeechOutput>().SpeakAsync(message).ConfigureAwait(false);
+                if (!result.IsSuccess)
+                {
+                    throw new InvalidOperationException(result.Reason);
+                }
             }));
+        services.AddSingleton(sp => new WorkflowLibraryViewModel(
+            sp.GetRequiredService<ISolutionSession>(),
+            sp.GetService<IDialogService>(),
+            new WorkflowValidator(),
+            sp.GetRequiredService<ILogger<WorkflowLibraryViewModel>>(),
+            new WorkflowLibraryRuntimeServices
+            {
+                WorkflowService = sp.GetRequiredService<IWorkflowService>(),
+                TraceStore = sp.GetRequiredService<IWorkflowTraceStore>(),
+                ExecutionContext = sp.GetRequiredService<ActionExecutionContext>(),
+                EventBus = sp.GetRequiredService<IEventBus>()
+            }));
+        services.AddSingleton<StationsPageViewModel>();
+        services.AddSingleton<TrainsPageViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
@@ -348,18 +375,14 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<SettingsPageViewModel>(),
-            sp.GetRequiredService<LocomotivesPageViewModel>(),
-            sp.GetRequiredService<WagonsPageViewModel>(),
+            sp.GetRequiredService<TrainsPageViewModel>(),
+            sp.GetRequiredService<StationsPageViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
-            sp.GetRequiredService<ActionExecutionContext>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
             sp.GetRequiredService<ICityService>(),
             sp.GetRequiredService<ISettingsService>(),
-            loggerFactory: sp.GetRequiredService<ILoggerFactory>(),
             dialogService: sp.GetService<IDialogService>(),
-            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
-            workflowService: sp.GetRequiredService<IWorkflowService>(),
-            workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));
+            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>()));
 
         services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
         services.AddTransient<InterlockingControlViewModel>();

@@ -2,9 +2,10 @@
 
 namespace Moba.Test.TrackPlanRenderer;
 
-using global::Moba.Backend.Service.TrackPlan;
 using global::Moba.SharedUI.Service;
 using global::Moba.TrackLibrary.PikoA;
+using global::Moba.TrackPlan.Editor;
+using global::Moba.Test.Helpers;
 
 internal sealed partial class TrackLayoutArchitectureTests
 {
@@ -149,6 +150,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         service.Select(original.Segment.No);
         service.PlaceSegment(new PlacedSegment(new G231(), 500, 0, 0), snapEnabled: false);
         var replacement = TrackPlanEditorDocument.FromData(
+            TrackPlanTestGeometry.Catalog,
             [new PlacedSegment(new G231(), 900, 0, 0)],
             []);
 
@@ -216,7 +218,8 @@ internal sealed partial class TrackLayoutArchitectureTests
         plan = new EditableTrackPlan();
         return new TrackPlanEditorService(
             plan,
-            new TrackPlanInteractionService(plan),
+            new TrackPlanInteractionService(plan, TrackPlanTestGeometry.PikoA),
+            TrackPlanTestGeometry.PikoA,
             new SelectionService(),
             new UndoRedoService<TrackPlanEditorDocument>());
     }

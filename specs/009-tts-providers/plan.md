@@ -6,7 +6,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Approved; slice 1 implemented in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) after #207 merged as `39312ca9` (2026-10-11); later slices pending.
+**Status**: Approved; slices 1 and 2 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) and [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250), after prerequisite #207 merged. Slice 3 implemented in draft [PR #278](https://github.com/ahuelsmann/MOBAflow/pull/278); current CI/Sonar evidence is tracked in that PR. T011 manual UI acceptance and slices 4-6 remain pending.
 
 **Input**: Feature specification from `/specs/009-tts-providers/spec.md`
 
@@ -31,12 +31,13 @@ voice names.
 and one options section per provider. Audio cache as WAV files plus a small index in the MOBAflow application data
 folder. Azure key in the Windows credential store; Azure region and voice in the app settings.
 
-**Testing**: NUnit and Moq; fake providers and a fake clock/file system for the cache; existing
+**Testing**: NUnit and Moq; fake providers and a clock for cache eviction; owned temporary directories for atomic WAV/index persistence and corruption tests; cache service doubles for I/O failure and waiter cancellation; existing
 `SpeakerEngineFactoryTests`, `PiperSpeechEngineTest`, `SystemSpeechEngineTest`, `AnnouncementServiceTests` and
 `MobaBackendServiceCollectionExtensionsTests` are moved or replaced.
 
 **Target Platforms**: Contract and shared speech output `net10.0` (Backend calls them on every platform); all
-provider libraries `net10.0-windows`, referenced by MOBAflow only.
+provider libraries `net10.0-windows` (local providers use the host target `net10.0-windows10.0.22621.0`),
+referenced by MOBAflow only.
 
 **Affected Layers**: `Sound` (speech parts move out), `Common/Configuration` (speech settings), `Backend`
 (`AnnouncementService`, `ActionExecutionContext`, DI), `SharedUI` (settings and health ViewModels), `MOBAflow`
@@ -66,7 +67,8 @@ Android speech and runtime plugin loading excluded.
   cancellation and failures, all without live paid calls.
 - [x] Validation follows the `AGENTS.md` matrix (shared logic plus WinUI compile, Android compile for the package
   removal).
-- [x] The design reuses `ISoundPlayer`, the speech health check and the DI extension methods; `ISpeakerEngine` and
+- [x] The design retains `ISoundPlayer` for sound effects and uses `IWavePlayer` for cancellable speech WAV playback,
+  with a Windows host adapter, the speech health check and the DI extension methods; `ISpeakerEngine` and
   its factory are replaced, not kept beside the new contract.
 - [x] Spec and plan reference #136.
 - [x] Artifacts stay below `specs/`.
@@ -95,7 +97,8 @@ Names follow the `TrackLibrary.Base` / `TrackLibrary.PikoA` pattern; final names
 
 - `ISpeechProvider`: `Id`, `DisplayName`, `IsLocal`, `GetCapabilitiesAsync`, and
   `SynthesizeAsync(SpeechRequest, CancellationToken)` returning `SpeechResult`. Providers return audio; they never
-  play it (FR-005).
+  play it (FR-005). `PrepareSynthesis(request)` captures a non-secret options fingerprint and the synthesis operation
+  before cache lookup, so later settings changes cannot relabel audio from the captured options.
 - `SpeechResult`: WAV audio on success, or a failure kind (`Unavailable`, `InvalidRequest`, `Failed`) with a
   display-safe reason. Expected failures are results, not exceptions.
 - `SpeechCapabilities`: voices with language, and whether rate and volume are supported.
@@ -108,10 +111,11 @@ Names follow the `TrackLibrary.Base` / `TrackLibrary.PikoA` pattern; final names
 
 1. Build the request from the current settings and resolve the selected provider by id (FR-003, takes effect for
    the next call). An unknown or missing id selects the default provider `system-speech` and writes a diagnostic.
-2. **Cache hit**: play the cached WAV through `ISoundPlayer`; no provider call (FR-006, SC-003).
-3. **Cache miss**: synthesise with the selected provider, store the audio in the cache, play it. Concurrent misses
-   for the same cache key share one synthesis (per-key single flight), so overlapping identical announcements cause
-   one provider call; different keys synthesise independently. Each caller observes its own cancellation token;
+2. **Cache hit**: play the cached WAV through `IWavePlayer`; no provider call (FR-006, SC-003).
+3. **Cache miss**: synthesise with the selected provider, play it, and store the audio in the cache only after
+   successful playback; cancelled or failed playback stores nothing. Concurrent misses for the same cache key share
+   one synthesis (per-key single flight), which stays joinable until its callers have played and stored the audio, so
+   overlapping identical announcements cause one provider call; different keys synthesise independently. Each caller observes its own cancellation token;
    the shared synthesis owns a separate token. Cancelling one caller ends its wait and prevents its playback,
    fallback and deferred synthesis, while other active callers continue. When the last waiting caller cancels,
    cancel the shared synthesis and remove its in-progress entry so a later request can start again. Application
@@ -126,6 +130,12 @@ shared-work rules above and stops audible playback: today's `WindowsSoundPlayer`
 needs a player that stops on cancellation (for example `SoundPlayer.Play()` plus `Stop()` on cancellation and a
 completion wait from the WAV duration), covered by a regression test.
 
+For slice 2, local provider availability includes a bounded Piper `--help` startup probe without synthesis.
+Changing providers resets the shell health display to pending. Checks publish the current provider's completed
+result even when its value repeats, and ignore results from a provider replaced during the check. A saved voice
+not offered by the selected provider uses that provider's configured/default voice; Piper uses its selected model.
+A newer speech playback session replaces the previous native waveform. Stop on cancellation or nominal
+completion applies only to the current session, guarded across host-player instances; older callers cannot stop it.
 ### Audio cache
 
 - Key: SHA-256 of provider id, a provider-supplied options fingerprint (for Piper: model, config, sentence silence,
@@ -135,7 +145,41 @@ completion wait from the WAV duration), covered by a regression test.
 - WAV files plus an index with size and last-use time; at the size limit (default 500 MB) the entries not played for
   the longest time are removed first (least recently used), so frequently repeated announcements stay cached. A
   corrupt or missing file is dropped and synthesised again.
-- `GetSizeAsync` and `ClearAsync` back the Settings size display and the "Clear cache" command.
+- `IAudioCache.GetSizeAsync` and `ClearAsync`, also exposed by `SpeechOutput`, back the later Settings size display and
+  the "Clear cache" command. The host registers one cache below `%LOCALAPPDATA%/MOBAflow/SpeechCache`; the size limit
+  is `Speech.CacheSizeLimitMegabytes` (500 MiB by default, zero disables storage). The limit covers retained WAV bytes.
+- WAV/index replacement is atomic. A lock file serializes cache operations across MOBAflow processes; each operation
+  reloads the index under that lock. Unindexed WAVs or temporary files left by an interrupted write are removed on the
+  first operation of a process, after a failed index update, before every store (which also covers a write another
+  process left unfinished), and whenever the size is read or the cache is cleared.
+  A clear increments the generation stored in the index and, once deletion starts, completes regardless of
+  cancellation: earlier in-progress synthesis, also in another process, can finish playback but cannot refill the
+  cleared cache. A lookup returns the generation read under the same lock as its miss; a failed lookup uses the
+  generation read before it. A store with a stale generation writes nothing but still records the playback of an
+  entry that exists in the current generation. Requests after clear use a new
+  shared-flight generation. A lookup reads only the requested file; the size limit is enforced from the index before
+  every hit, whenever audio is stored, and when the size is read. Only when the index exceeds the limit are its
+  entries checked against the files, so missing WAVs never cause valid audio to be evicted. Before a hit is served,
+  its file length is compared with the index: a file larger than the limit is dropped instead of read, and a corrected
+  size is enforced against the limit first.
+  A cache I/O failure is diagnosed without raw filesystem details and does not silence an otherwise valid announcement.
+- Synthesized audio is stored only after it has played successfully, with that playback as its last-use time, so the
+  cache never exceeds its limit and unheard audio never displaces played audio. A completed shared synthesis stays
+  joinable while any caller still plays or stores it, so an identical request during that playback reuses its audio
+  instead of calling the provider again. Each successful playback of a cached entry updates its last-use time.
+  Provider fingerprints include effective Piper executable/model/config paths, pronunciation options and sentence
+  silence; System Speech includes its configured default voice and, when no voice is configured, the Windows default
+  SAPI voice token, so changing the Windows default voice synthesizes again. A result a provider marks as not cacheable is played
+  but not stored: System Speech does so when a requested voice is missing and a substitute speaks, so installing the
+  voice later synthesizes again. Availability is excluded, so a cached announcement remains usable when the provider
+  cannot start. Replacing model contents at the same configured path requires clearing the cache. Request text uses
+  Unicode canonical normalization in both synthesis and cache identity.
+- Host service disposal cancels caller waits, shared synthesis and playback, then awaits their completion.
+  `SpeechOutput` is only asynchronously disposable, so no caller can return before that wait; cache size and clear
+  operations are cancelled and awaited the same way before dependent services are disposed.
+- The WinUI host enables unsafe blocks for generated C#/WinRT interop of disposable cache/output services; no
+  handwritten unsafe speech code or UI dependency is added to `Speech.Base`. Exact analyzer snapshots retire the
+  resolved WinRT configuration diagnostics and record only the two source-suppressed NUnit reflection fixtures.
 
 ### Pending synthesis
 
@@ -204,7 +248,9 @@ Each slice is one draft PR from its own worktree.
   the network off on the maintainer's PC (requires launch approval and the maintainer's Azure key).
 - **Regression checks**: slice 2 compiles with all removed-field callers and bindings converted; both the Settings
   test callback and `AnnouncementService` use the current selection and settings without restarting; app settings
-  load with removed fields; analyzer baselines unchanged. Slice 3 tests one cancelled waiter, all waiters cancelled,
+  load with removed fields; analyzer baseline gates stay unchanged. Refresh snapshots only for removed/moved
+  diagnostics and reviewed findings already suppressed as false positives. Slice 3 tests one cancelled waiter,
+  all waiters cancelled,
   a new request after cancellation and shutdown during shared synthesis; cancelled calls start no fallback or
   deferred synthesis. Slice 4 repeats the cancellation assertions with fallback and the pending queue enabled.
 - **Secrets scan**: all changed files; a test asserts that the key never appears in logs, diagnostics or cache

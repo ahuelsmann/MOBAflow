@@ -8,7 +8,7 @@ using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
@@ -108,11 +108,11 @@ public sealed class JourneyCounterProjectionTests
         {
             if (e.PropertyName == nameof(MainWindowViewModel.SpeechStatusDisplayText)) updates++;
         };
-        fixture.ViewModel.SettingsPage.SelectedSpeechEngine = "Piper TTS";
-        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Does.StartWith("Piper TTS:"));
+        fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "piper";
+        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Is.EqualTo("Speech: Initializing..."));
 
         await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);
-        fixture.ViewModel.SettingsPage.SelectedSpeechEngine = "System Speech (Windows SAPI)";
+        fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "system-speech";
         Assert.That(updates, Is.EqualTo(1));
     }
 
@@ -245,19 +245,19 @@ public sealed class JourneyCounterProjectionTests
             io.Setup(service => service.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((true, "projection-test.json", null));
             Settings.Counter.CountOfFeedbackPoints = 7;
             var locomotiveSession1 = TestSolutionSessions.Create(solution ?? new Solution { Projects = [new Project()] }, dispatcher.Object, Runtime.Object, io.Object);
+            var stationEventBus1 = _eventBus;
             ViewModel = new MainWindowViewModel(
                 new LayoutColumnWidthsViewModel(),
                 Runtime.Object,
                 Runtime.Object,
                 Runtime.Object,
                 Gateway.Object,
-                _eventBus,
+                stationEventBus1,
                 dispatcher.Object,
                 TestSettingsPages.Create(Settings, dispatcher.Object),
-                _rollingStockPages.GetLocomotivesPage(locomotiveSession1, io.Object),
-                _rollingStockPages.GetWagonsPage(locomotiveSession1, io.Object),
+                _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object),
+                _rollingStockPages.GetStationsPage(locomotiveSession1, Runtime.Object, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, stationEventBus1),
                 locomotiveSession1,
-                new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
                 NullLogger<MainWindowViewModel>.Instance);
         }
 

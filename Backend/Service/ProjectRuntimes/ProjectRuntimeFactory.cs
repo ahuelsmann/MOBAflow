@@ -60,7 +60,7 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
         var executionContext = new ActionExecutionContext
         {
             Z21 = z21,
-            SpeakerEngine = shared.SharedExecutionContext.SpeakerEngine,
+            SpeechOutput = shared.SharedExecutionContext.SpeechOutput,
             SoundPlayer = shared.SharedExecutionContext.SoundPlayer
         };
         var unavailableReason = lease.ConflictProjectName is { } owner
@@ -180,6 +180,27 @@ public sealed class ProjectRuntime : IAsyncDisposable
     public string? Z21Key { get; }
 
     internal Project Project => _project;
+
+    internal bool IsDisposed => Volatile.Read(ref _disposed) != 0;
+
+    internal async Task<LocomotiveTrainRuntimeCapture?> CaptureLocomotiveTrainUsageAsync(
+        ILocomotiveTrainReferenceAnalyzer analyzer, Guid? locomotiveId, CancellationToken cancellationToken)
+    {
+        if (IsDisposed)
+            return null;
+        var captured = await _service.CaptureLocomotiveTrainUsageAsync(analyzer, ProjectId, locomotiveId, cancellationToken)
+            .ConfigureAwait(false);
+        return IsDisposed ? null : captured;
+    }
+
+    internal async Task<bool> IsLocomotiveTrainUsageCurrentAsync(
+        LocomotiveTrainUsageReceipt receipt, CancellationToken cancellationToken)
+    {
+        if (IsDisposed)
+            return false;
+        var current = await _service.IsLocomotiveTrainUsageCurrentAsync(receipt, cancellationToken).ConfigureAwait(false);
+        return current && !IsDisposed;
+    }
 
     /// <summary>Gets the runtime service.</summary>
     public IMobaRuntime Runtime { get; }

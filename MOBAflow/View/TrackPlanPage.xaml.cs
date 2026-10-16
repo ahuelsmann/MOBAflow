@@ -24,6 +24,7 @@ using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.ViewModel;
 using TrackLibrary.PikoA;
+using TrackPlan.Editor;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
@@ -52,6 +53,7 @@ public sealed partial class TrackPlanPage
     public InterlockingControlViewModel InterlockingViewModel { get; }
     public MainWindowViewModel MainViewModel { get; }
     private readonly EditableTrackPlan _plan;
+    private readonly SegmentPlacementGeometry _geometry;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
     private readonly ILogger<TrackPlanPage>? _logger;
 
@@ -80,7 +82,7 @@ public sealed partial class TrackPlanPage
     internal TrackPlanPage(
         TrackPlanPageViewModels viewModels,
         MainWindowViewModel mainViewModel,
-        EditableTrackPlan plan,
+        TrackPlanPageEditor editor,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
         AppSettings settings,
         ISettingsService? settingsService = null,
@@ -90,7 +92,9 @@ public sealed partial class TrackPlanPage
         ViewModel = viewModels.TrackPlan;
         InterlockingViewModel = viewModels.Interlocking;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
-        _plan = plan ?? throw new ArgumentNullException(nameof(plan));
+        ArgumentNullException.ThrowIfNull(editor);
+        _plan = editor.Plan;
+        _geometry = editor.Geometry;
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
         _settings = settings;
         _settingsService = settingsService;
@@ -618,7 +622,7 @@ public sealed partial class TrackPlanPage
                 {
                     var segment = entry.CreateInstance();
                     var placed = new PlacedSegment(segment, xMm, yMm, 0);
-                    TrySnapAndPlace(placed, null);
+                    TrySnapAndPlace(placed);
                 }
             }
         }
@@ -866,7 +870,7 @@ public sealed partial class TrackPlanPage
         var canvasPoint = MainGrid.TransformToVisual(OverlayCanvas).TransformPoint(e.GetCurrentPoint(MainGrid).Position);
         var (xMm, yMm) = ToWorldCoordinates(canvasPoint);
         UpdateToolboxDragPlacement(xMm, yMm);
-        TrySnapAndPlace(_draggedPlaced, null);
+        TrySnapAndPlace(_draggedPlaced);
     }
 
     private void Canvas_PointerReleased_CanvasDrag(object sender, PointerRoutedEventArgs e)
@@ -913,7 +917,7 @@ public sealed partial class TrackPlanPage
 
         var rotationDegrees = _toolboxDragBaseRotationDegrees ?? _draggedPlaced.RotationDegrees;
         var rawPlaced = _draggedPlaced.WithPosition(worldX, worldY, rotationDegrees);
-        var snap = _snapEnabled ? FindBestSnap(rawPlaced, null) : null;
+        var snap = _snapEnabled ? FindBestSnap(rawPlaced) : null;
         _draggedPlaced = snap?.Placed ?? rawPlaced;
         UpdateGhostPosition();
         UpdatePortHighlights();
@@ -944,35 +948,20 @@ public sealed partial class TrackPlanPage
         CoordinatesText.Text = "X: 0  Y: 0";
     }
 
-    private void TrySnapAndPlace(PlacedSegment placed, Guid? excludeSegmentId)
+    private void TrySnapAndPlace(PlacedSegment placed)
     {
-        _ = excludeSegmentId;
         ViewModel.PlaceSegment(placed, _snapEnabled);
         UpdateStats();
     }
 
-    private (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? FindBestSnap(PlacedSegment placed, Guid? excludeSegmentId)
+    private (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? FindBestSnap(PlacedSegment placed)
     {
         var movingGroup = _draggedSegmentId == placed.Segment.No ? _draggingGroup : null;
-        var snap = ViewModel.FindBestSnap(placed, excludeSegmentId, movingGroup);
+        var snap = ViewModel.FindBestSnap(placed, null, movingGroup);
 
         return snap == null
             ? null
             : (snap.Placed, snap.SourcePort, snap.TargetSegmentId, snap.TargetPort);
-    }
-
-    private static double NormalizeAngle(double degrees)
-    {
-        while (degrees >= 360) degrees -= 360;
-        while (degrees < 0) degrees += 360;
-        return degrees;
-    }
-
-    private bool IsPortConnected(Guid segmentId, string portName)
-    {
-        return _plan.Connections.Any(connection =>
-            (connection.SourceSegment == segmentId && connection.SourcePort == portName)
-            || (connection.TargetSegment == segmentId && connection.TargetPort == portName));
     }
 
     private void UpdatePortHighlights()
@@ -984,7 +973,7 @@ public sealed partial class TrackPlanPage
 
         var (offsetX, offsetY) = GetDrawOffset();
         var draggedPorts = GetUnconnectedDraggedPorts();
-        var portsToHighlight = CalculatePortsToHighlight(draggedPorts);
+        var portsToHighlight = CalculatePortsToHighlight();
         RenderTargetPortIndicators(offsetX, offsetY, portsToHighlight);
         RenderDraggedPortIndicators(offsetX, offsetY, draggedPorts, portsToHighlight);
     }
@@ -1001,13 +990,10 @@ public sealed partial class TrackPlanPage
             return [];
         }
 
-        return SegmentPortGeometry.GetAllPortWorldPositions(_draggedPlaced)
-            .Where(p => !IsPortConnected(_draggedPlaced.Segment.No, p.PortName))
-            .Select(p => (p.PortName, p.X, p.Y))
-            .ToList();
+        return _geometry.GetOpenPortWorldPositions(_draggedPlaced, _plan.Connections).ToList();
     }
 
-    private HashSet<(double X, double Y)> CalculatePortsToHighlight(List<(string PortName, double X, double Y)> draggedPorts)
+    private HashSet<(double X, double Y)> CalculatePortsToHighlight()
     {
         if (_draggedPlaced == null)
         {
@@ -1015,7 +1001,6 @@ public sealed partial class TrackPlanPage
             return [];
         }
 
-        _ = draggedPorts;
         var preview = ViewModel
             .GetSnapPreview(_draggedPlaced, _draggingGroup, PortHighlightRadiusMm)
             .HighlightedPorts;
@@ -1027,13 +1012,8 @@ public sealed partial class TrackPlanPage
     {
         foreach (var placed in EnumerateSnapTargetSegments())
         {
-            foreach (var (targetPortName, px, py, _) in SegmentPortGeometry.GetAllPortWorldPositions(placed))
+            foreach (var (_, px, py) in _geometry.GetOpenPortWorldPositions(placed, _plan.Connections))
             {
-                if (IsPortConnected(placed.Segment.No, targetPortName))
-                {
-                    continue;
-                }
-
                 var highlight = portsToHighlight.Contains((px, py));
                 AddPortIndicator((px + offsetX) * ScaleMmToPx, (py + offsetY) * ScaleMmToPx, highlight);
             }
@@ -1089,54 +1069,8 @@ public sealed partial class TrackPlanPage
     /// <summary>
     /// Berechnet die Bounding-Box aller Segmente in Weltkoordinaten (mm).
     /// </summary>
-    private (double MinX, double MinY, double MaxX, double MaxY)? ComputeContentBoundsMm()
-    {
-        if (_plan.Segments.Count == 0)
-            return null;
-
-        double minX = double.MaxValue, minY = double.MaxValue;
-        double maxX = double.MinValue, maxY = double.MinValue;
-
-        foreach (var placed in _plan.Segments)
-        {
-            var path = SegmentLocalPathBuilder.GetPath(placed.Segment);
-            var (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(path);
-
-            var angleRad = placed.RotationDegrees * Math.PI / 180;
-            var cos = Math.Cos(angleRad);
-            var sin = Math.Sin(angleRad);
-
-            static double Tx(double ox, double oy, double lx, double ly, double cos, double sin)
-            {
-                _ = oy;
-                return ox + lx * cos - ly * sin;
-            }
-
-            static double Ty(double ox, double oy, double lx, double ly, double cos, double sin)
-            {
-                _ = ox;
-                return oy + lx * sin + ly * cos;
-            }
-
-            var corners = new[]
-            {
-                (Tx(placed.X, placed.Y, localMinX, localMinY, cos, sin), Ty(placed.X, placed.Y, localMinX, localMinY, cos, sin)),
-                (Tx(placed.X, placed.Y, localMaxX, localMinY, cos, sin), Ty(placed.X, placed.Y, localMaxX, localMinY, cos, sin)),
-                (Tx(placed.X, placed.Y, localMinX, localMaxY, cos, sin), Ty(placed.X, placed.Y, localMinX, localMaxY, cos, sin)),
-                (Tx(placed.X, placed.Y, localMaxX, localMaxY, cos, sin), Ty(placed.X, placed.Y, localMaxX, localMaxY, cos, sin))
-            };
-
-            foreach (var (x, y) in corners)
-            {
-                minX = Math.Min(minX, x);
-                minY = Math.Min(minY, y);
-                maxX = Math.Max(maxX, x);
-                maxY = Math.Max(maxY, y);
-            }
-        }
-
-        return (minX, minY, maxX, maxY);
-    }
+    private (double MinX, double MinY, double MaxX, double MaxY)? ComputeContentBoundsMm() =>
+        _geometry.GetContentBounds(_plan.Segments);
 
     /// <summary>Offset in mm, damit der gesamte Inhalt im sichtbaren Bereich liegt (analog SVG viewBox).</summary>
     /// <remarks>
@@ -1272,7 +1206,7 @@ public sealed partial class TrackPlanPage
         var selectedTrackIds = ViewModel.SelectedTrackId is Guid selectedTrackId
             ? new HashSet<Guid> { selectedTrackId }
             : null;
-        var renderScene = TrackPlanRenderSceneBuilder.Build(_plan.Segments, selectedTrackIds, feedbackIntensities);
+        var renderScene = TrackPlanRenderSceneBuilder.Build(_geometry, _plan.Segments, selectedTrackIds, feedbackIntensities);
         foreach (var (placed, renderItem) in _plan.Segments.Zip(renderScene.Items))
         {
             var worldGeometry = PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
@@ -1394,28 +1328,14 @@ public sealed partial class TrackPlanPage
     /// segment's ports, which reliably lies on (straight, curved) or just next to (switch,
     /// crossing) the physical track regardless of rotation or segment type.
     /// </summary>
-    private static (double X, double Y) GetTrackLabelAnchorWorld(PlacedSegment placed)
-    {
-        var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed);
-        if (ports.Count == 0)
-            return (placed.X, placed.Y);
-
-        double sumX = 0, sumY = 0;
-        foreach (var port in ports)
-        {
-            sumX += port.X;
-            sumY += port.Y;
-        }
-
-        return (sumX / ports.Count, sumY / ports.Count);
-    }
+    private (double X, double Y) GetTrackLabelAnchorWorld(PlacedSegment placed) => _geometry.GetPortCentroid(placed);
 
     private void DrawValidationOverlay(CanvasDrawingSession drawingSession, double offsetX, double offsetY)
     {
         if (_plan.Segments.Count == 0)
             return;
 
-        var analysis = TrackPlanValidationHelper.Analyze(_plan.Segments, _plan.Connections);
+        var analysis = TrackPlanValidationHelper.Analyze(_geometry, _plan.Segments, _plan.Connections);
         var openPortFill = Color.FromArgb(160, 255, 185, 0);
         var openPortStroke = Color.FromArgb(255, 255, 140, 0);
         var overlapFill = Color.FromArgb(180, 232, 17, 35);
@@ -1646,7 +1566,7 @@ public sealed partial class TrackPlanPage
         var deltaRad = currentAngleRad - _rotationDragStartAngleRad;
         var deltaDeg = deltaRad * 180.0 / Math.PI;
         // Im Bildschirm-KS: Uhrzeigersinn = negativer Winkel → Segment soll mitdrehen
-        var newRotation = NormalizeAngle(_rotationDragStartSegmentDegrees - deltaDeg);
+        var newRotation = SegmentPlacementGeometry.NormalizeAngle(_rotationDragStartSegmentDegrees - deltaDeg);
         ViewModel.SetSelectedTrackRotation(newRotation);
     }
 
@@ -1711,7 +1631,7 @@ public sealed partial class TrackPlanPage
 
     private void UpdateStats()
     {
-        var analysis = TrackPlanValidationHelper.Analyze(_plan.Segments, _plan.Connections);
+        var analysis = TrackPlanValidationHelper.Analyze(_geometry, _plan.Segments, _plan.Connections);
         NodeCountText.Text = _plan.Segments.Count.ToString();
         EdgeCountText.Text = _plan.Connections.Count.ToString();
         EndcapCountText.Text = analysis.OpenPorts.Count.ToString();
@@ -1725,3 +1645,10 @@ public sealed partial class TrackPlanPage
 internal sealed record TrackPlanPageViewModels(
     TrackPlanViewModel TrackPlan,
     InterlockingControlViewModel Interlocking);
+
+/// <summary>
+/// Editor model and catalogue geometry drawn and edited by the physical plan page.
+/// </summary>
+internal sealed record TrackPlanPageEditor(
+    EditableTrackPlan Plan,
+    SegmentPlacementGeometry Geometry);

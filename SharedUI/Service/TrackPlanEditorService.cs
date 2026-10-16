@@ -2,13 +2,13 @@
 
 namespace Moba.SharedUI.Service;
 
-using Backend.Service.TrackPlan;
-
 using Domain;
 
 using System.Text.Json;
 
-using TrackLibrary.PikoA;
+using TrackLibrary.Base;
+
+using TrackPlan.Editor;
 
 /// <summary>
 /// Coordinates platform-neutral track-plan selection, mutations, validation, history, and dirty state.
@@ -17,6 +17,7 @@ public sealed class TrackPlanEditorService : IDisposable
 {
     private readonly EditableTrackPlan _plan;
     private readonly TrackPlanInteractionService _interactionService;
+    private readonly SegmentPlacementGeometry _geometry;
     private readonly SelectionService _selectionService;
     private readonly UndoRedoService<TrackPlanEditorDocument> _undoRedoService;
     private TrackPlanEditorDocument? _pendingGestureSnapshot;
@@ -26,16 +27,19 @@ public sealed class TrackPlanEditorService : IDisposable
     public TrackPlanEditorService(
         EditableTrackPlan plan,
         TrackPlanInteractionService interactionService,
+        SegmentPlacementGeometry geometry,
         SelectionService selectionService,
         UndoRedoService<TrackPlanEditorDocument> undoRedoService)
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(interactionService);
+        ArgumentNullException.ThrowIfNull(geometry);
         ArgumentNullException.ThrowIfNull(selectionService);
         ArgumentNullException.ThrowIfNull(undoRedoService);
 
         _plan = plan;
         _interactionService = interactionService;
+        _geometry = geometry;
         _selectionService = selectionService;
         _undoRedoService = undoRedoService;
         _plan.PlanChanged += OnPlanChanged;
@@ -44,6 +48,9 @@ public sealed class TrackPlanEditorService : IDisposable
 
     /// <summary>Raised when selection, history, dirty state, or editor content changes.</summary>
     public event EventHandler? StateChanged;
+
+    /// <summary>Catalogue that supplies track codes, names and geometry.</summary>
+    public ITrackCatalog Catalog => _geometry.Catalog;
 
     public IReadOnlyList<PlacedSegment> Segments => _plan.Segments;
 
@@ -135,7 +142,7 @@ public sealed class TrackPlanEditorService : IDisposable
             }
         }
 
-        _plan.HealImplicitConnections();
+        _plan.HealImplicitConnections(_geometry);
         CompleteGesture();
     }
 
@@ -165,7 +172,7 @@ public sealed class TrackPlanEditorService : IDisposable
             _interactionService.AddWithSnap(snap);
         }
 
-        _plan.HealImplicitConnections();
+        _plan.HealImplicitConnections(_geometry);
         RecordSnapshotIfChanged(before);
     }
 
@@ -266,13 +273,13 @@ public sealed class TrackPlanEditorService : IDisposable
 
     public TrackPlanEditorDocument CaptureDocument()
     {
-        return TrackPlanEditorDocument.FromEditableTrackPlan(_plan);
+        return TrackPlanEditorDocument.FromEditableTrackPlan(_geometry.Catalog, _plan);
     }
 
     public void ApplyDocument(TrackPlanEditorDocument document, bool clearHistory, bool markClean)
     {
         ArgumentNullException.ThrowIfNull(document);
-        var (placements, connections) = document.ToEditableTrackPlanData();
+        var (placements, connections) = document.ToEditableTrackPlanData(_geometry.Catalog);
 
         _isApplyingDocument = true;
         try
@@ -280,7 +287,7 @@ public sealed class TrackPlanEditorService : IDisposable
             _pendingGestureSnapshot = null;
             _selectionService.Select(null);
             _plan.LoadFromPlacements(placements, connections);
-            _plan.HealImplicitConnections();
+            _plan.HealImplicitConnections(_geometry);
             if (clearHistory)
             {
                 _undoRedoService.Clear();
@@ -335,7 +342,7 @@ public sealed class TrackPlanEditorService : IDisposable
             messages.Add($"Port {usage.PortName} of segment {usage.SegmentId} is used multiple times.");
         }
 
-        var analysis = TrackPlanValidationHelper.Analyze(_plan.Segments, _plan.Connections);
+        var analysis = TrackPlanValidationHelper.Analyze(_geometry, _plan.Segments, _plan.Connections);
         if (analysis.ConnectedGroups.Count > 1)
         {
             messages.Add($"The track plan consists of {analysis.ConnectedGroups.Count} disconnected groups.");

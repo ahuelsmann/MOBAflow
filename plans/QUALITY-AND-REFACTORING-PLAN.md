@@ -139,11 +139,11 @@ dependencies.
 | RF-08 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
 | RF-09 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Risk-critical behavior has non-decreasing coverage and mutation protection. |
 | RF-10 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Formatting drift fails CI without obscuring functional changes. |
-| RF-11 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
-| RF-12 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Mobile session, discovery, runtime projection, synchronization, and upload concerns are separated. |
+| RF-11 | [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
+| RF-12 | [#242](https://github.com/ahuelsmann/MOBAflow/issues/242) | Mobile session, discovery, runtime projection, synchronization, and upload concerns are separated. |
 | RF-13 | [#91](https://github.com/ahuelsmann/MOBAflow/issues/91) | Track-plan editor operations are platform-neutral and WinUI remains a thin input and rendering adapter. |
 | RF-14 | [#92](https://github.com/ahuelsmann/MOBAflow/issues/92) | Signal-box property changes flow through commands and ViewModels rather than direct control mutation. |
-| RF-15 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Unused synchronous and unsafe path abstractions are removed or hardened. |
+| RF-15 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) | Unused synchronous and unsafe path abstractions are removed or hardened. |
 | RF-16 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical workflows pass accessibility, keyboard, contrast, and theme acceptance. |
 | RF-17 | [#116](https://github.com/ahuelsmann/MOBAflow/issues/116) | Repository guidance and executable engineering gates describe the same rules. |
 | RF-18 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical throughput, load, telemetry, recovery, and endurance behavior is measured. |
@@ -234,57 +234,23 @@ formatting gate rejects subsequent drift.
 
 ### RF-11: Decompose `TrainControlViewModel`
 
-After characterization tests, extract in this order:
-
-1. locomotive selection and fleet projection;
-2. speed conversion, ramping, and command debounce;
-3. function state and appearance;
-4. brake and door state machines;
-5. journey and station projection;
-6. telemetry aggregation and peaks;
-7. host-specific settings persistence.
-
-Acceptance anchor: `TrainControlViewModel` coordinates focused,
-platform-neutral collaborators; state transitions are independently testable
-with controlled time and cancellation; WinUI and MAUI differences remain
-explicit; each superseded path is removed after equivalence is proven.
+Child issue [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) owned this package; its child plan
+took over the provisional anchor and was removed when the slices were delivered. The resulting
+collaborators are described in [the architecture overview](../docs/ARCHITECTURE.md#train-control).
 
 ### RF-12: Decompose `MauiViewModel`
 
-After characterization tests, separate:
-
-1. discovery and endpoint selection;
-2. SignalR session and reconnect lifecycle;
-3. remote snapshot projection;
-4. solution synchronization;
-5. photo capture and upload orchestration;
-6. application and network lifecycle handling;
-7. move the remaining mobile root ViewModel into the `Mobile` folder and
-   namespace of `SharedUI`; it stays in `SharedUI` because the portable test run
-   excludes `MOBAsmart` by default.
-
-Acceptance anchor: the root mobile ViewModel is a composition boundary rather
-than the owner of networking, storage, runtime projection, and UI state
-transitions; reconnect, cancellation, failure, and lifecycle behavior is
-independently tested; superseded paths are removed.
+Child issue [#242](https://github.com/ahuelsmann/MOBAflow/issues/242) owned this package; its child plan
+took over the provisional anchor and was removed when the slices were delivered. The resulting
+collaborators are described in
+[the architecture overview](../docs/ARCHITECTURE.md#mobasmart-session-and-projection).
 
 ### RF-15: Remove or harden latent legacy services
 
-Sequence:
-
-1. reconcile current references and issue #36 ownership before changing display
-   sender code; consume its cutover rather than repeating feature-owned work;
-2. remove an unreferenced synchronous sender only after all required behavior
-   uses `IFrameSender.SendFrameAsync`;
-3. remove an unused photo-storage abstraction or route every remaining path
-   through `PhotoPathHelper` with canonical-root containment;
-4. add traversal cases for parent segments, rooted paths, alternate separators,
-   and encoded edge cases before retaining any path abstraction;
-5. remove duplicate utilities only after reference and behavior checks.
-
-Acceptance anchor: no required caller depends on the removed synchronous path;
-remaining path operations cannot escape their configured root; relevant
-behavior and failure tests pass; no product behavior from issue #36 is absorbed.
+Delivered without a child issue. `IFrameSender` exposes only `SendFrameAsync`; the unused photo-storage
+service was removed and desktop photo saves go through `PhotoPathHelper` with root containment and
+traversal tests ([#280](https://github.com/ahuelsmann/MOBAflow/pull/280)); function-button colours use one
+shared hex parser ([#287](https://github.com/ahuelsmann/MOBAflow/pull/287)).
 
 ### RF-16: Accessibility and themes
 

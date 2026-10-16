@@ -2,7 +2,7 @@
 
 namespace Moba.SharedUI.Interface;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 

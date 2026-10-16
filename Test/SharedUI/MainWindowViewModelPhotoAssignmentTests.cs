@@ -13,7 +13,7 @@ using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -120,22 +120,22 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             .Callback<Action>(action => action());
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object);
+        var stationEventBus1 = eventBusMock.Object;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
-            eventBusMock.Object,
+            stationEventBus1,
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
-            locomotiveSession1,
-            new ActionExecutionContext
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntimeMock.Object, new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
-            },
+            }, stationEventBus1),
+            locomotiveSession1,
             loggerMock.Object);
     }
 
@@ -393,19 +393,19 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             .Callback((Solution solution, string _) => save(JsonSerializer.Serialize(solution, JsonOptions.Default)))
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
         var locomotiveSession2 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object, io.Object);
+        var stationEventBus2 = new Mock<IEventBus>().Object;
         var viewModel = new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
             runtime.Object,
             new LocalRuntimeCommandGateway(runtime.Object),
-            new Mock<IEventBus>().Object,
+            stationEventBus2,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession2, io.Object),
-            _rollingStockPages.GetWagonsPage(locomotiveSession2, io.Object),
+            _rollingStockPages.GetTrainsPage(locomotiveSession2, runtime.Object, io.Object),
+            _rollingStockPages.GetStationsPage(locomotiveSession2, runtime.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus2),
             locomotiveSession2,
-            new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             NullLogger<MainWindowViewModel>.Instance)
         {
             CurrentSolutionPath = "inventory.json",

@@ -8,7 +8,7 @@ using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -714,19 +714,19 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
         runtime.Setup(value => value.GetTrafficPackets()).Returns([]);
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object);
+        var stationEventBus1 = eventBus;
         var mainWindow = new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
             runtime.Object,
             new LocalRuntimeCommandGateway(runtime.Object),
-            eventBus,
+            stationEventBus1,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, stationEventBus1),
             locomotiveSession1,
-            new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
             Mock.Of<ILogger<MainWindowViewModel>>());
         var evaluation = new StubEvaluationService(evaluationResult ?? new TimetableEvaluationResult([]));
         var timing = new StubTimingService(delay ?? TimeSpan.Zero);

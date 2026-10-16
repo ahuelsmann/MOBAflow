@@ -67,72 +67,55 @@ public class Z21Settings
     public int SystemStatePollingIntervalSeconds { get; set; }
 }
 
-/// <summary>
-/// Text-to-speech synthesis configuration.
-/// </summary>
+/// <summary>Shared text-to-speech selection and request options.</summary>
 public class SpeechSettings
 {
-    /// <summary>
-    /// Path to the local Piper executable.
-    /// </summary>
-    public string PiperExecutablePath { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Path to the local Piper voice model (.onnx).
-    /// </summary>
-    public string PiperModelPath { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Optional path to the Piper model configuration (.json).
-    /// </summary>
-    public string PiperConfigPath { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Speech synthesis rate (-10 to 10).
-    /// </summary>
+    /// <summary>Provider selected for the next announcement.</summary>
+    public string ProviderId { get; set; } = "system-speech";
+    /// <summary>Maximum retained speech WAV size in MiB; zero disables storage.</summary>
+    public int CacheSizeLimitMegabytes { get; set => field = Math.Max(0, value); } = 500;
+    /// <summary>Speech rate from -10 to 10.</summary>
     public int Rate { get; set; } = -1;
-
-    /// <summary>
-    /// Speech synthesis volume (0-100).
-    /// </summary>
+    /// <summary>Speech volume from 0 to 100.</summary>
     public uint Volume { get; set; } = 90;
-
-    /// <summary>
-    /// Default speaker engine name.
-    /// </summary>
-    public string SpeakerEngineName { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Default voice name.
-    /// </summary>
+    /// <summary>Optional voice name; empty selects the provider default.</summary>
     public string VoiceName { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Test message for speech synthesis (used in Settings test button).
-    /// Default: German test message.
-    /// </summary>
+    /// <summary>Optional language tag used when selecting the default voice.</summary>
+    public string Language { get; set; } = string.Empty;
+    /// <summary>Text used by the Settings test command.</summary>
     public string TestMessage { get; set; } = "This is a speech synthesis test. Next stop: Central Station.";
+    /// <summary>Local Piper synthesis options.</summary>
+    public PiperSpeechSettings Piper { get; set; } = new();
+    /// <summary>Windows speech synthesis options.</summary>
+    public SystemSpeechSettings SystemSpeech { get; set; } = new();
+}
 
-    /// <summary>
-    /// Enables Piper-specific pronunciation normalization before synthesis.
-    /// </summary>
+/// <summary>Local executable, model and pronunciation options for Piper.</summary>
+public class PiperSpeechSettings
+{
+    /// <summary>Path to the local Piper executable.</summary>
+    public string ExecutablePath { get; set => field = value ?? string.Empty; } = string.Empty;
+    /// <summary>Path to the selected .onnx voice model.</summary>
+    public string ModelPath { get; set => field = value ?? string.Empty; } = string.Empty;
+    /// <summary>Optional path to the model configuration.</summary>
+    public string ConfigPath { get; set => field = value ?? string.Empty; } = string.Empty;
+    /// <summary>Maximum synthesis time in seconds.</summary>
+    public int TimeoutSeconds { get; set; } = 30;
+    /// <summary>Normalizes station abbreviations before synthesis.</summary>
     public bool EnablePronunciationNormalization { get; set; } = true;
-
-    /// <summary>
-    /// Pause in seconds between sentences passed to Piper.
-    /// </summary>
-    public double PiperSentenceSilenceSeconds { get; set; }
-
-    /// <summary>
-    /// Keeps the last generated Piper WAV file in the local diagnostics folder.
-    /// </summary>
-    public bool EnablePiperAudioDiagnostics { get; set; }
-
-    /// <summary>
-    /// Custom phrase replacements for difficult station names or words.
-    /// Key: source phrase, value: Piper-friendly replacement.
-    /// </summary>
+    /// <summary>Pause between sentences in seconds.</summary>
+    public double SentenceSilenceSeconds { get; set; }
+    /// <summary>Preserves the last WAV in the local diagnostics directory.</summary>
+    public bool EnableAudioDiagnostics { get; set; }
+    /// <summary>Custom pronunciation replacements.</summary>
     public Dictionary<string, string> PronunciationReplacements { get; set; } = [];
+}
+
+/// <summary>Windows speech defaults, independent of a Piper model.</summary>
+public class SystemSpeechSettings
+{
+    /// <summary>Default Windows voice when the shared voice is empty.</summary>
+    public string DefaultVoiceName { get; set; } = string.Empty;
 }
 
 /// <summary>

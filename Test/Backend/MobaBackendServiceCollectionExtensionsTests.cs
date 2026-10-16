@@ -11,6 +11,10 @@ using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Sound;
+using Moba.Speech.Base;
+using Moba.Domain;
+using Moba.Domain.Enum;
+using Moq;
 
 /// <summary>
 /// Tests for <see cref="MobaBackendServiceCollectionExtensions.AddMobaBackendServices"/>.
@@ -19,6 +23,42 @@ using Moba.Sound;
 [TestFixture]
 internal sealed class MobaBackendServiceCollectionExtensionsTests
 {
+    [Test]
+    public void UsageAnalyzer_IsShared_WithoutAddingADesktopOwnerReaderToCommonBackend()
+    {
+        using var provider = BuildServiceProvider();
+        var analyzer = provider.GetRequiredService<ILocomotiveTrainReferenceAnalyzer>();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(analyzer, Is.InstanceOf<LocomotiveTrainReferenceAnalyzer>());
+            Assert.That(provider.GetRequiredService<ILocomotiveTrainReferenceAnalyzer>(), Is.SameAs(analyzer));
+            Assert.That(provider.GetService<ILocomotiveTrainRuntimeUsageReader>(), Is.Null);
+            Assert.That(provider.GetService<IProjectRuntimeHost>(), Is.Null);
+        }
+    }
+
+    [Test]
+    public async Task AddMobaBackendServices_PreservesExplicitAdapterAndRoutesResolvedHandlersThroughIt()
+    {
+        var adapter = new Mock<IWorkflowEffectAdapter>();
+        adapter.Setup(value => value.ExecuteAsync(It.IsAny<WorkflowEffectRequest>(), It.IsAny<ActionExecutionContext>(),
+            It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton(adapter.Object);
+        services.AddMobaBackendServices();
+        services.AddMobaBackendServices();
+        using var provider = services.BuildServiceProvider();
+        var z21 = new Mock<IZ21>(MockBehavior.Strict);
+        var action = new WorkflowAction { Type = ActionType.Command, Command = new() { BytesBase64 = "AQID" } };
+        await provider.GetRequiredService<IActionExecutor>().ExecuteAsync(action, new ActionExecutionContext { Z21 = z21.Object }).ConfigureAwait(false);
+        Assert.That(provider.GetRequiredService<IWorkflowEffectAdapter>(), Is.SameAs(adapter.Object));
+        adapter.Verify(value => value.ExecuteAsync(It.Is<WorkflowCommandEffectRequest>(request => request.ActionId == action.Id),
+            It.IsAny<ActionExecutionContext>(), CancellationToken.None), Times.Once);
+        z21.VerifyNoOtherCalls();
+    }
+
     [Test]
     public void AddMobaBackendServices_NullCollection_Throws()
     {
@@ -38,6 +78,7 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
             Assert.That(provider.GetService<IMobaRuntime>(), Is.InstanceOf<MobaRuntimeService>());
             Assert.That(provider.GetService<IInterlockingRuntime>(), Is.InstanceOf<InterlockingRuntimeService>());
             Assert.That(provider.GetService<IWorkflowService>(), Is.InstanceOf<WorkflowService>());
+            Assert.That(provider.GetService<IWorkflowEffectAdapter>(), Is.InstanceOf<ProductionWorkflowEffectAdapter>());
             Assert.That(provider.GetService<IProjectValidator>(), Is.InstanceOf<ProjectValidator>());
             Assert.That(provider.GetService<IProjectDiagnosticsService>(), Is.InstanceOf<ProjectDiagnosticsService>());
             Assert.That(provider.GetService<ILocomotiveLibraryService>(), Is.InstanceOf<LocomotiveLibraryService>());
@@ -77,7 +118,7 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
         services.AddSingleton(new AppSettings());
         services.AddSingleton<IEventBus>(sp => new EventBus(sp.GetRequiredService<ILogger<EventBus>>()));
-        services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
+        services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
         services.AddMobaBackendServices();
         return services;

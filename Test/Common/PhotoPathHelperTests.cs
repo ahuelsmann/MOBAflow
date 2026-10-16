@@ -7,6 +7,7 @@ using Moba.Common.Path;
 /// Tests for PhotoPathHelper to prevent path-separator regressions (e.g. DirectorySeparator vs DirectorySeparatorChar).
 /// </summary>
 [TestFixture]
+[NonParallelizable] // Tests temporarily change the bundled photo directory and shared solution path.
 internal class PhotoPathHelperTests
 {
     [Test]
@@ -172,14 +173,26 @@ internal class PhotoPathHelperTests
     {
         var bundledBase = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var photosDir = Path.Combine(bundledBase, "photos");
-        if (!Directory.Exists(photosDir))
+        using var photosLock = BundledPhotosDirectoryLock.Acquire(photosDir);
+        var createdDirectory = !Directory.Exists(photosDir);
+        if (createdDirectory)
         {
-            Assert.Ignore("Bundled photos folder is not present in this test runtime.");
+            Directory.CreateDirectory(photosDir);
         }
 
-        var result = PhotoPathHelper.ResolvePhotoBaseDirectory(null);
+        try
+        {
+            var result = PhotoPathHelper.ResolvePhotoBaseDirectory(null);
 
-        Assert.That(result, Is.EqualTo(bundledBase));
+            Assert.That(result, Is.EqualTo(bundledBase));
+        }
+        finally
+        {
+            if (createdDirectory)
+            {
+                Directory.Delete(photosDir); // Never delete pre-existing contents or recurse into unowned files.
+            }
+        }
     }
 
     [Test]

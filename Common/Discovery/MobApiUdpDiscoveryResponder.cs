@@ -4,6 +4,7 @@ namespace Moba.Common.Discovery;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Contracts.Discovery;
 
 /// <summary>
 /// UDP discovery responder for the MOBAflow REST API (MOBApi).
@@ -13,7 +14,9 @@ using System.Text;
 public sealed class MobApiUdpDiscoveryResponder : IDisposable
 {
     private readonly int _restApiPort;
-    private UdpClient? _udpListener;
+    private readonly Func<IDiscoveryDatagramTransport> _createTransport;
+    private readonly Func<IPEndPoint, string> _resolveAddress;
+    private IDiscoveryDatagramTransport? _udpListener;
     private CancellationTokenSource? _cts;
     private Task? _listenerTask;
     private bool _disposed;
@@ -22,6 +25,12 @@ public sealed class MobApiUdpDiscoveryResponder : IDisposable
     /// Creates a responder that advertises the given REST API port.
     /// </summary>
     public MobApiUdpDiscoveryResponder(int restApiPort)
+        : this(restApiPort, () => new UdpDiscoveryDatagramTransport(), MobApiDiscoveryAddressResolver.GetLocalIpAddressForRemote)
+    {
+    }
+
+    internal MobApiUdpDiscoveryResponder(int restApiPort, Func<IDiscoveryDatagramTransport> createTransport,
+        Func<IPEndPoint, string> resolveAddress)
     {
         if (restApiPort <= 0 || restApiPort >= 65536)
         {
@@ -29,6 +38,8 @@ public sealed class MobApiUdpDiscoveryResponder : IDisposable
         }
 
         _restApiPort = restApiPort;
+        _createTransport = createTransport;
+        _resolveAddress = resolveAddress;
     }
 
     /// <summary>
@@ -64,14 +75,11 @@ public sealed class MobApiUdpDiscoveryResponder : IDisposable
     {
         try
         {
-            _udpListener = new UdpClient { ExclusiveAddressUse = false };
+            _udpListener = _createTransport();
 
             var localEndPoint = new IPEndPoint(IPAddress.Any, DiscoveryResponseParser.MulticastPort);
-            _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            _udpListener.Client.Bind(localEndPoint);
-
             var multicastAddress = IPAddress.Parse(DiscoveryResponseParser.MulticastAddress);
-            _udpListener.JoinMulticastGroup(multicastAddress);
+            _udpListener.BindAndJoinMulticast(localEndPoint, multicastAddress);
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -85,7 +93,7 @@ public sealed class MobApiUdpDiscoveryResponder : IDisposable
                         continue;
                     }
 
-                    var advertisedIp = MobApiDiscoveryAddressResolver.GetLocalIpAddressForRemote(result.RemoteEndPoint);
+                    var advertisedIp = _resolveAddress(result.RemoteEndPoint);
                     var response = DiscoveryResponseParser.CreateResponse(advertisedIp, _restApiPort);
                     var responseBytes = Encoding.UTF8.GetBytes(response);
                     await _udpListener.SendAsync(responseBytes, result.RemoteEndPoint, cancellationToken)
@@ -130,19 +138,25 @@ public static class MobApiDiscoveryAddressResolver
     /// Gets the local IP address reachable from the remote endpoint (prefer same subnet so client can connect).
     /// </summary>
     public static string GetLocalIpAddressForRemote(IPEndPoint? remote)
+        => GetLocalIpAddressForRemote(remote, GetDnsAddresses);
+
+    internal static string GetLocalIpAddressForRemote(IPEndPoint? remote, Func<IPAddress[]> getLocalAddresses)
     {
         if (remote?.Address == null)
         {
-            return GetLocalIpAddress();
+            return GetLocalIpAddress(getLocalAddresses);
         }
 
-        return GetLocalIpAddressInSubnet(remote.Address) ?? GetLocalIpAddress();
+        return GetLocalIpAddressInSubnet(remote.Address, getLocalAddresses) ?? GetLocalIpAddress(getLocalAddresses);
     }
 
     /// <summary>
     /// Returns a local IPv4 address in the same subnet as the given remote address, or null.
     /// </summary>
     public static string? GetLocalIpAddressInSubnet(IPAddress remoteIp)
+        => GetLocalIpAddressInSubnet(remoteIp, GetDnsAddresses);
+
+    internal static string? GetLocalIpAddressInSubnet(IPAddress remoteIp, Func<IPAddress[]> getLocalAddresses)
     {
         if (remoteIp.AddressFamily != AddressFamily.InterNetwork)
         {
@@ -151,8 +165,7 @@ public static class MobApiDiscoveryAddressResolver
 
         try
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            return SelectLocalIpAddressInSubnet(remoteIp, host.AddressList);
+            return SelectLocalIpAddressInSubnet(remoteIp, getLocalAddresses());
         }
         catch
         {
@@ -166,17 +179,21 @@ public static class MobApiDiscoveryAddressResolver
     /// Gets a best-effort local IPv4 address for LAN advertisement.
     /// </summary>
     public static string GetLocalIpAddress()
+        => GetLocalIpAddress(GetDnsAddresses);
+
+    internal static string GetLocalIpAddress(Func<IPAddress[]> getLocalAddresses)
     {
         try
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            return SelectLocalIpAddress(host.AddressList);
+            return SelectLocalIpAddress(getLocalAddresses());
         }
         catch
         {
             return "127.0.0.1";
         }
     }
+
+    private static IPAddress[] GetDnsAddresses() => Dns.GetHostEntry(Dns.GetHostName()).AddressList;
 
     /// <summary>Selects the first supplied IPv4 address matching the remote /24 or /16 subnet, without DNS access.</summary>
     public static string? SelectLocalIpAddressInSubnet(IPAddress remoteIp, IEnumerable<IPAddress> localAddresses)

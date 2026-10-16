@@ -11,10 +11,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.TrainControl;
 
 using Moq;
 

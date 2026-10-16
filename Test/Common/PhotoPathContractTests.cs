@@ -292,6 +292,33 @@ internal sealed class PhotoPathContractTests
         }
     }
 
+    [TestCase(@".jpg\..\..\..\outside.jpg")]
+    [TestCase("/../../../outside.jpg")]
+    public void TryBuildPhotoUploadFullPath_RejectsAlternateSeparatorTraversal(string extension)
+    {
+        var accepted = PhotoPathHelper.TryBuildPhotoUploadFullPath(
+            _root.FullName, "locomotives", EntityId, extension, out var fullPath, out _);
+
+        Assert.That(!accepted || fullPath!.StartsWith(_root.FullName, StringComparison.OrdinalIgnoreCase), Is.True,
+            $"An accepted destination must stay under the storage root: {fullPath}");
+    }
+
+    [Test]
+    public void EncodedDotSegments_AreNotDecodedAndStayUnderTheRoot()
+    {
+        var normalized = PhotoPathHelper.NormalizeStoredRelativePath("photos/%2e%2e/outside.jpg");
+        var accepted = PhotoPathHelper.TryBuildPhotoUploadFullPath(
+            _root.FullName, "locomotives", EntityId, ".%2e%2e%2foutside.jpg", out var fullPath, out _);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(normalized, Is.EqualTo("photos/%2e%2e/outside.jpg"));
+            Assert.That(accepted, Is.True);
+            Assert.That(fullPath, Does.StartWith(_root.FullName));
+            Assert.That(Path.GetFileName(fullPath), Is.EqualTo($"{EntityId}.%2e%2e%2foutside.jpg"));
+        }
+    }
+
     [Test]
     public void TryBuildPhotoUploadFullPath_RejectsDestinationAtExactParentDirectory()
     {
@@ -302,6 +329,26 @@ internal sealed class PhotoPathContractTests
             Assert.That(fullPath, Is.Null);
             Assert.That(relative, Is.Null);
             Assert.That(Directory.GetFileSystemEntries(_root.FullName), Is.Empty);
+        }
+    }
+
+    [Test]
+    public void FilesystemRootAsStorageRoot_KeepsPathsUnderTheRoot()
+    {
+        var root = Path.GetPathRoot(_root.FullName)!;
+        var photo = Path.Combine(root, "photos", "locomotives", "abc.jpg");
+
+        var built = PhotoPathHelper.TryBuildPhotoUploadFullPath(
+            root, "locomotives", EntityId, ".jpg", out var fullPath, out var relative);
+        var resolved = PhotoPathHelper.TryGetStorageRelativePath(root, photo, out var storageRelative);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(built, Is.True);
+            Assert.That(fullPath, Is.EqualTo(Path.Combine(root, "locomotives", $"{EntityId}.jpg")));
+            Assert.That(relative, Is.EqualTo($"photos/locomotives/{EntityId}.jpg"));
+            Assert.That(resolved, Is.True);
+            Assert.That(storageRelative, Is.EqualTo("photos/locomotives/abc.jpg"));
         }
     }
 
@@ -385,6 +432,7 @@ internal sealed class PhotoPathContractTests
     {
         var appBase = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var photosRoot = Path.Combine(appBase, "photos");
+        using var photosLock = BundledPhotosDirectoryLock.Acquire(photosRoot);
         var rootExisted = Directory.Exists(photosRoot);
         var ownedFolder = Path.Combine(photosRoot, $"photo-contract-{Guid.NewGuid():N}");
         Directory.CreateDirectory(ownedFolder);

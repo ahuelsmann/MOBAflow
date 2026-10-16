@@ -11,7 +11,7 @@ using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -223,22 +223,22 @@ internal partial class MainWindowViewModelShutdownTests
             .Callback<Action>(action => action());
 
         var locomotiveSession1 = TestSolutionSessions.Create(solution ?? new Solution(), dispatcher.Object, runtime, ioService);
+        var stationEventBus1 = eventBus;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime,
             runtime,
             runtime,
             new LocalRuntimeCommandGateway(runtime),
-            eventBus,
+            stationEventBus1,
             dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, ioService),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, ioService),
-            locomotiveSession1,
-            new ActionExecutionContext
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime, ioService),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime, new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
-            },
+            }, stationEventBus1),
+            locomotiveSession1,
             new Mock<ILogger<MainWindowViewModel>>().Object);
     }
 

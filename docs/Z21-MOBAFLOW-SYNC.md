@@ -19,8 +19,8 @@ LAN specification. The specification is not redistributed in this repository.
 ## Z21 LAN broadcasts (what the central station actually shares)
 
 Broadcast flags are set **per client** (IP + port) via `LAN_SET_BROADCASTFLAGS` and must be
-re-applied after every connect. Constants live in
-[`Common/Z21/Z21BroadcastRequirements.cs`](../Common/Z21/Z21BroadcastRequirements.cs).
+re-applied after every connect. Constants live in `Z21Protocol.BroadcastFlags`
+([`Backend/Protocol/Z21Protocol.cs`](../Backend/Protocol/Z21Protocol.cs)).
 
 MOBAflow subscribes with `Driving | Rbus | SystemState` (not `AllLocoInfo`).
 
@@ -74,10 +74,10 @@ solution does not contain; MOBAflow runs it in that project's runtime only.
 
 ### 3. Runtime snapshot sync (slim profile)
 
-[`RuntimeSnapshotRemoteFilter`](../Common/Runtime/RuntimeSnapshotRemoteFilter.cs) strips
+[`RuntimeSnapshotRemoteFilter`](../Contracts/Runtime/RuntimeSnapshotRemoteFilter.cs) strips
 `LocomotiveStates` before MOBApi / SignalR transport. Mobile clients read locomotive feedback
 from their **local Z21 connection** when connected
-([`TrainControlViewModel`](../SharedUI/ViewModel/TrainControlViewModel.cs), hybrid mode).
+([`TrainControlViewModel`](../SharedUI/TrainControl/TrainControlViewModel.cs), hybrid mode).
 
 Each snapshot names its project (`ProjectId`). MOBApi keeps the latest snapshot of every
 project and sends a remote only the snapshots of the project it registered for
@@ -115,6 +115,6 @@ Use these fields as a baseline before further payload optimisation.
 | Test file | Purpose |
 |-----------|---------|
 | `Test/Backend/Z21BroadcastProtocolTests.cs` | Protocol prerequisites, turnout vs loco routing |
-| `Test/Common/RuntimeSnapshotRemoteFilterTests.cs` | Slim snapshot shape and payload size |
+| `Test/Contracts/RuntimeSnapshotRemoteFilterTests.cs` | Slim snapshot shape and payload size |
 | `Test/MOBApi/RuntimeBroadcastMetricsTests.cs` | Broadcast metrics |
 | `Test/SharedUI/ViewModelCharacterizationTests.cs` | Hybrid loco state from local Z21 |

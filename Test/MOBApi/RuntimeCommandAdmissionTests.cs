@@ -4,7 +4,7 @@ namespace Moba.Test.MOBApi;
 
 using Microsoft.AspNetCore.SignalR;
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.MOBApi.Hubs;
 using Moba.MOBApi.Service;
 
@@ -77,9 +77,9 @@ internal sealed class RuntimeCommandAdmissionTests
         Assert.That(result.Status, Is.EqualTo(RuntimeCommandAdmissionStatus.QueueFull));
     }
 
-    [TestCase(HubCommand.Drive, RuntimeHubMethods.ExecuteSetLocomotiveDrive)]
-    [TestCase(HubCommand.Function, RuntimeHubMethods.ExecuteSetLocomotiveFunction)]
-    [TestCase(HubCommand.SignalAspect, RuntimeHubMethods.ExecuteSetSignalAspect)]
+    [TestCase(HubCommand.Drive, nameof(IRuntimeHubHostCallbacks.ExecuteSetLocomotiveDrive))]
+    [TestCase(HubCommand.Function, nameof(IRuntimeHubHostCallbacks.ExecuteSetLocomotiveFunction))]
+    [TestCase(HubCommand.SignalAspect, nameof(IRuntimeHubHostCallbacks.ExecuteSetSignalAspect))]
     public async Task HubCommand_ValidWithHost_IsForwardedAndNotQueued(HubCommand command, string hostMethod)
     {
         var fixture = new HubFixture(hostConnectionId: "host-1");
@@ -88,9 +88,7 @@ internal sealed class RuntimeCommandAdmissionTests
 
         using (Assert.EnterMultipleScope())
         {
-            fixture.HostProxy.Verify(
-                proxy => proxy.SendCoreAsync(hostMethod, It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
-                Times.Once);
+            Assert.That(fixture.HostProxy.Invocations.Select(invocation => invocation.Method.Name), Is.EqualTo(new[] { hostMethod }));
             Assert.That(fixture.Queue.TryDequeue(out _), Is.False);
         }
     }
@@ -125,9 +123,7 @@ internal sealed class RuntimeCommandAdmissionTests
 
         using (Assert.EnterMultipleScope())
         {
-            fixture.HostProxy.Verify(
-                proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
-                Times.Never);
+            Assert.That(fixture.HostProxy.Invocations, Is.Empty);
             Assert.That(fixture.Queue.TryDequeue(out _), Is.False);
         }
     }
@@ -161,13 +157,7 @@ internal sealed class RuntimeCommandAdmissionTests
             .ConfigureAwait(false);
 
         fixture.HostProxy.Verify(
-            proxy => proxy.SendCoreAsync(
-                RuntimeHubMethods.ExecuteSetSignalAspect,
-                It.Is<object?[]>(args =>
-                    (string?)args[0] == Project.ToString()
-                    && (string?)args[1] == signalId.ToString()
-                    && (string?)args[2] == nameof(SignalAspect.Zs1)),
-                It.IsAny<CancellationToken>()),
+            host => host.ExecuteSetSignalAspect(Project.ToString(), signalId.ToString(), nameof(SignalAspect.Zs1)),
             Times.Once);
     }
 
@@ -204,9 +194,7 @@ internal sealed class RuntimeCommandAdmissionTests
 
         await Assert.ThatAsync(() => fixture.Hub.SetLocomotiveDrive(string.Empty, 3, 40, forward: true),
             Throws.TypeOf<HubException>()).ConfigureAwait(false);
-        fixture.HostProxy.Verify(
-            proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        Assert.That(fixture.HostProxy.Invocations, Is.Empty);
     }
 
     /// <summary>A synchronized solution that contains only <see cref="Project"/>.</summary>
@@ -244,10 +232,7 @@ internal sealed class RuntimeCommandAdmissionTests
             Queue = new RuntimeCommandQueue(queueCapacity);
             var hostRegistry = new Mock<IRuntimeHostRegistry>();
             hostRegistry.SetupGet(registry => registry.HostConnectionId).Returns(hostConnectionId);
-            HostProxy
-                .Setup(proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-            var clients = new Mock<IHubCallerClients>();
+            var clients = new Mock<IHubCallerClients<IRuntimeHubCallbacks>>();
             clients.Setup(candidate => candidate.Client(It.IsAny<string>())).Returns(HostProxy.Object);
 
             Hub = new RuntimeHub(
@@ -325,6 +310,6 @@ internal sealed class RuntimeCommandAdmissionTests
 
         public RuntimeCommandQueue Queue { get; }
 
-        public Mock<ISingleClientProxy> HostProxy { get; } = new();
+        public Mock<IRuntimeHubCallbacks> HostProxy { get; } = new();
     }
 }

@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Common.Path;
 
+using System.Diagnostics.CodeAnalysis;
+
 using Path = System.IO.Path;
 
 /// <summary>
@@ -81,8 +83,8 @@ public static class PhotoPathHelper
         if (string.IsNullOrWhiteSpace(fullPath) || !Path.IsPathRooted(fullPath))
             return false;
 
-        var normalizedBaseDir = Path.GetFullPath(baseDir)
-            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        // Keeps the separator of a filesystem root (C:\ or /); "C:" alone would mean the drive's current directory.
+        var normalizedBaseDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(baseDir));
         var normalizedFullPath = Path.GetFullPath(fullPath);
         var candidate = Path.GetRelativePath(normalizedBaseDir, normalizedFullPath);
 
@@ -184,8 +186,8 @@ public static class PhotoPathHelper
         string category,
         Guid entityId,
         string extension,
-        out string? fullPath,
-        out string? storageRelativePath)
+        [NotNullWhen(true)] out string? fullPath,
+        [NotNullWhen(true)] out string? storageRelativePath)
     {
         ArgumentNullException.ThrowIfNull(baseDir);
 
@@ -216,8 +218,8 @@ public static class PhotoPathHelper
 
     private static bool IsPathUnderDirectory(string baseDir, string fullPath)
     {
-        var normalizedBaseDir = Path.GetFullPath(baseDir)
-            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        // Keeps the separator of a filesystem root (C:\ or /); "C:" alone would mean the drive's current directory.
+        var normalizedBaseDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(baseDir));
         var normalizedFullPath = Path.GetFullPath(fullPath);
         var relative = Path.GetRelativePath(normalizedBaseDir, normalizedFullPath);
 
@@ -307,7 +309,8 @@ public static class PhotoPathHelper
     /// <param name="baseDir">Base directory for photos (e.g. from Application.PhotoStoragePath or My Documents).</param>
     /// <param name="relativePath">Relative path, optionally starting with "photos/" or "photos\".</param>
     /// <returns>Full local path using the platform directory separator.</returns>
-    public static string ToFullPath(string baseDir, string relativePath)
+    /// <remarks>Does not check containment; callers use the guarded <c>Try…</c> methods of this class.</remarks>
+    internal static string ToFullPath(string baseDir, string relativePath)
     {
         ArgumentNullException.ThrowIfNull(baseDir);
         ArgumentNullException.ThrowIfNull(relativePath);

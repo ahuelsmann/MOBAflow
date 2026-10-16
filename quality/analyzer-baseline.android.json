@@ -314,7 +314,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 12
+      "count": 8
     },
     {
       "project": "Backend",
@@ -522,13 +522,6 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "CA1724",
-      "path": "Backend/Z21.Commands.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Backend/Data/MasterDataStore.cs",
       "count": 1
@@ -578,20 +571,6 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "Backend/Service/TrackPlan/GraphService.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "Backend/Service/TrackPlan/LayoutService.cs",
-      "count": 5
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "CA1826",
       "path": "Backend/FeedbackResult.cs",
       "count": 1
@@ -622,7 +601,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Service/AnnouncementService.cs",
-      "count": 8
+      "count": 7
     },
     {
       "project": "Backend",
@@ -671,7 +650,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 12
+      "count": 3
     },
     {
       "project": "Backend",
@@ -818,7 +797,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
       "path": "Backend/Service/AnnouncementService.cs",
-      "count": 5
+      "count": 4
     },
     {
       "project": "Backend",
@@ -840,13 +819,6 @@
       "ruleId": "CA1873",
       "path": "Backend/Service/ProjectValidator.cs",
       "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 6
     },
     {
       "project": "Backend",
@@ -1290,10 +1262,10 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "Common/Display/FunctionBacklightColor.cs",
+      "path": "SharedUI/Appearance/FunctionBacklightColor.cs",
       "count": 1
     },
     {
@@ -1311,17 +1283,17 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/LocomotiveFleetSnapshotComparer.cs",
+      "path": "Contracts/Runtime/LocomotiveFleetSnapshotComparer.cs",
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/SignalBoxSnapshotMerge.cs",
+      "path": "Contracts/Runtime/SignalBoxSnapshotMerge.cs",
       "count": 1
     },
     {
@@ -1412,8 +1384,8 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Common/Configuration/GridSplitterLayoutSettings.cs",
-      "count": 4
+      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "count": 1
     },
     {
       "project": "Common",
@@ -1447,8 +1419,8 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/GridSplitterLayoutSettings.cs",
-      "count": 4
+      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "count": 1
     },
     {
       "project": "Common",
@@ -1670,13 +1642,6 @@
     {
       "project": "Domain",
       "targetFramework": "net10.0",
-      "ruleId": "CA1724",
-      "path": "Domain/TrackLayout.cs",
-      "count": 1
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
       "ruleId": "CA1810",
       "path": "Domain/JsonOptions.cs",
       "count": 1
@@ -1756,13 +1721,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Domain/Solution.cs",
-      "count": 1
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2227",
-      "path": "Domain/SpeakerEngineConfiguration.cs",
       "count": 1
     },
     {
@@ -2581,13 +2539,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
       "count": 1
     },
@@ -2609,14 +2560,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1003",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1003",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
       "count": 1
     },
     {
@@ -2644,6 +2595,34 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "SharedUI/Mobile/MauiViewModel.BackgroundService.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/Mobile/MauiViewModel.TabUpdates.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "SharedUI/Mobile/MobaflowEndpointLocator.cs",
       "count": 3
     },
@@ -2658,6 +2637,20 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "SharedUI/Mobile/MobileAppLifecycle.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/Mobile/MobilePhotoUploader.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "SharedUI/Mobile/MobileSolutionSynchronizer.cs",
       "count": 3
     },
@@ -2665,15 +2658,22 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
+      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 2
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "path": "SharedUI/TrainControl/TrainControlSettingsStore.cs",
       "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 8
     },
     {
       "project": "SharedUI",
@@ -2707,20 +2707,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
       "count": 1
     },
@@ -2735,34 +2721,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 6
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MauiViewModel.TabUpdates.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
       "count": 4
     },
@@ -2770,15 +2728,22 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.cs",
       "count": 2
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 10
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "count": 2
     },
     {
       "project": "SharedUI",
@@ -2812,15 +2777,15 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/Service/OperatingStateEvaluator.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 4
+      "path": "SharedUI/Service/OperatingStateEvaluator.cs",
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2875,21 +2840,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
       "count": 1
     },
     {
@@ -2951,30 +2909,9 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1305",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1307",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
       "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1307",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1307",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
-      "count": 3
     },
     {
       "project": "SharedUI",
@@ -3015,6 +2952,27 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
+      "path": "SharedUI/Mobile/MauiViewModel.Session.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/Action/WorkflowActionViewModelFactory.cs",
       "count": 1
     },
@@ -3036,36 +2994,43 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MauiViewModel.Session.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/StationViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "ruleId": "CA1823",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/Mobile/MauiViewModel.BackgroundService.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
       "count": 4
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1823",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "ruleId": "CA1848",
+      "path": "SharedUI/Mobile/MauiViewModel.TabUpdates.cs",
       "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
+      "count": 8
     },
     {
       "project": "SharedUI",
@@ -3073,13 +3038,6 @@
       "ruleId": "CA1848",
       "path": "SharedUI/Service/MobileSolutionStore.cs",
       "count": 10
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3094,6 +3052,13 @@
       "ruleId": "CA1848",
       "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 25
     },
     {
       "project": "SharedUI",
@@ -3148,34 +3113,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 8
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MauiViewModel.TabUpdates.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
       "count": 4
     },
@@ -3204,13 +3141,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 28
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 1
     },
@@ -3232,14 +3162,21 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/Service/MobileSolutionStore.cs",
-      "count": 3
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
+      "count": 2
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/Service/MobileSolutionStore.cs",
       "count": 3
     },
     {
@@ -3248,6 +3185,13 @@
       "ruleId": "CA1873",
       "path": "SharedUI/Service/SolutionRemoteLoader.cs",
       "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 9
     },
     {
       "project": "SharedUI",
@@ -3259,37 +3203,16 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 10
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "SharedUI/Service/PhotoStorageService.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "SharedUI/Service/SolutionRemoteLoader.cs",
       "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 12
     },
     {
       "project": "SharedUI",
@@ -3344,22 +3267,8 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 19
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 6
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2213",
-      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3371,15 +3280,29 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA2227",
-      "path": "SharedUI/ViewModel/SpeakerEngineConfigurationViewModel.cs",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/Mobile/MauiViewModel.ControlTab.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA5394",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/Mobile/MauiViewModel.Session.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
       "count": 1
     },
     {
@@ -3387,41 +3310,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/MauiViewModel.ControlTab.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/MauiViewModel.Session.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
       "count": 1
     },
     {
@@ -3435,8 +3323,22 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
       "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 11
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3463,22 +3365,8 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 6
     },
     {
       "project": "SharedUI",
@@ -3491,7 +3379,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
       "count": 1
     },
     {
@@ -3507,13 +3395,6 @@
       "ruleId": "IDE0028",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
       "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0028",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3617,13 +3498,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0330",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0330",
       "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
       "count": 1
     },
@@ -3647,6 +3521,34 @@
       "ruleId": "IDE2002",
       "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
       "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/Mobile/MauiViewModel.MobaflowConnection.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/Mobile/MauiViewModel.cs",
+      "count": 19
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
+      "count": 21
     },
     {
       "project": "SharedUI",
@@ -3743,13 +3645,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Stations.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.SyncDiagnostics.cs",
       "count": 14
     },
@@ -3757,35 +3652,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
-      "count": 3
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MauiViewModel.cs",
-      "count": 19
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
       "count": 1
     },
     {
@@ -3848,13 +3715,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 29
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/VehicleItemViewModel.cs",
       "count": 3
     },
@@ -3889,106 +3749,8 @@
     {
       "project": "Sound",
       "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 2
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1304",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 2
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1416",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1416",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 6
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Sound/SoundManager.cs",
-      "count": 4
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 7
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 9
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/PiperSpeechEngine.cs",
       "count": 4
     },
     {
@@ -3997,48 +3759,6 @@
       "ruleId": "CA1873",
       "path": "Sound/SoundManager.cs",
       "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SpeakerEngineFactory.cs",
-      "count": 3
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 2
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 5
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "Sound/SpeechHealthCheck.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "Sound/PiperSpeechEngine.cs",
-      "count": 1
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "Sound/SystemSpeechEngine.cs",
-      "count": 1
     },
     {
       "project": "TrackLibrary.Base",
@@ -4062,158 +3782,60 @@
       "count": 1
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "TrackLibrary.PikoA/TrackPlan.cs",
+      "path": "TrackPlan.Editor/TrackPlanEditorDocument.cs",
       "count": 2
     },
     {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "TrackLibrary.PikoA/TrackPlanEditorDocument.cs",
-      "count": 2
-    },
-    {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1003",
-      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
+      "path": "TrackPlan.Editor/EditableTrackPlan.cs",
       "count": 1
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
-      "ruleId": "CA1014",
-      "path": "<no-location>",
+      "ruleId": "CA1034",
+      "path": "TrackPlan.Editor/EditableTrackPlan.cs",
       "count": 1
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/SegmentLocalPathBuilder.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/SegmentPortGeometry.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/TrackPlanInteractionService.cs",
+      "path": "TrackPlan.Editor/TrackPlanInteractionService.cs",
       "count": 2
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/TrackPlanSnapHelper.cs",
+      "path": "TrackPlan.Editor/TrackPlanSnapHelper.cs",
       "count": 1
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
-      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
+      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
       "count": 4
     },
     {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
+      "path": "TrackPlan.Editor/EditableTrackPlan.cs",
       "count": 4
     },
     {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/SegmentLocalPathBuilder.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/SegmentPortGeometry.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "TrackLibrary.PikoA/TrackPlan.cs",
-      "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1305",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
-      "count": 2
-    },
-    {
-      "project": "TrackLibrary.PikoA",
+      "project": "TrackPlan.Editor",
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
-      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
-      "count": 2
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1860",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
+      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
       "count": 1
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
-      "count": 23
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
-      "count": 4
-    },
-    {
-      "project": "TrackLibrary.PikoA",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0028",
-      "path": "TrackLibrary.PikoA/TrackPlan.cs",
-      "count": 2
     },
     {
       "project": "TrackPlan.Renderer",
@@ -4242,13 +3864,6 @@
       "ruleId": "CA1305",
       "path": "TrackPlan.Renderer/PlacedTrackPlanSvgRenderer.cs",
       "count": 10
-    },
-    {
-      "project": "TrackPlan.Renderer",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1724",
-      "path": "TrackPlan.Renderer/TrackPlan.cs",
-      "count": 1
     },
     {
       "project": "TrackPlan.Renderer",

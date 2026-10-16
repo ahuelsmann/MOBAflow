@@ -24,6 +24,22 @@ on Windows and Linux.
   and any remaining limitation. English UI and commit-message rules do not constrain conversation language.
   Write answers for junior developers: explain unfamiliar terms briefly and make necessary next steps explicit.
 
+## Master coordination and standing mandate
+
+- A human-assigned implementation task includes planning, implementation, validation, a draft PR, independent
+  Claude CLI review, correction of confirmed findings, Ready and squash merge after all current gates pass.
+  Art Director and Issue Master organize these steps without repeated technical approvals. An explicit narrower
+  assignment, pause, no-merge instruction or excluded follow-up remains binding; do not infer new product work.
+- Art Director owns routine product decisions inside the assigned scope and its delivery; important product goals,
+  priorities and material UX decisions remain with the user. Issue Master owns the single serial final integration queue.
+  They hand work over directly and may exchange task-related messages with their assigned team and Claude CLI
+  in both directions. The user does not relay messages, inspect code or administer PRs.
+- Art Director, Issue Master, Head of Quality and Communications Director may independently consult the
+  Head of UI/UX (Gemini Argon via Antigravity CLI) within assigned work, without another human approval.
+  Use the verified synchronous CLI contract in master coordination; PR reviews stay with fresh Claude sessions.
+- Follow [master coordination](.github/instructions/master-coordination.instructions.md) for ownership,
+  Claude review independence, merge evidence, automation and the decisions that still need the user.
+
 ## Repository policies
 
 - GitHub is the only Git host. Inspect `git remote -v` and branch tracking before synchronizing; use the configured
@@ -63,14 +79,15 @@ Do not assume every directory is an active project or discover projects inside `
 | Area | Responsibility |
 | --- | --- |
 | `Domain/` | Serializable models, enums, workflow payloads and domain rules |
-| `Common/` | Configuration, events, runtime snapshots, discovery, paths and platform-neutral state |
+| `Contracts/` | Wire contracts shared by MOBApi and the apps: runtime snapshots, remote commands, runtime hub, discovery protocol |
+| `Common/` | Configuration, events, network discovery helpers, paths and platform-neutral state |
 | `Backend/` | Z21 transport/protocol, runtime, journey managers and workflow action handlers |
 | `SharedUI/` | Shared MVVM state, commands, runtime projection and UI service interfaces |
 | `MOBAflow/` | WinUI 3 desktop UI and Windows service implementations |
 | `MOBAsmart/` | Android MAUI UI, local/remote runtime coordination and mobile services |
 | `MOBApi/` | ASP.NET Core REST and SignalR host (default REST port 5001) |
 | `MOBAdisplay/` | Display rendering/transport; ESP32-S3 firmware in `esp32/` |
-| `Sound/`, `TrackLibrary.Base/`, `TrackLibrary.PikoA/`, `TrackPlan.Renderer/` | Audio, track catalogues and rendering |
+| `Sound/`, `TrackLibrary.Base/`, `TrackLibrary.PikoA/`, `TrackPlan.Editor/`, `TrackPlan.Renderer/` | Audio, track catalogues, track-plan editor and rendering |
 | `Test/` | NUnit tests, Moq, test doubles and fixtures; `Analysis/` has separate helper projects |
 | `docs/`, `scripts/`, `.vscode/tasks.json` | Architecture/user docs and development workflows |
 | `.github/workflows/` | GitHub CI and release definitions |

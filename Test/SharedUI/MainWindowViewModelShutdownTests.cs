@@ -10,7 +10,7 @@ using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -181,22 +181,22 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
                     uiDispatcherMock.Object,
                     host.Object,
                     NullLogger<SolutionSession>.Instance);
+        var stationEventBus1 = eventBus ?? new Mock<IEventBus>().Object;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
-            eventBus ?? new Mock<IEventBus>().Object,
+            stationEventBus1,
             uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            _rollingStockPages.GetLocomotivesPage(locomotiveSession1, null),
-            _rollingStockPages.GetWagonsPage(locomotiveSession1, null),
-            locomotiveSession1,
-            new ActionExecutionContext
+            _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntimeMock.Object, new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
-            },
+            }, stationEventBus1, dialog?.Object),
+            locomotiveSession1,
             loggerMock.Object,
             dialogService: dialog?.Object);
     }

@@ -2,7 +2,7 @@
 
 namespace Moba.SharedUI.Interface;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 /// <summary>
 /// MOBAflow SignalR host client for the runtime hub (push snapshots, receive commands).

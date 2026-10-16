@@ -11,6 +11,8 @@
         <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</Platform>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <UseWinUI>true</UseWinUI>
+        <!-- C#/WinRT generates interop helpers for disposable speech services. -->
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
         <GenerateAppxManifest>false</GenerateAppxManifest>
         <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -51,6 +53,8 @@
     </ItemGroup>
     <!-- Project References -->
     <ItemGroup>
+        <ProjectReference Include="..\Speech.Piper\Speech.Piper.csproj" />
+        <ProjectReference Include="..\Speech.SystemSpeech\Speech.SystemSpeech.csproj" />
         <ProjectReference Include="..\Backend\Backend.csproj" />
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\MOBApi\MOBApi.csproj" Condition="'$(BuildMOBApiDependency)' == 'true'">
@@ -61,6 +65,7 @@
         <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
         <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
         <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+        <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
         <ProjectReference Include="..\MOBAdisplay\MOBAdisplay.csproj" />
     </ItemGroup>
     <!-- Assets -->

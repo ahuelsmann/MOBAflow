@@ -5,14 +5,15 @@
 **Input**: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md), [data-model.md](data-model.md),
 [runtime contract](contracts/isolated-runtime.md), [operator contract](contracts/operator-ui.md) and [quickstart.md](quickstart.md).
 
-**Branch**: `codex/issue-35-tasks-analysis`
+**Branch**: `codex/issue-35-automation-testbench`
 
 **Baseline**: reviewed design PR #241 at `3a57dff2c2b6edca769e4daaaa302a835ae9a283`, merged as `4fa6402c` on 2026-10-11.
 The backlog is based on integrated main `e7cc6f3232ffc6b22fe890dba054371642e901ec`. #241 was marked ready only after
 current-head required checks/Sonar passed with zero OPEN/CONFIRMED issues. T003 rechecks current source and backlog acceptance.
 
-**Status**: Draft implementation backlog. All 70 tasks remain unchecked. This change generates tasks and performs analysis,
-not product code, tests, schema changes or an example solution.
+**Status**: First foundation slice implemented: T001-T004 and T009-T010 (6 of 70 tasks).
+Scenario definitions, scheduling, private runtime, comparisons, persistence and UI remain open. See [quickstart.md](quickstart.md)
+for local evidence and separate CI/manual gates; this is not complete feature acceptance.
 
 **Tests**: Meaningful regression tests are required by the feature/AGENTS.md and explicit acceptance scenarios.
 Within each implementation slice, add the specified failing cases before changing behavior. A filtered zero-test run is
@@ -24,23 +25,23 @@ Paths for proposed types/fixtures are deliberate new files; reuse existing servi
 
 ## Phase 1: Analysis and Setup
 
-Purpose: refresh integrated source contracts before implementation. All tasks are future work; no product task is completed by generating this list.
+Purpose: refresh integrated source contracts before implementation. Revalidated on 2026-10-14/15 against main 7c1d9242; #241/#245 are merged.
 
-- [ ] T001 Recheck `Backend/Service/ProjectRuntimes/ProjectRuntimeFactory.cs`, `Backend/Service/WorkflowActionHandlers.cs` and `Backend/Service/WorkflowService.Sequence.cs` against current main; record the implementation base and approved scope in `specs/010-automation-testbench/plan.md` (FR-006).
-- [ ] T002 Map the existing counter/journey/workflow/whistle and architecture regression fixtures to `specs/010-automation-testbench/quickstart.md`; confirm fixture discovery, named consumer builds and portable/Windows target commands (FR-006, SC-001).
-- [ ] T003 Confirm the integrated #241 design, current source contracts, backlog acceptance and the read-only consistency report before writing product code; record remaining review/manual gates in `plans/issue-35-automation-testbench.md` (FR-019).
+- [x] T001 Recheck `Backend/Service/ProjectRuntimes/ProjectRuntimeFactory.cs`, `Backend/Service/WorkflowActionHandlers.cs` and `Backend/Service/WorkflowService.Sequence.cs` against current main; record the implementation base and approved scope in `specs/010-automation-testbench/plan.md` (FR-006).
+- [x] T002 Map the existing counter/journey/workflow/whistle and architecture regression fixtures to `specs/010-automation-testbench/quickstart.md`; confirm fixture discovery, named consumer builds and portable/Windows target commands (FR-006, SC-001).
+- [x] T003 Confirm the integrated #241 design, current source contracts, backlog acceptance and the read-only consistency report before writing product code; record remaining review/manual gates in `plans/issue-35-automation-testbench.md` (FR-019).
 
 ## Phase 2: Foundational Work
 
 Purpose: shared definitions, real-effect boundary and owned scheduling. This phase blocks every executable story. New paths are proposed files, not existing implementations.
 
-- [ ] T004 Characterize current source-local FIFO, independent journeys, stop-change context, cancellation and filtered raw feedback in `Test/Backend/WorkflowSequenceExecutionTests.cs`, `Test/Backend/WorkflowExecutionCoordinatorTests.cs` and `Test/Backend/LocomotiveWhistleAutomationServiceTests.cs`; preserve existing behavior before introducing seams (FR-006, FR-010).
+- [x] T004 Characterize current source-local FIFO, independent journeys, stop-change context, cancellation and filtered raw feedback in `Test/Backend/WorkflowSequenceExecutionTests.cs`, `Test/Backend/WorkflowExecutionCoordinatorTests.cs` and `Test/Backend/LocomotiveWhistleAutomationServiceTests.cs`; preserve existing behavior before introducing seams (FR-006, FR-010).
 - [ ] T005 Define `Domain/Automation/AutomationScenario.cs` and `Domain/Automation/AutomationInitialState.cs` with GUID selections, counter seeds and journey state; retain these exact constraints: "Nonempty unique identity; trimmed nonempty project-unique name (ordinal ignore-case); no duplicate selections; speed finite and positive", "Exactly one state for every captured journey; no inherited activation or unrecognized references", "Supported nonzero InPort; unique port; unspecified ports initialize to zero; no reset/feedback emitted", "Nonempty journey: both stop fields resolve to the same zero-based stop; empty journey: both null". Use uint InPort, ulong Count, nullable stop ID/index and scenario PlaybackSpeed default 1.0 (FR-002, FR-009).
 - [ ] T006 Define `Domain/Automation/SyntheticInput.cs` with GUID Id, long AtTicks, int Order and Feedback payload {uint InPort, bool IsActive}; preserve "Identity unique within scenario; nonnegative ticks/order; unique (AtTicks, Order); payload structurally valid", 100-nanosecond ticks and checked DateTimeOffset-range validation (FR-003, FR-010).
 - [ ] T007 Define typed effect/invocation/state/absence/ordered-group models in `Domain/Automation/AutomationExpectation.cs`; preserve "Predicate fields legal for its kind; referenced IDs resolve; default positive exact count 1", "Known workflow; runnable selection rules are separate; default positive exact count 1", "State field/type valid; snapshot assertions evaluate once, not once per repeated projection", "Exactly zero matches; cannot also specify a positive count", and "Distinct scenario-owned references; no cycles/nested groups; positive or zero-allowing counts; disjoint matches across slots". Use inclusive windows, nonnegative integer Exact/Range with min <= max, and missing-window whole-trace matching (FR-017). Configure explicit typed JSON discriminators with existing Domain JSON options; do not introduce a second serializer.
 - [ ] T008 Add model-only serialization/constraint tests in `Test/Domain/AutomationScenarioDefinitionTests.cs` using `Domain/JsonOptions.cs`; verify camelCase typed discriminators and that no run/state/result object enters definitions (FR-002, FR-019).
-- [ ] T009 Extend shared validated effect requests at `Backend/Interface/IWorkflowEffectPlanner.cs` / `Backend/Service/WorkflowEffectPlanner.cs`, introduce `Backend/Interface/IWorkflowEffectAdapter.cs` and `Backend/Service/ProductionWorkflowEffectAdapter.cs`, and route `Backend/Service/WorkflowActionHandlers.cs` through them; keep structural/reference validation and stop changes shared, with environment probes/real execution only in the production adapter (FR-006, FR-007).
-- [ ] T010 Extend `Test/Backend/WorkflowActionHandlersTests.cs` and `Test/Backend/WorkflowEffectPlannerTests.cs` to preserve production missing-file, malformed-payload, cancellation, signal-resolution and unconfigured-display behavior across all seven action families (FR-006, FR-007).
+- [x] T009 Extend shared validated effect requests at `Backend/Interface/IWorkflowEffectPlanner.cs` / `Backend/Service/WorkflowEffectPlanner.cs`, introduce `Backend/Interface/IWorkflowEffectAdapter.cs` and `Backend/Service/ProductionWorkflowEffectAdapter.cs`, and route `Backend/Service/WorkflowActionHandlers.cs` through them; keep structural/reference validation and stop changes shared, with environment probes/real execution only in the production adapter (FR-006, FR-007).
+- [x] T010 Extend `Test/Backend/WorkflowActionHandlersTests.cs` and `Test/Backend/WorkflowEffectPlannerTests.cs` to preserve production missing-file, malformed-payload, cancellation, signal-resolution and unconfigured-display behavior across all seven action families (FR-006, FR-007).
 - [ ] T011 Define internal `Backend/Interface/IAutomationWorkScheduler.cs` and `Backend/Service/AutomationScheduling/AutomationWorkHandle.cs` with stable keys, registered-before-launch ownership, Ready/Running/WaitingTimer/WaitingChildren/Terminal states and native deferred/delay/owned-join awaitables (FR-012, FR-013, FR-014).
 - [ ] T012 Add scheduling proof tests in `Test/Backend/AutomationWorkSchedulerTests.cs`: nested-result continuations, same-time descendants, future waits, no callback under manager locks, subscriber/owned-work faults, and waiting-child cycles with no possible future deadline and deterministic joined cancellation; prove ordinary Task/ConfigureAwait(false) escapes cannot produce a successful run (FR-012, FR-013, FR-014, FR-018).
 - [ ] T013 Implement `Backend/Service/AutomationScheduling/ProductionAutomationWorkScheduler.cs`, `Backend/Service/AutomationTestbench/DeterministicAutomationWorkScheduler.cs` and `Backend/Service/AutomationTestbench/VirtualAutomationClock.cs`; preserve production independence/FIFO, fixed UTC epoch 2000-01-01, UTC timezone, checked timestamps/timers and current-instant draining without awaiting future work (FR-011, FR-012, FR-013).

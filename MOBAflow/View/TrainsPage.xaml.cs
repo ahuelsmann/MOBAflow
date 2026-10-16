@@ -19,7 +19,7 @@ using Windows.System;
 
 internal sealed partial class TrainsPage
 {
-    public MainWindowViewModel ViewModel { get; }
+    public TrainsPageViewModel ViewModel { get; }
 
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
@@ -32,7 +32,7 @@ internal sealed partial class TrainsPage
     private GridLength _propertiesExpandedWidth = new(1.9, GridUnitType.Star);
 
     public TrainsPage(
-        MainWindowViewModel viewModel,
+        TrainsPageViewModel viewModel,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<TrainsPage>? logger = null)

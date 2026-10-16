@@ -4,7 +4,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Slice 1 implemented in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244); later slices pending. #207 merged as `39312ca9` on 2026-10-11 before implementation started.
+**Status**: Approved; slices 1 and 2 merged in [PR #244](https://github.com/ahuelsmann/MOBAflow/pull/244) and [PR #250](https://github.com/ahuelsmann/MOBAflow/pull/250), after prerequisite #207 merged. Slice 3 implemented in draft [PR #278](https://github.com/ahuelsmann/MOBAflow/pull/278); current CI/Sonar evidence is tracked in that PR. T011 manual UI acceptance and slices 4-6 remain pending.
 
 Input: [spec.md](spec.md), [plan.md](plan.md).
 
@@ -37,22 +37,62 @@ new provider contract:
 
 ## Slice 2 - Contract, shared output and local providers
 
-- [ ] T004 Create `Speech.Base` (net10.0) with `ISpeechProvider`, `SpeechRequest`, `SpeechCapabilities`, `SpeechResult`, `ISpeechOutput` and `NullSpeechOutput`; add it to `Moba.slnx`
-- [ ] T005 Add `SpeechOutput` (per-call provider resolution, default provider `system-speech` for unknown or missing ids with a diagnostic, structured failures)
-- [ ] T006 Add a cancellable WAV player for the shared layer that stops audible playback on cancellation, with a regression test against the production player behavior
-- [ ] T007 Create `Speech.SystemSpeech` (net10.0-windows): move `SystemSpeechEngine`, synthesise to a WAV stream, report voices and rate/volume support
-- [ ] T008 Create `Speech.Piper` (net10.0-windows): move the Piper engine, `PiperPronunciationNormalizer` and `PcmWavePostProcessor`; return the WAV instead of playing it
-- [ ] T009 Switch `AnnouncementService`, `ActionExecutionContext`, the Settings test callback and the Backend DI to `ISpeechOutput`; register both providers in MOBAflow; MOBAsmart registers `NullSpeechOutput`; convert speech health/status callers that depend on removed contracts in the same cutover
-- [ ] T010 Replace existing local-provider Settings ViewModel properties and page bindings with `ProviderId` and the new option sections, preserving saving, local provider selection and test behavior; remove `System.Speech` from `Sound` (keep `System.Windows.Extensions` for `WindowsSoundPlayer`); remove `ISpeakerEngine`, `SpeakerEngineFactory`, `SpeechSpeakerEngineSelection`, `SpeakerEngineConfiguration` and the old speech settings fields with all their callers, bindings, tests and docs in this same slice; set `ProviderId` to `piper` in `MOBAflow/appsettings.json`
+- [X] T004 Create `Speech.Base` (net10.0) with `ISpeechProvider`, `SpeechRequest`, `SpeechCapabilities`, `SpeechResult`, `ISpeechOutput` and `NullSpeechOutput`; add it to `Moba.slnx`
+- [X] T005 Add `SpeechOutput` (per-call provider resolution, default provider `system-speech` for unknown or missing ids with a diagnostic, structured failures)
+- [X] T006 Add a cancellable WAV player for the shared layer that stops audible playback on cancellation, with a regression test against the production player behavior
+- [X] T007 Create `Speech.SystemSpeech` (net10.0-windows): move `SystemSpeechEngine`, synthesise to a WAV stream, report voices and rate/volume support
+- [X] T008 Create `Speech.Piper` (net10.0-windows): move the Piper engine, `PiperPronunciationNormalizer` and `PcmWavePostProcessor`; return the WAV instead of playing it
+- [X] T009 Switch `AnnouncementService`, `ActionExecutionContext`, the Settings test callback and the Backend DI to `ISpeechOutput`; register both providers in MOBAflow; MOBAsmart registers `NullSpeechOutput`; convert speech health/status callers that depend on removed contracts in the same cutover
+- [X] T010 Replace existing local-provider Settings ViewModel properties and page bindings with `ProviderId` and the new option sections, preserving saving, local provider selection and test behavior; remove `System.Speech` from `Sound` (keep `System.Windows.Extensions` for `WindowsSoundPlayer`); remove `ISpeakerEngine`, `SpeakerEngineFactory`, `SpeechSpeakerEngineSelection`, `SpeakerEngineConfiguration` and the old speech settings fields with all their callers, bindings, tests and docs in this same slice; set `ProviderId` to `piper` in `MOBAflow/appsettings.json`
 - [ ] T011 Tests for resolution, immediate switch through both `AnnouncementService` and the Settings test command, local-provider settings persistence, unknown ids, a fresh configuration, a settings file with only removed fields, failures and cancellation; run the Windows suite, MOBAflow FastDebug build and Android build for validation; have the maintainer check changed Settings bindings in Light and Dark with launch approval
-- [ ] T012 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
+- [X] T012 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
+Slice 2 automated validation: portable Release suite 2,330 passed, 1 skipped; Windows Release suite 2,422 passed,
+0 skipped, including controlled process timeout/cancellation tests and in-memory Windows speech synthesis.
+WinUI FastDebug and Android FastDebug/Release compile. The Android restored graph contains `Speech.Base`, with no local Windows speech provider
+or `System.Speech`. All three analyzer snapshots remove obsolete diagnostics and reflect relocated NUnit/SAPI
+false positives already suppressed by their analyzers or a narrowly justified source suppression; no combined
+rule quota increases and the baseline guards remain unchanged. T011 stays open for the maintainer's Light/Dark
+Settings check with explicit launch approval. T012 is verified by SonarCloud analysis of `7dbda9c5` on 2026-10-12: quality gate OK and zero OPEN/CONFIRMED findings. Cache, Azure, fallback and deferred synthesis remain for later slices.
+
+CI/Sonar follow-up (2026-10-12): split WAV format parsing and Windows voice selection into small helpers,
+and make the status getter's generated instance-property access explicit. Add native sound-adapter regression
+tests for missing files and pre-cancelled calls without audible playback. Local full Windows suite: 2,466 passed;
+final focused regressions: 125 Windows and 84 portable passed. Sound line coverage is 86.95% against the existing
+64.50% threshold. Portable/Windows analyzer baselines match without changes. The synchronized branch also
+passes the 125 Windows regressions with NUnit3TestAdapter 6.3.1. CI completion and the T011 manual Light/Dark
+Settings check remain pending; the PR stays draft.
+
+Review follow-up (2026-10-13): all five findings are confirmed by failing regressions and addressed within
+T004-T012. Add a bounded Piper startup probe, reset provider health to pending on selection, discard stale
+check results and publish repeated completed results, render Unavailable as a warning/degraded operating state,
+use the selected provider's default for a stale voice, and guard process-wide speech playback ownership so older
+completion/cancellation cannot stop a newer announcement. Tests use controlled processes, SAPI WAV synthesis
+to memory, virtual time and fake playback sessions; no audible playback, desktop application or hardware run.
+Current-head CI/Sonar evidence is recorded in PR #250. T011 manual Light/Dark acceptance remains open.
 ## Slice 3 - Audio cache
 
-- [ ] T013 Add `AudioCache`: hashed key over provider id, provider options fingerprint, voice, language, rate, volume and text; WAV files plus index; least-recently-used eviction at the size limit (default 500 MB); corrupt entries dropped
-- [ ] T014 Use the cache in `SpeechOutput` (hit plays without a provider call, miss stores the result, concurrent identical misses share one synthesis); keep caller cancellation separate from the shared synthesis token, cancel/remove the shared work when its last waiter cancels, and cancel shared work on shutdown; cancelled callers neither play audio nor initiate fallback or deferred synthesis; expose size and clear service APIs (UI in T022/T023)
-- [ ] T015 Tests for hit, miss, key and provider-option changes, least-recently-used eviction, concurrent identical requests, corrupt files and clear; cover one waiter cancelling while another completes with one provider call, all waiters cancelling the provider, a new request after cancellation, shutdown during shared synthesis and no playback/fallback/deferred synthesis for cancelled callers; run suites for validation
-- [ ] T016 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
+- [X] T013 Add `AudioCache`: hashed key over provider id, provider options fingerprint, voice, language, rate, volume and text; WAV files plus index; least-recently-used eviction at the size limit (default 500 MB); corrupt entries dropped
+- [X] T014 Use the cache in `SpeechOutput` (hit plays without a provider call, miss stores the result, concurrent identical misses share one synthesis); keep caller cancellation separate from the shared synthesis token, cancel/remove the shared work when its last waiter cancels, and cancel shared work on shutdown; cancelled callers neither play audio nor initiate fallback or deferred synthesis; expose size and clear service APIs (UI in T022/T023)
+- [X] T015 Tests for hit, miss, key and provider-option changes, least-recently-used eviction, concurrent identical requests, corrupt files and clear; cover one waiter cancelling while another completes with one provider call, all waiters cancelling the provider, a new request after cancellation, shutdown during shared synthesis and no playback/fallback/deferred synthesis for cancelled callers; run suites for validation
+- [X] T016 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
+
+Slice 3 local validation (2026-10-13, synchronized with main through #259 / `28fafa8e`): full portable Release
+suite 2,561 passed, one reported bundled-photo skip; full Windows Release suite 2,673 passed, zero reported skips.
+The explicit sustained-refresh acceptance test was not run. Complete WinUI/Windows Release graph and Android
+Release compile; the Android follow-up uses `RunAOTCompilation=false` for compilation/analyzer validation, not
+AOT/bundle acceptance. Android references only `Speech.Base`, without Windows providers or `System.Speech`.
+Exact portable/Windows/Android analyzer gates match. Only the two source-suppressed NUnit reflection fixtures
+are added to the portable/Windows snapshots; 21 resolved WinRT unsafe-code configuration diagnostics are retired.
+Tests cover persistent files/index, keys and captured options, LRU, corrupt/missing data, provider switching,
+availability-independent hits, size/clear APIs, clear during active synthesis, independent waiter cancellation,
+retry after the last waiter cancels, and shutdown through production DI. Mutation lane coverage, internal links,
+Spec Kit governance, secrets and line endings pass. T016 is verified by the draft PR and SonarCloud analysis of
+`18b1655f` on 2026-10-13: quality gate OK and zero OPEN/CONFIRMED findings. The S6618 follow-up uses invariant
+`string.Create`; 39 final portable cache/output regressions pass, and the exact portable analyzer gate matches.
+The PR remains draft as requested; its latest CI/Sonar evidence must be rechecked before review. UI controls,
+Azure, fallback and deferred synthesis remain
+in later slices; no desktop application, hardware or paid cloud synthesis was started.
 
 ## Slice 4 - Azure provider and fallback
 

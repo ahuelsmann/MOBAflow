@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using Microsoft.Extensions.Logging;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using System.Collections.ObjectModel;
 
@@ -171,16 +171,11 @@ public partial class MainWindowViewModel
             {
                 SelectedJourney = null;
             }
-
-            SelectedTrain = newValue.Trains.FirstOrDefault();
-
-            OnPropertyChanged(nameof(FilteredTrains));
         }
         else
         {
             // Clear journey selection when no project is selected
             SelectedJourney = null;
-            SelectedTrain = null;
         }
 
         UpdateSolutionLoadedStatus();

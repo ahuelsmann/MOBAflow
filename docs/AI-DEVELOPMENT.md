@@ -4,6 +4,28 @@ Open the dedicated task worktree, then read [AGENTS.md](../AGENTS.md). It owns t
 and validation policy. [The instruction index](../.github/instructions/instructions-index.md) links
 technical guidance by task. Use [Spec Kit](SPEC-KIT.md) for cross-cutting features.
 
+## Work through the master chats
+
+The user discusses product goals and results with Art Director and Issue Master. An implementation assignment
+includes delivery through merge under the [standing master mandate](../.github/instructions/master-coordination.instructions.md),
+unless explicitly limited. Art Director owns routine product decisions inside the assigned scope and its
+implementation, and hands work directly to Issue Master, the sole final integration coordinator. Technical
+transitions, confirmed fixes and ordinary PR administration do not need repeated human approval. Important
+product goals, priorities and material UX decisions, scope expansion, fundamental architecture changes, new
+costs/external commitments and explicitly required practical permissions or acceptance still go to the user.
+
+PR reviews run in fresh independent Claude CLI sessions. Both masters communicate directly with Claude in both
+directions; coordination sessions do not count as review. Assigned work authorizes necessary team handovers,
+not unrelated features or overrides of explicit stops. Masters maintain the existing queue/ownership records,
+continue assigned work through chat automations and report outcomes or decisions. Tool permissions and all
+current quality, Sonar, review and acceptance gates remain in effect.
+
+Art Director, Issue Master, Head of Quality and Communications Director may independently consult the existing
+Head of UI/UX conversation (Gemini Argon via Antigravity CLI) within assigned work, without another human approval.
+Use the verified contact and synchronous request/response contract in the
+[Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
+Its advice adds no approval gate and does not replace tests, UI acceptance or Claude PR reviews.
+
 ## Start in the correct checkout
 Use Git, PowerShell 7 (`pwsh`), Python 3.11+ and `rg` for development checks.
 Install product SDKs/workloads only for the affected build target.

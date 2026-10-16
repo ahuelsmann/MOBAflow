@@ -40,21 +40,27 @@ this table, so it is the single source of these rules.
 | --- | --- | --- |
 | `Domain` | `Moba.Domain` | none |
 | `TrackLibrary.Base` | `Moba.TrackLibrary.Base` | none |
-| `Common` | `Moba.Common` | `Domain` |
+| `Contracts` | `Moba.Contracts` | `Domain` |
+| `Common` | `Moba.Common` | `Contracts`, `Domain` |
 | `Sound` | `Moba.Sound` | `Common` |
-| `Backend` | `Moba.Backend` | `Common`, `Domain`, `Sound` |
+| `Speech.Base` | `Moba.Speech.Base` | `Common` |
+| `Speech.Piper` | `Moba.Speech.Piper` | `Speech.Base` |
+| `Speech.SystemSpeech` | `Moba.Speech.SystemSpeech` | `Speech.Base` |
+| `Backend` | `Moba.Backend` | `Common`, `Domain`, `Sound`, `Speech.Base` |
 | `TrackPlan.Renderer` | `Moba.TrackPlan.Renderer` | `TrackLibrary.Base` |
-| `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base`, `Domain`, `TrackPlan.Renderer` |
+| `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base` |
+| `TrackPlan.Editor` | `Moba.TrackPlan.Editor` | `Domain`, `TrackLibrary.Base`, `TrackPlan.Renderer` |
 | `MOBAdisplay` | `Moba.Display` | `Domain` |
 | `MOBApi` | `Moba.MOBApi` | `Common` |
-| `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackLibrary.PikoA` |
-| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `MOBAdisplay` |
-| `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound` |
+| `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackPlan.Editor` |
+| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `TrackPlan.Editor`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
+| `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound`, `Speech.Base` |
 
 Further rules:
 
 - Only `MOBAflow` uses WinUI and only `MOBAsmart` uses MAUI. Every other
-  project stays platform-neutral.
+  project stays free of UI framework types. `Speech.Piper` and `Speech.SystemSpeech` target Windows
+  for synthesis; `Speech.Base` remains platform-neutral and is the only speech project referenced by MOBAsmart.
 - Project references point to projects in `Moba.slnx`. The rules also apply
   to `Directory.Build.props`, `Directory.Build.targets` and imported build files.
 - Every namespace declared in a project starts with the root namespace in the
@@ -65,14 +71,35 @@ Further rules:
 table, the project and build files, and the C# syntax of the sources; a failure
 message names the broken rule.
 
+### Speech dependency rule
+
+`Speech.Base` owns the provider contracts, structured results and shared output. `AnnouncementService`,
+workflow execution contexts and the Settings test command all use `ISpeechOutput`. It captures the current
+provider ID and shared request options on each call. Local providers synthesize WAV data without opening
+an audio device; MOBAflow's cancellable WAV player owns audible playback. `Sound` keeps sound effects and
+no longer references `System.Speech`. Android registers `NullSpeechOutput` and includes no Windows provider.
+
+The Windows host shares one `AudioCache` below `%LOCALAPPDATA%/MOBAflow/SpeechCache`. It stores WAV files and an
+atomic index under SHA-256 keys; request text and provider options are absent from file names and the index.
+The default WAV limit is 500 MiB (`Speech.CacheSizeLimitMegabytes`); least recently played entries are evicted, and
+synthesized audio is stored only after successful playback. The limit also applies before cache hits. A lock file
+serializes cache access across MOBAflow processes, which reload the index for every operation.
+Providers prepare a synthesis snapshot before cache lookup. Identical concurrent misses share one provider call,
+which stays joinable until its audio has played and been stored, while each caller owns its wait and playback
+cancellation. The last cancelled waiter cancels the shared synthesis;
+host disposal cancels and awaits synthesis and playback. Clearing the cache invalidates writes from older work.
+Cache size/clear services are available; their Settings controls, Azure, fallback and deferred synthesis follow in later slices.
+
 ### Track-plan dependency rule
 
 Track-plan code follows an explicit inward dependency direction:
 
-`TrackLibrary.Base contracts → TrackPlan.Renderer → platform adapters`
+`TrackLibrary.Base contracts → TrackPlan.Renderer, TrackPlan.Editor → platform adapters`
 
-`TrackLibrary.PikoA` implements catalogue-specific geometry and may depend on
-`TrackLibrary.Base`; the neutral renderer must never reference Piko A. Win2D
+`TrackLibrary.PikoA` implements catalogue-specific geometry (`ITrackCatalog`) and may depend only on
+`TrackLibrary.Base`. `TrackPlan.Editor` owns the editable plan, placement geometry, snapping,
+validation and render scene and reaches the catalogue only through `ITrackCatalog`; neither the
+renderer nor the editor references Piko A. Win2D
 conversion stays in the Windows host. Runtime projection of EventBus feedback,
 timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`.
 `Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs` protects these rules.
@@ -116,7 +143,8 @@ are the immutable boundary exposed to UI consumers.
 - `WorkflowValidator` and `WorkflowEffectPlanner`
 - `WorkflowExecutionCoordinator` (FIFO execution per journey)
 - `WorkflowTraceStore` (bounded in-memory lifecycle projection)
-- `ActionExecutor` and typed action handlers (live effects only)
+- `ActionExecutor` and typed action handlers (shared validation/domain resolution)
+- `IWorkflowEffectAdapter` / `ProductionWorkflowEffectAdapter` (replaceable external effects; production owns environment probes and output)
 - `MasterDataStore` (shared cities/locomotives/multiplex master JSON, e.g. `data.json`)
 - `ActiveProjectContext` (runtime project activation inside `MobaRuntimeService`)
 - Runtime Snapshots (MobaRuntimeSnapshot, JourneyRuntimeSnapshot)
@@ -275,7 +303,26 @@ runtime services.
 - The page coordinates visual column widths and matching load/unload subscriptions. Editor disposal
   releases session, collection and model handlers without changing bound state during shutdown.
   The architecture guard rejects shell dependencies in LocomotivesPage. Train-composition
-  and central layout-persistence extraction remain later RF-24 slices.
+  is extracted in slice 2c below; central layout-persistence extraction remains planned.
+
+**Read-only locomotive/train usage (#306):**
+
+- The pure [ILocomotiveTrainReferenceAnalyzer](../Backend/Interface/ILocomotiveTrainReferenceAnalyzer.cs)
+  scans explicit project-local locomotive vehicle entries. Its immutable locations preserve repeated
+  positions and distinguish rule identity from finding identity. ProjectDiagnosticsService uses the
+  same traversal for missing-reference errors; valid uses appear only in an explicit usage query.
+- [ILocomotiveTrainRuntimeUsageReader](../Backend/Interface/ILocomotiveTrainRuntimeUsageReader.cs)
+  is an alias of the existing Windows ProjectRuntimeHost singleton, not a new owner. Shared Backend DI
+  registers only the analyzer. The reader captures the actual ActiveProjectContext clone under the
+  existing host-gate then activation-lock ordering, without I/O, lifecycle calls or queued RequestFactory execution.
+- Request-local receipts bind existing host/owner/context/definition identities and are checked immediately
+  before projection. Replacement, disposal and definition refresh invalidate them. Loaded definitions (A)
+  can be Complete; retained definitions (B) and operative use (C) remain Unknown, so aggregate runtime
+  evidence is at most Partial. No deletion permission or remote protocol is introduced.
+- LocomotiveTrainUsageViewModel uses ISolutionSession load/model/selection events, cancellable request
+  contexts and coalesced receipt checks on all-project snapshot hints. Raw callbacks marshal UI changes
+  through IUiDispatcher. The existing locomotive page exposes Show usage and existing Messages merges
+  source-qualified findings; coverage remains outside the Information filter. Delete and persistence stay unchanged.
 
 **Wagon presentation (RF-24 slice 2b):**
 
@@ -290,7 +337,38 @@ runtime services.
   entity/solution checks, refresh image bindings for repeated paths and ignore results after disposal.
 - The editor detaches session, project-collection and selected-model subscriptions at shutdown.
   The architecture guard rejects shell dependencies in both wagon inventory pages.
-  Train composition and central layout persistence remain later slices.
+  Train composition is extracted in slice 2c below; central layout persistence remains planned.
+
+**Train composition (RF-24 slice 2c):**
+
+- The host owns one TrainsPageViewModel for TrainsPage. It reads ISolutionSession directly,
+  shares the existing LocomotivesPageViewModel, WagonsPageViewModel and LayoutColumnWidthsViewModel,
+  and keeps train/vehicle selection, search, train CRUD, composition order and panel expansion.
+- Selection and solution replacement detach the previous train's VehiclesModified callback.
+  Disposal releases session and train subscriptions without removing session-owned train property
+  tracking. Vehicle callbacks preserve auto-save suppression and update the existing connection
+  runtime's project snapshot; runtime ownership and operator command routing are unchanged.
+- TrainsPage retains only visual layout and drag/drop coordination. Its architecture guard rejects
+  MainWindowViewModel dependencies. The superseded Train partial is removed; the shell retains
+  its runtime-refresh helper for station/journey editors until their own extraction.
+
+**Station and platform presentation (RF-24 slice 3a):**
+
+- The host owns one StationsPageViewModel for StationsPage, reading ISolutionSession directly.
+  It owns station/platform selection, properties, CRUD and panel expansion, sharing the existing
+  layout widths and settings. The Stations shell partial is removed and the architecture guard
+  rejects shell dependencies in StationsPage.
+- The page owns property tracking for its selected project-station and platform wrappers. Selection,
+  project/solution replacement, collection removal and disposal detach previous tracking and
+  collection subscriptions. A platform refresh also detaches discarded platform wrappers.
+  The session still owns persistence and updates the current runtime snapshot for model edits.
+- One WorkflowLibraryViewModel is registered through host DI and shared by the station workflow
+  library and the shell's existing workflow surfaces. Search uses the same library state through
+  both access paths. Runtime services, execution context and EventBus are composed in the host;
+  workflow behavior stays in the existing editor. Remaining workflow presentation is a later slice.
+- StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
+  unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
+  central layout persistence remains planned. The shell retains the journey runtime-refresh helper.
 
 **Settings presentation (RF-24 slice 1):**
 
@@ -540,6 +618,25 @@ passes the mandatory `WorkflowValidator` gate before effect planning (dry run) o
 live action execution; ordinary connection and locomotive commands do not pass
 through that workflow pipeline. Resulting runtime snapshots refresh the UI.
 
+### Train control
+
+[`TrainControlViewModel`](../SharedUI/TrainControl/TrainControlViewModel.cs) binds the MOBAflow Train
+Control page and the MOBAsmart Engines/Control tabs. It coordinates platform-neutral collaborators in
+[`SharedUI/TrainControl`](../SharedUI/TrainControl), which take `TimeProvider` where timing matters:
+
+| Component | Responsibility |
+| --- | --- |
+| [`LocomotiveRoster`](../SharedUI/TrainControl/LocomotiveRoster.cs) | Locomotive list source (live fleet, runtime fleet, project), in-place fleet merge, paused updates and selection restore. |
+| [`SpeedController`](../SharedUI/TrainControl/SpeedController.cs) | 75 ms drive debounce, speed ramp and the grace period in which a local drive command wins over snapshots. |
+| [`FunctionPanel`](../SharedUI/TrainControl/FunctionPanel.cs) | Function bits per address, local function grace period, snapshot merge, all-functions-off and appearance edits. |
+| [`BrakeAndDoorState`](../SharedUI/TrainControl/BrakeAndDoorState.cs) | Parking brake and door release rules and the timed door transition. |
+| [`JourneyStationProjection`](../SharedUI/TrainControl/JourneyStationProjection.cs) | Previous, current and next stop of the selected journey. |
+| [`TelemetryProjection`](../SharedUI/TrainControl/TelemetryProjection.cs) | Command station readings and peaks. |
+| [`TrainControlSettingsStore`](../SharedUI/TrainControl/TrainControlSettingsStore.cs) | Ramp, speed steps, series/Vmax and the per-host (WinUI/MAUI) selected locomotive. |
+
+The ViewModel keeps the bound properties, commands and the UI-thread continuations of ramps and the
+door transition; host differences stay explicit through `TrainControlViewModelOptions`.
+
 ### MOBAsmart session and projection
 
 These platform-neutral components live in [`SharedUI/Mobile`](../SharedUI/Mobile)
@@ -548,10 +645,13 @@ and are registered as singletons by
 
 | Component | Responsibility and owned state |
 | --- | --- |
+| [`MobaflowEndpointLocator`](../SharedUI/Mobile/MobaflowEndpointLocator.cs) | Finds MOBApi on the LAN, anchored on the subnet of the selected project's Z21: startup retries, periodic rediscovery cadence and health-check delays. Remembers found and reachable addresses in the settings. |
 | [`MobaflowHubSession`](../SharedUI/Mobile/MobaflowHubSession.cs) | REST health checks, client registration cadence and SignalR connect retries/forced reconnect. Returns connection outcomes; the caller applies UI state. A failed REST check alone does not close an already connected hub. |
 | [`MobileRuntimeProjection`](../SharedUI/Mobile/MobileRuntimeProjection.cs) | Holds the latest remote fleet and signal-box snapshots, including restored cache data. Filters to the selected project and chooses/merges live remote, synchronized project, cached and local runtime data. Persists remote snapshots through `IMobileSolutionStore`; restored fleet data starts as stale. |
 | [`MobileSolutionSynchronizer`](../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog imports, tracks whether the current session's catalog was applied, and delegates push, periodic and on-demand solution refresh to `ISolutionRemoteLoader`. On-demand refresh can load the phone's cache first. |
-| `MauiViewModel` | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
+| [`MobilePhotoUploader`](../SharedUI/Mobile/MobilePhotoUploader.cs) | Takes a photo, uploads it to the known or discovered MOBApi endpoint and returns the result with its status text. |
+| [`MobileAppLifecycle`](../SharedUI/Mobile/MobileAppLifecycle.cs) | Android foreground-service keep-alive (syncs run in order), network-change debounce and the stopping state. Created and disposed by `MauiViewModel`. |
+| [`MauiViewModel`](../SharedUI/Mobile/MauiViewModel.cs) | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
 
 `MobileSolutionStore` owns disk persistence; `SolutionSession` owns the loaded
 solution and selection. Projection data does not become a second editable
@@ -599,7 +699,7 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `SettingsPageViewModel`, `LocomotivesPageViewModel`, `WagonsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;
