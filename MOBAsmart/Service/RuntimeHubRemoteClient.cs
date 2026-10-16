@@ -2,7 +2,6 @@
 
 namespace Moba.MAUI.Service;
 
-using Common.Discovery;
 using Contracts.Runtime;
 
 using Domain;
@@ -14,6 +13,7 @@ using SharedUI.Interface;
 
 using System.Text;
 using System.Text.Json;
+using Contracts.Discovery;
 
 /// <summary>
 /// SignalR remote client for MOBApi runtime hub.

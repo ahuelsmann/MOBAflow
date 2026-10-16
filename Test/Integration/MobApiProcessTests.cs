@@ -4,11 +4,11 @@ namespace Moba.Test.Integration;
 
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
-using Moba.Common.Discovery;
 using Moba.Contracts.Runtime;
 using System.Net;
 using System.Net.Http.Json;
 using System.Threading.Channels;
+using Moba.Contracts.Discovery;
 
 /// <summary>
 /// Starts the real MOBApi process and verifies the plain-HTTP contract used by MOBAflow and MOBAsmart:

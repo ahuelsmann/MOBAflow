@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Discovery;
+namespace Moba.Backend.Discovery;
 
 /// <summary>
 /// A Z21 command station that answered a network search.

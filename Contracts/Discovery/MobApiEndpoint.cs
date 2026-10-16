@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Common.Discovery;
+namespace Moba.Contracts.Discovery;
 
 /// <summary>
 /// Address of a MOBApi instance and the single place that builds its request URIs.

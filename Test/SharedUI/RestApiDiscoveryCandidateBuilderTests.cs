@@ -1,10 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Test.Common;
+namespace Moba.Test.SharedUI;
 
 using Moba.Common.Configuration;
-using Moba.Common.Discovery;
 
 using System.Net;
+using Moba.Contracts.Discovery;
+using Moba.SharedUI.Mobile;
 
 [TestFixture]
 internal sealed class RestApiDiscoveryCandidateBuilderTests
