@@ -6,22 +6,33 @@ technical guidance by task. Use [Spec Kit](SPEC-KIT.md) for cross-cutting featur
 
 ## Work through the master chats
 
-The user discusses product goals and results with Art Director and Issue Master. An implementation assignment
+The user discusses goals and results with the responsible masters. An implementation assignment
 includes delivery through merge under the [standing master mandate](../.github/instructions/master-coordination.instructions.md),
 unless explicitly limited. Art Director owns routine product decisions inside the assigned scope and its
-implementation, and hands work directly to Issue Master, the sole final integration coordinator. Technical
+implementation, and hands work directly to Chief Project Manager (formerly Issue Master), the sole execution
+and final integration coordinator. Technical Director coordinates resources and responsibilities through that
+same queue. Documentation Lead and Head of DevOps deliver assigned documentation/user guidance and
+GitHub/repository/CI infrastructure work respectively, under the same standing mandate. Technical
 transitions, confirmed fixes and ordinary PR administration do not need repeated human approval. Important
 product goals, priorities and material UX decisions, scope expansion, fundamental architecture changes, new
 costs/external commitments and explicitly required practical permissions or acceptance still go to the user.
 
-PR reviews run in fresh independent Claude CLI sessions. Both masters communicate directly with Claude in both
+Across all MOBAflow teams, Codex, Claude and Antigravity, at most one larger task runs at a time. Implementation,
+extensive analysis/documentation, builds, tests, reviews and integration run serially, including large steps
+within a package. Before a substantial start or resume, obtain Chief Project Manager's current allocation in
+the existing queue. An occupied or unknown slot blocks a start; preserve actual processes and remote CI and
+coordinate safe stopping points with their owners. Short master status and handover exchanges remain allowed.
+
+PR reviews run in fresh independent Claude CLI sessions. Masters communicate directly with Claude in both
 directions; coordination sessions do not count as review. Assigned work authorizes necessary team handovers,
 not unrelated features or overrides of explicit stops. Masters maintain the existing queue/ownership records,
 continue assigned work through chat automations and report outcomes or decisions. Tool permissions and all
 current quality, Sonar, review and acceptance gates remain in effect.
 
-Art Director, Issue Master, Head of Quality and Communications Director may independently consult the existing
-Head of UI/UX conversation (Gemini Argon via Antigravity CLI) within assigned work, without another human approval.
+Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
+DevOps may independently consult the existing Head of UI/UX conversation (Gemini Argon via Antigravity CLI)
+within assigned work, without another human approval. Coordinate the global slot and active caller centrally;
+contacts are serial and synchronous. This supersedes the earlier contact restriction for the two new masters.
 Use the verified contact and synchronous request/response contract in the
 [Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
 Its advice adds no approval gate and does not replace tests, UI acceptance or Claude PR reviews.
