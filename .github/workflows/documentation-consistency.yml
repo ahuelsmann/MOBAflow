@@ -55,7 +55,9 @@ jobs:
           DOCS_AI_ENABLED: ${{ vars.DOCS_AI_ENABLED }}
           DOCS_AI_MODEL: ${{ vars.DOCS_AI_MODEL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          # Presence only: the App private key is passed solely to the separate token step.
+          # The runner evaluates App-key presence with this job's secrets context; only the
+          # resulting boolean reaches the assessment process and model. The full key value is
+          # supplied to create-github-app-token in the separate publishing job.
           DOCS_WRITER_CONFIGURED: ${{ vars.DOCS_APP_ID != '' && secrets.DOCS_APP_PRIVATE_KEY != '' }}
         run: >-
           python3 controls/scripts/run_documentation_consistency.py assess

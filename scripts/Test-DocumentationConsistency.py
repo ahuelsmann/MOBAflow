@@ -501,7 +501,7 @@ class WorkflowBoundaryTests(unittest.TestCase):
         always = [step.splitlines()[0] for step in self.steps if "always()" in step.split("\n  publish-and-report:\n")[0]]
         self.assertEqual(["      - name: Preserve assessment"], always)
 
-    def test_app_private_key_reaches_only_the_token_step(self):
+    def test_app_private_key_references_outside_token_step_are_presence_only(self):
         key = "secrets.DOCS_APP_PRIVATE_KEY"
         for step in self.steps:
             if key in step and "create-github-app-token" not in step:
