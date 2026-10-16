@@ -40,7 +40,8 @@ this table, so it is the single source of these rules.
 | --- | --- | --- |
 | `Domain` | `Moba.Domain` | none |
 | `TrackLibrary.Base` | `Moba.TrackLibrary.Base` | none |
-| `Common` | `Moba.Common` | `Domain` |
+| `Contracts` | `Moba.Contracts` | `Domain` |
+| `Common` | `Moba.Common` | `Contracts`, `Domain` |
 | `Sound` | `Moba.Sound` | `Common` |
 | `Speech.Base` | `Moba.Speech.Base` | `Common` |
 | `Speech.Piper` | `Moba.Speech.Piper` | `Speech.Base` |
@@ -142,7 +143,8 @@ are the immutable boundary exposed to UI consumers.
 - `WorkflowValidator` and `WorkflowEffectPlanner`
 - `WorkflowExecutionCoordinator` (FIFO execution per journey)
 - `WorkflowTraceStore` (bounded in-memory lifecycle projection)
-- `ActionExecutor` and typed action handlers (live effects only)
+- `ActionExecutor` and typed action handlers (shared validation/domain resolution)
+- `IWorkflowEffectAdapter` / `ProductionWorkflowEffectAdapter` (replaceable external effects; production owns environment probes and output)
 - `MasterDataStore` (shared cities/locomotives/multiplex master JSON, e.g. `data.json`)
 - `ActiveProjectContext` (runtime project activation inside `MobaRuntimeService`)
 - Runtime Snapshots (MobaRuntimeSnapshot, JourneyRuntimeSnapshot)
@@ -302,6 +304,28 @@ runtime services.
   releases session, collection and model handlers without changing bound state during shutdown.
   The architecture guard rejects shell dependencies in LocomotivesPage. Train-composition
   is extracted in slice 2c below; central layout-persistence extraction remains planned.
+
+**Read-only locomotive/train usage (#306):**
+
+- The pure [ILocomotiveTrainReferenceAnalyzer](../Backend/Interface/ILocomotiveTrainReferenceAnalyzer.cs)
+  scans explicit project-local locomotive vehicle entries. Its immutable locations preserve repeated
+  positions and distinguish rule identity from finding identity. ProjectDiagnosticsService uses the
+  same traversal for missing-reference errors; valid uses appear only in an explicit usage query.
+- [ILocomotiveTrainRuntimeUsageReader](../Backend/Interface/ILocomotiveTrainRuntimeUsageReader.cs)
+  is an alias of the existing Windows ProjectRuntimeHost singleton, not a new owner. Shared Backend DI
+  registers only the analyzer. The reader captures the actual ActiveProjectContext clone under the
+  existing host-gate then activation-lock ordering, without I/O, lifecycle calls or queued RequestFactory execution.
+- Request-local receipts bind existing host/owner/context/definition identities and are checked immediately
+  before projection. Replacement, disposal and definition refresh invalidate them. Loaded definitions (A)
+  can be Complete; retained definitions (B) and operative use (C) remain Unknown, so aggregate runtime
+  evidence is at most Partial. No deletion permission or remote protocol is introduced.
+- LocomotiveTrainUsageViewModel uses ISolutionSession load/model/selection events, cancellable request
+  contexts and coalesced receipt checks on all-project snapshot hints. Raw callbacks marshal UI changes
+  through IUiDispatcher. The existing locomotive page exposes Show usage and existing Messages merges
+  source-qualified findings; coverage remains outside the Information filter. Delete and persistence stay unchanged.
+- Messages Refresh rebuilds project diagnostics while retaining the current usage observation and its timestamp;
+  only a new Show usage query reads fresh usage evidence. Session model-change notifications invalidate both
+  edited and runtime query results without starting another read.
 
 **Wagon presentation (RF-24 slice 2b):**
 

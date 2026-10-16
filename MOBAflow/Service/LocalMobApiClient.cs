@@ -2,8 +2,8 @@
 
 namespace Moba.WinUI.Service;
 
-using Common.Discovery;
 using Common.Configuration;
+using Contracts.Discovery;
 
 /// <summary>
 /// Sends requests from MOBAflow to the MOBApi process on this PC over plain HTTP.

@@ -10,7 +10,33 @@ internal sealed class ProjectDiagnosticsServiceTests
 {
     private readonly ProjectDiagnosticsService _service = new(
         new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()),
-        new InterlockingDefinitionValidator());
+        new InterlockingDefinitionValidator(), new LocomotiveTrainReferenceAnalyzer());
+
+    [Test]
+    public void Analyze_MissingLocomotiveEntry_IsError_AndRepairRemovesIt()
+    {
+        var missingId = Guid.NewGuid();
+        var train = new Train { Name = "Broken consist", Vehicles = [new Vehicle { VehicleId = missingId }] };
+        var project = new Project { Name = "Yard", Trains = [train] };
+
+        var missing = _service.Analyze(project);
+
+        Assert.That(missing, Has.Count.EqualTo(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(missing[0].Severity, Is.EqualTo(ProjectDiagnosticSeverity.Error));
+            Assert.That(missing[0].TargetIds, Does.Contain(train.Id));
+        }
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(missing[0].TargetIds, Does.Contain(missingId));
+            Assert.That(missing[0].RuleCode, Is.EqualTo("LTU002"));
+            Assert.That(missing[0].Location!.VehicleIndex, Is.Zero);
+            Assert.That(missing[0].Id, Is.EqualTo(_service.Analyze(project)[0].Id));
+        }
+        project.Locomotives.Add(new Locomotive { Id = missingId });
+        Assert.That(_service.Analyze(project), Is.Empty, "Valid uses belong only to the explicit query.");
+    }
 
     [Test]
     public void Analyze_AllowsSharedWagonFunctionDecoderAddresses()

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.MOBApi.Controllers;
 using Moba.MOBApi.Hubs;
 using Moba.MOBApi.Service;

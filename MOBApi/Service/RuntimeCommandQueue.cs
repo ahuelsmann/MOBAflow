@@ -2,7 +2,7 @@
 
 namespace Moba.MOBApi.Service;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using System.Threading.Channels;
 

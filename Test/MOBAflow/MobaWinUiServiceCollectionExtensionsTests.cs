@@ -4,6 +4,7 @@ namespace Moba.Test.MOBAflow;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
+using Moba.Backend.Service.ProjectRuntimes;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
@@ -29,21 +30,20 @@ using Moq;
 internal sealed class MobaWinUiServiceCollectionExtensionsTests
 {
     [Test]
-    public void ConfigurationRegistersSharedLanguageServicesWithoutPlatformViewConstruction()
+    public async Task UsageReaderAndProjection_ResolveTheExistingDesktopOwnerAndSharedPageInstance()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
-            new Dictionary<string, string?> { ["Application:UiLanguage"] = "de-DE" }).Build();
-        var services = new ServiceCollection();
-        services.AddMobaWinUiConfiguration(configuration);
-        services.AddSingleton(Mock.Of<ISettingsService>());
-        using var provider = services.BuildServiceProvider();
-        var text = provider.GetRequiredService<Moba.SharedUI.Localization.IUiLocalizer>();
-        var viewModel = provider.GetRequiredService<LanguageSettingsViewModel>();
+        var provider = CreateValidatorServiceProvider();
+        await using var lifetime = provider.ConfigureAwait(false);
+        var owner = provider.GetRequiredService<ProjectRuntimeHost>();
+        var usage = provider.GetRequiredService<LocomotiveTrainUsageViewModel>();
+
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(provider.GetRequiredService<Moba.SharedUI.Localization.IUiLocalizer>(), Is.SameAs(text));
-            Assert.That(viewModel.SelectedChoice?.Value, Is.EqualTo("de-DE"));
-            Assert.That(provider.GetRequiredService<LanguageSettingsViewModel>(), Is.SameAs(viewModel));
+            Assert.That(provider.GetRequiredService<ILocomotiveTrainRuntimeUsageReader>(), Is.SameAs(owner));
+            Assert.That(provider.GetRequiredService<IProjectRuntimeHost>(), Is.SameAs(owner));
+            Assert.That(provider.GetRequiredService<IProjectRuntimeSnapshots>(), Is.SameAs(owner));
+            Assert.That(provider.GetRequiredService<LocomotivesPageViewModel>().Usage, Is.SameAs(usage));
+            Assert.That(provider.GetRequiredService<MainWindowViewModel>().LocomotivesPage.Usage, Is.SameAs(usage));
         }
     }
 

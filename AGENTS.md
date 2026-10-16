@@ -8,7 +8,8 @@ on Windows and Linux.
 - Complete the requested work through implementation, relevant validation, and a concise handoff.
   Make routine, reversible decisions from repository evidence without asking for confirmation.
 - Ask only when missing information materially affects correctness or scope and cannot be inferred, or an action
-  needs authorization that the user has not already given. Continue independent work while blocked.
+  needs authorization that the user has not already given. Continue short coordination and work within the
+  current central execution allocation while blocked.
 - Make the smallest cohesive change that solves the problem. Preserve unrelated user edits and existing contracts;
   avoid incidental cleanup, speculative abstractions, dependency upgrades, and repository-wide formatting.
   Ask before adding mechanics the request does not name, such as runtime lifecycle commands, chaining/follow-up
@@ -23,6 +24,31 @@ on Windows and Linux.
 - Keep updates and the final response brief, in the user's language. State what changed, what was actually checked,
   and any remaining limitation. English UI and commit-message rules do not constrain conversation language.
   Write answers for junior developers: explain unfamiliar terms briefly and make necessary next steps explicit.
+
+## Master coordination and standing mandate
+
+- A human-assigned implementation task includes planning, implementation, validation, a draft PR, independent
+  Claude CLI review, correction of confirmed findings, Ready and squash merge after all current gates pass.
+  The assigned master and Chief Project Manager organize these steps without repeated technical approvals.
+  An explicit narrower assignment, pause, no-merge instruction or excluded follow-up remains binding;
+  do not infer new product work.
+- Art Director owns routine product decisions inside the assigned scope and its delivery; important product goals,
+  priorities and material UX decisions remain with the user. Chief Project Manager (formerly Issue Master) owns
+  the single execution and integration queue. Technical Director coordinates technical resources and responsibilities
+  through that queue. Head of Quality, Communications Director, Documentation Lead and Head of DevOps deliver work
+  within their assigned roles. Masters hand work over directly and may exchange task-related messages with their
+  assigned team and Claude CLI in both directions. The user does not relay messages, inspect code or administer PRs.
+- Across all MOBAflow teams, Codex, Claude and Antigravity, run at most one larger task at a time. Before starting
+  or resuming substantial work, obtain the Chief Project Manager's current execution allocation. Implementation,
+  extensive analysis/documentation, builds, tests, reviews and integration run serially. An occupied or unknown slot
+  blocks another start; preserve existing executions and remote CI and coordinate a safe stopping point with their
+  owner. Short status, handover and blocker communication remains allowed; do not start parallel specialists.
+- Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
+  DevOps may independently consult the Head of UI/UX (Gemini Argon via Antigravity CLI) within assigned work,
+  without another human approval. Observe the same execution allocation and serialize callers using the verified
+  synchronous CLI contract in master coordination; PR reviews stay with fresh independent Claude sessions.
+- Follow [master coordination](.github/instructions/master-coordination.instructions.md) for ownership,
+  Claude review independence, merge evidence, automation and the decisions that still need the user.
 
 ## Repository policies
 
@@ -63,7 +89,8 @@ Do not assume every directory is an active project or discover projects inside `
 | Area | Responsibility |
 | --- | --- |
 | `Domain/` | Serializable models, enums, workflow payloads and domain rules |
-| `Common/` | Configuration, events, runtime snapshots, discovery, paths and platform-neutral state |
+| `Contracts/` | Wire contracts shared by MOBApi and the apps: runtime snapshots, remote commands, runtime hub, discovery protocol |
+| `Common/` | Configuration, events, network discovery helpers, paths and platform-neutral state |
 | `Backend/` | Z21 transport/protocol, runtime, journey managers and workflow action handlers |
 | `SharedUI/` | Shared MVVM state, commands, runtime projection and UI service interfaces |
 | `MOBAflow/` | WinUI 3 desktop UI and Windows service implementations |

@@ -120,7 +120,7 @@ public sealed class TrackPlanInteractionService
         var movingPorts = _geometry.GetAllPortWorldPositions(movingSegment);
         foreach (var source in movingPorts)
         {
-            if (IsConnected(movingSegment.Segment.No, source.PortName))
+            if (_plan.Connections.IsConnected(movingSegment.Segment.No, source.PortName))
                 continue;
             foreach (var candidate in _spatialIndex.Query(source.X, source.Y, thresholdMm))
             {
@@ -128,7 +128,7 @@ public sealed class TrackPlanInteractionService
                     continue;
                 foreach (var target in _geometry.GetAllPortWorldPositions(candidate))
                 {
-                    if (IsConnected(candidate.Segment.No, target.PortName) || Distance(source.X, source.Y, target.X, target.Y) >= thresholdMm)
+                    if (_plan.Connections.IsConnected(candidate.Segment.No, target.PortName) || Distance(source.X, source.Y, target.X, target.Y) >= thresholdMm)
                         continue;
                     highlights.Add((source.X, source.Y));
                     highlights.Add((target.X, target.Y));
@@ -137,10 +137,6 @@ public sealed class TrackPlanInteractionService
         }
         return new SnapPreview(highlights);
     }
-
-    private bool IsConnected(Guid segmentId, string portName) => _plan.Connections.Any(connection =>
-        (connection.SourceSegment == segmentId && connection.SourcePort == portName)
-        || (connection.TargetSegment == segmentId && connection.TargetPort == portName));
 
     private static void Consider(PlacedSegment candidate, double distance, double tolerance, ref PlacedSegment? best, ref double bestDistance)
     {

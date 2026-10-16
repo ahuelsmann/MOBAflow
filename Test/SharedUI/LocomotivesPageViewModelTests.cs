@@ -6,7 +6,7 @@ using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -25,6 +25,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     private AppSettings _settings = null!;
     private LocomotivesPageViewModel _page = null!;
     private Mock<Action<string>> _explorer = null!;
+    private LocomotiveTrainUsageViewModel _usage = null!;
 
     [SetUp]
     public void SetUp()
@@ -49,15 +50,43 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         detector.Setup(value => value.Detect(It.IsAny<Project>())).Returns(new DigitalAddressConflictReport([], []));
         var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: _session);
         _explorer = new Mock<Action<string>>();
+        _usage = TestRollingStockPages.CreateUsage(_session);
         _page = new LocomotivesPageViewModel(_session, _io.Object, _persistence.Object,
-            new LayoutColumnWidthsViewModel(), management, NullLogger<LocomotivesPageViewModel>.Instance, _explorer.Object);
+            new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, _usage),
+            NullLogger<LocomotivesPageViewModel>.Instance, _explorer.Object);
     }
 
     [TearDown]
     public void Dispose()
     {
         _page.Dispose();
+        _usage.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    [Test]
+    public async Task ShowUsage_ForwardsSelection_WithoutChangingDeleteOrSaving()
+    {
+        _page.AddLocomotiveCommand.Execute(null);
+        var selected = _page.SelectedLocomotive;
+        var deleteEnabled = _page.DeleteLocomotiveCommand.CanExecute(null);
+        _io.Invocations.Clear();
+
+        await _page.ShowUsageCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_page.Usage.EditedResult!.TargetState, Is.EqualTo(LocomotiveTrainTargetState.Exists));
+            Assert.That(_page.SelectedLocomotive, Is.SameAs(selected));
+            Assert.That(_page.DeleteLocomotiveCommand.CanExecute(null), Is.EqualTo(deleteEnabled));
+        }
+        _io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
+        _page.SelectedLocomotive = null;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_page.ShowUsageCommand.CanExecute(null), Is.False);
+            Assert.That(_page.Usage.Diagnostics, Is.Empty);
+        }
     }
 
     [Test]

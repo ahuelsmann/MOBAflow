@@ -2,11 +2,11 @@
 namespace Moba.MAUI.Service;
 
 using Common.Configuration;
-using Common.Discovery;
 
 using SharedUI.Interface;
 
 using System.Text.Json;
+using SharedUI.Mobile;
 
 /// <summary>
 /// MAUI-specific settings service for reading and writing application settings.
