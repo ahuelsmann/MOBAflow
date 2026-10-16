@@ -467,7 +467,12 @@ internal sealed partial class TrackLayoutArchitectureTests
             "DisconnectButton.Click",
             "DeleteButton.Click",
             "RotateLeftButton.Click",
-            "RotateRightButton.Click"
+            "RotateRightButton.Click",
+            "Math.Cos(",
+            "Math.Sin(",
+            "TrackPathGeometry.GetBounds(",
+            "bool IsPortConnected(",
+            "static double NormalizeAngle("
         ];
 
         using (Assert.EnterMultipleScope())

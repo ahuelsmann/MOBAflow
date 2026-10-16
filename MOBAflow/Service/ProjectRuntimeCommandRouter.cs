@@ -4,7 +4,7 @@ namespace Moba.WinUI.Service;
 using Backend.Interface;
 using Backend.Service.ProjectRuntimes;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using SharedUI.Interface;
 using SharedUI.Service;

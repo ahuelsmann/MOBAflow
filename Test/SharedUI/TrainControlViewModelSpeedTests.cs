@@ -7,7 +7,7 @@ using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.TrainControl;

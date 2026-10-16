@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Interface;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 /// <summary>
 /// The snapshots of all project runtimes, for services that publish every project, such as the MOBApi host push.

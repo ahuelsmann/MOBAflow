@@ -4,7 +4,7 @@ namespace Moba.Test.MOBApi;
 
 using Microsoft.AspNetCore.SignalR;
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.MOBApi.Hubs;
 using Moba.MOBApi.Service;
 

@@ -2,7 +2,7 @@
 
 namespace Moba.Common.Events;
 
-using Runtime;
+using Contracts.Runtime;
 
 /// <summary>
 /// Published when the in-process runtime has produced a new immutable state snapshot.
