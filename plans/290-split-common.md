@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/290
 **Spec Kit**: Not applicable - structural refactoring; the only persisted-format change is the internal feature-toggle collection, loaded with defaults per repository policy
-**Status**: Active; plan integrated through #291; slice 1 (display helpers) and slice 3 (host-specific and unused types) in review; slice 2 waits for RF-24 slice 6
+**Status**: Active; slices 1 and 3 integrated through #295; slice 4a (runtime contracts, #310) and slice 4b (discovery) in review; slice 2 waits for RF-24 slice 6
 
 ## Purpose and scope
 
@@ -41,7 +41,7 @@ Consumers were counted from `using` directives and type references on main `1d45
 | `Configuration/RestApiRecentEndpointHistory`, `Runtime/MobileBackgroundKeepAlivePolicy` | SharedUI | `SharedUI` |
 | `Platform/IPlatformCapability`, `GridSplitterLayoutSettings` class | none | remove |
 | `Z21/Z21BroadcastRequirements` | Backend tests only | remove; duplicates `Z21Protocol.BroadcastFlags` in Backend |
-| `Runtime/*` snapshots, `RemoteRuntimeCommands`, `RuntimeCommandValidator`, `RuntimeHubMethods`, `RuntimeJsonSerializer`, snapshot filter/merge helpers | Backend, SharedUI, MOBAflow, MOBAsmart, MOBApi | contracts project |
+| `Runtime/*` snapshots, `RemoteRuntimeCommands`, `RuntimeCommandValidator`, `RuntimeHubContract` (hub interfaces), `RuntimeJsonSerializer`, snapshot filter/merge helpers | Backend, SharedUI, MOBAflow, MOBAsmart, MOBApi | contracts project |
 | `Discovery/*` protocol types (`DiscoveryResponseParser`, `MobApiUdpDiscoveryResponder`, endpoint and candidate builders, `MobaApiRuntimeDeployment`, path resolver) | Backend, SharedUI, hosts, MOBApi | contracts project for wire format; host-specific discovery helpers to their owner |
 | `Events`, `Extension`, `IO`, `Path`, `Serilog`, `Validation`, `Recording`, `Multiplex`, neutral `AppSettings` sections | Backend and all hosts | stay in `Common` (re-checked in slice 5) |
 
@@ -85,9 +85,13 @@ RF-20 architecture rule for the boundary it creates.
 3. **Remaining host-specific and unused types.** Move REST endpoint history and the mobile keep-alive policy
    to `SharedUI/Mobile`; remove `Z21BroadcastRequirements` (tests use `Z21Protocol.BroadcastFlags`),
    `IPlatformCapability` and the unused `GridSplitterLayoutSettings` class.
-4. **Contracts project.** Starts after #267 is integrated and #281 is integrated or rebased. Create
-   `Contracts`, move runtime and discovery wire types, update project references (MOBApi, Backend, SharedUI,
-   hosts, tests, mutation projects, `Moba.slnx`) and the architecture rules for allowed references.
+4. **Contracts project.** 4a (#310): `Contracts` (`Moba.Contracts`, references `Domain`) takes everything from
+   `Common/Runtime`; `Common` references `Contracts` because its events carry snapshots. 4b: the MOBApi discovery
+   wire protocol (`DiscoveryResponseParser`, `MobApiEndpoint`, `MobApiHealthProbe`) moves to `Contracts/Discovery`;
+   Z21 discovery types (`DiscoveredZ21`, `IZ21DiscoveryService`) join `Backend/Discovery`; `RestApiDiscoveryCandidateBuilder`
+   moves to `SharedUI/Mobile`; the unused `NullZ21DiscoveryService` is removed. The UDP responder (used by MOBApi and
+   by MOBAflow, whose MOBApi reference is optional), the network helpers and the MOBApi path/deployment helpers stay
+   in `Common` as neutral infrastructure.
 5. **Common boundary and documentation.** Re-check what is left in `Common`, add the final RF-20 rules,
    update `docs/ARCHITECTURE.md` and the repository map in `AGENTS.md`, replace the RF-26 anchor in the
    umbrella plan with a delivery note and remove this plan.

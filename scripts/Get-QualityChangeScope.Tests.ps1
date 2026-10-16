@@ -55,6 +55,7 @@ Assert-Scope @('Sound/Resources/Sounds/Station/README.md') $true $false $false '
 Assert-Scope @('docs/ARCHITECTURE.md', 'Backend/Service/Z21.cs') $true $false $false 'mixed documentation and backend code'
 Assert-Scope @('SharedUI/ViewModel/MainWindowViewModel.cs', 'MOBAflow/View/SolutionPage.xaml') $true $false $false 'desktop code'
 Assert-Scope @('MOBAdisplay/Protocol/DisplayPayloadCodec.cs') $true $false $false 'display host code'
+Assert-Scope @('Contracts/Runtime/MobaRuntimeSnapshot.cs', 'TrackPlan.Editor/EditableTrackPlan.cs') $true $false $false 'wire contracts and track-plan editor code'
 Assert-Scope @('quality/analyzer-baseline.json') $true $false $false 'analyzer baseline change'
 Assert-Scope @('Test/SharedUI/SolutionSessionTests.cs') $true $false $false 'tests outside the Domain lane'
 

@@ -5,13 +5,13 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
-using Moba.Common.Discovery;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
+using Moba.Backend.Discovery;
 
 /// <summary>
 /// Covers the Z21 finder: every found Z21 is listed until a project uses it, and each Z21 belongs to one project.

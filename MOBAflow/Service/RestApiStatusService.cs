@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
-using Common.Discovery;
 using Backend.Interface;
 
 using Common.Configuration;
@@ -14,6 +13,7 @@ using SharedUI.Interface;
 
 using System.Text.Json;
 using System.Timers;
+using Contracts.Discovery;
 
 /// <summary>
 /// Polls the REST API (MOBApi process) status and publishes events when status changes.

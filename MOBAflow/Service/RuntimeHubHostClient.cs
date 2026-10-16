@@ -2,9 +2,7 @@
 
 namespace Moba.WinUI.Service;
 
-using Common.Discovery;
-
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 
@@ -12,11 +10,12 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 
 using SharedUI.Interface;
+using Contracts.Discovery;
 
 /// <summary>
 /// SignalR host client: pushes runtime snapshots and executes remote commands on the local runtime.
 /// </summary>
-public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
+public sealed class RuntimeHubHostClient : IRuntimeHubHostClient, IRuntimeHubHostCallbacks
 {
     private readonly ProjectRuntimeCommandRouter _router;
     private readonly ILogger<RuntimeHubHostClient>? _logger;
@@ -48,9 +47,14 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
             ])
             .Build();
 
-        _hubConnection.On<string, string, string>(RuntimeHubMethods.ExecuteSetSignalAspect, OnExecuteSetSignalAspectAsync);
-        _hubConnection.On<string, int, int, bool>(RuntimeHubMethods.ExecuteSetLocomotiveDrive, OnExecuteSetLocomotiveDriveAsync);
-        _hubConnection.On<string, int, int, bool>(RuntimeHubMethods.ExecuteSetLocomotiveFunction, OnExecuteSetLocomotiveFunctionAsync);
+        // Registering the callback interface methods makes the compiler check each handler's parameter types.
+        IRuntimeHubHostCallbacks callbacks = this;
+        _hubConnection.On<string, string, string>(
+            nameof(IRuntimeHubHostCallbacks.ExecuteSetSignalAspect), callbacks.ExecuteSetSignalAspect);
+        _hubConnection.On<string, int, int, bool>(
+            nameof(IRuntimeHubHostCallbacks.ExecuteSetLocomotiveDrive), callbacks.ExecuteSetLocomotiveDrive);
+        _hubConnection.On<string, int, int, bool>(
+            nameof(IRuntimeHubHostCallbacks.ExecuteSetLocomotiveFunction), callbacks.ExecuteSetLocomotiveFunction);
         _hubConnection.Reconnected += OnReconnectedAsync;
 
         await _hubConnection.StartAsync(cancellationToken).ConfigureAwait(false);
@@ -82,7 +86,7 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
         }
 
         var json = RuntimeJsonSerializer.Serialize(snapshot);
-        await _hubConnection.InvokeAsync(RuntimeHubMethods.PushSnapshot, json, cancellationToken).ConfigureAwait(false);
+        await _hubConnection.InvokeAsync(nameof(IRuntimeHubHostMethods.PushSnapshot), json, cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask DisposeAsync()
@@ -104,7 +108,7 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
             return;
         }
 
-        await _hubConnection.InvokeAsync(RuntimeHubMethods.RegisterHost, cancellationToken).ConfigureAwait(false);
+        await _hubConnection.InvokeAsync(nameof(IRuntimeHubHostMethods.RegisterHost), cancellationToken).ConfigureAwait(false);
         _logger?.LogInformation("RuntimeHub host registered");
     }
 
@@ -127,7 +131,7 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
         }
     }
 
-    private async Task OnExecuteSetSignalAspectAsync(string projectId, string signalId, string aspect)
+    async Task IRuntimeHubHostCallbacks.ExecuteSetSignalAspect(string projectId, string signalId, string aspect)
     {
         if (!Guid.TryParse(signalId, out var id) || !Enum.TryParse<SignalAspect>(aspect, out var parsedAspect))
         {
@@ -140,7 +144,7 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
         }
     }
 
-    private async Task OnExecuteSetLocomotiveDriveAsync(string projectId, int address, int speed, bool forward)
+    async Task IRuntimeHubHostCallbacks.ExecuteSetLocomotiveDrive(string projectId, int address, int speed, bool forward)
     {
         if (ForProject(projectId) is { } gateway)
         {
@@ -148,7 +152,7 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
         }
     }
 
-    private async Task OnExecuteSetLocomotiveFunctionAsync(string projectId, int address, int functionIndex, bool isOn)
+    async Task IRuntimeHubHostCallbacks.ExecuteSetLocomotiveFunction(string projectId, int address, int functionIndex, bool isOn)
     {
         if (ForProject(projectId) is { } gateway)
         {

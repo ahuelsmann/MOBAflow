@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.TrainControl;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 /// <summary>
 /// The command station readings shown on the train-control desk, with the peaks since the last reset.

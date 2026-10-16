@@ -3,7 +3,7 @@
 namespace Moba.MAUI.Service;
 
 using Common.Events;
-using Common.Runtime;
+using Contracts.Runtime;
 
 using SharedUI.Interface;
 

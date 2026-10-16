@@ -2,7 +2,7 @@
 
 namespace Moba.MOBApi.Controllers;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Microsoft.AspNetCore.Mvc;
 
