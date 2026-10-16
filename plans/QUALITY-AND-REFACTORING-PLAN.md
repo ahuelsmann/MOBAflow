@@ -157,7 +157,7 @@ dependencies.
 | RF-26 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | `Common` is split by responsibility: shared contracts, host-owned UI settings and presentation helpers. |
 | RF-27 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Domain classes own the rules and state transitions that need only domain data. |
 | RF-28 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
-| RF-29 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Platform-specific sound and file services live in platform adapters with one role per class. |
+| RF-29 | [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) | Platform-specific sound and file services live in platform adapters with one role per class. |
 | RF-30 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
 | RF-31 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | The remaining oversized code-behind and recording classes are split by responsibility. |
 
@@ -446,15 +446,9 @@ existing track-plan architecture tests and the RF-13 editor behavior pass.
 
 ### RF-29: Platform adapters for sound and files
 
-Sequence:
-
-1. move Windows speech and sound playback out of the `Sound` project used by
-   Android into the Windows host or a Windows adapter project;
-2. split `IoService` into one class per role: solution files, file picking and
-   photo storage.
-
-Acceptance anchor: the Android build contains no Windows-only speech packages;
-each file service class implements one role; affected tests pass.
+The extraction order, source inventory, design and validation now belong to
+[the RF-29 child plan](313-platform-adapters.md), owned by
+[issue #313](https://github.com/ahuelsmann/MOBAflow/issues/313).
 
 ### RF-30: Repository and test layout
 
