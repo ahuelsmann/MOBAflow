@@ -33,6 +33,7 @@ assignment includes the delivery steps below unless explicitly limited.
 | Issue Master | Own final integration, arrange independent Claude reviews and fixes, verify evidence, issue permits and verify squash merges |
 | Assigned implementer | Own the task worktree until an acknowledged writer handover; report actual checks and remaining limits |
 | Claude reviewer | Independently review the exact change against requirements and rules; report findings without editing or self-approval |
+| Head of UI/UX | Primary UI/UX specialist (Gemini Argon via Antigravity CLI); advises masters and delivery owners as described [below](#head-of-uiux-gemini-argon-via-antigravity) |
 
 Each task has one delivery owner and one writer per worktree. Art Director hands integration directly to Issue
 Master with issue/scope, PR URL, worktree/branch, exact head/base, checks, acceptance requirements and restrictions.
@@ -69,6 +70,29 @@ mandate; they are not new human authority and cannot override stops.
   masters/team. Avoid unchanged acknowledgements and communication loops.
 - Obtain only narrow task permissions. Do not bypass sandbox/tool approval, disable protection or read credentials.
   Diagnose real access failures within a bounded attempt; never replace missing review with confidence alone.
+
+## Head of UI/UX (Gemini Argon via Antigravity)
+
+The human designates the existing Head of UI/UX conversation, running Gemini Argon through the Antigravity CLI, as
+the primary specialist for UI/UX in assigned work: navigation, interaction, visual hierarchy, accessibility and the
+relevant UI states. The role advises masters and delivery owners; material product and UX decisions remain human.
+Architecture, refactoring or test-gap advice is secondary and stays inside the assigned scope.
+
+- Masters may exchange task-specific messages with that conversation in both directions. Address it by its exact,
+  verified conversation ID; never fall back to the most recent session or present a new assistant as the existing
+  role. Record the ID and open questions in the existing handover record and avoid concurrent sessions for the role.
+- Use the explicitly configured, available Argon model identifier and verify the actual model and completion;
+  never silently substitute another model. Prompts or plan mode alone do not enforce a read-only boundary, so keep
+  the real tool permissions narrow.
+- Supply relevant, secrets-scanned context with exact SHAs/evidence where applicable. The advice separates
+  observations from assumptions.
+- The advice does not replace tests, required real UI acceptance or the fresh independent Claude PR review. It adds
+  no routine approval gate, grants no product, app, hardware or scope authority and leaves the named writer and
+  Issue Master's single integration queue unchanged.
+
+Sources (checked 2026-10-16): [Antigravity CLI headless mode](https://antigravity.google/docs/cli/headless/) and
+[resume](https://antigravity.google/docs/cli/commands/resume/) document explicit conversation IDs and the headless
+message protocol.
 
 ## Serial integration and completion
 
