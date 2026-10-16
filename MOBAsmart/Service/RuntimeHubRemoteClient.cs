@@ -2,8 +2,7 @@
 
 namespace Moba.MAUI.Service;
 
-using Common.Discovery;
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 
@@ -14,11 +13,12 @@ using SharedUI.Interface;
 
 using System.Text;
 using System.Text.Json;
+using Contracts.Discovery;
 
 /// <summary>
 /// SignalR remote client for MOBApi runtime hub.
 /// </summary>
-public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
+public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHubRemoteCallbacks
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<RuntimeHubRemoteClient>? _logger;
@@ -95,9 +95,11 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             ])
             .Build();
 
-        _hubConnection.On<string>(RuntimeHubMethods.SnapshotUpdated, OnSnapshotUpdatedAsync);
-        _hubConnection.On<bool>(RuntimeHubMethods.SessionStateChanged, OnSessionStateChangedAsync);
-        _hubConnection.On<string>(RuntimeHubMethods.SolutionUpdated, OnSolutionUpdatedAsync);
+        // Registering the callback interface methods makes the compiler check each handler's parameter types.
+        IRuntimeHubRemoteCallbacks callbacks = this;
+        _hubConnection.On<string>(nameof(IRuntimeHubRemoteCallbacks.SnapshotUpdated), callbacks.SnapshotUpdated);
+        _hubConnection.On<bool>(nameof(IRuntimeHubRemoteCallbacks.SessionStateChanged), callbacks.SessionStateChanged);
+        _hubConnection.On<string>(nameof(IRuntimeHubRemoteCallbacks.SolutionUpdated), callbacks.SolutionUpdated);
         _hubConnection.Reconnected += OnReconnectedAsync;
         _hubConnection.Closed += OnClosedAsync;
 
@@ -143,7 +145,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             try
             {
                 await _hubConnection
-                    .InvokeAsync(RuntimeHubMethods.SetSignalAspect, RequireProject().ToString(), signalId.ToString(), aspect.ToString(), cancellationToken)
+                    .InvokeAsync(nameof(IRuntimeHubRemoteMethods.SetSignalAspect), RequireProject().ToString(), signalId.ToString(), aspect.ToString(), cancellationToken)
                     .ConfigureAwait(false);
                 return;
             }
@@ -166,7 +168,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             try
             {
                 await _hubConnection
-                    .InvokeAsync(RuntimeHubMethods.SetLocomotiveDrive, RequireProject().ToString(), address, speed, forward, cancellationToken)
+                    .InvokeAsync(nameof(IRuntimeHubRemoteMethods.SetLocomotiveDrive), RequireProject().ToString(), address, speed, forward, cancellationToken)
                     .ConfigureAwait(false);
                 return;
             }
@@ -189,7 +191,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             try
             {
                 await _hubConnection
-                    .InvokeAsync(RuntimeHubMethods.SetLocomotiveFunction, RequireProject().ToString(), address, functionIndex, isOn, cancellationToken)
+                    .InvokeAsync(nameof(IRuntimeHubRemoteMethods.SetLocomotiveFunction), RequireProject().ToString(), address, functionIndex, isOn, cancellationToken)
                     .ConfigureAwait(false);
                 return;
             }
@@ -228,7 +230,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         response.EnsureSuccessStatusCode();
     }
 
-    private async Task OnSnapshotUpdatedAsync(string snapshotJson)
+    async Task IRuntimeHubRemoteCallbacks.SnapshotUpdated(string snapshotJson)
     {
         var snapshot = RuntimeJsonSerializer.Deserialize(snapshotJson);
         // A snapshot of the project shown before a project switch can still arrive; it is not this project.
@@ -243,7 +245,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         }
     }
 
-    private async Task OnSessionStateChangedAsync(bool isOperational)
+    async Task IRuntimeHubRemoteCallbacks.SessionStateChanged(bool isOperational)
     {
         _hasActiveHost = isOperational;
         if (SessionStateChanged != null)
@@ -252,7 +254,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         }
     }
 
-    private async Task OnSolutionUpdatedAsync(string updatedAtIso)
+    async Task IRuntimeHubRemoteCallbacks.SolutionUpdated(string updatedAtIso)
     {
         if (!DateTimeOffset.TryParse(updatedAtIso, out var updatedAt))
         {
@@ -275,7 +277,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         // Without a project yet the phone still registers, so it receives the solution and can select one.
         var projectId = _projectId == Guid.Empty ? string.Empty : _projectId.ToString();
         await _hubConnection
-            .InvokeAsync(RuntimeHubMethods.RegisterRemote, _clientId, projectId, cancellationToken)
+            .InvokeAsync(nameof(IRuntimeHubRemoteMethods.RegisterRemote), _clientId, projectId, cancellationToken)
             .ConfigureAwait(false);
     }
 

@@ -12,6 +12,9 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
+/// <summary>The locomotive page's existing management and read-only usage projections, composed by its host.</summary>
+public sealed record LocomotivePageAnalysis(LocomotiveManagementViewModel Management, LocomotiveTrainUsageViewModel Usage);
+
 /// <summary>Owns the locomotive editor shared by the locomotive page and train library.</summary>
 public sealed partial class LocomotivesPageViewModel : ObservableObject, IDisposable
 {
@@ -32,7 +35,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         IIoService ioService,
         ISettingsService settingsService,
         LayoutColumnWidthsViewModel layoutColumnWidths,
-        LocomotiveManagementViewModel management,
+        LocomotivePageAnalysis analysis,
         ILogger<LocomotivesPageViewModel> logger,
         Action<string> showPhotoInExplorer)
     {
@@ -40,7 +43,9 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         ArgumentNullException.ThrowIfNull(ioService);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
-        ArgumentNullException.ThrowIfNull(management);
+        ArgumentNullException.ThrowIfNull(analysis);
+        ArgumentNullException.ThrowIfNull(analysis.Management);
+        ArgumentNullException.ThrowIfNull(analysis.Usage);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
@@ -50,7 +55,8 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         _logger = logger;
         _showPhotoInExplorer = showPhotoInExplorer;
         LayoutColumnWidths = layoutColumnWidths;
-        Management = management;
+        Management = analysis.Management;
+        Usage = analysis.Usage;
         _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage.IsListExpanded;
         _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage.IsPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
@@ -61,6 +67,12 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     public LayoutColumnWidthsViewModel LayoutColumnWidths { get; }
 
     public LocomotiveManagementViewModel Management { get; }
+
+    /// <summary>Read-only usage projection shared with the existing Messages area.</summary>
+    public LocomotiveTrainUsageViewModel Usage { get; }
+
+    /// <summary>Shows the current selection's uses without altering Delete or model commands.</summary>
+    public IAsyncRelayCommand ShowUsageCommand => Usage.ShowUsageCommand;
 
     public ProjectViewModel? SelectedProject => _session.SelectedProject;
 
@@ -131,6 +143,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
             _session.TrackChanges(newValue);
         }
         DeleteLocomotiveCommand.NotifyCanExecuteChanged();
+        Usage.SetTarget(SelectedProject?.Model, newValue?.Model.Id);
         RefreshManagement();
     }
 
@@ -193,6 +206,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         if (_disposed)
             return;
         _disposed = true;
+        Usage.Dispose();
         _session.PropertyChanged -= OnSessionPropertyChanged;
         _session.SolutionReplacing -= OnSolutionReplacing;
         // Shutdown may continue off the UI thread: release subscriptions without changing bound state.

@@ -6,6 +6,7 @@
   "projects": {
     "Backend": 64.5,
     "Common": 71.0,
+    "Contracts": 97.0,
     "Domain": 87.5,
     "MOBAdisplay": 77.0,
     "MOBAflow": 4.5,

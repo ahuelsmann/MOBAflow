@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.MOBApi.Controllers;
 using Moba.MOBApi.Hubs;
 using Moba.MOBApi.Service;
@@ -51,6 +51,21 @@ internal sealed class SolutionControllerTests
         await controller.PutSolution(CancellationToken.None).ConfigureAwait(false);
 
         Assert.That(_snapshots.GetAll().Select(entry => entry.ProjectId), Is.EquivalentTo(new[] { kept }));
+    }
+
+    [Test]
+    public async Task PutSolution_NotifiesAllRemotesOfTheNewSolutionTimestamp()
+    {
+        var remotes = new Mock<IRuntimeHubCallbacks>();
+        var controller = CreateController(_cache, IPAddress.Loopback, remotes: remotes);
+        SetRequestBody(controller, ValidSolutionJson);
+        using var request = new CancellationTokenSource();
+
+        await controller.PutSolution(request.Token).ConfigureAwait(false);
+
+        Assert.That(_cache.TryGet(out var entry), Is.True);
+        // The broadcast is cancelled together with the request.
+        remotes.Verify(remote => remote.SolutionUpdated(entry.UpdatedAt.ToString("O"), request.Token), Times.Once);
     }
 
     [Test]
@@ -123,17 +138,16 @@ internal sealed class SolutionControllerTests
     private static SolutionController CreateController(
         ISolutionCache cache,
         IPAddress remoteIp,
-        IRuntimeSnapshotCache? snapshots = null)
+        IRuntimeSnapshotCache? snapshots = null,
+        Mock<IRuntimeHubCallbacks>? remotes = null)
     {
-        var clientProxy = new Mock<IClientProxy>();
-        clientProxy
-            .Setup(proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        // Only the group of all remotes is set up; a broadcast to any other group would fail.
+        var hubClients = new Mock<IHubClients<IRuntimeHubCallbacks>>();
+        hubClients
+            .Setup(clients => clients.Group(RuntimeHub.RuntimeRemoteGroup))
+            .Returns((remotes ?? new Mock<IRuntimeHubCallbacks>()).Object);
 
-        var hubClients = new Mock<IHubClients>();
-        hubClients.Setup(clients => clients.Group("runtime-remote")).Returns(clientProxy.Object);
-
-        var hubContext = new Mock<IHubContext<RuntimeHub>>();
+        var hubContext = new Mock<IHubContext<RuntimeHub, IRuntimeHubCallbacks>>();
         hubContext.Setup(context => context.Clients).Returns(hubClients.Object);
 
         var controller = new SolutionController(cache, snapshots ?? new RuntimeSnapshotCache(), hubContext.Object)

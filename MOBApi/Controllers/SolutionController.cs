@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MOBApi.Controllers;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Common.Validation;
 using Domain;
@@ -27,12 +27,12 @@ public class SolutionController : ControllerBase
 
     private readonly ISolutionCache _solutionCache;
     private readonly IRuntimeSnapshotCache _snapshotCache;
-    private readonly IHubContext<RuntimeHub> _hubContext;
+    private readonly IHubContext<RuntimeHub, IRuntimeHubCallbacks> _hubContext;
 
     public SolutionController(
         ISolutionCache solutionCache,
         IRuntimeSnapshotCache snapshotCache,
-        IHubContext<RuntimeHub> hubContext)
+        IHubContext<RuntimeHub, IRuntimeHubCallbacks> hubContext)
     {
         _solutionCache = solutionCache;
         _snapshotCache = snapshotCache;
@@ -101,7 +101,7 @@ public class SolutionController : ControllerBase
 
         await _hubContext.Clients
             .Group(RuntimeHub.RuntimeRemoteGroup)
-            .SendAsync(RuntimeHubMethods.SolutionUpdated, entry.UpdatedAt.ToString("O"), cancellationToken)
+            .SolutionUpdated(entry.UpdatedAt.ToString("O"), cancellationToken)
             .ConfigureAwait(false);
 
         return Ok(BuildMetaResponse(entry));

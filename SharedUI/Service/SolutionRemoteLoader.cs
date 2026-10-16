@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Service;
 
-using Common.Discovery;
 using Backend.Interface;
 
 using Common.Events;
@@ -15,6 +14,7 @@ using Microsoft.Extensions.Logging;
 
 using System.Net.Http;
 using System.Text.Json;
+using Contracts.Discovery;
 
 /// <summary>
 /// Downloads the solution JSON from MOBApi, validates it, and activates the first project in the local runtime.

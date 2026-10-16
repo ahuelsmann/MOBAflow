@@ -7,7 +7,7 @@ using Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR.Client;
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 
 using System.Net.Http.Json;
 using System.Text;
@@ -72,7 +72,7 @@ internal sealed class RuntimeHubLiveE2ETests
         await using var remoteHub = await ConnectRemoteHubAsync(snapshotReceived, sessionStateReceived, testSnapshot.StatusText).ConfigureAwait(false);
 
         await hostHub
-            .InvokeAsync(RuntimeHubMethods.PushSnapshot, RuntimeJsonSerializer.Serialize(testSnapshot))
+            .InvokeAsync(nameof(IRuntimeHubHostMethods.PushSnapshot), RuntimeJsonSerializer.Serialize(testSnapshot))
             .ConfigureAwait(false);
 
         var receivedSnapshot = await snapshotReceived.Task.WaitAsync(StepTimeout).ConfigureAwait(false);
@@ -84,7 +84,7 @@ internal sealed class RuntimeHubLiveE2ETests
         Assert.That(sessionOperational, Is.True);
 
         await remoteHub
-            .InvokeAsync(RuntimeHubMethods.SetLocomotiveDrive, ProjectId.ToString(), 3, 42, true)
+            .InvokeAsync(nameof(IRuntimeHubRemoteMethods.SetLocomotiveDrive), ProjectId.ToString(), 3, 42, true)
             .ConfigureAwait(false);
 
         var drive = await driveReceived.Task.WaitAsync(StepTimeout).ConfigureAwait(false);
@@ -119,7 +119,7 @@ internal sealed class RuntimeHubLiveE2ETests
             .ConfigureAwait(false);
 
         await hostHub
-            .InvokeAsync(RuntimeHubMethods.PushSnapshot, RuntimeJsonSerializer.Serialize(cachedSnapshot))
+            .InvokeAsync(nameof(IRuntimeHubHostMethods.PushSnapshot), RuntimeJsonSerializer.Serialize(cachedSnapshot))
             .ConfigureAwait(false);
 
         var snapshotReceived = new TaskCompletionSource<MobaRuntimeSnapshot>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -182,6 +182,31 @@ internal sealed class RuntimeHubLiveE2ETests
         Assert.That(emptyPending.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NoContent));
     }
 
+    [Test]
+    public async Task SolutionPut_Should_NotifyRemoteWithoutProject()
+    {
+        var solutionUpdated = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var remoteHub = new HubConnectionBuilder()
+            .WithUrl($"{BaseUrl}/runtime-hub")
+            .Build();
+        await using var remoteHubLifetime = remoteHub.ConfigureAwait(false);
+        // A one-argument handler only matches when the server keeps the cancellation token off the wire.
+        remoteHub.On<string>(nameof(IRuntimeHubRemoteCallbacks.SolutionUpdated), updatedAt =>
+        {
+            solutionUpdated.TrySetResult(updatedAt);
+            return Task.CompletedTask;
+        });
+        await remoteHub.StartAsync().ConfigureAwait(false);
+        await remoteHub
+            .InvokeAsync(nameof(IRuntimeHubRemoteMethods.RegisterRemote), "e2e-solution-client", string.Empty)
+            .ConfigureAwait(false);
+
+        await PublishSolutionAsync().ConfigureAwait(false);
+
+        var updatedAt = await solutionUpdated.Task.WaitAsync(StepTimeout).ConfigureAwait(false);
+        Assert.That(DateTimeOffset.TryParse(updatedAt, System.Globalization.CultureInfo.InvariantCulture, out _), Is.True, updatedAt);
+    }
+
     /// <summary>Synchronizes a solution that contains <see cref="ProjectId"/>; commands name known projects only.</summary>
     private async Task PublishSolutionAsync()
     {
@@ -200,14 +225,14 @@ internal sealed class RuntimeHubLiveE2ETests
             .WithUrl($"{BaseUrl}/runtime-hub")
             .Build();
 
-        hub.On<string, int, int, bool>(RuntimeHubMethods.ExecuteSetLocomotiveDrive, (_, address, speed, forward) =>
+        hub.On<string, int, int, bool>(nameof(IRuntimeHubHostCallbacks.ExecuteSetLocomotiveDrive), (_, address, speed, forward) =>
         {
             driveReceived.TrySetResult((address, speed, forward));
             return Task.CompletedTask;
         });
 
         await hub.StartAsync().ConfigureAwait(false);
-        await hub.InvokeAsync(RuntimeHubMethods.RegisterHost).ConfigureAwait(false);
+        await hub.InvokeAsync(nameof(IRuntimeHubHostMethods.RegisterHost)).ConfigureAwait(false);
         return hub;
     }
 
@@ -220,7 +245,7 @@ internal sealed class RuntimeHubLiveE2ETests
             .WithUrl($"{BaseUrl}/runtime-hub")
             .Build();
 
-        hub.On<string>(RuntimeHubMethods.SnapshotUpdated, json =>
+        hub.On<string>(nameof(IRuntimeHubRemoteCallbacks.SnapshotUpdated), json =>
         {
             var snapshot = RuntimeJsonSerializer.Deserialize(json);
             if (snapshot?.StatusText == expectedStatusText)
@@ -231,7 +256,7 @@ internal sealed class RuntimeHubLiveE2ETests
             return Task.CompletedTask;
         });
 
-        hub.On<bool>(RuntimeHubMethods.SessionStateChanged, isOperational =>
+        hub.On<bool>(nameof(IRuntimeHubRemoteCallbacks.SessionStateChanged), isOperational =>
         {
             if (isOperational)
             {
@@ -242,7 +267,7 @@ internal sealed class RuntimeHubLiveE2ETests
         });
 
         await hub.StartAsync().ConfigureAwait(false);
-        await hub.InvokeAsync(RuntimeHubMethods.RegisterRemote, "e2e-test-client", ProjectId.ToString()).ConfigureAwait(false);
+        await hub.InvokeAsync(nameof(IRuntimeHubRemoteMethods.RegisterRemote), "e2e-test-client", ProjectId.ToString()).ConfigureAwait(false);
         return hub;
     }
 }

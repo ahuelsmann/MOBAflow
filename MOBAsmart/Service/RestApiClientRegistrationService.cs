@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Common.Discovery;
 using SharedUI.Interface;
 
 using System.Text;
 using System.Text.Json;
+using Contracts.Discovery;
 
 /// <summary>
 /// Registers this MAUI app with the WinUI REST API so it appears in Overview "Connected clients".

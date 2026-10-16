@@ -80,6 +80,34 @@ such as invalid references or conflicting data.
 MOBAflow reports digital-address conflicts in project diagnostics. Resolve them
 before operating the affected locomotives.
 
+#### Show locomotive usage
+
+Select a locomotive and use the magnifying-glass button in the locomotive list
+header, or choose **Show usage** in its context menu. **Messages** opens with each
+train and vehicle position that refers to this locomotive. Positions start at 1;
+repeated entries are shown separately. The query includes unsaved edits and does
+not save, delete, reset or operate the layout.
+
+**Edited project data** and **Loaded runtime definition (A)** are separate sources.
+The runtime result comes from the existing project's current loaded definition,
+even if that project is disconnected. Its observation time is shown. Missing
+locomotive references are errors; valid uses are neutral information. Choose
+**Show usage** again to capture a new comparison and observation time. The
+**Refresh** button in **Messages** refreshes project diagnostics but keeps the
+existing usage observation and its time; it does not run **Show usage** again.
+
+The coverage summary remains visible when Information rows are hidden. Normal
+project diagnostics also keep an Unknown coverage status visible independently of
+severity filters when invalid identities prevent a precise analysis, even without
+using Show usage.
+**Retained definitions (B)** and **Operational use (C)** are **Unknown / Not checked
+in this slice**. A zero-reference result applies only to the source just read;
+it is not a claim that the locomotive is unused everywhere or safe to delete.
+Unavailable owners, unsupported remote queries and changed definitions remain
+explicitly unknown. Loading another solution or changing the selection clears
+the previous query. Model changes also clear it without automatically starting
+another usage query. Choose **Show usage** again to inspect the changed data.
+
 ### Recorder
 
 **Recorder** captures supported runtime events and operator commands in a

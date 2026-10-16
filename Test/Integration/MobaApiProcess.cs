@@ -2,12 +2,12 @@
 
 namespace Moba.Test.Integration;
 
-using Moba.Common.Discovery;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using Moba.Contracts.Discovery;
 
 /// <summary>
 /// Starts the built MOBApi as an isolated process on a free local port and stops it on disposal.
