@@ -304,6 +304,25 @@ runtime services.
   The architecture guard rejects shell dependencies in LocomotivesPage. Train-composition
   is extracted in slice 2c below; central layout-persistence extraction remains planned.
 
+**Read-only locomotive/train usage (#306):**
+
+- The pure [ILocomotiveTrainReferenceAnalyzer](../Backend/Interface/ILocomotiveTrainReferenceAnalyzer.cs)
+  scans explicit project-local locomotive vehicle entries. Its immutable locations preserve repeated
+  positions and distinguish rule identity from finding identity. ProjectDiagnosticsService uses the
+  same traversal for missing-reference errors; valid uses appear only in an explicit usage query.
+- [ILocomotiveTrainRuntimeUsageReader](../Backend/Interface/ILocomotiveTrainRuntimeUsageReader.cs)
+  is an alias of the existing Windows ProjectRuntimeHost singleton, not a new owner. Shared Backend DI
+  registers only the analyzer. The reader captures the actual ActiveProjectContext clone under the
+  existing host-gate then activation-lock ordering, without I/O, lifecycle calls or queued RequestFactory execution.
+- Request-local receipts bind existing host/owner/context/definition identities and are checked immediately
+  before projection. Replacement, disposal and definition refresh invalidate them. Loaded definitions (A)
+  can be Complete; retained definitions (B) and operative use (C) remain Unknown, so aggregate runtime
+  evidence is at most Partial. No deletion permission or remote protocol is introduced.
+- LocomotiveTrainUsageViewModel uses ISolutionSession load/model/selection events, cancellable request
+  contexts and coalesced receipt checks on all-project snapshot hints. Raw callbacks marshal UI changes
+  through IUiDispatcher. The existing locomotive page exposes Show usage and existing Messages merges
+  source-qualified findings; coverage remains outside the Information filter. Delete and persistence stay unchanged.
+
 **Wagon presentation (RF-24 slice 2b):**
 
 - The host owns one WagonsPageViewModel, shared by PassengerWagonPage, GoodsWagonPage and both

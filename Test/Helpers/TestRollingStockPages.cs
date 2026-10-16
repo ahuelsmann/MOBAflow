@@ -28,9 +28,11 @@ internal sealed partial class TestRollingStockPages : IDisposable
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        var usage = CreateUsage(session, usageReader);
+        _pages.Add(usage);
         var page = new LocomotivesPageViewModel(session, ioService ?? new NullIoService(),
             persistence.Object, new LayoutColumnWidthsViewModel(), management,
-            NullLogger<LocomotivesPageViewModel>.Instance, CreateUsage(session, usageReader), _ => { });
+            NullLogger<LocomotivesPageViewModel>.Instance, usage, _ => { });
         _pages.Add(page);
         return page;
     }

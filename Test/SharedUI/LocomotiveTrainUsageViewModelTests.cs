@@ -1,53 +1,54 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Backend.Service.Validation;
 using Moba.Common.Runtime;
 using Moba.Domain;
-using Moba.Domain.Enum;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.Test.Helpers;
 using Moq;
-using System.ComponentModel;
+using static Moba.Test.Helpers.TestLocomotiveTrainUsage;
 
 [TestFixture]
-internal sealed class LocomotiveTrainUsageViewModelTests
+internal static class LocomotiveTrainUsageViewModelTests
 {
     [TestCase(false)]
     [TestCase(true)]
-    public async Task RealOwnerChangedAfterRead_IsRevalidatedBeforeApplying(bool dispose)
+    public static async Task RealOwnerChangedAfterRead_IsRevalidatedBeforeApplying(bool dispose)
     {
-        await using var fixture = new TestProjectRuntimeHost();
+        var fixture = new TestProjectRuntimeHost();
+        await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = CreateProject();
-        await fixture.Host.LoadAsync([project]);
-        var actual = (ILocomotiveTrainRuntimeUsageReader)fixture.Host;
+        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        var actual = fixture.Host;
         var reader = new Mock<ILocomotiveTrainRuntimeUsageReader>();
         reader.Setup(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()))
             .Returns(async (LocomotiveTrainUsageRequest request, CancellationToken token) =>
             {
-                var result = await actual.ReadAsync(request, token);
-                if (dispose) await fixture.Host.DisposeAsync();
-                else await fixture.Host.ReplaceAsync(project, token);
+                var result = await actual.ReadAsync(request, token).ConfigureAwait(false);
+                if (dispose) await fixture.Host.DisposeAsync().ConfigureAwait(false);
+                else await fixture.Host.ReplaceAsync(project, token).ConfigureAwait(false);
                 return result;
             });
         reader.Setup(value => value.IsCurrentAsync(It.IsAny<LocomotiveTrainRuntimeObservation>(), It.IsAny<CancellationToken>()))
             .Returns((LocomotiveTrainRuntimeObservation observation, CancellationToken token) => actual.IsCurrentAsync(observation, token));
         using var viewModel = CreateViewModel(CreateSession(project).Object, reader.Object);
 
-        await viewModel.QueryAsync(project, project.Locomotives[0].Id);
+        await viewModel.QueryAsync(project, project.Locomotives[0].Id).ConfigureAwait(false);
 
-        Assert.That(viewModel.RuntimeObservation!.LoadedDefinitionCoverage.State, Is.EqualTo(LocomotiveTrainCoverageState.Unknown));
-        Assert.That(viewModel.RuntimeObservation.LoadedDefinitionCoverage.Reason, Is.EqualTo(dispose
-            ? LocomotiveTrainCoverageReason.OwnerUnavailable : LocomotiveTrainCoverageReason.StaleObservation));
-        Assert.That(viewModel.Diagnostics, Has.Length.EqualTo(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RuntimeObservation!.LoadedDefinitionCoverage.State, Is.EqualTo(LocomotiveTrainCoverageState.Unknown));
+            Assert.That(viewModel.RuntimeObservation.LoadedDefinitionCoverage.Reason, Is.EqualTo(dispose
+                ? LocomotiveTrainCoverageReason.OwnerUnavailable : LocomotiveTrainCoverageReason.StaleObservation));
+            Assert.That(viewModel.Diagnostics, Has.Length.EqualTo(1));
+        }
         Assert.That(viewModel.Diagnostics[0].Location.Source, Is.EqualTo(LocomotiveTrainSource.EditedProjectData));
     }
 
     [Test]
-    public async Task SnapshotBurst_CoalescesPendingChecks_UsesUiDispatch_AndDisposalUnsubscribes()
+    public static async Task SnapshotBurst_CoalescesPendingChecks_UsesUiDispatch_AndDisposalUnsubscribes()
     {
         var project = CreateProject();
         var reader = CompleteReader(project);
@@ -60,7 +61,7 @@ internal sealed class LocomotiveTrainUsageViewModelTests
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
         dispatcher.Setup(value => value.InvokeOnUiAsync(It.IsAny<Func<Task>>())).Returns<Func<Task>>(action => action());
         using var viewModel = CreateViewModel(CreateSession(project).Object, reader.Object, snapshots.Object, dispatcher.Object);
-        await viewModel.QueryAsync(project, project.Locomotives[0].Id);
+        await viewModel.QueryAsync(project, project.Locomotives[0].Id).ConfigureAwait(false);
         var invalidated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         viewModel.PropertyChanged += (_, args) =>
         {
@@ -74,10 +75,10 @@ internal sealed class LocomotiveTrainUsageViewModelTests
             for (var index = 0; index < 20; index++)
                 snapshots.Raise(value => value.RuntimeSnapshotChanged += null,
                     new ProjectRuntimeSnapshotEventArgs(new MobaRuntimeSnapshot { ProjectId = project.Id }));
-        });
+        }).ConfigureAwait(false);
         Assert.That(checks, Is.EqualTo(2), "A burst must not start concurrent checks while one is pending.");
         pending.SetResult(LocomotiveTrainObservationValidity.Stale);
-        await invalidated.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await invalidated.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         dispatcher.Verify(value => value.InvokeOnUiAsync(It.IsAny<Func<Task>>()), Times.AtLeast(2));
         reader.Verify(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()), Times.Once);
 
@@ -89,7 +90,42 @@ internal sealed class LocomotiveTrainUsageViewModelTests
     }
 
     [Test]
-    public async Task Query_SeparatesEditorAndRuntimeOccurrences_AndKeepsUnknownBC()
+    public static async Task LateSnapshotReceiptResult_CannotClearANewerQuery()
+    {
+        var project = CreateProject();
+        var reader = CompleteReader(project);
+        var pending = new TaskCompletionSource<LocomotiveTrainObservationValidity>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var checks = 0;
+        reader.Setup(value => value.IsCurrentAsync(It.IsAny<LocomotiveTrainRuntimeObservation>(), It.IsAny<CancellationToken>()))
+            .Returns(() => Interlocked.Increment(ref checks) == 2 ? pending.Task : Task.FromResult(LocomotiveTrainObservationValidity.Current));
+        var snapshots = new Mock<IProjectRuntimeSnapshots>();
+        var oldCallbackApplied = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var dispatchCompletions = 0;
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
+        dispatcher.Setup(value => value.InvokeOnUiAsync(It.IsAny<Func<Task>>())).Returns<Func<Task>>(async action =>
+        {
+            await action().ConfigureAwait(false);
+            if (Interlocked.Increment(ref dispatchCompletions) == 3)
+                oldCallbackApplied.TrySetResult();
+        });
+        using var viewModel = CreateViewModel(CreateSession(project).Object, reader.Object, snapshots.Object, dispatcher.Object);
+        await viewModel.QueryAsync(project, project.Locomotives[0].Id).ConfigureAwait(false);
+        snapshots.Raise(value => value.RuntimeSnapshotChanged += null,
+            new ProjectRuntimeSnapshotEventArgs(new MobaRuntimeSnapshot { ProjectId = project.Id }));
+        Assert.That(checks, Is.EqualTo(2));
+        await viewModel.QueryAsync(project, project.Locomotives[0].Id).ConfigureAwait(false);
+        var current = viewModel.RuntimeObservation;
+
+        pending.SetResult(LocomotiveTrainObservationValidity.Stale);
+        await oldCallbackApplied.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        Assert.That(viewModel.RuntimeObservation, Is.SameAs(current));
+        Assert.That(viewModel.RuntimeObservation!.LoadedDefinitionCoverage.State, Is.EqualTo(LocomotiveTrainCoverageState.Complete));
+    }
+
+    [Test]
+    public static async Task Query_SeparatesEditorAndRuntimeOccurrences_AndKeepsUnknownBC()
     {
         var project = CreateProject();
         var clone = CreateProject();
@@ -100,39 +136,49 @@ internal sealed class LocomotiveTrainUsageViewModelTests
         var reader = CompleteReader(clone);
         using var viewModel = CreateViewModel(session.Object, reader.Object);
 
-        await viewModel.QueryAsync(project, project.Locomotives[0].Id);
+        await viewModel.QueryAsync(project, project.Locomotives[0].Id).ConfigureAwait(false);
 
         Assert.That(viewModel.Diagnostics, Has.Length.EqualTo(2));
-        Assert.That(viewModel.Diagnostics.Select(finding => finding.Location.Source).Distinct().Count(), Is.EqualTo(2));
-        Assert.That(viewModel.RuntimeObservation!.RuntimeCoverage, Is.EqualTo(LocomotiveTrainRuntimeCoverage.Partial));
-        Assert.That(viewModel.CoverageSummary, Does.Contain("Retained definitions (B): Unknown"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.Diagnostics.Select(finding => finding.Location.Source).Distinct().Count(), Is.EqualTo(2));
+            Assert.That(viewModel.RuntimeObservation!.RuntimeCoverage, Is.EqualTo(LocomotiveTrainRuntimeCoverage.Partial));
+            Assert.That(viewModel.CoverageSummary, Does.Contain("Retained definitions (B): Unknown"));
+        }
         Assert.That(viewModel.CoverageSummary, Does.Contain("Operational use (C): Unknown"));
     }
 
     [TestCase(LocomotiveTrainCoverageReason.UnsupportedRemote)]
     [TestCase(LocomotiveTrainCoverageReason.QueryFailed)]
     [TestCase(LocomotiveTrainCoverageReason.OwnerUnavailable)]
-    public async Task FailedRefresh_ReplacesOldComplete_WithExplicitUnknown(LocomotiveTrainCoverageReason reason)
+    public static async Task FailedRefresh_ReplacesOldComplete_WithExplicitUnknown(LocomotiveTrainCoverageReason reason)
     {
         var project = CreateProject();
         var session = CreateSession(project);
         var reader = CompleteReader(project);
         using var viewModel = CreateViewModel(session.Object, reader.Object);
-        await viewModel.QueryAsync(project, project.Locomotives[0].Id);
+        await viewModel.QueryAsync(project, project.Locomotives[0].Id).ConfigureAwait(false);
         reader.Setup(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((LocomotiveTrainUsageRequest request, CancellationToken _) => LocomotiveTrainRuntimeObservation.Unknown(request, reason));
 
-        await viewModel.QueryAsync(project, project.Locomotives[0].Id);
+        await viewModel.QueryAsync(project, project.Locomotives[0].Id).ConfigureAwait(false);
 
-        Assert.That(viewModel.RuntimeObservation!.LoadedDefinitionCoverage.Reason, Is.EqualTo(reason));
-        Assert.That(viewModel.Diagnostics, Has.Length.EqualTo(1));
-        Assert.That(viewModel.Diagnostics.Single().Location.Source, Is.EqualTo(LocomotiveTrainSource.EditedProjectData));
-        Assert.That(viewModel.CoverageSummary, Does.Contain("Unknown"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RuntimeObservation!.LoadedDefinitionCoverage.Reason, Is.EqualTo(reason));
+            Assert.That(viewModel.Diagnostics, Has.Length.EqualTo(1));
+        }
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.Diagnostics.Single().Location.Source, Is.EqualTo(LocomotiveTrainSource.EditedProjectData));
+            Assert.That(viewModel.CoverageSummary, Does.Contain("Unknown"));
+            Assert.That(viewModel.CoverageSummary, Does.Contain("checked "));
+        }
     }
 
     [TestCase(LocomotiveTrainObservationValidity.Current)]
     [TestCase(LocomotiveTrainObservationValidity.Stale)]
-    public async Task LateReceiptAnswer_CannotReplaceANewerTargetQuery(LocomotiveTrainObservationValidity oldValidity)
+    public static async Task LateReceiptAnswer_CannotReplaceANewerTargetQuery(LocomotiveTrainObservationValidity oldValidity)
     {
         var project = CreateProject();
         var second = new Locomotive { Name = "Second target" };
@@ -145,18 +191,21 @@ internal sealed class LocomotiveTrainUsageViewModelTests
         using var viewModel = CreateViewModel(CreateSession(project).Object, reader.Object);
         var oldQuery = viewModel.QueryAsync(project, project.Locomotives[0].Id);
         viewModel.SetTarget(project, second.Id);
-        await viewModel.QueryAsync(project, second.Id);
+        await viewModel.QueryAsync(project, second.Id).ConfigureAwait(false);
         var current = viewModel.RuntimeObservation;
 
         pending.SetResult(oldValidity);
-        await oldQuery;
+        await oldQuery.ConfigureAwait(false);
 
-        Assert.That(viewModel.RuntimeObservation, Is.SameAs(current));
-        Assert.That(viewModel.Diagnostics, Is.Empty);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RuntimeObservation, Is.SameAs(current));
+            Assert.That(viewModel.Diagnostics, Is.Empty);
+        }
     }
 
     [Test]
-    public async Task SnapshotHint_RevalidatesExistingReceipt_WithoutAnotherRead_AndClearsStaleComplete()
+    public static async Task SnapshotHint_RevalidatesExistingReceipt_WithoutAnotherRead_AndClearsStaleComplete()
     {
         var project = CreateProject();
         var reader = CompleteReader(project);
@@ -165,7 +214,7 @@ internal sealed class LocomotiveTrainUsageViewModelTests
             .ReturnsAsync(LocomotiveTrainObservationValidity.Stale);
         var snapshots = new Mock<IProjectRuntimeSnapshots>();
         using var viewModel = CreateViewModel(CreateSession(project).Object, reader.Object, snapshots.Object);
-        await viewModel.QueryAsync(project, project.Locomotives[0].Id);
+        await viewModel.QueryAsync(project, project.Locomotives[0].Id).ConfigureAwait(false);
         var invalidated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         viewModel.PropertyChanged += (_, args) =>
         {
@@ -175,16 +224,19 @@ internal sealed class LocomotiveTrainUsageViewModelTests
         };
 
         await Task.Run(() => snapshots.Raise(value => value.RuntimeSnapshotChanged += null,
-            new ProjectRuntimeSnapshotEventArgs(new MobaRuntimeSnapshot { ProjectId = project.Id })));
-        await invalidated.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            new ProjectRuntimeSnapshotEventArgs(new MobaRuntimeSnapshot { ProjectId = project.Id }))).ConfigureAwait(false);
+        await invalidated.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
-        Assert.That(viewModel.EditedResult, Is.Not.Null);
-        Assert.That(viewModel.Diagnostics, Has.Length.EqualTo(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.EditedResult, Is.Not.Null);
+            Assert.That(viewModel.Diagnostics, Has.Length.EqualTo(1));
+        }
         reader.Verify(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
-    public async Task Query_ReadsUnsavedEdits_WithoutSavingOrChangingTheModel()
+    public static async Task Query_ReadsUnsavedEdits_WithoutSavingOrChangingTheModel()
     {
         var project = CreateProject();
         var session = CreateSession(project);
@@ -193,11 +245,14 @@ internal sealed class LocomotiveTrainUsageViewModelTests
         var train = project.Trains.Single();
         train.Vehicles.Add(new Vehicle { VehicleId = project.Locomotives.Single().Id });
 
-        await viewModel.QueryAsync(project, project.Locomotives.Single().Id);
+        await viewModel.QueryAsync(project, project.Locomotives.Single().Id).ConfigureAwait(false);
 
-        Assert.That(viewModel.EditedResult!.Findings, Has.Length.EqualTo(2));
-        Assert.That(train.Vehicles, Has.Count.EqualTo(2));
-        Assert.That(viewModel.RuntimeObservation!.LoadedDefinitionCoverage.State, Is.EqualTo(LocomotiveTrainCoverageState.Unknown));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.EditedResult!.Findings, Has.Length.EqualTo(2));
+            Assert.That(train.Vehicles, Has.Count.EqualTo(2));
+            Assert.That(viewModel.RuntimeObservation!.LoadedDefinitionCoverage.State, Is.EqualTo(LocomotiveTrainCoverageState.Unknown));
+        }
         session.Verify(value => value.SaveAsync(It.IsAny<bool>()), Times.Never);
         session.Verify(value => value.SaveSolutionInternalAsync(), Times.Never);
         session.Verify(value => value.StartRuntimesAsync(), Times.Never);
@@ -208,7 +263,7 @@ internal sealed class LocomotiveTrainUsageViewModelTests
     }
 
     [Test]
-    public async Task InPlaceSolutionReload_DiscardsTheOldAnswerEvenWithSameObjectsAndIds()
+    public static async Task InPlaceSolutionReload_DiscardsTheOldAnswerEvenWithSameObjectsAndIds()
     {
         var project = CreateProject();
         var session = CreateSession(project);
@@ -222,32 +277,38 @@ internal sealed class LocomotiveTrainUsageViewModelTests
         var query = viewModel.QueryAsync(project, project.Locomotives.Single().Id);
         session.Raise(value => value.SolutionLoaded += null, EventArgs.Empty);
         pending.SetResult(LocomotiveTrainRuntimeObservation.Unknown(captured!, LocomotiveTrainCoverageReason.OwnerUnavailable));
-        await query;
+        await query.ConfigureAwait(false);
 
-        Assert.That(viewModel.EditedResult, Is.Null);
-        Assert.That(viewModel.RuntimeObservation, Is.Null);
-        Assert.That(viewModel.Diagnostics, Is.Empty);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.EditedResult, Is.Null);
+            Assert.That(viewModel.RuntimeObservation, Is.Null);
+            Assert.That(viewModel.Diagnostics, Is.Empty);
+        }
     }
 
     [Test]
-    public async Task ModelChange_ClearsObservedResults_WithoutStartingAnotherReadOrSaving()
+    public static async Task ModelChange_ClearsObservedResults_WithoutStartingAnotherReadOrSaving()
     {
         var project = CreateProject();
         var session = CreateSession(project);
         var reader = UnknownReader();
         using var viewModel = CreateViewModel(session.Object, reader.Object);
-        await viewModel.QueryAsync(project, project.Locomotives.Single().Id);
+        await viewModel.QueryAsync(project, project.Locomotives.Single().Id).ConfigureAwait(false);
 
-        session.Raise(value => value.ModelChanged += null, project, new PropertyChangedEventArgs("Vehicles"));
+        RaiseModelChanged(session, project, "Vehicles");
 
-        Assert.That(viewModel.EditedResult, Is.Null);
-        Assert.That(viewModel.RuntimeObservation, Is.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.EditedResult, Is.Null);
+            Assert.That(viewModel.RuntimeObservation, Is.Null);
+        }
         reader.Verify(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         session.Verify(value => value.SaveSolutionInternalAsync(), Times.Never);
     }
 
     [Test]
-    public async Task Query_ForeignProjectWithSameGuid_IsRejected()
+    public static async Task Query_ForeignProjectWithSameGuid_IsRejected()
     {
         var project = CreateProject();
         var session = CreateSession(project);
@@ -255,14 +316,14 @@ internal sealed class LocomotiveTrainUsageViewModelTests
         using var viewModel = CreateViewModel(session.Object, reader.Object);
         var foreign = new Project { Id = project.Id };
 
-        await viewModel.QueryAsync(foreign, project.Locomotives.Single().Id);
+        await viewModel.QueryAsync(foreign, project.Locomotives.Single().Id).ConfigureAwait(false);
 
         Assert.That(viewModel.EditedResult, Is.Null);
         reader.Verify(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
-    public async Task Cancellation_DiscardsPartialResults()
+    public static async Task Cancellation_DiscardsPartialResults()
     {
         var project = CreateProject();
         var session = CreateSession(project);
@@ -272,62 +333,14 @@ internal sealed class LocomotiveTrainUsageViewModelTests
                 Task.FromCanceled<LocomotiveTrainRuntimeObservation>(token));
         using var viewModel = CreateViewModel(session.Object, reader.Object);
         using var cancelled = new CancellationTokenSource();
-        cancelled.Cancel();
+        await cancelled.CancelAsync().ConfigureAwait(false);
 
-        await viewModel.QueryAsync(project, project.Locomotives.Single().Id, cancelled.Token);
+        await viewModel.QueryAsync(project, project.Locomotives.Single().Id, cancelled.Token).ConfigureAwait(false);
 
-        Assert.That(viewModel.EditedResult, Is.Null);
-        Assert.That(viewModel.Diagnostics, Is.Empty);
-    }
-
-    internal static Project CreateProject()
-    {
-        var locomotive = new Locomotive { Name = "Harbor pilot" };
-        return new Project
+        using (Assert.EnterMultipleScope())
         {
-            Name = "Yard", Locomotives = [locomotive],
-            Trains = [new Train { Name = "Morning service", Vehicles = [new Vehicle { VehicleKind = TrainVehicleKind.Locomotive, VehicleId = locomotive.Id }] }]
-        };
-    }
-
-    internal static Mock<ISolutionSession> CreateSession(Project project)
-    {
-        var session = new Mock<ISolutionSession>();
-        session.SetupGet(value => value.Solution).Returns(new Solution { Projects = [project] });
-        session.SetupGet(value => value.SelectedProject).Returns(new ProjectViewModel(project));
-        return session;
-    }
-
-    internal static Mock<ILocomotiveTrainRuntimeUsageReader> UnknownReader()
-    {
-        var reader = new Mock<ILocomotiveTrainRuntimeUsageReader>();
-        reader.Setup(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((LocomotiveTrainUsageRequest request, CancellationToken _) =>
-                LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.OwnerUnavailable));
-        return reader;
-    }
-
-    internal static Mock<ILocomotiveTrainRuntimeUsageReader> CompleteReader(Project definition)
-    {
-        var reader = new Mock<ILocomotiveTrainRuntimeUsageReader>();
-        reader.Setup(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((LocomotiveTrainUsageRequest request, CancellationToken _) =>
-                new LocomotiveTrainRuntimeObservation(request.RequestId, request.ProjectId, DateTimeOffset.UtcNow,
-                    new LocomotiveTrainReferenceAnalyzer().Analyze(definition, LocomotiveTrainSource.LoadedRuntimeDefinition, request.LocomotiveId)));
-        reader.Setup(value => value.IsCurrentAsync(It.IsAny<LocomotiveTrainRuntimeObservation>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(LocomotiveTrainObservationValidity.Current);
-        return reader;
-    }
-
-    internal static LocomotiveTrainUsageViewModel CreateViewModel(
-        ISolutionSession session, ILocomotiveTrainRuntimeUsageReader reader, IProjectRuntimeSnapshots? snapshots = null,
-        IUiDispatcher? dispatcherOverride = null)
-    {
-        var dispatcher = new Mock<IUiDispatcher>();
-        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        dispatcher.Setup(value => value.InvokeOnUiAsync(It.IsAny<Func<Task>>())).Returns<Func<Task>>(action => action());
-        return new(session, new LocomotiveTrainReferenceAnalyzer(), reader,
-            snapshots ?? new Mock<IProjectRuntimeSnapshots>().Object, dispatcherOverride ?? dispatcher.Object,
-            NullLogger<LocomotiveTrainUsageViewModel>.Instance);
+            Assert.That(viewModel.EditedResult, Is.Null);
+            Assert.That(viewModel.Diagnostics, Is.Empty);
+        }
     }
 }

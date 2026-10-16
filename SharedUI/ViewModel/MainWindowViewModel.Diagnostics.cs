@@ -101,9 +101,10 @@ public sealed partial class MainWindowViewModel
             ProjectDiagnostics.Add(diagnostic);
 
         var usage = LocomotivesPage.Usage;
+        var currentFindingIds = ProjectDiagnostics.Select(diagnostic => diagnostic.Id).ToHashSet(StringComparer.Ordinal);
         foreach (var finding in usage.Diagnostics)
         {
-            if (ProjectDiagnostics.Any(existing => existing.Id == finding.FindingId))
+            if (!currentFindingIds.Add(finding.FindingId))
                 continue;
             ProjectDiagnostics.Add(ProjectDiagnosticsService.FromLocomotiveTrainReference(finding,
                 finding.Location.Source == Backend.Interface.LocomotiveTrainSource.LoadedRuntimeDefinition

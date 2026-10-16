@@ -2,11 +2,13 @@
 
 **Source Issue**: https://github.com/ahuelsmann/MOBAflow/issues/306
 
-**Status**: Proposed future behavior; no product UI implemented.
+**Status**: Implemented bindings/projection; actual Light/Dark/keyboard app inspection remains open without launch authorization.
 
 ## Read interaction
 
 The locomotive page exposes one read-only `Show usage` command for an actual selected locomotive/project. The focused SharedUI projection captures edited-data findings on the established model thread, then queries the matching runtime owner asynchronously. No Delete command is modified. The existing Messages area receives the current query's source-qualified use/coverage rows; no new page or navigation destination.
+
+The existing locomotive header's magnifying-glass button and existing context menu forward this same command. The Messages expander opens for the result; its coverage summary sits above the existing filtered list.
 
 The query remains callable for any project in the loaded solution, including a non-selected project's background diagnostics. This never equates same-ID locomotives across projects. Normal project diagnostics use the pure analyzer for missing-target errors; valid uses appear only for an explicit usage query.
 
@@ -16,7 +18,7 @@ The query remains callable for any project in the loaded solution, including a n
 - A valid use states `Used in: Train <name> - vehicle <position>` with locomotive identity and exact structured location. It is neutral Information, not an error/warning.
 - A missing reference states `Missing locomotive reference: Train <name> - vehicle <position>` as Error; preserve target ID when no name exists.
 - Source-qualified zero says `No train references found in this loaded definition`, never `Unused` or `Safe to delete`.
-- Runtime summary always shows the separate loaded-definition (A), retained-definition (B) and operative-use (C) coverage and observation time. B/C read `Not checked in this slice`. Failure/unavailability states the reason.
+- Runtime summary always shows the separate loaded-definition (A), retained-definition (B) and operative-use (C) coverage and successful observation time (check time for Unknown). B/C read `Not checked in this slice`. Failure/unavailability states the reason.
 
 Names are user data and remain unchanged/escaped by the UI binding/rendering path. Do not show local paths or raw runtime objects. Position displayed is 1-based; underlying location index is 0-based.
 

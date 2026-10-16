@@ -41,6 +41,12 @@ public sealed class ProjectRuntimeHost(
     private Guid? _selectedId;
     private Guid? _requestedSelection;
     private int _disposed;
+    private static readonly Action<ILogger, Guid, Exception?> LogUsageReadFailed =
+        LoggerMessage.Define<Guid>(LogLevel.Error, new EventId(3, nameof(LogUsageReadFailed)),
+            "Reading locomotive train usage failed for project {ProjectId}");
+    private static readonly Action<ILogger, Guid, Exception?> LogUsageRevalidationFailed =
+        LoggerMessage.Define<Guid>(LogLevel.Error, new EventId(4, nameof(LogUsageRevalidationFailed)),
+            "Revalidating locomotive train usage failed for project {ProjectId}");
 
     /// <inheritdoc />
     public async Task<LocomotiveTrainRuntimeObservation> ReadAsync(
@@ -81,7 +87,7 @@ public sealed class ProjectRuntimeHost(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            _logger.LogError(exception, "Reading locomotive train usage failed for project {ProjectId}", request.ProjectId);
+            LogUsageReadFailed(_logger, request.ProjectId, exception);
             return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.QueryFailed);
         }
         finally
@@ -131,7 +137,7 @@ public sealed class ProjectRuntimeHost(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            _logger.LogError(exception, "Revalidating locomotive train usage failed for project {ProjectId}", observation.ProjectId);
+            LogUsageRevalidationFailed(_logger, observation.ProjectId, exception);
             return LocomotiveTrainObservationValidity.Unavailable;
         }
         finally

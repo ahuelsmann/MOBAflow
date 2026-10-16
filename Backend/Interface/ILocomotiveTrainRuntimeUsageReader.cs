@@ -57,10 +57,10 @@ public sealed record LocomotiveTrainRuntimeObservation(
     /// <summary>Category A: current loaded definitions only.</summary>
     public LocomotiveTrainCoverage LoadedDefinitionCoverage => Definition.Coverage;
     /// <summary>Category B is deliberately not inferred from current definitions.</summary>
-    public LocomotiveTrainCoverage RetainedDefinitionsCoverage =>
+    public LocomotiveTrainCoverage RetainedDefinitionsCoverage { get; } =
         new(LocomotiveTrainCoverageState.Unknown, LocomotiveTrainCoverageReason.NotInspectedInSlice);
     /// <summary>Category C is deliberately not inferred from fleet, speed or traces.</summary>
-    public LocomotiveTrainCoverage OperationalUsageCoverage =>
+    public LocomotiveTrainCoverage OperationalUsageCoverage { get; } =
         new(LocomotiveTrainCoverageState.Unknown, LocomotiveTrainCoverageReason.NotInspectedInSlice);
     /// <summary>At most Partial; no complete runtime-use or non-use promise exists.</summary>
     public LocomotiveTrainRuntimeCoverage RuntimeCoverage => Definition.Coverage.State == LocomotiveTrainCoverageState.Complete
@@ -68,11 +68,14 @@ public sealed record LocomotiveTrainRuntimeObservation(
 
     /// <summary>Creates explicitly unavailable evidence without a successful empty definition result.</summary>
     public static LocomotiveTrainRuntimeObservation Unknown(
-        LocomotiveTrainUsageRequest request, LocomotiveTrainCoverageReason reason) =>
-        new(request.RequestId, request.ProjectId, DateTimeOffset.UtcNow,
-            new(request.ProjectId, request.ExpectedProject.Name, LocomotiveTrainSource.LoadedRuntimeDefinition,
+        LocomotiveTrainUsageRequest request, LocomotiveTrainCoverageReason reason)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return new(request.RequestId, request.ProjectId, DateTimeOffset.UtcNow,
+            new(request.ProjectId, request.ProjectId.ToString("D"), LocomotiveTrainSource.LoadedRuntimeDefinition,
                 request.LocomotiveId.HasValue ? LocomotiveTrainTargetState.Ambiguous : LocomotiveTrainTargetState.NotRequested,
                 [], new(LocomotiveTrainCoverageState.Unknown, reason)));
+    }
 }
 
 /// <summary>Opaque binding to existing owner/definition objects, with no public construction or persisted registry.</summary>

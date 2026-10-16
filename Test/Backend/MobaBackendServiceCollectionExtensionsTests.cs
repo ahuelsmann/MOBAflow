@@ -29,10 +29,13 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
         using var provider = BuildServiceProvider();
         var analyzer = provider.GetRequiredService<ILocomotiveTrainReferenceAnalyzer>();
 
-        Assert.That(analyzer, Is.InstanceOf<LocomotiveTrainReferenceAnalyzer>());
-        Assert.That(provider.GetRequiredService<ILocomotiveTrainReferenceAnalyzer>(), Is.SameAs(analyzer));
-        Assert.That(provider.GetService<ILocomotiveTrainRuntimeUsageReader>(), Is.Null);
-        Assert.That(provider.GetService<IProjectRuntimeHost>(), Is.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(analyzer, Is.InstanceOf<LocomotiveTrainReferenceAnalyzer>());
+            Assert.That(provider.GetRequiredService<ILocomotiveTrainReferenceAnalyzer>(), Is.SameAs(analyzer));
+            Assert.That(provider.GetService<ILocomotiveTrainRuntimeUsageReader>(), Is.Null);
+            Assert.That(provider.GetService<IProjectRuntimeHost>(), Is.Null);
+        }
     }
 
     [Test]

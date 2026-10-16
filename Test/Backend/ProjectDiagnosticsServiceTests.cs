@@ -22,12 +22,18 @@ internal sealed class ProjectDiagnosticsServiceTests
         var missing = _service.Analyze(project);
 
         Assert.That(missing, Has.Count.EqualTo(1));
-        Assert.That(missing[0].Severity, Is.EqualTo(ProjectDiagnosticSeverity.Error));
-        Assert.That(missing[0].TargetIds, Does.Contain(train.Id));
-        Assert.That(missing[0].TargetIds, Does.Contain(missingId));
-        Assert.That(missing[0].RuleCode, Is.EqualTo("LTU002"));
-        Assert.That(missing[0].Location!.VehicleIndex, Is.Zero);
-        Assert.That(missing[0].Id, Is.EqualTo(_service.Analyze(project)[0].Id));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(missing[0].Severity, Is.EqualTo(ProjectDiagnosticSeverity.Error));
+            Assert.That(missing[0].TargetIds, Does.Contain(train.Id));
+        }
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(missing[0].TargetIds, Does.Contain(missingId));
+            Assert.That(missing[0].RuleCode, Is.EqualTo("LTU002"));
+            Assert.That(missing[0].Location!.VehicleIndex, Is.Zero);
+            Assert.That(missing[0].Id, Is.EqualTo(_service.Analyze(project)[0].Id));
+        }
         project.Locomotives.Add(new Locomotive { Id = missingId });
         Assert.That(_service.Analyze(project), Is.Empty, "Valid uses belong only to the explicit query.");
     }

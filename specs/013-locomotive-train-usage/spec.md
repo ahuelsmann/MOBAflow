@@ -6,13 +6,15 @@
 
 **Created**: 2026-10-15
 
-**Status**: Planning review - product implementation conditionally authorized for the assigned engineer after all planning gates pass; no product code implemented by the specification author
+**Status**: Implemented; final platform validation, independent review and Draft-PR delivery in progress
 
 **Spec Kit**: Required
 
 **Input**: Create the issue and Spec Kit artifacts for the first locomotive-to-train-consist slice, agree the runtime query contract with Brain, and implement no product code.
 
 **Authorization update (2026-10-16)**: The user subsequently authorized completing planning and starting implementation in this same worktree if all planning checks pass. Art Director assigns implementation to Ingenieur after an explicit green handoff; Lokfuehrer remains the planning author until that handoff and makes no product changes.
+
+**Delivery authorization (2026-10-16)**: After the explicit green handoff the user instructed the team to implement #306, execute the planned tests and create a Draft PR. Ingenieur is the sole implementation author; no app/device/hardware start, ready marking or merge is included.
 
 ## Governance and Traceability *(mandatory)*
 

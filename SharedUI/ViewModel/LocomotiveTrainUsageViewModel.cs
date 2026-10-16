@@ -24,6 +24,15 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
     private Project? _targetProject;
     private Guid? _targetId;
     private bool _disposed;
+    private static readonly Action<ILogger, Guid, Exception?> LogQueryFailed =
+        LoggerMessage.Define<Guid>(LogLevel.Error, new EventId(1, nameof(LogQueryFailed)),
+            "Reading locomotive train usage failed for project {ProjectId}");
+    private static readonly Action<ILogger, Exception?> LogReceiptCheckFailed =
+        LoggerMessage.Define(LogLevel.Error, new EventId(2, nameof(LogReceiptCheckFailed)),
+            "Checking locomotive train usage receipt failed");
+    private static readonly Action<ILogger, Guid, Exception?> LogRevalidationFailed =
+        LoggerMessage.Define<Guid>(LogLevel.Error, new EventId(3, nameof(LogRevalidationFailed)),
+            "Revalidating locomotive train usage failed for project {ProjectId}");
 
     /// <summary>Uses the existing session, owner reader and UI dispatcher; it owns no runtime or model persistence.</summary>
     public LocomotiveTrainUsageViewModel(
@@ -47,11 +56,13 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
         _snapshots.RuntimeSnapshotChanged += OnRuntimeSnapshotChanged;
     }
 
+    /// <summary>Copied current editor evidence, cleared when its query context is invalidated.</summary>
     [ObservableProperty]
-    private LocomotiveTrainReferenceResult? _editedResult;
+    public partial LocomotiveTrainReferenceResult? EditedResult { get; set; }
 
+    /// <summary>Revalidated runtime evidence, independent of the editor source.</summary>
     [ObservableProperty]
-    private LocomotiveTrainRuntimeObservation? _runtimeObservation;
+    public partial LocomotiveTrainRuntimeObservation? RuntimeObservation { get; set; }
 
     /// <summary>Source-qualified copied occurrences for the active explicit query only.</summary>
     public ImmutableArray<LocomotiveTrainFinding> Diagnostics =>
@@ -62,7 +73,7 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
         : $"Edited project data: {EditedResult.ProjectName} - {DescribeDefinition(EditedResult)}. "
           + (RuntimeObservation is { } runtime
               ? $"Loaded runtime definition (A): {runtime.Definition.ProjectName} - {DescribeDefinition(runtime.Definition)}; "
-                + $"observed {runtime.ObservedAtUtc:O}. "
+                + $"{(runtime.LoadedDefinitionCoverage.State == LocomotiveTrainCoverageState.Complete ? "observed" : "checked")} {runtime.ObservedAtUtc:O}. "
               : "Loaded runtime definition (A): Unknown (query pending). ")
           + "Retained definitions (B): Unknown - Not checked in this slice. Operational use (C): Unknown - Not checked in this slice.";
 
@@ -123,14 +134,14 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
         NotifyResultsChanged();
         try
         {
-            var runtime = await _reader.ReadAsync(request, context.Token);
+            var runtime = await _reader.ReadAsync(request, context.Token).ConfigureAwait(true);
             if (!IsActive(context))
                 return;
             if (runtime.RequestId != request.RequestId || runtime.ProjectId != request.ProjectId)
                 runtime = LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.ContextMismatch);
             if (runtime.LoadedDefinitionCoverage.State == LocomotiveTrainCoverageState.Complete)
             {
-                var validity = await _reader.IsCurrentAsync(runtime, context.Token);
+                var validity = await _reader.IsCurrentAsync(runtime, context.Token).ConfigureAwait(true);
                 if (!IsActive(context))
                     return;
                 if (validity != LocomotiveTrainObservationValidity.Current)
@@ -147,9 +158,9 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
             if (ReferenceEquals(_context, context))
                 Invalidate();
         }
-        catch (Exception exception)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            _logger.LogError(exception, "Reading locomotive train usage failed for project {ProjectId}", project.Id);
+            LogQueryFailed(_logger, project.Id, exception);
             if (IsActive(context))
             {
                 RuntimeObservation = LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.QueryFailed);
@@ -178,7 +189,7 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
             return;
         // All-project snapshot events are raw background callbacks, unlike the decorated UI EventBus.
         _dispatcher.InvokeOnUi(() => RevalidateReceiptAsync(context)
-            .Observe(exception => _logger.LogError(exception, "Checking locomotive train usage receipt failed")));
+            .Observe(exception => LogReceiptCheckFailed(_logger, exception)));
     }
 
     private async Task RevalidateReceiptAsync(QueryContext context)
@@ -208,9 +219,9 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
         catch (OperationCanceledException) when (context.Token.IsCancellationRequested)
         {
         }
-        catch (Exception exception)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            _logger.LogError(exception, "Revalidating locomotive train usage failed for project {ProjectId}", context.Request.ProjectId);
+            LogRevalidationFailed(_logger, context.Request.ProjectId, exception);
             await _dispatcher.InvokeOnUiAsync(() =>
             {
                 if (IsActive(context))

@@ -78,7 +78,7 @@ public sealed record LocomotiveTrainLocation(
     Guid TargetId)
 {
     /// <summary>The only relationship kind supported by this query.</summary>
-    public TrainVehicleKind TargetKind => TrainVehicleKind.Locomotive;
+    public TrainVehicleKind TargetKind { get; } = TrainVehicleKind.Locomotive;
     /// <summary>One-based position for operator-facing text.</summary>
     public int VehiclePosition => VehicleIndex + 1;
     /// <summary>Zero-based field path in the containing train.</summary>

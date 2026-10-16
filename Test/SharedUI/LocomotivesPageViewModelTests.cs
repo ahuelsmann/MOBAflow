@@ -25,6 +25,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     private AppSettings _settings = null!;
     private LocomotivesPageViewModel _page = null!;
     private Mock<Action<string>> _explorer = null!;
+    private LocomotiveTrainUsageViewModel _usage = null!;
 
     [SetUp]
     public void SetUp()
@@ -49,15 +50,17 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         detector.Setup(value => value.Detect(It.IsAny<Project>())).Returns(new DigitalAddressConflictReport([], []));
         var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: _session);
         _explorer = new Mock<Action<string>>();
+        _usage = TestRollingStockPages.CreateUsage(_session);
         _page = new LocomotivesPageViewModel(_session, _io.Object, _persistence.Object,
             new LayoutColumnWidthsViewModel(), management, NullLogger<LocomotivesPageViewModel>.Instance,
-            TestRollingStockPages.CreateUsage(_session), _explorer.Object);
+            _usage, _explorer.Object);
     }
 
     [TearDown]
     public void Dispose()
     {
         _page.Dispose();
+        _usage.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -69,15 +72,21 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         var deleteEnabled = _page.DeleteLocomotiveCommand.CanExecute(null);
         _io.Invocations.Clear();
 
-        await _page.ShowUsageCommand.ExecuteAsync(null);
+        await _page.ShowUsageCommand.ExecuteAsync(null).ConfigureAwait(false);
 
-        Assert.That(_page.Usage.EditedResult!.TargetState, Is.EqualTo(LocomotiveTrainTargetState.Exists));
-        Assert.That(_page.SelectedLocomotive, Is.SameAs(selected));
-        Assert.That(_page.DeleteLocomotiveCommand.CanExecute(null), Is.EqualTo(deleteEnabled));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_page.Usage.EditedResult!.TargetState, Is.EqualTo(LocomotiveTrainTargetState.Exists));
+            Assert.That(_page.SelectedLocomotive, Is.SameAs(selected));
+            Assert.That(_page.DeleteLocomotiveCommand.CanExecute(null), Is.EqualTo(deleteEnabled));
+        }
         _io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
         _page.SelectedLocomotive = null;
-        Assert.That(_page.ShowUsageCommand.CanExecute(null), Is.False);
-        Assert.That(_page.Usage.Diagnostics, Is.Empty);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_page.ShowUsageCommand.CanExecute(null), Is.False);
+            Assert.That(_page.Usage.Diagnostics, Is.Empty);
+        }
     }
 
     [Test]

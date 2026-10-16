@@ -2,7 +2,7 @@
 
 **Source Issue**: https://github.com/ahuelsmann/MOBAflow/issues/306
 
-All additions below are proposed in-memory library/read models, not new persisted Domain fields.
+All additions below are in-memory library/read models, not new persisted Domain fields.
 
 ## Existing relationship
 

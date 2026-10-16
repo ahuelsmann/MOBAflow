@@ -6,7 +6,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Planning review - implementation conditionally authorized for Ingenieur after green planning gates and explicit same-worktree handoff; no product implementation in this planning delivery
+**Status**: Implemented after green same-worktree handoff; final platform validation, review and authorized Draft-PR delivery in progress
 
 **Input**: Specification, Brain agreement and source inspection at `6888b0d9239bee3b623fbca0f6ae9d71fe7ec185`.
 
@@ -16,7 +16,7 @@
 
 Add one explicit locomotive-to-train-entry analyzer; use it for incoming references and missing-target diagnostics. Reuse ProjectDiagnosticsService/Messages. A narrow reader on the existing project runtime host asks matching existing owners for immutable copied findings from actual active project clones. A is real loaded-definition evidence; B/C remain unknown. No Delete changes.
 
-This delivery is issue #306 and Markdown artifacts only. Product tasks remain unchecked. [Runtime contract](contracts/runtime-query.md) defines a proposed API, not an existing one.
+The original planning-only delivery was superseded by the user's implementation/test/Draft-PR instruction on 2026-10-16. [Runtime contract](contracts/runtime-query.md) now describes the implemented internal read API; task checkboxes record actual implementation and remaining evidence.
 
 ## Technical Context
 
@@ -62,7 +62,7 @@ All checks pass for the proposed design before research and after contracts; the
 
 `specs/013-locomotive-train-usage/`: spec.md, plan.md, research.md, data-model.md, quickstart.md, tasks.md, checklists/requirements.md and contracts/runtime-query.md plus contracts/presentation.md.
 
-### Planned source paths (not created in this delivery)
+### Source paths
 
 | Path | Responsibility |
 | --- | --- |
@@ -78,6 +78,7 @@ All checks pass for the proposed design before research and after contracts; the
 | SharedUI/ViewModel/LocomotivesPageViewModel.cs | Selected-locomotive read integration; Delete unchanged |
 | SharedUI/ViewModel/MainWindowViewModel.Diagnostics.cs | Existing Messages result merge, no parallel diagnostics platform |
 | MOBAflow/View/MainWindow.xaml | Minimal existing Messages binding/labels if needed |
+| MOBAflow/View/LocomotivesPage.xaml | Existing header/context-menu binding to the authorized Show usage command |
 | MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs | Reader alias to the same existing ProjectRuntimeHost singleton, alongside existing host aliases; session/reader/dispatcher projection composition |
 | Test/Backend/LocomotiveTrainReferenceAnalyzerTests.cs | Pure relationship matrix |
 | Test/Backend/LocomotiveTrainRuntimeUsageReaderTests.cs | Runtime provenance/coverage/disposal matrix |
@@ -99,7 +100,7 @@ Future implementation order: contracts/analyzer and tests; missing-target adapte
 - **Future Windows**: AGENTS.md restore/FastDebug build of MOBAflow and Windows Test target. Compile MOBAsmart on an Android-workload host if shared registration affects that consumer; no Android screen work.
 - **Future manual**: existing Messages Light/Dark, keyboard, source/unknown labels and target changes. App launch requires separate explicit authorization.
 - **Regressions**: serialization/defaults/safe startup, command routing, cancellation, runtime isolation, singleton identity and existing Delete behavior.
-- **Publication**: issue #306, changed-file scans/line endings and CI-only current-head Sonar gates; draft PR when publication is authorized. No commit/push/PR requested now.
+- **Publication**: issue #306, changed-file scans/line endings and CI-only current-head Sonar gates. The user explicitly authorized tests and a Draft PR on 2026-10-16; keep the PR draft, with no ready/merge action.
 
 ## Complexity Tracking
 

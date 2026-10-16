@@ -2,18 +2,18 @@
 
 **Source Issue**: https://github.com/ahuelsmann/MOBAflow/issues/306
 
-**Status**: Proposed contract; no API or product code implemented.
+**Status**: Implemented internal read contract; final platform/review evidence is recorded separately.
 
 ## Purpose and placement
 
-The future `Backend/Interface/ILocomotiveTrainRuntimeUsageReader.cs` is a narrow read role implemented by the existing `ProjectRuntimeHost`. Backend performs identity resolution and reads the actual runtime owner. SharedUI never acquires a runtime/connection/command role to perform this query. It does not acquire a mutable runtime Project.
+The `Backend/Interface/ILocomotiveTrainRuntimeUsageReader.cs` contract is a narrow read role implemented by the existing `ProjectRuntimeHost`. Backend performs identity resolution and reads the actual runtime owner. SharedUI never acquires a runtime/connection/command role to perform this query. It does not acquire a mutable runtime Project.
 
 The public semantics are two operations, not implementation bodies:
 
 - `ReadAsync(request, cancellationToken)` returns one immutable source observation for one expected project and optional target locomotive.
 - `IsCurrentAsync(observation, cancellationToken)` returns Current, Stale or Unavailable after checking the opaque receipt. It neither scans relationships nor refreshes a runtime.
 
-These are new, planned contracts. Existing IProjectRuntimeHost/IProjectRuntimeSnapshots do not already provide them. No HTTP/SignalR endpoint is added.
+These are separate new read contracts; IProjectRuntimeHost/IProjectRuntimeSnapshots retain their existing roles. No HTTP/SignalR endpoint is added.
 
 ## Request
 
@@ -34,7 +34,7 @@ For a solution-wide pass, the caller issues one scoped request for each project 
 | Member | Meaning |
 | --- | --- |
 | RequestId, ProjectId | Echo validated request identity |
-| ObservedAtUtc | Time of the copied observation; not a freshness guarantee |
+| ObservedAtUtc | Time of the copied observation, or check time for Unknown evidence; not a freshness guarantee |
 | TargetState | NotRequested, Exists, Missing or Ambiguous in this source |
 | Findings | Immutable copied occurrence/finding values; never Project/Train/Vehicle/runtime objects |
 | LoadedDefinitionCoverage | Complete or Unknown, with reason and observation receipt |

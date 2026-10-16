@@ -37,11 +37,14 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         var owner = provider.GetRequiredService<ProjectRuntimeHost>();
         var usage = provider.GetRequiredService<LocomotiveTrainUsageViewModel>();
 
-        Assert.That(provider.GetRequiredService<ILocomotiveTrainRuntimeUsageReader>(), Is.SameAs(owner));
-        Assert.That(provider.GetRequiredService<IProjectRuntimeHost>(), Is.SameAs(owner));
-        Assert.That(provider.GetRequiredService<IProjectRuntimeSnapshots>(), Is.SameAs(owner));
-        Assert.That(provider.GetRequiredService<LocomotivesPageViewModel>().Usage, Is.SameAs(usage));
-        Assert.That(provider.GetRequiredService<MainWindowViewModel>().LocomotivesPage.Usage, Is.SameAs(usage));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<ILocomotiveTrainRuntimeUsageReader>(), Is.SameAs(owner));
+            Assert.That(provider.GetRequiredService<IProjectRuntimeHost>(), Is.SameAs(owner));
+            Assert.That(provider.GetRequiredService<IProjectRuntimeSnapshots>(), Is.SameAs(owner));
+            Assert.That(provider.GetRequiredService<LocomotivesPageViewModel>().Usage, Is.SameAs(usage));
+            Assert.That(provider.GetRequiredService<MainWindowViewModel>().LocomotivesPage.Usage, Is.SameAs(usage));
+        }
     }
 
     [Test]

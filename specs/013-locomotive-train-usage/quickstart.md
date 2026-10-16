@@ -2,79 +2,69 @@
 
 **Source Issue**: https://github.com/ahuelsmann/MOBAflow/issues/306
 
-**Status**: Implementation in progress. Executed results below supersede the original future-check headings; pending platform/manual/publication gates are not reported as passed.
+**Status**: Implementation and automated local validation completed on 2026-10-16. Independent review, manual desktop acceptance and current-head PR CI/Sonar remain distinct delivery gates.
 
-## Implementation entry (2026-10-16)
+## Scope and evidence base
 
-Explicit green handoff received. No extension hooks exist. Spec Kit prerequisites select this feature; requirements checklist is 17/17 checked, zero unchecked. Nine original planning files are preserved. Task branch is based on live main `fb63e8fde5f6aa299a3f3478560e7277f8661a90`.
+Use the existing `codex/issue-306-locomotive-usage-spec` worktree and `specs/013-locomotive-train-usage/`. The user's implementation/test/Draft-PR authorization supersedes the original planning-only issue wording. Ingenieur is the sole author; #304 remains separate. No extension hooks exist. Spec Kit prerequisites select this feature and its requirements checklist is 17/17 checked.
 
-SDK 10.0.402 is installed. Installed workloads include android 36.1.118, maui-android 10.0.110 and maui-windows 10.0.110 (workload inventory required read-only elevation for the Windows Service Control Manager). Existing fixture names verified: ProjectDiagnosticsServiceTests, ProjectValidatorTests, ProjectRuntimeHostTests, MobaRuntimeServiceProjectIsolationTests, LocomotivesPageViewModelTests, MainWindowDiagnosticsTests and Backend/Windows registration tests. The three new fixtures remain implementation tasks and have not run. Test.csproj contains portable and Windows targets; MOBAsmart participation is opt-in. All planned app builds are compile checks, never launch permission.
+The original planning base was `6888b0d9`. Implementation first incorporated `fb63e8fd` (#301 typed runtime hub); current main `22346a7d523de58a6d97284f4afbace10d0c4969` (#288 effect isolation) was then merged normally as `e016fede`. The one DI-test insertion conflict retained both independent tests. No runtime query or protocol was added at the imported workflow-effect boundary.
 
-## Executed implementation checks (before current-main resynchronization)
+SDK 10.0.402 and Android 36.1.118 / MAUI-Android 10.0.110 / MAUI-Windows 10.0.110 were verified. The first sandbox restore failed NU1301 with access denied; the same narrow elevated dotnet command succeeded. No dependency, warning threshold or analyzer baseline was changed.
 
-- Initial sandbox NuGet restore failed NU1301 with path access denied. The same narrow dotnet-test command with approved elevation restored successfully; no package, warning or analyzer gate was lowered.
-- Analyzer and initial editor-query cases compiled only after their planned implementations were added. The first integrated US1 run passed 21 tests (0 failures/skips), including existing locomotive-page regressions and the new read-only Show usage command.
-- Missing-reference and diagnostics/repair cases were run red before their corresponding behavior was added, then the combined analyzer/editor/page/diagnostics run passed 35 tests.
-- The actual owner reader and runtime integration run passed 56 tests (0 failures/skips): new reader fixture plus existing ProjectRuntimeHostTests and MobaRuntimeServiceProjectIsolationTests. This uses real owners/clones with fake Z21, not only fabricated observations. An initial replacement classification mismatch was corrected in production membership-check ordering; no test was weakened.
-- Three new read-path fixtures passed 31 tests together. Messages/usage and common-DI integration subsequently passed 28 tests (0 failures/skips), covering source replacement, Information filters, stale pre-apply answers, raw snapshot revalidation/coalescing, real owner replacement/disposal before apply and required common analyzer resolution without a desktop reader.
-- All runs use net10.0 with TargetFrameworks=net10.0, serial MSBuild (-m:1 -nr:false); TRX files under Test/TestResults/issue306-*.trx are local validation artifacts. The Windows alias identity test exists but has not executed yet. Desktop XAML and final broad suites remain pending.
-- Show usage is exposed by the existing locomotive header and context menu, opens existing Messages and does not navigate to a new page. The coverage summary is outside the severity-filtered list. Light/Dark/keyboard inspection requires separate launch permission and remains open.
+## Executed automated checks
 
-## Planning checks now
+All commands run from the feature worktree. Tests use invented in-memory models, real runtime owners/clones over fake transports, and projection-specific fakes. No layout file, application, emulator or hardware was started.
 
-From the dedicated feature worktree, scan the feature files and validation scripts before reads, then run:
-
-```powershell
-$env:SPECIFY_FEATURE_DIRECTORY='specs/013-locomotive-train-usage'
-./.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks
-./scripts/Test-LineEndings.ps1 -Path specs/013-locomotive-train-usage
-$featureFiles=Get-ChildItem specs/013-locomotive-train-usage -Recurse -File | ForEach-Object { [IO.Path]::GetRelativePath((Get-Location).Path,$_.FullName) }
-./scripts/Test-SpecKitGovernance.ps1 -Mode PullRequest -ChangedFiles $featureFiles
-git diff --check
-git status --short
-```
-
-An untracked file is not included in plain git diff. Review the explicit feature-file list and scan/check those files; do not stage only to make them visible. Local internal Markdown links must resolve, including heading fragments.
-
-## Future product prerequisites
-
-The user conditionally authorized product implementation on 2026-10-16. The assigned engineer starts only after all planning gates pass and the explicit writing-ownership handoff, using approved Spec Kit artifacts and matching SDK/workloads; the real new fixtures must exist before their commands are run. Use fake owners/transports and invented in-memory Domain objects; do not create a real sample solution.json or connect a layout.
-
-## Future acceptance matrix
-
-| Case | Expected |
+| Check | Actual result |
 | --- | --- |
-| Existing target has zero/one/many/repeated train entries | Exact source/project/type/position list; zero is source-qualified |
-| Missing/empty locomotive target | Missing target/entry error, never existing-unused success |
-| Same GUID in another project or wagon type | No false match |
-| Unsaved edited reference | Edited source updated without save/reload |
-| Editor-only and runtime-only references | Both independent source results retained |
-| Non-selected/disconnected existing owner | Actual loaded clone still queried |
-| A Complete with zero occurrences | B/C Unknown; aggregate never Complete or delete permission |
-| Owner absent/unsupported remote/query failure | A Unknown and concrete reason, editor result preserved |
-| Duplicate/empty train identity | Invalid/unknown precise scope, no fabricated occurrence ID |
-| Definition changes during capture | One immutable version; stale receipt rejected before apply |
-| Query succeeds, then same-ID owner replacement or host disposal | Old response/revalidation not applied |
-| In-place reload into same Solution object | Old context cancelled/results removed |
-| Target changes during pending validation | Old target response cannot replace current target |
-| Repeated refresh and repaired reference | No accumulation; source-specific repair removes old finding |
-| Information filter hides neutral rows | Coverage summary still states unknown runtime categories |
-| Analysis invocation | Zero saves, model changes, commands, Delete/Reset, RequestFactory/workflow calls or lifecycle operations |
+| Three new fixtures: LocomotiveTrainReferenceAnalyzerTests, LocomotiveTrainRuntimeUsageReaderTests, LocomotiveTrainUsageViewModelTests | 40 executed/passed; final affected-suite run 115 executed/passed, zero failures |
+| Full portable Release suite | 2,828 discovered, 2,827 executed/passed, zero failures; one explicit hardware test NotExecuted |
+| Full Windows Release suite | 2,941 discovered, 2,940 executed/passed, zero failures; same explicit hardware test NotExecuted |
+| Windows production DI alias test | UsageReaderAndProjection_ResolveTheExistingDesktopOwnerAndSharedPageInstance passed |
+| Portable Release rebuild with MobaAnalyzerGate=true | Zero errors; strict unchanged baseline matches 3,248 diagnostics in 1,133 groups |
+| Windows Release test graph with MobaAnalyzerGate=true | Zero errors; strict unchanged baseline matches 2,471 diagnostics in 947 groups |
+| Normal desktop Debug build with API dependency/copy and XAML compilation | Passed with zero errors/warnings; final confirmation took 39 seconds |
+| Portable MOBApi consumer build | Passed on the final source with zero errors/warnings |
+| MOBAsmart restore and FastDebug Android consumer build | Passed on the installed workload; zero errors, 45 existing Android/XAML warnings. No device deployment, AAB publish or Android Release acceptance claim |
 
-## Future automated commands
+The explicit hardware case is `SustainedRefresh_MeetsAcceptanceThresholds`. Its OneTimeSetUp drives the real display and is maintainer-run only. Both TRX files contain a NotExecuted result even though their summary notExecuted counter is zero; the actual result nodes determine the counts above.
 
-After the intended new fixtures actually exist, first run:
+Local ignored evidence is in `Test/TestResults/issue306-*.trx` and `artifacts/issue306-validation/`. Final full runs are `issue306-portable-release-final.trx` and `issue306-windows-release-final.trx`; affected cases are `issue306-quality-fixes-final.trx`. New fixtures are stateless internal static NUnit fixtures and all intended cases were discovered. No new analyzer suppression or baseline update was needed.
+
+## Reproducible commands
+
+Restore as required for the selected graph; do not use a portable-only restore immediately before the Windows build.
 
 ```powershell
-dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter 'FullyQualifiedName~LocomotiveTrainReferenceAnalyzerTests|FullyQualifiedName~LocomotiveTrainRuntimeUsageReaderTests|FullyQualifiedName~LocomotiveTrainUsageViewModelTests'
-dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
-dotnet build MOBApi/MOBApi.csproj
+dotnet build Test/Test.csproj -c Release -f net10.0 --no-restore -m:1 -nr:false -t:Rebuild -p:IncludeMobaSmartTests=false -p:MobaAnalyzerGate=true -p:UseSharedCompilation=false
+./scripts/Test-AnalyzerBaseline.ps1 -SarifRoot artifacts/analyzers/Release/net10.0 -BaselinePath quality/analyzer-baseline.json
+dotnet test Test/Test.csproj -c Release -p:TargetFrameworks=net10.0 -f net10.0 --no-build --no-restore -m:1 -nr:false
+
+dotnet build Test/Test.csproj -c Release -f net10.0-windows10.0.22621.0 --no-restore -m:1 -nr:false -p:IncludeMobaSmartTests=false -p:DebugType=portable -p:DebugSymbols=true -p:MobaAnalyzerGate=true -p:UseSharedCompilation=false
+./scripts/Test-AnalyzerBaseline.ps1 -SarifRoot artifacts/analyzers/Release/net10.0-windows10.0.22621.0 -BaselinePath quality/analyzer-baseline.windows.json
+dotnet test Test/Test.csproj -c Release -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false --no-build --no-restore -m:1 -nr:false
+
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet build MOBAflow/MOBAflow.csproj -c Debug --no-restore -m:1 -nr:false
+dotnet restore MOBAsmart/MOBAsmart.csproj
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore -m:1 -nr:false
 ```
 
-The first run must discover and execute the intended tests; zero tests is a failure of verification. Broaden because runtime/DI boundaries change. Use AGENTS.md Windows restore/FastDebug/Test commands for desktop; Android compile on a workload-equipped host where shared registration changes require it. Report actual failures/skips rather than treating environment limitations as passes. If workload resolution fails, diagnose it explicitly; no workaround proves Android/Windows validation.
+A focused run can filter the three fixture names above; zero discovered tests is never successful validation. The full suites cover runtime/DI boundaries, existing validators, commands, persistence/defaults and existing Delete regressions. Release analyzer warnings are assessed by the complete strict baselines, not by an incremental WinUI SARIF refresh.
 
-## Future manual and publication gates
+## Acceptance coverage
 
-Only after explicit app-launch authorization: inspect existing Messages with invented data in Light/Dark, keyboard use, selected-target changes and visible A/B/C coverage with Information rows filtered. No hardware operation is necessary. Check that Delete remains unchanged by this slice.
+Automated cases cover zero/one/multiple/repeated references, missing/empty targets, equal IDs in other projects/types, unsaved edits, deterministic copied locations, source-specific repair and existence. Real owner tests establish actual active-clone reads for non-selected/disconnected projects, missing/wrong-context owners, consistent capture, update/replacement/disposal races, request validation, cancellation and receipt identity. Projection tests cover in-place reload, late replies, snapshot coalescing, Information filtering and zero query-triggered saves/model/lifecycle/workflow/Z21 operations.
 
-Before any later publication: changed-file secrets scans, line endings, diff, links and governance. Draft PR and current-head GitHub CI/SonarCloud with zero OPEN/CONFIRMED issues; no local Sonar code analysis. This planning task creates no commit, push, PR or product validation claim.
+Successful A evidence has an observation time and is revalidated before display. Unavailable evidence uses an explicit reason and check time, without borrowing the editor name as a runtime observation. B (retained definitions) and C (operative use) always remain Unknown; zero A references is no global non-use or deletion permission.
+
+## Remaining manual and publication gates
+
+T028 requires separate explicit app-launch authorization: inspect existing Messages in Light/Dark, keyboard access, source/coverage visibility with Information rows filtered, target changes and exact train positions. Use invented data and no hardware. No such launch has been authorized or performed. Source/XAML review and compilation do not replace this acceptance check.
+
+The explicitly authorized Draft PR must link #306 and report these limits. Before publication, scan changed files, normalize/check line endings, review the diff and run internal links plus Spec Kit governance. Obtain independent reviews on a fixed comparison after team messaging is directly authorized. Code analysis runs only through GitHub PR CI; a current-head green SonarCloud check and zero OPEN/CONFIRMED issues are required before any readiness claim. Keep the PR draft; ready/merge is outside this task.
+
+## Final local gates
+
+Changed-file secrets and line endings passed for all 39 task files. Internal documentation links passed (492 links), Spec Kit PullRequest governance passed and git diff whitespace checks passed. No analyzer-baseline, dependency, configuration or schema file changed. Convergence appended T031/T032 for the two remaining acceptance/publication gaps; no extra product-code task was found.

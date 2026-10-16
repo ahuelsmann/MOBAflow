@@ -45,17 +45,20 @@ internal sealed class ProjectRuntimeHostTests
     {
         var inspected = new Project { Name = "Inspected" };
         var other = new Project { Name = "Selected" };
-        await _host.LoadAsync([inspected, other]);
+        await _host.LoadAsync([inspected, other]).ConfigureAwait(false);
         _host.SelectProject(other.Id);
         var selected = _host.Selected;
-        var reader = (ILocomotiveTrainRuntimeUsageReader)_host;
-        var observation = await reader.ReadAsync(new(Guid.NewGuid(), inspected, inspected.Id));
+        var reader = _host;
+        var observation = await reader.ReadAsync(new(Guid.NewGuid(), inspected, inspected.Id)).ConfigureAwait(false);
 
-        await _host.RemoveAsync(inspected.Id);
+        await _host.RemoveAsync(inspected.Id).ConfigureAwait(false);
 
-        Assert.That(await reader.IsCurrentAsync(observation), Is.EqualTo(LocomotiveTrainObservationValidity.Stale));
-        Assert.That(_host.Selected, Is.SameAs(selected));
-        Assert.That(_host.Runtimes, Has.Count.EqualTo(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(await reader.IsCurrentAsync(observation).ConfigureAwait(false), Is.EqualTo(LocomotiveTrainObservationValidity.Stale));
+            Assert.That(_host.Selected, Is.SameAs(selected));
+            Assert.That(_host.Runtimes, Has.Count.EqualTo(1));
+        }
     }
 
     [Test]
