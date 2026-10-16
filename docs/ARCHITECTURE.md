@@ -323,6 +323,9 @@ runtime services.
   contexts and coalesced receipt checks on all-project snapshot hints. Raw callbacks marshal UI changes
   through IUiDispatcher. The existing locomotive page exposes Show usage and existing Messages merges
   source-qualified findings; coverage remains outside the Information filter. Delete and persistence stay unchanged.
+- Messages Refresh rebuilds project diagnostics while retaining the current usage observation and its timestamp;
+  only a new Show usage query reads fresh usage evidence. Session model-change notifications invalidate both
+  edited and runtime query results without starting another read.
 
 **Wagon presentation (RF-24 slice 2b):**
 
