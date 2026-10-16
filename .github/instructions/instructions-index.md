@@ -24,7 +24,7 @@ relevant files explicitly. Examples illustrate patterns; current source code def
 | Instruction maintenance | [Writing instructions](instructions.instructions.md) |
 | Independent repository write tasks | [Worktree isolation](git-worktree-isolation.instructions.md) |
 | Commits and pull requests | [Secrets and Sonar gates](sonarqube-pre-pr.instructions.md) |
-| Master mandates, Claude reviews and autonomous integration | [Master coordination](master-coordination.instructions.md) |
+| Master mandates, global execution queue, specialist CLI contact and integration | [Master coordination](master-coordination.instructions.md) |
 | Feature specifications and plans | [Spec Kit workflow](../../docs/SPEC-KIT.md), [governance](spec-kit-governance.instructions.md) |
 
 ## Further references
