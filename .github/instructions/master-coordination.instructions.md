@@ -1,5 +1,5 @@
 ---
-description: 'Standing delivery mandate for Art Director, Issue Master and independent Claude CLI reviews.'
+description: 'Standing delivery and shared specialist contact for MOBAflow masters; independent Claude CLI reviews.'
 applyTo: 'AGENTS.md,CLAUDE.md,docs/AI-DEVELOPMENT.md,.agents/skills/mobaflow-code-review/**,.claude/skills/mobaflow-code-review/**'
 ---
 
@@ -31,6 +31,8 @@ assignment includes the delivery steps below unless explicitly limited.
 | Human | Product goals, priorities, material user-experience choices, fundamental architecture changes, new costs/external commitments and authorized practical acceptance |
 | Art Director | Clarify the outcome, coordinate the assigned team, complete planning/implementation, assess the result and hand it over |
 | Issue Master | Own final integration, arrange independent Claude reviews and fixes, verify evidence, issue permits and verify squash merges |
+| Head of Quality | Coordinate assigned quality work and advise delivery owners on relevant risks; preserve existing approval and integration ownership |
+| Communications Director | Coordinate assigned communication work and related design questions; preserve existing publication and integration limits |
 | Assigned implementer | Own the task worktree until an acknowledged writer handover; report actual checks and remaining limits |
 | Claude reviewer | Independently review the exact change against requirements and rules; report findings without editing or self-approval |
 | Head of UI/UX | Primary UI/UX specialist (Gemini Argon via Antigravity CLI); advises masters and delivery owners as described [below](#head-of-uiux-gemini-argon-via-antigravity) |
@@ -73,22 +75,60 @@ mandate; they are not new human authority and cannot override stops.
 
 ## Head of UI/UX (Gemini Argon via Antigravity)
 
-The human designates the existing Head of UI/UX conversation, running Gemini Argon through the Antigravity CLI, as
-the primary specialist for UI/UX in assigned work: navigation, interaction, visual hierarchy, accessibility and the
-relevant UI states. The role advises masters and delivery owners; material product and UX decisions remain human.
-Architecture, refactoring or test-gap advice is secondary and stays inside the assigned scope.
+The human designates Head of UI/UX as the primary specialist for navigation, interaction, visual hierarchy,
+accessibility and relevant UI states in assigned work. Art Director, Issue Master, Head of Quality and
+Communications Director may consult this existing role autonomously for relevant questions without another human
+approval. Architecture, refactoring and test-gap advice are secondary uses inside the assigned scope. Material
+product and UX decisions remain human. Head of UI/UX follows the same boundaries; its first product work package
+remains with the human.
 
-- Masters may exchange task-specific messages with that conversation in both directions. Address it by its exact,
-  verified conversation ID; never fall back to the most recent session or present a new assistant as the existing
-  role. Record the ID and open questions in the existing handover record and avoid concurrent sessions for the role.
-- Use the explicitly configured, available Argon model identifier and verify the actual model and completion;
-  never silently substitute another model. Prompts or plan mode alone do not enforce a read-only boundary, so keep
-  the real tool permissions narrow.
-- Supply relevant, secrets-scanned context with exact SHAs/evidence where applicable. The advice separates
-  observations from assumptions.
-- The advice does not replace tests, required real UI acceptance or the fresh independent Claude PR review. It adds
-  no routine approval gate, grants no product, app, hardware or scope authority and leaves the named writer and
-  Issue Master's single integration queue unchanged.
+### Verified CLI contact
+
+Verified on 2026-10-16 through Claude coordination and a two-turn Codex exchange:
+
+| Field | Value |
+| --- | --- |
+| CLI conversation | `1d8313f7-1f6f-42c8-b32c-f0b422653677` |
+| Project | MOBAflow UI/UX Team |
+| Model | `gemini-4-argon-high` |
+
+The desktop-app conversation has a separate history and is not this CLI address. Do not use its ID, clone it or
+create a substitute. Update this contact definition only after an authorized handover and verified replacement.
+Record the active caller, target ID and open questions in the existing master handover.
+
+From the actual MOBAflow checkout on Windows, use the installed executable:
+
+```powershell
+& "$env:LOCALAPPDATA\agy\bin\agy.exe" `
+  --conversation 1d8313f7-1f6f-42c8-b32c-f0b422653677 `
+  --model gemini-4-argon-high `
+  --mode plan `
+  --output-format json `
+  --print-timeout 330s `
+  -p "[Von: Codex] <task-specific question>"
+```
+
+The full path also works when the shell's PATH predates installation. On another host use an existing, verified
+`agy` installation; this mandate does not authorize installing tools.
+
+- Use only serial synchronous request/response. Prefix messages with `[Von: Codex]` or `[Von: Claude]` and identify
+  the originating master in the message. Read
+  `response` and answer `An Codex:` / `An Claude:` questions in the same conversation. Coordinate the active caller
+  with the other masters and Claude before sending, then release the conversation after completion. The Head
+  starts no active callbacks, `claude`/`codex` calls, file inboxes or timers.
+- Keep `--mode plan` and real tool permissions narrow. Do not combine it with `--disable-slash-commands`, use
+  `--continue`, bypass permissions or silently substitute a conversation/model. Prompts and plan mode alone are
+  not enforced read-only boundaries. Allow more than 330 seconds for the outer process and wait without blocking
+  progress communication. After a timeout inspect ongoing execution before retrying; never duplicate a possibly
+  active request.
+- Verify actual completion, model and response content. Exit zero or aggregate conversation counters alone do not
+  prove delivery of an answer. Supply only relevant context, with exact SHAs/evidence where applicable, and enforce
+  the active secrets-before-read policy in delegated work too. Never send credentials; distinguish observations
+  from assumptions.
+- Advice adds no universal review or approval gate and cannot replace tests, required practical acceptance or a
+  fresh independent Claude PR review. It grants no new product, app, hardware, publication or merge authority.
+  Preserve the named writer and Issue Master's exclusive integration queue. The Head changes only its own task
+  worktrees/branches and submits assigned implementation as draft PRs.
 
 Sources (checked 2026-10-16): [Antigravity CLI headless mode](https://antigravity.google/docs/cli/headless/) and
 [resume](https://antigravity.google/docs/cli/commands/resume/) document explicit conversation IDs and the headless
@@ -119,9 +159,10 @@ advance the queue. A successful command exit alone does not prove integration.
 - Keep responsibilities here; keep scope, queue, SHA-bound evidence, active executions, ownership, restrictions
   and pending decisions in existing task/coordination records. Do not grow recurring prompts with historical
   reports or a fixed "current main" SHA. Only the responsible owner updates operational state.
-- Use a heartbeat on each existing master chat. Update the matching automation instead of duplicating it.
-  Preserve cadence, notification preferences and explicit pauses unless asked to change them. Do not reactivate
-  a paused specialist follow-up through this mandate.
+- Keep the existing Art Director and Issue Master heartbeats; update the matching automation instead of
+  duplicating it. Other masters retain their mandate in existing role conversations or mandate records. This
+  contact mandate does not create additional automations. Preserve cadence, notification preferences and explicit
+  pauses unless asked to change them; do not reactivate a paused specialist follow-up.
 - Reconcile actual GitHub/worker state, continue the next authorized step and avoid duplicate writers or merges.
   Coordinate directly when another owner is working. Do not leave work idle at review, correction, Ready or merge.
 - Stay quiet without actionable assigned work. Notify only for verified delivery, a material unresolved blocker

@@ -20,10 +20,11 @@ not unrelated features or overrides of explicit stops. Masters maintain the exis
 continue assigned work through chat automations and report outcomes or decisions. Tool permissions and all
 current quality, Sonar, review and acceptance gates remain in effect.
 
-The existing Head of UI/UX conversation (Gemini Argon via the Antigravity CLI) is the primary UI/UX contact.
-Masters reach it in both directions by its exact conversation ID under the
-[Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity);
-its advice adds no approval gate and does not replace tests, UI acceptance or Claude PR reviews.
+Art Director, Issue Master, Head of Quality and Communications Director may independently consult the existing
+Head of UI/UX conversation (Gemini Argon via Antigravity CLI) within assigned work, without another human approval.
+Use the verified contact and synchronous request/response contract in the
+[Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
+Its advice adds no approval gate and does not replace tests, UI acceptance or Claude PR reviews.
 
 ## Start in the correct checkout
 Use Git, PowerShell 7 (`pwsh`), Python 3.11+ and `rg` for development checks.

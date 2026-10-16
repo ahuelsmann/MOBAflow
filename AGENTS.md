@@ -34,7 +34,9 @@ on Windows and Linux.
   priorities and material UX decisions remain with the user. Issue Master owns the single serial final integration queue.
   They hand work over directly and may exchange task-related messages with their assigned team and Claude CLI
   in both directions. The user does not relay messages, inspect code or administer PRs.
-- The Head of UI/UX (Gemini Argon via Antigravity CLI) is the primary UI/UX advisor; PR reviews stay with Claude.
+- Art Director, Issue Master, Head of Quality and Communications Director may independently consult the
+  Head of UI/UX (Gemini Argon via Antigravity CLI) within assigned work, without another human approval.
+  Use the verified synchronous CLI contract in master coordination; PR reviews stay with fresh Claude sessions.
 - Follow [master coordination](.github/instructions/master-coordination.instructions.md) for ownership,
   Claude review independence, merge evidence, automation and the decisions that still need the user.
 
