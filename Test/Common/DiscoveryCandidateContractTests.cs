@@ -5,6 +5,7 @@ using Moba.Common.Configuration;
 using Moba.Common.Discovery;
 
 using System.Net;
+using Moba.SharedUI.Mobile;
 
 [TestFixture]
 internal sealed class DiscoveryCandidateContractTests

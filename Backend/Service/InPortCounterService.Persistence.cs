@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Service;
 
-using Common.Runtime;
+using Contracts.Runtime;
 using Interface;
 using Microsoft.Extensions.Logging;
 

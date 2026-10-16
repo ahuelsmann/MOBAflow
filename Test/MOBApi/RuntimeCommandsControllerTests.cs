@@ -5,7 +5,7 @@ namespace Moba.Test.MOBApi;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.MOBApi.Controllers;
 using Moba.MOBApi.Service;
 

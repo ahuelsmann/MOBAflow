@@ -65,11 +65,12 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 
 ## Direct Package Inventory
 
-The following table was regenerated on 2026-10-14 from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and the `PackageReference` entries in tracked project files and build-wide props/targets.
-Conditional references and both mutation test hosts are included; this is a source inventory,
+The following table is generated from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and the `PackageReference` entries in tracked project files and build-wide props/targets.
+Conditional references and all three mutation test hosts are included; this is a source inventory,
 not a resolved per-platform restore graph. Each package has its own row so its version and
 usage can be compared directly with those XML entries. Versions in this section must not be edited independently of the central package catalog.
 
+<!-- documentation-facts:packages:start -->
 | Package | Version | Directly referenced in | Purpose |
 | --- | --- | --- | --- |
 | `CommunityToolkit.Maui` | `15.0.1` | `MOBAsmart` | MAUI helpers, converters and behaviors. |
@@ -83,20 +84,20 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `Microsoft.Extensions.DependencyInjection` | `10.0.13` | `MutationTest`, `MutationTest/Common`, `Test` | Dependency injection container. |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `10.0.13` | `Backend` | Dependency injection contracts. |
 | `Microsoft.Extensions.Http` | `10.0.13` | `MOBAsmart` | HTTP client registration. |
-| `Microsoft.Extensions.Logging` | `10.0.13` | `MutationTest/Common`, `Test` | Logging services. |
-| `Microsoft.Extensions.Logging.Abstractions` | `10.0.13` | `Backend`, `Common`, `SharedUI`, `Sound` | Logging contracts. |
+| `Microsoft.Extensions.Logging` | `10.0.13` | `MutationTest/Common`, `MutationTest/Speech.Base`, `Test` | Logging services. |
+| `Microsoft.Extensions.Logging.Abstractions` | `10.0.13` | `Backend`, `Common`, `SharedUI`, `Sound`, `Speech.Base`, `Speech.Piper` | Logging contracts. |
 | `Microsoft.Extensions.Logging.Console` | `10.0.13` | `Test` | Console logging output. |
 | `Microsoft.Extensions.Options` | `10.0.13` | `Sound` | Typed configuration options. |
 | `Microsoft.Graphics.Win2D` | `1.4.0` | `MOBAflow` | Windows GPU-accelerated 2D rendering. |
 | `Microsoft.Maui.Controls` | `10.0.110` | `MOBAsmart` | Android MAUI UI framework. |
-| `Microsoft.NET.Test.Sdk` | `18.10.1` | `MutationTest`, `MutationTest/Common`, `Test` | Test execution host. |
+| `Microsoft.NET.Test.Sdk` | `18.10.1` | `MutationTest`, `MutationTest/Common`, `MutationTest/Speech.Base`, `Test` | Test execution host. |
 | `Microsoft.WindowsAppSDK` | `2.5.1` | `MOBAflow` | Windows desktop UI and runtime. |
 | `Microsoft.Xaml.Behaviors.WinUI.Managed` | `3.0.1` | `MOBAflow` | WinUI XAML behaviors. |
 | `MinVer` | `8.0.0` | Build-wide via `Directory.Build.props` | Build-time versions from Git tags. |
-| `Moq` | `4.21.0` | `MutationTest/Common`, `Test` | Test doubles. |
-| `NUnit` | `5.0.0` | `MutationTest`, `MutationTest/Common`, `Test` | Test framework. |
+| `Moq` | `4.21.0` | `MutationTest/Common`, `MutationTest/Speech.Base`, `Test` | Test doubles. |
+| `NUnit` | `5.0.0` | `MutationTest`, `MutationTest/Common`, `MutationTest/Speech.Base`, `Test` | Test framework. |
 | `NUnit.Analyzers` | `4.15.0` | `Test` | NUnit analyzer rules. |
-| `NUnit3TestAdapter` | `6.3.1` | `MutationTest`, `MutationTest/Common`, `Test` | NUnit test discovery and execution. |
+| `NUnit3TestAdapter` | `6.3.1` | `MutationTest`, `MutationTest/Common`, `MutationTest/Speech.Base`, `Test` | NUnit test discovery and execution. |
 | `Serilog` | `4.4.0` | `Common` | Structured logging. |
 | `Serilog.Enrichers.Environment` | `3.0.1` | `MOBAflow` | Environment log context. |
 | `Serilog.Enrichers.Process` | `3.0.0` | `MOBAflow` | Process log context. |
@@ -108,9 +109,10 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `SkiaSharp` | `4.153.1` | `MOBAdisplay`, `MOBAflow` | Display frame and image rendering. |
 | `System.Drawing.Common` | `10.0.12` | `MOBAdisplay` | Image conversion utilities. |
 | `System.Formats.Nrbf` | `10.0.12` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
-| `System.Speech` | `10.0.12` | `Sound` | Windows text-to-speech. |
+| `System.Speech` | `10.0.12` | `Speech.SystemSpeech` | Windows text-to-speech. |
 | `System.Windows.Extensions` | `10.0.12` | `Sound` | Windows audio APIs. |
 | `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | Android startup integration. |
+<!-- documentation-facts:packages:end -->
 
 ---
 
@@ -157,7 +159,8 @@ Any new dependency with copyleft, commercial, or field-of-use restrictions shoul
 When adding or removing a direct dependency:
 
 1. Update the package inventory in `Directory.Packages.props` or the relevant project file.
-2. Reflect the change in this document, including version, usage scope, and purpose.
+2. Run `python scripts/documentation_consistency.py --write` to regenerate the version and usage columns;
+   Quality fails while they are stale. Review the purpose of every new package, which the generator flags.
 3. Re-check whether the package introduces new attribution or redistribution requirements.
 4. Keep `README.md` references in sync when user-facing build or dependency information changes.
 
@@ -169,6 +172,6 @@ We are grateful to the open-source maintainers and standards authors whose work 
 
 ---
 
-**Last Updated:** 2026-10-14
+**Last Updated:** 2026-10-16
 **Scope:** Current direct dependencies and external interoperability surface  
 **License:** MIT License (see [LICENSE](../LICENSE))

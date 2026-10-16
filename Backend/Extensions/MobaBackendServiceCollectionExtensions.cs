@@ -3,7 +3,6 @@
 namespace Moba.Backend;
 
 using Common.Configuration;
-using Common.Discovery;
 using Common.Events;
 using Common.IO;
 using Common.Multiplex;
@@ -45,6 +44,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<ILocomotivePassportHtmlRenderer, LocomotivePassportHtmlRenderer>();
         services.TryAddSingleton<IDigitalAddressConflictDetector, DigitalAddressConflictDetector>();
         services.TryAddSingleton<IInterlockingDefinitionValidator, InterlockingDefinitionValidator>();
+        services.TryAddSingleton<ILocomotiveTrainReferenceAnalyzer, LocomotiveTrainReferenceAnalyzer>();
         services.TryAddSingleton<IProjectDiagnosticsService, ProjectDiagnosticsService>();
         services.TryAddSingleton<ITimetableEvaluationService, TimetableEvaluationService>();
         services.TryAddSingleton<ITimetableTimingService, TimetableTimingService>();

@@ -2,7 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Interface;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.TrainControl;

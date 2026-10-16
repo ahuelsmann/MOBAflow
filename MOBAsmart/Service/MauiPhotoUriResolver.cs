@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Common.Discovery;
 using Common.Path;
 using Common.Configuration;
 
 using SharedUI.Interface;
+using Contracts.Discovery;
 
 /// <summary>
 /// Resolves locomotive and wagon photos against the connected MOBApi REST host.

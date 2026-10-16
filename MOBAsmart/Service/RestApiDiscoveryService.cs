@@ -14,6 +14,8 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
+using Contracts.Discovery;
+using SharedUI.Mobile;
 
 /// <summary>
 /// Discovers the MOBAflow REST API (MOBApi) on the LAN for MOBAsmart.
