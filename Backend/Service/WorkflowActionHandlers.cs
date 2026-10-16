@@ -3,141 +3,98 @@
 namespace Moba.Backend.Service;
 
 using Common.IO;
-
 using Domain;
 using Domain.Enum;
-
 using Interface;
-
 using Microsoft.Extensions.Logging;
 
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-
-/// <summary>
-/// Sends raw Z21 command bytes.
-/// </summary>
-public sealed class CommandWorkflowActionHandler(ILogger<CommandWorkflowActionHandler>? logger = null) : IWorkflowActionHandler
+/// <summary>Sends validated command bytes through the selected effect adapter.</summary>
+public sealed class CommandWorkflowActionHandler(
+    ILogger<CommandWorkflowActionHandler>? logger = null,
+    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
 {
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(logger: logger);
     public ActionType ActionType => ActionType.Command;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
         ExecuteAsync(action, context, CancellationToken.None);
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (action.Command == null)
             throw new ArgumentException("Command action requires a command payload");
-
-        if (!WorkflowActionParameterBinding.TryGetCommandBytes(action, out var bytes))
+        var request = new WorkflowEffectPlanner().Plan(action).Request;
+        if (request == null)
         {
             logger?.LogWarning("Command action skipped: no valid bytes provided");
-            return;
+            return Task.CompletedTask;
         }
-
-        logger?.LogDebug("Sending command bytes: {ByteCount}", bytes.Length);
-        await context.Z21.SendCommandAsync(bytes, cancellationToken).ConfigureAwait(false);
-        logger?.LogDebug("Command sent: {ByteCount} bytes", bytes.Length);
+        return _effectAdapter.ExecuteAsync(request, context, cancellationToken);
     }
 }
 
-/// <summary>
-/// Plays an audio file through the configured sound player.
-/// </summary>
+/// <summary>Validates an audio intent without probing its environment.</summary>
 public sealed class AudioWorkflowActionHandler(
     ILogger<AudioWorkflowActionHandler>? logger = null,
-    IFileSystem? fileSystem = null) : IWorkflowActionHandler
+    IFileSystem? fileSystem = null,
+    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
 {
-    private readonly IFileSystem _fileSystem = fileSystem ?? SystemFileSystem.Instance;
-
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(fileSystem: fileSystem, logger: logger);
     public ActionType ActionType => ActionType.Audio;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
         ExecuteAsync(action, context, CancellationToken.None);
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (context.SoundPlayer == null)
-            throw new ArgumentException("Audio action requires SoundPlayer");
-
         if (action.Audio == null)
             throw new ArgumentException("Audio action requires an audio payload");
-
-        if (!WorkflowActionParameterBinding.TryGetAudioFilePath(action, out var filePath))
-            throw new ArgumentException("Audio action requires a valid FilePath parameter");
-
-        if (!_fileSystem.FileExists(filePath))
-        {
-            var error = $"Audio file not found: {filePath}";
-            logger?.LogWarning("Audio action failed: {Error}", error);
-            throw new FileNotFoundException(error, filePath);
-        }
-
-        await context.SoundPlayer.PlayAsync(filePath, cancellationToken).ConfigureAwait(false);
-        logger?.LogDebug("Audio played: {FilePath}", filePath);
+        var request = new WorkflowEffectPlanner().Plan(action).Request
+            ?? throw new ArgumentException("Audio action requires a valid FilePath parameter");
+        return _effectAdapter.ExecuteAsync(request, context, cancellationToken);
     }
 }
 
-/// <summary>
-/// Generates and speaks a text announcement.
-/// </summary>
+/// <summary>Resolves announcement text against the owning invocation before selecting output.</summary>
 public sealed class AnnouncementWorkflowActionHandler(
     IAnnouncementService? announcementService = null,
-    ILogger<AnnouncementWorkflowActionHandler>? logger = null) : IWorkflowActionHandler
+    ILogger<AnnouncementWorkflowActionHandler>? logger = null,
+    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
 {
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(announcementService, logger: logger);
     public ActionType ActionType => ActionType.Announcement;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
         ExecuteAsync(action, context, CancellationToken.None);
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var templateText = action.Announcement?.Message ?? context.JourneyTemplateText;
-        if (string.IsNullOrEmpty(templateText))
+        if (string.IsNullOrEmpty(templateText) || context.CurrentStation == null || announcementService == null)
         {
-            logger?.LogWarning("Announcement '{ActionName}' skipped: missing announcement template text", action.Name);
-            return;
+            logger?.LogWarning("Announcement '{ActionName}' skipped: template, station or announcement service unavailable", action.Name);
+            return Task.CompletedTask;
         }
-
-        if (context.CurrentStation == null)
-        {
-            logger?.LogWarning("Announcement '{ActionName}' skipped: no current station", action.Name);
-            return;
-        }
-
-        if (announcementService == null)
-        {
-            logger?.LogWarning("Announcement '{ActionName}' skipped: AnnouncementService not configured", action.Name);
-            return;
-        }
-
         var stationIndex = context.CurrentStationIndex.GetValueOrDefault(1);
-        var announcementText = announcementService.GenerateAnnouncementText(
-            templateText,
-            context.CurrentStation,
-            stationIndex,
-            action.Name);
-
-        await announcementService.GenerateAndSpeakAnnouncementAsync(
-            templateText,
-            context.CurrentStation,
-            stationIndex,
-            cancellationToken,
-            action.Name).ConfigureAwait(false);
-
-        logger?.LogInformation("Announcement executed for action '{ActionName}': {AnnouncementText}", action.Name, announcementText);
+        var request = new WorkflowAnnouncementEffectRequest(action.Id, action.Name, templateText)
+        {
+            Station = context.CurrentStation,
+            StationIndex = stationIndex,
+            RenderedText = announcementService.GenerateAnnouncementText(templateText, context.CurrentStation, stationIndex, action.Name)
+        };
+        return _effectAdapter.ExecuteAsync(request, context, cancellationToken);
     }
 }
 
-/// <summary>
-/// Sends journey data to a train destination display.
-/// </summary>
+/// <summary>Validates display intent while retaining unconfigured production delivery.</summary>
 public sealed class TrainDestinationDisplayWorkflowActionHandler(
-    ILogger<TrainDestinationDisplayWorkflowActionHandler>? logger = null) : IWorkflowActionHandler
+    ILogger<TrainDestinationDisplayWorkflowActionHandler>? logger = null,
+    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
 {
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(logger: logger);
     public ActionType ActionType => ActionType.TrainDestinationDisplay;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
@@ -146,131 +103,59 @@ public sealed class TrainDestinationDisplayWorkflowActionHandler(
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        logger?.LogWarning(
-            "Train destination display action '{ActionName}' skipped: display service not configured",
-            action.Name);
-        return Task.CompletedTask;
+        var request = new WorkflowEffectPlanner().Plan(action).Request;
+        if (request == null)
+        {
+            logger?.LogWarning("Train destination display action '{ActionName}' skipped: display service not configured", action.Name);
+            return Task.CompletedTask;
+        }
+        return _effectAdapter.ExecuteAsync(request, context, cancellationToken);
     }
 }
 
-/// <summary>
-/// Sets a signal aspect by resolving the configured multiplexer command.
-/// </summary>
-public sealed class SelectSignalAspectWorkflowActionHandler : IWorkflowActionHandler
+/// <summary>Shares signal resolution before dispatching the resolved accessory intent.</summary>
+public sealed class SelectSignalAspectWorkflowActionHandler(IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
 {
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter();
     public ActionType ActionType => ActionType.SelectSignalAspect;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
         ExecuteAsync(action, context, CancellationToken.None);
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var payload = action.SelectSignalAspect ?? throw new ArgumentException("Select signal aspect action requires a signal aspect payload");
-
-        var command = MultiplexerCommandResolver.Resolve(
-            payload.BaseAddress,
-            payload.MultiplexerArticleNumber,
-            payload.SignalArticleNumber,
-            payload.SignalAspect);
-
-        await context.Z21.SetTurnoutAsync(
-                command.DccAddress,
-                command.Output,
-                command.Activate,
-                false,
-                cancellationToken)
-            .ConfigureAwait(false);
+        var payload = action.SelectSignalAspect
+            ?? throw new ArgumentException("Select signal aspect action requires a signal aspect payload");
+        var command = MultiplexerCommandResolver.Resolve(payload.BaseAddress, payload.MultiplexerArticleNumber,
+            payload.SignalArticleNumber, payload.SignalAspect);
+        var request = new WorkflowSignalEffectRequest(action.Id, action.Name, payload.SignalAspect, command);
+        return _effectAdapter.ExecuteAsync(request, context, cancellationToken);
     }
 }
 
-/// <summary>
-/// Executes a PowerShell script action.
-/// </summary>
+/// <summary>Validates script intent; file probes and process execution belong to production output.</summary>
 public sealed class ExecuteScriptWorkflowActionHandler(
     ILogger<ExecuteScriptWorkflowActionHandler>? logger = null,
-    IFileSystem? fileSystem = null) : IWorkflowActionHandler
+    IFileSystem? fileSystem = null,
+    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
 {
-    private readonly IFileSystem _fileSystem = fileSystem ?? SystemFileSystem.Instance;
-
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(fileSystem: fileSystem, logger: logger);
     public ActionType ActionType => ActionType.ExecuteScript;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
         ExecuteAsync(action, context, CancellationToken.None);
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
-        _ = context;
         cancellationToken.ThrowIfCancellationRequested();
-
-        var payload = action.PowerShell ?? throw new ArgumentException("ExecuteScript action requires a PowerShell payload");
-        if (string.IsNullOrWhiteSpace(payload.ScriptPath))
-            throw new ArgumentException("ExecuteScript action requires a script path");
-
-        if (!_fileSystem.FileExists(payload.ScriptPath))
-            throw new FileNotFoundException($"PowerShell script file not found: {payload.ScriptPath}", payload.ScriptPath);
-
-        var executable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "powershell.exe" : "pwsh";
-        var arguments = BuildPowerShellArguments(payload.ScriptPath, payload.Arguments);
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = executable,
-                Arguments = arguments,
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true
-            }
-        };
-
-        logger?.LogInformation("Executing PowerShell action '{ActionName}' with script {ScriptPath}", action.Name, payload.ScriptPath);
-
-        process.Start();
-        using var cancellationRegistration = cancellationToken.Register(
-            static state => TryTerminate((Process)state!),
-            process);
-        var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
-        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-
-        var output = await outputTask.ConfigureAwait(false);
-        var error = await errorTask.ConfigureAwait(false);
-        if (!string.IsNullOrWhiteSpace(output))
-            logger?.LogDebug("PowerShell action '{ActionName}' output: {Output}", action.Name, output);
-
-        if (process.ExitCode != 0)
-            throw new InvalidOperationException($"PowerShell action '{action.Name}' failed with exit code {process.ExitCode}: {error}");
-    }
-
-    private static string BuildPowerShellArguments(string scriptPath, string? scriptArguments)
-    {
-        var arguments = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? $"-NoProfile -ExecutionPolicy Bypass -File {Quote(scriptPath)}"
-            : $"-NoProfile -File {Quote(scriptPath)}";
-
-        return string.IsNullOrWhiteSpace(scriptArguments)
-            ? arguments
-            : $"{arguments} {scriptArguments}";
-    }
-
-    private static string Quote(string value) => $"\"{value.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
-
-    private static void TryTerminate(Process process)
-    {
-        try
-        {
-            if (!process.HasExited)
-                process.Kill(entireProcessTree: true);
-        }
-        catch (InvalidOperationException)
-        {
-            // The process exited between the cancellation check and termination request.
-        }
+        if (action.PowerShell == null)
+            throw new ArgumentException("ExecuteScript action requires a PowerShell payload");
+        var request = new WorkflowEffectPlanner().Plan(action).Request
+            ?? throw new ArgumentException("ExecuteScript action requires a script path");
+        return _effectAdapter.ExecuteAsync(request, context, cancellationToken);
     }
 }
-
 /// <summary>Moves the active journey to the next or an explicitly configured stop.</summary>
 public sealed class ChangeJourneyStopWorkflowActionHandler(IJourneyStopTransitionService? transitionService = null) : IWorkflowActionHandler
 {

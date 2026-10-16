@@ -1,11 +1,133 @@
 # Quickstart and Validation: Automation Testbench
 
 **Source Issue**: #35
-**Status**: Design validation guide. The feature and proposed new fixtures do not exist yet.
+**Status**: First foundation slice implemented; the scenario runner and desktop feature remain unimplemented.
 
-## Current planning change
+## Current main synchronization (2026-10-16)
 
-Work in the dedicated task worktree for the relevant planning slice (currently codex/issue-35-tasks-analysis). Read AGENTS.md/applicable guidance with required
+Merge `7f67c990` integrates main `fb63e8fde5f6aa299a3f3478560e7277f8661a90` (#301, typed runtime hub contract) after the
+earlier conflict-free merge `93b34020` of main `6888b0d9` (#300, RF-28 slices 1 and 2). Both merges preserve history and
+were conflict-free; RF-28's `TrackPlan.Editor` project and #301's `RuntimeHubContract` are taken unchanged. Against main
+the PR still changes the same 19 foundation, test and document files. Its only baseline changes remain the
+WorkflowActionHandlers reductions in the portable and Android baselines. Both review corrections below are retained.
+Local evidence on merge `7f67c990`, in this order:
+
+- Android Release `MOBAsmart` `-t:Rebuild -m:1` analyzer graph: 0 errors, all 11 SARIF files rewritten (including
+  `TrackPlan.Editor`); the strict guard matches 1,522 diagnostics in 556 groups. This is an analyzer/compile check,
+  not a Release AAB, device or hardware acceptance.
+- Portable Release `-t:Rebuild -m:1`: 0 errors, 13 fresh SARIF files; guard matches 3,248 diagnostics in 1,133 groups.
+- Windows Release `--no-incremental`: 0 errors, 4 fresh SARIF files; guard matches 2,471 diagnostics in 947 groups, with
+  no PR288 change to the Windows baseline.
+- The focused fixtures below plus whistle, Z21, journey, every `*ArchitectureTests` fixture and the in-process typed hub
+  boundary fixtures `RuntimeCommandAdmissionTests` and `SolutionControllerTests`: **289 tests passed, 0 failures, 0 skips**
+  on both Release `net10.0` and `net10.0-windows10.0.22621.0`; both review-correction tests ran explicitly (8 of 8 cases
+  on each target). Process-starting `MobApiProcessTests` and `RuntimeHubLiveE2ETests` were not run.
+
+The same analyzer counts were measured on the `6888b0d9` merge. Current-head CI and SonarCloud results are pending after
+the push and are not claimed here.
+The two sections below are the earlier, superseded evidence for main `6e7c6116`.
+
+## Main synchronization (2026-10-15)
+
+PR #288 retains its published foundation commit `7e7c26bb` and the earlier merge `4371fc2f` of main `d4d3d2b1`, then
+merges main `6e7c6116551b3abae547aa7499d3a861e0f2ca85` (#281, #267, #296, #295) without rewriting history.
+Both merges were conflict-free. Against main the code and test diff is still the original foundation; the only baseline
+changes are the effect-boundary reductions CA1062 12 to 8, CA1848 12 to 3 and CA1873 6 to 0 for WorkflowActionHandlers,
+now applied to both the portable and the Android baseline.
+No additional product behavior or backlog task is introduced by synchronization.
+
+Local evidence on the merged tree (SDK 10.0.402 with installed workloads; no workload-resolver workaround was needed):
+
+- Portable Release analyzer rebuild: baseline matches 3,320 diagnostics in 1,154 groups (main 3,339/1,155 minus those reductions).
+- Windows Release analyzer build with `--no-incremental`: 2,493 diagnostics in 953 groups, unchanged from main.
+- The focused fixtures below plus every `*ArchitectureTests` fixture: **232 tests passed, 0 failures, 0 skips** on both
+  Release `net10.0` and `net10.0-windows10.0.22621.0`.
+- Named Backend, SharedUI and MOBApi Debug builds had 0 warnings/errors; MOBAflow compiled in the Windows Release test graph.
+  MOBAsmart compiled with `-c FastDebug` (0 errors, 45 existing warnings). This is a compile check, not a Release AAB.
+
+Android analyzer baseline: the manual-only Android job reads the whole `artifacts/analyzers/Release` root, which includes
+Backend `net10.0`, but `quality/analyzer-baseline.android.json` still held the pre-change counts 12/12/6. A fresh
+`MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release -t:Rebuild -m:1 -p:MobaAnalyzerGate=true` build (0 errors, empty
+SARIF root) made the strict guard report exactly those three decreases and no other mismatch. Only those reductions were
+applied (CA1062 12 to 8, CA1848 12 to 3, CA1873 group removed); the guard then matched 1,577 diagnostics in 573 groups.
+This is an analyzer/compile check, not a Release AAB, device or hardware acceptance.
+Current-head CI/Sonar evidence is recorded in the PR after execution; old green checks are not reused.
+
+## Review corrections (2026-10-15)
+
+An independent review of `6dad974e` found that the filtered-counter whistle regression drove a mocked `IZ21` and published
+a separate bus event by hand, so it did not connect the counter, raw feedback and whistle. It now feeds two real R-Bus
+activations (with a release between them) through `FakeUdpClientWrapper` and `Z21` into one shared `EventBus`.
+`InPortCounterService` and `LocomotiveWhistleAutomationService` share a `ManualTimeProvider`: the count stays 1 under the
+timer filter, both raw `FeedbackReceivedEvent`s reach the bus, and each activation produces its own whistle on/off pair.
+The planner no longer attaches a context-free announcement request; announcements, like journey-stop transitions, have a
+null plan `Request` because station, index and rendered text exist only in the owning invocation. Handlers and the
+production adapter are unchanged.
+
+Fresh local evidence for the corrected tree, in this order:
+
+- Android Release `-t:Rebuild -m:1` analyzer graph: 0 errors, 11 SARIF files; guard matches 1,577 diagnostics in 573 groups.
+- Portable Release rebuild: guard matches 3,320 diagnostics in 1,154 groups. The first build found CA2000 and NUnit2045 in
+  the new test; both were fixed in source, not accepted into the baseline.
+- Windows Release `--no-incremental` build: guard matches 2,493 diagnostics in 953 groups.
+- Focused whistle, Z21, counter, planner, handler, workflow, DI, end-to-end and architecture fixtures:
+  **261 tests passed, 0 failures, 0 skips** on both Release `net10.0` and `net10.0-windows10.0.22621.0`.
+  Backend, SharedUI, MOBApi and MOBAflow compiled in these Release graphs.
+
+## Foundation slice evidence (2026-10-14/15)
+
+Dedicated branch `codex/issue-35-automation-testbench`, base `7c1d92422c0cbf675fddc03a8979990957733d15`.
+GitHub #241 and #245 are merged; all 16 requirements-quality checklist items are checked. No extension hooks exist.
+T001-T004 and T009-T010 cover revalidation, production characterization and the shared effect boundary.
+T005-T008 model contracts remain a separate foundation slice before any executable private graph.
+
+Existing handlers now send typed, validated execution requests through `IWorkflowEffectAdapter`.
+`ProductionWorkflowEffectAdapter` owns file probes, process/audio/speech and Z21 output. Pure signal/template resolution
+and journey stop transitions remain shared; the announcement handler builds its request from the invocation context. Serialized plans exclude executable requests and script formatting omits
+arguments/paths. This does not implement the future safe trace or an isolated factory.
+
+Final local verification on 2026-10-15: portable Release run discovered/executed **169 tests, 0 failures, 0 skips**.
+The complete portable Release analyzer build passed; the strict baseline matches 3,324 diagnostics in 1,152 groups.
+Only three proven reductions in WorkflowActionHandlers were updated (CA1062 12 to 8, CA1848 12 to 3, CA1873 6 to 0);
+there are no new/increased accepted diagnostics, rule changes or threshold changes. Existing diagnostics remain tracked.
+Current-head CI/Sonar results are recorded in the draft PR and remain separate from this local evidence.
+The 46-test pre-change anchor run passed. The new isolation tests first failed compilation on the absent adapter contract.
+Named Debug builds of `SharedUI/SharedUI.csproj` and `MOBApi/MOBApi.csproj` passed with zero warnings/errors.
+The initial SDK workload resolver failed with MSB4242 (missing .NET 10.0.402 workload manifests). Portable checks used
+`MSBuildEnableWorkloadResolver=false` for that process only. This is not Windows or Android validation.
+
+| Production boundary | Executed fixture mapping |
+| --- | --- |
+| Shared payloads, effect requests, missing audio/script files, signal mapping and unconfigured display | WorkflowEffectPlannerTests, WorkflowActionHandlersTests, ActionExecutorTests, MultiplexerCommandResolverTests |
+| Ordered/awaited actions, stop-change context and cancellation | WorkflowSequenceExecutionTests, WorkflowServiceTests, WorkflowExecutionCoordinatorTests |
+| Source-local FIFO, context built after predecessor, other journey remains independent | WorkflowExecutionCoordinatorTests, JourneyEventPlanTests, JourneyEventPlanAcceptanceTests |
+| Seeds/persistence/filtering and independent counts | InPortCounterServiceTests, PersistentInPortCounterTests |
+| Real R-Bus receive path: filtered count with raw feedback and whistle per activation; coalescing/function-off | LocomotiveWhistleAutomationServiceTests |
+| Real DI override/idempotence and fake Z21 transport chain | MobaBackendServiceCollectionExtensionsTests, WorkflowExecutionEndToEndTests |
+
+The full focused filter is reproducible from the repository root:
+
+```powershell
+$env:MSBuildEnableWorkloadResolver = 'false'
+$fixtures = @('WorkflowActionHandlersTests', 'WorkflowEffectPlannerTests', 'WorkflowSequenceExecutionTests',
+    'WorkflowExecutionCoordinatorTests', 'LocomotiveWhistleAutomationServiceTests', 'ActionExecutorTests',
+    'WorkflowServiceTests', 'JourneyEventPlan', 'InPortCounterServiceTests', 'PersistentInPortCounterTests',
+    'MultiplexerCommandResolverTests', 'WorkflowExecutionEndToEndTests', 'MobaBackendServiceCollectionExtensionsTests')
+$filter = ($fixtures | ForEach-Object { "FullyQualifiedName~$_" }) -join '|'
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter $filter -v minimal
+dotnet build SharedUI/SharedUI.csproj -v minimal
+dotnet build MOBApi/MOBApi.csproj -v minimal
+```
+
+Use only test-owned definitions and fakes. No real/shipped/example solution was read, generated or edited.
+No app/device/process-script execution was used for these tests. Complete private-runtime zero-I/O acceptance,
+deterministic scheduling/joined disposal and authorized manual UI acceptance remain open; the focused Windows run and
+desktop compilation are recorded in the main synchronization above. Each implementation PR stays draft until current-head
+CI/Sonar and an independent review pass; ready marking and merge go only through the central serial merge queue.
+
+## Planning-only structural checks
+
+Work in the dedicated task worktree for the relevant slice (currently codex/issue-35-automation-testbench). Read AGENTS.md/applicable guidance with required
 pre-read secrets scans. Use global.json for SDK selection. No app launch, hardware action or example solution is required.
 
 For this documentation-only change: scan changed files, review diff/relative links and run the repository line-ending and
@@ -80,6 +202,6 @@ No hardware power/movement, flashing, Android deployment or public release is pa
 ## Next phase
 
 Review [plan.md](plan.md), [data-model.md](data-model.md), [contracts](contracts/isolated-runtime.md) and [tasks.md](tasks.md).
-Design #241 is merged. Task generation and read-only consistency analysis are complete as draft backlog work; integrate
-the reviewed backlog before executing the narrow slices. No implementation/acceptance task is checked off by this documentation step.
+Design #241 and backlog/analysis #245 are merged. Continue with the open foundation tasks before private graph execution;
+the first effect-boundary slice does not satisfy runner, comparison, persistence or desktop acceptance.
 CI/Sonar and future manual acceptance remain separate gates; this guide never claims them from document checks.
