@@ -12,6 +12,9 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
+/// <summary>The locomotive page's existing management and read-only usage projections, composed by its host.</summary>
+public sealed record LocomotivePageAnalysis(LocomotiveManagementViewModel Management, LocomotiveTrainUsageViewModel Usage);
+
 /// <summary>Owns the locomotive editor shared by the locomotive page and train library.</summary>
 public sealed partial class LocomotivesPageViewModel : ObservableObject, IDisposable
 {
@@ -32,17 +35,17 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         IIoService ioService,
         ISettingsService settingsService,
         LayoutColumnWidthsViewModel layoutColumnWidths,
-        LocomotiveManagementViewModel management,
+        LocomotivePageAnalysis analysis,
         ILogger<LocomotivesPageViewModel> logger,
-        LocomotiveTrainUsageViewModel usage,
         Action<string> showPhotoInExplorer)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(ioService);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
-        ArgumentNullException.ThrowIfNull(management);
-        ArgumentNullException.ThrowIfNull(usage);
+        ArgumentNullException.ThrowIfNull(analysis);
+        ArgumentNullException.ThrowIfNull(analysis.Management);
+        ArgumentNullException.ThrowIfNull(analysis.Usage);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
@@ -52,8 +55,8 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         _logger = logger;
         _showPhotoInExplorer = showPhotoInExplorer;
         LayoutColumnWidths = layoutColumnWidths;
-        Management = management;
-        Usage = usage;
+        Management = analysis.Management;
+        Usage = analysis.Usage;
         _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage.IsListExpanded;
         _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage.IsPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;

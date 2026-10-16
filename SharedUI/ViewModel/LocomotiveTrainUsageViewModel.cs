@@ -69,23 +69,37 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
         [.. (EditedResult?.Findings ?? []).Concat(RuntimeObservation?.Definition.Findings ?? [])];
 
     /// <summary>Always-visible source and A/B/C coverage; never an aggregate non-use or Delete decision.</summary>
-    public string CoverageSummary => EditedResult is null ? string.Empty
-        : $"Edited project data: {EditedResult.ProjectName} - {DescribeDefinition(EditedResult)}. "
-          + (RuntimeObservation is { } runtime
-              ? $"Loaded runtime definition (A): {runtime.Definition.ProjectName} - {DescribeDefinition(runtime.Definition)}; "
-                + $"{(runtime.LoadedDefinitionCoverage.State == LocomotiveTrainCoverageState.Complete ? "observed" : "checked")} {runtime.ObservedAtUtc:O}. "
-              : "Loaded runtime definition (A): Unknown (query pending). ")
-          + "Retained definitions (B): Unknown - Not checked in this slice. Operational use (C): Unknown - Not checked in this slice.";
+    public string CoverageSummary
+    {
+        get
+        {
+            if (EditedResult is null)
+                return string.Empty;
+            var runtimeSummary = "Loaded runtime definition (A): Unknown (query pending). ";
+            if (RuntimeObservation is { } runtime)
+            {
+                var timeLabel = runtime.LoadedDefinitionCoverage.State == LocomotiveTrainCoverageState.Complete
+                    ? "observed" : "checked";
+                runtimeSummary = $"Loaded runtime definition (A): {runtime.Definition.ProjectName} - {DescribeDefinition(runtime.Definition)}; "
+                    + $"{timeLabel} {runtime.ObservedAtUtc:O}. ";
+            }
+            return $"Edited project data: {EditedResult.ProjectName} - {DescribeDefinition(EditedResult)}. "
+                + runtimeSummary
+                + "Retained definitions (B): Unknown - Not checked in this slice. Operational use (C): Unknown - Not checked in this slice.";
+        }
+    }
 
-    private static string DescribeDefinition(LocomotiveTrainReferenceResult result) =>
-        result.Coverage.State == LocomotiveTrainCoverageState.Unknown
-            ? $"Unknown ({ReasonLabel(result.Coverage.Reason)})"
-            : $"Complete; target {result.TargetState}; "
-              + (result.Findings.IsEmpty
-                  ? result.Source == LocomotiveTrainSource.LoadedRuntimeDefinition
-                      ? "No train references found in this loaded definition"
-                      : "No train references found in edited project data"
-                  : $"{result.Findings.Length} train reference(s)");
+    private static string DescribeDefinition(LocomotiveTrainReferenceResult result)
+    {
+        if (result.Coverage.State == LocomotiveTrainCoverageState.Unknown)
+            return $"Unknown ({ReasonLabel(result.Coverage.Reason)})";
+        var references = $"{result.Findings.Length} train reference(s)";
+        if (result.Findings.IsEmpty)
+            references = result.Source == LocomotiveTrainSource.LoadedRuntimeDefinition
+                ? "No train references found in this loaded definition"
+                : "No train references found in edited project data";
+        return $"Complete; target {result.TargetState}; {references}";
+    }
 
     private static string ReasonLabel(LocomotiveTrainCoverageReason reason) => reason switch
     {
@@ -134,21 +148,8 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
         NotifyResultsChanged();
         try
         {
-            var runtime = await _reader.ReadAsync(request, context.Token).ConfigureAwait(true);
-            if (!IsActive(context))
-                return;
-            if (runtime.RequestId != request.RequestId || runtime.ProjectId != request.ProjectId)
-                runtime = LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.ContextMismatch);
-            if (runtime.LoadedDefinitionCoverage.State == LocomotiveTrainCoverageState.Complete)
-            {
-                var validity = await _reader.IsCurrentAsync(runtime, context.Token).ConfigureAwait(true);
-                if (!IsActive(context))
-                    return;
-                if (validity != LocomotiveTrainObservationValidity.Current)
-                    runtime = LocomotiveTrainRuntimeObservation.Unknown(request, validity == LocomotiveTrainObservationValidity.Stale
-                        ? LocomotiveTrainCoverageReason.StaleObservation : LocomotiveTrainCoverageReason.OwnerUnavailable);
-            }
-            if (!IsActive(context))
+            var runtime = await ReadCurrentObservationAsync(context).ConfigureAwait(true);
+            if (runtime is null || !IsActive(context))
                 return;
             RuntimeObservation = runtime;
             NotifyResultsChanged();
@@ -168,6 +169,27 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
             }
         }
     }
+
+    private async Task<LocomotiveTrainRuntimeObservation?> ReadCurrentObservationAsync(QueryContext context)
+    {
+        var request = context.Request;
+        var runtime = await _reader.ReadAsync(request, context.Token).ConfigureAwait(true);
+        if (!IsActive(context))
+            return null;
+        if (runtime.RequestId != request.RequestId || runtime.ProjectId != request.ProjectId)
+            return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.ContextMismatch);
+        if (runtime.LoadedDefinitionCoverage.State != LocomotiveTrainCoverageState.Complete)
+            return runtime;
+        var validity = await _reader.IsCurrentAsync(runtime, context.Token).ConfigureAwait(true);
+        if (!IsActive(context))
+            return null;
+        return validity == LocomotiveTrainObservationValidity.Current ? runtime
+            : LocomotiveTrainRuntimeObservation.Unknown(request, ReasonForValidity(validity));
+    }
+
+    private static LocomotiveTrainCoverageReason ReasonForValidity(LocomotiveTrainObservationValidity validity) =>
+        validity == LocomotiveTrainObservationValidity.Stale
+            ? LocomotiveTrainCoverageReason.StaleObservation : LocomotiveTrainCoverageReason.OwnerUnavailable;
 
     private bool IsActive(QueryContext context) => !_disposed && ReferenceEquals(_context, context)
         && !context.Token.IsCancellationRequested && _session.Solution.Projects.Contains(context.Request.ExpectedProject);
@@ -204,20 +226,14 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
                 var validity = await _reader.IsCurrentAsync(observation, context.Token).ConfigureAwait(false);
                 await _dispatcher.InvokeOnUiAsync(() =>
                 {
-                    if (IsActive(context) && ReferenceEquals(RuntimeObservation, observation)
-                        && validity != LocomotiveTrainObservationValidity.Current)
-                    {
-                        RuntimeObservation = LocomotiveTrainRuntimeObservation.Unknown(context.Request,
-                            validity == LocomotiveTrainObservationValidity.Stale
-                                ? LocomotiveTrainCoverageReason.StaleObservation : LocomotiveTrainCoverageReason.OwnerUnavailable);
-                        NotifyResultsChanged();
-                    }
+                    ApplyReceiptValidity(context, observation, validity);
                     return Task.CompletedTask;
                 }).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (context.Token.IsCancellationRequested)
         {
+            // A superseded context must leave the newer query's results untouched.
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -238,6 +254,16 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
             if (IsContextCurrent(context) && Volatile.Read(ref context.ReceiptCheckRequested) != 0)
                 QueueReceiptCheck(context);
         }
+    }
+
+    private void ApplyReceiptValidity(QueryContext context, LocomotiveTrainRuntimeObservation observation,
+        LocomotiveTrainObservationValidity validity)
+    {
+        if (!IsActive(context) || !ReferenceEquals(RuntimeObservation, observation)
+            || validity == LocomotiveTrainObservationValidity.Current)
+            return;
+        RuntimeObservation = LocomotiveTrainRuntimeObservation.Unknown(context.Request, ReasonForValidity(validity));
+        NotifyResultsChanged();
     }
 
     private void OnSolutionLoad(object? sender, EventArgs args) => Invalidate();

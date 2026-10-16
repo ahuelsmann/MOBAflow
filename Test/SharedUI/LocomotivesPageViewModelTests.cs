@@ -52,8 +52,8 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         _explorer = new Mock<Action<string>>();
         _usage = TestRollingStockPages.CreateUsage(_session);
         _page = new LocomotivesPageViewModel(_session, _io.Object, _persistence.Object,
-            new LayoutColumnWidthsViewModel(), management, NullLogger<LocomotivesPageViewModel>.Instance,
-            _usage, _explorer.Object);
+            new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, _usage),
+            NullLogger<LocomotivesPageViewModel>.Instance, _explorer.Object);
     }
 
     [TearDown]

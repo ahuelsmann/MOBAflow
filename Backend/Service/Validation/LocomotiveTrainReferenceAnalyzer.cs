@@ -20,17 +20,36 @@ public sealed class LocomotiveTrainReferenceAnalyzer : ILocomotiveTrainReference
 
         var locomotiveIds = project.Locomotives.GroupBy(locomotive => locomotive.Id)
             .ToDictionary(group => group.Key, group => group.Count());
-        var targetState = !locomotiveId.HasValue ? LocomotiveTrainTargetState.NotRequested
-            : !locomotiveIds.TryGetValue(locomotiveId.Value, out var count) ? LocomotiveTrainTargetState.Missing
-            : count == 1 ? LocomotiveTrainTargetState.Exists : LocomotiveTrainTargetState.Ambiguous;
-        var trainIds = project.Trains.Select(train => train.Id).ToArray();
-        if (project.Id == Guid.Empty || trainIds.Contains(Guid.Empty) || trainIds.Distinct().Count() != trainIds.Length
-            || locomotiveIds.Any(pair => pair.Key == Guid.Empty || pair.Value != 1))
+        if (HasInvalidIdentity(project, locomotiveIds))
         {
             return new(project.Id, project.Name, source, LocomotiveTrainTargetState.Ambiguous, [],
                 new(LocomotiveTrainCoverageState.Unknown, LocomotiveTrainCoverageReason.InvalidIdentity));
         }
 
+        return new(project.Id, project.Name, source, GetTargetState(locomotiveId, locomotiveIds),
+            FindReferences(project, source, locomotiveId, locomotiveIds),
+            new(LocomotiveTrainCoverageState.Complete, LocomotiveTrainCoverageReason.None));
+    }
+
+    private static bool HasInvalidIdentity(Project project, Dictionary<Guid, int> locomotiveIds)
+    {
+        var trainIds = project.Trains.Select(train => train.Id).ToArray();
+        return project.Id == Guid.Empty || trainIds.Contains(Guid.Empty) || trainIds.Distinct().Count() != trainIds.Length
+            || locomotiveIds.Any(pair => pair.Key == Guid.Empty || pair.Value != 1);
+    }
+
+    private static LocomotiveTrainTargetState GetTargetState(Guid? locomotiveId, Dictionary<Guid, int> locomotiveIds)
+    {
+        if (!locomotiveId.HasValue)
+            return LocomotiveTrainTargetState.NotRequested;
+        if (!locomotiveIds.TryGetValue(locomotiveId.Value, out var count))
+            return LocomotiveTrainTargetState.Missing;
+        return count == 1 ? LocomotiveTrainTargetState.Exists : LocomotiveTrainTargetState.Ambiguous;
+    }
+
+    private static ImmutableArray<LocomotiveTrainFinding> FindReferences(
+        Project project, LocomotiveTrainSource source, Guid? locomotiveId, Dictionary<Guid, int> locomotiveIds)
+    {
         var findings = ImmutableArray.CreateBuilder<LocomotiveTrainFinding>();
         foreach (var train in project.Trains.OrderBy(train => train.Id))
         {
@@ -48,7 +67,6 @@ public sealed class LocomotiveTrainReferenceAnalyzer : ILocomotiveTrainReference
             }
         }
 
-        return new(project.Id, project.Name, source, targetState, findings.ToImmutable(),
-            new(LocomotiveTrainCoverageState.Complete, LocomotiveTrainCoverageReason.None));
+        return findings.ToImmutable();
     }
 }

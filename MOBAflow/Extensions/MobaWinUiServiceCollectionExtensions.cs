@@ -312,9 +312,9 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IIoService>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
-            sp.GetRequiredService<LocomotiveManagementViewModel>(),
+            new LocomotivePageAnalysis(sp.GetRequiredService<LocomotiveManagementViewModel>(),
+                sp.GetRequiredService<LocomotiveTrainUsageViewModel>()),
             sp.GetRequiredService<ILogger<LocomotivesPageViewModel>>(),
-            sp.GetRequiredService<LocomotiveTrainUsageViewModel>(),
             showPhotoInExplorer: fullPath => System.Diagnostics.Process.Start(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
                 $"/select,\"{fullPath}\"")));

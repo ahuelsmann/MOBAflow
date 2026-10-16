@@ -31,8 +31,8 @@ internal sealed partial class TestRollingStockPages : IDisposable
         var usage = CreateUsage(session, usageReader);
         _pages.Add(usage);
         var page = new LocomotivesPageViewModel(session, ioService ?? new NullIoService(),
-            persistence.Object, new LayoutColumnWidthsViewModel(), management,
-            NullLogger<LocomotivesPageViewModel>.Instance, usage, _ => { });
+            persistence.Object, new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, usage),
+            NullLogger<LocomotivesPageViewModel>.Instance, _ => { });
         _pages.Add(page);
         return page;
     }
