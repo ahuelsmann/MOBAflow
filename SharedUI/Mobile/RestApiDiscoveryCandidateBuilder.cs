@@ -1,7 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Discovery;
+namespace Moba.SharedUI.Mobile;
 
-using Configuration;
+using Common.Configuration;
+using Common.Discovery;
 
 using System.Net;
 using System.Net.Sockets;

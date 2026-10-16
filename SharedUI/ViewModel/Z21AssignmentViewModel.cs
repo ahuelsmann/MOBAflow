@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Discovery;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -13,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Sockets;
+using Backend.Discovery;
 
 /// <summary>
 /// Searches the network for Z21 command stations and lists those not yet assigned to a project, so the user can

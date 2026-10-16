@@ -4289,7 +4289,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/DiscoveryResponseParserTests.cs",
+      "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 1
     },
     {
@@ -4394,7 +4394,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/MobApiEndpointTests.cs",
+      "path": "Test/Contracts/MobApiEndpointTests.cs",
       "count": 1
     },
     {
@@ -4450,7 +4450,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/RestApiDiscoveryCandidateBuilderTests.cs",
+      "path": "Test/SharedUI/RestApiDiscoveryCandidateBuilderTests.cs",
       "count": 1
     },
     {
@@ -4506,7 +4506,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/Z21DiscoveryServiceTests.cs",
+      "path": "Test/Backend/Z21DiscoveryServiceTests.cs",
       "count": 1
     },
     {
@@ -5542,7 +5542,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1852",
-      "path": "Test/Common/DiscoveryResponseParserTests.cs",
+      "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 1
     },
     {
@@ -6711,7 +6711,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/DiscoveryResponseParserTests.cs",
+      "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 11
     },
     {
@@ -7355,7 +7355,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/DiscoveryResponseParserTests.cs",
+      "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 1
     },
     {
@@ -7404,7 +7404,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/RestApiDiscoveryCandidateBuilderTests.cs",
+      "path": "Test/SharedUI/RestApiDiscoveryCandidateBuilderTests.cs",
       "count": 2
     },
     {

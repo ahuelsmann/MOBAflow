@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Test.Common;
+namespace Moba.Test.Backend;
 
 using Moba.Backend.Discovery;
 using Moba.Backend.Protocol;
@@ -50,7 +50,7 @@ internal sealed class Z21DiscoveryServiceTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(read, Is.True);
-            Assert.That(z21, Is.EqualTo(new Moba.Common.Discovery.DiscoveredZ21("192.168.0.111", 21105, 12345)));
+            Assert.That(z21, Is.EqualTo(new Moba.Backend.Discovery.DiscoveredZ21("192.168.0.111", 21105, 12345)));
         }
     }
 

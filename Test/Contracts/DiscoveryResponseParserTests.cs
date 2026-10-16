@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Test.Common;
+namespace Moba.Test.Contracts;
 
-using Moba.Common.Discovery;
+using Moba.Contracts.Discovery;
 
 /// <summary>
 /// Tests for discovery response parsing so protocol changes are caught by tests.

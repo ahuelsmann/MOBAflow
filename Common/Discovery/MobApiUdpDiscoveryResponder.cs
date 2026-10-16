@@ -4,6 +4,7 @@ namespace Moba.Common.Discovery;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Contracts.Discovery;
 
 /// <summary>
 /// UDP discovery responder for the MOBAflow REST API (MOBApi).

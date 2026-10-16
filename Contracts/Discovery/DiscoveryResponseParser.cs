@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Discovery;
+namespace Moba.Contracts.Discovery;
 
 /// <summary>
 /// Parses the MOBAflow REST API discovery response format so the protocol is defined and testable in one place.

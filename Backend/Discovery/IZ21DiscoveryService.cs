@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Discovery;
+namespace Moba.Backend.Discovery;
 
 /// <summary>
 /// Discovers a Z21 command station on the local network (e.g. by scanning the subnet on port 21105).

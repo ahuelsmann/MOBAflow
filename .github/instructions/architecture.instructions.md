@@ -50,7 +50,7 @@ Use [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for broader context and v
   Inspect its request/result contracts and partials before changing execution. The legacy overload taking
   `WorkflowExecutionOptions` is a compatibility adapter; do not assume old failure options still control execution.
 - Keep configuration in `Common/Configuration/`. Reuse `Common/Path/PhotoPathHelper.cs` for photo paths and
-  `Common/Discovery/DiscoveryResponseParser.cs` for `MOBAFLOW_REST_API|ip|port` discovery messages.
+  `Contracts/Discovery/DiscoveryResponseParser.cs` for `MOBAFLOW_REST_API|ip|port` discovery messages.
 - Platform-neutral presentation state lives in `SharedUI/Appearance/`, such as `LedMatrix5x5State.cs`, not in `Common`;
   adapt its ARGB values to brushes in the platform layer.
 
