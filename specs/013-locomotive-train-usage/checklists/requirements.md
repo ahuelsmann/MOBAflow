@@ -32,8 +32,8 @@
 - [x] Actual runtime A capture and pre-apply revalidation are concrete planned additions, not claimed existing APIs.
 - [x] Backend owner/query and SharedUI projection responsibilities are separated.
 - [x] No persisted schema/config/layout or remote-protocol change is planned.
-- [x] Product tasks remain unchecked; no product test execution/implementation claim.
+- [x] At the original planning checkpoint (2026-10-15), product tasks were unchecked and no implementation or product test execution was claimed; later delivery evidence is tracked in tasks.md and quickstart.md.
 
 ## Notes
 
-This checklist records design review only. Planning validation outcomes and the cross-artifact report are reported separately after running their checks. Future warning/blocking policy and atomic Delete coordination are deliberately out of scope, not requirements silently left open.
+This checklist records the original design review. Later implementation, test and acceptance evidence is recorded in tasks.md, quickstart.md and Draft PR #309. Future warning/blocking policy and atomic Delete coordination are deliberately out of scope, not requirements silently left open.
