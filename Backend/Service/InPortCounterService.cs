@@ -2,7 +2,7 @@
 namespace Moba.Backend.Service;
 
 using Common.Configuration;
-using Common.Runtime;
+using Contracts.Runtime;
 using Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

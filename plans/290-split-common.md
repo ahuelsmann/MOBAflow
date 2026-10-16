@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/290
 **Spec Kit**: Not applicable - structural refactoring; the only persisted-format change is the internal feature-toggle collection, loaded with defaults per repository policy
-**Status**: Active; plan integrated through #291; slice 1 (display helpers) and slice 3 (host-specific and unused types) in review; slice 2 waits for RF-24 slice 6
+**Status**: Active; slices 1 and 3 integrated through #295; slice 4a (runtime contracts in `Contracts`) in review, slice 4b (discovery protocol) next; slice 2 waits for RF-24 slice 6
 
 ## Purpose and scope
 

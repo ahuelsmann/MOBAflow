@@ -17,7 +17,7 @@ Use [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for broader context and v
   Its partials separate `RuntimeApi`, `Z21Handlers` and `AutoConnect`.
   [MobaRuntimeSnapshotBuilder](../../Backend/Service/MobaRuntimeSnapshotBuilder.cs) and
   [MobaRuntimeStatusFormatter](../../Backend/Service/MobaRuntimeStatusFormatter.cs) hold extracted helpers.
-- Treat [MobaRuntimeSnapshot](../../Common/Runtime/MobaRuntimeSnapshot.cs) as read-only query state; route mutations
+- Treat [MobaRuntimeSnapshot](../../Contracts/Runtime/MobaRuntimeSnapshot.cs) as read-only query state; route mutations
   through runtime commands. Keep editable project models separate from active runtime execution state.
 - Shared ViewModels depend only on `IRuntimeSnapshotProvider`, `IConnectionRuntime` and `ITrafficMonitor` and send
   operator commands through the required

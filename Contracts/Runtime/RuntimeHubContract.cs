@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Common.Runtime;
+namespace Moba.Contracts.Runtime;
 
 // The SignalR wire contract of the MOBApi runtime hub (/runtime-hub), shared by MOBApi, the MOBAflow host and
 // MOBAsmart remotes. A method name is the wire name, so renaming a method changes the protocol on all sides.

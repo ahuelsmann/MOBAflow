@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Common.Runtime;
+namespace Moba.Contracts.Runtime;
 
 /// <summary>
 /// Builds MOBAsmart-facing runtime snapshots without locomotive states.

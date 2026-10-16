@@ -4,7 +4,7 @@ namespace Moba.WinUI.Service;
 
 using Backend.Interface;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Microsoft.Extensions.Logging;
 

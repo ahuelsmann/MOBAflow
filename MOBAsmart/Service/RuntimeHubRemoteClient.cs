@@ -3,7 +3,7 @@
 namespace Moba.MAUI.Service;
 
 using Common.Discovery;
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 

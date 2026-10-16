@@ -4,7 +4,7 @@ namespace Moba.Test.SharedUI;
 
 using Domain;
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.SharedUI.Service;
 
 [TestFixture]

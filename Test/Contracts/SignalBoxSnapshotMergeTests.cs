@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 
 using Moba.Domain;
 
-namespace Moba.Test.Common;
+namespace Moba.Test.Contracts;
 
 [TestFixture]
 

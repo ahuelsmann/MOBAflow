@@ -1283,17 +1283,17 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/LocomotiveFleetSnapshotComparer.cs",
+      "path": "Contracts/Runtime/LocomotiveFleetSnapshotComparer.cs",
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/SignalBoxSnapshotMerge.cs",
+      "path": "Contracts/Runtime/SignalBoxSnapshotMerge.cs",
       "count": 1
     },
     {
@@ -4359,7 +4359,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/LocomotiveFleetSnapshotComparerTests.cs",
+      "path": "Test/Contracts/LocomotiveFleetSnapshotComparerTests.cs",
       "count": 1
     },
     {
@@ -4457,28 +4457,28 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/RuntimeCommandValidatorTests.cs",
+      "path": "Test/Contracts/RuntimeCommandValidatorTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/RuntimeSnapshotPreservationTests.cs",
+      "path": "Test/Contracts/RuntimeSnapshotPreservationTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/RuntimeSnapshotRemoteFilterTests.cs",
+      "path": "Test/Contracts/RuntimeSnapshotRemoteFilterTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/SignalBoxSnapshotMergeTests.cs",
+      "path": "Test/Contracts/SignalBoxSnapshotMergeTests.cs",
       "count": 1
     },
     {
@@ -6424,7 +6424,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "Test/Common/SignalBoxSnapshotMergeTests.cs",
+      "path": "Test/Contracts/SignalBoxSnapshotMergeTests.cs",
       "count": 1
     },
     {
@@ -7411,14 +7411,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/RuntimeSnapshotPreservationTests.cs",
+      "path": "Test/Contracts/RuntimeSnapshotPreservationTests.cs",
       "count": 5
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/RuntimeSnapshotRemoteFilterTests.cs",
+      "path": "Test/Contracts/RuntimeSnapshotRemoteFilterTests.cs",
       "count": 1
     },
     {

@@ -4,7 +4,7 @@ namespace Moba.WinUI.Service;
 
 using Common.Discovery;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 

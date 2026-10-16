@@ -5,7 +5,7 @@ namespace Moba.Test.Integration;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Moba.Common.Discovery;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using System.Net;
 using System.Net.Http.Json;
 using System.Threading.Channels;

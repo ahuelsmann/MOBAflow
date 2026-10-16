@@ -10,7 +10,7 @@ using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Common.Multiplex;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;

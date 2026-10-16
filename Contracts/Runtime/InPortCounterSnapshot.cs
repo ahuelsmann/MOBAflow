@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Runtime;
+namespace Moba.Contracts.Runtime;
 
 /// <summary>Immutable application-lifetime statistics for one feedback input.</summary>
 /// <param name="InPort">One-based feedback input.</param>
