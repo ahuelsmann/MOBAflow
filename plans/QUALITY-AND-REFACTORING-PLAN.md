@@ -156,7 +156,7 @@ dependencies.
 | RF-25 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Constructors declare real dependencies; no hidden optional services, fallbacks or mutable static hooks. |
 | RF-26 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | `Common` is split by responsibility: shared contracts, host-owned UI settings and presentation helpers. |
 | RF-27 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Domain classes own the rules and state transitions that need only domain data. |
-| RF-28 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
+| RF-28 | [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
 | RF-29 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Platform-specific sound and file services live in platform adapters with one role per class. |
 | RF-30 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
 | RF-31 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | The remaining oversized code-behind and recording classes are split by responsibility. |
@@ -431,18 +431,11 @@ stays unchanged.
 
 ### RF-28: Consolidate the track-plan model
 
-Sequence:
-
-1. document the current track-plan types in `Domain`, `TrackLibrary.Base`,
-   `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `Backend/Service/TrackPlan` and
-   `SharedUI`;
-2. move the editable plan and interaction logic out of the Piko A catalogue
-   into a catalogue-neutral editor boundary;
-3. move editor-only services (selection, undo and redo) out of `Backend`;
-4. reduce `TrackPlanPage.xaml.cs` to input and rendering adaptation.
-
-Acceptance anchor: catalogue projects contain only catalogue geometry; the
-existing track-plan architecture tests and the RF-13 editor behavior pass.
+Child issue [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) owned this package; its child plan was removed
+when the slices were delivered (#300, #305, #307). `TrackPlanDocument` is the one persisted model, the
+catalogue-neutral `TrackPlan.Editor` project reaches Piko A only through `ITrackCatalog`, and the WinUI page
+adapts input and drawing (see [the track-plan dependency rule](../docs/ARCHITECTURE.md#track-plan-dependency-rule)).
+The page layout restore/save moves with RF-24 slice 6, which centralizes layout persistence.
 
 ### RF-29: Platform adapters for sound and files
 
