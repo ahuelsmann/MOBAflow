@@ -9,7 +9,7 @@ using Moba.Common.Recording;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 
 using Moba.Domain;
 

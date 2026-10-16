@@ -40,7 +40,8 @@ this table, so it is the single source of these rules.
 | --- | --- | --- |
 | `Domain` | `Moba.Domain` | none |
 | `TrackLibrary.Base` | `Moba.TrackLibrary.Base` | none |
-| `Common` | `Moba.Common` | `Domain` |
+| `Contracts` | `Moba.Contracts` | `Domain` |
+| `Common` | `Moba.Common` | `Contracts`, `Domain` |
 | `Sound` | `Moba.Sound` | `Common` |
 | `Speech.Base` | `Moba.Speech.Base` | `Common` |
 | `Speech.Piper` | `Moba.Speech.Piper` | `Speech.Base` |

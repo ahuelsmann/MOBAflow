@@ -2,7 +2,7 @@
 
 namespace Moba.Test.SharedUI;
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.SharedUI.Service;
 
 /// <summary>

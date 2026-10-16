@@ -6,6 +6,7 @@ using Common.Discovery;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
+using Contracts.Discovery;
 
 /// <summary>
 /// UDP Discovery Responder for MOBAflow REST-API.

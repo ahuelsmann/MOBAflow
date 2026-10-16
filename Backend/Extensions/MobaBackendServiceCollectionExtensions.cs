@@ -3,7 +3,6 @@
 namespace Moba.Backend;
 
 using Common.Configuration;
-using Common.Discovery;
 using Common.Events;
 using Common.IO;
 using Common.Multiplex;

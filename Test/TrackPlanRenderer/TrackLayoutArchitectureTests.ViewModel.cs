@@ -2,7 +2,6 @@
 
 namespace Moba.Test.TrackPlanRenderer;
 
-using global::Moba.Backend.Service.TrackPlan;
 using global::Moba.Common.Configuration;
 using global::Moba.SharedUI.Interface;
 using global::Moba.SharedUI.Service;

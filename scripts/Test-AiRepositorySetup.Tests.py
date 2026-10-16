@@ -52,7 +52,7 @@ class StructureTests(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, target)
         # Link targets are represented without copying product/user contents.
-        for directory in ("docs", "SharedUI", "MOBAflow", "Backend", "scripts", "Test", "Common", "MOBAsmart"):
+        for directory in ("docs", "SharedUI", "MOBAflow", "Backend", "scripts", "Test", "Common", "Contracts", "MOBAsmart"):
             for source in (ROOT / directory).rglob("*"):
                 if source.is_file() and not any(p in ("bin", "obj", ".nuget") for p in source.parts):
                     target = self.root / source.relative_to(ROOT)

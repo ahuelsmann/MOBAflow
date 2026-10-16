@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Common.Configuration;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Common.Events;
 using Moba.Domain;
 using Moba.SharedUI.Interface;

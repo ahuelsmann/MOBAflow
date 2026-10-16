@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/298
 **Spec Kit**: Not applicable - structural refactoring; the persisted `TrackPlanDocument` format is unchanged
-**Status**: Active; plan integrated through #299; slice 1 (#300) and slice 2 in review
+**Status**: Active; slices 1 and 2 integrated through #300, slice 3 through #305; slice 4 (thin page) in review; page layout restore/save waits for RF-24 slice 6
 
 ## Purpose and scope
 

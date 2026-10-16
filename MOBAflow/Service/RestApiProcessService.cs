@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
 
 using System.Diagnostics;
+using Contracts.Discovery;
 
 /// <summary>
 /// Starts the standalone MOBApi project process when "Auto-start REST API" is enabled.

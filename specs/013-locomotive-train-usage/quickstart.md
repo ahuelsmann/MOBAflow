@@ -128,3 +128,17 @@ The process started at 2026-10-16T10:42:57.9849934Z (12:42 MESZ), PID 44592 / wi
 Two observations are explicitly bounded. Normal Messages Refresh retains Usage's observation time because RefreshProjectDiagnostics recomputes normal diagnostics and projects existing usage evidence; a Current receipt check retains that observation, while Show usage captures a new one. Also, the fixture was not byte-identical after exit: its manifest SHA256 6F4ACD995ECC90181DB2FF97739D9EE79B0FB265AAADD65C13C6220A65F7C28A became DA7A912E6EA62D346B223AC015FC8D9A6E39D7BDD1A25D873F80374A9CD9DC73, with empty trackPlan defaults added to both projects. The unchanged TrackPlanSolutionBinder.OnSolutionSaving calls PushPlanToSelectedProject before normal saves and can populate that empty document. This is a source-based explanation, not a causal UI trace. No no-write or byte-identity claim is made; the UI run did not isolate usage queries from existing host autosave/startup/shutdown behavior.
 
 T028/T031 are complete for the recorded focused scope. No manual reload/receipt-race, model editing, screen-reader, 200-percent system-font/DPI, Android/TalkBack or hardware acceptance was performed. Those broader checks are not implied by this result. The PR stays Draft; final synchronization/readiness/merge belongs to Issue Master after the current comparison's gates and final review.
+
+## Main integration at 63e360f4 (2026-10-16)
+
+Main 63e360f40b58913afc4b80b346e607f584146377 (#305, #310 Contracts project, #307) was merged normally, without rebase. The merge had no textual conflicts. Main's move of runtime and discovery wire contracts from `Common.*` to `Contracts.*` required one matching using update in LocomotiveTrainUsageViewModelTests. Within this feature's surface, main changed only using directives; the TrackPlanPage geometry move does not touch TrackPlanSolutionBinder or saving. Earlier `Common/Runtime` mentions in plan/research remain historical evidence.
+
+| Check on the merged source | Actual result |
+| --- | --- |
+| MOBAsmart Release Rebuild, net10.0-android, MobaAnalyzerGate=true | Zero errors; strict unchanged Android baseline matches 1,517 diagnostics in 555 groups |
+| Portable Release Rebuild with MobaAnalyzerGate=true | Zero errors; strict unchanged baseline matches 3,244 diagnostics in 1,133 groups |
+| Windows Release Rebuild, including MOBAflow XAML and the normal MOBApi build/copy | Zero errors; strict unchanged Windows baseline matches 2,472 diagnostics in 948 groups |
+| Affected fixtures (new trio 44, diagnostics, Locomotives page, runtime host/isolation, DI, command path) | Portable 126 and Windows 139 (adds WinUI DI) executed/passed |
+| Full Release suites without MobApiProcessTests and RuntimeHubLiveE2ETests | Portable 2,839 and Windows 2,960 passed, zero failures; the explicit real-display case is NotExecuted in each |
+
+All baselines are the current merged files, and every evaluated SARIF was written by these rebuilds. The Android Release build is compile and analyzer evidence only: no AAB was published or validated, and no device was used. No application, API host, emulator or hardware was started. The 8e40f8a5 desktop acceptance above remains historical evidence for that binary and was not repeated. Evidence: Test/TestResults/issue306-main63-*.trx and artifacts/issue306-validation/main63/.

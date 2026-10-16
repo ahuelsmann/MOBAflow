@@ -26,7 +26,7 @@ public sealed class TrackPlanSnapHelper(SegmentPlacementGeometry geometry)
 
         foreach (var (sourcePort, sourceX, sourceY, _) in _geometry.GetAllPortWorldPositions(movingSegment))
         {
-            if (IsPortConnected(connections, movingSegment.Segment.No, sourcePort))
+            if (connections.IsConnected(movingSegment.Segment.No, sourcePort))
                 continue;
 
             foreach (var target in GetOpenTargetPorts(movingSegment, allSegments, connections, excludeSegmentId, movingGroup))
@@ -67,7 +67,7 @@ public sealed class TrackPlanSnapHelper(SegmentPlacementGeometry geometry)
 
             foreach (var (targetPort, targetX, targetY, _) in _geometry.GetAllPortWorldPositions(other))
             {
-                if (!IsPortConnected(connections, other.Segment.No, targetPort))
+                if (!connections.IsConnected(other.Segment.No, targetPort))
                     yield return new SnapTarget(other, targetPort, targetX, targetY);
             }
         }
@@ -84,12 +84,12 @@ public sealed class TrackPlanSnapHelper(SegmentPlacementGeometry geometry)
         bool rigidGroup,
         double rigidGroupAngleToleranceDegrees)
     {
-        var desiredOutwardAngle = NormalizeAngle(_geometry.GetPortOutwardWorldAngleDegrees(target.Segment, target.Port) + 180);
+        var desiredOutwardAngle = SegmentPlacementGeometry.NormalizeAngle(_geometry.GetPortOutwardWorldAngleDegrees(target.Segment, target.Port) + 180);
 
         if (rigidGroup)
         {
             var currentOutwardAngle = _geometry.GetPortOutwardWorldAngleDegrees(movingSegment, sourcePort);
-            if (GetAngleDeltaDegrees(currentOutwardAngle, desiredOutwardAngle) > rigidGroupAngleToleranceDegrees)
+            if (SegmentPlacementGeometry.AngleDeltaDegrees(currentOutwardAngle, desiredOutwardAngle) > rigidGroupAngleToleranceDegrees)
                 return null;
 
             var (translatedX, translatedY, translatedRotation) = _geometry.TranslatePlacementForPort(
@@ -114,29 +114,5 @@ public sealed class TrackPlanSnapHelper(SegmentPlacementGeometry geometry)
         var deltaX = x2 - x1;
         var deltaY = y2 - y1;
         return Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-    }
-
-    private static bool IsPortConnected(IReadOnlyList<PortConnection> connections, Guid segmentId, string portName)
-    {
-        return connections.Any(connection =>
-            (connection.SourceSegment == segmentId && connection.SourcePort == portName)
-            || (connection.TargetSegment == segmentId && connection.TargetPort == portName));
-    }
-
-    private static double GetAngleDeltaDegrees(double leftDegrees, double rightDegrees)
-    {
-        var delta = NormalizeAngle(leftDegrees - rightDegrees);
-        if (delta > 180)
-            delta = 360 - delta;
-        return Math.Abs(delta);
-    }
-
-    private static double NormalizeAngle(double degrees)
-    {
-        while (degrees >= 360)
-            degrees -= 360;
-        while (degrees < 0)
-            degrees += 360;
-        return degrees;
     }
 }

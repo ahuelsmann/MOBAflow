@@ -331,7 +331,7 @@ public sealed partial class MobaRuntimeService
         await _z21.SetLocoDriveAsync(address, speed, forward, cancellationToken).ConfigureAwait(false);
 
         var existingState = _locomotiveStates.TryGetValue(address, out var current) ? current : null;
-        _locomotiveStates[address] = new Common.Runtime.LocomotiveRuntimeSnapshot
+        _locomotiveStates[address] = new Contracts.Runtime.LocomotiveRuntimeSnapshot
         {
             Address = address,
             Speed = speed,
@@ -403,7 +403,7 @@ public sealed partial class MobaRuntimeService
             functions &= ~(1u << functionIndex);
         }
 
-        _locomotiveStates[address] = new Common.Runtime.LocomotiveRuntimeSnapshot
+        _locomotiveStates[address] = new Contracts.Runtime.LocomotiveRuntimeSnapshot
         {
             Address = address,
             Speed = existingState?.Speed ?? 0,
@@ -423,7 +423,7 @@ public sealed partial class MobaRuntimeService
         // Reflect the commanded all-off state in the runtime model so consumers (and the next
         // snapshot) see Functions=0 immediately, instead of stale decoder bits from earlier info.
         var existingState = _locomotiveStates.TryGetValue(address, out var current) ? current : null;
-        _locomotiveStates[address] = new Common.Runtime.LocomotiveRuntimeSnapshot
+        _locomotiveStates[address] = new Contracts.Runtime.LocomotiveRuntimeSnapshot
         {
             Address = address,
             Speed = existingState?.Speed ?? 0,
