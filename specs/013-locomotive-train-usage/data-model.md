@@ -43,7 +43,7 @@ The expected editable project is only an identity guard against a foreign loaded
 
 - MissingReference maps to existing Error severity, source and target IDs, preserving typed occurrence metadata for exact text/projection.
 - Use maps to neutral Information only for the explicit usage query; it is excluded from error/warning counts.
-- Unknown coverage is an explicit source-qualified information/status row; it cannot disappear under an empty-success summary. It must remain evident when error filters are changed, as specified in the presentation contract.
+- Unknown coverage is an explicit source-qualified information/status row with typed Coverage metadata; it cannot disappear under an empty-success summary. The status remains visible independently of all severity filters, including normal project diagnostics without an explicit usage query. Neutral use rows retain normal Information filtering.
 - Existing ProjectDiagnostic fields stay useful; add only the metadata required by this relationship. Do not parse Message to recover IDs, sort keys or navigation.
 
 ## Data effects

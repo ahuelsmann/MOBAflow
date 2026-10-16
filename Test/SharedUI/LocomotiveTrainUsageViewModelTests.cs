@@ -13,6 +13,56 @@ using static Moba.Test.Helpers.TestLocomotiveTrainUsage;
 [TestFixture]
 internal static class LocomotiveTrainUsageViewModelTests
 {
+    [TestCase(false, LocomotiveTrainObservationValidity.Stale)]
+    [TestCase(true, LocomotiveTrainObservationValidity.Stale)]
+    [TestCase(false, LocomotiveTrainObservationValidity.Current)]
+    [TestCase(true, LocomotiveTrainObservationValidity.Current)]
+    public static async Task SnapshotBeforeFirstPublication_IsCheckedBeforeAnyCompleteResult(
+        bool queuedDispatch, LocomotiveTrainObservationValidity latestValidity)
+    {
+        var project = CreateProject();
+        var reader = CompleteReader(project);
+        var initialCheck = new TaskCompletionSource<LocomotiveTrainObservationValidity>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var checks = 0;
+        reader.Setup(value => value.IsCurrentAsync(It.IsAny<LocomotiveTrainRuntimeObservation>(), It.IsAny<CancellationToken>()))
+            .Returns(() => Interlocked.Increment(ref checks) == 1 ? initialCheck.Task : Task.FromResult(latestValidity));
+        var snapshots = new Mock<IProjectRuntimeSnapshots>();
+        var queued = new Queue<Action>();
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action =>
+        {
+            if (queuedDispatch) queued.Enqueue(action);
+            else action();
+        });
+        dispatcher.Setup(value => value.InvokeOnUiAsync(It.IsAny<Func<Task>>())).Returns<Func<Task>>(action => action());
+        using var viewModel = CreateViewModel(CreateSession(project).Object, reader.Object, snapshots.Object, dispatcher.Object);
+        var published = new List<LocomotiveTrainCoverageState>();
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(viewModel.RuntimeObservation) && viewModel.RuntimeObservation is { } observation)
+                published.Add(observation.LoadedDefinitionCoverage.State);
+        };
+
+        var query = viewModel.QueryAsync(project, project.Locomotives[0].Id);
+        Assert.That(checks, Is.EqualTo(1));
+        snapshots.Raise(value => value.RuntimeSnapshotChanged += null,
+            new ProjectRuntimeSnapshotEventArgs(new MobaRuntimeSnapshot { ProjectId = project.Id }));
+        if (queuedDispatch) queued.Dequeue()();
+        Assert.That(checks, Is.EqualTo(1), "A hint without a published observation must wait, not spin or start a parallel check.");
+        initialCheck.SetResult(LocomotiveTrainObservationValidity.Current);
+        await query.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        var expected = latestValidity == LocomotiveTrainObservationValidity.Current
+            ? LocomotiveTrainCoverageState.Complete : LocomotiveTrainCoverageState.Unknown;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(checks, Is.EqualTo(2));
+            Assert.That(published, Is.EqualTo(new[] { expected }));
+            Assert.That(viewModel.RuntimeObservation!.LoadedDefinitionCoverage.State, Is.EqualTo(expected));
+        }
+        reader.Verify(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public static async Task RealOwnerChangedAfterRead_IsRevalidatedBeforeApplying(bool dispose)

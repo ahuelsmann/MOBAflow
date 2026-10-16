@@ -94,7 +94,10 @@ even if that project is disconnected. Its observation time is shown. Missing
 locomotive references are errors; valid uses are neutral information. Choose
 **Show usage** again to refresh this comparison after changing data.
 
-The coverage summary remains visible when Information rows are hidden.
+The coverage summary remains visible when Information rows are hidden. Normal
+project diagnostics also keep an Unknown coverage status visible independently of
+severity filters when invalid identities prevent a precise analysis, even without
+using Show usage.
 **Retained definitions (B)** and **Operational use (C)** are **Unknown / Not checked
 in this slice**. A zero-reference result applies only to the source just read;
 it is not a claim that the locomotive is unused everywhere or safe to delete.

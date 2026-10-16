@@ -26,7 +26,7 @@ Names are user data and remain unchanged/escaped by the UI binding/rendering pat
 
 Use ProjectDiagnosticsService for missing-target findings and the existing Messages collection/filter path for projection. Stable source-scoped identities replace active results on refresh. Keep editor and runtime findings separate. Repair removes old findings only after successful refresh of that source; failed runtime refresh replaces old A-Complete evidence with visible Unknown, not stale success.
 
-Error/warning filters apply to actual severities. A short coverage summary inside the existing Messages expander remains visible regardless of filtering Information rows, so hiding neutral uses cannot hide Unknown runtime coverage. This is a small addition to the existing area, not a separate diagnostics platform. If no valid query is selected, clear prior query rows/summary while normal project diagnostics remain.
+Error/warning filters apply to actual severities. A short coverage summary inside the existing Messages expander remains visible regardless of filtering Information rows, so hiding neutral uses cannot hide Unknown runtime coverage. This is a small addition to the existing area, not a separate diagnostics platform. If no valid query is selected, clear prior query rows/summary while normal project diagnostics remain. Normal Unknown coverage statuses carry typed coverage and remain visible independently of all severity filters even without an explicit query; this does not raise neutral use severity or fabricate precise missing-reference errors.
 
 No click-through object selection/navigation is promised. Locations provide enough text to identify the train/entry for manual inspection.
 

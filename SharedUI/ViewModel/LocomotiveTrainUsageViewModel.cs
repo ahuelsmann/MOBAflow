@@ -151,6 +151,12 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
             var runtime = await ReadCurrentObservationAsync(context).ConfigureAwait(true);
             if (runtime is null || !IsActive(context))
                 return;
+            while (HasPendingInitialReceiptCheck(context, runtime))
+            {
+                runtime = await ValidateObservationAsync(context, runtime).ConfigureAwait(true);
+                if (runtime is null || !IsActive(context))
+                    return;
+            }
             RuntimeObservation = runtime;
             NotifyResultsChanged();
         }
@@ -180,11 +186,21 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
             return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.ContextMismatch);
         if (runtime.LoadedDefinitionCoverage.State != LocomotiveTrainCoverageState.Complete)
             return runtime;
+        return await ValidateObservationAsync(context, runtime).ConfigureAwait(true);
+    }
+
+    private static bool HasPendingInitialReceiptCheck(QueryContext context, LocomotiveTrainRuntimeObservation observation) =>
+        observation.LoadedDefinitionCoverage.State == LocomotiveTrainCoverageState.Complete
+        && Interlocked.Exchange(ref context.ReceiptCheckRequested, 0) != 0;
+
+    private async Task<LocomotiveTrainRuntimeObservation?> ValidateObservationAsync(
+        QueryContext context, LocomotiveTrainRuntimeObservation runtime)
+    {
         var validity = await _reader.IsCurrentAsync(runtime, context.Token).ConfigureAwait(true);
         if (!IsActive(context))
             return null;
         return validity == LocomotiveTrainObservationValidity.Current ? runtime
-            : LocomotiveTrainRuntimeObservation.Unknown(request, ReasonForValidity(validity));
+            : LocomotiveTrainRuntimeObservation.Unknown(context.Request, ReasonForValidity(validity));
     }
 
     private static LocomotiveTrainCoverageReason ReasonForValidity(LocomotiveTrainObservationValidity validity) =>
@@ -218,10 +234,12 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
     {
         try
         {
-            while (IsContextCurrent(context) && Interlocked.Exchange(ref context.ReceiptCheckRequested, 0) != 0)
+            while (IsContextCurrent(context))
             {
                 var observation = RuntimeObservation;
-                if (observation?.LoadedDefinitionCoverage.State != LocomotiveTrainCoverageState.Complete)
+                // Keep early hints for QueryCoreAsync; consuming them before publication loses invalidations.
+                if (observation?.LoadedDefinitionCoverage.State != LocomotiveTrainCoverageState.Complete
+                    || Interlocked.Exchange(ref context.ReceiptCheckRequested, 0) == 0)
                     return;
                 var validity = await _reader.IsCurrentAsync(observation, context.Token).ConfigureAwait(false);
                 await _dispatcher.InvokeOnUiAsync(() =>
@@ -251,7 +269,8 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
         finally
         {
             Interlocked.Exchange(ref context.ReceiptCheckPending, 0);
-            if (IsContextCurrent(context) && Volatile.Read(ref context.ReceiptCheckRequested) != 0)
+            if (IsContextCurrent(context) && RuntimeObservation?.LoadedDefinitionCoverage.State == LocomotiveTrainCoverageState.Complete
+                && Volatile.Read(ref context.ReceiptCheckRequested) != 0)
                 QueueReceiptCheck(context);
         }
     }

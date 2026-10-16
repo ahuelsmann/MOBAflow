@@ -28,6 +28,53 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    public void InvalidUsageScope_RemainsVisibleWithoutAnExplicitQuery_AndRepairRestoresDiagnostics(int invalidIdentity)
+    {
+        var missingId = Guid.NewGuid();
+        var train = new Train { Vehicles = [new Vehicle { VehicleId = missingId }] };
+        var project = new Project { Trains = [train] };
+        if (invalidIdentity == 0) train.Id = Guid.Empty;
+        if (invalidIdentity == 1) project.Trains.Add(new Train { Id = train.Id });
+        if (invalidIdentity == 2)
+        {
+            var duplicate = Guid.NewGuid();
+            project.Locomotives.Add(new Locomotive { Id = duplicate, DigitalAddress = 4 });
+            project.Locomotives.Add(new Locomotive { Id = duplicate, DigitalAddress = 5 });
+        }
+        var service = new ProjectDiagnosticsService(new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()),
+            new InterlockingDefinitionValidator(), new LocomotiveTrainReferenceAnalyzer());
+        var viewModel = CreateViewModel(new Solution { Projects = [project] }, service);
+        viewModel.ShowDiagnosticErrors = false;
+        viewModel.ShowDiagnosticWarnings = false;
+        viewModel.ShowDiagnosticInformation = false;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.LocomotivesPage.Usage.EditedResult, Is.Null, "This is ordinary project diagnostics, not Show usage.");
+            Assert.That(viewModel.DiagnosticErrorCount, Is.Zero, "Ambiguous scope cannot fabricate precise missing-reference errors.");
+            Assert.That(viewModel.DiagnosticInformationCount, Is.EqualTo(1));
+            Assert.That(viewModel.VisibleProjectDiagnostics, Is.EqualTo(viewModel.ProjectDiagnostics));
+        }
+
+        foreach (var item in project.Trains) item.Id = Guid.NewGuid();
+        foreach (var locomotive in project.Locomotives) locomotive.Id = Guid.NewGuid();
+        viewModel.RefreshProjectDiagnosticsCommand.Execute(null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.DiagnosticInformationCount, Is.Zero);
+            Assert.That(viewModel.DiagnosticErrorCount, Is.EqualTo(1));
+            Assert.That(viewModel.VisibleProjectDiagnostics, Is.Empty, "An actual missing-reference error still follows the Error filter.");
+        }
+        viewModel.ShowDiagnosticErrors = true;
+        Assert.That(viewModel.VisibleProjectDiagnostics.Single().RuleCode, Is.EqualTo("LTU002"));
+        project.Locomotives.Add(new Locomotive { Id = missingId, DigitalAddress = 9 });
+        viewModel.RefreshProjectDiagnosticsCommand.Execute(null);
+        Assert.That(viewModel.VisibleProjectDiagnostics, Is.Empty);
+    }
+
     [Test]
     public async Task UsageMessages_KeepSourcesSeparate_RepairWithoutDuplicates_AndShowCoverageDespiteFiltering()
     {

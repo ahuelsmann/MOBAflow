@@ -32,6 +32,9 @@ public sealed record ProjectDiagnostic(
     /// <summary>Runtime observation time when this finding came from an explicit usage query.</summary>
     public DateTimeOffset? ObservedAtUtc { get; init; }
 
+    /// <summary>Typed analysis coverage status, kept visible independently of severity filters.</summary>
+    public LocomotiveTrainCoverage? Coverage { get; init; }
+
     public string SeverityLabel => Severity switch
     {
         ProjectDiagnosticSeverity.Error => "Error",
@@ -76,7 +79,10 @@ public sealed class ProjectDiagnosticsService(
             .Select(finding => FromLocomotiveTrainReference(finding)));
         if (references.Coverage.State == LocomotiveTrainCoverageState.Unknown)
             diagnostics.Add(new($"ltu:scope:{project.Id:N}", ProjectDiagnosticSeverity.Information, "Edited project data",
-                $"Locomotive train references: Unknown ({references.Coverage.Reason}).", [project.Id]));
+                $"Locomotive train references: Unknown ({references.Coverage.Reason}).", [project.Id])
+            {
+                Coverage = references.Coverage
+            });
 
         return diagnostics
             .OrderBy(diagnostic => SeverityOrder(diagnostic.Severity))

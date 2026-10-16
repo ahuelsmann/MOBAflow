@@ -2,7 +2,7 @@
 
 **Source Issue**: https://github.com/ahuelsmann/MOBAflow/issues/306
 
-**Status**: Implementation and automated local validation completed on 2026-10-16. Independent review, manual desktop acceptance and current-head PR CI/Sonar remain distinct delivery gates.
+**Status**: Implementation and P3 corrections have completed local validation on 2026-10-16. Final post-commit CI/Sonar and fresh Claude CLI review evidence is recorded in Draft PR #309 against its actual published head. Manual desktop acceptance remains open.
 
 ## Scope and evidence base
 
@@ -84,3 +84,13 @@ Correction commit 7d7b4704e2adc588004d6dfdc6fd8e626e3a9168 was verified against 
 SonarCloud Code Analysis on that exact commit succeeded. The separate server query reported quality-gate OK and zero OPEN/CONFIRMED PR issues. All gate conditions passed: reliability/security/maintainability A, new duplication 0 percent against a 3 percent ceiling, reviewed security hotspots 100 percent against a 100 percent floor. The earlier 11 issues were resolved through code changes. [Quality run](https://github.com/ahuelsmann/MOBAflow/actions/runs/38876807446) and [Sonar PR result](https://sonarcloud.io/dashboard?id=ahuelsmann_MOBAflow2&pullRequest=309) provide remote evidence.
 
 T030 is complete. T028/T031 remain open for separately authorized manual UI acceptance. T032 remains partial because independent fixed-comparison team reviews are pending. The PR stays draft; no app/device/hardware start, ready marking or merge occurred. This final evidence-only update does not change the tested product code; its own current-head CI/Sonar is verified separately at handoff.
+
+## Claude P3 correction validation
+
+The valid independent CLI review of base 22346a7d523de58a6d97284f4afbace10d0c4969 through head 4c866c1bd811bdaa549ca23fe00cc358db60b2df reported no P1/P2 and two P3 findings. The user authorized fixing both, testing and a fresh read-only Claude CLI review. The first CLI attempt inspected no files and is invalid; only artifacts/issue306-validation/claude-review-4c866c1b-retry.json is prior review evidence.
+
+Seven new regression cases failed on the original product code: four combinations of inline/queued snapshot dispatch and stale/unchanged receipt outcome, plus three invalid-identity/repair cases in normal Messages with all severity filters off and no explicit usage query. The corrections retain the existing pending receipt-check hint while the first observation is unavailable, revalidate pending hints before publishing any Complete result and avoid a null-observation requeue loop. Typed Coverage metadata keeps Unknown statuses visible independently of severity filtering; neutral uses and actual missing-reference errors retain their normal filters. No new owner, runtime state registry, lifecycle command or persisted data change.
+
+The affected three-fixture run passed 37 tests. Final full Release suites passed 2,834 portable and 2,947 Windows tests, zero failures; each discovers the same one explicit real-display case NotExecuted. All seven new regressions executed. Evidence: issue306-review-p3-red.trx, issue306-review-p3-green.trx, issue306-review-p3-portable-full.trx and issue306-review-p3-windows-full.trx under Test/TestResults. Complete portable/Windows Release analyzer graphs again matched unchanged strict baselines (3,248 diagnostics/1,133 groups and 2,471 diagnostics/947 groups). Normal desktop/API/XAML Debug build passed with zero errors/warnings. Android FastDebug consumer passed with zero errors and 45 existing warnings; no AAB/device claim.
+
+T033/T034 are complete. The published correction head must pass GitHub CI/Sonar with zero OPEN/CONFIRMED issues before its fresh independent Claude CLI review; final results, actual model/turn count, permission-denial audit and reviewed comparison are attached to the PR/handoff without subsequently changing the reviewed commit. The CLI uses a fresh session, safe mode, plan permissions, explicit read/scan/git-inspection tools, no MCP configuration, no delegated agents and no permission bypass. Its JSON output is scanned before reading and the checkout is checked before/after. T028/T031 remain open: manual Light/Dark/keyboard acceptance requires separate launch authorization. The PR stays Draft.

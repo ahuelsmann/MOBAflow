@@ -64,7 +64,7 @@ The projection also verifies that its request-local context, target and current 
 
 Use SolutionReplacing/SolutionLoaded, ModelChanged and selected project/locomotive changes to cancel/replace the request context. In-place load reuses the Solution object, so the load event must invalidate even with equal object references/IDs. Observe the existing all-project runtime snapshot event as an invalidation hint: revalidate the affected receipt, rather than assuming the snapshot proves usage or blindly rescanning on every telemetry packet. Do not treat the selected-runtime-only event as coverage of all owners.
 
-Raw all-runtime .NET callbacks are background callbacks; cancellation can occur directly, but collection/property changes are marshalled through the existing `SharedUI/Interface/IUiDispatcher.cs`. Existing UI-dispatched EventBus handlers receive no extra dispatch. Coalesce pending receipt checks for a source; only the latest query context can replace its result. Unsubscribe and cancel when the projection is disposed.
+Raw all-runtime .NET callbacks are background callbacks; cancellation can occur directly, but collection/property changes are marshalled through the existing `SharedUI/Interface/IUiDispatcher.cs`. Existing UI-dispatched EventBus handlers receive no extra dispatch. Coalesce pending receipt checks for a source; only the latest query context can replace its result. Preserve hints arriving before the first observation is published. Consume those pending hints through receipt revalidation before publishing the initial observation; do not spin or discard a hint just because no observation is available yet. Unsubscribe and cancel when the projection is disposed.
 
 ## Failure and coverage table
 

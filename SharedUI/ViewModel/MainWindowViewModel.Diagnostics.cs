@@ -125,11 +125,16 @@ public sealed partial class MainWindowViewModel
             VisibleProjectDiagnostics.Add(diagnostic);
     }
 
-    private bool IsDiagnosticVisible(ProjectDiagnostic diagnostic) => diagnostic.Severity switch
+    private bool IsDiagnosticVisible(ProjectDiagnostic diagnostic)
     {
-        ProjectDiagnosticSeverity.Error => ShowDiagnosticErrors,
-        ProjectDiagnosticSeverity.Warning => ShowDiagnosticWarnings,
-        ProjectDiagnosticSeverity.Information => ShowDiagnosticInformation,
-        _ => true
-    };
+        if (diagnostic.Coverage?.State == Backend.Interface.LocomotiveTrainCoverageState.Unknown)
+            return true;
+        return diagnostic.Severity switch
+        {
+            ProjectDiagnosticSeverity.Error => ShowDiagnosticErrors,
+            ProjectDiagnosticSeverity.Warning => ShowDiagnosticWarnings,
+            ProjectDiagnosticSeverity.Information => ShowDiagnosticInformation,
+            _ => true
+        };
+    }
 }
