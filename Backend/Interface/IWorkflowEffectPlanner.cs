@@ -4,6 +4,7 @@ namespace Moba.Backend.Interface;
 
 using Domain;
 using Domain.Enum;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Identifies the external-effect family of a workflow action.
@@ -86,6 +87,13 @@ public sealed record WorkflowActionPlan(
 {
     /// <summary>Gets whether the action can be planned safely.</summary>
     public bool IsValid => Issues.Count == 0 && Effect != null;
+
+    /// <summary>
+    /// Gets private validated execution data; never part of a serialized plan or run output.
+    /// Null for context-dependent announcements and journey-stop transitions, which need the owning invocation.
+    /// </summary>
+    [JsonIgnore]
+    public WorkflowEffectRequest? Request { get; init; }
 }
 
 /// <summary>

@@ -18,6 +18,142 @@ using Moq;
 internal sealed class WorkflowActionHandlersTests
 {
     [Test]
+    public async Task ExternalHandlers_WithRecordingAdapter_DoNotReachProductionDependencies()
+    {
+        var adapter = new RecordingEffectAdapter();
+        var files = new Mock<IFileSystem>(MockBehavior.Strict);
+        var z21 = new Mock<IZ21>(MockBehavior.Strict);
+        var sound = new Mock<ISoundPlayer>(MockBehavior.Strict);
+        var speech = new Mock<IAnnouncementService>(MockBehavior.Strict);
+        speech.Setup(service => service.GenerateAnnouncementText("Next {StationName}", It.IsAny<Station>(), 2, "Arrival"))
+            .Returns("Next Minden");
+        var context = new ActionExecutionContext
+        {
+            Z21 = z21.Object, SoundPlayer = sound.Object,
+            CurrentStation = new Station { Name = "Minden" }, CurrentStationIndex = 2
+        };
+        var actions = new WorkflowAction[]
+        {
+            new() { Type = ActionType.Command, Command = new() { BytesBase64 = "AQID" } },
+            new() { Type = ActionType.Audio, Audio = new() { FilePath = "missing.wav" } },
+            new() { Name = "Arrival", Type = ActionType.Announcement, Announcement = new() { Message = "Next {StationName}" } },
+            new() { Type = ActionType.ExecuteScript, PowerShell = new() { ScriptPath = "missing.ps1", Arguments = "-Mode test" } },
+            new() { Type = ActionType.SelectSignalAspect, SelectSignalAspect = new() { BaseAddress = 201 } },
+            new() { Type = ActionType.TrainDestinationDisplay, TrainDestinationDisplay = new() { DisplayDeviceId = Guid.NewGuid() } }
+        };
+        IWorkflowActionHandler[] handlers =
+        [
+            new CommandWorkflowActionHandler(effectAdapter: adapter),
+            new AudioWorkflowActionHandler(fileSystem: files.Object, effectAdapter: adapter),
+            new AnnouncementWorkflowActionHandler(speech.Object, effectAdapter: adapter),
+            new ExecuteScriptWorkflowActionHandler(fileSystem: files.Object, effectAdapter: adapter),
+            new SelectSignalAspectWorkflowActionHandler(effectAdapter: adapter),
+            new TrainDestinationDisplayWorkflowActionHandler(effectAdapter: adapter)
+        ];
+        using var cancellation = new CancellationTokenSource();
+
+        for (var index = 0; index < actions.Length; index++)
+            await handlers[index].ExecuteAsync(actions[index], context, cancellation.Token).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(adapter.Requests.Select(request => request.ActionId), Is.EqualTo(actions.Select(action => action.Id)));
+            Assert.That(adapter.Tokens, Is.All.EqualTo(cancellation.Token));
+            Assert.That(((WorkflowCommandEffectRequest)adapter.Requests[0]).Bytes.ToArray(), Is.EqualTo(new byte[] { 1, 2, 3 }));
+            Assert.That(((WorkflowAudioEffectRequest)adapter.Requests[1]).FilePath, Is.EqualTo("missing.wav"));
+            Assert.That(((WorkflowAnnouncementEffectRequest)adapter.Requests[2]).RenderedText, Is.EqualTo("Next Minden"));
+            Assert.That(((WorkflowScriptEffectRequest)adapter.Requests[3]).ScriptPath, Is.EqualTo("missing.ps1"));
+            Assert.That(((WorkflowSignalEffectRequest)adapter.Requests[4]).Command.DccAddress, Is.EqualTo(201));
+            Assert.That(((WorkflowDisplayEffectRequest)adapter.Requests[5]).DisplayDeviceId,
+                Is.EqualTo(actions[5].TrainDestinationDisplay!.DisplayDeviceId));
+        }
+        files.VerifyNoOtherCalls();
+        z21.VerifyNoOtherCalls();
+        sound.VerifyNoOtherCalls();
+        speech.Verify(service => service.GenerateAndSpeakAnnouncementAsync(It.IsAny<string>(), It.IsAny<Station>(),
+            It.IsAny<int>(), It.IsAny<CancellationToken>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
+    }
+
+    [Test]
+    public async Task RecordingAdapter_DoesNotBypassMalformedPayloadOrCancellation()
+    {
+        var adapter = new RecordingEffectAdapter();
+        var context = new ActionExecutionContext { Z21 = new Mock<IZ21>(MockBehavior.Strict).Object };
+        var handler = new AudioWorkflowActionHandler(effectAdapter: adapter);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => handler.ExecuteAsync(
+            new WorkflowAction { Type = ActionType.Audio, Audio = new() { FilePath = " " } }, context)).ConfigureAwait(false);
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+        await Assert.ThrowsAsync<OperationCanceledException>(() => handler.ExecuteAsync(
+            new WorkflowAction { Type = ActionType.Audio, Audio = new() { FilePath = "missing.wav" } }, context, cancellation.Token)).ConfigureAwait(false);
+
+        Assert.That(adapter.Requests, Is.Empty);
+    }
+
+    private sealed class RecordingEffectAdapter : IWorkflowEffectAdapter
+    {
+        public List<WorkflowEffectRequest> Requests { get; } = [];
+        public List<CancellationToken> Tokens { get; } = [];
+
+        public Task ExecuteAsync(WorkflowEffectRequest request, ActionExecutionContext context, CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            Tokens.Add(cancellationToken);
+            return Task.CompletedTask;
+        }
+    }
+
+    [Test]
+    public async Task ProductionDisplay_RemainsUnconfiguredAndMakesNoDeviceCall()
+    {
+        var z21 = new Mock<IZ21>(MockBehavior.Strict);
+        await new TrainDestinationDisplayWorkflowActionHandler().ExecuteAsync(new WorkflowAction
+        {
+            Type = ActionType.TrainDestinationDisplay,
+            TrainDestinationDisplay = new() { DisplayDeviceId = Guid.NewGuid() }
+        }, new ActionExecutionContext { Z21 = z21.Object }).ConfigureAwait(false);
+        z21.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task EffectAdapterFailure_PropagatesToExecutorCaller()
+    {
+        var adapter = new Mock<IWorkflowEffectAdapter>();
+        adapter.Setup(value => value.ExecuteAsync(It.IsAny<WorkflowEffectRequest>(),
+            It.IsAny<ActionExecutionContext>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Effect failed"));
+        var handler = new CommandWorkflowActionHandler(effectAdapter: adapter.Object);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.ExecuteAsync(new WorkflowAction
+        {
+            Type = ActionType.Command, Command = new() { BytesBase64 = "AQID" }
+        }, new ActionExecutionContext { Z21 = new Mock<IZ21>(MockBehavior.Strict).Object })).ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task AllHandlers_PreCancelledToken_DoNotInvokeAdapterOrMutateJourney()
+    {
+        var adapter = new Mock<IWorkflowEffectAdapter>(MockBehavior.Strict);
+        IWorkflowActionHandler[] handlers =
+        [
+            new CommandWorkflowActionHandler(effectAdapter: adapter.Object),
+            new AudioWorkflowActionHandler(effectAdapter: adapter.Object),
+            new AnnouncementWorkflowActionHandler(effectAdapter: adapter.Object),
+            new ExecuteScriptWorkflowActionHandler(effectAdapter: adapter.Object),
+            new SelectSignalAspectWorkflowActionHandler(effectAdapter: adapter.Object),
+            new TrainDestinationDisplayWorkflowActionHandler(effectAdapter: adapter.Object),
+            new ChangeJourneyStopWorkflowActionHandler()
+        ];
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+        foreach (var handler in handlers)
+            await Assert.ThrowsAsync<OperationCanceledException>(() => handler.ExecuteAsync(
+                new WorkflowAction { Type = handler.ActionType },
+                new ActionExecutionContext { Z21 = new Mock<IZ21>(MockBehavior.Strict).Object }, cancellation.Token)).ConfigureAwait(false);
+        adapter.VerifyNoOtherCalls();
+    }
+
+    [Test]
     public async Task ChangeJourneyStopHandler_MovesToNextStop()
     {
         var first = new Station { Name = "Porta Westfalica" };

@@ -142,7 +142,8 @@ are the immutable boundary exposed to UI consumers.
 - `WorkflowValidator` and `WorkflowEffectPlanner`
 - `WorkflowExecutionCoordinator` (FIFO execution per journey)
 - `WorkflowTraceStore` (bounded in-memory lifecycle projection)
-- `ActionExecutor` and typed action handlers (live effects only)
+- `ActionExecutor` and typed action handlers (shared validation/domain resolution)
+- `IWorkflowEffectAdapter` / `ProductionWorkflowEffectAdapter` (replaceable external effects; production owns environment probes and output)
 - `MasterDataStore` (shared cities/locomotives/multiplex master JSON, e.g. `data.json`)
 - `ActiveProjectContext` (runtime project activation inside `MobaRuntimeService`)
 - Runtime Snapshots (MobaRuntimeSnapshot, JourneyRuntimeSnapshot)
