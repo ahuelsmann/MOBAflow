@@ -2,8 +2,6 @@
 
 namespace Moba.SharedUI.Service;
 
-using Backend.Service.TrackPlan;
-
 using Domain;
 
 using System.Text.Json;

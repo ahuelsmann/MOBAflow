@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Backend.Service.TrackPlan;
+namespace Moba.TrackPlan.Editor;
 
 /// <summary>Bounded, framework-independent snapshot history for editor state.</summary>
 public sealed class UndoRedoService<T>
