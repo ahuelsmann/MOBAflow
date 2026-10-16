@@ -13,6 +13,57 @@ using Moq;
 public sealed class WorkflowExecutionCoordinatorTests
 {
     [Test]
+    public async Task SameSourceWaitsForPredecessorAndBuildsContextAtExecutionWhileAnotherSourceRuns()
+    {
+        var service = new Mock<IWorkflowService>();
+        var firstEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstRequest = CreateRequest();
+        service.Setup(value => value.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns<WorkflowExecutionRequest, CancellationToken>(async (request, _) =>
+            {
+                if (request == firstRequest)
+                {
+                    firstEntered.TrySetResult();
+                    await releaseFirst.Task.ConfigureAwait(false);
+                }
+                return Succeeded(request);
+            });
+        using var coordinator = new WorkflowExecutionCoordinator(service.Object, TimeProvider.System);
+        var first = coordinator.EnqueueAsync(new QueuedWorkflowExecution
+        {
+            SourceKey = "journey:1", OwnerId = Guid.NewGuid(), WorkflowId = firstRequest.Workflow.Id,
+            RequestFactory = () => firstRequest
+        });
+        await firstEntered.Task.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+        var contextBuilt = false;
+        var state = "before";
+        string? observedState = null;
+        var laterRequest = CreateRequest();
+        var later = coordinator.EnqueueAsync(new QueuedWorkflowExecution
+        {
+            SourceKey = "journey:1", OwnerId = Guid.NewGuid(), WorkflowId = laterRequest.Workflow.Id,
+            RequestFactory = () => { contextBuilt = true; observedState = state; return laterRequest; }
+        });
+        try
+        {
+            var other = await coordinator.EnqueueAsync(CreateQueued("journey:2")).WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(other.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
+                Assert.That(contextBuilt, Is.False);
+            }
+            state = "after";
+        }
+        finally
+        {
+            releaseFirst.TrySetResult();
+        }
+        await Task.WhenAll(first, later).WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+        Assert.That(observedState, Is.EqualTo("after"));
+    }
+
+    [Test]
     public async Task CancelOwner_CancelsDelayedExecutionWithoutAffectingAnotherOwner()
     {
         var service = new Mock<IWorkflowService>();
