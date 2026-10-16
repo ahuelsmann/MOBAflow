@@ -121,19 +121,20 @@ public sealed partial class MainWindowViewModel
     private void ApplyDiagnosticFilter()
     {
         VisibleProjectDiagnostics.Clear();
-        foreach (var diagnostic in ProjectDiagnostics.Where(IsDiagnosticVisible))
+        foreach (var diagnostic in ProjectDiagnostics.Where(diagnostic =>
+                     IsDiagnosticVisible(diagnostic, ShowDiagnosticErrors, ShowDiagnosticWarnings, ShowDiagnosticInformation)))
             VisibleProjectDiagnostics.Add(diagnostic);
     }
 
-    private bool IsDiagnosticVisible(ProjectDiagnostic diagnostic)
+    private static bool IsDiagnosticVisible(ProjectDiagnostic diagnostic, bool showErrors, bool showWarnings, bool showInformation)
     {
         if (diagnostic.Coverage?.State == Backend.Interface.LocomotiveTrainCoverageState.Unknown)
             return true;
         return diagnostic.Severity switch
         {
-            ProjectDiagnosticSeverity.Error => ShowDiagnosticErrors,
-            ProjectDiagnosticSeverity.Warning => ShowDiagnosticWarnings,
-            ProjectDiagnosticSeverity.Information => ShowDiagnosticInformation,
+            ProjectDiagnosticSeverity.Error => showErrors,
+            ProjectDiagnosticSeverity.Warning => showWarnings,
+            ProjectDiagnosticSeverity.Information => showInformation,
             _ => true
         };
     }
