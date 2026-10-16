@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/313
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: Planned; implementation starts with slice 1 after this plan is integrated
+**Status**: Active; slice 1 in #315 and slice 2 in #317 (both in review); slice 3 follows
 
 ## Purpose and scope
 
@@ -34,9 +34,12 @@ Consumers by role: `SolutionSession` (solution files); `LocomotivesPageViewModel
 
 - **Windows sound player in the host.** MOBAflow is the only host that plays WAV files; a separate
   `Sound.Windows` project would add a project for one class. MOBAsmart keeps `NullSoundPlayer`.
-- **Role classes share the picker window.** `FilePickerService` owns the window handle (`SetWindowId`);
-  `SolutionFileService` uses `IFilePickerService` for its open/save dialogs instead of duplicating picker code;
-  `PhotoStorageService` keeps the `PhotoPathHelper` containment from RF-15.
+- **Role classes share the main window.** A host-internal `WinUiWindowContext` holds the window id and XAML
+  root; the main window sets it once. `FilePickerService` and `SolutionFileService` read it, so the solution
+  dialogs (suggested file name, unsaved-changes prompt) move unchanged instead of being rebuilt on
+  `IFilePickerService`. `PhotoStorageService` keeps the `PhotoPathHelper` containment from RF-15.
+- **Null objects per role.** `NullSolutionIoService` (`CanPersist` is false) and `NullFilePickerService`
+  replace `NullIoService`; photo storage has no null object because only the desktop pages use it.
 - **No aggregate.** Each role interface is registered once; constructors request only the roles they use.
 
 ## Independently reviewable delivery slices
