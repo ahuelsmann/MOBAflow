@@ -45,6 +45,13 @@
                     </Button>
                     <Button
                         Padding="4"
+                        AutomationProperties.Name="Show usage for the selected locomotive"
+                        Command="{x:Bind ViewModel.ShowUsageCommand}"
+                        ToolTipService.ToolTip="Show locomotive usage in train consists">
+                        <FontIcon FontSize="14" Glyph="&#xE721;" />
+                    </Button>
+                    <Button
+                        Padding="4"
                         Command="{x:Bind ViewModel.DeleteLocomotiveCommand}"
                         ToolTipService.ToolTip="Delete the selected locomotive">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
@@ -78,6 +85,7 @@
                                         <FontIcon Glyph="&#xE710;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.ShowUsageCommand}" Text="Show usage" />
                                 <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteLocomotiveCommand}" Text="Delete Locomotive">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE738;" />
