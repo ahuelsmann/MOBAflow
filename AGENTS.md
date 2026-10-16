@@ -30,7 +30,8 @@ on Windows and Linux.
   Claude CLI review, correction of confirmed findings, Ready and squash merge after all current gates pass.
   Art Director and Issue Master organize these steps without repeated technical approvals. An explicit narrower
   assignment, pause, no-merge instruction or excluded follow-up remains binding; do not infer new product work.
-- Art Director owns product decisions and delivery; Issue Master owns the single serial final integration queue.
+- Art Director owns routine product decisions inside the assigned scope and its delivery; important product goals,
+  priorities and material UX decisions remain with the user. Issue Master owns the single serial final integration queue.
   They hand work over directly and may exchange task-related messages with their assigned team and Claude CLI
   in both directions. The user does not relay messages, inspect code or administer PRs.
 - Follow [master coordination](.github/instructions/master-coordination.instructions.md) for ownership,

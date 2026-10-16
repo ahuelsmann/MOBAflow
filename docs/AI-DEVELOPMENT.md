@@ -8,10 +8,11 @@ technical guidance by task. Use [Spec Kit](SPEC-KIT.md) for cross-cutting featur
 
 The user discusses product goals and results with Art Director and Issue Master. An implementation assignment
 includes delivery through merge under the [standing master mandate](../.github/instructions/master-coordination.instructions.md),
-unless explicitly limited. Art Director owns product/implementation and hands work directly to Issue Master,
-the sole final integration coordinator. Technical transitions, confirmed fixes and ordinary PR administration
-do not need repeated human approval. Important product choices, scope/architecture changes, new external
-commitments and explicitly required practical permissions or acceptance still go to the user.
+unless explicitly limited. Art Director owns routine product decisions inside the assigned scope and its
+implementation, and hands work directly to Issue Master, the sole final integration coordinator. Technical
+transitions, confirmed fixes and ordinary PR administration do not need repeated human approval. Important
+product goals, priorities and material UX decisions, scope/architecture changes, new external commitments and
+explicitly required practical permissions or acceptance still go to the user.
 
 PR reviews run in fresh independent Claude CLI sessions. Both masters communicate directly with Claude in both
 directions; coordination sessions do not count as review. Assigned work authorizes necessary team handovers,
