@@ -7,7 +7,7 @@ using Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR.Client;
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 
 using System.Net.Http.Json;
 using System.Text;

@@ -2,7 +2,7 @@
 
 namespace Moba.Test.MOBApi;
 
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.MOBApi.Service;
 

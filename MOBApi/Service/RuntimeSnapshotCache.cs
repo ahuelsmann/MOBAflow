@@ -2,7 +2,7 @@
 
 namespace Moba.MOBApi.Service;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 public sealed record RuntimeSnapshotCacheEntry(Guid ProjectId, string Json, DateTimeOffset UpdatedAt, bool IsConnected);
 

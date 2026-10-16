@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
-using Common.Discovery;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 
 using SharedUI.Interface;
+using Contracts.Discovery;
 
 /// <summary>
 /// Real-time SignalR Client for photo notifications.

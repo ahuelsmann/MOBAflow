@@ -2,6 +2,7 @@
 namespace Moba.MOBApi.Service;
 
 using Moba.Common.Discovery;
+using Moba.Contracts.Discovery;
 
 /// <summary>
 /// UDP Discovery Service for MOBAflow MOBApi.
