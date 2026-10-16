@@ -29,8 +29,10 @@ Counted on main `71830101`; "tests" counts construction sites in `Test/`.
 | `Common/Discovery/LanIpv4AddressHelper.AugmentAddresses` | mutable static `Action` set by `MOBAsmart/Service/LanIpv4AddressHelperAndroidBootstrap.cs` | - | injected `ILocalAddressSource` with the network-interface implementation in `Common` and an Android decorator in MOBAsmart; `Z21DiscoveryService` and `RestApiDiscoveryService` receive it |
 | `MOBAflow/View/SegmentPlanPathBuilder.ScaleMmToPx` | mutable static set by `TrackPlanPage` to the constant 1.0 | - | scale passed by the caller (or one shared constant); no setter |
 | `SharedUI/ViewModel/WorkflowLibraryViewModel` | `?? new NullDialogService()`, `?? new WorkflowValidator()`; `WorkflowLibraryRuntimeServices.ExecutionContext` | 19 | required dialog service and `IWorkflowValidator`; the test-run path receives a narrow workflow-run service instead of the runtime context |
-| `SolutionViewModel`, `ProjectViewModel`, `WorkflowViewModel`, `JourneyViewModel`, `AudioViewModel`, `CommandViewModel` | optional dispatcher, `IIoService`, sound player, `ILoggerFactory`/logger(s) | 48+ | the creating session passes one required services record (a new type this plan introduces; RF-29 only reserves the name `SolutionViewModelServices`); tests build ViewModels through one helper |
+| `SolutionViewModel`, `ProjectViewModel`, `WorkflowViewModel`, `JourneyViewModel`, `AudioViewModel`, `CommandViewModel` | optional dispatcher, `IIoService`, sound player, `ILoggerFactory`/logger(s) | 48+ | the creating session passes one required services record (`SolutionViewModelServices`, a new type that slice 4 of this plan creates; RF-25 does not depend on RF-29 for it); tests build ViewModels through one helper |
 | `SolutionSession` | optional `ISoundPlayer` and `ILoggerFactory` parameters, forwarded to the project ViewModels | many | both required, or replaced by the services record above; hosts register it |
+| `ProductionWorkflowEffectAdapter` | optional announcement service, file system (`?? SystemFileSystem.Instance`) and logger | few | all required; DI supplies the system file system |
+| `SolutionRemoteLoader`, `MobileRuntimeProjection`, `MobiStartupService` | optional `IMobileRuntimeCoordinator`, `IUiDispatcher`, `IMobileSolutionStore`, `IProjectContext`, `ISolutionRemoteLoader` | few | required; MOBAsmart registers null objects where it has no implementation |
 | `TrainControlSettingsStore`, `LocomotiveRoster`, `FeedbackCounterEngine`, `PhotosController` | optional logger, project context, time provider, hub context | few | required; `TimeProvider.System` registered by DI |
 
 Kept as is: value options with documented defaults (`RecorderOptions`, `RecordingArtifactImportLimits`,
@@ -59,15 +61,15 @@ Kept as is: value options with documented defaults (`RecorderOptions`, `Recordin
 ## Independently reviewable delivery slices
 
 1. **Workflow execution and validation (Backend).** Action handlers, `WorkflowService`, `ActionExecutor`,
-   `AnnouncementService`, `WorkflowValidator`, `ProjectValidator`; DI registrations in `MobaBackendServiceCollectionExtensions`.
+   `AnnouncementService`, `ProductionWorkflowEffectAdapter`, `WorkflowValidator`, `ProjectValidator`; DI registrations in `MobaBackendServiceCollectionExtensions`.
 2. **Runtime composition (Backend).** `MobaRuntimeService` with one constructor, `JourneyManager` dependencies,
    `JourneyManagerFactory`, `PlatformManager`, `ProjectRuntimeFactory`; ownership tests for the counter service.
 3. **Static hooks.** `ILocalAddressSource` replaces `LanIpv4AddressHelper.AugmentAddresses` (MOBAsmart registers
    the Android decorator); `SegmentPlanPathBuilder.ScaleMmToPx` loses its setter.
 4. **SharedUI ViewModels.** Starts after RF-24 slice 3b (#293), which changes `MainWindowViewModel` and the shared
    test helpers. `WorkflowLibraryViewModel`, the model-wrapper ViewModels, `SolutionSession`, train-control and
-   counter services, `PhotosController`.
-5. **DI validation and completion.** WinUI and MAUI container validators resolve every changed registration;
+   counter services, `PhotosController`, `SolutionRemoteLoader`, `MobileRuntimeProjection`, `MobiStartupService`.
+5. **DI validation and completion.** WinUI and MAUI container validators resolve every changed registration (including the executable Android DI test lane described under validation);
    update `docs/ARCHITECTURE.md` where it describes construction, replace the RF-25 anchor in the umbrella plan
    with a delivery note and remove this plan.
 
@@ -76,7 +78,10 @@ Kept as is: value options with documented defaults (`RecorderOptions`, `Recordin
 Every slice: portable and Windows test suites, the cross-platform, Windows and Android analyzer gates, the
 affected host builds and the DI container validation tests (`MobaWinUiServiceCollectionExtensionsTests`,
 `MobaBackendServiceCollectionExtensionsTests`, and `MobaMauiServiceCollectionExtensionsTests` with
-`MobiDiContainerValidator` in the Android test lane). Slice 2 additionally keeps
+`MobiDiContainerValidator`). The MAUI fixture is excluded from the default test graph (`IncludeMobaSmartTests=false`,
+`SKIP_ANDROID_TESTS`) and no workflow runs it today. Slice 5 must therefore either add a CI job that builds `Test` with
+`IncludeMobaSmartTests=true` or move the validator contract into a portable boundary, and must show that the fixture
+is discovered and executed; until then slices that change MAUI registrations verify them with a MOBAsmart build. Slice 2 additionally keeps
 the runtime ownership and per-project isolation tests unchanged; slice 3 covers the Android address source with a
 portable test of the decorator contract. No app launch, device deployment or hardware action by the agent.
 
