@@ -173,6 +173,12 @@ skipped steps and a skipped job count as successful.
 `scripts/Get-QualityChangeScope.Tests.ps1` checks these rules, including every
 source and copied fixture input of the mutation project.
 
+The repository consistency job also checks source-derived package and mutation
+documentation facts and runs their offline boundary tests. A separate
+[documentation consistency workflow](DOCUMENTATION-CONSISTENCY.md) supports
+semantic assessment and documentation commits in the existing PR. Its AI portion
+is initially inactive and requires explicit API/App configuration and live acceptance.
+
 The repository consistency job also lints every workflow with a pinned,
 checksum-verified actionlint release and checks internal documentation links
 and images with `scripts/Test-DocumentationLinks.ps1`. External links are
@@ -228,15 +234,18 @@ configuration. The registry guard evaluates each configured host's actual MSBuil
 and production reference; registration alone is not enough. It rejects missing active fixtures and
 test-case filters. Planned lanes remain explicitly outside the mutation guarantee.
 
-| Active lane | Test project | Stryker configuration | Break threshold | CI selection / runner |
+<!-- documentation-facts:mutation:start -->
+| Active lane | Production project | Test project | Stryker configuration | Break threshold |
 | --- | --- | --- | --- | --- |
-| Domain | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% | Domain/test/fixture or mutation/build inputs; Linux |
-| Common | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% | Every code-relevant PR; Windows |
-| Speech.Base | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% | Every code-relevant PR; Linux |
+| domain | `Domain/Domain.csproj` | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% |
+| common | `Common/Common.csproj` | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% |
+| speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% |
+<!-- documentation-facts:mutation:end -->
 
-All three also run on main pushes and manual Quality runs. Common uses Windows because
-its existing fixtures include Windows-specific photo paths. Its concurrency is
-limited to four test processes. The Common lane includes selected Backend test
+Domain runs when its inputs change; Common and Speech.Base run for every code-relevant PR.
+All three also run on main pushes and manual Quality runs. Domain and Speech.Base run on
+Linux. Common uses Windows because its existing fixtures include Windows-specific
+photo paths. Its concurrency is limited to four test processes. The Common lane includes selected Backend test
 fixtures for Common contracts and `SpeechSettingsTests.cs`; it does not mutate Backend production code.
 Speech.Base mutates the entire assembly, including the audio cache, shared synthesis and WAV handling.
 Its four portable Speech fixtures use fake providers/players and four Stryker processes. Windows-only
