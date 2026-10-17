@@ -34,7 +34,7 @@ unrelated features or overrides of stops. Tool permissions and existing quality/
 Every integration assesses architecture/developer documentation and the versioned user guides in `docs/wiki/`.
 Record the pages corrected or a concrete no-change reason in the handover and completion evidence. Reassess after
 behavior-changing review fixes and confirm against actual integrated main. Correct drift within the assigned
-scope; coordinate any remaining work through the same Project Manager queue and state the limitation. Do not
+scope; coordinate any remaining work through the same Chief Project Manager queue and state the limitation. Do not
 invent text changes or infer new user behavior from a refactoring. This does not authorize separate wiki publication.
 
 Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of

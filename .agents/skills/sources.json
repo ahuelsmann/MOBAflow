@@ -107,7 +107,7 @@
       "source": "https://github.com/mattpocock/skills/tree/c55ee46073ed923f86ce59a5eb3b6d895095d1b7/skills/engineering/code-review",
       "revision": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
       "license": ".agents/skills/mobaflow-code-review/LICENSE",
-      "localChanges": "Adapted for MOBAflow instructions, scoped validation, native tools and explicit launch/hardware authorization; removed required delegation/foreign bootstrap and Bash loop dependency; routes PR reviews after Project Manager Ready through the existing Claude plan with independent Opus 5.5-or-higher review, separate fixes and re-review, at most five centrally allocated tasks, and documented developer/user-wiki impact."
+      "localChanges": "Adapted for MOBAflow instructions, scoped validation, native tools and explicit launch/hardware authorization; removed required delegation/foreign bootstrap and Bash loop dependency; routes PR reviews after Chief Project Manager sets Ready through the existing Claude plan with independent Opus 5.5-or-higher review, separate fixes and re-review, at most five centrally allocated tasks, and documented developer/user-wiki impact."
     },
     {
       "name": "mobaflow-diagnosing-bugs",

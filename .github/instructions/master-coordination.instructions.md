@@ -69,7 +69,7 @@ or use a no-resume instruction to justify a competing writer.
   not another human approval; required dependencies still apply.
 - Preserve running work, ownership, results and restrictions. If execution overlaps or ownership is unclear,
   coordinate the next safe stopping point with the owner and Chief Project Manager; do not blindly interrupt,
-  restart or duplicate processes or cancel CI to free the slot. Resume only after the central reconciliation.
+  restart or duplicate processes or cancel CI to free an allocation. Resume only after the central reconciliation.
 - Technical Director coordinates resources and responsibilities through Chief Project Manager's queue without
   creating another queue, lock, permit or scheduling mechanism. Only the responsible owner changes existing
   operational state. Allocated capacity does not expand scope or override explicit pauses or acceptance gates.
@@ -152,7 +152,7 @@ The full path also works when the shell's PATH predates installation. On another
 - Use only serial synchronous request/response. Prefix messages with `[Von: Codex]` or `[Von: Claude]` and identify
   the originating master in the message. Read
   `response` and answer `An Codex:` / `An Claude:` questions in the same conversation. Coordinate the active caller
-  with Chief Project Manager, the other masters and Claude before sending, under the same global execution
+  with Chief Project Manager, the other masters and Claude before sending, under the same central execution
   allocation. Verify the target is idle, wait for actual process completion, then release the conversation. The Head
   starts no active callbacks, `claude`/`codex` calls, file inboxes or timers.
 - Keep `--mode plan` and real tool permissions narrow. Do not combine it with `--disable-slash-commands`, use
@@ -187,7 +187,8 @@ automatic merges. The existing Claude plan alone performs the subsequent review/
 
 Immediately before merge, verify live head/base, mergeability, current required checks, current-commit Sonar
 success and zero OPEN/CONFIRMED issues, independent Claude review, threads, real GitHub approval requirements,
-applicable repository rules and required manual acceptance. Permitted skips are not executed tests; a private
+applicable repository rules, required manual acceptance and any active stop or no-merge restriction. Permitted
+skips are not executed tests; a private
 Claude review cannot manufacture a GitHub approval. Squash against the reviewed head without direct `main`
 pushes or protection bypass. A changed comparison requires refreshed checks, documentation assessment and fresh
 independent review. Chief Project Manager independently verifies actual merged status, merge commit and resulting
