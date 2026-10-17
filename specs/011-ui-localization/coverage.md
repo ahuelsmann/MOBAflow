@@ -55,7 +55,7 @@ Parallel local build attempts had output-lock/debug-symbol collisions; serial bu
 
 ## Claude review corrections (2026-10-15)
 
-- P1: The Windows settings writer now propagates a logged write failure. The existing language
+- P1: The Windows settings writer now propagates write failures to its callers. The existing language
   ViewModel can therefore restore the previous in-memory preference and show its localized retry
   message instead of reporting success. Existing automatic-save callers already observe failures.
 - Two new Windows integration cases use the actual SettingsService with an exclusively write-blocked
@@ -71,8 +71,32 @@ Parallel local build attempts had output-lock/debug-symbol collisions; serial bu
   The resource guard rejects comment references to absent arguments; four added isolated cases cover
   missing context, copied/unmatched argument notes and valid/escaped context references (18 total).
 
-Consult the PR description for fresh PR-head CI/Sonar results and the follow-up Claude CLI review.
+Consult the PR description for fresh PR-head CI/Sonar results and the central review handover.
 The earlier publication snapshot below remains historical evidence, not the result of these fixes.
+
+## Resumed validation (2026-10-17)
+
+The previous three uncommitted fixes were preserved unchanged while fast-forwarding to the published
+task branch. The full local rebuild/test input was `81009534c43ac201d0d7fb67df7a78744d6ffe8b`
+plus these fixes; the subsequent remote synchronization `edc866467407a8853c0577e8ba81fa9a8ac86667`
+adds only the RF-25 plan and does not change the validated source.
+
+- Normal Windows Release test-graph rebuild, including the desktop host and API dependency, passed.
+  The complete suite passed 2995 tests with no failures. Both actual file-lock/read-only regression
+  cases passed; the explicit `SustainedRefresh_MeetsAcceptanceThresholds` case was not executed.
+- The redundant log-and-rethrow catch is removed (S2139). The test's file lock has a deterministic
+  `using` lifetime (CA2000); the original IO/access-denied exceptions and retry behavior are preserved.
+- Complete, worktree-source-verified Windows SARIF matches 2453 diagnostics in 945 groups. The existing
+  baseline changes only SettingsService CA1031 from 3 to 2 and CA1848 from 10 to 9. No diagnostic is
+  added, suppressed or excluded; the earlier incomplete incremental report was not used.
+- Resource validation still passes 109 keys, two languages and 52 WinUI targets; all 18 isolated guard
+  cases pass. English/German values and generated projections are unchanged.
+
+Delivery remains a draft with no Ready/auto-merge/merge or app/hardware launch. The assigned central
+owner coordinates the later review handover; this resumed correction dispatches no additional Claude
+review. Manual restart, themes, scaling, keyboard/screenreader and Android/device acceptance remain
+open. Fresh exact-head CI/Sonar evidence is kept in the PR description rather than attributed to an
+earlier commit.
 
 ## Acceptance and publication evidence
 

@@ -32,13 +32,11 @@ internal sealed class SettingsServiceTests
             var viewModel = new LanguageSettingsViewModel(settings, service, text);
             viewModel.SelectedChoice = viewModel.Choices.Single(choice => choice.Value == UiLanguagePreference.English);
 
-            FileStream? lockedFile = null;
             try
             {
                 if (readOnly)
                     File.SetAttributes(path, FileAttributes.ReadOnly);
-                else
-                    lockedFile = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+                using var lockedFile = readOnly ? null : File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
 
                 await Assert.ThrowsAsync(readOnly ? typeof(UnauthorizedAccessException) : typeof(IOException),
                     () => service.SaveSettingsAsync(settings)).ConfigureAwait(false);
@@ -46,7 +44,6 @@ internal sealed class SettingsServiceTests
             }
             finally
             {
-                if (lockedFile is not null) await lockedFile.DisposeAsync().ConfigureAwait(false);
                 File.SetAttributes(path, FileAttributes.Normal);
             }
 

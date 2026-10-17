@@ -217,11 +217,6 @@ internal class SettingsService : ISettingsService
             await File.WriteAllTextAsync(_settingsFilePath, json);
             _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to save settings");
-            throw;
-        }
         finally
         {
             _saveLock.Release();
