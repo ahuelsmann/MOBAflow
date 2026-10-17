@@ -54,16 +54,18 @@
 
             <controls:CollapsibleColumnCollection.PanelContent>
                 <ListView
-                    AllowDrop="True"
-                    DragOver="ProjectListView_DragOver"
-                    Drop="ProjectListView_Drop"
                     IsItemClickEnabled="True"
                     ItemsSource="{x:Bind ViewModel.SolutionViewModel.Projects, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
                     SelectionMode="Single">
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="viewmodel:ProjectViewModel">
-                            <Grid Padding="6">
+                            <Grid
+                                Padding="6"
+                                AllowDrop="True"
+                                Background="Transparent"
+                                DragOver="ProjectCard_DragOver"
+                                Drop="ProjectCard_Drop">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
