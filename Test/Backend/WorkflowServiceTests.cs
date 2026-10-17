@@ -2,6 +2,7 @@
 
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Domain;
@@ -23,7 +24,7 @@ internal sealed class WorkflowServiceTests
                 It.IsAny<ActionExecutionContext>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        var service = new WorkflowService(executor.Object);
+        var service = TestWorkflowServices.Workflow(executor.Object);
         var workflow = CreateWorkflow();
         var project = new Project { Workflows = [workflow] };
 
@@ -41,7 +42,7 @@ internal sealed class WorkflowServiceTests
     public async Task ExecuteAsync_EmptyList_ThrowsWithoutCallingActionExecutor()
     {
         var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
-        var service = new WorkflowService(executor.Object);
+        var service = TestWorkflowServices.Workflow(executor.Object);
         var workflow = new Workflow();
         var project = new Project { Workflows = [workflow] };
 
@@ -55,7 +56,7 @@ internal sealed class WorkflowServiceTests
     public async Task ExecuteAsync_PreCancelledToken_ThrowsCancellationWithoutCallingActionExecutor()
     {
         var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
-        var service = new WorkflowService(executor.Object);
+        var service = TestWorkflowServices.Workflow(executor.Object);
         var workflow = CreateWorkflow();
         var project = new Project { Workflows = [workflow] };
         using var cancellation = new CancellationTokenSource();
