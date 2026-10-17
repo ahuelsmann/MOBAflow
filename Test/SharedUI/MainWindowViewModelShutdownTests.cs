@@ -177,7 +177,7 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
                 ? TestSolutionSessions.Create(solution ?? new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object)
                 : new SolutionSession(
                     solution ?? new Solution(),
-                    new NullIoService(),
+                    new NullSolutionIoService(),
                     uiDispatcherMock.Object,
                     host.Object,
                     NullLogger<SolutionSession>.Instance);

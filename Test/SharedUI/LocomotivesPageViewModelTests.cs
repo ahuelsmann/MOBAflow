@@ -20,7 +20,7 @@ using System.Diagnostics.CodeAnalysis;
 internal sealed partial class LocomotivesPageViewModelTests : IDisposable
 {
     private SolutionSession _session = null!;
-    private Mock<IIoService> _io = null!;
+    private Mock<ISolutionIoService> _io = null!;
     private Mock<ISettingsService> _persistence = null!;
     private AppSettings _settings = null!;
     private LocomotivesPageViewModel _page = null!;
@@ -36,7 +36,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
             .Returns(Task.CompletedTask);
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        _io = new Mock<IIoService>();
+        _io = TestFileServices.CreateMock();
         _io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
         _session = TestSolutionSessions.Create(new Solution { Projects = [new Project()] }, dispatcher.Object, runtime.Object, _io.Object);
@@ -51,7 +51,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: _session);
         _explorer = new Mock<Action<string>>();
         _usage = TestRollingStockPages.CreateUsage(_session);
-        _page = new LocomotivesPageViewModel(_session, _io.Object, _persistence.Object,
+        _page = new LocomotivesPageViewModel(_session, TestFileServices.Photos(_io.Object), _persistence.Object,
             new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, _usage),
             NullLogger<LocomotivesPageViewModel>.Instance, _explorer.Object);
     }
@@ -178,11 +178,11 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     {
         _page.AddLocomotiveCommand.Execute(null);
         var locomotive = _page.SelectedLocomotive!;
-        _io.Setup(value => value.BrowseForPhotoAsync()).ReturnsAsync(path);
+        _io.As<IFilePickerService>().Setup(value => value.BrowseForPhotoAsync()).ReturnsAsync(path);
         _io.Invocations.Clear();
         await locomotive.BrowsePhotoCommand!.ExecuteAsync(null).ConfigureAwait(false);
         Assert.That(locomotive.PhotoPath, Is.Null);
-        _io.Verify(value => value.SavePhotoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>()), Times.Never);
+        _io.As<IPhotoStorageService>().Verify(value => value.SavePhotoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>()), Times.Never);
         _io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -192,8 +192,8 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         _page.AddLocomotiveCommand.Execute(null);
         var locomotive = _page.SelectedLocomotive!;
         var copy = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _io.Setup(value => value.BrowseForPhotoAsync()).ReturnsAsync("source.png");
-        _io.Setup(value => value.SavePhotoAsync("source.png", "locomotives", locomotive.Model.Id)).Returns(copy.Task);
+        _io.As<IFilePickerService>().Setup(value => value.BrowseForPhotoAsync()).ReturnsAsync("source.png");
+        _io.As<IPhotoStorageService>().Setup(value => value.SavePhotoAsync("source.png", "locomotives", locomotive.Model.Id)).Returns(copy.Task);
         var pending = locomotive.BrowsePhotoCommand!.ExecuteAsync(null);
         Assert.That(pending.IsCompleted, Is.False);
         _page.Dispose();
@@ -213,7 +213,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
             _page.AddLocomotiveCommand.Execute(null);
             var locomotive = _page.SelectedLocomotive!;
             locomotive.PhotoPath = "relative.png";
-            _io.Setup(value => value.GetPhotoFullPath("relative.png")).Returns(temporaryPhoto);
+            _io.As<IPhotoStorageService>().Setup(value => value.GetPhotoFullPath("relative.png")).Returns(temporaryPhoto);
             locomotive.ShowInExplorerCommand!.Execute(null);
             _explorer.Verify(value => value(temporaryPhoto), Times.Once);
         }

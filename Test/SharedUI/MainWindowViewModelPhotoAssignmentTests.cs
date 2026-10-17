@@ -300,9 +300,9 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         var project = new Project();
         var savedJson = string.Empty;
         var copy = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var io = new Mock<IIoService>();
-        io.Setup(value => value.BrowseForPhotoAsync()).ReturnsAsync("source.png");
-        io.Setup(value => value.SavePhotoAsync("source.png", It.IsAny<string>(), It.IsAny<Guid>()))
+        var io = TestFileServices.CreateMock();
+        io.As<IFilePickerService>().Setup(value => value.BrowseForPhotoAsync()).ReturnsAsync("source.png");
+        io.As<IPhotoStorageService>().Setup(value => value.SavePhotoAsync("source.png", It.IsAny<string>(), It.IsAny<Guid>()))
             .Returns(copy.Task);
         var viewModel = CreateViewModel(project, json => savedJson = json, io);
         AddCommand(viewModel, kind).Execute(null);
@@ -379,7 +379,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         }
     }
 
-    private MainWindowViewModel CreateViewModel(Project project, Action<string> save, Mock<IIoService>? io = null)
+    private MainWindowViewModel CreateViewModel(Project project, Action<string> save, Mock<ISolutionIoService>? io = null)
     {
         var runtime = new Mock<IMobaRuntime>();
         runtime.SetupGet(value => value.Current).Returns(MobaRuntimeSnapshot.Empty);
@@ -388,7 +388,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             .Returns(Task.CompletedTask);
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        io ??= new Mock<IIoService>();
+        io ??= TestFileServices.CreateMock();
         io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
             .Callback((Solution solution, string _) => save(JsonSerializer.Serialize(solution, JsonOptions.Default)))
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
