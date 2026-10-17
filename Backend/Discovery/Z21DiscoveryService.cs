@@ -149,8 +149,7 @@ public sealed class Z21DiscoveryService(ILocalIpv4AddressSource localAddresses) 
 
     private async Task<string?> ScanSubnetsAsync(int port, CancellationToken cancellationToken)
     {
-        var localAddresses = _localAddresses.GetCandidateLocalIpv4Addresses();
-        var candidates = SubnetCandidateBuilder.BuildCandidates(localAddresses);
+        var candidates = SubnetCandidateBuilder.BuildCandidates(_localAddresses.GetCandidateLocalIpv4Addresses());
         if (candidates.Count == 0)
         {
             return null;
