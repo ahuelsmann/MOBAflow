@@ -7,7 +7,7 @@ using Path = System.IO.Path;
 
 /// <summary>
 /// Centralized photo path handling to avoid regressions (e.g. Path.DirectorySeparator vs Path.DirectorySeparatorChar).
-/// Used by SharedUI, WinUI IoService, and RestApi for consistent resolution of relative photo paths.
+/// Used by SharedUI, the WinUI file services, and RestApi for consistent resolution of relative photo paths.
 /// </summary>
 public static class PhotoPathHelper
 {

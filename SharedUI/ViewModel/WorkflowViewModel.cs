@@ -24,13 +24,13 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     private readonly WorkflowActionViewModelFactory _actionViewModelFactory;
 
     /// <summary>Creates authoritative action wrappers in persisted list order.</summary>
-    public WorkflowViewModel(Workflow model, IIoService? ioService = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
+    public WorkflowViewModel(Workflow model, IFilePickerService? filePicker = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(model);
         _model = model;
         _model.Actions ??= [];
         _actionViewModelFactory = new WorkflowActionViewModelFactory(
-            ioService ?? new NullIoService(), soundPlayer, loggerFactory?.CreateLogger<CommandViewModel>());
+            filePicker ?? new NullFilePickerService(), soundPlayer, loggerFactory?.CreateLogger<CommandViewModel>());
         Actions = [];
         foreach (var action in model.Actions)
         {

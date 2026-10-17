@@ -7,6 +7,7 @@ namespace Moba.Test.TestBase;
 using Moba.SharedUI.Interface;
 
 using Moq;
+using Moba.Test.Helpers;
 
 /// <summary>
 /// Base class for ViewModel tests that provides common mock dependencies.
@@ -25,9 +26,9 @@ internal abstract class ViewModelTestBase
     protected Mock<IWorkflowService> WorkflowServiceMock { get; private set; } = null!;
 
     /// <summary>
-    /// Mock for IIoService interface (file operations)
+    /// Mock for the file roles (solution files, pickers, photo storage)
     /// </summary>
-    protected Mock<IIoService> IoServiceMock { get; private set; } = null!;
+    protected Mock<ISolutionIoService> IoServiceMock { get; private set; } = null!;
 
     /// <summary>
     /// Mock for IUiDispatcher interface (UI thread dispatching)
@@ -43,7 +44,7 @@ internal abstract class ViewModelTestBase
     {
         Z21Mock = new Mock<IZ21>();
         WorkflowServiceMock = new Mock<IWorkflowService>();
-        IoServiceMock = new Mock<IIoService>();
+        IoServiceMock = TestFileServices.CreateMock();
         UiDispatcherMock = new Mock<IUiDispatcher>();
 
         // Configure UiDispatcher to execute actions immediately (synchronous for tests)
@@ -57,7 +58,7 @@ internal abstract class ViewModelTestBase
             .Setup(d => d.InvokeOnUiLowPriority(It.IsAny<Action>()))
             .Callback<Action>(action => action());
 
-        // Configure default IoService behavior (returns empty solution)
+        // Configure default solution file behavior (returns empty solution)
         IoServiceMock
             .Setup(s => s.LoadAsync())
             .ReturnsAsync((new Solution(), null, null));

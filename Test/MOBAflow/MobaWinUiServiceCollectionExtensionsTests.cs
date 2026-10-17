@@ -87,9 +87,10 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
 
         Assert.Multiple(() =>
         {
-            var ioService = provider.GetRequiredService<IIoService>();
-            Assert.That(ioService, Is.Not.Null);
-            Assert.That(provider.GetRequiredService<ISolutionIoService>(), Is.SameAs(ioService));
+            Assert.That(provider.GetRequiredService<ISolutionIoService>().CanPersist, Is.True);
+            Assert.That(provider.GetRequiredService<IFilePickerService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IPhotoStorageService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<PhotoAssignmentService>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<IRecordingFileService>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.InstanceOf<RecordingRuntimeCommandGateway>());
             Assert.That(provider.GetRequiredService<LocalRuntimeCommandGateway>(), Is.Not.Null);

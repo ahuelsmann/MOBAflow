@@ -262,7 +262,7 @@ public sealed class JourneyCounterProjectionTests
         }
 
         public Mock<IMobaRuntime> Runtime { get; } = new();
-        public Mock<IIoService> Io { get; } = new();
+        public Mock<ISolutionIoService> Io { get; } = TestFileServices.CreateMock();
         public Mock<IRuntimeCommandGateway> Gateway { get; } = new();
         public MainWindowViewModel ViewModel { get; }
         public AppSettings Settings { get; } = new();
