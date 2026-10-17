@@ -155,7 +155,7 @@ dependencies.
 | RF-24 | [#219](https://github.com/ahuelsmann/MOBAflow/issues/219) | `MainWindowViewModel` is a shell; each page area has its own focused ViewModel. |
 | RF-25 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Constructors declare real dependencies; no hidden optional services, fallbacks or mutable static hooks. |
 | RF-26 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | `Common` is split by responsibility: shared contracts, host-owned UI settings and presentation helpers. |
-| RF-27 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Domain classes own the rules and state transitions that need only domain data. |
+| RF-27 | [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) | Domain classes own the rules and state transitions that need only domain data. |
 | RF-28 | [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
 | RF-29 | [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) | Platform-specific sound and file services live in platform adapters with one role per class. |
 | RF-30 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
@@ -417,17 +417,9 @@ removed fields.
 
 ### RF-27: Move domain rules into the domain model
 
-Sequence:
-
-1. inventory rules in Backend services and ViewModels that need only domain
-   data, for example journey stop transitions, workflow structure validation
-   and address conflicts;
-2. move each rule into the owning domain class behind a characterization test;
-3. keep persistence, time and hardware effects out of `Domain`.
-
-Acceptance anchor: moved rules are tested at the domain level; services
-delegate to domain methods instead of duplicating the rule; the JSON format
-stays unchanged.
+The inventory, decisions and delivery slices now belong to
+[the RF-27 child plan](339-domain-rules.md), owned by
+[issue #339](https://github.com/ahuelsmann/MOBAflow/issues/339).
 
 ### RF-28: Consolidate the track-plan model
 
