@@ -104,6 +104,20 @@ conversion stays in the Windows host. Runtime projection of EventBus feedback,
 timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`.
 `Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs` protects these rules.
 
+### Platform adapter rule
+
+Shared projects hold only platform-neutral contracts; each host supplies one implementation per role.
+
+- **Sound:** `Sound` contains `ISoundPlayer` and `NullSoundPlayer` and has no Windows API or package. MOBAflow
+  plays WAV files through its internal `WindowsSoundPlayer`; MOBAsmart registers `NullSoundPlayer`.
+- **Files:** `SharedUI/Interface` defines one interface per file role: `ISolutionIoService` (solution
+  new/load/save, with `CanPersist`), `IFilePickerService` (open and save pickers) and `IPhotoStorageService`
+  (vehicle photos below the photo root). MOBAflow implements them in `SolutionFileService`, `FilePickerService`
+  and `PhotoStorageService`; the first two get the main window handle and XAML root from `WinUiWindowContext`.
+  Hosts without files use `NullSolutionIoService` and `NullFilePickerService`. Consumers request only the role
+  they use; there is no aggregate file interface. `PhotoAssignmentService` combines picking and storing for the
+  locomotive and wagon pages.
+
 ### 1. **Domain Layer** (`Domain/`)
 
 **Purpose:** Pure business logic, independent from UI or infrastructure.
