@@ -58,6 +58,11 @@
                     ItemsSource="{x:Bind ViewModel.SolutionViewModel.Projects, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
                     SelectionMode="Single">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="viewmodel:ProjectViewModel">
                             <Grid
