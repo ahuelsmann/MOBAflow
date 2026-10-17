@@ -4,7 +4,6 @@ namespace Moba.Test.Backend;
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
-using Moba.Common.Events;
 using Moba.Domain;
 
 using Moq;
