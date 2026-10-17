@@ -229,13 +229,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Backend/Manager/JourneyManager.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "Backend/Manager/PlatformManager.cs",
       "count": 1
     },
