@@ -24,6 +24,21 @@ MOBAflow can automatically reopen the last solution. Settings and solution data
 are separate: app preferences live in the local settings file, while projects,
 rolling stock, journeys and plans are stored in the solution JSON.
 
+## UI language
+
+In **Settings**, choose **System language**, **English** or **Deutsch** in the
+UI-language area, then **Save language**. A full app restart applies the saved
+choice; each device keeps its own preference. System selects German for a German
+OS UI language and English otherwise.
+
+**Reset to Defaults** returns the language picker to System, including an unsaved
+choice. If saving fails, the previous saved preference remains unchanged and the
+picker retains the attempted choice for an explicit retry. Speech language,
+voices and user-authored content stay independent of UI language.
+
+Navigation, language settings, Help and Info use the selected language. Other
+page bodies and existing Settings sections remain English for now.
+
 ## Projects, Z21 assignment and safe switching
 
 Each project represents one layout with its own runtime and its own Z21. All
@@ -260,7 +275,7 @@ MOBAflow supports two local speech engines:
 
 Configure and test the selected engine in **Settings → Speech Synthesis**. See
 the [Piper setup guide](PIPER-TTS-SETUP.md) for installation details. Speech
-language and voice are independent from the English application UI.
+language and voice are independent from the selected UI language.
 
 ## MOBAsmart and MOBApi
 
