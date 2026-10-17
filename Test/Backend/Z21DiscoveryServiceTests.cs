@@ -73,7 +73,7 @@ internal sealed class Z21DiscoveryServiceTests
     }
 
     [Test]
-    public async Task DiscoverAllAsync_ScansOnlyTheSubnetsOfTheInjectedAddressSource()
+    public async Task DiscoverAllAsync_WithoutLocalAddresses_QueriesTheSourcePerPortAndFindsNothing()
     {
         var addresses = new Mock<ILocalIpv4AddressSource>();
         addresses.Setup(source => source.GetCandidateLocalIpv4Addresses()).Returns([]);

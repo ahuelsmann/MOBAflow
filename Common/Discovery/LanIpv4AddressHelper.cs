@@ -30,6 +30,18 @@ public static class LanIpv4AddressHelper
         return candidates;
     }
 
+    /// <summary>
+    /// Appends host-specific addresses to the interface addresses and keeps distinct private IPv4 addresses,
+    /// interface addresses first.
+    /// </summary>
+    public static IReadOnlyList<IPAddress> MergePrivateIpv4Addresses(IEnumerable<IPAddress> interfaceAddresses, IEnumerable<IPAddress> additionalAddresses)
+    {
+        ArgumentNullException.ThrowIfNull(interfaceAddresses);
+        ArgumentNullException.ThrowIfNull(additionalAddresses);
+
+        return SelectPrivateIpv4Addresses(interfaceAddresses.Concat(additionalAddresses));
+    }
+
     private static void TryAddPrivateAddress(List<IPAddress> addresses, IPAddress address)
     {
         if (address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(address))

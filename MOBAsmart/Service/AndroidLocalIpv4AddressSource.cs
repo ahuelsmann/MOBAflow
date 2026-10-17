@@ -19,8 +19,8 @@ internal sealed class AndroidLocalIpv4AddressSource(NetworkInterfaceIpv4AddressS
 
     /// <inheritdoc />
     public IReadOnlyList<IPAddress> GetCandidateLocalIpv4Addresses() =>
-        LanIpv4AddressHelper.SelectPrivateIpv4Addresses(
-            _interfaces.GetCandidateLocalIpv4Addresses().Concat(GetActiveNetworkAddresses()));
+        LanIpv4AddressHelper.MergePrivateIpv4Addresses(
+            _interfaces.GetCandidateLocalIpv4Addresses(), GetActiveNetworkAddresses());
 
     private static List<IPAddress> GetActiveNetworkAddresses()
     {
