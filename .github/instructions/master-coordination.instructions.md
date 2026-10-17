@@ -57,11 +57,11 @@ or use a no-resume instruction to justify a competing writer.
 
 ### Handover evidence and delivery
 
-- Start every team handover with its type (information, advice or execution), assignment, existing Chief Project
-  Manager `taskKey`, named responsible owner, expected deliverable and next step. Name exactly one next recipient
-  and reference the standing mandate without repeating it in full.
-  Include the actual phase, evidenced status, existing limits and actual observation timestamp with time zone
-  and an unambiguous phase/comparison reference; distinguish
+- Start every team handover with its type (information, advice or execution), assignment, task reference (the
+  existing Chief Project Manager `taskKey` for allocated work, otherwise the issue, PR or assignment), named
+  responsible owner, expected deliverable and next step. Name exactly one next recipient and reference the
+  standing mandate without repeating it in full. Include the actual phase, evidenced status, existing limits,
+  an unambiguous phase/comparison reference and the actual observation timestamp with time zone; distinguish
   that observation from the message's sending time. Do not estimate an observation time as if it were measured.
 - Distinguish sent, accepted, writer ended and verified complete. Successful tool delivery proves only sending;
   neither sending time nor sender success proves freshness, recipient takeover, stopped processes or completion.
