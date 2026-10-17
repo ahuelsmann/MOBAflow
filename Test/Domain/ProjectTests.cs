@@ -135,4 +135,22 @@ internal class ProjectTests
         project.Locomotives.Remove(loco);
         Assert.That(project.Locomotives, Is.Empty);
     }
+
+    [Test]
+    public void FindWorkflowsWithInvalidIds_FlagsEmptyAndRepeatedIdsButNotTheirFirstUse()
+    {
+        var shared = Guid.NewGuid();
+        var project = new Project
+        {
+            Workflows =
+            [
+                new Workflow { Id = shared },
+                new Workflow { Id = Guid.Empty },
+                new Workflow { Id = Guid.NewGuid() },
+                new Workflow { Id = shared }
+            ]
+        };
+
+        Assert.That(project.FindWorkflowsWithInvalidIds(), Is.EquivalentTo(new[] { 1, 3 }));
+    }
 }

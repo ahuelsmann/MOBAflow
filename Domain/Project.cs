@@ -110,4 +110,21 @@ public class Project
     /// </summary>
     public TrackPlanDocument? TrackPlan { get; set; }
 
+    /// <summary>
+    /// Finds the positions in <see cref="Workflows"/> whose identifier is empty or repeats an earlier
+    /// workflow identifier.
+    /// </summary>
+    public IReadOnlySet<int> FindWorkflowsWithInvalidIds()
+    {
+        var invalid = new HashSet<int>();
+        var ids = new HashSet<Guid>();
+        for (var index = 0; index < Workflows.Count; index++)
+        {
+            var id = Workflows[index].Id;
+            if (id == Guid.Empty || !ids.Add(id))
+                invalid.Add(index);
+        }
+
+        return invalid;
+    }
 }
