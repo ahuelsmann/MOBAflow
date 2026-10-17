@@ -52,6 +52,10 @@ on Windows and Linux.
   synchronous CLI contract in master coordination; PR reviews stay with fresh independent Claude sessions.
 - Follow [master coordination](.github/instructions/master-coordination.instructions.md) for ownership,
   Claude review independence, merge evidence, automation and the decisions that still need the user.
+- Use its [handover evidence rules](.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
+  for every team transition: identify the existing task, owner, next recipient, observed phase/status, observation
+  time with time zone, next step and limits. Sending alone proves neither takeover nor completion; preserve newer
+  confirmed evidence.
 
 ## Repository policies
 

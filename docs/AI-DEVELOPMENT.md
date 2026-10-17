@@ -31,6 +31,12 @@ automation or merge concurrently. Chief Project Manager independently verifies a
 the delivery owner follows through to that outcome. Assigned work authorizes necessary team handovers, not
 unrelated features or overrides of stops. Tool permissions and existing quality/acceptance gates remain in effect.
 
+Apply the [handover evidence rules](../.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
+to every team transition. Record the existing task, owner, one next recipient, observed phase/status, observation
+time with time zone, next step and limits. Complete the handover before the supplier goes quiet and retain delivery
+responsibility until actual recipient takeover. Sending proves neither takeover nor freshness; preserve newer
+confirmed evidence when messages arrive late. Keep blocked delivery in the same task under existing permissions.
+
 Every integration assesses architecture/developer documentation and the versioned user guides in `docs/wiki/`.
 Record the pages corrected or a concrete no-change reason in the handover and completion evidence. Reassess after
 behavior-changing review fixes and confirm against actual integrated main. Correct drift within the assigned

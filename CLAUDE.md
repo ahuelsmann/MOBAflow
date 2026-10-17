@@ -12,6 +12,8 @@ Draft; Chief Project Manager alone sets Ready for review. The existing Claude pl
 Opus 5.5-or-higher review, separate fixes, independent re-review and SHA-bound squash merge. Do not dispatch a
 second review or merge. Technical Director coordinates through that same queue. Each integration records its
 documentation and `docs/wiki/` impact, including justified no-change results and reassessment after functional fixes.
+Use the guide's [handover evidence rules](.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
+for observed timestamps, actual takeover and delayed or blocked messages; sender success alone proves no handover.
 Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
 DevOps may independently consult the Head of UI/UX (Gemini Argon via Antigravity) within assigned work,
 using that guide's synchronous CLI contract and the same central execution and caller coordination.
