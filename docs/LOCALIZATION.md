@@ -11,6 +11,11 @@ System language, English or Deutsch, then Save language. A full app restart appl
 the running interface stays in its startup language. Each device stores its own choice.
 System selects German for German OS UI languages and English for all others.
 
+Reset to defaults selects System in the language picker and discards an unsaved choice.
+Saving commits the preference only after the settings file write succeeds. If it fails,
+the previous preference remains authoritative, including for automatic settings saves;
+the picker retains the attempted choice for an explicit retry.
+
 The preference is `Application.UiLanguage` (`system`, `en-US`, `de-DE`) in the existing
 application settings file. Missing/invalid preferences use System. It is independent of
 solution files, undo history, speech provider/language/voice and user-authored text.

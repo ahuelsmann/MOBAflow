@@ -10,6 +10,12 @@ using Common.Configuration;
 /// </summary>
 public interface ISettingsService
 {
+    /// <summary>Notifies committed UI-language saves and successful settings resets, even when the language is unchanged.</summary>
+    event EventHandler? UiLanguagePreferenceChanged;
+
+    /// <summary>Saves only the UI-language preference without exposing an uncommitted value to other settings saves.</summary>
+    Task SaveUiLanguageAsync(string preference);
+
     #region Application Settings
     /// <summary>
     /// Gets the current in-memory application settings.

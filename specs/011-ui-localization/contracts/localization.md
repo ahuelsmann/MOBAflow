@@ -26,6 +26,14 @@ accessible names and keyboard focus; long prose wraps. WinUI x:Uid maps .Text/.C
 and attached accessible names explicitly. Navigation tags, product names, versions, URLs and
 custom page-label suffixes remain invariant. MAUI markup resolves the same semantic catalogue.
 
+ISettingsService.SaveUiLanguageAsync serializes the candidate preference under the host's existing
+settings-file write lock. The shared AppSettings preference changes only after that write succeeds;
+queued automatic saves therefore retain the previous preference after a failed language save.
+UiLanguagePreferenceChanged notifies a committed preference or successful reset, including a reset
+to an unchanged System value. LanguageSettingsViewModel refreshes its choice and status through
+IUiDispatcher and releases the subscription on disposal. Reset discards an unsaved picker choice;
+the running UI culture remains unchanged.
+
 ## Validation
 
 Reject duplicate/missing/empty keys, unknown used keys, malformed composite format,

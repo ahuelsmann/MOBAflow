@@ -8,24 +8,28 @@ using Interface;
 using Localization;
 
 /// <summary>Edits app-local UI language with explicit saving and restart semantics.</summary>
-public sealed partial class LanguageSettingsViewModel : ObservableObject
+public sealed partial class LanguageSettingsViewModel : ObservableObject, IDisposable
 {
     private readonly AppSettings _settings;
     private readonly ISettingsService _persistence;
     private readonly IUiLocalizer _text;
+    private readonly IUiDispatcher _dispatcher;
 
     /// <summary>Creates language presentation state using existing app settings persistence.</summary>
-    public LanguageSettingsViewModel(AppSettings settings, ISettingsService persistence, IUiLocalizer text)
+    public LanguageSettingsViewModel(AppSettings settings, ISettingsService persistence, IUiLocalizer text, IUiDispatcher dispatcher)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(persistence);
         ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(dispatcher);
         _settings = settings;
         _persistence = persistence;
         _text = text;
+        _dispatcher = dispatcher;
         Choices = [new(UiLanguagePreference.System, text.GetText("LanguageSystem")),
             new(UiLanguagePreference.English, "English"), new(UiLanguagePreference.German, "Deutsch")];
         SelectedChoice = Choices.First(choice => choice.Value == settings.Application.UiLanguage);
+        _persistence.UiLanguagePreferenceChanged += OnUiLanguagePreferenceChanged;
     }
 
     /// <summary>Available app-local preferences; language names are shown in their native form.</summary>
@@ -42,23 +46,37 @@ public sealed partial class LanguageSettingsViewModel : ObservableObject
     private async Task SaveAsync()
     {
         if (SelectedChoice is null) return;
-        var previous = _settings.Application.UiLanguage;
-        _settings.Application.UiLanguage = SelectedChoice.Value;
         try
         {
-            await _persistence.SaveSettingsAsync(_settings).ConfigureAwait(true);
+            await _persistence.SaveUiLanguageAsync(SelectedChoice.Value).ConfigureAwait(true);
             Message = _text.GetText("LanguageRestart");
         }
         catch (IOException)
         {
-            _settings.Application.UiLanguage = previous;
             Message = _text.GetText("LanguageSaveFailed");
         }
         catch (UnauthorizedAccessException)
         {
-            _settings.Application.UiLanguage = previous;
             Message = _text.GetText("LanguageSaveFailed");
         }
+    }
+
+    private void OnUiLanguagePreferenceChanged(object? sender, EventArgs args)
+    {
+        _ = sender;
+        _ = args;
+        _dispatcher.InvokeOnUi(() =>
+        {
+            SelectedChoice = Choices.First(choice => choice.Value == _settings.Application.UiLanguage);
+            Message = string.Empty;
+        });
+    }
+
+    /// <summary>Releases the subscription to the app-local settings service.</summary>
+    public void Dispose()
+    {
+        _persistence.UiLanguagePreferenceChanged -= OnUiLanguagePreferenceChanged;
+        GC.SuppressFinalize(this);
     }
 }
 

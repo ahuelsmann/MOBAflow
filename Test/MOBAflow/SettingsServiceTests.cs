@@ -5,14 +5,128 @@ namespace Moba.Test.MOBAflow;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
 using Moba.SharedUI.Localization;
+using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Service;
+using Moq;
 using System.Globalization;
 using System.Text.Json;
 
 [TestFixture]
 internal sealed class SettingsServiceTests
 {
+    private static IUiDispatcher CreateLanguageDispatcher()
+    {
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
+        return dispatcher.Object;
+    }
+
+    [TestCase("en-US", "en-US")]
+    [TestCase("system", "de-DE")]
+    public async Task ResetRefreshesLanguagePickerAndDoesNotResaveTheDiscardedChoice(string saved, string draft)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "mobaflow-language-reset-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "appsettings.json");
+        try
+        {
+            var settings = new AppSettings();
+            var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
+            settings.Application.UiLanguage = saved;
+            await service.SaveSettingsAsync(settings).ConfigureAwait(false);
+            var text = new UiLocalizer(CultureInfo.GetCultureInfo("de-DE"));
+            using var viewModel = new LanguageSettingsViewModel(settings, service, text, CreateLanguageDispatcher());
+            viewModel.SelectedChoice = viewModel.Choices.Single(choice => choice.Value == draft);
+            viewModel.Message = "Previous status";
+
+            await service.ResetToDefaultsAsync().ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(viewModel.SelectedChoice?.Value, Is.EqualTo(UiLanguagePreference.System));
+                Assert.That(viewModel.Message, Is.Empty);
+                Assert.That(text.Culture.Name, Is.EqualTo("de-DE"));
+            }
+            await viewModel.SaveCommand.ExecuteAsync(null).ConfigureAwait(false);
+            var loaded = new AppSettings();
+            _ = new SettingsService(loaded, NullLogger<SettingsService>.Instance, path);
+            Assert.That(loaded.Application.UiLanguage, Is.EqualTo(UiLanguagePreference.System));
+        }
+        finally
+        {
+            File.Delete(path);
+            Directory.Delete(directory);
+        }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task FailedLanguageWriteCannotLeakIntoQueuedAutomaticSave(bool accessDenied)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "mobaflow-language-concurrent-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "appsettings.json");
+        var writeStarted = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var pendingWrite = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        try
+        {
+            var settings = new AppSettings();
+            settings.Speech.Language = "fr-FR";
+            var writeCount = 0;
+            var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path, async (file, json) =>
+            {
+                if (Interlocked.Increment(ref writeCount) == 1)
+                {
+                    writeStarted.SetResult(json);
+                    await pendingWrite.Task.ConfigureAwait(false);
+                }
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            });
+            var text = new UiLocalizer(CultureInfo.GetCultureInfo("de-DE"));
+            using var viewModel = new LanguageSettingsViewModel(settings, service, text, CreateLanguageDispatcher());
+            viewModel.SelectedChoice = viewModel.Choices.Single(choice => choice.Value == UiLanguagePreference.English);
+
+            var languageSave = viewModel.SaveCommand.ExecuteAsync(null);
+            var candidateJson = await writeStarted.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            var languageWhilePending = settings.Application.UiLanguage;
+            settings.Counter.TargetLapCount = 19;
+            var automaticSave = service.SaveSettingsAsync(settings);
+            var automaticSaveWasQueued = !automaticSave.IsCompleted;
+            pendingWrite.SetException(accessDenied ? new UnauthorizedAccessException("denied") : new IOException("failed"));
+            await Task.WhenAll(languageSave, automaticSave).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+
+            using var candidate = JsonDocument.Parse(candidateJson);
+            using var persisted = JsonDocument.Parse(await File.ReadAllTextAsync(path).ConfigureAwait(false));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(languageWhilePending, Is.EqualTo(UiLanguagePreference.System));
+                Assert.That(candidate.RootElement.GetProperty("application").GetProperty("uiLanguage").GetString(),
+                    Is.EqualTo(UiLanguagePreference.English));
+                Assert.That(automaticSaveWasQueued, Is.True);
+                Assert.That(persisted.RootElement.GetProperty("application").GetProperty("uiLanguage").GetString(),
+                    Is.EqualTo(UiLanguagePreference.System));
+                Assert.That(persisted.RootElement.GetProperty("counter").GetProperty("targetLapCount").GetInt32(), Is.EqualTo(19));
+                Assert.That(settings.Application.UiLanguage, Is.EqualTo(UiLanguagePreference.System));
+                Assert.That(viewModel.Message, Is.EqualTo(text.GetText("LanguageSaveFailed")));
+            }
+            await viewModel.SaveCommand.ExecuteAsync(null).ConfigureAwait(false);
+            await service.LoadSettingsAsync().ConfigureAwait(false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(settings.Application.UiLanguage, Is.EqualTo(UiLanguagePreference.English));
+                Assert.That(settings.Counter.TargetLapCount, Is.EqualTo(19));
+                Assert.That(settings.Speech.Language, Is.EqualTo("fr-FR"));
+                Assert.That(viewModel.Message, Is.EqualTo(text.GetText("LanguageRestart")));
+            }
+        }
+        finally
+        {
+            pendingWrite.TrySetException(new IOException("Test completed"));
+            File.Delete(path);
+            Directory.Delete(directory);
+        }
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public async Task UiLanguageWriteFailureRestoresSavedPreferenceAndAllowsRetry(bool readOnly)
@@ -29,7 +143,7 @@ internal sealed class SettingsServiceTests
             await service.SaveSettingsAsync(settings).ConfigureAwait(false);
             var savedJson = await File.ReadAllTextAsync(path).ConfigureAwait(false);
             var text = new UiLocalizer(CultureInfo.GetCultureInfo("de-DE"));
-            var viewModel = new LanguageSettingsViewModel(settings, service, text);
+            using var viewModel = new LanguageSettingsViewModel(settings, service, text, CreateLanguageDispatcher());
             viewModel.SelectedChoice = viewModel.Choices.Single(choice => choice.Value == UiLanguagePreference.English);
 
             try

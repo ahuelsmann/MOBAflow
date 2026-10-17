@@ -23,6 +23,9 @@ internal class SettingsService : ISettingsService
     private readonly string _settingsFilePath;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
     private readonly ILogger<SettingsService> _logger;
+    private readonly Func<string, string, Task> _writeSettings;
+
+    public event EventHandler? UiLanguagePreferenceChanged;
 
     public SettingsService(AppSettings settings, ILogger<SettingsService> logger)
         : this(settings, logger, ResolveSettingsFilePath())
@@ -30,10 +33,18 @@ internal class SettingsService : ISettingsService
     }
 
     internal SettingsService(AppSettings settings, ILogger<SettingsService> logger, string settingsFilePath)
+        : this(settings, logger, settingsFilePath, static (path, json) => File.WriteAllTextAsync(path, json))
     {
+    }
+
+    internal SettingsService(AppSettings settings, ILogger<SettingsService> logger, string settingsFilePath,
+        Func<string, string, Task> writeSettings)
+    {
+        ArgumentNullException.ThrowIfNull(writeSettings);
         _settings = settings;
         _logger = logger;
         _settingsFilePath = settingsFilePath;
+        _writeSettings = writeSettings;
 
         // Load settings synchronously to avoid deadlock
         LoadSettingsSync();
@@ -81,7 +92,7 @@ internal class SettingsService : ISettingsService
     /// Copies all property values from a deserialized AppSettings to the DI-registered singleton.
     /// Single source of truth for property mapping - used by both sync and async load paths.
     /// </summary>
-    private void ApplyLoadedSettings(AppSettings source)
+    private void ApplyLoadedSettings(AppSettings source, bool applyUiLanguage = true)
     {
         _settings.Speech = source.Speech;
         _settings.Application.LastSolutionPath = source.Application.LastSolutionPath;
@@ -89,7 +100,7 @@ internal class SettingsService : ISettingsService
         _settings.Application.AutoStartWebApp = source.Application.AutoStartWebApp;
         _settings.Application.IsDarkMode = source.Application.IsDarkMode;
         _settings.Application.UseSystemTheme = source.Application.UseSystemTheme;
-        _settings.Application.UiLanguage = source.Application.UiLanguage;
+        if (applyUiLanguage) _settings.Application.UiLanguage = source.Application.UiLanguage;
 
         _settings.Z21.AutoConnectRetryIntervalSeconds = source.Z21.AutoConnectRetryIntervalSeconds;
         _settings.Z21.SystemStatePollingIntervalSeconds = source.Z21.SystemStatePollingIntervalSeconds;
@@ -203,24 +214,55 @@ internal class SettingsService : ISettingsService
     public async Task SaveSettingsAsync(AppSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
+        var replacesSettings = !ReferenceEquals(settings, _settings);
         await _saveLock.WaitAsync();
         try
         {
             // Keep the DI singleton in sync even when callers provide a separate instance
             // (for example ResetToDefaultsAsync).
-            if (!ReferenceEquals(settings, _settings))
+            if (replacesSettings)
             {
-                ApplyLoadedSettings(settings);
+                ApplyLoadedSettings(settings, applyUiLanguage: false);
             }
 
-            var json = JsonSerializer.Serialize(_settings, JsonOptions.Default);
-            await File.WriteAllTextAsync(_settingsFilePath, json);
-            _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);
+            await WriteSettingsAsync(replacesSettings ? settings.Application.UiLanguage : null);
         }
         finally
         {
             _saveLock.Release();
         }
+        if (replacesSettings) UiLanguagePreferenceChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public async Task SaveUiLanguageAsync(string preference)
+    {
+        var normalized = UiLanguagePreference.Normalize(preference);
+        await _saveLock.WaitAsync().ConfigureAwait(true);
+        try
+        {
+            await WriteSettingsAsync(normalized).ConfigureAwait(true);
+        }
+        finally
+        {
+            _saveLock.Release();
+        }
+        UiLanguagePreferenceChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private async Task WriteSettingsAsync(string? uiLanguage)
+    {
+        string json;
+        if (uiLanguage is null)
+            json = JsonSerializer.Serialize(_settings, JsonOptions.Default);
+        else
+        {
+            var document = JsonSerializer.SerializeToNode(_settings, JsonOptions.Default)!;
+            document["application"]!["uiLanguage"] = uiLanguage;
+            json = document.ToJsonString(JsonOptions.Default);
+        }
+        await _writeSettings(_settingsFilePath, json).ConfigureAwait(true);
+        if (uiLanguage is not null) _settings.Application.UiLanguage = uiLanguage;
+        _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);
     }
 
     /// <summary>

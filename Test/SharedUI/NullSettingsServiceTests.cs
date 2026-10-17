@@ -88,6 +88,8 @@ internal class SettingsServiceInterfaceTests
     /// </summary>
     private class TestSettingsService : ISettingsService
     {
+        public event EventHandler? UiLanguagePreferenceChanged { add { } remove { } }
+        public Task SaveUiLanguageAsync(string preference) => Task.CompletedTask;
         private readonly AppSettings _settings = new();
 
         public bool LoadCalled { get; private set; }

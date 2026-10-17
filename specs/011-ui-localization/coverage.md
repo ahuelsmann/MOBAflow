@@ -98,6 +98,39 @@ review. Manual restart, themes, scaling, keyboard/screenreader and Android/devic
 open. Fresh exact-head CI/Sonar evidence is kept in the PR description rather than attributed to an
 earlier commit.
 
+## Reset and concurrent-save corrections (2026-10-17)
+
+The correction input is `7af769d3d8d238cbbda7e218143c459eff0d9a43` plus the changes described here.
+Four new regression cases failed before the correction: reset left an explicit/unsaved language
+selected, and an in-flight failed language save exposed its candidate to another settings save.
+
+- The settings service now owns the language commit. It serializes a candidate under the host's
+  settings-file write lock and updates the shared preference only after successful persistence.
+  Both Windows and Android implement this narrow operation; other settings-save callers keep
+  their existing interface and observe the last committed UI language.
+- A successful reset notifies the language ViewModel even when System was already persisted.
+  The picker discards its unsaved choice and clears previous status through IUiDispatcher.
+  Disposal removes the subscription; the running UI language remains unchanged.
+- The Windows boundary tests pause the actual writer deterministically, queue an unrelated
+  automatic save, then inject IO/access-denied failures. They verify the queued file keeps the
+  previous language and the unrelated edit, followed by a successful explicit language retry.
+  Real reset/reload tests cover both an explicit saved language and an unsaved draft over System.
+- Fresh normal Windows Release rebuild, including host/API dependencies, passed. The complete
+  Windows suite passed 3047 tests with zero failures; the explicit SustainedRefresh performance
+  case was not executed. Complete Windows SARIF matches the unchanged 2454/946 baseline.
+- The fresh portable Release rebuild passed; its unchanged analyzer baseline matches 3214/1127.
+  The final portable settings fixture passed all 49 cases. Catalogue/tool checks still pass
+  109 keys, two languages, 52 WinUI targets and 18 isolated cases.
+- Android FastDebug and normal Release rebuilds passed. The signed Release AAB contains the
+  required manifest/resources/DEX and exactly arm64-v8a/x86_64 native ABIs. Complete isolated
+  Android/dependency SARIF matches 1505 diagnostics in 552 groups after removing only the
+  SettingsService CA1869 entry (reused serializer options). No new warning is accepted.
+  These are compile/package checks, not emulator/device or manual UI acceptance.
+
+Exact publication-head CI/Sonar results are recorded in the PR description.
+No app, debugger, device or hardware is started. Delivery remains Draft without
+Ready/auto-merge/merge; the central owner arranges the subsequent independent review.
+
 ## Acceptance and publication evidence
 
 No desktop or Android app was launched. Full process restart, system-language startup,
