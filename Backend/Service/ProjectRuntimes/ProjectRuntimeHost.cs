@@ -2,7 +2,7 @@
 namespace Moba.Backend.Service.ProjectRuntimes;
 
 using Common.Events;
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 
@@ -14,8 +14,9 @@ using Microsoft.Extensions.Logging;
 /// Holds one runtime per project of the loaded solution. All runtimes run at the same time; the selected project
 /// only decides which runtime the UI shows. Runtimes live as long as their solution.
 /// </summary>
-public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<ProjectRuntimeHost> logger)
-    : IProjectRuntimeHost, IProjectRuntimeSnapshots, IAsyncDisposable
+public sealed class ProjectRuntimeHost(
+    ProjectRuntimeFactory factory, ILogger<ProjectRuntimeHost> logger, ILocomotiveTrainReferenceAnalyzer analyzer)
+    : IProjectRuntimeHost, IProjectRuntimeSnapshots, ILocomotiveTrainRuntimeUsageReader, IAsyncDisposable
 {
     private static readonly Action<ILogger, Guid, Exception?> LogStopLocomotivesFailed =
         LoggerMessage.Define<Guid>(
@@ -31,6 +32,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
 
     private readonly ProjectRuntimeFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
     private readonly ILogger<ProjectRuntimeHost> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly ILocomotiveTrainReferenceAnalyzer _usageAnalyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
     private readonly Dictionary<Guid, ProjectRuntime> _runtimes = [];
     // The order of the projects in the solution; the earliest project of a Z21 owns its connection.
     private readonly List<Guid> _order = [];
@@ -38,6 +40,124 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
     private readonly Dictionary<Guid, Guid> _snapshotSubscriptions = [];
     private Guid? _selectedId;
     private Guid? _requestedSelection;
+    private int _disposed;
+    private static readonly Action<ILogger, Guid, Exception?> LogUsageReadFailed =
+        LoggerMessage.Define<Guid>(LogLevel.Error, new EventId(3, nameof(LogUsageReadFailed)),
+            "Reading locomotive train usage failed for project {ProjectId}");
+    private static readonly Action<ILogger, Guid, Exception?> LogUsageRevalidationFailed =
+        LoggerMessage.Define<Guid>(LogLevel.Error, new EventId(4, nameof(LogUsageRevalidationFailed)),
+            "Revalidating locomotive train usage failed for project {ProjectId}");
+
+    /// <inheritdoc />
+    public async Task<LocomotiveTrainRuntimeObservation> ReadAsync(
+        LocomotiveTrainUsageRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+        cancellationToken.ThrowIfCancellationRequested();
+        var entered = false;
+        try
+        {
+            if (Volatile.Read(ref _disposed) != 0)
+                return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.OwnerUnavailable);
+            await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            entered = true;
+            var owner = Get(request.ProjectId);
+            if (Volatile.Read(ref _disposed) != 0 || owner is null || owner.IsDisposed)
+                return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.OwnerUnavailable);
+            if (!ReferenceEquals(owner.Project, request.ExpectedProject))
+                return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.ContextMismatch);
+            var captured = await owner.CaptureLocomotiveTrainUsageAsync(_usageAnalyzer, request.LocomotiveId, cancellationToken)
+                .ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (Volatile.Read(ref _disposed) != 0 || owner.IsDisposed || !ReferenceEquals(Get(request.ProjectId), owner))
+                return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.OwnerUnavailable);
+            if (captured is null)
+                return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.ContextMismatch);
+
+            var receipt = new LocomotiveTrainUsageReceipt(this, owner, captured.Context, captured.Definition);
+            var observation = new LocomotiveTrainRuntimeObservation(
+                request.RequestId, request.ProjectId, DateTimeOffset.UtcNow, captured.Result, receipt);
+            receipt.Observation = observation;
+            return observation;
+        }
+        catch (ObjectDisposedException)
+        {
+            return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.OwnerUnavailable);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogUsageReadFailed(_logger, request.ProjectId, exception);
+            return LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.QueryFailed);
+        }
+        finally
+        {
+            if (entered)
+                ReleaseUsageGate();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<LocomotiveTrainObservationValidity> IsCurrentAsync(
+        LocomotiveTrainRuntimeObservation observation, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(observation);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (Volatile.Read(ref _disposed) != 0)
+            return LocomotiveTrainObservationValidity.Unavailable;
+        var receipt = observation.Receipt;
+        if (receipt is null || !ReferenceEquals(receipt.Host, this) || !ReferenceEquals(receipt.Observation, observation)
+            || receipt.Owner is not ProjectRuntime owner)
+            return LocomotiveTrainObservationValidity.Stale;
+        var entered = false;
+        try
+        {
+            await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            entered = true;
+            if (Volatile.Read(ref _disposed) != 0)
+                return LocomotiveTrainObservationValidity.Unavailable;
+            if (!ReferenceEquals(Get(observation.ProjectId), owner))
+                return LocomotiveTrainObservationValidity.Stale;
+            if (owner.IsDisposed)
+                return LocomotiveTrainObservationValidity.Unavailable;
+            var current = await owner.IsLocomotiveTrainUsageCurrentAsync(receipt, cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (Volatile.Read(ref _disposed) != 0)
+                return LocomotiveTrainObservationValidity.Unavailable;
+            if (!ReferenceEquals(Get(observation.ProjectId), owner))
+                return LocomotiveTrainObservationValidity.Stale;
+            if (owner.IsDisposed)
+                return LocomotiveTrainObservationValidity.Unavailable;
+            return current
+                ? LocomotiveTrainObservationValidity.Current : LocomotiveTrainObservationValidity.Stale;
+        }
+        catch (ObjectDisposedException)
+        {
+            return LocomotiveTrainObservationValidity.Unavailable;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogUsageRevalidationFailed(_logger, observation.ProjectId, exception);
+            return LocomotiveTrainObservationValidity.Unavailable;
+        }
+        finally
+        {
+            if (entered)
+                ReleaseUsageGate();
+        }
+    }
+
+    private void ReleaseUsageGate()
+    {
+        try
+        {
+            _gate.Release();
+        }
+        catch (ObjectDisposedException) when (Volatile.Read(ref _disposed) != 0)
+        {
+            // Existing disposal bypasses the host gate; a read must not release a disposed semaphore.
+        }
+    }
 
     /// <inheritdoc />
     public event EventHandler<ProjectRuntimeSnapshotEventArgs>? RuntimeSnapshotChanged;
@@ -196,6 +316,7 @@ public sealed class ProjectRuntimeHost(ProjectRuntimeFactory factory, ILogger<Pr
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        Volatile.Write(ref _disposed, 1);
         await DisposeAllAsync().ConfigureAwait(false);
         _gate.Dispose();
     }

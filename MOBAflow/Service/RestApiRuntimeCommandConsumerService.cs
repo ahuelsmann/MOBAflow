@@ -2,7 +2,7 @@
 
 namespace Moba.WinUI.Service;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Microsoft.Extensions.Logging;
 

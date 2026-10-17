@@ -117,10 +117,67 @@ public sealed class SegmentPlacementGeometry(ITrackCatalog catalog)
     /// <summary>Drawing path of the segment in local coordinates.</summary>
     public IReadOnlyList<ITrackPathCommand> GetPath(Segment segment) => Catalog.GetPath(segment);
 
-    private SegmentPort? GetPort(Segment segment, string portName) =>
-        Catalog.GetPorts(segment).FirstOrDefault(port => port.Name == portName);
+    /// <summary>World positions of the connectors that take part in no connection.</summary>
+    public IReadOnlyList<(string PortName, double X, double Y)> GetOpenPortWorldPositions(
+        PlacedSegment placed,
+        IEnumerable<PortConnection> connections)
+    {
+        ArgumentNullException.ThrowIfNull(placed);
+        ArgumentNullException.ThrowIfNull(connections);
+        var connectionList = connections as IReadOnlyCollection<PortConnection> ?? connections.ToList();
+        return GetAllPortWorldPositions(placed)
+            .Where(port => !connectionList.IsConnected(placed.Segment.No, port.PortName))
+            .Select(port => (port.PortName, port.X, port.Y))
+            .ToList();
+    }
 
-    private static double NormalizeAngle(double degrees)
+    /// <summary>Axis-aligned world bounds (mm) of the rotated drawing path of a placed segment.</summary>
+    public (double MinX, double MinY, double MaxX, double MaxY) GetWorldBounds(PlacedSegment placed)
+    {
+        ArgumentNullException.ThrowIfNull(placed);
+        var (localMinX, localMinY, localMaxX, localMaxY) = TrackPathGeometry.GetBounds(GetPath(placed.Segment));
+        (double X, double Y)[] corners =
+        [
+            ToWorld(localMinX, localMinY, placed.X, placed.Y, placed.RotationDegrees),
+            ToWorld(localMaxX, localMinY, placed.X, placed.Y, placed.RotationDegrees),
+            ToWorld(localMinX, localMaxY, placed.X, placed.Y, placed.RotationDegrees),
+            ToWorld(localMaxX, localMaxY, placed.X, placed.Y, placed.RotationDegrees)
+        ];
+
+        return (corners.Min(c => c.X), corners.Min(c => c.Y), corners.Max(c => c.X), corners.Max(c => c.Y));
+    }
+
+    /// <summary>World bounds (mm) enclosing all placements, or <c>null</c> when there are none.</summary>
+    public (double MinX, double MinY, double MaxX, double MaxY)? GetContentBounds(IEnumerable<PlacedSegment> placements)
+    {
+        ArgumentNullException.ThrowIfNull(placements);
+        (double MinX, double MinY, double MaxX, double MaxY)? result = null;
+        foreach (var placed in placements)
+        {
+            var (minX, minY, maxX, maxY) = GetWorldBounds(placed);
+            result = result is { } current
+                ? (Math.Min(current.MinX, minX), Math.Min(current.MinY, minY), Math.Max(current.MaxX, maxX), Math.Max(current.MaxY, maxY))
+                : (minX, minY, maxX, maxY);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Centroid of the connectors in world coordinates; lies on or next to the track for every segment type.
+    /// Falls back to the segment origin when the segment has no connectors.
+    /// </summary>
+    public (double X, double Y) GetPortCentroid(PlacedSegment placed)
+    {
+        ArgumentNullException.ThrowIfNull(placed);
+        var ports = GetAllPortWorldPositions(placed);
+        return ports.Count == 0
+            ? (placed.X, placed.Y)
+            : (ports.Average(port => port.X), ports.Average(port => port.Y));
+    }
+
+    /// <summary>Normalizes an angle to the range [0, 360).</summary>
+    public static double NormalizeAngle(double degrees)
     {
         while (degrees >= 360)
             degrees -= 360;
@@ -128,4 +185,16 @@ public sealed class SegmentPlacementGeometry(ITrackCatalog catalog)
             degrees += 360;
         return degrees;
     }
+
+    /// <summary>Smallest absolute difference between two angles in degrees (0 to 180).</summary>
+    public static double AngleDeltaDegrees(double leftDegrees, double rightDegrees)
+    {
+        var delta = NormalizeAngle(leftDegrees - rightDegrees);
+        if (delta > 180)
+            delta = 360 - delta;
+        return Math.Abs(delta);
+    }
+
+    private SegmentPort? GetPort(Segment segment, string portName) =>
+        Catalog.GetPorts(segment).FirstOrDefault(port => port.Name == portName);
 }

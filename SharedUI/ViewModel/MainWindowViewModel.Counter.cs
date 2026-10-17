@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using Microsoft.Extensions.Logging;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using System.Collections.ObjectModel;
 

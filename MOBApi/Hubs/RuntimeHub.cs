@@ -2,7 +2,7 @@
 
 namespace Moba.MOBApi.Hubs;
 
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Microsoft.AspNetCore.SignalR;
 

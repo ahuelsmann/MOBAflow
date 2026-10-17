@@ -314,7 +314,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 12
+      "count": 8
     },
     {
       "project": "Backend",
@@ -650,7 +650,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 12
+      "count": 3
     },
     {
       "project": "Backend",
@@ -819,13 +819,6 @@
       "ruleId": "CA1873",
       "path": "Backend/Service/ProjectValidator.cs",
       "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 6
     },
     {
       "project": "Backend",
@@ -1290,17 +1283,17 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/LocomotiveFleetSnapshotComparer.cs",
+      "path": "Contracts/Runtime/LocomotiveFleetSnapshotComparer.cs",
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/SignalBoxSnapshotMerge.cs",
+      "path": "Contracts/Runtime/SignalBoxSnapshotMerge.cs",
       "count": 1
     },
     {
@@ -2539,13 +2532,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
       "count": 1
     },
@@ -2813,7 +2799,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2981,20 +2967,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/Action/WorkflowActionViewModelFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Solution.cs",
       "count": 1
     },
     {
@@ -3406,13 +3378,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "IDE0053",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0290",
       "path": "SharedUI/Service/FeedbackCounterEngine.cs",
       "count": 1
@@ -3611,7 +3576,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 22
+      "count": 16
     },
     {
       "project": "SharedUI",
@@ -3626,13 +3591,6 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3754,20 +3712,6 @@
       "count": 1
     },
     {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SoundManager.cs",
-      "count": 4
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SoundManager.cs",
-      "count": 3
-    },
-    {
       "project": "TrackLibrary.Base",
       "targetFramework": "net10.0",
       "ruleId": "CA1014",
@@ -3842,14 +3786,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
       "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
-      "count": 2
-    },
-    {
-      "project": "TrackPlan.Editor",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
-      "count": 4
+      "count": 1
     },
     {
       "project": "TrackPlan.Renderer",

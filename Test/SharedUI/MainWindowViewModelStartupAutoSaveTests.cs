@@ -11,7 +11,7 @@ using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -29,7 +29,7 @@ internal partial class MainWindowViewModelShutdownTests
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var runtime = CreateRuntimeMock();
-        var ioService = new Mock<IIoService>();
+        var ioService = TestFileServices.CreateMock();
 
         runtime
             .Setup(candidate => candidate.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
@@ -50,7 +50,7 @@ internal partial class MainWindowViewModelShutdownTests
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var runtime = CreateRuntimeMock();
-        var ioService = new Mock<IIoService>();
+        var ioService = TestFileServices.CreateMock();
         var viewModel = CreateViewModel(runtime.Object, eventBus, ioService.Object);
 
         await viewModel.SaveSolutionInternalAsync().ConfigureAwait(false);
@@ -75,7 +75,7 @@ internal partial class MainWindowViewModelShutdownTests
         // Arrange
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var runtime = CreateRuntimeMock();
-        var ioService = new Mock<IIoService>();
+        var ioService = TestFileServices.CreateMock();
         var firstSaveStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var releaseFirstSave = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var secondSaveStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -146,7 +146,7 @@ internal partial class MainWindowViewModelShutdownTests
         // Arrange
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var runtime = CreateRuntimeMock();
-        var ioService = new Mock<IIoService>();
+        var ioService = TestFileServices.CreateMock();
         ioService
             .Setup(candidate => candidate.SaveAsync(It.IsAny<Solution>(), "existing.json"))
             .ReturnsAsync((false, (string?)null, "disk full"));
@@ -172,7 +172,7 @@ internal partial class MainWindowViewModelShutdownTests
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var runtime = CreateRuntimeMock();
-        var ioService = new Mock<IIoService>();
+        var ioService = TestFileServices.CreateMock();
         ioService
             .Setup(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()))
             .ReturnsAsync((true, "selected.json", null));
@@ -196,7 +196,7 @@ internal partial class MainWindowViewModelShutdownTests
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var runtime = CreateRuntimeMock();
-        var ioService = new Mock<IIoService>();
+        var ioService = TestFileServices.CreateMock();
         ioService
             .Setup(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()))
             .ReturnsAsync((false, null, null));
@@ -214,7 +214,7 @@ internal partial class MainWindowViewModelShutdownTests
     private MainWindowViewModel CreateViewModel(
         IMobaRuntime runtime,
         IEventBus eventBus,
-        IIoService ioService,
+        ISolutionIoService ioService,
         Solution? solution = null)
     {
         var dispatcher = new Mock<IUiDispatcher>();

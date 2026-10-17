@@ -9,14 +9,18 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Interface;
 using Microsoft.Extensions.Logging;
+using Service;
 using System.Collections.Specialized;
 using System.ComponentModel;
+
+/// <summary>The locomotive page's existing management and read-only usage projections, composed by its host.</summary>
+public sealed record LocomotivePageAnalysis(LocomotiveManagementViewModel Management, LocomotiveTrainUsageViewModel Usage);
 
 /// <summary>Owns the locomotive editor shared by the locomotive page and train library.</summary>
 public sealed partial class LocomotivesPageViewModel : ObservableObject, IDisposable
 {
     private readonly ISolutionSession _session;
-    private readonly IIoService _ioService;
+    private readonly PhotoAssignmentService _photos;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly ILogger<LocomotivesPageViewModel> _logger;
@@ -29,28 +33,31 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
 
     public LocomotivesPageViewModel(
         ISolutionSession session,
-        IIoService ioService,
+        PhotoAssignmentService photos,
         ISettingsService settingsService,
         LayoutColumnWidthsViewModel layoutColumnWidths,
-        LocomotiveManagementViewModel management,
+        LocomotivePageAnalysis analysis,
         ILogger<LocomotivesPageViewModel> logger,
         Action<string> showPhotoInExplorer)
     {
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(ioService);
+        ArgumentNullException.ThrowIfNull(photos);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
-        ArgumentNullException.ThrowIfNull(management);
+        ArgumentNullException.ThrowIfNull(analysis);
+        ArgumentNullException.ThrowIfNull(analysis.Management);
+        ArgumentNullException.ThrowIfNull(analysis.Usage);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
-        _ioService = ioService;
+        _photos = photos;
         _settings = settingsService.GetSettings();
         _settingsService = settingsService;
         _logger = logger;
         _showPhotoInExplorer = showPhotoInExplorer;
         LayoutColumnWidths = layoutColumnWidths;
-        Management = management;
+        Management = analysis.Management;
+        Usage = analysis.Usage;
         _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage.IsListExpanded;
         _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage.IsPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
@@ -61,6 +68,12 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     public LayoutColumnWidthsViewModel LayoutColumnWidths { get; }
 
     public LocomotiveManagementViewModel Management { get; }
+
+    /// <summary>Read-only usage projection shared with the existing Messages area.</summary>
+    public LocomotiveTrainUsageViewModel Usage { get; }
+
+    /// <summary>Shows the current selection's uses without altering Delete or model commands.</summary>
+    public IAsyncRelayCommand ShowUsageCommand => Usage.ShowUsageCommand;
 
     public ProjectViewModel? SelectedProject => _session.SelectedProject;
 
@@ -131,6 +144,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
             _session.TrackChanges(newValue);
         }
         DeleteLocomotiveCommand.NotifyCanExecuteChanged();
+        Usage.SetTarget(SelectedProject?.Model, newValue?.Model.Id);
         RefreshManagement();
     }
 
@@ -193,6 +207,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         if (_disposed)
             return;
         _disposed = true;
+        Usage.Dispose();
         _session.PropertyChanged -= OnSessionPropertyChanged;
         _session.SolutionReplacing -= OnSolutionReplacing;
         // Shutdown may continue off the UI thread: release subscriptions without changing bound state.
@@ -219,11 +234,11 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     {
         var solution = _session.Solution;
         var project = SelectedProject?.Model;
-        var photoPath = await _ioService.BrowseForPhotoAsync().ConfigureAwait(true);
+        var photoPath = await _photos.PickPhotoAsync().ConfigureAwait(true);
         if (string.IsNullOrEmpty(photoPath)) return;
         if (_disposed || project is null || !ReferenceEquals(_session.Solution, solution) || !solution.Projects.Contains(project)) return;
 
-        var saved = await _ioService.SavePhotoAsync(photoPath, "locomotives", locomotive.Model.Id).ConfigureAwait(true);
+        var saved = await _photos.StorePhotoAsync(photoPath, "locomotives", locomotive.Model.Id).ConfigureAwait(true);
         if (_disposed || saved is null || !ReferenceEquals(_session.Solution, solution) || !solution.Projects.Contains(project)) return;
 
         if (locomotive.PhotoPath == saved)
@@ -244,7 +259,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     private void ShowLocomotivePhotoInExplorer(LocomotiveViewModel locomotive)
     {
         if (string.IsNullOrWhiteSpace(locomotive.PhotoPath)) return;
-        var fullPath = _ioService.GetPhotoFullPath(locomotive.PhotoPath);
+        var fullPath = _photos.GetPhotoFullPath(locomotive.PhotoPath);
         if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
         {
             LogPhotoMissing(_logger, fullPath);

@@ -74,7 +74,7 @@ solution does not contain; MOBAflow runs it in that project's runtime only.
 
 ### 3. Runtime snapshot sync (slim profile)
 
-[`RuntimeSnapshotRemoteFilter`](../Common/Runtime/RuntimeSnapshotRemoteFilter.cs) strips
+[`RuntimeSnapshotRemoteFilter`](../Contracts/Runtime/RuntimeSnapshotRemoteFilter.cs) strips
 `LocomotiveStates` before MOBApi / SignalR transport. Mobile clients read locomotive feedback
 from their **local Z21 connection** when connected
 ([`TrainControlViewModel`](../SharedUI/TrainControl/TrainControlViewModel.cs), hybrid mode).
@@ -115,6 +115,6 @@ Use these fields as a baseline before further payload optimisation.
 | Test file | Purpose |
 |-----------|---------|
 | `Test/Backend/Z21BroadcastProtocolTests.cs` | Protocol prerequisites, turnout vs loco routing |
-| `Test/Common/RuntimeSnapshotRemoteFilterTests.cs` | Slim snapshot shape and payload size |
+| `Test/Contracts/RuntimeSnapshotRemoteFilterTests.cs` | Slim snapshot shape and payload size |
 | `Test/MOBApi/RuntimeBroadcastMetricsTests.cs` | Broadcast metrics |
 | `Test/SharedUI/ViewModelCharacterizationTests.cs` | Hybrid loco state from local Z21 |

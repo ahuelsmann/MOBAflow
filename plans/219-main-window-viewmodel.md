@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slices 1, 2a, 2b, 2c and 3a integrated through #248, #257, #264, #272 and #282; slice 3b (Journeys/cities) implemented with validation tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main fb63e8fde5f6aa299a3f3478560e7277f8661a90 on 2026-10-15.
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main 22346a7d523de58a6d97284f4afbace10d0c4969 on 2026-10-16.
 
 ## Purpose and scope
 
@@ -194,21 +194,24 @@ Rollback is a revert to the preceding validated slice; do not retain a parallel 
 | SetSignalAspect and ordered ApplySignalBoxElementChange | Signal-box editor collaborator in slice 6's final shell audit. Preserve configuration-update/command/save order and the gateway; no signal behavior changes in 3b. |
 | Remaining page layout and GridColumnResizeBehavior shell lookup | Slice 6's single persistence boundary; keep serialized keys and star-column semantics. |
 
-## Slice 3b local validation (2026-10-15)
+## Slice 3b local validation (2026-10-15, refreshed 2026-10-16)
 
-The source is synchronized with main `fb63e8fde5f6aa299a3f3478560e7277f8661a90`.
-Both full Release test graphs were rebuilt with `-m:1 -t:Rebuild -p:MobaAnalyzerGate=true
--p:UseSharedCompilation=false`; the Windows graph includes the active WinUI pages and normal
-MOBApi build/copy dependency. The exact analyzer gates match 3,254 diagnostics in 1,129 groups
-(portable) and 2,471 in 947 groups (Windows). The portable baseline only removes or decreases
-diagnostics made obsolete by extraction; no new diagnostic group or increased count is accepted.
+The source is synchronized with main `22346a7d523de58a6d97284f4afbace10d0c4969`.
+MOBAsmart (Android) and both full Release test graphs were rebuilt with `-m:1 -t:Rebuild
+-p:MobaAnalyzerGate=true -p:UseSharedCompilation=false`; the Windows graph includes the active
+WinUI pages and normal MOBApi build/copy dependency. The exact analyzer gates match 3,235
+diagnostics in 1,128 groups (portable), 2,471 in 947 groups (Windows) and 1,509 in 551 groups
+(Android). The portable and Android baselines only remove or decrease diagnostics made obsolete
+by extraction; no new diagnostic group or increased count is accepted.
 
 Full Release suites ran sequentially from the compiled outputs with `--no-build --no-restore`:
-2,793 portable tests passed with no counted skips; 2,874 Windows tests passed with
-no counted skips. The explicit sustained-refresh test is outside the ordinary suites. 31
+2,802 portable and 2,923 Windows tests passed with no failures. The explicit sustained-refresh
+test is not executed. The portable run excludes the eight MOBApi process-start cases
+(`MobApiProcessTests`, `RuntimeHubLiveE2ETests`), which CI runs. Earlier counts (2,793 portable,
+2,874 Windows) predate this synchronization; the Windows count was not confirmed by a final run. 31
 page regression cases extend the existing JourneyCounterProjectionTests fixture; actual-host DI
 also verifies shared editor/session/layout identity, the existing reset-all counter command,
-injected journey-reset routing and shutdown unsubscription. Documentation links (472), instruction
+injected journey-reset routing and shutdown unsubscription. Documentation links (475), instruction
 consistency, secrets, diff and line-ending checks pass. The implementing draft PR owns current
 remote CI/Sonar evidence; local checks do not establish a remote gate result.
 
@@ -230,10 +233,10 @@ detach its subscription.
 Both station-click event orders verify that the old station stops saving and the new one saves
 exactly once. The diagnosis uses source inspection and bounded tests without starting the app.
 
-Portable/Windows checks used the process-local `MSBuildEnableWorkloadResolver=false` property;
-analyzer and XAML gates remain enabled. The existing SDK 10.0.402 workloads are now installed.
-Android FastDebug compilation passed; Android Release, its analyzer gate and AAB validation
-remain unverified. No machine-wide repair/install was performed. Manual Light/Dark/High Contrast,
+Earlier portable/Windows checks used the process-local `MSBuildEnableWorkloadResolver=false`
+property; the refreshed runs use the installed SDK 10.0.402 workloads without it. Analyzer and
+XAML gates remain enabled. Android Release compilation and its analyzer gate pass; AAB
+validation remains unverified. No machine-wide repair/install was performed. Manual Light/Dark/High Contrast,
 accessibility and app/device checks remain open; no application or hardware was started.
 
 ## Validation strategy

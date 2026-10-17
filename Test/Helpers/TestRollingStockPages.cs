@@ -8,7 +8,6 @@ using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.SharedUI.Interface;
-using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
@@ -17,7 +16,8 @@ internal sealed partial class TestRollingStockPages : IDisposable
     private readonly List<IDisposable> _pages = [];
 
     // The test fixture owns this collection; returned pages stay alive until its teardown.
-    public LocomotivesPageViewModel GetLocomotivesPage(ISolutionSession session, IIoService? ioService = null)
+    public LocomotivesPageViewModel GetLocomotivesPage(
+        ISolutionSession session, ISolutionIoService? files = null, ILocomotiveTrainRuntimeUsageReader? usageReader = null)
     {
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(service => service.Detect(It.IsAny<Moba.Domain.Project>()))
@@ -27,32 +27,51 @@ internal sealed partial class TestRollingStockPages : IDisposable
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-        var page = new LocomotivesPageViewModel(session, ioService ?? new NullIoService(),
-            persistence.Object, new LayoutColumnWidthsViewModel(), management,
+        var usage = CreateUsage(session, usageReader);
+        _pages.Add(usage);
+        var page = new LocomotivesPageViewModel(session, TestFileServices.Photos(files),
+            persistence.Object, new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, usage),
             NullLogger<LocomotivesPageViewModel>.Instance, _ => { });
         _pages.Add(page);
         return page;
     }
-    public WagonsPageViewModel GetWagonsPage(ISolutionSession session, IIoService? ioService = null)
+    internal static LocomotiveTrainUsageViewModel CreateUsage(
+        ISolutionSession session, ILocomotiveTrainRuntimeUsageReader? usageReader = null)
+    {
+        var reader = new Mock<ILocomotiveTrainRuntimeUsageReader>();
+        reader.Setup(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((LocomotiveTrainUsageRequest request, CancellationToken _) =>
+                LocomotiveTrainRuntimeObservation.Unknown(request, LocomotiveTrainCoverageReason.OwnerUnavailable));
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
+        dispatcher.Setup(value => value.InvokeOnUiAsync(It.IsAny<Func<Task>>())).Returns<Func<Task>>(action => action());
+        return new LocomotiveTrainUsageViewModel(session, new LocomotiveTrainReferenceAnalyzer(), usageReader ?? reader.Object,
+            new Mock<IProjectRuntimeSnapshots>().Object, dispatcher.Object,
+            NullLogger<LocomotiveTrainUsageViewModel>.Instance);
+    }
+
+    public WagonsPageViewModel GetWagonsPage(ISolutionSession session, ISolutionIoService? files = null)
     {
         var settings = new AppSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-        var page = new WagonsPageViewModel(session, ioService ?? new NullIoService(),
+        var page = new WagonsPageViewModel(session, TestFileServices.Photos(files),
             persistence.Object, new LayoutColumnWidthsViewModel(),
             NullLogger<WagonsPageViewModel>.Instance, _ => { });
         _pages.Add(page);
         return page;
     }
-    public TrainsPageViewModel GetTrainsPage(ISolutionSession session, IConnectionRuntime runtime, IIoService? ioService = null)
+    public TrainsPageViewModel GetTrainsPage(
+        ISolutionSession session, IConnectionRuntime runtime, ISolutionIoService? files = null,
+        ILocomotiveTrainRuntimeUsageReader? usageReader = null)
     {
         var settings = new AppSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
         var page = new TrainsPageViewModel(session, runtime, persistence.Object, new LayoutColumnWidthsViewModel(),
-            GetLocomotivesPage(session, ioService), GetWagonsPage(session, ioService),
+            GetLocomotivesPage(session, files, usageReader), GetWagonsPage(session, files),
             NullLogger<TrainsPageViewModel>.Instance);
         _pages.Add(page);
         return page;

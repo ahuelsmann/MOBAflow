@@ -4,7 +4,7 @@ namespace Moba.Backend.Service;
 
 using Backend;
 using Common.Events;
-using Common.Runtime;
+using Contracts.Runtime;
 using Events;
 using Microsoft.Extensions.Logging;
 using Model;

@@ -10,7 +10,7 @@ using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -177,7 +177,7 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
                 ? TestSolutionSessions.Create(solution ?? new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object)
                 : new SolutionSession(
                     solution ?? new Solution(),
-                    new NullIoService(),
+                    new NullSolutionIoService(),
                     uiDispatcherMock.Object,
                     host.Object,
                     NullLogger<SolutionSession>.Instance);

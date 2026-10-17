@@ -8,7 +8,7 @@ using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
-using Moba.Common.Runtime;
+using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
@@ -264,7 +264,7 @@ public sealed partial class JourneyCounterProjectionTests
         }
 
         public Mock<IMobaRuntime> Runtime { get; } = new();
-        public Mock<IIoService> Io { get; } = new();
+        public Mock<ISolutionIoService> Io { get; } = TestFileServices.CreateMock();
         public Mock<IRuntimeCommandGateway> Gateway { get; } = new();
         public MainWindowViewModel ViewModel { get; }
         public AppSettings Settings { get; } = new();

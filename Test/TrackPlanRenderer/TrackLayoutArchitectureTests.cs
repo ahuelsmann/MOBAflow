@@ -425,6 +425,18 @@ internal sealed partial class TrackLayoutArchitectureTests
     }
 
     [Test]
+    public void EditorSelectionAndHistory_AreOwnedByEditorAssembly()
+    {
+        var editorAssembly = typeof(EditableTrackPlan).Assembly;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(typeof(SelectionService).Assembly, Is.EqualTo(editorAssembly));
+            Assert.That(typeof(UndoRedoService<>).Assembly, Is.EqualTo(editorAssembly));
+        }
+    }
+
+    [Test]
     public void TrackPlanPage_CodeBehind_RemainsAPlatformAdapter()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -455,7 +467,12 @@ internal sealed partial class TrackLayoutArchitectureTests
             "DisconnectButton.Click",
             "DeleteButton.Click",
             "RotateLeftButton.Click",
-            "RotateRightButton.Click"
+            "RotateRightButton.Click",
+            "Math.Cos(",
+            "Math.Sin(",
+            "TrackPathGeometry.GetBounds(",
+            "bool IsPortConnected(",
+            "static double NormalizeAngle("
         ];
 
         using (Assert.EnterMultipleScope())

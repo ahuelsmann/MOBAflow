@@ -2,9 +2,7 @@
 
 namespace Moba.WinUI.Service;
 
-using Common.Discovery;
-
-using Common.Runtime;
+using Contracts.Runtime;
 
 using Domain;
 
@@ -12,6 +10,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 
 using SharedUI.Interface;
+using Contracts.Discovery;
 
 /// <summary>
 /// SignalR host client: pushes runtime snapshots and executes remote commands on the local runtime.

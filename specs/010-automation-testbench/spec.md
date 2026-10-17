@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-11
 
-**Status**: Requirements/design integrated through #233/#241; draft task backlog and consistency analysis exist. Backlog review/integration remain before implementation.
+**Status**: Requirements/design #233/#241 and backlog/consistency analysis #245 integrated; first effect-boundary foundation slice implemented. Full feature acceptance remains open.
 
 **Spec Kit**: Required
 

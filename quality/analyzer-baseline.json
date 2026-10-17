@@ -314,7 +314,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 12
+      "count": 8
     },
     {
       "project": "Backend",
@@ -650,7 +650,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 12
+      "count": 3
     },
     {
       "project": "Backend",
@@ -819,13 +819,6 @@
       "ruleId": "CA1873",
       "path": "Backend/Service/ProjectValidator.cs",
       "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Backend/Service/WorkflowActionHandlers.cs",
-      "count": 6
     },
     {
       "project": "Backend",
@@ -1290,17 +1283,17 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/LocomotiveFleetSnapshotComparer.cs",
+      "path": "Contracts/Runtime/LocomotiveFleetSnapshotComparer.cs",
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "Contracts",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Common/Runtime/SignalBoxSnapshotMerge.cs",
+      "path": "Contracts/Runtime/SignalBoxSnapshotMerge.cs",
       "count": 1
     },
     {
@@ -3572,20 +3565,6 @@
       "count": 1
     },
     {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SoundManager.cs",
-      "count": 4
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SoundManager.cs",
-      "count": 3
-    },
-    {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1001",
@@ -4261,7 +4240,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/DiscoveryResponseParserTests.cs",
+      "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 1
     },
     {
@@ -4331,7 +4310,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/LocomotiveFleetSnapshotComparerTests.cs",
+      "path": "Test/Contracts/LocomotiveFleetSnapshotComparerTests.cs",
       "count": 1
     },
     {
@@ -4366,7 +4345,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/MobApiEndpointTests.cs",
+      "path": "Test/Contracts/MobApiEndpointTests.cs",
       "count": 1
     },
     {
@@ -4422,35 +4401,35 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/RestApiDiscoveryCandidateBuilderTests.cs",
+      "path": "Test/SharedUI/RestApiDiscoveryCandidateBuilderTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/RuntimeCommandValidatorTests.cs",
+      "path": "Test/Contracts/RuntimeCommandValidatorTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/RuntimeSnapshotPreservationTests.cs",
+      "path": "Test/Contracts/RuntimeSnapshotPreservationTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/RuntimeSnapshotRemoteFilterTests.cs",
+      "path": "Test/Contracts/RuntimeSnapshotRemoteFilterTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/SignalBoxSnapshotMergeTests.cs",
+      "path": "Test/Contracts/SignalBoxSnapshotMergeTests.cs",
       "count": 1
     },
     {
@@ -4478,7 +4457,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/Z21DiscoveryServiceTests.cs",
+      "path": "Test/Backend/Z21DiscoveryServiceTests.cs",
       "count": 1
     },
     {
@@ -4996,7 +4975,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
+      "path": "Test/SharedUI/NullFileServicesTests.cs",
       "count": 1
     },
     {
@@ -5269,6 +5248,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/TrackPlanRenderer/SegmentPlacementGeometryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/TrackPlanRenderer/SvgExporterTests.cs",
       "count": 1
     },
@@ -5514,7 +5500,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1852",
-      "path": "Test/Common/DiscoveryResponseParserTests.cs",
+      "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 1
     },
     {
@@ -5592,13 +5578,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1852",
       "path": "Test/Domain/WorkflowTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1852",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
       "count": 1
     },
     {
@@ -5711,13 +5690,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
       "path": "Test/MOBAdisplay/DisplayPayloadCodecTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
       "count": 1
     },
     {
@@ -6284,13 +6256,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
-      "count": 13
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
       "path": "Test/SharedUI/NullSettingsServiceTests.cs",
       "count": 3
     },
@@ -6396,7 +6361,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "IDE0005",
-      "path": "Test/Common/SignalBoxSnapshotMergeTests.cs",
+      "path": "Test/Contracts/SignalBoxSnapshotMergeTests.cs",
       "count": 1
     },
     {
@@ -6683,7 +6648,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/DiscoveryResponseParserTests.cs",
+      "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 11
     },
     {
@@ -6867,13 +6832,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/SharedUI/MobileSolutionContextTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
-      "count": 4
     },
     {
       "project": "Test",
@@ -7327,7 +7285,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/DiscoveryResponseParserTests.cs",
+      "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 1
     },
     {
@@ -7376,21 +7334,21 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/RestApiDiscoveryCandidateBuilderTests.cs",
+      "path": "Test/SharedUI/RestApiDiscoveryCandidateBuilderTests.cs",
       "count": 2
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/RuntimeSnapshotPreservationTests.cs",
+      "path": "Test/Contracts/RuntimeSnapshotPreservationTests.cs",
       "count": 5
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Common/RuntimeSnapshotRemoteFilterTests.cs",
+      "path": "Test/Contracts/RuntimeSnapshotRemoteFilterTests.cs",
       "count": 1
     },
     {
@@ -7580,13 +7538,6 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/MobileSolutionStoreTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/SharedUI/NullIoServiceTests.cs",
       "count": 1
     },
     {
@@ -7846,14 +7797,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
       "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
-      "count": 2
-    },
-    {
-      "project": "TrackPlan.Editor",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "TrackPlan.Editor/TrackPlanValidationHelper.cs",
-      "count": 4
+      "count": 1
     },
     {
       "project": "TrackPlan.Renderer",

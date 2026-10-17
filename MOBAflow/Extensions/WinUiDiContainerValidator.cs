@@ -45,7 +45,9 @@ public static class WinUiDiContainerValidator
         _ = services.GetRequiredService<IMobaRuntime>();
         _ = services.GetRequiredService<IEventBus>();
         _ = services.GetRequiredService<ISettingsService>();
-        _ = services.GetRequiredService<IIoService>();
+        _ = services.GetRequiredService<ISolutionIoService>();
+        _ = services.GetRequiredService<IFilePickerService>();
+        _ = services.GetRequiredService<IPhotoStorageService>();
         _ = services.GetRequiredService<IRuntimeCommandGateway>();
         _ = services.GetRequiredService<MainWindowViewModel>();
         _ = services.GetRequiredService<TrainControlViewModel>();

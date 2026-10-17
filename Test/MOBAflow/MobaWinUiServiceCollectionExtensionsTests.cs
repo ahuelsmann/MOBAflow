@@ -4,6 +4,7 @@ namespace Moba.Test.MOBAflow;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
+using Moba.Backend.Service.ProjectRuntimes;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
@@ -28,6 +29,24 @@ using Moq;
 [TestFixture]
 internal sealed class MobaWinUiServiceCollectionExtensionsTests
 {
+    [Test]
+    public async Task UsageReaderAndProjection_ResolveTheExistingDesktopOwnerAndSharedPageInstance()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var lifetime = provider.ConfigureAwait(false);
+        var owner = provider.GetRequiredService<ProjectRuntimeHost>();
+        var usage = provider.GetRequiredService<LocomotiveTrainUsageViewModel>();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<ILocomotiveTrainRuntimeUsageReader>(), Is.SameAs(owner));
+            Assert.That(provider.GetRequiredService<IProjectRuntimeHost>(), Is.SameAs(owner));
+            Assert.That(provider.GetRequiredService<IProjectRuntimeSnapshots>(), Is.SameAs(owner));
+            Assert.That(provider.GetRequiredService<LocomotivesPageViewModel>().Usage, Is.SameAs(usage));
+            Assert.That(provider.GetRequiredService<MainWindowViewModel>().LocomotivesPage.Usage, Is.SameAs(usage));
+        }
+    }
+
     [Test]
     public void AddMobaWinUiPlatformServices_RegistersUiDispatcherAndEventBus()
     {
@@ -68,9 +87,10 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
 
         Assert.Multiple(() =>
         {
-            var ioService = provider.GetRequiredService<IIoService>();
-            Assert.That(ioService, Is.Not.Null);
-            Assert.That(provider.GetRequiredService<ISolutionIoService>(), Is.SameAs(ioService));
+            Assert.That(provider.GetRequiredService<ISolutionIoService>().CanPersist, Is.True);
+            Assert.That(provider.GetRequiredService<IFilePickerService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IPhotoStorageService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<PhotoAssignmentService>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<IRecordingFileService>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.InstanceOf<RecordingRuntimeCommandGateway>());
             Assert.That(provider.GetRequiredService<LocalRuntimeCommandGateway>(), Is.Not.Null);
