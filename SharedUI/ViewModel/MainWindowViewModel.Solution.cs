@@ -16,8 +16,6 @@ using System.ComponentModel;
 /// </summary>
 public partial class MainWindowViewModel
 {
-    private ProjectViewModel? _observedSelectedProject;
-
     #region Solution Events
     /// <summary>
     /// Raised before saving the Solution. Subscribers should sync their data to Domain models.
@@ -94,16 +92,11 @@ public partial class MainWindowViewModel
         switch (e.PropertyName)
         {
             case nameof(ISolutionSession.SelectedProject):
-                _observedSelectedProject = _session.SelectedProject;
                 OnPropertyChanged(nameof(SelectedProject));
-                HandleSelectedProjectChanged(_observedSelectedProject);
+                HandleSelectedProjectChanged();
                 break;
             case nameof(ISolutionSession.SelectedJourney):
                 OnPropertyChanged(nameof(SelectedJourney));
-                AddStationCommand.NotifyCanExecuteChanged();
-                AddStationFromCityCommand.NotifyCanExecuteChanged();
-                ResetJourneyCommand.NotifyCanExecuteChanged();
-                ResetJourneyCounterCommand.NotifyCanExecuteChanged();
                 break;
             case nameof(ISolutionSession.CurrentSolutionPath):
                 OnPropertyChanged(nameof(CurrentSolutionPath));
@@ -120,24 +113,12 @@ public partial class MainWindowViewModel
         }
     }
 
-    /// <summary>
-    /// Refreshes the runtime's snapshot of the selected project after an editor change, without re-activation.
-    /// </summary>
-    private void RefreshProjectRuntimeSnapshot()
-    {
-        if (SelectedProject is { } project)
-        {
-            ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(project.Model), "Update project runtime");
-        }
-    }
-
     private void OnSolutionReplacing(object? sender, EventArgs e) => ClearAllSelections();
 
     private void OnSessionSolutionLoaded(object? sender, EventArgs e)
     {
-        SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectCommand.NotifyCanExecuteChanged();
-        LoadCities();
+        this.SaveSolutionCommand.NotifyCanExecuteChanged();
+        this.ConnectCommand.NotifyCanExecuteChanged();
     }
     #endregion
 
@@ -225,10 +206,6 @@ public partial class MainWindowViewModel
         SelectedProject = null;
         SelectedJourney = null;
 
-        // Journeys Page
-        SelectedStation = null;
-        JourneysPageSelectedObject = null;
-
         // Workflows Page
         SelectedWorkflow = null;
         SelectedAction = null;
@@ -238,13 +215,5 @@ public partial class MainWindowViewModel
         CurrentSelectedObject = null;
     }
 
-    /// <summary>
-    /// Loads cities from City Library into AvailableCities for UI binding.
-    /// Cities are master data loaded from CityService, not stored in Project.
-    /// </summary>
-    private void LoadCities()
-    {
-        // Cities are loaded from CityLibrary on startup, not from the solution file.
-    }
     #endregion
 }

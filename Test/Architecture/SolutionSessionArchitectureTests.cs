@@ -28,7 +28,6 @@ internal sealed class SolutionSessionArchitectureTests
         ["MOBAflow/Extensions/"] = "composition root registers the shell",
         ["MOBAflow/Service/NavigationRegistration.cs"] = "creates the pages that bind to the shell",
         ["SharedUI/ViewModel/MonitorPageViewModel.cs"] = "reads the shell's Z21 traffic monitor state until RF-24",
-        ["SharedUI/ViewModel/EventManagerViewModel.cs"] = "reads the shell's journey command status until RF-24",
         ["MOBAsmart/Platforms/Android/MainActivity.cs"] = "shutdown cleanup lookup (MOBAsmart does not register the shell)",
     };
 
@@ -51,6 +50,7 @@ internal sealed class SolutionSessionArchitectureTests
                 && !relative.StartsWith("MOBAflow/View/GoodsWagonPage", StringComparison.Ordinal)
                 && !relative.StartsWith("MOBAflow/View/TrainsPage", StringComparison.Ordinal)
                 && !relative.StartsWith("MOBAflow/View/StationsPage", StringComparison.Ordinal)
+                && !relative.StartsWith("MOBAflow/View/JourneysPage", StringComparison.Ordinal)
                 && AllowedDependents.Keys.Any(allowed => relative.StartsWith(allowed, StringComparison.Ordinal)))
             {
                 continue;

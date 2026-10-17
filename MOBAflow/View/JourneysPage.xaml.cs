@@ -25,10 +25,10 @@ internal sealed partial class JourneysPage
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<JourneysPage>? _logger;
 
-    public MainWindowViewModel ViewModel { get; }
+    public JourneysPageViewModel ViewModel { get; }
 
     public JourneysPage(
-        MainWindowViewModel viewModel,
+        JourneysPageViewModel viewModel,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<JourneysPage>? logger = null)
@@ -40,7 +40,6 @@ internal sealed partial class JourneysPage
         InitializeComponent();
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
-        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
     }
 
     private double _journeysExpandedWidth = 250;
