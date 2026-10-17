@@ -116,7 +116,7 @@ private double _leftPanelWidth = 250;
 | Concern | Code-Behind | ViewModel |
 |---------|-------------|-----------|
 | Dialog display | ❌ (UI-specific) | ✅ (via IDialogService) |
-| File I/O | ❌ | ✅ (via IIoService) |
+| File I/O | ❌ | ✅ (via ISolutionIoService, IFilePickerService) |
 | Drag-drop visuals | ✅ | ❌ (WinUI events) |
 | Data model changes | ❌ | ✅ |
 | Navigation | ❌ (view-specific) | ✅ (via INavigationService) |

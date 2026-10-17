@@ -11,6 +11,7 @@ using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
+using Moba.Test.Helpers;
 
 /// <summary>
 /// Characterizes solution ownership in <see cref="SolutionSession"/>: load, save, auto-save status, dirty state,
@@ -332,10 +333,10 @@ internal sealed partial class SolutionSessionTests
 
     private static SolutionSession CreateSession(
         Solution solution,
-        out Mock<IIoService> io,
+        out Mock<ISolutionIoService> io,
         out Mock<IProjectRuntimeHost> runtime)
     {
-        io = new Mock<IIoService>();
+        io = TestFileServices.CreateMock();
         runtime = new Mock<IProjectRuntimeHost>();
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());

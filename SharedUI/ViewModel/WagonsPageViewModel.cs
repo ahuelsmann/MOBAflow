@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Interface;
 using Microsoft.Extensions.Logging;
+using Service;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
@@ -18,7 +19,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
     private const string SaveRollingStockOperation = "Save rolling stock";
 
     private readonly ISolutionSession _session;
-    private readonly IIoService _ioService;
+    private readonly PhotoAssignmentService _photos;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly ILogger<WagonsPageViewModel> _logger;
@@ -34,20 +35,20 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
 
     public WagonsPageViewModel(
         ISolutionSession session,
-        IIoService ioService,
+        PhotoAssignmentService photos,
         ISettingsService settingsService,
         LayoutColumnWidthsViewModel layoutColumnWidths,
         ILogger<WagonsPageViewModel> logger,
         Action<string> showPhotoInExplorer)
     {
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(ioService);
+        ArgumentNullException.ThrowIfNull(photos);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
-        _ioService = ioService;
+        _photos = photos;
         _settingsService = settingsService;
         _settings = settingsService.GetSettings();
         _logger = logger;
@@ -292,11 +293,11 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
     {
         var solution = _session.Solution;
         var project = SelectedProject?.Model;
-        var photoPath = await _ioService.BrowseForPhotoAsync().ConfigureAwait(true);
+        var photoPath = await _photos.PickPhotoAsync().ConfigureAwait(true);
         if (string.IsNullOrEmpty(photoPath)) return;
         if (_disposed || project is null || !ReferenceEquals(_session.Solution, solution) || !solution.Projects.Contains(project)) return;
 
-        var saved = await _ioService.SavePhotoAsync(photoPath, "wagons", wagon.Model.Id).ConfigureAwait(true);
+        var saved = await _photos.StorePhotoAsync(photoPath, "wagons", wagon.Model.Id).ConfigureAwait(true);
         if (_disposed || saved is null || !ReferenceEquals(_session.Solution, solution) || !solution.Projects.Contains(project)) return;
 
         if (wagon.PhotoPath == saved)
@@ -316,7 +317,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
     private void ShowWagonPhotoInExplorer(WagonViewModel wagon)
     {
         if (string.IsNullOrWhiteSpace(wagon.PhotoPath)) return;
-        var fullPath = _ioService.GetPhotoFullPath(wagon.PhotoPath);
+        var fullPath = _photos.GetPhotoFullPath(wagon.PhotoPath);
         if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
         {
             LogPhotoMissing(_logger, fullPath);

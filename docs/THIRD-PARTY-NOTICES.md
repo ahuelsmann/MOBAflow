@@ -110,7 +110,7 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `System.Drawing.Common` | `10.0.12` | `MOBAdisplay` | Image conversion utilities. |
 | `System.Formats.Nrbf` | `10.0.12` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
 | `System.Speech` | `10.0.12` | `Speech.SystemSpeech` | Windows text-to-speech. |
-| `System.Windows.Extensions` | `10.0.12` | `Sound` | Windows audio APIs. |
+| `System.Windows.Extensions` | `10.0.12` | `MOBAflow` | Windows audio APIs. |
 | `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | Android startup integration. |
 <!-- documentation-facts:packages:end -->
 
