@@ -50,6 +50,7 @@
         <PackageReference Include="Serilog.Enrichers.Process" />
         <PackageReference Include="Serilog.Enrichers.Thread" />
         <PackageReference Include="SkiaSharp" />
+        <PackageReference Include="System.Windows.Extensions" />
     </ItemGroup>
     <!-- Project References -->
     <ItemGroup>
