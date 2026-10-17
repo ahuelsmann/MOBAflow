@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slices 1, 2a, 2b, 2c and 3a integrated through #248, #257, #264, #272 and #282; slice 3b (Journeys/cities) implemented with validation tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main 22346a7d523de58a6d97284f4afbace10d0c4969 on 2026-10-16.
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main 135bd9e1d9066879a79d16c9294c33783e2a512c on 2026-10-17.
 
 ## Purpose and scope
 
@@ -238,6 +238,31 @@ property; the refreshed runs use the installed SDK 10.0.402 workloads without it
 XAML gates remain enabled. Android Release compilation and its analyzer gate pass; AAB
 validation remains unverified. No machine-wide repair/install was performed. Manual Light/Dark/High Contrast,
 accessibility and app/device checks remain open; no application or hardware was started.
+
+## Slice 3b integration refresh (2026-10-17)
+
+The current source includes main `135bd9e1d9066879a79d16c9294c33783e2a512c` and preserves
+all intervening PR commits and the interrupted P3 changes. Two journey regression fixtures
+still referenced the removed `IIoService` after the file-role split. They now use the existing
+`TestFileServices.CreateMock()` helper and `ISolutionIoService`, including its persistence capability.
+The station editor fix and its behavior assertions remain intact.
+
+Both Release graphs were rebuilt with analyzers enabled, including active WinUI XAML and the
+normal MOBApi dependency. After integrating main's additional speech tests, only the affected
+test assemblies needed recompilation (`BuildProjectReferences=false`); the production outputs
+were unchanged. The exact baselines pass unchanged: 3,204 diagnostics / 1,121 groups (portable)
+and 2,455 / 945 (Windows).
+
+The final sequential runs passed 2,889 portable and 3,011 Windows tests. All 41 journey fixture
+cases pass, including 13 station search/reorder/editor-lifetime cases. The portable run excludes
+the eight MOBApi process-start cases listed above; CI owns those cases. The explicit
+sustained-refresh test is not executed. Internal documentation links (513), instruction
+consistency, secrets, diff and line-ending checks pass.
+
+The preceding dated Android evidence is historical; this refresh does not claim a new local
+Android Release/AAB result. Current remote CI and Sonar evidence belongs to the exact pushed
+head of draft PR #293. Manual Light/Dark/High Contrast, accessibility and app/device acceptance
+remain open. No application, debugger, device or hardware was started.
 
 ## Validation strategy
 

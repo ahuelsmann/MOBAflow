@@ -20,6 +20,7 @@ using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
 using Moba.Speech.Base;
+using Moba.Test.Helpers;
 using Moba.Test.Speech;
 using Moq;
 
@@ -284,7 +285,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         var gateway = new Mock<IRuntimeCommandGateway>();
         gateway.Setup(value => value.ResetJourneyAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        var io = new Mock<IIoService>();
+        var io = TestFileServices.CreateMock();
         io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
         var provider = CreateValidatorServiceProvider(services =>
