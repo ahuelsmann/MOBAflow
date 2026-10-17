@@ -573,4 +573,18 @@ internal sealed partial class MobApiDiscoveryAddressResolverTests
         network.SetupGet(adapter => adapter.Name).Returns(name!);
         return network.Object;
     }
+
+    [Test]
+    public void NetworkInterfaceSource_ReturnsOnlyDistinctPrivateIpv4Addresses()
+    {
+        var addresses = new NetworkInterfaceIpv4AddressSource().GetCandidateLocalIpv4Addresses();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(addresses, Is.Unique);
+            Assert.That(addresses, Has.All.Matches<IPAddress>(address =>
+                address is { AddressFamily: AddressFamily.InterNetwork } && !IPAddress.IsLoopback(address)
+                && SubnetCandidateBuilder.IsPrivateIPv4(address)));
+        }
+    }
 }

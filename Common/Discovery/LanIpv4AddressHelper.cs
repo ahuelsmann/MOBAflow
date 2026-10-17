@@ -6,7 +6,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
 /// <summary>
-/// Resolves local IPv4 addresses used to derive /24 subnet scan lists (Z21 and MOBApi discovery).
+/// Filters local IPv4 addresses and network interfaces for the /24 subnet scans of Z21 and MOBApi discovery.
 /// </summary>
 public static class LanIpv4AddressHelper
 {
@@ -15,44 +15,6 @@ public static class LanIpv4AddressHelper
         NetworkInterfaceType.Wireless80211,
         NetworkInterfaceType.Ethernet
     ];
-
-    /// <summary>
-    /// Optional host-specific augmenter (e.g. Android ConnectivityManager fallback) registered at startup.
-    /// </summary>
-    public static Action<List<IPAddress>>? AugmentAddresses { get; set; }
-
-    /// <summary>
-    /// Gets candidate local IPv4 addresses whose /24 subnets should be scanned on the LAN.
-    /// </summary>
-    public static List<IPAddress> GetCandidateLocalIpv4Addresses()
-    {
-        var privateAddresses = new List<IPAddress>();
-
-        try
-        {
-            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                if (!IsDiscoveryCapableInterface(ni, OperatingSystem.IsAndroid()))
-                {
-                    continue;
-                }
-
-                var props = ni.GetIPProperties();
-                foreach (var ua in props.UnicastAddresses)
-                {
-                    TryAddPrivateAddress(privateAddresses, ua.Address);
-                }
-            }
-        }
-        catch
-        {
-            // Ignore: e.g. permission or platform
-        }
-
-        AugmentAddresses?.Invoke(privateAddresses);
-
-        return privateAddresses;
-    }
 
     /// <summary>Filters supplied addresses to distinct private IPv4 addresses without querying the network.</summary>
     public static IReadOnlyList<IPAddress> SelectPrivateIpv4Addresses(IEnumerable<IPAddress> addresses)
