@@ -118,7 +118,7 @@ An operator prepares and prints an A5-friendly copy that a guest can read alongs
 - **SC-001**: In the seven-position example and boundary fixtures, 100% of source occurrences remain in order at the correct positions, including every repeat and invalid reference; no wrong-kind or wrong-project match appears.
 - **SC-002**: Screen and output comparisons agree on 100% of train/project identities, creation time, position data and diagnostics for each generated card, including after a source edit.
 - **SC-003**: At normal and 200% Windows text size in Light and Dark, all card content and controls remain readable/reachable; the open-print-cancel-close journey completes using only the keyboard with the required focus return.
-- **SC-004**: At A5 portrait, the ordinary, multipage and overheight-position cases retain all text without clipping or omitted positions, show correct page counts and continuations, and use at least 11-point body text; larger requested text creates additional pages.
+- **SC-004**: At A5 portrait, the ordinary, multipage and overheight-position cases retain all text without clipping or omitted positions, show correct page counts and continuations, and use at least 11-point body text; larger requested text flows onto additional pages as needed and never shrinks below 11 points.
 - **SC-005**: Automated safety checks observe zero definition mutations, Solution writes, runtime-owner start/update calls, operator commands and hardware calls across generation and presentation interactions.
 - **SC-006**: The acceptance record identifies every executed check's scope and outcome, and separately records Windows UI, digital A5 output and physical A5 print results or their concrete remaining limitation.
 
