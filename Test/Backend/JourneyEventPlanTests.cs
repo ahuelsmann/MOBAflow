@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Manager;
 using Moba.Backend.Service;
@@ -74,11 +75,11 @@ public sealed class JourneyEventPlanTests
             .Returns(async (WorkflowAction action, ActionExecutionContext context, CancellationToken token) =>
             {
                 if (action.Type == ActionType.ChangeJourneyStop)
-                    await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, context, token).ConfigureAwait(false);
+                    await TestWorkflowServices.ChangeJourneyStop().ExecuteAsync(action, context, token).ConfigureAwait(false);
                 else
                     observed = context;
             });
-        var service = new WorkflowService(executor.Object);
+        var service = TestWorkflowServices.Workflow(executor.Object);
         fixture.WorkflowService.Setup(item => item.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
             .Returns(async (WorkflowExecutionRequest request, CancellationToken token) =>
             {
@@ -335,7 +336,7 @@ public sealed class JourneyEventPlanTests
                 {
                     firstStarted.TrySetResult();
                     await releaseFirst.Task.WaitAsync(cancellationToken);
-                    await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(NextStopAction(), request.Context, cancellationToken);
+                    await TestWorkflowServices.ChangeJourneyStop().ExecuteAsync(NextStopAction(), request.Context, cancellationToken);
                 }
 
                 return Success(request);
@@ -369,7 +370,7 @@ public sealed class JourneyEventPlanTests
         fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
             .Returns(async (WorkflowExecutionRequest request, CancellationToken cancellationToken) =>
             {
-                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(NextStopAction(), request.Context, cancellationToken);
+                await TestWorkflowServices.ChangeJourneyStop().ExecuteAsync(NextStopAction(), request.Context, cancellationToken);
                 started.TrySetResult();
                 try
                 {
@@ -626,7 +627,7 @@ public sealed class JourneyEventPlanTests
 
         public void SetupNextStopActions(int times)
         {
-            var handler = new ChangeJourneyStopWorkflowActionHandler();
+            var handler = TestWorkflowServices.ChangeJourneyStop();
             WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
                 .Returns(async (WorkflowExecutionRequest request, CancellationToken cancellationToken) =>
                 {

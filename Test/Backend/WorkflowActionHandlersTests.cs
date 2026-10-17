@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.IO;
@@ -43,12 +46,12 @@ internal sealed class WorkflowActionHandlersTests
         };
         IWorkflowActionHandler[] handlers =
         [
-            new CommandWorkflowActionHandler(effectAdapter: adapter),
-            new AudioWorkflowActionHandler(fileSystem: files.Object, effectAdapter: adapter),
-            new AnnouncementWorkflowActionHandler(speech.Object, effectAdapter: adapter),
-            new ExecuteScriptWorkflowActionHandler(fileSystem: files.Object, effectAdapter: adapter),
-            new SelectSignalAspectWorkflowActionHandler(effectAdapter: adapter),
-            new TrainDestinationDisplayWorkflowActionHandler(effectAdapter: adapter)
+            new CommandWorkflowActionHandler(NullLogger<CommandWorkflowActionHandler>.Instance, adapter),
+            new AudioWorkflowActionHandler(adapter),
+            new AnnouncementWorkflowActionHandler(speech.Object, NullLogger<AnnouncementWorkflowActionHandler>.Instance, adapter),
+            new ExecuteScriptWorkflowActionHandler(adapter),
+            new SelectSignalAspectWorkflowActionHandler(adapter),
+            new TrainDestinationDisplayWorkflowActionHandler(NullLogger<TrainDestinationDisplayWorkflowActionHandler>.Instance, adapter)
         ];
         using var cancellation = new CancellationTokenSource();
 
@@ -79,7 +82,7 @@ internal sealed class WorkflowActionHandlersTests
     {
         var adapter = new RecordingEffectAdapter();
         var context = new ActionExecutionContext { Z21 = new Mock<IZ21>(MockBehavior.Strict).Object };
-        var handler = new AudioWorkflowActionHandler(effectAdapter: adapter);
+        var handler = new AudioWorkflowActionHandler(adapter);
 
         await Assert.ThrowsAsync<ArgumentException>(() => handler.ExecuteAsync(
             new WorkflowAction { Type = ActionType.Audio, Audio = new() { FilePath = " " } }, context)).ConfigureAwait(false);
@@ -108,7 +111,7 @@ internal sealed class WorkflowActionHandlersTests
     public async Task ProductionDisplay_RemainsUnconfiguredAndMakesNoDeviceCall()
     {
         var z21 = new Mock<IZ21>(MockBehavior.Strict);
-        await new TrainDestinationDisplayWorkflowActionHandler().ExecuteAsync(new WorkflowAction
+        await new TrainDestinationDisplayWorkflowActionHandler(NullLogger<TrainDestinationDisplayWorkflowActionHandler>.Instance, TestWorkflowServices.ProductionEffects()).ExecuteAsync(new WorkflowAction
         {
             Type = ActionType.TrainDestinationDisplay,
             TrainDestinationDisplay = new() { DisplayDeviceId = Guid.NewGuid() }
@@ -123,7 +126,7 @@ internal sealed class WorkflowActionHandlersTests
         adapter.Setup(value => value.ExecuteAsync(It.IsAny<WorkflowEffectRequest>(),
             It.IsAny<ActionExecutionContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Effect failed"));
-        var handler = new CommandWorkflowActionHandler(effectAdapter: adapter.Object);
+        var handler = new CommandWorkflowActionHandler(NullLogger<CommandWorkflowActionHandler>.Instance, adapter.Object);
         await Assert.ThrowsAsync<InvalidOperationException>(() => handler.ExecuteAsync(new WorkflowAction
         {
             Type = ActionType.Command, Command = new() { BytesBase64 = "AQID" }
@@ -136,13 +139,13 @@ internal sealed class WorkflowActionHandlersTests
         var adapter = new Mock<IWorkflowEffectAdapter>(MockBehavior.Strict);
         IWorkflowActionHandler[] handlers =
         [
-            new CommandWorkflowActionHandler(effectAdapter: adapter.Object),
-            new AudioWorkflowActionHandler(effectAdapter: adapter.Object),
-            new AnnouncementWorkflowActionHandler(effectAdapter: adapter.Object),
-            new ExecuteScriptWorkflowActionHandler(effectAdapter: adapter.Object),
-            new SelectSignalAspectWorkflowActionHandler(effectAdapter: adapter.Object),
-            new TrainDestinationDisplayWorkflowActionHandler(effectAdapter: adapter.Object),
-            new ChangeJourneyStopWorkflowActionHandler()
+            new CommandWorkflowActionHandler(NullLogger<CommandWorkflowActionHandler>.Instance, adapter.Object),
+            new AudioWorkflowActionHandler(adapter.Object),
+            new AnnouncementWorkflowActionHandler(TestWorkflowServices.Announcements(), NullLogger<AnnouncementWorkflowActionHandler>.Instance, adapter.Object),
+            new ExecuteScriptWorkflowActionHandler(adapter.Object),
+            new SelectSignalAspectWorkflowActionHandler(adapter.Object),
+            new TrainDestinationDisplayWorkflowActionHandler(NullLogger<TrainDestinationDisplayWorkflowActionHandler>.Instance, adapter.Object),
+            TestWorkflowServices.ChangeJourneyStop()
         ];
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync().ConfigureAwait(false);
@@ -178,7 +181,7 @@ internal sealed class WorkflowActionHandlersTests
             CurrentJourneySessionState = state
         };
 
-        await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, context);
+        await TestWorkflowServices.ChangeJourneyStop().ExecuteAsync(action, context);
 
         Assert.Multiple(() =>
         {
@@ -193,7 +196,7 @@ internal sealed class WorkflowActionHandlersTests
     {
         var z21 = new Mock<IZ21>();
         var bytes = new byte[] { 0x04, 0x00, 0x85, 0x00 };
-        var handler = new CommandWorkflowActionHandler();
+        var handler = new CommandWorkflowActionHandler(NullLogger<CommandWorkflowActionHandler>.Instance, TestWorkflowServices.ProductionEffects());
         var action = new WorkflowAction
         {
             Name = "Stop",
@@ -211,7 +214,7 @@ internal sealed class WorkflowActionHandlersTests
     public async Task CommandHandler_WithoutBytes_SkipsSend()
     {
         var z21 = new Mock<IZ21>();
-        var handler = new CommandWorkflowActionHandler();
+        var handler = new CommandWorkflowActionHandler(NullLogger<CommandWorkflowActionHandler>.Instance, TestWorkflowServices.ProductionEffects());
         var action = new WorkflowAction
         {
             Type = ActionType.Command,
@@ -229,7 +232,7 @@ internal sealed class WorkflowActionHandlersTests
         const string path = @"C:\audio\horn.wav";
         var fileSystem = new FakeFileSystem(path);
         var soundPlayer = new RecordingSoundPlayer();
-        var handler = new AudioWorkflowActionHandler(fileSystem: fileSystem);
+        var handler = new AudioWorkflowActionHandler(TestWorkflowServices.ProductionEffects(fileSystem: fileSystem));
         var action = new WorkflowAction
         {
             Type = ActionType.Audio,
@@ -249,7 +252,7 @@ internal sealed class WorkflowActionHandlersTests
     [Test]
     public async Task AudioHandler_MissingFile_ThrowsFileNotFound()
     {
-        var handler = new AudioWorkflowActionHandler(fileSystem: new FakeFileSystem());
+        var handler = new AudioWorkflowActionHandler(TestWorkflowServices.ProductionEffects(fileSystem: new FakeFileSystem()));
         var action = new WorkflowAction
         {
             Type = ActionType.Audio,
@@ -268,7 +271,7 @@ internal sealed class WorkflowActionHandlersTests
     public async Task AnnouncementHandler_WithStationAndService_GeneratesSpeech()
     {
         var announcementService = new RecordingAnnouncementService();
-        var handler = new AnnouncementWorkflowActionHandler(announcementService);
+        var handler = new AnnouncementWorkflowActionHandler(announcementService, NullLogger<AnnouncementWorkflowActionHandler>.Instance, TestWorkflowServices.ProductionEffects(announcementService));
         var station = new Station { Name = "Berlin Hbf" };
         var action = new WorkflowAction
         {
@@ -297,7 +300,7 @@ internal sealed class WorkflowActionHandlersTests
     public async Task AnnouncementHandler_WithoutStation_SkipsExecution()
     {
         var announcementService = new RecordingAnnouncementService();
-        var handler = new AnnouncementWorkflowActionHandler(announcementService);
+        var handler = new AnnouncementWorkflowActionHandler(announcementService, NullLogger<AnnouncementWorkflowActionHandler>.Instance, TestWorkflowServices.ProductionEffects(announcementService));
         var action = new WorkflowAction
         {
             Type = ActionType.Announcement,
@@ -313,7 +316,7 @@ internal sealed class WorkflowActionHandlersTests
     public async Task SelectSignalAspectHandler_ResolvesMultiplexerAndSendsTurnout()
     {
         var z21 = new Mock<IZ21>();
-        var handler = new SelectSignalAspectWorkflowActionHandler();
+        var handler = new SelectSignalAspectWorkflowActionHandler(TestWorkflowServices.ProductionEffects());
         var action = new WorkflowAction
         {
             Type = ActionType.SelectSignalAspect,
@@ -339,7 +342,7 @@ internal sealed class WorkflowActionHandlersTests
     [Test]
     public async Task ExecuteScriptHandler_MissingScriptFile_ThrowsFileNotFound()
     {
-        var handler = new ExecuteScriptWorkflowActionHandler(fileSystem: new FakeFileSystem());
+        var handler = new ExecuteScriptWorkflowActionHandler(TestWorkflowServices.ProductionEffects(fileSystem: new FakeFileSystem()));
         var action = new WorkflowAction
         {
             Type = ActionType.ExecuteScript,
@@ -361,7 +364,7 @@ internal sealed class WorkflowActionHandlersTests
         };
         using var cancellation = new CancellationTokenSource();
 
-        await new CommandWorkflowActionHandler().ExecuteAsync(
+        await new CommandWorkflowActionHandler(NullLogger<CommandWorkflowActionHandler>.Instance, TestWorkflowServices.ProductionEffects()).ExecuteAsync(
             action,
             new ActionExecutionContext { Z21 = z21.Object },
             cancellation.Token);
@@ -381,7 +384,7 @@ internal sealed class WorkflowActionHandlersTests
         };
         using var cancellation = new CancellationTokenSource();
 
-        await new AudioWorkflowActionHandler(fileSystem: new FakeFileSystem(path)).ExecuteAsync(
+        await new AudioWorkflowActionHandler(TestWorkflowServices.ProductionEffects(fileSystem: new FakeFileSystem(path))).ExecuteAsync(
             action,
             new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), SoundPlayer = player },
             cancellation.Token);
@@ -400,7 +403,7 @@ internal sealed class WorkflowActionHandlersTests
         };
         using var cancellation = new CancellationTokenSource();
 
-        await new AnnouncementWorkflowActionHandler(service).ExecuteAsync(
+        await new AnnouncementWorkflowActionHandler(service, NullLogger<AnnouncementWorkflowActionHandler>.Instance, TestWorkflowServices.ProductionEffects(service)).ExecuteAsync(
             action,
             new ActionExecutionContext
             {
@@ -435,7 +438,7 @@ internal sealed class WorkflowActionHandlersTests
         };
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, context, cancellation.Token)).ConfigureAwait(false);
+            TestWorkflowServices.ChangeJourneyStop().ExecuteAsync(action, context, cancellation.Token)).ConfigureAwait(false);
         Assert.That(state.CurrentStationId, Is.EqualTo(first.Id));
     }
 
@@ -452,7 +455,7 @@ internal sealed class WorkflowActionHandlersTests
         };
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            new ExecuteScriptWorkflowActionHandler(fileSystem: new FakeFileSystem(path)).ExecuteAsync(
+            new ExecuteScriptWorkflowActionHandler(TestWorkflowServices.ProductionEffects(fileSystem: new FakeFileSystem(path))).ExecuteAsync(
                 action,
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
                 cancellation.Token)).ConfigureAwait(false);
@@ -493,8 +496,6 @@ internal sealed class WorkflowActionHandlersTests
         public int LastStationIndex { get; private set; }
 
         public CancellationToken LastCancellationToken { get; private set; }
-
-        public bool IsSpeechOutputAvailable => true;
 
         public string GenerateAnnouncementText(Journey journey, Station station, int stationIndex)
             => GenerateAnnouncementText(journey.Text, station, stationIndex);

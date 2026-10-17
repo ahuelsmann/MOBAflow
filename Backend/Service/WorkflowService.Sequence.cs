@@ -40,7 +40,7 @@ public partial class WorkflowService
                 Elapsed = elapsed
             };
             _traceStore.Append(entry);
-            _eventBus?.Publish(entry);
+            _eventBus.Publish(entry);
         }
 
         // An unfinished library draft must not block another valid workflow's event.
@@ -123,8 +123,7 @@ public partial class WorkflowService
             catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or AccessViolationException))
             {
                 var failure = $"Action execution failed ({ex.GetType().Name}).";
-                if (_logger != null)
-                    LogActionFailure(_logger, ex, workflowId, action.Id);
+                LogActionFailure(_logger, ex, workflowId, action.Id);
                 publish(WorkflowLifecycleKind.StepFailed, action.Id, failure, _timeProvider.GetElapsedTime(actionStarted));
                 return (WorkflowExecutionStatus.Failed, failure);
             }

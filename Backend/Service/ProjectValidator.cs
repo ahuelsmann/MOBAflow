@@ -39,16 +39,17 @@ public class ProjectValidator : IProjectValidator
     /// </summary>
     /// <param name="logger">Logger used for diagnostic output during validation.</param>
     /// <param name="interlockingValidator">Validator for the shared operational definition.</param>
-    /// <param name="workflowValidator">Optional Workflow 2.0 validator.</param>
+    /// <param name="workflowValidator">Workflow 2.0 validator.</param>
     public ProjectValidator(
         ILogger<ProjectValidator> logger,
         IInterlockingDefinitionValidator interlockingValidator,
-        IWorkflowValidator? workflowValidator = null)
+        IWorkflowValidator workflowValidator)
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(interlockingValidator);
+        ArgumentNullException.ThrowIfNull(workflowValidator);
         _logger = logger;
-        _workflowValidator = workflowValidator ?? new WorkflowValidator();
+        _workflowValidator = workflowValidator;
         _interlockingValidator = interlockingValidator;
     }
 

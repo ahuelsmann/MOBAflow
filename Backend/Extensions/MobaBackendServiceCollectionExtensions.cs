@@ -82,18 +82,16 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<AnnouncementService>();
         services.TryAddSingleton<IAnnouncementService>(sp => sp.GetRequiredService<AnnouncementService>());
         services.TryAddSingleton<IWorkflowEffectPlanner, WorkflowEffectPlanner>();
-        services.TryAddSingleton<IWorkflowEffectAdapter>(sp => new ProductionWorkflowEffectAdapter(
-            sp.GetService<IAnnouncementService>(), sp.GetRequiredService<IFileSystem>(),
-            sp.GetService<ILogger<ProductionWorkflowEffectAdapter>>()));
+        services.TryAddSingleton<IWorkflowEffectAdapter, ProductionWorkflowEffectAdapter>();
         services.TryAddSingleton<IWorkflowTraceStore, WorkflowTraceStore>();
         services.TryAddSingleton(sp => new WorkflowServiceDependencies
         {
             Validator = sp.GetRequiredService<IWorkflowValidator>(),
             EffectPlanner = sp.GetRequiredService<IWorkflowEffectPlanner>(),
-            EventBus = sp.GetService<IEventBus>(),
+            EventBus = sp.GetRequiredService<IEventBus>(),
             TraceStore = sp.GetRequiredService<IWorkflowTraceStore>(),
             TimeProvider = sp.GetRequiredService<TimeProvider>(),
-            Logger = sp.GetService<ILogger<WorkflowService>>()
+            Logger = sp.GetRequiredService<ILogger<WorkflowService>>()
         });
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, CommandWorkflowActionHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, AudioWorkflowActionHandler>());
