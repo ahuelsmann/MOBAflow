@@ -116,7 +116,7 @@ Hashing script arguments still derives sensitive output. Persisted run history/f
 **Decision**: Project-owned optional definition collection; schema version 4, existing Domain JSON options and atomic solution
 save. New page transient/VM singleton. Await one narrow testbench guard at concrete transition commands before mutations.
 
-**Rationale**: `MOBAflow/Service/IoService.cs:200` owns atomic saving; runtime transport JSON is not solution serialization.
+**Rationale**: `MOBAflow/Service/SolutionFileService.cs` owns atomic saving; runtime transport JSON is not solution serialization.
 `WorkflowLibraryViewModel` supplies wrapper/save patterns. Architecture guidance requires transient views; TimetablePage
 registration is a current example. Navigation swaps Frame content before unload; project selection and replacing events
 are synchronous. Therefore cancellation in Unloaded/PropertyChanged cannot satisfy pre-replacement disposal.

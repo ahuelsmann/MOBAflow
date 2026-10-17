@@ -3747,20 +3747,6 @@
       "count": 1
     },
     {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Sound/SoundManager.cs",
-      "count": 4
-    },
-    {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Sound/SoundManager.cs",
-      "count": 3
-    },
-    {
       "project": "TrackLibrary.Base",
       "targetFramework": "net10.0",
       "ruleId": "CA1014",
