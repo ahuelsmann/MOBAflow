@@ -17,7 +17,7 @@ using Moba.Domain.Enum;
 internal sealed class ProjectValidatorTests
 {
     private static ProjectValidator CreateValidator()
-        => new(NullLogger<ProjectValidator>.Instance, new InterlockingDefinitionValidator());
+        => new(NullLogger<ProjectValidator>.Instance, new InterlockingDefinitionValidator(), new WorkflowValidator());
 
     private static Project CreateMinimalValidProject()
     {
@@ -33,14 +33,21 @@ internal sealed class ProjectValidatorTests
     public void Constructor_NullLogger_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new ProjectValidator(null!, new InterlockingDefinitionValidator()));
+            new ProjectValidator(null!, new InterlockingDefinitionValidator(), new WorkflowValidator()));
     }
 
     [Test]
     public void Constructor_NullInterlockingValidator_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new ProjectValidator(NullLogger<ProjectValidator>.Instance, null!));
+            new ProjectValidator(NullLogger<ProjectValidator>.Instance, null!, new WorkflowValidator()));
+    }
+
+    [Test]
+    public void Constructor_NullWorkflowValidator_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new ProjectValidator(NullLogger<ProjectValidator>.Instance, new InterlockingDefinitionValidator(), null!));
     }
 
     [Test]

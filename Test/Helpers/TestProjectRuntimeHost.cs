@@ -68,8 +68,10 @@ internal sealed class TestProjectRuntimeHost : IAsyncDisposable
         {
             Validator = new Mock<IWorkflowValidator>().Object,
             EffectPlanner = new Mock<IWorkflowEffectPlanner>().Object,
+            EventBus = new Mock<IEventBus>().Object,
             TraceStore = new Mock<IWorkflowTraceStore>().Object,
-            TimeProvider = TimeProvider.System
+            TimeProvider = TimeProvider.System,
+            Logger = NullLogger<WorkflowService>.Instance
         },
         SharedExecutionContext = new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
         StopTransitionService = new JourneyStopTransitionService(),

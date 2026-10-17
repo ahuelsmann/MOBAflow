@@ -38,8 +38,6 @@ using Speech.Base;
 /// </summary>
 public interface IAnnouncementService
 {
-    bool IsSpeechOutputAvailable { get; }
-
     string GenerateAnnouncementText(Journey journey, Station station, int stationIndex);
 
     string GenerateAnnouncementText(string? templateText, Station station, int stationIndex, string? templateName = null);
@@ -61,26 +59,20 @@ public interface IAnnouncementService
 
 public class AnnouncementService : IAnnouncementService
 {
-    private readonly ISpeechOutput? _speechOutput;
-    private readonly ILogger<AnnouncementService>? _logger;
+    private readonly ISpeechOutput _speechOutput;
+    private readonly ILogger<AnnouncementService> _logger;
 
     /// <summary>
-    /// Gets whether a speech output is available for speech synthesis.
+    /// Initializes the announcement service. Hosts without synthesis pass a null speech output.
     /// </summary>
-    public bool IsSpeechOutputAvailable => _speechOutput != null;
-
-    /// <summary>
-    /// Initializes announcement service with optional speech output.
-    /// If no output is supplied, announcements are generated but not spoken.
-    /// </summary>
-    /// <param name="speechOutput">Shared speech output (optional)</param>
-    /// <param name="logger">Optional logger for debugging</param>
-    public AnnouncementService(ISpeechOutput? speechOutput = null, ILogger<AnnouncementService>? logger = null)
+    /// <param name="speechOutput">Shared speech output.</param>
+    /// <param name="logger">Logger for announcement diagnostics.</param>
+    public AnnouncementService(ISpeechOutput speechOutput, ILogger<AnnouncementService> logger)
     {
+        ArgumentNullException.ThrowIfNull(speechOutput);
+        ArgumentNullException.ThrowIfNull(logger);
         _speechOutput = speechOutput;
         _logger = logger;
-        _logger?.LogInformation("AnnouncementService initialized (Speech Output: {OutputAvailable})",
-            _speechOutput != null ? "Available" : "None");
     }
 
     /// <summary>
@@ -107,7 +99,7 @@ public class AnnouncementService : IAnnouncementService
     {
         if (string.IsNullOrEmpty(templateText))
         {
-            _logger?.LogWarning("Announcement template '{TemplateName}' is empty", templateName ?? "<unknown>");
+            _logger.LogWarning("Announcement template '{TemplateName}' is empty", templateName ?? "<unknown>");
             return string.Empty;
         }
 
@@ -136,7 +128,7 @@ public class AnnouncementService : IAnnouncementService
             text = ReplaceToken(text, "TrackNumber", platformNumber.Value.ToString());
         }
 
-        _logger?.LogInformation("Generated announcement: \"{AnnouncementText}\"", text);
+        _logger.LogInformation("Generated announcement: \"{AnnouncementText}\"", text);
         return text;
     }
 
@@ -180,37 +172,29 @@ public class AnnouncementService : IAnnouncementService
 
         if (string.IsNullOrEmpty(announcementText))
         {
-            _logger?.LogWarning("No announcement text to speak for station '{StationName}'", station.Name);
+            _logger.LogWarning("No announcement text to speak for station '{StationName}'", station.Name);
             return;
         }
 
-        // Speak via shared speech output if speech output is available
-        if (_speechOutput != null)
+        try
         {
-            try
+            var result = await _speechOutput.SpeakAsync(announcementText, cancellationToken).ConfigureAwait(false);
+            if (!result.IsSuccess && !suppressSpeechErrors)
             {
-                var result = await _speechOutput.SpeakAsync(announcementText, cancellationToken).ConfigureAwait(false);
-                if (!result.IsSuccess && !suppressSpeechErrors)
-                {
-                    throw new InvalidOperationException(result.Reason);
-                }
+                throw new InvalidOperationException(result.Reason);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to speak announcement: {Error}", ex.Message);
+            if (!suppressSpeechErrors)
             {
                 throw;
             }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Failed to speak announcement: {Error}", ex.Message);
-                if (!suppressSpeechErrors)
-                {
-                    throw;
-                }
-            }
-        }
-        else
-        {
-            _logger?.LogInformation("No speech output configured. Announcement text: \"{Text}\"", announcementText);
         }
     }
 
@@ -228,7 +212,7 @@ public class AnnouncementService : IAnnouncementService
 
         if (replaced != text)
         {
-            _logger?.LogDebug("Replaced {{{Token}}} with '{Value}'", token, value);
+            _logger.LogDebug("Replaced {{{Token}}} with '{Value}'", token, value);
         }
 
         return replaced;

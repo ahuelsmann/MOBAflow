@@ -5,9 +5,10 @@ using Domain;
 using Interface;
 
 /// <summary>Validates ordered actions without invoking handlers or external effects.</summary>
-public sealed class WorkflowValidator(IWorkflowEffectPlanner? effectPlanner = null) : IWorkflowValidator
+public sealed class WorkflowValidator : IWorkflowValidator
 {
-    private readonly IWorkflowEffectPlanner _effectPlanner = effectPlanner ?? new WorkflowEffectPlanner();
+    // The planner is a pure rule over the action payload, used directly like the action handlers do.
+    private readonly WorkflowEffectPlanner _effectPlanner = new();
 
     /// <inheritdoc />
     public WorkflowValidationResult Validate(Project project)

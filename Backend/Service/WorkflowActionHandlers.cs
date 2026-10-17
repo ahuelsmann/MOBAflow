@@ -2,7 +2,6 @@
 
 namespace Moba.Backend.Service;
 
-using Common.IO;
 using Domain;
 using Domain.Enum;
 using Interface;
@@ -10,10 +9,11 @@ using Microsoft.Extensions.Logging;
 
 /// <summary>Sends validated command bytes through the selected effect adapter.</summary>
 public sealed class CommandWorkflowActionHandler(
-    ILogger<CommandWorkflowActionHandler>? logger = null,
-    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
+    ILogger<CommandWorkflowActionHandler> logger,
+    IWorkflowEffectAdapter effectAdapter) : IWorkflowActionHandler
 {
-    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(logger: logger);
+    private readonly ILogger<CommandWorkflowActionHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? throw new ArgumentNullException(nameof(effectAdapter));
     public ActionType ActionType => ActionType.Command;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
@@ -27,7 +27,7 @@ public sealed class CommandWorkflowActionHandler(
         var request = new WorkflowEffectPlanner().Plan(action).Request;
         if (request == null)
         {
-            logger?.LogWarning("Command action skipped: no valid bytes provided");
+            _logger.LogWarning("Command action skipped: no valid bytes provided");
             return Task.CompletedTask;
         }
         return _effectAdapter.ExecuteAsync(request, context, cancellationToken);
@@ -35,12 +35,9 @@ public sealed class CommandWorkflowActionHandler(
 }
 
 /// <summary>Validates an audio intent without probing its environment.</summary>
-public sealed class AudioWorkflowActionHandler(
-    ILogger<AudioWorkflowActionHandler>? logger = null,
-    IFileSystem? fileSystem = null,
-    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
+public sealed class AudioWorkflowActionHandler(IWorkflowEffectAdapter effectAdapter) : IWorkflowActionHandler
 {
-    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(fileSystem: fileSystem, logger: logger);
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? throw new ArgumentNullException(nameof(effectAdapter));
     public ActionType ActionType => ActionType.Audio;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
@@ -59,11 +56,13 @@ public sealed class AudioWorkflowActionHandler(
 
 /// <summary>Resolves announcement text against the owning invocation before selecting output.</summary>
 public sealed class AnnouncementWorkflowActionHandler(
-    IAnnouncementService? announcementService = null,
-    ILogger<AnnouncementWorkflowActionHandler>? logger = null,
-    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
+    IAnnouncementService announcementService,
+    ILogger<AnnouncementWorkflowActionHandler> logger,
+    IWorkflowEffectAdapter effectAdapter) : IWorkflowActionHandler
 {
-    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(announcementService, logger: logger);
+    private readonly IAnnouncementService _announcementService = announcementService ?? throw new ArgumentNullException(nameof(announcementService));
+    private readonly ILogger<AnnouncementWorkflowActionHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? throw new ArgumentNullException(nameof(effectAdapter));
     public ActionType ActionType => ActionType.Announcement;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
@@ -73,9 +72,9 @@ public sealed class AnnouncementWorkflowActionHandler(
     {
         cancellationToken.ThrowIfCancellationRequested();
         var templateText = action.Announcement?.Message ?? context.JourneyTemplateText;
-        if (string.IsNullOrEmpty(templateText) || context.CurrentStation == null || announcementService == null)
+        if (string.IsNullOrEmpty(templateText) || context.CurrentStation == null)
         {
-            logger?.LogWarning("Announcement '{ActionName}' skipped: template, station or announcement service unavailable", action.Name);
+            _logger.LogWarning("Announcement '{ActionName}' skipped: template or station unavailable", action.Name);
             return Task.CompletedTask;
         }
         var stationIndex = context.CurrentStationIndex.GetValueOrDefault(1);
@@ -83,7 +82,7 @@ public sealed class AnnouncementWorkflowActionHandler(
         {
             Station = context.CurrentStation,
             StationIndex = stationIndex,
-            RenderedText = announcementService.GenerateAnnouncementText(templateText, context.CurrentStation, stationIndex, action.Name)
+            RenderedText = _announcementService.GenerateAnnouncementText(templateText, context.CurrentStation, stationIndex, action.Name)
         };
         return _effectAdapter.ExecuteAsync(request, context, cancellationToken);
     }
@@ -91,10 +90,11 @@ public sealed class AnnouncementWorkflowActionHandler(
 
 /// <summary>Validates display intent while retaining unconfigured production delivery.</summary>
 public sealed class TrainDestinationDisplayWorkflowActionHandler(
-    ILogger<TrainDestinationDisplayWorkflowActionHandler>? logger = null,
-    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
+    ILogger<TrainDestinationDisplayWorkflowActionHandler> logger,
+    IWorkflowEffectAdapter effectAdapter) : IWorkflowActionHandler
 {
-    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(logger: logger);
+    private readonly ILogger<TrainDestinationDisplayWorkflowActionHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? throw new ArgumentNullException(nameof(effectAdapter));
     public ActionType ActionType => ActionType.TrainDestinationDisplay;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
@@ -106,7 +106,7 @@ public sealed class TrainDestinationDisplayWorkflowActionHandler(
         var request = new WorkflowEffectPlanner().Plan(action).Request;
         if (request == null)
         {
-            logger?.LogWarning("Train destination display action '{ActionName}' skipped: display service not configured", action.Name);
+            _logger.LogWarning("Train destination display action '{ActionName}' skipped: display service not configured", action.Name);
             return Task.CompletedTask;
         }
         return _effectAdapter.ExecuteAsync(request, context, cancellationToken);
@@ -114,9 +114,9 @@ public sealed class TrainDestinationDisplayWorkflowActionHandler(
 }
 
 /// <summary>Shares signal resolution before dispatching the resolved accessory intent.</summary>
-public sealed class SelectSignalAspectWorkflowActionHandler(IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
+public sealed class SelectSignalAspectWorkflowActionHandler(IWorkflowEffectAdapter effectAdapter) : IWorkflowActionHandler
 {
-    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter();
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? throw new ArgumentNullException(nameof(effectAdapter));
     public ActionType ActionType => ActionType.SelectSignalAspect;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
@@ -135,12 +135,9 @@ public sealed class SelectSignalAspectWorkflowActionHandler(IWorkflowEffectAdapt
 }
 
 /// <summary>Validates script intent; file probes and process execution belong to production output.</summary>
-public sealed class ExecuteScriptWorkflowActionHandler(
-    ILogger<ExecuteScriptWorkflowActionHandler>? logger = null,
-    IFileSystem? fileSystem = null,
-    IWorkflowEffectAdapter? effectAdapter = null) : IWorkflowActionHandler
+public sealed class ExecuteScriptWorkflowActionHandler(IWorkflowEffectAdapter effectAdapter) : IWorkflowActionHandler
 {
-    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? new ProductionWorkflowEffectAdapter(fileSystem: fileSystem, logger: logger);
+    private readonly IWorkflowEffectAdapter _effectAdapter = effectAdapter ?? throw new ArgumentNullException(nameof(effectAdapter));
     public ActionType ActionType => ActionType.ExecuteScript;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
@@ -157,9 +154,9 @@ public sealed class ExecuteScriptWorkflowActionHandler(
     }
 }
 /// <summary>Moves the active journey to the next or an explicitly configured stop.</summary>
-public sealed class ChangeJourneyStopWorkflowActionHandler(IJourneyStopTransitionService? transitionService = null) : IWorkflowActionHandler
+public sealed class ChangeJourneyStopWorkflowActionHandler(IJourneyStopTransitionService transitionService) : IWorkflowActionHandler
 {
-    private readonly IJourneyStopTransitionService _transitionService = transitionService ?? new JourneyStopTransitionService();
+    private readonly IJourneyStopTransitionService _transitionService = transitionService ?? throw new ArgumentNullException(nameof(transitionService));
 
     public ActionType ActionType => ActionType.ChangeJourneyStop;
 

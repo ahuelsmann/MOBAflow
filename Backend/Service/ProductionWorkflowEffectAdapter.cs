@@ -10,11 +10,13 @@ using System.Runtime.InteropServices;
 
 /// <summary>Owns environment probes and real workflow output; never used by isolated execution.</summary>
 public sealed partial class ProductionWorkflowEffectAdapter(
-    IAnnouncementService? announcementService = null,
-    IFileSystem? fileSystem = null,
-    ILogger? logger = null) : IWorkflowEffectAdapter
+    IAnnouncementService announcementService,
+    IFileSystem fileSystem,
+    ILogger<ProductionWorkflowEffectAdapter> logger) : IWorkflowEffectAdapter
 {
-    private readonly IFileSystem _fileSystem = fileSystem ?? SystemFileSystem.Instance;
+    private readonly IAnnouncementService _announcementService = announcementService ?? throw new ArgumentNullException(nameof(announcementService));
+    private readonly IFileSystem _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+    private readonly ILogger<ProductionWorkflowEffectAdapter> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <inheritdoc />
     public Task ExecuteAsync(WorkflowEffectRequest request, ActionExecutionContext context, CancellationToken cancellationToken)
@@ -38,9 +40,9 @@ public sealed partial class ProductionWorkflowEffectAdapter(
 
     private async Task ExecuteCommandAsync(WorkflowCommandEffectRequest request, ActionExecutionContext context, CancellationToken cancellationToken)
     {
-        if (logger != null) LogSendingCommand(logger, request.Bytes.Length);
+        LogSendingCommand(_logger, request.Bytes.Length);
         await context.Z21.SendCommandAsync(request.Bytes.ToArray(), cancellationToken).ConfigureAwait(false);
-        if (logger != null) LogCommandSent(logger, request.Bytes.Length);
+        LogCommandSent(_logger, request.Bytes.Length);
     }
 
     private async Task ExecuteAudioAsync(WorkflowAudioEffectRequest request, ActionExecutionContext context, CancellationToken cancellationToken)
@@ -49,24 +51,24 @@ public sealed partial class ProductionWorkflowEffectAdapter(
             throw new ArgumentException("Audio action requires SoundPlayer");
         if (!_fileSystem.FileExists(request.FilePath))
         {
-            if (logger != null) LogMissingAudio(logger, request.FilePath);
+            LogMissingAudio(_logger, request.FilePath);
             throw new FileNotFoundException($"Audio file not found: {request.FilePath}", request.FilePath);
         }
         await context.SoundPlayer.PlayAsync(request.FilePath, cancellationToken).ConfigureAwait(false);
-        if (logger != null) LogAudioPlayed(logger, request.FilePath);
+        LogAudioPlayed(_logger, request.FilePath);
     }
 
     private async Task ExecuteAnnouncementAsync(WorkflowAnnouncementEffectRequest request, CancellationToken cancellationToken)
     {
-        if (announcementService == null || request.Station == null) return;
-        await announcementService.GenerateAndSpeakAnnouncementAsync(request.TemplateText, request.Station, request.StationIndex,
+        if (request.Station == null) return;
+        await _announcementService.GenerateAndSpeakAnnouncementAsync(request.TemplateText, request.Station, request.StationIndex,
             cancellationToken, request.ActionName).ConfigureAwait(false);
-        if (logger != null) LogAnnouncement(logger, request.ActionName, request.RenderedText);
+        LogAnnouncement(_logger, request.ActionName, request.RenderedText);
     }
 
     private Task ExecuteDisplay(WorkflowDisplayEffectRequest request)
     {
-        if (logger != null) LogUnconfiguredDisplay(logger, request.ActionName);
+        LogUnconfiguredDisplay(_logger, request.ActionName);
         return Task.CompletedTask;
     }
 
@@ -89,7 +91,7 @@ public sealed partial class ProductionWorkflowEffectAdapter(
             }
         };
 
-        if (logger != null) LogScriptStarting(logger, request.ActionName, request.ScriptPath);
+        LogScriptStarting(_logger, request.ActionName, request.ScriptPath);
         process.Start();
         using var cancellationRegistration = cancellationToken.Register(static state => TryTerminate((Process)state!), process);
         var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
@@ -97,8 +99,8 @@ public sealed partial class ProductionWorkflowEffectAdapter(
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
         var output = await outputTask.ConfigureAwait(false);
         var error = await errorTask.ConfigureAwait(false);
-        if (!string.IsNullOrWhiteSpace(output) && logger != null)
-            LogScriptOutput(logger, request.ActionName, output);
+        if (!string.IsNullOrWhiteSpace(output))
+            LogScriptOutput(_logger, request.ActionName, output);
         if (process.ExitCode != 0)
             throw new InvalidOperationException($"PowerShell action '{request.ActionName}' failed with exit code {process.ExitCode}: {error}");
     }
