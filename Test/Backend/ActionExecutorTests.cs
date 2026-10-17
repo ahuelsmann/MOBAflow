@@ -2,6 +2,7 @@
 
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
@@ -28,7 +29,7 @@ internal class ActionExecutorTests
     [SetUp]
     public void SetUp()
     {
-        _actionExecutor = ActionExecutor.CreateWithDefaultHandlers(); // No AnnouncementService for basic tests
+        _actionExecutor = TestWorkflowServices.Executor(); // No AnnouncementService for basic tests
         _fakeUdp = new FakeUdpClientWrapper();
         _eventBus = new EventBus(NullLogger<EventBus>.Instance);
         _z21 = new Z21(_fakeUdp, _eventBus);

@@ -47,6 +47,7 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton(adapter.Object);
+        services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
         services.AddMobaBackendServices();
         services.AddMobaBackendServices();
         using var provider = services.BuildServiceProvider();
