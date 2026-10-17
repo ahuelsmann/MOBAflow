@@ -57,16 +57,18 @@ or use a no-resume instruction to justify a competing writer.
 
 ### Handover evidence and delivery
 
-- Start every team handover with the assignment/type, existing Chief Project Manager `taskKey`, named responsible
-  owner, expected deliverable and next step; name exactly one next recipient and reference the standing mandate.
+- Start every team handover with its type (information, advice or execution), assignment, existing Chief Project
+  Manager `taskKey`, named responsible owner, expected deliverable and next step. Name exactly one next recipient
+  and reference the standing mandate without repeating it in full.
   Include the actual phase, evidenced status, existing limits and actual observation timestamp with time zone
   and an unambiguous phase/comparison reference; distinguish
   that observation from the message's sending time. Do not estimate an observation time as if it were measured.
 - Distinguish sent, accepted, writer ended and verified complete. Successful tool delivery proves only sending;
   neither sending time nor sender success proves freshness, recipient takeover, stopped processes or completion.
   Claim each later state only with its actual evidence. A handover or writer stop does not free the task's slot.
-- Pass on complete evidence bound to its actual commit/comparison and scope, including applicable checks,
-  acceptance and remaining limits. Refresh affected evidence when relevant changes or unresolved risks require it;
+- Pass on complete evidence bound to its actual commit/comparison, scope and configuration, including applicable
+  checks, results, acceptance and remaining limits. Distinguish static, simulated, manual and device evidence.
+  Reuse still-valid evidence; refresh affected evidence when relevant changes or unresolved risks require it;
   do not rerun unchanged checks without such a reason or transfer old results to a changed comparison.
 - Provide the complete handover before the supplier session goes quiet. The supplier retains delivery
   responsibility until the named recipient explicitly accepts once in its target chat or confirms takeover
