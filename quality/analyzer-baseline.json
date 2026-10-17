@@ -1780,13 +1780,6 @@
       "count": 1
     },
     {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE2002",
-      "path": "Domain/Project.cs",
-      "count": 1
-    },
-    {
       "project": "MOBAdisplay",
       "targetFramework": "net10.0",
       "ruleId": "CA1001",

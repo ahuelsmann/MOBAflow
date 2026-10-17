@@ -4,6 +4,8 @@ namespace Moba.Test.Domain;
 [TestFixture]
 internal class ProjectTests
 {
+    private static readonly int[] SecondAndFourthWorkflow = [1, 3];
+
     [Test]
     public void Constructor_InitializesDefaults()
     {
@@ -151,6 +153,6 @@ internal class ProjectTests
             ]
         };
 
-        Assert.That(project.FindWorkflowsWithInvalidIds(), Is.EquivalentTo(new[] { 1, 3 }));
+        Assert.That(project.FindWorkflowsWithInvalidIds(), Is.EquivalentTo(SecondAndFourthWorkflow));
     }
 }
