@@ -55,6 +55,29 @@ For existing work, preserve current writers, queue positions, uncommitted change
 Reconcile the latest human instructions before takeover. Do not blindly restart workers, copy interrupted work
 or use a no-resume instruction to justify a competing writer.
 
+### Handover evidence and delivery
+
+- Every team handover identifies the existing Chief Project Manager `taskKey`, the named responsible owner,
+  exactly one next recipient, the actual phase and evidenced status, the next step and existing limits. Include
+  the actual observation timestamp with time zone and an unambiguous phase/comparison reference; distinguish
+  that observation from the message's sending time. Do not estimate an observation time as if it were measured.
+- Distinguish sent, accepted, writer ended and verified complete. Successful tool delivery proves only sending;
+  neither sending time nor sender success proves freshness, recipient takeover, stopped processes or completion.
+  Claim each later state only with its actual evidence. A handover or writer stop does not free the task's slot.
+- Provide the complete handover before the supplier session goes quiet. The supplier retains delivery
+  responsibility until the named recipient explicitly accepts once in its target chat or confirms takeover
+  through the agreed callback. Do not assume acceptance from silence, an idle chat or a successful send, and do
+  not create acknowledgement chains. Writer ownership changes only after the acknowledged writer handover.
+- Compare delayed messages with the latest confirmed state for the same task and phase/comparison. Identify
+  older observations as historical; do not overwrite newer evidence or restart a completed phase because an
+  earlier status arrived late. Route conflicting candidates and counterevidence to the named owner and Chief
+  Project Manager through the existing handover, without making an independent start or takeover decision.
+- If delivery is blocked or a tool rejects communication, record the exact failed action and limitation in the
+  existing task and coordinate with Chief Project Manager through an authorized route. Leave the assignment
+  with its existing owner; do not create replacement writers, automatic retries, timers or another queue, change
+  permissions/security settings or bypass a communication restriction. A local reply collected through an
+  already agreed callback is valid when permitted; it does not authorize a blocked outbound send.
+
 ## Up to five allocated tasks in one queue
 
 - Across every MOBAflow team and Codex, Claude and Antigravity, allocate at most five larger tasks at a time.
