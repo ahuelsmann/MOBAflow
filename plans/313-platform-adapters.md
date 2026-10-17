@@ -2,7 +2,9 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/313
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: Active; slice 1 in #315 and slice 2 in #317 (both in review); slice 3 follows
+**Status**: Implementation delivered (slice 1 #315, slice 2 #317) and documented (platform adapter rule in
+[ARCHITECTURE.md](../docs/ARCHITECTURE.md#platform-adapter-rule)); open: the maintainer desktop acceptance below,
+recorded on #313. This plan is removed only after that acceptance is recorded.
 
 ## Purpose and scope
 
