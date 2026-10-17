@@ -8,7 +8,6 @@ using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.SharedUI.Interface;
-using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
@@ -18,7 +17,7 @@ internal sealed partial class TestRollingStockPages : IDisposable
 
     // The test fixture owns this collection; returned pages stay alive until its teardown.
     public LocomotivesPageViewModel GetLocomotivesPage(
-        ISolutionSession session, IIoService? ioService = null, ILocomotiveTrainRuntimeUsageReader? usageReader = null)
+        ISolutionSession session, ISolutionIoService? files = null, ILocomotiveTrainRuntimeUsageReader? usageReader = null)
     {
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(service => service.Detect(It.IsAny<Moba.Domain.Project>()))
@@ -30,7 +29,7 @@ internal sealed partial class TestRollingStockPages : IDisposable
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
         var usage = CreateUsage(session, usageReader);
         _pages.Add(usage);
-        var page = new LocomotivesPageViewModel(session, ioService ?? new NullIoService(),
+        var page = new LocomotivesPageViewModel(session, TestFileServices.Photos(files),
             persistence.Object, new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, usage),
             NullLogger<LocomotivesPageViewModel>.Instance, _ => { });
         _pages.Add(page);
@@ -51,20 +50,20 @@ internal sealed partial class TestRollingStockPages : IDisposable
             NullLogger<LocomotiveTrainUsageViewModel>.Instance);
     }
 
-    public WagonsPageViewModel GetWagonsPage(ISolutionSession session, IIoService? ioService = null)
+    public WagonsPageViewModel GetWagonsPage(ISolutionSession session, ISolutionIoService? files = null)
     {
         var settings = new AppSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-        var page = new WagonsPageViewModel(session, ioService ?? new NullIoService(),
+        var page = new WagonsPageViewModel(session, TestFileServices.Photos(files),
             persistence.Object, new LayoutColumnWidthsViewModel(),
             NullLogger<WagonsPageViewModel>.Instance, _ => { });
         _pages.Add(page);
         return page;
     }
     public TrainsPageViewModel GetTrainsPage(
-        ISolutionSession session, IConnectionRuntime runtime, IIoService? ioService = null,
+        ISolutionSession session, IConnectionRuntime runtime, ISolutionIoService? files = null,
         ILocomotiveTrainRuntimeUsageReader? usageReader = null)
     {
         var settings = new AppSettings();
@@ -72,7 +71,7 @@ internal sealed partial class TestRollingStockPages : IDisposable
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
         var page = new TrainsPageViewModel(session, runtime, persistence.Object, new LayoutColumnWidthsViewModel(),
-            GetLocomotivesPage(session, ioService, usageReader), GetWagonsPage(session, ioService),
+            GetLocomotivesPage(session, files, usageReader), GetWagonsPage(session, files),
             NullLogger<TrainsPageViewModel>.Instance);
         _pages.Add(page);
         return page;
