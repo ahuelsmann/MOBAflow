@@ -29,7 +29,7 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
 
     // Optional Services
     private readonly IUiDispatcher? _dispatcher;
-    private readonly IIoService? _ioService;
+    private readonly IFilePickerService? _filePicker;
     private readonly ISoundPlayer? _soundPlayer;
     private readonly ILoggerFactory? _loggerFactory;
 
@@ -175,15 +175,15 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     /// <param name="model">The project domain model.</param>
     /// <param name="dispatcher">Optional UI dispatcher used by nested ViewModels.</param>
-    /// <param name="ioService">Optional IO service used by nested ViewModels.</param>
+    /// <param name="filePicker">Optional IO service used by nested ViewModels.</param>
     /// <param name="soundPlayer">Optional sound player used by nested ViewModels.</param>
     /// <param name="loggerFactory">Optional factory for nested view model loggers.</param>
-    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
+    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IFilePickerService? filePicker = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(model);
         Model = model;
         _dispatcher = dispatcher;
-        _ioService = ioService;
+        _filePicker = filePicker;
         _soundPlayer = soundPlayer;
         _loggerFactory = loggerFactory;
         _name = model.Name;  // Initialize from Model
@@ -310,5 +310,5 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     }
 
     private WorkflowViewModel CreateWorkflowViewModel(Workflow workflow) =>
-        new(workflow, ioService: _ioService, soundPlayer: _soundPlayer, loggerFactory: _loggerFactory);
+        new(workflow, filePicker: _filePicker, soundPlayer: _soundPlayer, loggerFactory: _loggerFactory);
 }

@@ -14,8 +14,6 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Sound;
-
 using System.ComponentModel;
 
 using ViewModel;
@@ -51,11 +49,10 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
             new EventId(1, nameof(LogProjectActivationFailed)),
             "Activate project runtime failed");
 
-    private readonly IIoService _ioService;
+    private readonly ISolutionIoService _solutionIo;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IProjectRuntimeHost _projectRuntimes;
-    private readonly ISoundPlayer? _soundPlayer;
-    private readonly ILoggerFactory? _loggerFactory;
+    private readonly SolutionViewModelServices _viewModelServices;
     private readonly ILogger<SolutionSession> _logger;
 
     /// <summary>Ensures at most one solution file write runs at a time (avoids races on temp/rename writes).</summary>
@@ -70,33 +67,30 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     /// Initializes a new instance of the <see cref="SolutionSession"/> class and selects the first project.
     /// </summary>
     /// <param name="solution">The application's solution instance; it is replaced in place on load.</param>
-    /// <param name="ioService">File access for solutions; <see cref="NullIoService"/> on hosts without files.</param>
+    /// <param name="solutionIo">Solution file access; <see cref="NullSolutionIoService"/> on hosts without files.</param>
     /// <param name="uiDispatcher">Dispatcher for state bound to the UI.</param>
     /// <param name="projectRuntimes">Creates and discards one runtime per project of the solution.</param>
     /// <param name="logger">Logger for background failures.</param>
-    /// <param name="soundPlayer">Optional sound player passed to project view models.</param>
-    /// <param name="loggerFactory">Optional logger factory passed to project view models.</param>
+    /// <param name="viewModelServices">Services passed to the solution and project view models; file picking is unavailable when omitted.</param>
     public SolutionSession(
         Solution solution,
-        IIoService ioService,
+        ISolutionIoService solutionIo,
         IUiDispatcher uiDispatcher,
         IProjectRuntimeHost projectRuntimes,
         ILogger<SolutionSession> logger,
-        ISoundPlayer? soundPlayer = null,
-        ILoggerFactory? loggerFactory = null)
+        SolutionViewModelServices? viewModelServices = null)
     {
         ArgumentNullException.ThrowIfNull(solution);
-        ArgumentNullException.ThrowIfNull(ioService);
+        ArgumentNullException.ThrowIfNull(solutionIo);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(projectRuntimes);
         ArgumentNullException.ThrowIfNull(logger);
 
-        _ioService = ioService;
+        _solutionIo = solutionIo;
         _uiDispatcher = uiDispatcher;
         _projectRuntimes = projectRuntimes;
         _logger = logger;
-        _soundPlayer = soundPlayer;
-        _loggerFactory = loggerFactory;
+        _viewModelServices = viewModelServices ?? new SolutionViewModelServices(new NullFilePickerService());
 
         // Ensure the solution always has at least one project.
         if (solution.Projects.Count == 0)
@@ -105,7 +99,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         }
 
         Solution = solution;
-        SolutionViewModel = new SolutionViewModel(solution, _uiDispatcher, _ioService, _soundPlayer, _loggerFactory);
+        SolutionViewModel = new SolutionViewModel(solution, _uiDispatcher, _viewModelServices.FilePicker, _viewModelServices.SoundPlayer, _viewModelServices.LoggerFactory);
         HasSolution = solution.Projects.Count > 0;
         SelectedProject = SolutionViewModel.Projects.FirstOrDefault();
     }
@@ -158,7 +152,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     public partial string SolutionSaveStatusText { get; private set; } = "Not saved";
 
     /// <inheritdoc />
-    public bool CanSave => _ioService is not NullIoService;
+    public bool CanSave => _solutionIo.CanPersist;
 
     /// <inheritdoc />
     public bool IsAutoSaveSuppressed => Volatile.Read(ref _autoSaveSuppressionCount) > 0;
@@ -169,7 +163,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         MarkDirty();
         var requestVersion = BeginAutoSaveRequest();
 
-        if (_ioService is NullIoService)
+        if (!_solutionIo.CanPersist)
         {
             SetSaveStatus(SolutionSaveState.NotSaved, "Not saved");
             return;
@@ -255,20 +249,20 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     /// <inheritdoc />
     public async Task LoadSolutionAsync()
     {
-        if (_ioService is NullIoService)
+        if (!_solutionIo.CanPersist)
             return;
 
-        var (loadedSolution, path, error) = await _ioService.LoadAsync().ConfigureAwait(false);
+        var (loadedSolution, path, error) = await _solutionIo.LoadAsync().ConfigureAwait(false);
         ApplyLoadResult(loadedSolution, path, error);
     }
 
     /// <inheritdoc />
     public async Task LoadSolutionFromPathAsync(string filePath)
     {
-        if (_ioService is NullIoService)
+        if (!_solutionIo.CanPersist)
             return;
 
-        var (loadedSolution, path, error) = await _ioService.LoadFromPathAsync(filePath).ConfigureAwait(false);
+        var (loadedSolution, path, error) = await _solutionIo.LoadFromPathAsync(filePath).ConfigureAwait(false);
         ApplyLoadResult(loadedSolution, path, error);
     }
 
@@ -298,7 +292,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         Solution.Projects.Add(project);
         _projectRuntimes.AddAsync(project).Observe(ex => LogProjectActivationFailed(_logger, ex));
 
-        var projectViewModel = new ProjectViewModel(project, _uiDispatcher, _ioService, _soundPlayer, _loggerFactory);
+        var projectViewModel = new ProjectViewModel(project, _uiDispatcher, _viewModelServices.FilePicker, _viewModelServices.SoundPlayer, _viewModelServices.LoggerFactory);
         SolutionViewModel!.Projects.Add(projectViewModel);
 
         SelectedProject = projectViewModel;
@@ -485,7 +479,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
     private async Task<bool> SaveCoreAsync(string? currentPath, bool allowPathSelection, long? autoSaveRequestVersion = null)
     {
-        if (_ioService is NullIoService || _isShuttingDown)
+        if (!_solutionIo.CanPersist || _isShuttingDown)
             return false;
 
         if (!await TryEnterSaveAsync().ConfigureAwait(false))
@@ -520,10 +514,10 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     private async Task<(bool success, string? path, string? error)> SaveAtPathAsync(string? currentPath, bool allowPathSelection)
     {
         if (!string.IsNullOrWhiteSpace(currentPath))
-            return await _ioService.SaveAsync(Solution, currentPath).ConfigureAwait(false);
+            return await _solutionIo.SaveAsync(Solution, currentPath).ConfigureAwait(false);
 
         if (allowPathSelection)
-            return await _ioService.SaveAsAsync(Solution).ConfigureAwait(false);
+            return await _solutionIo.SaveAsAsync(Solution).ConfigureAwait(false);
 
         return (false, null, null);
     }

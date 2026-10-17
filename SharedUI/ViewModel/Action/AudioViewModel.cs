@@ -19,7 +19,7 @@ using Sound;
 public sealed partial class AudioViewModel : WorkflowActionViewModel
 {
     #region Fields
-    private readonly IIoService _ioService;
+    private readonly IFilePickerService _filePicker;
     private readonly ISoundPlayer? _soundPlayer;
     #endregion
 
@@ -27,12 +27,12 @@ public sealed partial class AudioViewModel : WorkflowActionViewModel
     /// Initializes a new instance of the <see cref="AudioViewModel"/> class for the given workflow action.
     /// </summary>
     /// <param name="action">The underlying workflow action that defines this audio playback.</param>
-    /// <param name="ioService">Service used to browse for audio files.</param>
+    /// <param name="filePicker">Service used to browse for audio files.</param>
     /// <param name="soundPlayer">Optional sound player used to preview the selected audio file.</param>
-    public AudioViewModel(WorkflowAction action, IIoService ioService, ISoundPlayer? soundPlayer = null) : base(action, ActionType.Audio)
+    public AudioViewModel(WorkflowAction action, IFilePickerService filePicker, ISoundPlayer? soundPlayer = null) : base(action, ActionType.Audio)
     {
-        ArgumentNullException.ThrowIfNull(ioService);
-        _ioService = ioService;
+        ArgumentNullException.ThrowIfNull(filePicker);
+        _filePicker = filePicker;
         _soundPlayer = soundPlayer;
         action.Audio ??= new AudioActionPayload();
     }
@@ -60,7 +60,7 @@ public sealed partial class AudioViewModel : WorkflowActionViewModel
     [RelayCommand]
     private async Task BrowseForFileAsync()
     {
-        var path = await _ioService.BrowseForAudioFileAsync();
+        var path = await _filePicker.BrowseForAudioFileAsync();
         if (!string.IsNullOrEmpty(path))
         {
             FilePath = path;

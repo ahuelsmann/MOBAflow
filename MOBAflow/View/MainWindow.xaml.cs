@@ -65,11 +65,11 @@ public sealed partial class MainWindow
         return version is not null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v0.0.0";
     }
 
-    public MainWindow(
+    internal MainWindow(
         MainWindowViewModel viewModel,
         NavigationService navigationService,
         IUiDispatcher uiDispatcher,
-        IIoService ioService,
+        WinUiWindowContext windowContext,
         List<PageMetadata> pages,
         AppSettings appSettings,
         RestApiStatusService restApiStatusService,
@@ -104,7 +104,7 @@ public sealed partial class MainWindow
 
             ConfigureWindowChrome();
             ConfigureWindowIconAndSizing();
-            InitializeIoService(ioService);
+            windowContext.Initialize(AppWindow.Id, Content.XamlRoot);
             SubscribeWindowEvents();
             ApplyTheme(ViewModel.SettingsPage.IsDarkMode);
             ApplyZ21TrackPowerIconConnectedState();
@@ -182,16 +182,6 @@ public sealed partial class MainWindow
             presenter.PreferredMinimumHeight = 768;
             presenter.Maximize();
         }
-    }
-
-    private void InitializeIoService(IIoService ioService)
-    {
-        if (ioService is not IoService winUiIoService)
-        {
-            return;
-        }
-
-        winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
     }
 
     private void InitializeNavigation()

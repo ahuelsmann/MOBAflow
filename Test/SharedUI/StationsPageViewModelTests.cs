@@ -20,7 +20,7 @@ internal sealed partial class StationsPageViewModelTests : IDisposable
 {
     private SolutionSession _session = null!;
     private Mock<IMobaRuntime> _runtime = null!;
-    private Mock<IIoService> _io = null!;
+    private Mock<ISolutionIoService> _io = null!;
     private Mock<ISettingsService> _persistence = null!;
     private AppSettings _settings = null!;
     private WorkflowLibraryViewModel _library = null!;
@@ -36,7 +36,7 @@ internal sealed partial class StationsPageViewModelTests : IDisposable
             .Returns(Task.CompletedTask);
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        _io = new Mock<IIoService>();
+        _io = TestFileServices.CreateMock();
         _io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
             .Callback((Solution solution, string _) => _lastSaved = JsonSerializer.Serialize(solution))
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
