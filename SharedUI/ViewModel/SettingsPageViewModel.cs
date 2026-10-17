@@ -1278,17 +1278,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
             // Use the announcement service if available
             if (_announcementService != null)
             {
-                // FIX: Check if speech output is available
-                if (!_announcementService.IsSpeechOutputAvailable)
-                {
-                    _uiDispatcher.InvokeOnUi(() =>
-                    {
-                        ErrorMessage = "Speech output is not configured.";
-                        ShowErrorMessage = true;
-                    });
-                    return;
-                }
-
                 var testJourney = new Journey { Text = testMessage };
                 var testStation = new Station { Name = "Test", IsExitOnLeft = false };
                 await _announcementService.GenerateAndSpeakAnnouncementAsync(

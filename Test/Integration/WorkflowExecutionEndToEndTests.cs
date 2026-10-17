@@ -2,6 +2,7 @@
 
 namespace Moba.Test.Integration;
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
@@ -25,7 +26,7 @@ internal sealed class WorkflowExecutionEndToEndTests
     {
         _fakeUdp = new FakeUdpClientWrapper();
         _z21 = new Z21(_fakeUdp, new EventBus(NullLogger<EventBus>.Instance));
-        _workflowService = new WorkflowService(ActionExecutor.CreateWithDefaultHandlers());
+        _workflowService = TestWorkflowServices.Workflow(TestWorkflowServices.Executor());
     }
 
     [TearDown]
@@ -107,11 +108,7 @@ internal sealed class WorkflowExecutionEndToEndTests
     public async Task SequentialActions_PreserveFakeZ21CorrelationChain()
     {
         var trace = new WorkflowTraceStore();
-        _workflowService = new WorkflowService(ActionExecutor.CreateWithDefaultHandlers(), new WorkflowServiceDependencies
-        {
-            Validator = new WorkflowValidator(), EffectPlanner = new WorkflowEffectPlanner(),
-            EventBus = new EventBus(NullLogger<EventBus>.Instance), TraceStore = trace, TimeProvider = TimeProvider.System
-        });
+        _workflowService = new WorkflowService(TestWorkflowServices.Executor(), TestWorkflowServices.Dependencies(traceStore: trace));
         var workflow = CreateCommandWorkflow([new byte[] { 1 }, new byte[] { 2 }]);
         var project = new Project { Workflows = [workflow] };
         var sourceId = Guid.NewGuid();
