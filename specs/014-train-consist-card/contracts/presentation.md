@@ -10,7 +10,7 @@ The read-only dialog shows train name, project, full available identity, "Planne
 
 Invalid/missing/ambiguous rows keep their number and raw available identity with a textual explanation at that row. Source identity problems are also shown in the header. An empty consist is explicitly empty; unavailable data is a different state.
 
-Controls: **Print** and **Close**. All have accessible names and keyboard access. Focus enters the reading surface; Tab/Shift+Tab reaches actions without getting trapped, and Close returns to the invoking control if present, otherwise the train list. Screen styling uses ThemeResource. Names and diagnostics wrap; enlarged text increases layout height and scrolling instead of being clipped or ellipsized. No edit/remove/reorder controls are present.
+Controls: **Print** and **Close**. All have accessible names and keyboard access. Focus enters the reading surface; Tab/Shift+Tab reaches actions without getting trapped, cancelling or ending print preparation keeps the card open and returns focus to Print, and Close returns to the invoking control if present, otherwise the train list. Screen styling uses ThemeResource. Names and diagnostics wrap; enlarged text increases layout height and scrolling instead of being clipped or ellipsized. No edit/remove/reorder controls are present.
 
 ## Print preparation
 

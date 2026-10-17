@@ -66,4 +66,4 @@
 
 ## 6. Clarification outcome and hook state
 
-The assigned PM/AD handoff already resolved source, flow, card lifetime, paper target and exclusions. No unanswered product question blocks planning. Actual print behavior remains a later verification risk, not an excuse to start a prototype. No .specify/extensions.yml exists at this baseline, so none of the specify/clarify/plan/tasks/analyze pre/post hooks apply. No research agents were started because the assignment explicitly requires this one writer and forbids new workers.
+The assigned Chief Project Manager/Art Director handoff already resolved source, flow, card lifetime, paper target and exclusions. No unanswered product question blocks planning. Actual print behavior remains a later verification risk, not an excuse to start a prototype. No .specify/extensions.yml exists at this baseline, so none of the specify/clarify/plan/tasks/analyze pre/post hooks apply. No research agents were started because the assignment explicitly requires this one writer and forbids new workers.

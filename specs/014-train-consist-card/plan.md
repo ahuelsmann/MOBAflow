@@ -51,7 +51,7 @@ The design was checked before research and again after design. Checked items bel
 - [x] Existing session, constructor injection and host registrations are reused; no broad shared-host requirement is added.
 - [x] Specification and plan reference #321; artifacts remain in one specs feature directory.
 - [x] Every file read is preceded by a successful secrets scan under the stricter current assignment; credentials and MOBAflow/solution.json are excluded.
-- [x] Sonar code analysis is CI-only; publication is Draft and Ready belongs to the Senior PM after current checks and zero OPEN/CONFIRMED issues.
+- [x] Sonar code analysis is CI-only; publication is Draft and Ready belongs to the Chief Project Manager after current checks and zero OPEN/CONFIRMED issues.
 
 The constitution's older `IMobaRuntime.CurrentSnapshot` and broad shared-ViewModel examples are stale against current AGENTS/architecture instructions. No conflict is introduced: this feature uses edited data and no runtime dependency at all. No constitution edit or exception is needed.
 
@@ -132,7 +132,7 @@ Review the full document diff, references/links and command arguments; run Spec 
 - **Tests**: `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~TrainCard"` after those fixtures exist; require discovered/executed tests. Run existing `TrainsPageViewModelTests` and `LocomotiveTrainReferenceAnalyzerTests` if integration affects those boundaries; CI's relevant full suite and analyzer gates still apply.
 - **Manual checks**: Follow [quickstart.md](quickstart.md), only after explicit app-launch/print acceptance assignment. Keyboard/focus, Light/Dark, 200% text, actual Windows callbacks, digital A5 output and physical print are separate evidence.
 - **Regression checks**: Strict mocks/model copies prove no train edits, Solution writes, owner start/update or operator commands; card components do not depend on Z21. No Android or layout/hardware certification.
-- **Secrets/Sonar**: Changed-file scans; Draft PR with exact head/base, current checks, green Sonar and zero OPEN/CONFIRMED PR issues. Senior PM alone verifies Ready; existing Claude plan then owns independent review/fix/re-review/merge.
+- **Secrets/Sonar**: Changed-file scans; Draft PR with exact head/base, current checks, green Sonar and zero OPEN/CONFIRMED PR issues. Chief Project Manager alone verifies Ready; existing Claude plan then owns independent review/fix/re-review/merge.
 - **Traceability**: [tasks.md](tasks.md) maps all FR/SC requirements. No extra task issues or agents are created by this package.
 
 ## Documentation and wiki impact
@@ -141,7 +141,7 @@ This planning PR adds only feature plans, so existing user-facing availability s
 
 ## Risks and remaining technical verification
 
-The design is source-backed and uses documented Windows APIs, but no native printing integration was compiled or run. Implementation must verify XamlRoot/HWND ownership, dialog focus behavior, text measurement at 200%, callback threading/disposal, actual driver imageable area and A5 support. Synthetic pure paginator tests cannot prove physical clipping. If those constraints prevent the approved reading/printing behavior, report concrete evidence to the PM/AD before changing scope or adding a different rendering dependency.
+The design is source-backed and uses documented Windows APIs, but no native printing integration was compiled or run. Implementation must verify XamlRoot/HWND ownership, dialog focus behavior, text measurement at 200%, callback threading/disposal, actual driver imageable area and A5 support. Synthetic pure paginator tests cannot prove physical clipping. If those constraints prevent the approved reading/printing behavior, report concrete evidence to the Chief Project Manager/Art Director before changing scope or adding a different rendering dependency.
 
 ## Complexity Tracking
 

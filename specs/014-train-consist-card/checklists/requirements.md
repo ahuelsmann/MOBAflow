@@ -33,4 +33,4 @@
 
 ## Notes
 
-16/16 specification-quality items pass by static review. The clarification pass asked zero new questions because the issue and assigned AD/PM handoff already resolve material scope. These checkmarks do not mark implementation tasks or product/UI/print acceptance complete. Every implementation task remains unchecked.
+16/16 specification-quality items pass by static review. The clarification pass asked zero new questions because the issue and assigned Art Director/Chief Project Manager handoff already resolve material scope. These checkmarks do not mark implementation tasks or product/UI/print acceptance complete. Every implementation task remains unchecked.

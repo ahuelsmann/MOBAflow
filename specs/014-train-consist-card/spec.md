@@ -16,13 +16,13 @@
 
 **Affected Platforms**: MOBAflow Windows desktop; platform-neutral presentation logic in SharedUI.
 
-**Out of Scope**: Product implementation in this planning package; prototypes; Android/API/display features; automatic train formation; manifests or freight scheduling; persistent check-off/progress/history; auto-refresh; deferred changes; games; length/platform fit; runtime or physical-presence certification; hardware commands; QR codes; mandatory photos. #306/#309 are completed reference material, not reopened work.
+**Out of Scope**: Product implementation in this planning package; prototypes; Android/API/display features; automatic train formation; manifests or freight scheduling; persistent check-off/progress/history; auto-refresh; deferred changes; games; length/platform fit; runtime or physical-presence certification; hardware commands; QR codes; mandatory photos; vehicle orientation (`IsReversed`), which #321 does not request and the card therefore neither shows nor certifies. #306/#309 are completed reference material, not reopened work.
 
 **Sensitive Data**: Project and vehicle names are user-authored. Include only the selected project's card fields; no credentials, local file paths, network configuration, decoder backup data or unrelated projects. Use synthetic data for validation.
 
 **Data and API Effects**: No changes to saved Solution JSON, schema version, settings/defaults, layouts, REST/SignalR APIs or Z21 protocol. A card is temporary read-only presentation data, not a persisted entity. Printing does not save the Solution.
 
-**Authority**: Issue #321, freshly read on 2026-10-17, plus the assigned AD/UX handoff accepted by the PM at 21:11:30 CEST. This package stops at planning and a planning Draft PR. Implementation and practical feature acceptance require a later assignment.
+**Authority**: Issue #321, freshly read on 2026-10-17, plus the assigned AD/UX handoff accepted by the Chief Project Manager at 21:11:30 CEST. This package stops at planning and a planning Draft PR. Implementation and practical feature acceptance require a later assignment.
 
 ## User Scenarios & Testing
 
@@ -54,7 +54,7 @@ An operator opens, reads and closes the card using the keyboard, including with 
 
 1. **Given** keyboard focus in the existing train view, **When** the operator activates "Train card", **Then** focus moves into the read-only card and all actions are reachable without editing the train.
 2. **Given** a long name or diagnostic, **When** the viewport narrows or text is enlarged, **Then** the complete text wraps and remains reachable by scrolling; color is not the only diagnostic signal.
-3. **Given** the card or system print preparation, **When** Close or cancellation returns, **Then** focus returns to the invoking control when it still exists, otherwise to the train list.
+3. **Given** an open card, **When** system print preparation is cancelled or ends, **Then** the card stays open and focus returns to its Print action; **When** the card is closed, **Then** focus returns to the invoking control when it still exists, otherwise to the train list.
 4. **Given** no current train or a stale selection outside the selected project, **When** entry is evaluated, **Then** the action is unavailable or an honest unavailable-source message is shown, rather than another train's data.
 
 ### User Story 3 - Print the same planned card (Priority: P2)
@@ -132,4 +132,4 @@ An operator prepares and prints an A5-friendly copy that a guest can read alongs
 
 ## Clarification review
 
-The assigned issue and AD/PM handoff resolve product scope, source, entry flow, snapshot lifetime, paper format and exclusions. No new human question was needed. Functional, domain, interaction, edge-case, constraints, terminology and completion categories are clear. Printing platform details and failure handling are addressed in the technical plan; no uptime/service or legal compliance target applies to this local read-only feature. This review does not claim implementation or acceptance.
+The assigned issue and Art Director/Chief Project Manager handoff resolve product scope, source, entry flow, snapshot lifetime, paper format and exclusions. No new human question was needed. Functional, domain, interaction, edge-case, constraints, terminology and completion categories are clear. Printing platform details and failure handling are addressed in the technical plan; no uptime/service or legal compliance target applies to this local read-only feature. This review does not claim implementation or acceptance.

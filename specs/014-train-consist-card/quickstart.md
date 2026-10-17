@@ -42,7 +42,7 @@ Require strict mocks to prove zero calls to Solution saves, runtime owner start/
 ## Actual Windows UI acceptance, later and explicitly assigned
 
 1. Open the selected train card with keyboard input. Verify provenance, timestamp, all seven positions, full identities and local diagnosis; no editable train controls.
-2. Traverse the dialog and actions using Tab/Shift+Tab; open/cancel print preparation; Close and verify focus return. Repeat open/close and print cancellation to detect duplicate handlers or stale cards.
+2. Traverse the dialog and actions using Tab/Shift+Tab; open/cancel print preparation and verify the card stays open with focus on Print; Close and verify focus returns to the invoking control. Repeat open/close and print cancellation to detect duplicate handlers or stale cards.
 3. Inspect Light and Dark at normal and 200% Windows text size, including narrow viewport and a 300-character/unbroken name. Reach all content through wrapping/scrolling.
 4. If the source changes while a card is open, verify it retains its copied contents. Explicit Close/reopen generates a fresh timestamp and contents.
 5. Check absent/stale selection, print unsupported/error status and explicit retry. Do not create a runtime or operate the layout to perform these checks.
@@ -61,4 +61,4 @@ Record commit/comparison, date/time+zone, configuration, fixture, executed comma
 
 ## Documentation and integration
 
-Update docs/wiki/MOBAFLOW-USER-GUIDE.md, docs/PROJECT-REFERENCE.md and docs/ARCHITECTURE.md when the feature actually exists. Preserve the edited-data and non-certification boundary, and reassess after review fixes against integrated main. Follow the existing Senior PM Ready and Claude review/fix/re-review/integration route.
+Update docs/wiki/MOBAFLOW-USER-GUIDE.md, docs/PROJECT-REFERENCE.md and docs/ARCHITECTURE.md when the feature actually exists. Preserve the edited-data and non-certification boundary, and reassess after review fixes against integrated main. Follow the existing Chief Project Manager Ready and Claude review/fix/re-review/integration route.
