@@ -2,6 +2,7 @@
 
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging;
 
 using Moba.Backend.Service;
@@ -23,7 +24,7 @@ internal class AnnouncementServiceTests
     public void SetUp()
     {
         _mockLogger = new Mock<ILogger<AnnouncementService>>();
-        _announcementService = new AnnouncementService(null, _mockLogger.Object);
+        _announcementService = new AnnouncementService(new NullSpeechOutput(), _mockLogger.Object);
     }
 
     [Test]
@@ -251,7 +252,7 @@ internal class AnnouncementServiceTests
     public async Task GenerateAndSpeakAnnouncementAsync_EmptyTemplate_DoesNotSpeak(string? template)
     {
         var output = new Mock<ISpeechOutput>(MockBehavior.Strict);
-        await new AnnouncementService(output.Object).GenerateAndSpeakAnnouncementAsync(template, new Station(), 1).ConfigureAwait(false);
+        await TestWorkflowServices.Announcements(output.Object).GenerateAndSpeakAnnouncementAsync(template, new Station(), 1).ConfigureAwait(false);
         output.VerifyNoOtherCalls();
     }
 
@@ -261,7 +262,7 @@ internal class AnnouncementServiceTests
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync().ConfigureAwait(false);
         var output = new Mock<ISpeechOutput>(MockBehavior.Strict);
-        await Assert.CatchAsync<OperationCanceledException>(() => new AnnouncementService(output.Object)
+        await Assert.CatchAsync<OperationCanceledException>(() => TestWorkflowServices.Announcements(output.Object)
             .GenerateAndSpeakAnnouncementAsync("Test", new Station(), 1, cancellation.Token)).ConfigureAwait(false);
         output.VerifyNoOtherCalls();
     }
@@ -274,7 +275,7 @@ internal class AnnouncementServiceTests
         var output = new Mock<ISpeechOutput>();
         output.Setup(value => value.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns((string text, CancellationToken _) => text == "First" ? firstCompletion.Task : secondCompletion.Task);
-        var service = new AnnouncementService(output.Object);
+        var service = TestWorkflowServices.Announcements(output.Object);
         var first = service.GenerateAndSpeakAnnouncementAsync("First", new Station(), 1);
         var second = service.GenerateAndSpeakAnnouncementAsync("Second", new Station(), 1);
         try
@@ -320,7 +321,7 @@ internal class AnnouncementServiceTests
         var output = new Mock<ISpeechOutput>();
         output.Setup(value => value.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(SpeechResult.Failure(SpeechFailureKind.Unavailable, "Speech unavailable."));
-        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => new AnnouncementService(output.Object)
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => TestWorkflowServices.Announcements(output.Object)
             .GenerateAndSpeakAnnouncementAsync("Test", new Station(), 1, suppressSpeechErrors: false)).ConfigureAwait(false);
         Assert.That(failure!.Message, Is.EqualTo("Speech unavailable."));
     }

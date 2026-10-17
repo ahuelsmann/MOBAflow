@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging;
 
 using Moba.Backend;
@@ -360,7 +361,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         workflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
             .Returns(async (WorkflowExecutionRequest request, CancellationToken cancellationToken) =>
             {
-                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(stopAction, request.Context, cancellationToken).ConfigureAwait(false);
+                await TestWorkflowServices.ChangeJourneyStop().ExecuteAsync(stopAction, request.Context, cancellationToken).ConfigureAwait(false);
                 return new WorkflowExecutionResult
                 {
                     ExecutionId = Guid.NewGuid(),
