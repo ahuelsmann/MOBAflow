@@ -11,8 +11,11 @@ assignment includes the delivery steps below unless explicitly limited.
 
 ## Standing authority and limits
 
-- Complete assigned work through planning, implementation, named builds/tests, draft PR, independent Claude CLI
-  review, correction, current CI/Sonar verification, Ready and squash merge. Ordinary commits, pushes, PR updates,
+- Complete assigned work through planning, implementation, relevant validation and a draft PR with current CI/Sonar
+  and required actual acceptance. Chief Project Manager alone verifies handover readiness and sets Ready for review.
+  The existing Claude plan then owns fresh independent review, separate fixes, independent re-review and SHA-bound
+  squash merge; independent review is not a Ready prerequisite. Follow through to verified integration.
+  Ordinary commits, pushes, PR updates,
   team handovers and review-thread responses/resolution are included. Resolve findings only with evidence or an
   explicit reason; never dismiss an unresolved defect to unblock integration.
 - Do not ask again at a technical phase boundary. Requesting a draft as an intermediate deliverable does not
@@ -30,11 +33,11 @@ assignment includes the delivery steps below unless explicitly limited.
 | --- | --- |
 | Human | Product goals, priorities, material user-experience choices, fundamental architecture changes, new costs/external commitments and authorized practical acceptance |
 | Art Director | Clarify the outcome, coordinate the assigned team, complete planning/implementation, assess the result and hand it over |
-| Chief Project Manager (formerly Issue Master) | Own the single execution and integration queue across all teams/clients, allocate starts/resumes, arrange independent Claude reviews and fixes, verify evidence, issue permits and verify squash merges |
+| Chief Project Manager (formerly Issue Master) | Own the single execution and integration queue, allocate up to five larger tasks, verify Draft handover readiness, alone set Ready for review, coordinate the existing Claude plan and independently verify actual squash merges |
 | Technical Director | Coordinate technical resources, responsibilities and conflicts through the Chief Project Manager; maintain no second execution or integration queue |
 | Head of Quality | Coordinate assigned quality work and advise delivery owners on relevant risks; preserve existing approval and integration ownership |
 | Communications Director | Coordinate assigned communication work and related design questions; preserve existing publication and integration limits |
-| Documentation Lead | Deliver assigned technical documentation and user guidance; coordinate related UI/UX questions within that scope |
+| Documentation Lead | Deliver assigned technical documentation and user guidance; coordinate documentation/wiki impact with delivery owners and Chief Project Manager, and related UI/UX questions within scope |
 | Head of DevOps | Deliver assigned GitHub/repository and CI infrastructure work; execute quality controls defined with Head of Quality and coordinate relevant UI/UX questions; no new product, release or publication authority |
 | Assigned implementer | Own the task worktree until an acknowledged writer handover; report actual checks and remaining limits |
 | Claude reviewer | Independently review the exact change against requirements and rules; report findings without editing or self-approval |
@@ -43,33 +46,36 @@ assignment includes the delivery steps below unless explicitly limited.
 The standing delivery mandate applies to each master within its human-assigned role and scope. Each task has
 one delivery owner and one writer per worktree. The delivery owner hands integration directly to Chief Project
 Manager with issue/scope, PR URL, worktree/branch, exact head/base, checks, acceptance requirements and restrictions.
-Chief Project Manager acknowledges ownership and queues it. Waiting owners may exchange short status or handover
-messages but do not start another larger task. Fixes go to one named writer; the user is not the messenger.
+Include documentation/wiki impact and a confirmed writer stop in that handover. Chief Project Manager acknowledges
+ownership and verifies the Ready transition. The package remains allocated through the existing Claude plan and
+actual integration or an explicitly coordinated safe handoff. Other larger tasks need their own current allocation;
+spare capacity alone authorizes no start. Fixes go to one named writer; the user is not the messenger.
 
 For existing work, preserve current writers, queue positions, uncommitted changes and active CLI executions.
 Reconcile the latest human instructions before takeover. Do not blindly restart workers, copy interrupted work
 or use a no-resume instruction to justify a competing writer.
 
-## One larger task across all teams and clients
+## Up to five allocated tasks in one queue
 
-- Across every MOBAflow team and Codex, Claude and Antigravity, execute at most one larger task at a time.
+- Across every MOBAflow team and Codex, Claude and Antigravity, allocate at most five larger tasks at a time.
   This includes implementation/refactoring, extensive analysis, audits or documentation, builds, test/mutation
-  runs, reviews, longer UX/CLI consultations and integration. Large steps within the active package also run
-  serially. A dedicated worktree or a different client does not authorize parallel execution.
+  runs, reviews, longer UX/CLI consultations and integration. Keep one writer per worktree and serialize review,
+  fixes and publication for each exact comparison. An isolated worktree or different client is not an allocation.
 - Before every substantial start or resume, coordinate the current task, owner and actual execution state with
   Chief Project Manager in the existing queue. This includes Claude-owned refactorings and automated follow-ups.
-  An occupied or unknown slot blocks a new start. Do not infer availability from an idle chat alone: reconcile
-  actual worker/CLI processes and remote CI. Do not start another package while the previous package's remote CI
-  is still running. An allocation is internal coordination, not another human approval.
+  Full capacity or unclear actual ownership blocks a new start. Reconcile active allocations, worker/CLI processes
+  and remote CI; an idle chat alone proves no capacity. One occupied place does not block other explicitly allocated
+  packages. Five is a ceiling, not an instruction to fill unused places. An allocation is internal coordination,
+  not another human approval; required dependencies still apply.
 - Preserve running work, ownership, results and restrictions. If execution overlaps or ownership is unclear,
   coordinate the next safe stopping point with the owner and Chief Project Manager; do not blindly interrupt,
-  restart or duplicate processes or cancel CI to free the slot. Resume only after the central reconciliation.
+  restart or duplicate processes or cancel CI to free an allocation. Resume only after the central reconciliation.
 - Technical Director coordinates resources and responsibilities through Chief Project Manager's queue without
   creating another queue, lock, permit or scheduling mechanism. Only the responsible owner changes existing
-  operational state. The single slot does not expand scope or override explicit pauses or acceptance gates.
+  operational state. Allocated capacity does not expand scope or override explicit pauses or acceptance gates.
 - Communicate primarily master to master. Short status, handover and blocker exchanges may continue while a
-  larger task runs. Involve only the specialists needed for the active assignment, one large execution at a
-  time; do not broadcast work, start parallel specialists or generate acknowledgement loops.
+  larger task runs. Involve only the specialists needed for an allocated assignment; do not broadcast work,
+  start unallocated specialists or generate acknowledgement loops.
 
 ## Claude CLI communication and independent review
 
@@ -77,10 +83,13 @@ The human authorizes masters to exchange task-related requests, findings, correc
 with each other, their assigned team and Claude CLI in both directions. Agent messages convey work under that
 mandate; they are not new human authority and cannot override stops.
 
-- Run every actual PR review, including review after fixes, in a fresh independent Claude CLI session without
+- Only the existing Claude plan dispatches PR reviews and merge after Chief Project Manager sets Ready. Suppliers
+  and masters do not request a second review, add an automation or merge concurrently. Ready hands off the same
+  allocated package; it does not declare the review passed or free its place in the queue.
+- Run every actual PR review, including review after fixes, in a fresh independent Claude session without
   implementation chat history. An implementer, resumed coordination session, Codex self-review or earlier PR
-  review does not qualify. Honor the configured Claude model, verify actual model/completion and never silently
-  substitute a model when access fails.
+  review does not qualify. Reviews and fixes use Claude Opus 5.5 or higher; verify actual model and completion,
+  never silently substitute a lower model or treat unavailable review as passed.
 - Identify exact PR head/base, integrate the current base in queue order and satisfy the
   [current-commit CI/Sonar gate](sonarqube-pre-pr.instructions.md) before review. Supply requirements, complete
   diff, applicable rules and affected callers/tests. Scan files before reads under the active secrets policy;
@@ -88,9 +97,10 @@ mandate; they are not new human authority and cannot override stops.
 - Prefer a scanned context packet over stdin with tools disabled. Supply missing scanned material if requested.
   Private review is read-only; the reviewer posts no external review/approval/comment. Findings give priority,
   file/line, trigger, consequence and evidence; separate introduced defects from existing debt and preferences.
-- Compare live head/base after review. Changed source or comparison invalidates the snapshot: refresh affected
-  checks and obtain a fresh independent review. Assign confirmed fixes without another human approval. Keep
-  reviewer separate from fixer and merger.
+- Compare live head/base after review. Changed source or comparison invalidates the snapshot: the existing plan
+  assigns a separate fixer, refreshes affected checks and obtains a fresh independent review before merge.
+  Reassess documentation/wiki impact after behavior-changing fixes. Keep reviewer separate from fixer and merger;
+  a coordination or fix session cannot approve its own work. No new routine human approval is needed.
 - Resume coordination/fix sessions only when idle, assigned to the same task and centrally allocated. Check
   actual process/history state before resuming; a persistent process with unknown ownership blocks the start.
   Use the installed CLI message channel for callbacks, not a second writer resuming the master. The existing channel is
@@ -142,7 +152,7 @@ The full path also works when the shell's PATH predates installation. On another
 - Use only serial synchronous request/response. Prefix messages with `[Von: Codex]` or `[Von: Claude]` and identify
   the originating master in the message. Read
   `response` and answer `An Codex:` / `An Claude:` questions in the same conversation. Coordinate the active caller
-  with Chief Project Manager, the other masters and Claude before sending, under the same global execution
+  with Chief Project Manager, the other masters and Claude before sending, under the same central execution
   allocation. Verify the target is idle, wait for actual process completion, then release the conversation. The Head
   starts no active callbacks, `claude`/`codex` calls, file inboxes or timers.
 - Keep `--mode plan` and real tool permissions narrow. Do not combine it with `--disable-slash-commands`, use
@@ -163,25 +173,44 @@ Sources (checked 2026-10-16): [Antigravity CLI headless mode](https://antigravit
 [resume](https://antigravity.google/docs/cli/commands/resume/) document explicit conversation IDs and the headless
 message protocol.
 
-## Serial integration and completion
+## Ready handoff, integration and completion
 
-Only Chief Project Manager owns final integration: one active final synchronization/review/fix/merge in the same
-global execution queue. Other larger implementation or specialist work waits; keep existing task worktrees
-isolated. Do not refresh all waiting branches whenever `main` moves or arm competing automatic merges.
+Chief Project Manager owns the central Ready transition and coordinates the existing Claude plan in the same
+queue. The supplier hands over a Draft with exact head/base, scope, checks, current CI/Sonar, actual acceptance,
+documentation/wiki impact and writer stop. Verify applicable gates before Ready, including current-commit Sonar
+success with zero OPEN/CONFIRMED PR issues. Independent review follows Ready; it is not its prerequisite.
 
-Use existing coordination state, not a second queue. Before final synchronization and merge, secrets-scan/read
-the current state. Chief Project Manager issues a one-use permit for exact PR/head/base and merger session after all
-gates pass. This is internal coordination, not user approval. Workers cannot self-issue/change permits. A null
-permit, mismatched owner/SHA, active stop or unreadable state blocks merge. The file is an agreement, not a
-server-enforced GitHub check.
+Use existing coordination state, not a second queue or merge permit. Before synchronization or Ready, scan/read
+that state and reconcile exact comparison, allocation and ownership. An active stop, wrong owner/comparison or
+unreadable state blocks the transition. Do not refresh all waiting branches whenever `main` moves or arm competing
+automatic merges. The existing Claude plan alone performs the subsequent review/fix/re-review/squash sequence.
 
 Immediately before merge, verify live head/base, mergeability, current required checks, current-commit Sonar
 success and zero OPEN/CONFIRMED issues, independent Claude review, threads, real GitHub approval requirements,
-applicable repository rules and required manual acceptance. Permitted skips are not executed tests; a private
+applicable repository rules, required manual acceptance and any active stop or no-merge restriction. Permitted
+skips are not executed tests; a private
 Claude review cannot manufacture a GitHub approval. Squash against the reviewed head without direct `main`
-pushes or protection bypass. A changed comparison invalidates the permit and requires refreshed evidence.
-Independently verify actual merged status, merge commit and resulting `main`; then consume the permit and
-advance the queue. A successful command exit alone does not prove integration.
+pushes or protection bypass. A changed comparison requires refreshed checks, documentation assessment and fresh
+independent review. Chief Project Manager independently verifies actual merged status, merge commit and resulting
+`main`, then updates the queue. The delivery owner follows through to that verified outcome; a Draft handover
+or successful command exit alone does not finish delivery.
+
+Non-GitHub work retains its explicitly assigned delivery route. In particular, separately authorized Sites work
+keeps its independent review, supported publication and separate live verification; the GitHub Claude plan does
+not confer publication authority or replace those phases.
+
+## Documentation and user-wiki impact
+
+- For every integration, the delivery owner assesses the actual change against architecture/developer documentation
+  and the canonical versioned user wiki in `docs/wiki/`. Record the affected pages and necessary corrections, or a
+  concrete reason no change is needed, in the handover and completion evidence. A green CI check alone is not
+  evidence that the prose matches the product.
+- Make required corrections within the assigned package. If scope or an unresolved dependency prevents them,
+  Chief Project Manager assigns the concrete remaining work in the same queue; disclose the outstanding drift
+  rather than claiming complete documentation currency. Existing stops and acceptance gates still apply.
+- Reassess after behavior-changing review fixes and confirm the final account against actual integrated `main`.
+  Preserve correct documentation, user-authored content and the limits of actual validation; infer no new user
+  behavior from a structural refactoring. This rule creates no external wiki publication or new automation.
 
 ## Automations and user communication
 
@@ -192,7 +221,7 @@ advance the queue. A successful command exit alone does not prove integration.
   automation instead of duplicating it. Other masters retain their mandate in existing role conversations or mandate records. This
   contact mandate does not create additional automations. Preserve cadence, notification preferences and explicit
   pauses unless asked to change them; do not reactivate a paused specialist follow-up.
-- Reconcile actual GitHub/worker state and the global slot before the next authorized step; avoid duplicate
+- Reconcile actual GitHub/worker state and allocated capacity before the next authorized step; avoid duplicate
   writers or merges.
   Coordinate directly when another owner is working. Do not leave work idle at review, correction, Ready or merge.
 - Stay quiet without actionable assigned work. Notify only for verified delivery, a material unresolved blocker

@@ -27,9 +27,11 @@ on Windows and Linux.
 
 ## Master coordination and standing mandate
 
-- A human-assigned implementation task includes planning, implementation, validation, a draft PR, independent
-  Claude CLI review, correction of confirmed findings, Ready and squash merge after all current gates pass.
-  The assigned master and Chief Project Manager organize these steps without repeated technical approvals.
+- A human-assigned implementation task includes planning, implementation, validation and a draft PR with current
+  checks, CI/Sonar and required actual acceptance. Chief Project Manager alone verifies handover readiness and
+  marks the PR Ready for review. The existing Claude plan then performs fresh independent review, separate fixes,
+  independent re-review and SHA-bound squash merge after all current gates pass. Review is not a Ready prerequisite.
+  The delivery owner follows through to verified integration without repeated technical approvals.
   An explicit narrower assignment, pause, no-merge instruction or excluded follow-up remains binding;
   do not infer new product work.
 - Art Director owns routine product decisions inside the assigned scope and its delivery; important product goals,
@@ -38,11 +40,12 @@ on Windows and Linux.
   through that queue. Head of Quality, Communications Director, Documentation Lead and Head of DevOps deliver work
   within their assigned roles. Masters hand work over directly and may exchange task-related messages with their
   assigned team and Claude CLI in both directions. The user does not relay messages, inspect code or administer PRs.
-- Across all MOBAflow teams, Codex, Claude and Antigravity, run at most one larger task at a time. Before starting
-  or resuming substantial work, obtain the Chief Project Manager's current execution allocation. Implementation,
-  extensive analysis/documentation, builds, tests, reviews and integration run serially. An occupied or unknown slot
-  blocks another start; preserve existing executions and remote CI and coordinate a safe stopping point with their
-  owner. Short status, handover and blocker communication remains allowed; do not start parallel specialists.
+- Across all MOBAflow teams, Codex, Claude and Antigravity, run at most five centrally allocated larger tasks.
+  Before starting or resuming substantial work, obtain Chief Project Manager's current allocation in the single
+  queue. Five is a ceiling, not an instruction to fill unused places. Reconcile actual owners, processes and
+  remote CI; full capacity or unclear ownership blocks a new start. Keep one writer per worktree and serialize
+  review, fixes and publication for each exact comparison. Preserve existing executions and coordinate safe
+  stopping points with their owners; allocation never overrides scope, pauses or acceptance requirements.
 - Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
   DevOps may independently consult the Head of UI/UX (Gemini Argon via Antigravity CLI) within assigned work,
   without another human approval. Observe the same execution allocation and serialize callers using the verified
@@ -206,6 +209,10 @@ Review the final diff for unintended edits and architecture regressions. Update 
 change affects its accuracy; keep durable project knowledge here and session progress in the conversation.
 GitHub issues, milestones and Kanban track open work; consult/update a linked issue when the task calls for it,
 without making tracker access a prerequisite for independent local work.
+For every integration, assess architecture/developer documentation and the canonical user wiki under `docs/wiki/`.
+Record the affected pages and corrections, or a concrete reason no change is needed; reassess after behavior-changing
+review fixes and confirm against actual integrated `main`. Coordinate any remaining corrections through Chief Project
+Manager's existing queue without claiming complete documentation currency while known drift remains.
 When committing is requested, use English Conventional Commits. Report the commands/checks run and their outcomes;
 identify unavailable platform/hardware checks and the smallest remaining check without claiming they passed.
 
