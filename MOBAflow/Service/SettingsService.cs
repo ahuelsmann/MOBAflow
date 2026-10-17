@@ -256,8 +256,8 @@ internal class SettingsService : ISettingsService
             json = JsonSerializer.Serialize(_settings, JsonOptions.Default);
         else
         {
-            var document = JsonSerializer.SerializeToNode(_settings, JsonOptions.Default)!;
-            document["application"]!["uiLanguage"] = uiLanguage;
+            var document = JsonSerializer.SerializeToNode(_settings, JsonOptions.Default);
+            document["application"]["uiLanguage"] = uiLanguage;
             json = document.ToJsonString(JsonOptions.Default);
         }
         await _writeSettings(_settingsFilePath, json).ConfigureAwait(true);
