@@ -19,8 +19,8 @@ public sealed class WorkflowServiceDependencies
     /// <summary>Gets the dry-run effect planner.</summary>
     public required IWorkflowEffectPlanner EffectPlanner { get; init; }
 
-    /// <summary>Gets the optional lifecycle event bus.</summary>
-    public IEventBus? EventBus { get; init; }
+    /// <summary>Gets the lifecycle event bus.</summary>
+    public required IEventBus EventBus { get; init; }
 
     /// <summary>Gets the retained workflow trace store.</summary>
     public required IWorkflowTraceStore TraceStore { get; init; }
@@ -28,8 +28,8 @@ public sealed class WorkflowServiceDependencies
     /// <summary>Gets the execution time source.</summary>
     public required TimeProvider TimeProvider { get; init; }
 
-    /// <summary>Gets the optional workflow logger.</summary>
-    public ILogger<WorkflowService>? Logger { get; init; }
+    /// <summary>Gets the workflow logger.</summary>
+    public required ILogger<WorkflowService> Logger { get; init; }
 }
 
 /// <summary>Validates, executes, dry-runs, and traces workflow sequences.</summary>
@@ -38,31 +38,12 @@ public partial class WorkflowService : IWorkflowService
     private readonly IActionExecutor _actionExecutor;
     private readonly IWorkflowValidator _workflowValidator;
     private readonly IWorkflowEffectPlanner _effectPlanner;
-    private readonly IEventBus? _eventBus;
+    private readonly IEventBus _eventBus;
     private readonly IWorkflowTraceStore _traceStore;
     private readonly TimeProvider _timeProvider;
-    private readonly ILogger<WorkflowService>? _logger;
+    private readonly ILogger<WorkflowService> _logger;
 
-    /// <summary>Creates a workflow service with default Workflow 2.0 collaborators.</summary>
-    public WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowService>? logger = null)
-        : this(
-            actionExecutor,
-            CreateDefaultDependencies(TimeProvider.System, logger))
-    {
-    }
-
-    /// <summary>Creates a workflow service with an injectable time source.</summary>
-    public WorkflowService(
-        IActionExecutor actionExecutor,
-        TimeProvider timeProvider,
-        ILogger<WorkflowService>? logger = null)
-        : this(
-            actionExecutor,
-            CreateDefaultDependencies(timeProvider, logger))
-    {
-    }
-
-    /// <summary>Creates the DI-composed Workflow 2.0 execution service.</summary>
+    /// <summary>Creates the Workflow 2.0 execution service.</summary>
     public WorkflowService(
         IActionExecutor actionExecutor,
         WorkflowServiceDependencies dependencies)
@@ -73,6 +54,8 @@ public partial class WorkflowService : IWorkflowService
         ArgumentNullException.ThrowIfNull(dependencies.EffectPlanner);
         ArgumentNullException.ThrowIfNull(dependencies.TraceStore);
         ArgumentNullException.ThrowIfNull(dependencies.TimeProvider);
+        ArgumentNullException.ThrowIfNull(dependencies.EventBus);
+        ArgumentNullException.ThrowIfNull(dependencies.Logger);
         _actionExecutor = actionExecutor;
         _workflowValidator = dependencies.Validator;
         _effectPlanner = dependencies.EffectPlanner;
@@ -81,17 +64,6 @@ public partial class WorkflowService : IWorkflowService
         _timeProvider = dependencies.TimeProvider;
         _logger = dependencies.Logger;
     }
-
-    private static WorkflowServiceDependencies CreateDefaultDependencies(
-        TimeProvider timeProvider,
-        ILogger<WorkflowService>? logger) => new()
-        {
-            Validator = new WorkflowValidator(),
-            EffectPlanner = new WorkflowEffectPlanner(),
-            TraceStore = new WorkflowTraceStore(),
-            TimeProvider = timeProvider,
-            Logger = logger
-        };
 
     /// <inheritdoc />
     public Task ExecuteAsync(
