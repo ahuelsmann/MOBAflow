@@ -49,9 +49,9 @@ Require strict mocks to prove zero calls to Solution saves, runtime owner start/
 
 ## Actual A5 output acceptance, later and explicitly assigned
 
-Use A5 portrait on a supporting driver. Record actual page size/imageable margins and chosen text size. Compare all screen fields with native preview and the resulting digital A5 output. Use the 7-position fixture, a 60-position fixture and one single position whose wrapped content exceeds one page; also exercise long header names and option changes.
+Use A5 portrait on a supporting driver. Record actual page size/imageable margins and the Windows text-size setting used. Compare all screen fields with native preview and the resulting digital A5 output. Use the 7-position fixture, a 60-position fixture and one single position whose wrapped content exceeds one page; also exercise long header names and option changes.
 
-Verify all text, page x of y, repeated card identity, uninterrupted positions and identified continuations. Body text must be at least 11 points and must not shrink when larger text is requested. Impossible imageable area must return an honest failure. An ordinary 7-position card is not required to fit one sheet.
+Verify all text, page x of y, the bounded repeated card identifier with the complete identity continuing from page 1, uninterrupted positions and identified continuations. Body text must be at least 11 points and must scale up, not shrink, when the Windows text size is enlarged. Impossible imageable area must return an honest failure. An ordinary 7-position card is not required to fit one sheet.
 
 A physical A5 print remains a separate actual check. Record printer/media/scale, evidence of margins/readability/content completeness and outcome. Digital output, native preview and spooler success cannot substitute for it. No railroad hardware acceptance is required by this feature.
 

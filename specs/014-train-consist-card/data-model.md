@@ -28,6 +28,7 @@ No Domain object, editor ViewModel, mutable collection, delegates to source data
 | Position | Exactly SourceIndex + 1, including repeated references. |
 | VehicleId, VehicleKind | Preserve the raw reference values when present; null slots retain their index and a null-entry diagnostic. |
 | Name, KindLabel, IdentityText | Copied display strings; full GUID/type remain available and are not claimed to be a physical identity. |
+| IsReversed | Copy the occurrence's `Vehicle.IsReversed`; presented as text ("Reversed"), never by visual mirroring or color alone. |
 | ConfiguredDccAddress | Copy the nullable locomotive DigitalAddress only; null displays "DCC not configured", never a fabricated number. |
 | Diagnostics | Immutable position-local list, including reference location and a text explanation. |
 
