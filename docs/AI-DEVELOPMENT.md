@@ -17,21 +17,29 @@ transitions, confirmed fixes and ordinary PR administration do not need repeated
 product goals, priorities and material UX decisions, scope expansion, fundamental architecture changes, new
 costs/external commitments and explicitly required practical permissions or acceptance still go to the user.
 
-Across all MOBAflow teams, Codex, Claude and Antigravity, at most one larger task runs at a time. Implementation,
-extensive analysis/documentation, builds, tests, reviews and integration run serially, including large steps
-within a package. Before a substantial start or resume, obtain Chief Project Manager's current allocation in
-the existing queue. An occupied or unknown slot blocks a start; preserve actual processes and remote CI and
-coordinate safe stopping points with their owners. Short master status and handover exchanges remain allowed.
+Across all MOBAflow teams, Codex, Claude and Antigravity, at most five larger tasks may be centrally allocated.
+Before a substantial start or resume, obtain Chief Project Manager's current allocation in the existing queue;
+available capacity alone is not a start assignment. Reconcile owners, actual processes and remote CI. Full
+capacity or unclear ownership blocks another start. Keep one writer per worktree, serialize review/fix/publication
+phases for the same comparison and preserve existing executions. Coordinate safe stopping points with owners.
 
-PR reviews run in fresh independent Claude CLI sessions. Masters communicate directly with Claude in both
-directions; coordination sessions do not count as review. Assigned work authorizes necessary team handovers,
-not unrelated features or overrides of explicit stops. Masters maintain the existing queue/ownership records,
-continue assigned work through chat automations and report outcomes or decisions. Tool permissions and all
-current quality, Sonar, review and acceptance gates remain in effect.
+The supplier prepares the Draft with current checks, CI/Sonar and required actual acceptance. Chief Project
+Manager alone verifies handover readiness and sets Ready for review; independent review follows Ready, not the
+reverse. The existing Claude plan owns fresh independent Opus 5.5-or-higher review, a separate fixer, independent
+re-review after comparison changes and SHA-bound squash merge. Do not order a second review, create another
+automation or merge concurrently. Chief Project Manager independently verifies actual merge and resulting main;
+the delivery owner follows through to that outcome. Assigned work authorizes necessary team handovers, not
+unrelated features or overrides of stops. Tool permissions and existing quality/acceptance gates remain in effect.
+
+Every integration assesses architecture/developer documentation and the versioned user guides in `docs/wiki/`.
+Record the pages corrected or a concrete no-change reason in the handover and completion evidence. Reassess after
+behavior-changing review fixes and confirm against actual integrated main. Correct drift within the assigned
+scope; coordinate any remaining work through the same Chief Project Manager queue and state the limitation. Do not
+invent text changes or infer new user behavior from a refactoring. This does not authorize separate wiki publication.
 
 Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
 DevOps may independently consult the existing Head of UI/UX conversation (Gemini Argon via Antigravity CLI)
-within assigned work, without another human approval. Coordinate the global slot and active caller centrally;
+within assigned work, without another human approval. Coordinate task allocation and the active caller centrally;
 contacts are serial and synchronous. This supersedes the earlier contact restriction for the two new masters.
 Use the verified contact and synchronous request/response contract in the
 [Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
@@ -135,8 +143,12 @@ Main pushes and manual runs enable the remaining scopes. See
 generated-fact checks and the separately activated semantic maintenance workflow.
 See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
-Create Draft PRs. Mark ready only after current-commit SonarCloud passes and remote issue results show zero
-OPEN/CONFIRMED findings. Main, local checks, prior PR commits and manual acceptance are separate evidence.
+Create Draft PRs. Chief Project Manager alone marks ready after checking the current comparison, applicable CI,
+current-commit SonarCloud success with zero OPEN/CONFIRMED issues, actual acceptance, ownership and documentation
+impact. The existing Claude plan performs the subsequent independent review and merge under
+[master coordination](../.github/instructions/master-coordination.instructions.md). Main, local checks, prior PR
+commits and manual acceptance are separate evidence. Non-GitHub work, including separately authorized Sites
+review/publication and independent live verification, retains its own assigned route.
 
 ## Updating
 Use the [Spec Kit update procedure](SPEC-KIT.md). For other skills, compare the exact source revision,
