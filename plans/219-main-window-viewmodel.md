@@ -3,7 +3,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
 **Status**: Active; slices 1, 2a, 2b, 2c and 3a integrated through #248, #257, #264, #272 and #282; slice 3b (Journeys/cities) implemented with validation tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main 135bd9e1d9066879a79d16c9294c33783e2a512c on 2026-10-17.
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main 91f80ab5d0639f2df76b533441b37bf02acd0b3f on 2026-10-17.
 
 ## Purpose and scope
 
@@ -241,19 +241,19 @@ accessibility and app/device checks remain open; no application or hardware was 
 
 ## Slice 3b integration refresh (2026-10-17)
 
-The current source includes main `135bd9e1d9066879a79d16c9294c33783e2a512c` and preserves
+The current source includes main `91f80ab5d0639f2df76b533441b37bf02acd0b3f` and preserves
 all intervening PR commits and the interrupted P3 changes. Two journey regression fixtures
 still referenced the removed `IIoService` after the file-role split. They now use the existing
 `TestFileServices.CreateMock()` helper and `ISolutionIoService`, including its persistence capability.
 The station editor fix and its behavior assertions remain intact.
 
 Both Release graphs were rebuilt with analyzers enabled, including active WinUI XAML and the
-normal MOBApi dependency. After integrating main's additional speech tests, only the affected
-test assemblies needed recompilation (`BuildProjectReferences=false`); the production outputs
-were unchanged. The exact baselines pass unchanged: 3,204 diagnostics / 1,121 groups (portable)
-and 2,455 / 945 (Windows).
+normal MOBApi dependency. The final integration includes RF-25's required workflow dependencies
+and its DI/test updates; the complete affected graphs and suites were rechecked for that change.
+The baselines inherited from main pass unchanged: 3,201 diagnostics / 1,122 groups (portable)
+and 2,456 / 946 (Windows).
 
-The final sequential runs passed 2,889 portable and 3,011 Windows tests. All 41 journey fixture
+The final sequential runs passed 2,909 portable and 3,031 Windows tests. All 41 journey fixture
 cases pass, including 13 station search/reorder/editor-lifetime cases. The portable run excludes
 the eight MOBApi process-start cases listed above; CI owns those cases. The explicit
 sustained-refresh test is not executed. Internal documentation links (513), instruction
