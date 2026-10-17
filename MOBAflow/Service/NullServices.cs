@@ -46,6 +46,12 @@ internal class NullLocomotiveService : ILocomotiveService
 /// </summary>
 internal class NullSettingsService : ISettingsService
 {
+    public event EventHandler? UiLanguagePreferenceChanged
+    {
+        add { /* The null service never publishes language changes or retains subscribers. */ }
+        remove { /* No subscriber is retained by the null service. */ }
+    }
+    public Task SaveUiLanguageAsync(string preference) => Task.CompletedTask;
     public AppSettings GetSettings() => new();
     public Task LoadSettingsAsync() => Task.CompletedTask;
     public Task SaveSettingsAsync(AppSettings settings) => Task.CompletedTask;

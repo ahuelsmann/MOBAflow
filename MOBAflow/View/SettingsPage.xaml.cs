@@ -21,14 +21,17 @@ using SharedUI.ViewModel;
 internal sealed partial class SettingsPage
 {
     public SettingsPageViewModel ViewModel { get; }
+    public LanguageSettingsViewModel LanguageViewModel { get; }
     private readonly ILogger<SettingsPage>? _logger;
     private readonly INavigationService? _navigationService;
     public SettingsPage(
         SettingsPageViewModel viewModel,
+        LanguageSettingsViewModel languageViewModel,
         ILogger<SettingsPage>? logger = null,
         INavigationService? navigationService = null)
     {
         ViewModel = viewModel;
+        LanguageViewModel = languageViewModel;
         _logger = logger;
         _navigationService = navigationService;
         InitializeComponent();

@@ -1,0 +1,210 @@
+[
+  {
+    "Key": "LanguageTitle",
+    "Target": "LanguageTitle.Text"
+  },
+  {
+    "Key": "LanguageChoice",
+    "Target": "LanguageChoice.Header"
+  },
+  {
+    "Key": "LanguageExplanation",
+    "Target": "LanguageExplanation.Text"
+  },
+  {
+    "Key": "LanguageSave",
+    "Target": "LanguageSave.Content"
+  },
+  {
+    "Key": "HelpWiki",
+    "Target": "HelpWiki.Header"
+  },
+  {
+    "Key": "HelpDocumentation",
+    "Target": "HelpDocumentation.Header"
+  },
+  {
+    "Key": "HelpWelcome",
+    "Target": "HelpWelcome.Text"
+  },
+  {
+    "Key": "LanguageChoice",
+    "Target": "LanguageChoice.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"
+  },
+  {
+    "Key": "InfoProduct",
+    "Target": "InfoProduct.Text"
+  },
+  {
+    "Key": "InfoTagline",
+    "Target": "InfoTagline.Text"
+  },
+  {
+    "Key": "InfoVersionAccessible",
+    "Target": "InfoVersion.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"
+  },
+  {
+    "Key": "InfoPurposeTitle",
+    "Target": "InfoPurposeTitle.Text"
+  },
+  {
+    "Key": "InfoPurpose",
+    "Target": "InfoPurpose.Text"
+  },
+  {
+    "Key": "InfoApplications",
+    "Target": "InfoApplications.Text"
+  },
+  {
+    "Key": "InfoDesktopTitle",
+    "Target": "InfoDesktopTitle.Text"
+  },
+  {
+    "Key": "InfoDesktop",
+    "Target": "InfoDesktop.Text"
+  },
+  {
+    "Key": "InfoMobileTitle",
+    "Target": "InfoMobileTitle.Text"
+  },
+  {
+    "Key": "InfoMobile",
+    "Target": "InfoMobile.Text"
+  },
+  {
+    "Key": "InfoApiTitle",
+    "Target": "InfoApiTitle.Text"
+  },
+  {
+    "Key": "InfoApi",
+    "Target": "InfoApi.Text"
+  },
+  {
+    "Key": "InfoDisplayTitle",
+    "Target": "InfoDisplayTitle.Text"
+  },
+  {
+    "Key": "InfoDisplay",
+    "Target": "InfoDisplay.Text"
+  },
+  {
+    "Key": "InfoCapabilities",
+    "Target": "InfoCapabilities.Text"
+  },
+  {
+    "Key": "InfoCapabilityFeedback",
+    "Target": "InfoCapabilityFeedback.Text"
+  },
+  {
+    "Key": "InfoCapabilityFleet",
+    "Target": "InfoCapabilityFleet.Text"
+  },
+  {
+    "Key": "InfoCapabilityAutomation",
+    "Target": "InfoCapabilityAutomation.Text"
+  },
+  {
+    "Key": "InfoCapabilityTrackPlan",
+    "Target": "InfoCapabilityTrackPlan.Text"
+  },
+  {
+    "Key": "InfoCapabilityRecorder",
+    "Target": "InfoCapabilityRecorder.Text"
+  },
+  {
+    "Key": "InfoCapabilitySpeech",
+    "Target": "InfoCapabilitySpeech.Text"
+  },
+  {
+    "Key": "InfoCapabilityMobile",
+    "Target": "InfoCapabilityMobile.Text"
+  },
+  {
+    "Key": "InfoSafetyTitle",
+    "Target": "InfoSafetyTitle.Text"
+  },
+  {
+    "Key": "InfoSafety",
+    "Target": "InfoSafety.Text"
+  },
+  {
+    "Key": "InfoNetwork",
+    "Target": "InfoNetwork.Text"
+  },
+  {
+    "Key": "InfoPreview",
+    "Target": "InfoPreview.Text"
+  },
+  {
+    "Key": "InfoLinks",
+    "Target": "InfoLinks.Text"
+  },
+  {
+    "Key": "InfoWebsiteAccessible",
+    "Target": "InfoWebsite.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"
+  },
+  {
+    "Key": "InfoWebsite",
+    "Target": "InfoWebsite.Content"
+  },
+  {
+    "Key": "InfoRepositoryAccessible",
+    "Target": "InfoRepository.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"
+  },
+  {
+    "Key": "InfoRepository",
+    "Target": "InfoRepository.Content"
+  },
+  {
+    "Key": "InfoDocsAccessible",
+    "Target": "InfoDocs.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"
+  },
+  {
+    "Key": "InfoDocs",
+    "Target": "InfoDocs.Content"
+  },
+  {
+    "Key": "InfoRoadmapAccessible",
+    "Target": "InfoRoadmap.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"
+  },
+  {
+    "Key": "InfoRoadmap",
+    "Target": "InfoRoadmap.Content"
+  },
+  {
+    "Key": "InfoNewsAccessible",
+    "Target": "InfoNews.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"
+  },
+  {
+    "Key": "InfoNews",
+    "Target": "InfoNews.Content"
+  },
+  {
+    "Key": "InfoHardwareAccessible",
+    "Target": "InfoHardware.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"
+  },
+  {
+    "Key": "InfoHardware",
+    "Target": "InfoHardware.Content"
+  },
+  {
+    "Key": "InfoLicenseAccessible",
+    "Target": "InfoLicense.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"
+  },
+  {
+    "Key": "InfoLicense",
+    "Target": "InfoLicense.Content"
+  },
+  {
+    "Key": "InfoTrademarks",
+    "Target": "InfoTrademarks.Text"
+  },
+  {
+    "Key": "HelpDocumentation",
+    "Target": "HelpCaption.Text"
+  },
+  {
+    "Key": "HelpWiki",
+    "Target": "HelpWikiTitle.Text"
+  }
+]

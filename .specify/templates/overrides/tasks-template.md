@@ -114,7 +114,9 @@ description: "MOBAflow task list template for feature implementation"
 ## Notes
 
 - Reuse existing helpers, services, DI registrations, serializers, and test fakes.
-- Never add `.Result`, `.Wait()`, redundant UI dispatch, hardcoded UI colors, source-code TODO comments, or non-English UI strings.
+- Never add `.Result`, `.Wait()`, redundant UI dispatch, hardcoded UI colors or source-code TODO comments.
+- Keep English source/fallback resources complete; localized UI follows the specified scope.
+  Preserve user content, domain/sample data, serialization and TTS settings independently of UI language.
 - Keep follow-up work in GitHub issues rather than code comments.
 - Every feature artifact and standalone plan must reference its authoritative GitHub issue.
 - Standalone plans belong in `plans/` and must be deleted after completion.

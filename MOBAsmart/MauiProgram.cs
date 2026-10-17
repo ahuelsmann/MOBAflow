@@ -6,11 +6,16 @@ using CommunityToolkit.Maui;
 using Extensions;
 
 using Service;
+using SharedUI.Localization;
+using System.Globalization;
 
 public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+        var culture = UiLanguagePolicy.Resolve(
+            UiLanguagePolicy.ReadSavedPreference(SettingsService.GetSettingsFilePath()), CultureInfo.CurrentUICulture);
+        UiLanguagePolicy.ApplyResourceCulture(culture);
 #if ANDROID
         LanIpv4AddressHelperAndroidBootstrap.Register();
 #endif

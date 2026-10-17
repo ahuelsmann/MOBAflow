@@ -17,8 +17,12 @@ Asynchronous work MUST use `await`; `.Result`, `.Wait()`, and equivalent sync-ov
 async patterns are prohibited. UI behavior belongs in ViewModels and commands.
 Code-behind and UserControls may translate platform input into commands, but MUST
 NOT own feature or domain behavior. WinUI visuals MUST use `ThemeResource` values
-and be verified in both Light and Dark themes. All shipped user-visible UI text
-MUST be English; announcement voice and language remain user-configurable.
+and be verified in both Light and Dark themes. English MUST remain the complete
+source and fallback language for shipped UI resources. Visible text in an explicitly
+specified localization scope MUST follow the selected UI language; untranslated
+areas remain English until covered by a later slice. Domain defaults and shipped
+sample data remain English. User-authored content and announcement voice, language
+and text MUST remain independent of the UI language.
 
 ### III. Tests Are a Delivery Requirement
 
@@ -125,4 +129,4 @@ semantic versioning: MAJOR for incompatible governance changes, MINOR for new or
 materially expanded principles, and PATCH for clarifications. Every plan and
 review MUST verify compliance; unresolved violations block implementation.
 
-**Version**: 4.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-25
+**Version**: 5.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-10-14

@@ -10,11 +10,14 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
 using Moba.WinUI.Service;
 using SharedUI.Interface;
+using SharedUI.Localization;
 
 internal sealed partial class HelpPage : INavigationParameterReceiver
 {
+    private const string WelcomeTopic = "Welcome";
     private readonly Dictionary<TreeViewNode, string> _sections = [];
     private readonly AppSettings _settings;
+    private readonly IUiLocalizer _text;
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<HelpPage>? _logger;
     private long _navigationExpandedToken;
@@ -26,10 +29,12 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
 
     public HelpPage(
         AppSettings settings,
+        IUiLocalizer text,
         ISettingsService? settingsService = null,
         ILogger<HelpPage>? logger = null)
     {
         _settings = settings;
+        _text = text;
         _settingsService = settingsService;
         _logger = logger;
         InitializeComponent();
@@ -189,15 +194,15 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
     private void InitializePage()
     {
         // Getting Started
-        var gettingStarted = new TreeViewNode { Content = "Getting Started", IsExpanded = true };
-        AddSection(gettingStarted, "Welcome");
+        var gettingStarted = new TreeViewNode { Content = LocalizeTopic("Getting Started"), IsExpanded = true };
+        AddSection(gettingStarted, WelcomeTopic);
         AddSection(gettingStarted, "Installation");
         AddSection(gettingStarted, "Z21 Connection");
         AddSection(gettingStarted, "First Ride");
         NavigationTreeView.RootNodes.Add(gettingStarted);
 
         // Train Control
-        var trainControl = new TreeViewNode { Content = "Train Control", IsExpanded = false };
+        var trainControl = new TreeViewNode { Content = LocalizeTopic("Train Control"), IsExpanded = false };
         AddSection(trainControl, "Speed Control");
         AddSection(trainControl, "Functions F0-F28");
         AddSection(trainControl, "Direction");
@@ -205,7 +210,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
         NavigationTreeView.RootNodes.Add(trainControl);
 
         // Automation
-        var automation = new TreeViewNode { Content = "Automation", IsExpanded = false };
+        var automation = new TreeViewNode { Content = LocalizeTopic("Automation"), IsExpanded = false };
         AddSection(automation, "Create Journey");
         AddSection(automation, "Define Stations");
         AddSection(automation, "Workflows");
@@ -213,7 +218,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
         NavigationTreeView.RootNodes.Add(automation);
 
         // Signal Box
-        var signalBox = new TreeViewNode { Content = "Signal Box", IsExpanded = false };
+        var signalBox = new TreeViewNode { Content = LocalizeTopic("Signal Box"), IsExpanded = false };
         AddSection(signalBox, "Track Plan Editor");
         AddSection(signalBox, "Signals");
         AddSection(signalBox, "Switches");
@@ -221,30 +226,30 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
         NavigationTreeView.RootNodes.Add(signalBox);
 
         // Track Plan
-        var trackPlan = new TreeViewNode { Content = "Track Plan", IsExpanded = false };
+        var trackPlan = new TreeViewNode { Content = LocalizeTopic("Track Plan"), IsExpanded = false };
         AddSection(trackPlan, "Track Libraries");
         AddSection(trackPlan, "Place Tracks");
         AddSection(trackPlan, "Connections");
         NavigationTreeView.RootNodes.Add(trackPlan);
 
         // Configuration
-        var config = new TreeViewNode { Content = "Configuration", IsExpanded = false };
+        var config = new TreeViewNode { Content = LocalizeTopic("Configuration"), IsExpanded = false };
         AddSection(config, "Piper TTS Setup");
         NavigationTreeView.RootNodes.Add(config);
 
         // Troubleshooting
-        var troubleshooting = new TreeViewNode { Content = "Troubleshooting", IsExpanded = false };
+        var troubleshooting = new TreeViewNode { Content = LocalizeTopic("Troubleshooting"), IsExpanded = false };
         AddSection(troubleshooting, "No Connection");
         AddSection(troubleshooting, "Locomotive Not Responding");
         AddSection(troubleshooting, "Feedback Points Missing");
         NavigationTreeView.RootNodes.Add(troubleshooting);
 
-        ShowContent("Welcome");
+        ShowContent(WelcomeTopic);
     }
 
     private void AddSection(TreeViewNode parent, string topic)
     {
-        var node = new TreeViewNode { Content = topic };
+        var node = new TreeViewNode { Content = LocalizeTopic(topic) };
         _sections[node] = topic;
         parent.Children.Add(node);
     }
@@ -257,15 +262,50 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
         }
     }
 
+    private string LocalizeTopic(string topic) => topic switch
+    {
+        "Getting Started" => _text.GetText("Help_GettingStarted"),
+        WelcomeTopic => _text.GetText("Help_Welcome"),
+        "Installation" => _text.GetText("Help_Installation"),
+        "Z21 Connection" => _text.GetText("Help_Z21Connection"),
+        "First Ride" => _text.GetText("Help_FirstRide"),
+        "Train Control" => _text.GetText("Help_TrainControl"),
+        "Speed Control" => _text.GetText("Help_SpeedControl"),
+        "Functions F0-F28" => _text.GetText("Help_FunctionsF0F28"),
+        "Direction" => _text.GetText("Help_Direction"),
+        "Emergency Stop" => _text.GetText("Help_EmergencyStop"),
+        "Automation" => _text.GetText("Help_Automation"),
+        "Create Journey" => _text.GetText("Help_CreateJourney"),
+        "Define Stations" => _text.GetText("Help_DefineStations"),
+        "Workflows" => _text.GetText("Help_Workflows"),
+        "Speech Announcements" => _text.GetText("Help_SpeechAnnouncements"),
+        "Signal Box" => _text.GetText("Help_SignalBox"),
+        "Track Plan Editor" => _text.GetText("Help_TrackPlanEditor"),
+        "Signals" => _text.GetText("Help_Signals"),
+        "Switches" => _text.GetText("Help_Switches"),
+        "Feedback Points" => _text.GetText("Help_FeedbackPoints"),
+        "Track Plan" => _text.GetText("Help_TrackPlan"),
+        "Track Libraries" => _text.GetText("Help_TrackLibraries"),
+        "Place Tracks" => _text.GetText("Help_PlaceTracks"),
+        "Connections" => _text.GetText("Help_Connections"),
+        "Configuration" => _text.GetText("Help_Configuration"),
+        "Piper TTS Setup" => _text.GetText("Help_PiperTTSSetup"),
+        "Troubleshooting" => _text.GetText("Help_Troubleshooting"),
+        "No Connection" => _text.GetText("Help_NoConnection"),
+        "Locomotive Not Responding" => _text.GetText("Help_LocomotiveNotResponding"),
+        "Feedback Points Missing" => _text.GetText("Help_FeedbackPointsMissing"),
+        _ => topic
+    };
+
     private void ShowContent(string section)
     {
-        HeaderTextBlock.Text = section;
+        HeaderTextBlock.Text = LocalizeTopic(section);
         ContentRichTextBlock.Blocks.Clear();
 
         var content = section switch
         {
             // Getting Started
-            "Welcome" => """
+            WelcomeTopic => """
                 Welcome to MOBAflow - Your control center for model railways!
 
                 MOBAflow connects directly to your Roco/Fleischmann Z21 digital command station and offers:

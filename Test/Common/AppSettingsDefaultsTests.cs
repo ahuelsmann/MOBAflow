@@ -11,6 +11,32 @@ using System.Text.Json;
 [Category("Unit")]
 internal class AppSettingsDefaultsTests
 {
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("fr-FR")]
+    [TestCase("invalid")]
+    public void UiLanguageInvalidValuesUseSystem(string? value)
+    {
+        var settings = new ApplicationSettings { UiLanguage = value! };
+        Assert.That(settings.UiLanguage, Is.EqualTo("system"));
+    }
+
+    [TestCase("system")]
+    [TestCase("en-US")]
+    [TestCase("de-DE")]
+    public void UiLanguageRoundtripsIndependentlyOfSpeech(string value)
+    {
+        var settings = new AppSettings();
+        settings.Application.UiLanguage = value;
+        settings.Speech.Language = "fr-FR";
+        var restored = JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(settings))!;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(restored.Application.UiLanguage, Is.EqualTo(value));
+            Assert.That(restored.Speech.Language, Is.EqualTo("fr-FR"));
+        }
+    }
+
     [Test]
     public void Application_PhotoStoragePath_default_is_empty()
     {

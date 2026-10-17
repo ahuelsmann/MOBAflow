@@ -57,10 +57,18 @@ The Counter tab contains connection state and the lap-counter setup.
 - Set or reset one input's count.
 - Reset all counters.
 - Toggle light/dark theme.
+- Choose the app's UI language: System language, English or Deutsch.
 - Capture a photo and upload it to the connected MOBAflow library.
 
 The camera button requires a reachable MOBApi endpoint. The photo is stored by
 the desktop-side API, not only on the phone.
+
+The separate UI-language area requires **Save language** and a full app restart
+to apply the choice. System selects German for a German OS UI language and
+English otherwise. The preference belongs to this phone and is independent of
+speech and user-authored content. If saving fails, the previous saved preference
+remains unchanged; retry explicitly. Tab labels and the language area use the selected
+language; other page bodies remain English for now.
 
 Lap counts are saved separately for each project on the phone. Switching projects
 or restarting the app restores that project's counts; timing history starts again

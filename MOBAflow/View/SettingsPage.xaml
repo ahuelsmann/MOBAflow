@@ -39,6 +39,23 @@
                 </StackPanel>
             </Grid>
 
+            <!--  UI language is independent of speech settings.  -->
+            <StackPanel Spacing="8">
+                <TextBlock x:Uid="LanguageTitle" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                <ComboBox
+                    x:Uid="LanguageChoice"
+                    HorizontalAlignment="Stretch"
+                    ItemsSource="{x:Bind LanguageViewModel.Choices}"
+                    DisplayMemberPath="Name"
+                    SelectedItem="{x:Bind LanguageViewModel.SelectedChoice, Mode=TwoWay}" />
+                <TextBlock x:Uid="LanguageExplanation" TextWrapping="Wrap" />
+                <Button x:Uid="LanguageSave" Command="{x:Bind LanguageViewModel.SaveCommand}" />
+                <TextBlock
+                    AutomationProperties.LiveSetting="Polite"
+                    Text="{x:Bind LanguageViewModel.Message, Mode=OneWay}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
             <!--  Error/Success Messages  -->
             <InfoBar
                 Title="Error"

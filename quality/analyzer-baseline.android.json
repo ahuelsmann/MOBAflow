@@ -2258,13 +2258,6 @@
     {
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
-      "ruleId": "CA1869",
-      "path": "MOBAsmart/Service/SettingsService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
       "ruleId": "CA1873",
       "path": "MOBAsmart/Service/RuntimeHubRemoteClient.cs",
       "count": 2

@@ -3,6 +3,7 @@
     x:Class="Moba.MAUI.Controls.AppBottomTabBar"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:l="clr-namespace:Moba.MAUI.Localization"
     x:Name="Root">
 
     <Border
@@ -43,7 +44,7 @@
                         Grid.Row="1"
                         InputTransparent="True"
                         Style="{DynamicResource FluentBottomTabBarLabel}"
-                        Text="Counter" />
+                        Text="{l:Localize TabCounter}" />
                 </Grid>
 
                 <Grid
@@ -65,7 +66,7 @@
                         Grid.Row="1"
                         InputTransparent="True"
                         Style="{DynamicResource FluentBottomTabBarLabel}"
-                        Text="SignalBox" />
+                        Text="{l:Localize TabSignalBox}" />
                 </Grid>
 
                 <Grid
@@ -87,7 +88,7 @@
                         Grid.Row="1"
                         InputTransparent="True"
                         Style="{DynamicResource FluentBottomTabBarLabel}"
-                        Text="Engines" />
+                        Text="{l:Localize TabEngines}" />
                 </Grid>
 
                 <Grid
@@ -109,7 +110,7 @@
                         Grid.Row="1"
                         InputTransparent="True"
                         Style="{DynamicResource FluentBottomTabBarLabel}"
-                        Text="Control" />
+                        Text="{l:Localize TabControl}" />
                 </Grid>
             </Grid>
         </Grid>

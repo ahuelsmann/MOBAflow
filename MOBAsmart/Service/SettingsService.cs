@@ -12,22 +12,28 @@ using SharedUI.Mobile;
 /// MAUI-specific settings service for reading and writing application settings.
 /// Uses Preferences for simple storage and file system for full settings.
 /// </summary>
-public class SettingsService : ISettingsService
+public sealed class SettingsService : ISettingsService, IDisposable
 {
+    private static readonly JsonSerializerOptions SettingsJsonOptions = new() { WriteIndented = true };
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
     private readonly AppSettings _settings;
     private readonly string _settingsFilePath;
     private bool _isLoaded;
 
+    public event EventHandler? UiLanguagePreferenceChanged;
+
     public SettingsService(AppSettings settings)
     {
         _settings = settings;
-        _settingsFilePath = Path.Combine(FileSystem.AppDataDirectory, "appsettings.json");
+        _settingsFilePath = GetSettingsFilePath();
 
         // ✅ DON'T block constructor - settings will be loaded in App.xaml.cs
         _isLoaded = false;
     }
 
     #region Application Settings
+
+    internal static string GetSettingsFilePath() => Path.Combine(FileSystem.AppDataDirectory, "appsettings.json");
 
     /// <summary>
     /// Loads settings from appsettings.json file in app data directory.
@@ -91,6 +97,7 @@ public class SettingsService : ISettingsService
                     _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
                     _settings.Application.IsDarkMode = loadedSettings.Application.IsDarkMode;
                     _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
+                    _settings.Application.UiLanguage = loadedSettings.Application.UiLanguage;
                     _settings.Counter.CountOfFeedbackPoints = loadedFeedbackPointCount;
                     _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
@@ -139,16 +146,46 @@ public class SettingsService : ISettingsService
     /// </summary>
     public async Task SaveSettingsAsync(AppSettings settings)
     {
+        ArgumentNullException.ThrowIfNull(settings);
+        var replacesSettings = !ReferenceEquals(settings, _settings);
+        await _saveLock.WaitAsync().ConfigureAwait(false);
         try
         {
-            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-
+            var json = JsonSerializer.Serialize(settings, SettingsJsonOptions);
             await File.WriteAllTextAsync(_settingsFilePath, json).ConfigureAwait(false);
+            if (replacesSettings) _settings.Application.UiLanguage = settings.Application.UiLanguage;
         }
-        catch (Exception)
+        finally
         {
-            throw;
+            _saveLock.Release();
         }
+        if (replacesSettings) UiLanguagePreferenceChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Commits only the UI preference while serializing access to the existing settings file.</summary>
+    public async Task SaveUiLanguageAsync(string preference)
+    {
+        var normalized = UiLanguagePreference.Normalize(preference);
+        await _saveLock.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var document = JsonSerializer.SerializeToNode(_settings, SettingsJsonOptions)!;
+            document[nameof(AppSettings.Application)]![nameof(ApplicationSettings.UiLanguage)] = normalized;
+            await File.WriteAllTextAsync(_settingsFilePath, document.ToJsonString(SettingsJsonOptions)).ConfigureAwait(false);
+            _settings.Application.UiLanguage = normalized;
+        }
+        finally
+        {
+            _saveLock.Release();
+        }
+        UiLanguagePreferenceChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Releases the app-local settings write lock.</summary>
+    public void Dispose()
+    {
+        _saveLock.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>

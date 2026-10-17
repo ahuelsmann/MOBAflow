@@ -10,7 +10,11 @@ Preserve the existing shared runtime and mobile local/remote coordination.
 
 ## UI and resources
 
-- Keep UI strings English; announcement content/voice remain user-configurable.
+- English remains the complete source and fallback language for UI resources. Within the specified localization
+  scope, resolve stable keys from `.resx` resources in XAML and shared UI logic. Translate complete templates with
+  matching placeholders; share catalogues instead of independently translating common text for each host.
+  Uncovered areas remain English until a later slice; see `specs/011-ui-localization/coverage.md`.
+  User content, domain defaults and announcement content, language and voice remain independent of UI language.
 - Reuse resources in `MOBAsmart/Resources/` and styles from surrounding views. Use semantic theme resources and
   `AppThemeBinding` where appropriate; a fixed White/Gray pair is not sufficient Light/Dark support.
 - Prefer `Border`, `CollectionView`, `Grid`, `VerticalStackLayout` and `HorizontalStackLayout` in new UI.

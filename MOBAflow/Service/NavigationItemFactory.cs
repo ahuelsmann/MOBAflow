@@ -3,6 +3,7 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+using SharedUI.Localization;
 
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -19,10 +20,12 @@ using Moba.WinUI.View;
 public sealed class NavigationItemFactory
 {
     private readonly AppSettings _settings;
+    private readonly IUiLocalizer _text;
 
-    public NavigationItemFactory(AppSettings settings)
+    public NavigationItemFactory(AppSettings settings, IUiLocalizer text)
     {
         _settings = settings;
+        _text = text;
     }
 
     /// <summary>
@@ -47,7 +50,7 @@ public sealed class NavigationItemFactory
         // Add tooltip for PathIcon pages
         if (!string.IsNullOrEmpty(page.PathIconData))
         {
-            ToolTipService.SetToolTip(item, page.Title);
+            ToolTipService.SetToolTip(item, GetTitle(page));
         }
 
         return item;
@@ -94,7 +97,7 @@ public sealed class NavigationItemFactory
         // Simple title without badge
         if (!hasBadge && !page.IsBold)
         {
-            return page.Title;
+            return GetTitle(page);
         }
 
         // Title with formatting or badge
@@ -107,7 +110,7 @@ public sealed class NavigationItemFactory
         // Title TextBlock
         var titleBlock = new TextBlock
         {
-            Text = page.Title,
+            Text = GetTitle(page),
             VerticalAlignment = VerticalAlignment.Center
         };
 
@@ -127,6 +130,8 @@ public sealed class NavigationItemFactory
 
         return panel;
     }
+
+    private string GetTitle(PageMetadata page) => _text.GetText("Nav_" + page.Tag);
 
     /// <summary>
     /// Creates a badge Border element.

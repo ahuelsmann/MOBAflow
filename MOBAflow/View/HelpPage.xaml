@@ -23,6 +23,7 @@
             x:Name="NavigationPanel"
             Grid.Column="0"
             Glyph="&#xE8A5;"
+            x:Uid="HelpWiki"
             Header="MOBAflow Wiki"
             IsExpanded="True">
             <controls:CollapsibleColumnCollection.PanelContent>
@@ -32,8 +33,9 @@
                             <TextBlock
                                 FontSize="20"
                                 FontWeight="SemiBold"
+                                x:Uid="HelpWikiTitle"
                                 Text="MOBAflow Wiki" />
-                            <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Dokumentation" />
+                            <TextBlock x:Uid="HelpCaption" Style="{ThemeResource CaptionTextBlockStyle}" Text="Documentation" />
                         </StackPanel>
 
                         <TreeView
@@ -56,6 +58,7 @@
             x:Name="DocumentationPanel"
             Grid.Column="2"
             Glyph="&#xE8A5;"
+            x:Uid="HelpDocumentation"
             Header="Documentation"
             IsExpanded="True">
             <controls:CollapsibleColumnHelper.PanelContent>
@@ -66,7 +69,8 @@
                             FontSize="32"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                            Text="Willkommen" />
+                            x:Uid="HelpWelcome"
+                            Text="Welcome" />
                         <RichTextBlock
                             x:Name="ContentRichTextBlock"
                             FontSize="15"

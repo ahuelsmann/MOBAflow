@@ -75,7 +75,8 @@ public sealed partial class MainWindow
         RestApiStatusService restApiStatusService,
         RestApiProcessService restApiProcessService,
         ILogger<WindowActivationService> windowActivationLogger,
-        ILogger<MainWindow> logger)
+        ILogger<MainWindow> logger,
+        Moba.SharedUI.Localization.IUiLocalizer uiText)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
@@ -88,7 +89,7 @@ public sealed partial class MainWindow
             _restApiStatusService = restApiStatusService;
             _restApiProcessService = restApiProcessService;
             _pages = pages;
-            var navigationItemFactory = new NavigationItemFactory(appSettings);
+            var navigationItemFactory = new NavigationItemFactory(appSettings, uiText);
             _navigationBootstrapper = new MainWindowNavigationBootstrapper(
                 _navigationService,
                 _pages,

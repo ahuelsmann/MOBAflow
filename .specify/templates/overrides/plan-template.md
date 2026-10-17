@@ -44,7 +44,8 @@
 - [ ] EventBus UI-thread marshalling remains centralized in `UiThreadEventBusDecorator`.
 - [ ] Async flows use `await` without sync-over-async.
 - [ ] UI behavior uses ViewModel commands; UI resources support Light and Dark themes.
-- [ ] All user-visible UI strings are English.
+- [ ] English source/fallback resources are complete; visible localized UI follows the specified language scope.
+- [ ] UI language leaves domain/sample data, user content, serialization and TTS settings unchanged.
 - [ ] Data and API effects are explicit; superseded models are removed without legacy paths or migrations.
 - [ ] Meaningful regression tests cover changed behavior; documentation-only edits use structural checks.
 - [ ] Validation commands follow the change matrix in `AGENTS.md` and match the affected platforms.

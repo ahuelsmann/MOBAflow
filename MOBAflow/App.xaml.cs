@@ -12,6 +12,8 @@ using Serilog;
 using Service;
 
 using System.Diagnostics;
+using System.Globalization;
+using Moba.SharedUI.Localization;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
@@ -39,6 +41,10 @@ public partial class App
         try
         {
             Debug.WriteLine("[Startup] App constructor started");
+            var culture = UiLanguagePolicy.Resolve(
+                UiLanguagePolicy.ReadSavedPreference(SettingsService.ResolveSettingsFilePath()), CultureInfo.CurrentUICulture);
+            UiLanguagePolicy.ApplyResourceCulture(culture);
+            Microsoft.Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = culture.Name;
             InitializeComponent();
             Debug.WriteLine("[Startup] App XAML initialized");
 
