@@ -13,8 +13,9 @@ assignment includes the delivery steps below unless explicitly limited.
 
 - Complete assigned work through planning, implementation, named builds/tests, draft PR, independent Claude CLI
   review, correction, current CI/Sonar verification, Ready and squash merge. Ordinary commits, pushes, PR updates,
-  team handovers and review-thread responses/resolution are included. Resolve findings only with evidence or an
-  explicit reason; never dismiss an unresolved defect to unblock integration.
+  team handovers and review-thread responses/resolution are included. Resolve a review finding by fixing it or
+  with evidence that it does not apply. A finding left unfixed needs a fresh independent Claude review that accepts
+  the evidence, or a human decision; the fixer or merger never dismisses it alone to unblock integration.
 - Do not ask again at a technical phase boundary. Requesting a draft as an intermediate deliverable does not
   cancel the standing mandate. Explicit "draft only", "no Ready/merge", pause, read-only restrictions, protected
   worktrees and excluded slices remain binding until the human specifically changes them.
@@ -122,9 +123,13 @@ Verified on 2026-10-16 through Claude coordination and a two-turn Codex exchange
 
 The desktop-app conversation has a separate history and is not this CLI address. Do not use its ID, clone it or
 create a substitute. Update this contact definition only after an authorized handover and verified replacement.
-Record the active caller, target ID and open questions in the existing master handover.
+Issue Master's coordination record holds the active caller, target ID and open questions for this conversation.
 
-From the actual MOBAflow checkout on Windows, use the installed executable:
+The Antigravity project allows writes and has no sandbox: `--mode plan` is the only write guard, and the working
+directory bounds what Argon can read and what a mistake can change. Run agy from the caller's own task worktree or
+a clean worktree that no other writer uses, never from the shared checkout or another writer's worktree. Check
+`git status` there after each call and report unexpected changes instead of silently keeping or discarding them.
+On Windows, use the installed executable:
 
 ```powershell
 & "$env:LOCALAPPDATA\agy\bin\agy.exe" `
@@ -151,9 +156,11 @@ The full path also works when the shell's PATH predates installation. On another
   progress communication. After a timeout inspect ongoing execution before retrying; never duplicate a possibly
   active request.
 - Verify actual completion, model and response content. Exit zero or aggregate conversation counters alone do not
-  prove delivery of an answer. Supply only relevant context, with exact SHAs/evidence where applicable, and enforce
-  the active secrets-before-read policy in delegated work too. Never send credentials; distinguish observations
-  from assumptions.
+  prove delivery of an answer. Supply only relevant context, with exact SHAs/evidence where applicable.
+  Plan mode limits writes, not reads: Argon reads files in its working directory itself and sends that content to
+  Google. Repository scans do not cover untracked or ignored files, so make sure the working directory holds no
+  local secret-bearing files (for example user configuration, `.env` or key files) or scan them first under the
+  active secrets policy. Never send credentials in prompts; distinguish observations from assumptions.
 - Advice adds no universal review or approval gate and cannot replace tests, required practical acceptance or a
   fresh independent Claude PR review. It grants no new product, app, hardware, publication or merge authority.
   Preserve the named writer and Chief Project Manager's exclusive execution and integration queue. The Head
