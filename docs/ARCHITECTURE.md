@@ -357,7 +357,12 @@ runtime services.
   shared layout widths and logger. The Journey shell partial and city members are removed.
 - The session keeps canonical project/journey selection and journey property tracking.
   The page owns journey/station CRUD, city search/loading, ItemClicked properties, selected
-  station tracking and panel expansion. A clicked journey remains the properties object when
+  station and open station-editor tracking, and panel expansion. Search and reordering replace
+  the list source and reset its selection; a valid open station editor retains its properties
+  and auto-save subscription even when the station is filtered out. Selecting a different station,
+  closing/replacing the editor, changing journey/project/solution, refreshing station wrappers or
+  disposal releases that tracking.
+  A clicked journey remains the properties object when
   WinUI subsequently updates the canonical selection. Project changes publish the new items source
   before selecting its first journey through the session; journey/project/solution changes,
   station refresh and disposal detach obsolete

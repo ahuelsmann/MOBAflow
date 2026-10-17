@@ -9,9 +9,11 @@ Model wrappers must notify when persistent values change. See the Name property 
 and raises PropertyChanged. Preserve nested propagation and computed-property notifications.
 
 Selection/project changes must detach obsolete subscriptions and attach current ones.
-Use [journey station selection](../../SharedUI/ViewModel/JourneysPageViewModel.cs) and
-[session save filtering](../../SharedUI/Service/SolutionSession.cs) as concrete references: the station hook
-receives oldValue and newValue, detaches the former and attaches the latter. The session tracks the canonical
+Use [journey station editing](../../SharedUI/ViewModel/JourneysPageViewModel.cs) and
+[session save filtering](../../SharedUI/Service/SolutionSession.cs) as concrete references: list selection and
+the valid open properties editor share station tracking. An ItemsSource reset can clear list selection while
+the editor still owns its station. Release tracking when neither owns it; genuine station/journey/project/
+solution changes, wrapper replacement and disposal detach obsolete editors. The session tracks the canonical
 journey, suppresses bulk-load saves, filters transient state and observes errors.
 Do not assume every existing selection hook already follows the same lifecycle.
 
