@@ -1146,6 +1146,13 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
+      "path": "MOBAflow/Service/WindowsSoundPlayer.cs",
+      "count": 4
+    },
+    {
+      "project": "MOBAflow",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1848",
       "path": "MOBAflow/View/EventManagerPage.xaml.cs",
       "count": 1
     },
@@ -1407,6 +1414,13 @@
       "ruleId": "CA1873",
       "path": "MOBAflow/Service/WinUiAppStartupService.cs",
       "count": 4
+    },
+    {
+      "project": "MOBAflow",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1873",
+      "path": "MOBAflow/Service/WindowsSoundPlayer.cs",
+      "count": 3
     },
     {
       "project": "MOBAflow",
@@ -3436,6 +3450,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAflow/WinUiShutdownCoordinatorTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAflow/WindowsSoundPlayerTests.cs",
       "count": 1
     },
     {
