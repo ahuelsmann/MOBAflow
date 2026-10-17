@@ -271,8 +271,12 @@ internal sealed class AudioCacheTests
         await (cache.StoreAsync(Key("first"), TestWaveAudio.Create([1]), before)).ConfigureAwait(false);
         await (cache.ClearAsync()).ConfigureAwait(false);
         await (cache.StoreAsync(Key("late"), TestWaveAudio.Create([1]), before)).ConfigureAwait(false);
+        using var index = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(_directory, "index.json")).ConfigureAwait(false));
         using (Assert.EnterMultipleScope())
         {
+            // Inspect the committed index before a later read can repair a phantom entry.
+            Assert.That(index.RootElement.GetProperty("Entries").EnumerateObject().Count(), Is.Zero);
+            Assert.That(index.RootElement.GetProperty("Generation").GetInt64(), Is.EqualTo(cache.Generation));
             Assert.That(await (cache.GetSizeAsync()).ConfigureAwait(false), Is.Zero);
             Assert.That(Directory.GetFiles(_directory, "*.wav"), Is.Empty);
         }
@@ -387,9 +391,12 @@ internal sealed class AudioCacheTests
         await cache.StoreAsync(Key("grown"), small, cache.Generation).ConfigureAwait(false);
         await File.WriteAllBytesAsync(Path.Combine(_directory, Key("grown") + ".wav"), larger).ConfigureAwait(false);
         var hit = await cache.TryGetAsync(Key("grown")).ConfigureAwait(false);
+        using var index = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(_directory, "index.json")).ConfigureAwait(false));
         using (Assert.EnterMultipleScope())
         {
             Assert.That(hit.Audio?.ToArray(), Is.EqualTo(larger));
+            Assert.That(index.RootElement.GetProperty("Entries").GetProperty(Key("grown")).GetProperty("Size").GetInt64(), Is.EqualTo(larger.Length));
+            Assert.That(index.RootElement.GetProperty("Entries").TryGetProperty(Key("older"), out _), Is.False);
             Assert.That(File.Exists(Path.Combine(_directory, Key("older") + ".wav")), Is.False);
             Assert.That(await cache.GetSizeAsync().ConfigureAwait(false), Is.EqualTo(larger.Length));
         }
@@ -508,6 +515,32 @@ internal sealed class AudioCacheTests
     }
 
     [Test]
+    public async Task ExhaustedLockRetriesReportIoFailureAndReleaseTheInstance()
+    {
+        using var cache = new AudioCache(_directory, () => 1000, _clock);
+        Directory.CreateDirectory(_directory);
+        using var cancellation = new CancellationTokenSource();
+        using (new FileStream(Path.Combine(_directory, "cache.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+        {
+            var lookup = cache.TryGetAsync(Key("locked until retries expire"), cancellation.Token);
+            try
+            {
+                // Real file-lock retries need scheduling/I/O headroom in the full suite; this bounds hangs, not retry latency.
+                await Assert.ThrowsAsync<IOException>(() => lookup.WaitAsync(TimeSpan.FromSeconds(30))).ConfigureAwait(false);
+            }
+            finally
+            {
+                // A regressed, unbounded retry must also finish before the cache and its gate are disposed.
+                await cancellation.CancelAsync().ConfigureAwait(false);
+                try { await lookup.ConfigureAwait(false); }
+                catch (Exception ex) when (ex is IOException or OperationCanceledException) { }
+            }
+        }
+        var recovered = await cache.TryGetAsync(Key("after retry exhaustion")).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        Assert.That(recovered.Audio, Is.Null);
+    }
+
+    [Test]
     public async Task SweepingKeepsUnrelatedFilesWhileRemovingOwnedOrphanAudio()
     {
         Directory.CreateDirectory(_directory);
@@ -538,11 +571,15 @@ internal sealed class AudioCacheTests
         await cache.StoreAsync(key, TestWaveAudio.Create([1]), cache.Generation).ConfigureAwait(false);
         var replacement = TestWaveAudio.Create([1, 2, 3]);
         await File.WriteAllBytesAsync(Path.Combine(_directory, key + ".wav"), replacement).ConfigureAwait(false);
-        Assert.That(await cache.GetSizeAsync().ConfigureAwait(false), Is.EqualTo(replacement.Length));
+        var size = await cache.GetSizeAsync().ConfigureAwait(false);
+        using var index = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(_directory, "index.json")).ConfigureAwait(false));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(size, Is.EqualTo(replacement.Length));
+            Assert.That(index.RootElement.GetProperty("Entries").GetProperty(key).GetProperty("Size").GetInt64(), Is.EqualTo(replacement.Length));
+        }
         using var reopened = new AudioCache(_directory, () => 1000, _clock);
         Assert.That((await reopened.TryGetAsync(key).ConfigureAwait(false)).Audio?.ToArray(), Is.EqualTo(replacement));
-        using var index = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(_directory, "index.json")).ConfigureAwait(false));
-        Assert.That(index.RootElement.GetProperty("Entries").GetProperty(key).GetProperty("Size").GetInt64(), Is.EqualTo(replacement.Length));
     }
 
     [Test]
@@ -648,6 +685,112 @@ internal sealed class AudioCacheTests
         {
             Assert.That(size, Is.Zero);
             Assert.That(index.RootElement.GetProperty("Entries").EnumerateObject().Count(), Is.Zero);
+        }
+    }
+
+    [Test]
+    public async Task RecordingExistingAudioKeepsItsOriginalBytesAndIndexedSize()
+    {
+        var key = Key("already retained");
+        var retained = TestWaveAudio.Create([1]);
+        using var cache = new AudioCache(_directory, () => 1000, _clock);
+        await cache.StoreAsync(key, retained, cache.Generation).ConfigureAwait(false);
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        await cache.StoreAsync(key, TestWaveAudio.Create([2, 3, 4]), cache.Generation).ConfigureAwait(false);
+        using var index = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(_directory, "index.json")).ConfigureAwait(false));
+        var entry = index.RootElement.GetProperty("Entries").GetProperty(key);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(await File.ReadAllBytesAsync(Path.Combine(_directory, key + ".wav")).ConfigureAwait(false), Is.EqualTo(retained));
+            Assert.That(entry.GetProperty("Size").GetInt64(), Is.EqualTo(retained.Length));
+            Assert.That(entry.GetProperty("LastPlayedAt").GetDateTimeOffset(), Is.EqualTo(_clock.GetUtcNow()));
+        }
+    }
+
+    [Test]
+    public async Task SizeQueryPersistsRemovalOfAMissingFileWithoutEvictingValidAudio()
+    {
+        var missing = Key("missing at size query");
+        var retained = Key("still retained");
+        var audio = TestWaveAudio.Create([1]);
+        using var cache = new AudioCache(_directory, () => 1000, _clock);
+        await cache.StoreAsync(missing, audio, cache.Generation).ConfigureAwait(false);
+        await cache.StoreAsync(retained, audio, cache.Generation).ConfigureAwait(false);
+        File.Delete(Path.Combine(_directory, missing + ".wav"));
+        var size = await cache.GetSizeAsync().ConfigureAwait(false);
+        using var index = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(_directory, "index.json")).ConfigureAwait(false));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(size, Is.EqualTo(audio.Length));
+            Assert.That(index.RootElement.GetProperty("Entries").TryGetProperty(missing, out _), Is.False);
+            Assert.That(index.RootElement.GetProperty("Entries").GetProperty(retained).GetProperty("Size").GetInt64(), Is.EqualTo(audio.Length));
+            Assert.That(await File.ReadAllBytesAsync(Path.Combine(_directory, retained + ".wav")).ConfigureAwait(false), Is.EqualTo(audio));
+        }
+    }
+
+    [Test]
+    public async Task CorruptIndexAfterStartupSweepsUnindexedAudioOnTheNextLookup()
+    {
+        var key = Key("orphan after index corruption");
+        using var cache = new AudioCache(_directory, () => 1000, _clock);
+        await cache.StoreAsync(key, TestWaveAudio.Create([1]), cache.Generation).ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(_directory, "index.json"), "invalid json").ConfigureAwait(false);
+        var lookup = await cache.TryGetAsync(key).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(lookup.Audio, Is.Null);
+            Assert.That(File.Exists(Path.Combine(_directory, key + ".wav")), Is.False);
+        }
+        await cache.StoreAsync(key, TestWaveAudio.Create([2]), cache.Generation).ConfigureAwait(false);
+        Assert.That((await cache.TryGetAsync(key).ConfigureAwait(false)).Audio?.ToArray(), Is.EqualTo(TestWaveAudio.Create([2])));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task RecoverableIndexSizeBoundariesKeepValidAudioAndPersistItsActualSize(bool maximumSize)
+    {
+        var key = Key("recoverable indexed size");
+        var audio = TestWaveAudio.Create([1]);
+        var size = maximumSize ? Array.MaxLength : 0;
+        Directory.CreateDirectory(_directory);
+        await File.WriteAllBytesAsync(Path.Combine(_directory, key + ".wav"), audio).ConfigureAwait(false);
+        var entries = new Dictionary<string, object>
+        {
+            [key] = new { Size = size, LastPlayedAt = DateTimeOffset.UnixEpoch }
+        };
+        await File.WriteAllTextAsync(Path.Combine(_directory, "index.json"),
+            System.Text.Json.JsonSerializer.Serialize(new { Generation = 0, Entries = entries })).ConfigureAwait(false);
+        using var cache = new AudioCache(_directory, () => Array.MaxLength, _clock);
+        var lookup = await cache.TryGetAsync(key).ConfigureAwait(false);
+        using var index = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(_directory, "index.json")).ConfigureAwait(false));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(lookup.Audio?.ToArray(), Is.EqualTo(audio));
+            Assert.That(index.RootElement.GetProperty("Entries").GetProperty(key).GetProperty("Size").GetInt64(), Is.EqualTo(audio.Length));
+        }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task FailedAtomicWriteRemovesTemporaryFilesAndAllowsTheNextStore(bool indexWrite)
+    {
+        var key = Key("retry after atomic write failure");
+        var audio = TestWaveAudio.Create([1]);
+        var blockedPath = Path.Combine(_directory, indexWrite ? "index.json" : key + ".wav");
+        Directory.CreateDirectory(blockedPath);
+        using var cache = new AudioCache(_directory, () => 1000, _clock);
+        var error = await Assert.CatchAsync<Exception>(() => cache.StoreAsync(key, audio, cache.Generation)).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(error, Is.InstanceOf<IOException>().Or.InstanceOf<UnauthorizedAccessException>());
+            Assert.That(Directory.GetFiles(_directory, "*.tmp"), Is.Empty);
+        }
+        Directory.Delete(blockedPath);
+        await cache.StoreAsync(key, audio, cache.Generation).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That((await cache.TryGetAsync(key).ConfigureAwait(false)).Audio?.ToArray(), Is.EqualTo(audio));
+            Assert.That(Directory.GetFiles(_directory, "*.tmp"), Is.Empty);
         }
     }
 }
