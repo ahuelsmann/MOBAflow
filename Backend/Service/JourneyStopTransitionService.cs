@@ -2,7 +2,6 @@
 namespace Moba.Backend.Service;
 
 using Domain;
-using Domain.Enum;
 
 public interface IJourneyStopTransitionService
 {
@@ -11,7 +10,10 @@ public interface IJourneyStopTransitionService
 
 public sealed record JourneyStopTransitionResult(Station? PreviousStation, Station? CurrentStation, bool Changed);
 
-/// <summary>Applies journey stop transitions consistently for feedback steps and workflow actions.</summary>
+/// <summary>
+/// Applies journey stop transitions to the runtime state, consistently for feedback steps and workflow actions.
+/// The stop rules belong to <see cref="Journey"/>; this service only reads and updates <see cref="JourneySessionState"/>.
+/// </summary>
 public sealed class JourneyStopTransitionService : IJourneyStopTransitionService
 {
     public JourneyStopTransitionResult Apply(Journey journey, JourneySessionState state, JourneyStopTransition transition)
@@ -20,24 +22,11 @@ public sealed class JourneyStopTransitionService : IJourneyStopTransitionService
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(transition);
 
-        var previous = ResolveCurrentStation(journey, state);
-        if (transition.Mode == JourneyStopTransitionMode.None)
+        var currentIndex = journey.IndexOfStop(state.CurrentStationId, state.CurrentPos);
+        var previous = currentIndex >= 0 && currentIndex < journey.Stations.Count ? journey.Stations[currentIndex] : null;
+        if (journey.ResolveStopTransition(currentIndex, transition) is not { } targetIndex)
         {
             return new(previous, previous, false);
-        }
-
-        var targetIndex = transition.Mode == JourneyStopTransitionMode.Next
-            ? ResolveCurrentIndex(journey, state) + 1
-            : journey.Stations.FindIndex(station => station.Id == transition.StationId);
-
-        if (targetIndex >= journey.Stations.Count && transition.Mode == JourneyStopTransitionMode.Next)
-        {
-            return new(previous, previous, false);
-        }
-
-        if (targetIndex < 0 || targetIndex >= journey.Stations.Count)
-        {
-            throw new InvalidOperationException("The configured target stop does not exist in the current journey");
         }
 
         var target = journey.Stations[targetIndex];
@@ -45,16 +34,5 @@ public sealed class JourneyStopTransitionService : IJourneyStopTransitionService
         state.CurrentStationName = target.Name;
         state.CurrentPos = targetIndex;
         return new(previous, target, previous?.Id != target.Id);
-    }
-
-    private static int ResolveCurrentIndex(Journey journey, JourneySessionState state) =>
-        state.CurrentStationId.HasValue
-            ? journey.Stations.FindIndex(station => station.Id == state.CurrentStationId.Value)
-            : state.CurrentPos;
-
-    private static Station? ResolveCurrentStation(Journey journey, JourneySessionState state)
-    {
-        var index = ResolveCurrentIndex(journey, state);
-        return index >= 0 && index < journey.Stations.Count ? journey.Stations[index] : null;
     }
 }
