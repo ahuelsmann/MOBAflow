@@ -104,7 +104,11 @@ Do not assume every directory is an active project or discover projects inside `
 | `MOBAsmart/` | Android MAUI UI, local/remote runtime coordination and mobile services |
 | `MOBApi/` | ASP.NET Core REST and SignalR host (default REST port 5001) |
 | `MOBAdisplay/` | Display rendering/transport; ESP32-S3 firmware in `esp32/` |
-| `Sound/`, `TrackLibrary.Base/`, `TrackLibrary.PikoA/`, `TrackPlan.Editor/`, `TrackPlan.Renderer/` | Audio, track catalogues, track-plan editor and rendering |
+| `Sound/` | Platform-neutral sound-effect playback contracts and null implementation |
+| `Speech.Base/` | Platform-neutral speech contracts, shared output and audio cache |
+| `Speech.Piper/` | Windows Piper speech synthesis and pronunciation normalization |
+| `Speech.SystemSpeech/` | Windows System.Speech synthesis provider |
+| `TrackLibrary.Base/`, `TrackLibrary.PikoA/`, `TrackPlan.Editor/`, `TrackPlan.Renderer/` | Track catalogues, track-plan editor and rendering |
 | `Test/` | NUnit tests, Moq, test doubles and fixtures; `Analysis/` has separate helper projects |
 | `docs/`, `scripts/`, `.vscode/tasks.json` | Architecture/user docs and development workflows |
 | `.github/workflows/` | GitHub CI and release definitions |
