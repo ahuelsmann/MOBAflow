@@ -34,7 +34,14 @@ Recorded on main `f4756172`. The CI lanes are jobs of [Quality CI](../.github/wo
   (at least 2500 tests must pass). Two tests are excluded:
   - `MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource` needs Windows file
     locks (`[Platform("Win")]`) and runs in the `desktop` lane;
-  - the explicit, maintainer-run `Hardware` category, which never runs in CI.
+  - the explicit, maintainer-run `Hardware` category, which never runs in CI;
+  - the Skia rendering fixtures (`ClockRendererTests`, `FrameLoopSchedulerTests`, `Rgb565ConverterTests`,
+    `SkiaFrameRendererTests`), which stay in the Windows desktop lane like in `display-protocol`, because there
+    is no native Linux Skia library.
+
+  The first Linux run found real portability defects, fixed in the same PR: `PhotoPathHelper` now rejects
+  Windows absolute paths (`C:\…`, `C:…`, `\…`, UNC) on every platform and treats both separators of stored photo
+  paths as directory boundaries. A timing-sensitive highlighter test now counts only synchronous raises.
 - **Android:** the Release AAB build takes much longer than the other lanes. Making it mandatory for PRs that touch
   Android inputs (`MOBAsmart/`, `SharedUI/` and their dependencies) is a maintainer decision on CI duration; slice 2
   implements the decision.

@@ -471,16 +471,25 @@ jobs:
       # AGENTS.md promises portable .NET work on Windows or Linux; this lane proves the portable suite on Linux.
       # Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource needs Windows file locks ([Platform("Win")])
       # and runs in the Windows desktop lane; explicit maintainer-run hardware tests (category Hardware) never run in
-      # CI. Both are excluded so the result guard can require every selected test to run.
+      # CI; Skia rendering stays in the Windows desktop lane like in display-protocol (no Linux native Skia library).
+      # They are excluded so the result guard can require every selected test to run.
       - name: Run portable tests
         shell: pwsh
         run: |
           $results = 'artifacts/TestResults/portable-linux'
+          $filter = @(
+            'TestCategory!=Hardware'
+            'FullyQualifiedName!=Moba.Test.Common.MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource'
+            'FullyQualifiedName!~ClockRendererTests'
+            'FullyQualifiedName!~FrameLoopSchedulerTests'
+            'FullyQualifiedName!~Rgb565ConverterTests'
+            'FullyQualifiedName!~SkiaFrameRendererTests'
+          ) -join '&'
           dotnet test Test/Test.csproj `
             -p:TargetFrameworks=net10.0 `
             --framework net10.0 `
             --configuration Release `
-            --filter 'TestCategory!=Hardware&FullyQualifiedName!=Moba.Test.Common.MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource' `
+            --filter $filter `
             --logger trx `
             --results-directory $results
           $testExitCode = $LASTEXITCODE
