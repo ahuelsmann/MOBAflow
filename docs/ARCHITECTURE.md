@@ -31,10 +31,13 @@ snapshots to it and consumes remote commands from it.
 
 ### Project dependency rules
 
-Dependencies point from the hosts towards `Domain`. Each project lists its
-direct project references; a project may also reference any project it already
-reaches through these edges, never one above it. The architecture test reads
-this table, so it is the single source of these rules.
+Dependencies point from the hosts towards `Domain`. This table defines the allowed
+dependency graph, not an inventory of direct `ProjectReference` entries. A project
+may reference any project it reaches through these edges, never one above it. The
+architecture test reads this table and checks transitive reachability. For example,
+MOBAsmart directly references `SharedUI`, `Common` and `Sound`; its allowed speech
+dependency is `Speech.Base`, reached through the shared projects. Read the project
+files for the actual direct references, including conditional entries.
 
 | Project | Root namespace | References |
 | --- | --- | --- |
@@ -111,6 +114,12 @@ implementations belong in the host that uses the role.
 
 - **Sound:** `Sound` contains `ISoundPlayer` and `NullSoundPlayer` and has no Windows API or package. MOBAflow
   plays WAV files through its internal `WindowsSoundPlayer`; MOBAsmart registers `NullSoundPlayer`.
+- **Discovery addresses:** [`ILocalIpv4AddressSource`](../Common/Discovery/ILocalIpv4AddressSource.cs) supplies
+  private LAN addresses for the /24 candidate scans used by Z21 and MOBApi discovery. Shared backend registration
+  defaults to [`NetworkInterfaceIpv4AddressSource`](../Common/Discovery/NetworkInterfaceIpv4AddressSource.cs).
+  MAUI registers [`AndroidLocalIpv4AddressSource`](../MOBAsmart/Service/AndroidLocalIpv4AddressSource.cs), which
+  merges those interface addresses with Android's active-network addresses from `ConnectivityManager`.
+  Both `Z21DiscoveryService` and MOBAsmart's `RestApiDiscoveryService` consume the platform-selected source.
 - **Files:** `SharedUI/Interface` defines one interface per file role: `ISolutionIoService` (solution
   new/load/save, with `CanPersist`), `IFilePickerService` (open and save pickers) and `IPhotoStorageService`
   (vehicle photos below the photo root). MOBAflow implements them in `SolutionFileService`, `FilePickerService`
@@ -301,9 +310,11 @@ runtime services.
 
 **Solution ownership and the RF-24 boundary:**
 
-- `SolutionSession` is the single owner of the loaded solution, selected project
-  and journey, dirty state and auto-save. Hosts register the same instance as
+- `SolutionSession` is the desktop owner of the loaded solution, selected project
+  and journey, dirty state and auto-save. The WinUI host registers the same instance as
   `ISolutionSession`, `IProjectContext` and `IJourneySelectionContext`.
+- MOBAsmart uses `MobileSolutionContext` as its `IProjectContext`, as described in
+  [the mobile session boundary](#mobasmart-session-and-projection).
 - Shared ViewModels and host services reach solution ownership through those
   contracts. The existing shell/composition, WinUI page bindings, column-width
   behavior, MonitorPageViewModel, EventManagerViewModel and Android shutdown
@@ -682,8 +693,11 @@ and are registered as singletons by
 | [`MobileAppLifecycle`](../SharedUI/Mobile/MobileAppLifecycle.cs) | Android foreground-service keep-alive (syncs run in order), network-change debounce and the stopping state. Created and disposed by `MauiViewModel`. |
 | [`MauiViewModel`](../SharedUI/Mobile/MauiViewModel.cs) | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
 
-`MobileSolutionStore` owns disk persistence; `SolutionSession` owns the loaded
-solution and selection. Projection data does not become a second editable
+[`MobileSolutionStore`](../SharedUI/Service/MobileSolutionStore.cs) owns mobile cache persistence;
+[`MobileSolutionContext`](../SharedUI/Service/MobileSolutionContext.cs) owns the phone's loaded
+solution and project selection. MAUI registers it as `IProjectContext`; `SolutionRemoteLoader`
+applies synchronized or cached solutions to it, and the mobile project picker updates its selection.
+The desktop's `SolutionSession` is a separate owner. Projection data does not become a second editable
 solution or runtime. After the initial catalog is shown, periodic refresh takes
 over; session loss or a connection-toggle change resets the import flag. App
 shutdown cancels ongoing work and releases the ViewModel's subscriptions;

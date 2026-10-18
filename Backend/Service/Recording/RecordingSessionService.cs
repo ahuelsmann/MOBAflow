@@ -26,6 +26,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
     private readonly RecorderOptions _options;
     private readonly List<RecordingEntry> _entries = [];
     private readonly Dictionary<long, int> _pendingEntries = [];
+    private readonly RecordingDropTracker _drops = new();
 
     private RecordingSessionState _state;
     private Guid? _sessionId;
@@ -36,10 +37,6 @@ public sealed class RecordingSessionService : IRecordingSessionService
     private DateTimeOffset? _pausedUtc;
     private TimeSpan _lastElapsed;
     private long _sequence;
-    private long _totalDroppedEntryCount;
-    private long _pendingDroppedEntryCount;
-    private long _firstPendingDroppedSequence;
-    private long _lastPendingDroppedSequence;
     private long _estimatedPayloadBytes;
     private bool _limitReached;
     private RecordingFailureCode _lastFailureCode;
@@ -121,7 +118,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var validation = ValidateStartRequest(request);
+        var validation = RecordingRequestValidator.ValidateStartRequest(request);
         if (validation is not null) return validation;
 
         RecordingSessionSnapshot snapshot;
@@ -249,7 +246,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
     {
         ArgumentNullException.ThrowIfNull(projection);
 
-        var estimatedPayloadBytes = ValidateProjection(projection);
+        var estimatedPayloadBytes = RecordingRequestValidator.ValidateProjection(projection);
         if (estimatedPayloadBytes < 0) return RecordingSubmissionResult.InvalidProjection;
 
         RecordingSessionSnapshot? snapshot = null;
@@ -295,7 +292,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
                 }
                 else
                 {
-                    TrackDroppedSequenceLocked(entry.Sequence);
+                    _drops.Track(entry.Sequence);
                     result = RecordingSubmissionResult.DroppedCapacity;
                     snapshot = CreateStatusLocked();
                 }
@@ -600,13 +597,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
         _estimatedPayloadBytes -= pendingPayloadBytes;
         _pendingEntries.Clear();
 
-        var firstLostSequence = CombineFirstSequence(
-            pendingSequences.Length == 0 ? null : pendingSequences[0],
-            _pendingDroppedEntryCount == 0 ? null : _firstPendingDroppedSequence);
-        var lastLostSequence = CombineLastSequence(
-            pendingSequences.Length == 0 ? null : pendingSequences[^1],
-            _pendingDroppedEntryCount == 0 ? null : _lastPendingDroppedSequence);
-        var lostCount = pendingSequences.LongLength + _pendingDroppedEntryCount;
+        var (firstLostSequence, lastLostSequence, lostCount) = _drops.LostRange(pendingSequences);
 
         _entries.Add(CreateEntryLocked(
             "recorder.fault",
@@ -621,7 +612,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
             }),
             message));
 
-        ClearPendingDroppedLocked();
+        _drops.ClearPending();
         _lastFailureCode = failureCode;
         _lastFailureMessage = message;
     }
@@ -648,7 +639,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
 
     private bool TryEmitRecoveredGapLocked()
     {
-        if (_pendingDroppedEntryCount == 0) return true;
+        if (!_drops.HasPending) return true;
         if (!HasNonTerminalEntryRoomLocked())
         {
             TriggerLimitLocked("entry-count");
@@ -661,7 +652,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
 
     private void AppendTerminalGapLocked()
     {
-        if (_pendingDroppedEntryCount == 0) return;
+        if (!_drops.HasPending) return;
         AppendGapLocked("ingestion-capacity");
     }
 
@@ -673,12 +664,12 @@ public sealed class RecordingSessionService : IRecordingSessionService
             JsonSerializer.SerializeToElement(new
             {
                 reason,
-                firstDroppedSequence = _firstPendingDroppedSequence,
-                lastDroppedSequence = _lastPendingDroppedSequence,
-                droppedCount = _pendingDroppedEntryCount
+                firstDroppedSequence = _drops.FirstPendingSequence,
+                lastDroppedSequence = _drops.LastPendingSequence,
+                droppedCount = _drops.PendingCount
             }),
-            $"Recording gap: {_pendingDroppedEntryCount} entries were dropped"));
-        ClearPendingDroppedLocked();
+            $"Recording gap: {_drops.PendingCount} entries were dropped"));
+        _drops.ClearPending();
     }
 
     private void TriggerLimitLocked(string reason)
@@ -693,30 +684,15 @@ public sealed class RecordingSessionService : IRecordingSessionService
                 reason,
                 entryLimit = _options.EntryLimit,
                 estimatedPayloadByteLimit = _options.EstimatedPayloadByteLimit,
-                firstDroppedSequence = _pendingDroppedEntryCount == 0 ? (long?)null : _firstPendingDroppedSequence,
-                lastDroppedSequence = _pendingDroppedEntryCount == 0 ? (long?)null : _lastPendingDroppedSequence,
-                droppedCount = _pendingDroppedEntryCount
+                firstDroppedSequence = _drops.HasPending ? _drops.FirstPendingSequence : (long?)null,
+                lastDroppedSequence = _drops.HasPending ? _drops.LastPendingSequence : (long?)null,
+                droppedCount = _drops.PendingCount
             }),
             "Recording session limit reached"));
-        ClearPendingDroppedLocked();
+        _drops.ClearPending();
         _limitReached = true;
         _lastFailureCode = RecordingFailureCode.LimitReached;
         _lastFailureMessage = LimitReachedMessage;
-    }
-
-    private void TrackDroppedSequenceLocked(long sequence)
-    {
-        if (_pendingDroppedEntryCount == 0) _firstPendingDroppedSequence = sequence;
-        _lastPendingDroppedSequence = sequence;
-        _pendingDroppedEntryCount++;
-        _totalDroppedEntryCount++;
-    }
-
-    private void ClearPendingDroppedLocked()
-    {
-        _pendingDroppedEntryCount = 0;
-        _firstPendingDroppedSequence = 0;
-        _lastPendingDroppedSequence = 0;
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
@@ -762,59 +738,6 @@ public sealed class RecordingSessionService : IRecordingSessionService
     private bool HasNonTerminalEntryRoomLocked() =>
         _entries.Count + _pendingEntries.Count < _options.EntryLimit - ReservedTerminalEntryCount;
 
-    private static RecordingOperationResult? ValidateStartRequest(RecordingSessionStartRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length > RecordingFormat.MaxSessionNameLength)
-        {
-            return RecordingOperationResult.Failure(
-                RecordingFailureCode.InvalidRequest,
-                $"Session name must contain between 1 and {RecordingFormat.MaxSessionNameLength} characters.");
-        }
-
-        if (string.IsNullOrWhiteSpace(request.SourceApplicationVersion) ||
-            request.SourceApplicationVersion.Trim().Length > RecordingFormat.MaxApplicationVersionLength)
-        {
-            return RecordingOperationResult.Failure(
-                RecordingFailureCode.InvalidRequest,
-                $"Application version must contain between 1 and {RecordingFormat.MaxApplicationVersionLength} characters.");
-        }
-
-        if (request.Project is not null &&
-            (request.Project.ProjectId == Guid.Empty ||
-             string.IsNullOrWhiteSpace(request.Project.Name) ||
-             request.Project.Name.Length > RecordingFormat.MaxProjectNameLength))
-        {
-            return RecordingOperationResult.Failure(RecordingFailureCode.InvalidRequest, "Project identity is invalid.");
-        }
-
-        return null;
-    }
-
-    private static int ValidateProjection(RecordingEntryProjection projection)
-    {
-        if (!IsValidKey(projection.Category) ||
-            !IsValidKey(projection.Source) ||
-            !IsValidKey(projection.Severity) ||
-            string.IsNullOrWhiteSpace(projection.TypeKey) ||
-            projection.TypeKey.Length > RecordingFormat.MaxTypeKeyLength ||
-            projection.DisplayText.Length > RecordingFormat.MaxDisplayTextLength ||
-            projection.EntityReferences.Length > RecordingFormat.MaxEntityReferencesPerEntry ||
-            projection.EntityReferences.Any(reference =>
-                string.IsNullOrWhiteSpace(reference.Kind) ||
-                reference.Kind.Length > RecordingFormat.MaxKeyLength ||
-                reference.Id == Guid.Empty))
-        {
-            return -1;
-        }
-
-        if (projection.Payload.ValueKind == JsonValueKind.Undefined) return -1;
-        var payloadBytes = Encoding.UTF8.GetByteCount(projection.Payload.GetRawText());
-        return payloadBytes <= RecordingFormat.MaxPayloadBytes ? payloadBytes : -1;
-    }
-
-    private static bool IsValidKey(string value) =>
-        !string.IsNullOrWhiteSpace(value) && value.Length <= RecordingFormat.MaxKeyLength;
-
     private RecordingOperationResult FailLocked(RecordingFailureCode code, string message)
     {
         _lastFailureCode = code;
@@ -829,7 +752,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
             _sessionName,
             _entries.Count + _pendingEntries.Count,
             _pendingEntries.Count,
-            _totalDroppedEntryCount,
+            _drops.TotalCount,
             _estimatedPayloadBytes,
             _limitReached,
             _lastFailureCode,
@@ -867,8 +790,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
         _pausedUtc = null;
         _lastElapsed = TimeSpan.Zero;
         _sequence = 0;
-        _totalDroppedEntryCount = 0;
-        ClearPendingDroppedLocked();
+        _drops.Reset();
         _estimatedPayloadBytes = 0;
         _limitReached = false;
         _lastFailureCode = RecordingFailureCode.None;
@@ -878,19 +800,5 @@ public sealed class RecordingSessionService : IRecordingSessionService
         _consumerTask = null;
         _stopTask = null;
         _artifact = null;
-    }
-
-    private static long? CombineFirstSequence(long? first, long? second)
-    {
-        if (first is null) return second;
-        if (second is null) return first;
-        return Math.Min(first.Value, second.Value);
-    }
-
-    private static long? CombineLastSequence(long? first, long? second)
-    {
-        if (first is null) return second;
-        if (second is null) return first;
-        return Math.Max(first.Value, second.Value);
     }
 }
