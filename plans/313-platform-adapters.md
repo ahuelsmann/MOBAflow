@@ -52,8 +52,8 @@ the interfaces and are updated with the DI registration.
    `Sound`, move its tests to the Windows test target. Check: MOBAsmart Release/Android analyzer gate and build.
 2. **File roles.** Split `IoService` and `NullIoService` by role, update DI and consumers, remove `IIoService`;
    tests for each role.
-3. **Documentation and completion.** Update architecture docs, mark RF-29 complete in the umbrella plan (its RF-29
-   section already links this plan) and remove this plan.
+3. **Documentation and completion.** Update architecture docs and the umbrella plan's RF-29 entry; after the
+   maintainer desktop acceptance is recorded on #313, mark RF-29 complete and remove this plan.
 
 ## Validation strategy
 

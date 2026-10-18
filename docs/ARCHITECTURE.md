@@ -113,10 +113,12 @@ Shared projects hold only platform-neutral contracts; each host supplies one imp
 - **Files:** `SharedUI/Interface` defines one interface per file role: `ISolutionIoService` (solution
   new/load/save, with `CanPersist`), `IFilePickerService` (open and save pickers) and `IPhotoStorageService`
   (vehicle photos below the photo root). MOBAflow implements them in `SolutionFileService`, `FilePickerService`
-  and `PhotoStorageService`; the first two get the main window handle and XAML root from `WinUiWindowContext`.
-  Hosts without files use `NullSolutionIoService` and `NullFilePickerService`. Consumers request only the role
-  they use; there is no aggregate file interface. `PhotoAssignmentService` combines picking and storing for the
-  locomotive and wagon pages.
+  and `PhotoStorageService`; the first two get the main window ID from `WinUiWindowContext`, and
+  `SolutionFileService` also gets the XAML root there for its dialogs. Only MOBAflow uses the file roles.
+  `NullSolutionIoService` (`CanPersist` is false) and `NullFilePickerService` serve tests, and `SolutionSession`
+  and `WorkflowViewModel` fall back to `NullFilePickerService` when no picker is passed. Consumers request only
+  the role they use; there is no aggregate file interface. `PhotoAssignmentService` combines picking and storing
+  for the locomotive and wagon pages.
 
 ### 1. **Domain Layer** (`Domain/`)
 
