@@ -139,6 +139,15 @@ reusable ordered list of typed actions. Events reference its stable ID and suppl
 the context of each execution. Runtime snapshots
 are the immutable boundary exposed to UI consumers.
 
+**Domain rules:** a rule that needs only the data of one domain object lives on that object and returns values or
+domain issue records, never messages, I/O, time or runtime state. `Journey.ResolveStopTransition` and
+`Journey.IndexOfStop` decide stop changes; `JourneyStopTransitionService` only applies them to the runtime
+`JourneySessionState`. `Workflow.FindStructureIssues` and `Project.FindWorkflowsWithInvalidIds` report structural
+problems as kinds and field paths; `WorkflowValidator` turns them into coded, user-facing issues and adds the payload
+checks. Validators that check consistency across many entities and produce user-facing findings, such as the
+interlocking definition, digital address conflicts, timetable evaluation against runtime states and project
+completeness, stay in `Backend/Service`.
+
 **Characteristics:**
 
 - ✅ **Framework-agnostic** - No dependencies on UI frameworks
