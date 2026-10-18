@@ -4,7 +4,7 @@
 **Spec Kit**: Not applicable - structural refactoring without behavior change
 **Status**: Implementation delivered (slice 1 #315, slice 2 #317) and documented (platform adapter rule in
 [ARCHITECTURE.md](../docs/ARCHITECTURE.md#platform-adapter-rule)); open: the maintainer desktop acceptance below,
-recorded on #313. This plan is removed only after that acceptance is recorded.
+to be recorded on #313. This plan is removed only after that acceptance is recorded.
 
 ## Purpose and scope
 

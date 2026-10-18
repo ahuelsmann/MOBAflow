@@ -443,7 +443,7 @@ The implementation slices are delivered (#315, #317): `Sound` holds only the pla
 owns the WAV player, and each file role has its own interface and implementation class (see
 [the platform adapter rule](../docs/ARCHITECTURE.md#platform-adapter-rule)). The maintainer desktop acceptance
 (file dialogs, unsaved-changes prompt, audio picker, photo pick/assign in Light and Dark) is still open; it is
-listed in [the RF-29 child plan](313-platform-adapters.md) and recorded on
+listed in [the RF-29 child plan](313-platform-adapters.md) and to be recorded on
 [issue #313](https://github.com/ahuelsmann/MOBAflow/issues/313), which stays open until then.
 
 ### RF-30: Repository and test layout

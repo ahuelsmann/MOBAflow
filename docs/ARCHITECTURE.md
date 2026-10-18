@@ -106,7 +106,8 @@ timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`
 
 ### Platform adapter rule
 
-Shared projects hold only platform-neutral contracts; each host supplies one implementation per role.
+Shared projects hold the platform-neutral contracts and null objects; each host that uses a role supplies its
+implementation.
 
 - **Sound:** `Sound` contains `ISoundPlayer` and `NullSoundPlayer` and has no Windows API or package. MOBAflow
   plays WAV files through its internal `WindowsSoundPlayer`; MOBAsmart registers `NullSoundPlayer`.
@@ -115,10 +116,10 @@ Shared projects hold only platform-neutral contracts; each host supplies one imp
   (vehicle photos below the photo root). MOBAflow implements them in `SolutionFileService`, `FilePickerService`
   and `PhotoStorageService`; the first two get the main window ID from `WinUiWindowContext`, and
   `SolutionFileService` also gets the XAML root there for its dialogs. Only MOBAflow uses the file roles.
-  `NullSolutionIoService` (`CanPersist` is false) and `NullFilePickerService` serve tests, and `SolutionSession`
-  and `WorkflowViewModel` fall back to `NullFilePickerService` when no picker is passed. Consumers request only
-  the role they use; there is no aggregate file interface. `PhotoAssignmentService` combines picking and storing
-  for the locomotive and wagon pages.
+  `NullSolutionIoService` (`CanPersist` is false) and `NullFilePickerService` serve tests; `SolutionSession`
+  (when no `SolutionViewModelServices` is passed) and `WorkflowViewModel` (when no picker is passed) fall back to
+  `NullFilePickerService`. Consumers request only the role they use; there is no aggregate file interface.
+  `PhotoAssignmentService` combines picking and storing for the locomotive and wagon pages.
 
 ### 1. **Domain Layer** (`Domain/`)
 
