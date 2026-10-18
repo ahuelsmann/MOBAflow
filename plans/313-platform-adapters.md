@@ -2,7 +2,9 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/313
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: Active; slice 1 in #315 and slice 2 in #317 (both in review); slice 3 follows
+**Status**: Implementation delivered (slice 1 #315, slice 2 #317) and documented (platform adapter rule in
+[ARCHITECTURE.md](../docs/ARCHITECTURE.md#platform-adapter-rule)); open: the maintainer desktop acceptance below,
+to be recorded on #313. This plan is removed only after that acceptance is recorded.
 
 ## Purpose and scope
 
@@ -50,8 +52,8 @@ the interfaces and are updated with the DI registration.
    `Sound`, move its tests to the Windows test target. Check: MOBAsmart Release/Android analyzer gate and build.
 2. **File roles.** Split `IoService` and `NullIoService` by role, update DI and consumers, remove `IIoService`;
    tests for each role.
-3. **Documentation and completion.** Update architecture docs, mark RF-29 complete in the umbrella plan (its RF-29
-   section already links this plan) and remove this plan.
+3. **Documentation and completion.** Update architecture docs and the umbrella plan's RF-29 entry; after the
+   maintainer desktop acceptance is recorded on #313, mark RF-29 complete and remove this plan.
 
 ## Validation strategy
 
