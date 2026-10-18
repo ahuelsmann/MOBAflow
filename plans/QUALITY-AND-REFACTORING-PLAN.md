@@ -439,9 +439,11 @@ The page layout restore/save moves with RF-24 slice 6, which centralizes layout 
 
 ### RF-29: Platform adapters for sound and files
 
-The extraction order, source inventory, design and validation now belong to
-[the RF-29 child plan](313-platform-adapters.md), owned by
-[issue #313](https://github.com/ahuelsmann/MOBAflow/issues/313).
+Child issue [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) owns this package and its status; the
+remaining maintainer desktop acceptance is listed in [the RF-29 child plan](313-platform-adapters.md). Outcome:
+`Sound` holds only the platform-neutral contract and its null object, MOBAflow owns the WAV player, and each file
+role has its own interface and implementation class (see
+[the platform adapter rule](../docs/ARCHITECTURE.md#platform-adapter-rule)).
 
 ### RF-30: Repository and test layout
 
