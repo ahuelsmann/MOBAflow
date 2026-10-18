@@ -453,6 +453,51 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  portable-linux:
+    name: Portable tests on Linux
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # AGENTS.md promises portable .NET work on Windows or Linux; this lane proves the portable suite on Linux.
+      # Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource needs Windows file locks ([Platform("Win")])
+      # and runs in the Windows desktop lane; explicit maintainer-run hardware tests (category Hardware) never run in
+      # CI. Both are excluded so the result guard can require every selected test to run.
+      - name: Run portable tests
+        shell: pwsh
+        run: |
+          $results = 'artifacts/TestResults/portable-linux'
+          dotnet test Test/Test.csproj `
+            -p:TargetFrameworks=net10.0 `
+            --framework net10.0 `
+            --configuration Release `
+            --filter 'TestCategory!=Hardware&FullyQualifiedName!=Moba.Test.Common.MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource' `
+            --logger trx `
+            --results-directory $results
+          $testExitCode = $LASTEXITCODE
+
+          $trx = @(Get-ChildItem $results -Recurse -Filter *.trx | ForEach-Object FullName)
+          ./scripts/Test-TestRunResults.ps1 -Path $trx -MinimumPassed 2500
+          exit $testExitCode
+
+      - name: Archive portable test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: portable-linux-${{ github.run_number }}
+          path: artifacts/TestResults/portable-linux/**
+          if-no-files-found: warn
+          retention-days: 30
+
   android-release:
     name: Android Release AAB
     needs: changes
