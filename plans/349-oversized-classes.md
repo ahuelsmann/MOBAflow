@@ -18,7 +18,7 @@ Inventory on main `de4af109`:
 
 | Class | Lines | Responsibilities today | Decision |
 | --- | --- | --- | --- |
-| `Backend/Service/Recording/RecordingSessionService.cs` | 896 | lifecycle and single-consumer pipeline; request/projection validation; bookkeeping of entries dropped at ingestion capacity; control-entry content | **Slice 1**: validation → `RecordingRequestValidator`, drop bookkeeping → `RecordingDropTracker` (both internal, used under the session lock); **slice 2**: control-entry content. The lock, channel and consumer stay in the session |
+| `Backend/Service/Recording/RecordingSessionService.cs` | 896 | lifecycle and single-consumer pipeline; request/projection validation; bookkeeping of entries dropped at ingestion capacity; control-entry content | **Slice 1**: validation → `RecordingRequestValidator`, drop bookkeeping → `RecordingDropTracker` (both internal); stateless validation runs before the session lock, while mutable drop-tracker state is accessed under that lock; **slice 2**: control-entry content. The lock, channel and consumer stay in the session |
 | `Backend/Service/Recording/RecordingArtifactSerializer.Import.cs` | 802 | file-format parsing, limit enforcement, payload validation | **Slice 2**: separate parsing from validation behind the existing serializer API |
 | `MOBAflow/Controls/SignalBox/SignalBoxPropertiesControl.xaml.cs` | - | property editing behavior in code-behind (partly moved by RF-14) | **Slice 3**: remaining behavior into the signal-box ViewModel |
 | `MOBAflow/View/HelpPage.xaml.cs` | 663 | navigation and section state, panel layout persistence | **Slice 4**: navigation/section state into a ViewModel; the layout persistence follows RF-24 slice 6 |
@@ -43,6 +43,7 @@ recorded on #349. No app launch by the agent.
 
 ## Risks
 
-- **Concurrency:** the session's lock, channel and consumer stay unchanged; extracted classes hold no lock and are
-  only called under the session lock.
+- **Concurrency:** the session's lock, channel and consumer stay unchanged. The stateless validator runs before
+  `Start` and `TryRecord` acquire the session lock. The mutable drop tracker is called under that lock and owns
+  no lock of its own.
 - **Open PRs:** #293 (RF-24) touches `MainWindow`; slice 5 waits for it.
