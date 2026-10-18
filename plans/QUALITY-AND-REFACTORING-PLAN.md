@@ -330,7 +330,8 @@ Sequence:
    `Domain/Matrix` and `Domain/Display`;
 2. move the `Moba.TrackPlan.Renderer` types declared in `TrackLibrary.PikoA`
    into a namespace of their project;
-3. move `Common/Speech/PiperPronunciationNormalizer` into `Sound`.
+3. move `Common/Speech/PiperPronunciationNormalizer` to
+   `Speech.Piper/PiperPronunciationNormalizer.cs`.
 
 Acceptance anchor: each removed type had no reference; moved types keep their
 behavior and tests; builds of all affected targets pass.
