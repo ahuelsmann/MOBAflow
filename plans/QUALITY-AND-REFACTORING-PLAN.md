@@ -159,7 +159,7 @@ dependencies.
 | RF-28 | [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
 | RF-29 | [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) | Platform-specific sound and file services live in platform adapters with one role per class. |
 | RF-30 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
-| RF-31 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | The remaining oversized code-behind and recording classes are split by responsibility. |
+| RF-31 | [#349](https://github.com/ahuelsmann/MOBAflow/issues/349) | The remaining oversized code-behind and recording classes are split by responsibility. |
 
 The phrase "until child creation" is traceability, not workflow status. Issue #47
 remains authoritative for whether a child package is proposed, active, blocked,
@@ -461,17 +461,9 @@ CI runs every test project.
 
 ### RF-31: Reduce the remaining oversized classes
 
-After characterization tests, split by responsibility:
-
-1. `HelpPage.xaml.cs`: move navigation and section state into a ViewModel and
-   panel layout persistence into the RF-24 layout service;
-2. `SignalBoxPropertiesControl.xaml.cs` and `MainWindow.xaml.cs`: keep only
-   view lifecycle and visual adaptation in code-behind;
-3. `RecordingSessionService` and the recording artifact import: separate
-   session lifecycle, event capture and file format handling.
-
-Acceptance anchor: each resulting class has one reason to change; code-behind
-contains no feature behavior; recording round-trip tests pass unchanged.
+The inventory, decisions and delivery slices now belong to
+[the RF-31 child plan](349-oversized-classes.md), owned by
+[issue #349](https://github.com/ahuelsmann/MOBAflow/issues/349).
 
 ## Spec Kit classification of RF-19 through RF-31
 
