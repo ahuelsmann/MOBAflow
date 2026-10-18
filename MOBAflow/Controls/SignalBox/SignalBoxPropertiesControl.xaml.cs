@@ -269,16 +269,11 @@ public sealed partial class SignalBoxPropertiesControl
 
     private void UpdateAspectPresentation(SbSignal? signal)
     {
-        var isSpeedIndicatorSignal = signal is not null &&
-            string.Equals(
-                signal.MainSignalArticleNumber,
-                "4046",
-                StringComparison.Ordinal);
-        var signalArticleNumber = isSpeedIndicatorSignal ? "4046" : string.Empty;
+        var isSpeedIndicatorSignal = KsSignalAspectNames.Is4046Signal(signal?.MainSignalArticleNumber);
+        var signalArticleNumber = KsSignalAspectNames.ResolvePreviewSignalArticleNumber(signal?.MainSignalArticleNumber);
 
         ApplyAspectPreviewSignals(signalArticleNumber, signal);
-        ApplyAspectLabels(this, isSpeedIndicatorSignal);
-        ApplyAspectTooltips(this, isSpeedIndicatorSignal);
+        ApplyAspectTexts(isSpeedIndicatorSignal);
     }
 
     private void ApplyAspectPreviewSignals(
@@ -311,78 +306,26 @@ public sealed partial class SignalBoxPropertiesControl
         yield return (AspectZs7Signal, SignalAspect.Zs7);
     }
 
-    private static void ApplyAspectLabels(
-        SignalBoxPropertiesControl control,
-        bool isSpeedIndicatorSignal)
+    private void ApplyAspectTexts(bool isSpeedIndicatorSignal)
     {
-        control.AspectHp0Label.Text = KsSignalAspectNames.GetAspectLabel(
-            SignalAspect.Hp0,
-            isSpeedIndicatorSignal);
-        control.AspectKs1Label.Text = KsSignalAspectNames.GetAspectLabel(
-            SignalAspect.Ks1,
-            isSpeedIndicatorSignal);
-        control.AspectKs2Label.Text = KsSignalAspectNames.GetAspectLabel(
-            SignalAspect.Ks2,
-            isSpeedIndicatorSignal);
-        control.AspectKs1BlinkLabel.Text = KsSignalAspectNames.GetAspectLabel(
-            SignalAspect.Ks1Blink,
-            isSpeedIndicatorSignal);
-        control.AspectKennlichtLabel.Text = KsSignalAspectNames.GetAspectLabel(
-            SignalAspect.Kennlicht,
-            isSpeedIndicatorSignal);
-        control.AspectDunkelLabel.Text = KsSignalAspectNames.GetAspectLabel(
-            SignalAspect.Dunkel,
-            isSpeedIndicatorSignal);
-        control.AspectRa12Label.Text = KsSignalAspectNames.GetAspectLabel(
-            SignalAspect.Ra12,
-            isSpeedIndicatorSignal);
-        control.AspectZs1Label.Text = KsSignalAspectNames.GetAspectLabel(
-            SignalAspect.Zs1,
-            isSpeedIndicatorSignal);
-        control.AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(
-            SignalAspect.Zs7,
-            isSpeedIndicatorSignal);
+        foreach (var (label, aspect) in EnumerateAspectLabels())
+            label.Text = KsSignalAspectNames.GetAspectLabel(aspect, isSpeedIndicatorSignal);
+
+        foreach (var (button, aspect) in EnumerateAspectButtons())
+            ToolTipService.SetToolTip(button, KsSignalAspectNames.GetAspectDescription(aspect, isSpeedIndicatorSignal));
     }
 
-    private static void ApplyAspectTooltips(
-        SignalBoxPropertiesControl control,
-        bool isSpeedIndicatorSignal)
+    private IEnumerable<(TextBlock Label, SignalAspect Aspect)> EnumerateAspectLabels()
     {
-        ToolTipService.SetToolTip(control.AspectHp0Button, "Hp 0 - Stop");
-        ToolTipService.SetToolTip(control.AspectKs1Button, "Ks 1 - Proceed");
-        ToolTipService.SetToolTip(
-            control.AspectKs2Button,
-            isSpeedIndicatorSignal
-                ? "Ks 2 with white marker light at the top left"
-                : "Ks 2 - Expect stop");
-        ToolTipService.SetToolTip(
-            control.AspectKs1BlinkButton,
-            isSpeedIndicatorSignal
-                ? "Ks 2 with white marker light at the top left and top speed indicator"
-                : "Ks 1 flashing - Proceed with speed pre-indicator");
-        ToolTipService.SetToolTip(
-            control.AspectKennlichtButton,
-            isSpeedIndicatorSignal
-                ? "Only white marker light at the top left"
-                : "Marker light - Signal disabled for operations");
-        ToolTipService.SetToolTip(
-            control.AspectDunkelButton,
-            isSpeedIndicatorSignal
-                ? "Green flashing with white marker light at the top left and top/bottom speed indicators"
-                : "Dark mode - Signal inactive");
-        ToolTipService.SetToolTip(
-            control.AspectRa12Button,
-            isSpeedIndicatorSignal
-                ? "Hp0 with white marker light at the bottom for shunting movements"
-                : "Sh 1/Ra 12 - Shunting allowed");
-        ToolTipService.SetToolTip(
-            control.AspectZs1Button,
-            isSpeedIndicatorSignal
-                ? "Ks 1 with top speed indicator"
-                : "Zs 1 - Substitute signal (white flashing)");
-        ToolTipService.SetToolTip(
-            control.AspectZs7Button,
-            "Zs 7 - Caution signal (3x yellow)");
+        yield return (AspectHp0Label, SignalAspect.Hp0);
+        yield return (AspectKs1Label, SignalAspect.Ks1);
+        yield return (AspectKs2Label, SignalAspect.Ks2);
+        yield return (AspectKs1BlinkLabel, SignalAspect.Ks1Blink);
+        yield return (AspectKennlichtLabel, SignalAspect.Kennlicht);
+        yield return (AspectDunkelLabel, SignalAspect.Dunkel);
+        yield return (AspectRa12Label, SignalAspect.Ra12);
+        yield return (AspectZs1Label, SignalAspect.Zs1);
+        yield return (AspectZs7Label, SignalAspect.Zs7);
     }
 
     private void UpdateSwitchButtons()
