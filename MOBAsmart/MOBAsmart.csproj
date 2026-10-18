@@ -12,6 +12,8 @@
         <PlatformTarget>AnyCPU</PlatformTarget>
         <!-- Suppress XC0103: BoolToObjectConverter requires attribute but is from external library (CommunityToolkit.Maui) -->
         <NoWarn>XC0103</NoWarn>
+        <!-- Compile bindings that set Source (for example x:Reference) as well; RF-08 -->
+        <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
         <!-- Display name -->
         <ApplicationTitle>MOBAsmart</ApplicationTitle>
         <!-- App Identifier -->

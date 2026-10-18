@@ -136,7 +136,7 @@ dependencies.
 | RF-05 | [#51](https://github.com/ahuelsmann/MOBAflow/issues/51) | A clean Android Release restore produces a validated AAB locally and in mandatory CI. |
 | RF-06 | [#90](https://github.com/ahuelsmann/MOBAflow/issues/90) | Release and CI run an explicit analyzer baseline and reject new unapproved diagnostics. |
 | RF-07 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Every supported delivery target has a reproducible mandatory clean-build lane. |
-| RF-08 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
+| RF-08 | [#357](https://github.com/ahuelsmann/MOBAflow/issues/357) | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
 | RF-09 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Risk-critical behavior has non-decreasing coverage and mutation protection. |
 | RF-10 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Formatting drift fails CI without obscuring functional changes. |
 | RF-11 | [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
@@ -190,18 +190,9 @@ required artifacts and tests are retained as workflow evidence.
 
 ### RF-08: Compile MAUI XAML bindings
 
-Sequence:
-
-1. inventory project-owned binding-context boundaries and current warnings;
-2. add correct `x:DataType` declarations and enable source-binding compilation
-   incrementally;
-3. fix resulting binding errors instead of suppressing `XC0025` globally;
-4. promote the clean project-owned warning baseline into CI.
-
-Acceptance anchor: Android Release has no `XC0025` warnings in project-owned
-XAML; locomotive selection, signal aspects, function toggles, and control-page
-state retain regression coverage; measured startup and interaction performance
-does not regress.
+The inventory, decisions and delivery slices now belong to
+[the RF-08 child plan](357-maui-compiled-bindings.md), owned by
+[issue #357](https://github.com/ahuelsmann/MOBAflow/issues/357).
 
 ### RF-09: Coverage and mutation ratchets
 
