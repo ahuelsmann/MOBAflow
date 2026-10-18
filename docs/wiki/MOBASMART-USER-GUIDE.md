@@ -127,7 +127,9 @@ when the SignalR connection is available.
 - Check that the selected project has a Z21 assigned in MOBAflow and that the
   solution was synchronized to the phone.
 - Select the project again or reopen the app after the Z21 is ready.
-- Ensure no firewall or access-point rule blocks Z21 UDP traffic on port `21105`.
+- Ensure no firewall or access-point rule blocks the selected project's configured
+  Z21 UDP port (`21105` by default). MOBAflow's **Z21 Finder** also probes `21106`
+  as an alternative Z21 port; this is separate from MOBApi discovery on the PC.
 
 ### MOBAflow shows Search or OFF
 
