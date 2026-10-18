@@ -106,8 +106,8 @@ timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`
 
 ### Platform adapter rule
 
-Shared projects hold the platform-neutral contracts and null objects; each host that uses a role supplies its
-implementation.
+Shared projects hold platform-neutral contracts, null objects and coordination logic; platform-specific
+implementations belong in the host that uses the role.
 
 - **Sound:** `Sound` contains `ISoundPlayer` and `NullSoundPlayer` and has no Windows API or package. MOBAflow
   plays WAV files through its internal `WindowsSoundPlayer`; MOBAsmart registers `NullSoundPlayer`.
