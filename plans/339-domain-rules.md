@@ -39,17 +39,21 @@ Found on main `3871a6d0` after #351. No move or stay decision is recorded for th
 
 | Candidate | Current behavior | Open qualification | Needed before a move |
 | --- | --- | --- | --- |
-| `Backend/Service/LocomotiveWhistleAutomationService.cs` `Validate` (lines 45-59) | Checks one `LocomotiveWhistleRule` (locomotive ID, feedback port, function F0-F31, delay, active duration) and returns message strings | Single-object rule, but it returns user-facing strings; decide whether the checks move to `LocomotiveWhistleRule` as issue records with the messages kept in the Backend | Characterization tests of the current messages and their callers |
-| `Backend/Service/DecoderCvService.cs` `Validate` (lines 38-56) | Checks a list of `DecoderCvValue` for one `DecoderProtocol` (protocol-specific CV range, value 0-255, duplicates) and returns row/message records | Rule over a value list plus protocol, not one domain object; decide whether it qualifies and which domain type would own it | Characterization tests of ranges, duplicates and row numbers |
-| `Backend/Manager/JourneyManager.cs` `GetCurrentStation` (lines 329-339) | Finds the current stop by scanning `Journey.Stations` IDs with a position fallback | Overlaps `Journey.IndexOfStop`; existed before #351. Decide whether it should call the domain method | Tests of the current-station lookup, including unknown IDs |
+| `Backend/Service/LocomotiveWhistleAutomationService.cs` `Validate` (lines 45-60) | Checks one `LocomotiveWhistleRule` (locomotive ID, feedback port, function F0-F31, delay, active duration) and returns message strings | Single-object rule, but it returns user-facing strings; decide whether the checks move to `LocomotiveWhistleRule` as issue records with the messages kept in the Backend | Characterization tests of the current messages and their callers |
+| `Backend/Service/DecoderCvService.cs` `Validate` (lines 38-57) | Checks a list of `DecoderCvValue` for one `DecoderProtocol` (protocol-specific CV range, value 0-255, duplicates) and returns row/message records | Rule over a value list plus protocol, not one domain object; decide whether it qualifies and which domain type would own it | Characterization tests of ranges, duplicates and row numbers |
+| `Backend/Manager/JourneyManager.cs` `GetCurrentStation` (lines 329-340) | Finds the current stop by scanning `Journey.Stations` IDs with a position fallback | Overlaps `Journey.IndexOfStop`; existed before #351. Decide whether it should call the domain method | Tests of the current-station lookup, including unknown IDs |
 
-This inventory is bounded to the candidates above. A complete audit of `SharedUI` and `Backend` for further
-single-object rules has not been done; record any further candidate here before acting on it.
+This inventory is not yet bounded. A complete audit of `Backend` and `SharedUI` for further single-object rules
+has not been done and remains open work; record each candidate it finds (for example
+`WorkflowEffectPlanner.Plan(WorkflowAction)` or
+`ProjectDiagnosticsService.AddTrackPlanFeedbackDiagnostics(Project, List<ProjectDiagnostic>)`, which still need
+assessment) here with a move or stay decision before RF-27 can close.
 
 ## Completion
 
 RF-27 is complete when:
 
-1. the remaining inventory is bounded and each candidate has a justified move or stay decision recorded on #339;
+1. the `Backend`/`SharedUI` audit is done, the remaining inventory is bounded and each candidate has a justified
+   move or stay decision recorded on #339;
 2. approved moves are delivered with their characterization tests and current CI and Sonar gates;
 3. the Domain layer documentation matches the result, and this plan is then removed.
