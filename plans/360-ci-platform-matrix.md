@@ -16,21 +16,26 @@ equivalent mandatory CI lane, and its artifacts and test results are kept as wor
 
 Recorded on main `f4756172`. The CI lanes are jobs of [Quality CI](../.github/workflows/quality.yml) unless noted.
 
-| Deliverable | Local command (from [AGENTS.md](../AGENTS.md)) | CI lane | Mandatory for PRs |
+| Deliverable | Local command (from [AGENTS.md](../AGENTS.md)) | CI lane | Runs on PRs / required check |
 | --- | --- | --- | --- |
-| Portable libraries and their tests (`Domain`, `Contracts`, `Common`, `Backend`, `SharedUI`, …) on Linux | `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0` | `portable-linux` (**new in slice 1**) | yes, when code changes |
+| Portable libraries and their tests (`Domain`, `Contracts`, `Common`, `Backend`, `SharedUI`, …) on Linux | `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0` | `portable-linux` (**new in slice 1**) | runs when code changes; **not yet a required check** (open step of slice 1) |
 | Windows desktop (`MOBAflow`) and the Windows test suite, coverage ratchet, analyzer gates, NuGet audit | `dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false` | `desktop` | yes, when code changes |
 | MOBApi host and its process integration tests | `dotnet build MOBApi/MOBApi.csproj` | `display-protocol` (MOBApi process integration) and the `desktop` test graph | yes, when code changes |
 | Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (pinned PlatformIO) | firmware build when firmware paths change |
 | Android app (`MOBAsmart`) Release AAB | release workflow steps; `scripts/Test-AndroidAppBundle.ps1` | `android-release` | **no**: only on manual `workflow_dispatch` with `validate_android` ([recorded maintainer decision](https://github.com/ahuelsmann/MOBAflow/issues/360#issuecomment-6256088821)) |
-| Mutation lanes (`domain`, `common`, `speech-base` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-speech-base` | yes, by change scope; further lanes belong to RF-09 |
+| Mutation lanes (`domain`, `common`, `speech-base` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-speech-base` | all run by change scope; only Domain mutation testing is a required check; further lanes belong to RF-09 |
 | Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule | yes |
 | Release package | [Release Studio](../.github/workflows/release-studio.yml) | manual release workflow | release only |
 
+Required (merge-blocking) checks are those of the `main` branch ruleset 24007434, verified on 2026-10-19:
+Repository instruction consistency; Windows desktop build, tests, and coverage; Display protocol host, parser, and
+firmware; Android Release AAB; Domain mutation testing; SonarCloud Code Analysis. Other lanes run but do not block
+a merge.
+
 ## Design decisions
 
-- **Linux lane:** `portable-linux` runs the portable suite on `ubuntu-latest` in Release. Like the other mandatory
-  lanes, it uses `scripts/Test-TestRunResults.ps1`, so a filter that selects nothing or a skipped test fails the lane
+- **Linux lane:** `portable-linux` runs the portable suite on `ubuntu-latest` in Release. Like the MOBApi
+  integration step of `display-protocol`, it uses `scripts/Test-TestRunResults.ps1`, so a filter that selects nothing or a skipped test fails the lane
   (at least 2500 tests must pass). The exclusions are:
   - `MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource` needs Windows file
     locks (`[Platform("Win")]`) and runs in the `desktop` lane;
@@ -52,7 +57,8 @@ Recorded on main `f4756172`. The CI lanes are jobs of [Quality CI](../.github/wo
 
 ## Independently reviewable delivery slices
 
-1. **Inventory and Linux lane** (with this plan).
+1. **Inventory and Linux lane** (with this plan). Open step: a maintainer adds the check name
+   `Portable tests on Linux` to the `main` ruleset so the lane becomes a required check.
 2. **Android Release lane policy:** settled by the recorded maintainer decision to retain manual validation.
 3. **Mutation and formatting lanes** after RF-09 and RF-10, documentation and completion.
 
