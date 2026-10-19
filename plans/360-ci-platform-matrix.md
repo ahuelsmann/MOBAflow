@@ -1,7 +1,7 @@
 # RF-07: Complete the CI platform matrix
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/360
-**Spec Kit**: Not applicable - CI and build-process change without product behavior
+**Spec Kit**: Not applicable - CI coverage plus bounded fixes for portability defects exposed by the Linux lane
 **Status**: Active; slice 1 ships with this plan
 
 ## Purpose and scope
@@ -22,7 +22,7 @@ Recorded on main `f4756172`. The CI lanes are jobs of [Quality CI](../.github/wo
 | Windows desktop (`MOBAflow`) and the Windows test suite, coverage ratchet, analyzer gates, NuGet audit | `dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false` | `desktop` | yes, when code changes |
 | MOBApi host and its process integration tests | `dotnet build MOBApi/MOBApi.csproj` | `display-protocol` (MOBApi process integration) and the `desktop` test graph | yes, when code changes |
 | Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (pinned PlatformIO) | firmware build when firmware paths change |
-| Android app (`MOBAsmart`) Release AAB | release workflow steps; `scripts/Test-AndroidAppBundle.ps1` | `android-release` | **no**: only on manual `workflow_dispatch` with `validate_android` (open decision, slice 2) |
+| Android app (`MOBAsmart`) Release AAB | release workflow steps; `scripts/Test-AndroidAppBundle.ps1` | `android-release` | **no**: only on manual `workflow_dispatch` with `validate_android` ([recorded maintainer decision](https://github.com/ahuelsmann/MOBAflow/issues/360#issuecomment-6256088821)) |
 | Mutation lanes (`domain`, `common`, `speech-base` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-speech-base` | yes, by change scope; further lanes belong to RF-09 |
 | Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule | yes |
 | Release package | [Release Studio](../.github/workflows/release-studio.yml) | manual release workflow | release only |
@@ -31,25 +31,29 @@ Recorded on main `f4756172`. The CI lanes are jobs of [Quality CI](../.github/wo
 
 - **Linux lane:** `portable-linux` runs the portable suite on `ubuntu-latest` in Release. Like the other mandatory
   lanes, it uses `scripts/Test-TestRunResults.ps1`, so a filter that selects nothing or a skipped test fails the lane
-  (at least 2500 tests must pass). Two tests are excluded:
+  (at least 2500 tests must pass). The exclusions are:
   - `MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource` needs Windows file
     locks (`[Platform("Win")]`) and runs in the `desktop` lane;
   - the explicit, maintainer-run `Hardware` category, which never runs in CI;
-  - the Skia rendering fixtures (`ClockRendererTests`, `FrameLoopSchedulerTests`, `Rgb565ConverterTests`,
+  - the Skia rendering fixtures (`ClockRendererTests`, `Rgb565ConverterTests`,
     `SkiaFrameRendererTests`), which stay in the Windows desktop lane like in `display-protocol`, because there
     is no native Linux Skia library.
 
   The first Linux run found real portability defects, fixed in the same PR: `PhotoPathHelper` now rejects
   Windows absolute paths (`C:\…`, `C:…`, `\…`, UNC) on every platform and treats both separators of stored photo
-  paths as directory boundaries. A timing-sensitive highlighter test now counts only synchronous raises.
-- **Android:** the Release AAB build takes much longer than the other lanes. Making it mandatory for PRs that touch
-  Android inputs (`MOBAsmart/`, `SharedUI/` and their dependencies) is a maintainer decision on CI duration; slice 2
-  implements the decision.
+  paths as directory boundaries. The highlighter also uses elapsed TimeSpan ticks consistently for pulse expiry,
+  ignore-window comparisons and intensity calculation. Raw Stopwatch ticks have a platform-dependent frequency;
+  treating them as TimeSpan ticks expired pulses prematurely on Linux. The ignore-window test counts only
+  synchronous feedback raises, separate from animation-frame notifications. Fake-only `FrameLoopSchedulerTests`
+  remain in the portable lane; they do not load native Skia.
+- **Android:** the [maintainer decision](https://github.com/ahuelsmann/MOBAflow/issues/360#issuecomment-6256088821)
+  keeps the Release AAB lane manual via `workflow_dispatch` / `validate_android`. It does not become a mandatory PR
+  lane; the existing release workflow still builds AABs for releases. This settles slice 2 without a workflow change.
 
 ## Independently reviewable delivery slices
 
 1. **Inventory and Linux lane** (with this plan).
-2. **Android Release lane for PRs** after the maintainer decision.
+2. **Android Release lane policy:** settled by the recorded maintainer decision to retain manual validation.
 3. **Mutation and formatting lanes** after RF-09 and RF-10, documentation and completion.
 
 ## Validation strategy

@@ -481,7 +481,6 @@ jobs:
             'TestCategory!=Hardware'
             'FullyQualifiedName!=Moba.Test.Common.MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource'
             'FullyQualifiedName!~ClockRendererTests'
-            'FullyQualifiedName!~FrameLoopSchedulerTests'
             'FullyQualifiedName!~Rgb565ConverterTests'
             'FullyQualifiedName!~SkiaFrameRendererTests'
           ) -join '&'
