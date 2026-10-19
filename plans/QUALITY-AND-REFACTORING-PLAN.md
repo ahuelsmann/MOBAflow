@@ -419,9 +419,10 @@ removed fields.
 
 ### RF-27: Move domain rules into the domain model
 
-The inventory, decisions and delivery slices now belong to
-[the RF-27 child plan](339-domain-rules.md), owned by
-[issue #339](https://github.com/ahuelsmann/MOBAflow/issues/339).
+Child issue [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) owned this package; its child plan was removed
+when the slices were delivered (#341, #346). Journey stop rules and workflow/project structure rules live on the
+domain objects; cross-entity validators with user-facing findings stay in `Backend/Service` (see
+[the Domain layer](../docs/ARCHITECTURE.md#1-domain-layer-domain)).
 
 ### RF-28: Consolidate the track-plan model
 
