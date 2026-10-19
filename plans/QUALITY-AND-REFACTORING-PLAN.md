@@ -135,7 +135,7 @@ dependencies.
 | RF-04 | [#43](https://github.com/ahuelsmann/MOBAflow/issues/43) | Z21 events are processed in deterministic FIFO order with defined overload and shutdown behavior. |
 | RF-05 | [#51](https://github.com/ahuelsmann/MOBAflow/issues/51) | A clean Android Release restore produces a validated AAB locally and in mandatory CI. |
 | RF-06 | [#90](https://github.com/ahuelsmann/MOBAflow/issues/90) | Release and CI run an explicit analyzer baseline and reject new unapproved diagnostics. |
-| RF-07 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Every supported delivery target has a reproducible mandatory clean-build lane. |
+| RF-07 | [#360](https://github.com/ahuelsmann/MOBAflow/issues/360) | Every supported delivery target has a reproducible mandatory clean-build lane. |
 | RF-08 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
 | RF-09 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Risk-critical behavior has non-decreasing coverage and mutation protection. |
 | RF-10 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Formatting drift fails CI without obscuring functional changes. |
@@ -174,19 +174,9 @@ updates issue #47, and remains inside the package and feature-scope boundaries.
 
 ### RF-07: Complete the CI platform matrix
 
-Sequence:
-
-1. inventory every supported deliverable and document its clean local command;
-2. make cross-platform .NET, Windows/WinUI, Android/MAUI Release, and ESP32
-   PlatformIO builds repeatable;
-3. add resolved transitive dependency auditing and the applicable test and
-   coverage gates;
-4. add mutation and formatting lanes only after RF-09 and RF-10 establish their
-   baselines.
-
-Acceptance anchor: every supported deliverable is reproduced from a clean
-checkout with the documented local command and an equivalent mandatory CI lane;
-required artifacts and tests are retained as workflow evidence.
+The deliverable inventory, decisions and delivery slices now belong to
+[the RF-07 child plan](360-ci-platform-matrix.md), owned by
+[issue #360](https://github.com/ahuelsmann/MOBAflow/issues/360).
 
 ### RF-08: Compile MAUI XAML bindings
 

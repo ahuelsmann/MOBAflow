@@ -152,6 +152,20 @@ fails the step when a selected test is skipped or too few tests run. Locally:
 dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~Moba.Test.Integration.MobApiProcessTests|FullyQualifiedName~Moba.Test.Integration.RuntimeHubLiveE2ETests"
 ```
 
+The `portable-linux` job (check `Portable tests on Linux`) runs the portable
+suite on `ubuntu-latest` for every code-changing PR, every push to `main` and
+manual runs. It is not yet a required check. The filter excludes the `Hardware`
+category, the Windows file-lock test
+`MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource`
+and the Skia fixtures `ClockRendererTests`, `Rgb565ConverterTests` and
+`SkiaFrameRendererTests`, which run in the Windows desktop job.
+`scripts/Test-TestRunResults.ps1` requires at least 2500 passed tests and no
+skipped test; the TRX results are archived for 30 days. Locally:
+
+```powershell
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --configuration Release --filter "TestCategory!=Hardware&FullyQualifiedName!=Moba.Test.Common.MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource&FullyQualifiedName!~ClockRendererTests&FullyQualifiedName!~Rgb565ConverterTests&FullyQualifiedName!~SkiaFrameRendererTests"
+```
+
 Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 `.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
