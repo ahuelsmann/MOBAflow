@@ -159,7 +159,7 @@ dependencies.
 | RF-28 | [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
 | RF-29 | [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) | Platform-specific sound and file services live in platform adapters with one role per class. |
 | RF-30 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
-| RF-31 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | The remaining oversized code-behind and recording classes are split by responsibility. |
+| RF-31 | [#349](https://github.com/ahuelsmann/MOBAflow/issues/349) | The remaining oversized code-behind and recording classes are split by responsibility. |
 
 The phrase "until child creation" is traceability, not workflow status. Issue #47
 remains authoritative for whether a child package is proposed, active, blocked,
@@ -330,7 +330,9 @@ Sequence:
    `Domain/Matrix` and `Domain/Display`;
 2. move the `Moba.TrackPlan.Renderer` types declared in `TrackLibrary.PikoA`
    into a namespace of their project;
-3. move `Common/Speech/PiperPronunciationNormalizer` into `Sound`.
+3. move `Common/Speech/PiperPronunciationNormalizer` into `Sound`. The speech
+   providers ([#250](https://github.com/ahuelsmann/MOBAflow/pull/250)) later
+   moved it to `Speech.Piper/PiperPronunciationNormalizer.cs`.
 
 Acceptance anchor: each removed type had no reference; moved types keep their
 behavior and tests; builds of all affected targets pass.
@@ -417,9 +419,10 @@ removed fields.
 
 ### RF-27: Move domain rules into the domain model
 
-The inventory, decisions and delivery slices now belong to
-[the RF-27 child plan](339-domain-rules.md), owned by
-[issue #339](https://github.com/ahuelsmann/MOBAflow/issues/339).
+Child issue [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) owned this package; its child plan was removed
+when the slices were delivered (#341, #346). Journey stop rules and workflow/project structure rules live on the
+domain objects; cross-entity validators with user-facing findings stay in `Backend/Service` (see
+[the Domain layer](../docs/ARCHITECTURE.md#1-domain-layer-domain)).
 
 ### RF-28: Consolidate the track-plan model
 
@@ -459,17 +462,9 @@ CI runs every test project.
 
 ### RF-31: Reduce the remaining oversized classes
 
-After characterization tests, split by responsibility:
-
-1. `HelpPage.xaml.cs`: move navigation and section state into a ViewModel and
-   panel layout persistence into the RF-24 layout service;
-2. `SignalBoxPropertiesControl.xaml.cs` and `MainWindow.xaml.cs`: keep only
-   view lifecycle and visual adaptation in code-behind;
-3. `RecordingSessionService` and the recording artifact import: separate
-   session lifecycle, event capture and file format handling.
-
-Acceptance anchor: each resulting class has one reason to change; code-behind
-contains no feature behavior; recording round-trip tests pass unchanged.
+The inventory, decisions and delivery slices now belong to
+[the RF-31 child plan](349-oversized-classes.md), owned by
+[issue #349](https://github.com/ahuelsmann/MOBAflow/issues/349).
 
 ## Spec Kit classification of RF-19 through RF-31
 
