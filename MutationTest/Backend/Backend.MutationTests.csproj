@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Moba.Test</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Backend\Backend.csproj" />
+    <!-- Existing Backend fixtures use the shared speed conversion and the platform-neutral sound contract. -->
+    <ProjectReference Include="..\..\SharedUI\SharedUI.csproj" />
+    <ProjectReference Include="..\..\Sound\Sound.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Test\Backend\**\*.cs" Link="Backend\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\..\Test\Integration\WorkflowExecutionEndToEndTests.cs" Link="Integration\WorkflowExecutionEndToEndTests.cs" />
+    <Compile Include="..\..\Test\Z21DccCommandDecoderTests.cs" Link="Z21DccCommandDecoderTests.cs" />
+    <!-- Shared fakes and builders of the main test project. -->
+    <Compile Include="..\..\Test\GlobalUsings.cs" Link="GlobalUsings.cs" />
+    <Compile Include="..\..\Test\Helpers\ManualTimeProvider.cs" Link="Helpers\ManualTimeProvider.cs" />
+    <Compile Include="..\..\Test\Helpers\TestProjectRuntimeHost.cs" Link="Helpers\TestProjectRuntimeHost.cs" />
+    <Compile Include="..\..\Test\Helpers\TestWorkflowServices.cs" Link="Helpers\TestWorkflowServices.cs" />
+    <Compile Include="..\..\Test\MOBAdisplay\ManualTimeProvider.cs" Link="MOBAdisplay\ManualTimeProvider.cs" />
+    <Compile Include="..\..\Test\Mocks\FakeUdpClientWrapper.cs" Link="Mocks\FakeUdpClientWrapper.cs" />
+    <Compile Include="..\..\Test\TestData\Z21Packets.cs" Link="TestData\Z21Packets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\Test\TestData\Recording\**" Link="TestData\Recording\%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\Test\TestFile\solution.json" Link="TestFile\solution.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
