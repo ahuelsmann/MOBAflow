@@ -101,8 +101,15 @@ internal class TrackPlanFeedbackHighlighterTests
 
             // Small sleep so the clock advances a measurable amount; pulse should NOT be restarted.
             Thread.Sleep(50);
+            // The ~30 fps frame timer keeps raising HighlightsChanged on a pool thread while the pulse is active;
+            // only a raise on this thread comes synchronously from the re-trigger.
+            var testThread = Environment.CurrentManagedThreadId;
             var changedAfter = 0;
-            highlighter.HighlightsChanged += (_, _) => changedAfter++;
+            highlighter.HighlightsChanged += (_, _) =>
+            {
+                if (Environment.CurrentManagedThreadId == testThread)
+                    Interlocked.Increment(ref changedAfter);
+            };
 
             bus.Publish(new FeedbackReceivedEvent(3));
 

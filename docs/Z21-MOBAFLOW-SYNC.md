@@ -90,6 +90,48 @@ Snapshots still carry:
 - `LocomotiveFleet` (catalog, not live drive state)
 - Z21 telemetry and fail-safe flags
 
+### RuntimeHub wire contract
+
+Both clients connect to `/runtime-hub`. The shared
+[`RuntimeHubContract`](../Contracts/Runtime/RuntimeHubContract.cs) separates calls by role:
+
+| Caller and contract | Wire methods |
+| --- | --- |
+| MOBAflow host, `IRuntimeHubHostMethods` | `RegisterHost()`, `PushSnapshot(snapshotJson)` |
+| MOBAsmart remote, `IRuntimeHubRemoteMethods` | `RegisterRemote(clientId, projectId)`, `SetSignalAspect(projectId, signalId, aspect)`, `SetLocomotiveDrive(projectId, address, speed, forward)`, `SetLocomotiveFunction(projectId, address, functionIndex, isOn)` |
+| Hub to host, `IRuntimeHubHostCallbacks` | `ExecuteSetSignalAspect(projectId, signalId, aspect)`, `ExecuteSetLocomotiveDrive(projectId, address, speed, forward)`, `ExecuteSetLocomotiveFunction(projectId, address, functionIndex, isOn)` |
+| Hub to remote, `IRuntimeHubRemoteCallbacks` | `SnapshotUpdated(snapshotJson)`, `SessionStateChanged(isOperational)`, `SolutionUpdated(updatedAtIso)` |
+
+`IRuntimeHubCallbacks` combines the two callback roles for the typed server hub;
+each client handles its own role. The
+[`host client`](../MOBAflow/Service/RuntimeHubHostClient.cs) and
+[`remote client`](../MOBAsmart/Service/RuntimeHubRemoteClient.cs) use `nameof` on
+these contract members when invoking methods or registering callbacks, so those
+names are wire-relevant. The server's cancellation-token overload of
+`SolutionUpdated` still sends only the timestamp argument to the remote.
+
+[`RuntimeHub`](../MOBApi/Hubs/RuntimeHub.cs) records the connection calling
+`RegisterHost` as the current host and joins it to `runtime-host`. Validated remote
+commands target that recorded connection; without a host, admission can queue them.
+`RegisterRemote` requires a client id and joins `runtime-remote`; a selected project
+also joins `runtime-remote:{projectId:N}`. Registering another project removes the
+old project membership. An empty project id permits solution updates before a
+project is selected. `RegisterRemote` sends callbacks to the calling remote:
+`SnapshotUpdated` when a project snapshot is cached, `SolutionUpdated` with the
+update timestamp when a solution with a nonempty source path is cached, and
+`SessionStateChanged` with the current session state. Subsequent snapshots and
+session state are sent to that project's group. `PushSnapshot` requires the
+registered host.
+
+### Platform discovery addresses
+
+Z21 discovery and MOBAsmart's MOBApi discovery obtain their local LAN candidates
+through [`ILocalIpv4AddressSource`](../Common/Discovery/ILocalIpv4AddressSource.cs).
+The shared default reads network interfaces; MAUI's Android adapter also merges
+addresses from the active Android network. This keeps Android network APIs in
+the host while both discovery services use the same platform-selected address
+source. See the [platform adapter rule](ARCHITECTURE.md#platform-adapter-rule).
+
 ## Why full removal of sync is not viable
 
 1. **Signals:** KS aspects are application semantics; Z21 only reports turnout P/A bits.
