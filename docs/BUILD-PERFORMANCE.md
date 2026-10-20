@@ -123,6 +123,10 @@ Open `build.binlog` with [MSBuild Structured Log Viewer](https://msbuildlog.com/
 
 ## CI note
 
+The separate [observational dependency review](DEPENDENCY-REVIEW.md) reports pull-request
+dependency changes and graph limitations. It adds no required gate and does not replace the
+resolved NuGet audit described below. A successful job is not a claim of complete graph coverage.
+
 The public, authoritative pull-request check is `.github/workflows/quality.yml`.
 It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
