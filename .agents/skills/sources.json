@@ -7,7 +7,7 @@
       "path": ".agents/skills/speckit-analyze",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -16,7 +16,7 @@
       "path": ".agents/skills/speckit-checklist",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -25,7 +25,7 @@
       "path": ".agents/skills/speckit-clarify",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -34,7 +34,7 @@
       "path": ".agents/skills/speckit-constitution",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -43,7 +43,7 @@
       "path": ".agents/skills/speckit-converge",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -52,7 +52,7 @@
       "path": ".agents/skills/speckit-implement",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -61,7 +61,7 @@
       "path": ".agents/skills/speckit-plan",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -70,7 +70,7 @@
       "path": ".agents/skills/speckit-specify",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -79,7 +79,7 @@
       "path": ".agents/skills/speckit-tasks",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -88,7 +88,7 @@
       "path": ".agents/skills/speckit-taskstoissues",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "Uses scripts/Resolve-GitHubRepository.ps1; expected managed-file modification; see docs/SPEC-KIT.md."
     },

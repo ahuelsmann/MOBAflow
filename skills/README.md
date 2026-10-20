@@ -9,6 +9,6 @@ and eight had no counterpart at that revision. These are historical comparison r
 instruction to overwrite or activate the collection. Only focused review and diagnosis workflows
 were adapted into uniquely named MOBAflow skills for Issue145.
 
-The origin of windows-app-developer remains unresolved; it has not been replaced from an unverified source.
+The inactive windows-app-developer reference copy was removed because its origin and redistribution rights could not be established. It was not an active repository skill.
 Personal/global skills are independent installations. Consult [AI development](../docs/AI-DEVELOPMENT.md)
 before importing/updating a skill, retaining license and necessary supporting resources.
