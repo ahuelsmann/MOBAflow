@@ -71,7 +71,7 @@ public sealed class TrackPlanFeedbackHighlighter : IDisposable
     /// </summary>
     public double GetPulseIntensity(Guid segmentId)
     {
-        long nowTicks = _clock.ElapsedTicks;
+        long nowTicks = _clock.Elapsed.Ticks;
         long startTicks;
         lock (_gate)
         {
@@ -120,7 +120,7 @@ public sealed class TrackPlanFeedbackHighlighter : IDisposable
     {
         try
         {
-            long nowTicks = _clock.ElapsedTicks;
+            long nowTicks = _clock.Elapsed.Ticks;
             long ignoreTicks = IgnoreWindow.Ticks;
             bool changed = false;
 
@@ -190,7 +190,7 @@ public sealed class TrackPlanFeedbackHighlighter : IDisposable
 
     private void PurgeExpired()
     {
-        long nowTicks = _clock.ElapsedTicks;
+        long nowTicks = _clock.Elapsed.Ticks;
         long holdTicks = HoldDuration.Ticks;
 
         List<Guid>? expired = null;
