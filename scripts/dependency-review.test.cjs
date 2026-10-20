@@ -51,6 +51,12 @@ test('missing central NuGet data cannot produce a clean result', () => {
 test('direct NuGet rows do not prove restored transitive coverage', () => {
     assert.equal(analyze(input({files: ['app.csproj'], changes: [row('added')]})).state, 'INCOMPLETE');
 });
+test('nested central, lock, project and workflow inputs require actual graph data', () => {
+    for (const file of ['nested/Directory.Packages.props', 'nested/packages.lock.json',
+        'nested/App.CSPROJ', '.github/workflows/build.yaml'])
+        assert.equal(analyze(input({files: [file]})).state, 'INCOMPLETE');
+    assert.equal(analyze(input({files: ['docs/README.md']})).state, 'NO_NEW_FINDINGS');
+});
 test('missing snapshots and bounded data are incomplete, never clean', () => {
     for (const flags of [{snapshotWarnings: true}, {truncated: true}]) {
         const report = analyze(input(flags));
@@ -81,9 +87,11 @@ test('API failure cannot enable the official action with empty data', () => {
 test('collector retains snapshot diagnostics and access failures', async () => {
     const iterator = async function* () {yield {data: [row('added')], headers: {'x-github-dependency-graph-snapshot-warnings': 'pending'}};};
     const github = {rest: {pulls: {get: async () => ({data: {base: {sha: 'a'}, head: {sha: 'b'}}}), listFiles: 'files'}},
-        paginate: Object.assign(async () => [{filename: 'app.csproj'}], {iterator})};
+        paginate: Object.assign(async () => [{filename: 'renamed.txt', previous_filename: 'app.csproj'}], {iterator})};
     const context = {repo: {owner: 'fixture', repo: 'fixture'}, payload: {pull_request: {number: 1, base: {sha: 'a'}, head: {sha: 'b'}}}};
-    assert.equal(analyze(await collect({github, context})).state, 'INCOMPLETE');
+    const collected = await collect({github, context});
+    assert.ok(collected.files.includes('app.csproj'));
+    assert.equal(analyze(collected).state, 'INCOMPLETE');
     github.rest.pulls.get = async () => {throw Object.assign(new Error('fixture'), {status: 403});};
     assert.equal(analyze(await collect({github, context})).state, 'FAILED');
 });

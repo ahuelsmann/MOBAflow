@@ -2,10 +2,53 @@
 
 const MAX_CHANGES = 200;
 const MAX_BYTES = 32768;
-const dependencyFile = name => /(?:^|\/)(?:Directory\.(?:Packages|Build)\.(?:props|targets)|[Nn]u[Gg]et\.[Cc]onfig|global\.json|packages\.(?:config|lock\.json)|package(?:-lock)?\.json|yarn\.lock|pnpm-lock\.yaml|requirements\.txt|poetry\.lock|Cargo\.(?:toml|lock)|go\.(?:mod|sum))$|\.(?:csproj|fsproj|vbproj|vcxproj|nuspec)$|^\.github\/workflows\/[^/]+\.ya?ml$/.test(name);
-const nugetFile = name => /Directory\.(?:Packages|Build)\.(?:props|targets)$|\.(?:csproj|fsproj|vbproj|vcxproj|nuspec)$|(?:^|\/)(?:packages\.(?:config|lock\.json)|[Nn]u[Gg]et\.[Cc]onfig|global\.json)$/.test(name);
+const NUGET_FILES = new Set(['directory.packages.props', 'directory.packages.targets', 'directory.build.props', 'directory.build.targets',
+    'nuget.config', 'global.json', 'packages.config', 'packages.lock.json']);
+const NUGET_EXTENSIONS = new Set(['csproj', 'fsproj', 'vbproj', 'vcxproj', 'nuspec']);
+const OTHER_FILES = new Set(['package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml',
+    'requirements.txt', 'poetry.lock', 'cargo.toml', 'cargo.lock', 'go.mod', 'go.sum']);
+const basename = name => name.split('/').at(-1).toLowerCase();
+function nugetFile(name) {
+    const file = basename(name);
+    return NUGET_FILES.has(file) || NUGET_EXTENSIONS.has(file.split('.').at(-1));
+}
+function dependencyFile(name) {
+    return nugetFile(name) || OTHER_FILES.has(basename(name)) || /^\.github\/workflows\/[^/]+\.ya?ml$/.test(name);
+}
 const escape = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('|', '&#124;').replace(/[\r\n]/g, ' ').slice(0, 600);
 
+function validChange(row) {
+    return row && ['added', 'removed'].includes(row.change_type) &&
+        ['manifest', 'ecosystem', 'name', 'version'].every(key => typeof row[key] === 'string') &&
+        Array.isArray(row.vulnerabilities) && row.vulnerabilities.every(v =>
+            v && typeof v.advisory_ghsa_id === 'string' && typeof v.severity === 'string');
+}
+function validComparison(input) {
+    return Array.isArray(input.changes) && Array.isArray(input.files) &&
+        input.files.every(file => typeof file === 'string') && input.changes.every(validChange);
+}
+function changeKind(group) {
+    if (group.added.length && group.removed.length) return 'changed';
+    if (group.added.length) return 'added';
+    return 'removed';
+}
+function summarizeChanges(changes) {
+    const groups = new Map();
+    const newFindings = [], removedFindings = [];
+    for (const row of changes) {
+        const key = JSON.stringify([row.manifest, row.ecosystem, row.name]);
+        if (!groups.has(key)) groups.set(key, {manifest: row.manifest, ecosystem: row.ecosystem, name: row.name, added: [], removed: []});
+        groups.get(key)[row.change_type].push(row.version);
+        for (const finding of row.vulnerabilities) {
+            const list = row.change_type === 'added' ? newFindings : removedFindings;
+            if (!list.some(v => v.id === finding.advisory_ghsa_id && v.manifest === row.manifest && v.name === row.name && v.version === row.version))
+                list.push({id: finding.advisory_ghsa_id, severity: finding.severity, manifest: row.manifest,
+                    name: row.name, version: row.version, scope: row.scope ?? 'not supplied',
+                    chain: 'Not supplied by this API'});
+        }
+    }
+    return {changes: [...groups.values()].map(group => ({...group, kind: changeKind(group)})), newFindings, removedFindings};
+}
 function analyze(input) {
     const report = {base: input.base, head: input.head, observedAt: input.observedAt,
         state: 'FAILED', reasons: [], changes: [], newFindings: [], removedFindings: [],
@@ -14,11 +57,7 @@ function analyze(input) {
         report.reasons.push(input.error);
         return report;
     }
-    if (!Array.isArray(input.changes) || !Array.isArray(input.files) ||
-        input.changes.some(row => !row || !['added', 'removed'].includes(row.change_type) ||
-            !['manifest', 'ecosystem', 'name', 'version'].every(key => typeof row[key] === 'string') ||
-            !Array.isArray(row.vulnerabilities) ||
-            row.vulnerabilities.some(v => !v || typeof v.advisory_ghsa_id !== 'string' || typeof v.severity !== 'string'))) {
+    if (!validComparison(input)) {
         report.reasons.push('Unexpected API response schema; no reliable comparison.');
         return report;
     }
@@ -30,23 +69,10 @@ function analyze(input) {
         report.reasons.push('No dependency-diff data for changed input: ' + file);
     if (relevant.some(nugetFile))
         report.reasons.push('Resolved NuGet/central-package/transitive coverage is unverified. The existing Quality restore-graph audit remains authoritative.');
-
-    const groups = new Map();
-    for (const row of input.changes) {
-        const key = JSON.stringify([row.manifest, row.ecosystem, row.name]);
-        if (!groups.has(key)) groups.set(key, {manifest: row.manifest, ecosystem: row.ecosystem, name: row.name, added: [], removed: []});
-        groups.get(key)[row.change_type].push(row.version);
-        for (const finding of row.vulnerabilities) {
-            const list = row.change_type === 'added' ? report.newFindings : report.removedFindings;
-            if (!list.some(v => v.id === finding.advisory_ghsa_id && v.manifest === row.manifest && v.name === row.name && v.version === row.version))
-                list.push({id: finding.advisory_ghsa_id, severity: finding.severity, manifest: row.manifest,
-                    name: row.name, version: row.version, scope: row.scope ?? 'not supplied',
-                    chain: 'Not supplied by this API'});
-        }
-    }
-    report.changes = [...groups.values()].map(group => ({...group,
-        kind: group.added.length && group.removed.length ? 'changed' : group.added.length ? 'added' : 'removed'}));
-    report.state = report.newFindings.length ? 'FINDINGS' : report.reasons.length ? 'INCOMPLETE' : 'NO_NEW_FINDINGS';
+    Object.assign(report, summarizeChanges(input.changes));
+    report.state = 'NO_NEW_FINDINGS';
+    if (report.reasons.length) report.state = 'INCOMPLETE';
+    if (report.newFindings.length) report.state = 'FINDINGS';
     report.coverage = report.reasons.length ? 'INCOMPLETE' : 'GitHub-reported dependency delta for the named inputs only';
     report.relevantFiles = relevant;
     report.officialActionAllowed = !input.truncated && !input.snapshotWarnings && input.changes.length <= MAX_CHANGES &&
