@@ -70,9 +70,10 @@ test('malformed responses and unrecognized change types fail', () => {
         assert.equal(analyze(input({changes})).state, 'FAILED');
 });
 test('summary escapes untrusted paths and package names', () => {
-    const report = analyze(input({changes: [row('added', {name: '<script>|bad\nname'})]}));
-    assert.doesNotMatch(render(report), /<script>/);
+    const report = analyze(input({changes: [row('added', {name: '<script>|bad\nname <SCRIPT>upper</SCRIPT>'})]}));
+    assert.equal(render(report).includes('<'), false);
     assert.match(render(report), /&lt;script&gt;&#124;bad name/);
+    assert.ok(render(report).includes('&lt;SCRIPT&gt;upper&lt;/SCRIPT&gt;'));
 });
 test('API failure cannot enable the official action with empty data', () => {
     assert.notEqual(analyze(input({error: 'missing data'})).officialActionAllowed, true);
