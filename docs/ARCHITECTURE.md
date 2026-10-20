@@ -148,12 +148,17 @@ reusable ordered list of typed actions. Events reference its stable ID and suppl
 the context of each execution. Runtime snapshots
 are the immutable boundary exposed to UI consumers.
 
-**Domain rules:** a rule that needs only the data of one domain object lives on that object and returns values or
-domain issue records, never messages, I/O, time or runtime state. `Journey.ResolveStopTransition` and
-`Journey.IndexOfStop` decide stop changes; `JourneyStopTransitionService` only applies them to the runtime
-`JourneySessionState`. `Workflow.FindStructureIssues` and `Project.FindWorkflowsWithInvalidIds` report structural
-problems as kinds and field paths; `WorkflowValidator` turns them into coded, user-facing issues and adds the payload
-checks. Validators that check consistency across many entities and produce user-facing findings, such as the
+**Domain rules:** the target is that a rule that needs only the data of one domain object lives on that object,
+without I/O, time or runtime state, and leaves user-facing findings to the Backend. Such a rule returns values or
+domain issue records, or throws a domain exception for an invalid request. Not every qualifying rule has moved yet;
+[#339](https://github.com/ahuelsmann/MOBAflow/issues/339) tracks the remaining inventory. `Journey.ResolveStopTransition`
+and `Journey.IndexOfStop` decide stop changes; `ResolveStopTransition` throws `InvalidOperationException` when the
+configured target station is not a stop of the journey. `JourneyStopTransitionService` only applies the result to
+the runtime `JourneySessionState`. `Workflow.FindStructureIssues` returns `IReadOnlyList<WorkflowStructureIssue>`
+with issue kinds and field paths; `WorkflowValidator` turns them into coded, user-facing issues and adds the payload
+checks. `Project.FindWorkflowsWithInvalidIds` returns an `IReadOnlySet<int>` of zero-based positions in
+`Project.Workflows` whose ID is empty or repeats an earlier one; the Backend maps those positions to user-facing
+issues. Validators that check consistency across many entities and produce user-facing findings, such as the
 interlocking definition, digital address conflicts, timetable evaluation against runtime states and project
 completeness, stay in `Backend/Service`.
 
