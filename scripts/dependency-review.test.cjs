@@ -45,7 +45,7 @@ test('advisory deduplication retains different affected manifests', () => {
 test('missing central NuGet data cannot produce a clean result', () => {
     const report = analyze(input({files: ['Directory.Packages.props']}));
     assert.equal(report.state, 'INCOMPLETE');
-    assert.match(report.reasons.join(' '), /No dependency-diff data/);
+    assert.match(report.reasons.join(' '), /without a returned dependency delta \(no dependency change or not parsed\): Directory\.Packages\.props/);
     assert.match(report.reasons.join(' '), /transitive coverage is unverified/);
 });
 test('direct NuGet rows do not prove restored transitive coverage', () => {
@@ -53,9 +53,19 @@ test('direct NuGet rows do not prove restored transitive coverage', () => {
 });
 test('nested central, lock, project and workflow inputs require actual graph data', () => {
     for (const file of ['nested/Directory.Packages.props', 'nested/packages.lock.json',
-        'nested/App.CSPROJ', '.github/workflows/build.yaml'])
+        'nested/App.CSPROJ', '.github/workflows/build.yaml', 'tools/pom.xml', 'android/build.gradle.kts',
+        'web/composer.lock', 'py/pyproject.toml', 'py/Pipfile.lock', 'ios/Package.resolved', 'app/pubspec.yaml',
+        'ex/mix.lock', 'rb/Gemfile', 'rb/fixture.gemspec'])
         assert.equal(analyze(input({files: [file]})).state, 'INCOMPLETE');
     assert.equal(analyze(input({files: ['docs/README.md']})).state, 'NO_NEW_FINDINGS');
+});
+test('many changed inputs without a delta stay incomplete with a bounded summary', () => {
+    const files = Array.from({length: 3000}, (_, i) => 'nested/' + 'x'.repeat(500) + i + '/package.json');
+    const report = analyze(input({files}));
+    assert.equal(report.state, 'INCOMPLETE');
+    assert.equal(report.reasons.length, 21);
+    assert.match(report.reasons.at(-1), /and 2980 more changed dependency inputs/);
+    assert.ok(Buffer.byteLength(render(report)) < 64 * 1024);
 });
 test('missing snapshots and bounded data are incomplete, never clean', () => {
     for (const flags of [{snapshotWarnings: true}, {truncated: true}]) {

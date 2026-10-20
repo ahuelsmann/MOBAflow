@@ -16,7 +16,7 @@ Severity alone does not prove exploitability.
 | --- | --- |
 | NO_NEW_FINDINGS | Successful comparison found no new vulnerable dependency in the explicitly named API delta. It does not certify the repository or absence of baseline findings. |
 | FINDINGS | Potentially vulnerable additions/changes were returned. Read affected versions, paths and coverage limits. |
-| INCOMPLETE | Missing/pending snapshots, missing manifest data, unverified NuGet resolution or bounded data prevents complete coverage. |
+| INCOMPLETE | Missing/pending snapshots, a changed dependency input without a returned delta (no dependency change or not parsed), unverified NuGet resolution or bounded data prevents complete coverage. Up to 20 such inputs are listed; the rest are counted. |
 | FAILED | API/access/rate/parse failure or a stale event prevented reliable comparison. It is not zero findings. |
 
 The API supplies a delta, not a full baseline vulnerability inventory. Unchanged findings and
@@ -50,7 +50,9 @@ automatic suppression, exception file, follow-up task, Ready transition or merge
 
 ## Forks, cost and execution limits
 
-- Only ordinary pull-request events run, including drafts and fix heads. Permissions are read-only
+- Only ordinary pull-request events run (opened, synchronize, reopened, ready_for_review, and
+  edited only when the base branch changed; title/body edits do not run), including drafts and
+  fix heads. Permissions are read-only
   repository contents and PR metadata. No application secrets, saved checkout credential,
   PR-comment write permission or privileged target/follow-up event is used.
 - The exact PR head supplies reporter and fixtures in an unprivileged disposable runner.

@@ -5,15 +5,20 @@ const MAX_BYTES = 32768;
 const NUGET_FILES = new Set(['directory.packages.props', 'directory.packages.targets', 'directory.build.props', 'directory.build.targets',
     'nuget.config', 'global.json', 'packages.config', 'packages.lock.json']);
 const NUGET_EXTENSIONS = new Set(['csproj', 'fsproj', 'vbproj', 'vcxproj', 'nuspec']);
-const OTHER_FILES = new Set(['package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml',
-    'requirements.txt', 'poetry.lock', 'cargo.toml', 'cargo.lock', 'go.mod', 'go.sum']);
+const MAX_LISTED_INPUTS = 20;
+const OTHER_FILES = new Set(['package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml',
+    'requirements.txt', 'pipfile', 'pipfile.lock', 'setup.py', 'pyproject.toml', 'poetry.lock', 'uv.lock',
+    'cargo.toml', 'cargo.lock', 'go.mod', 'go.sum', 'pom.xml', 'build.gradle', 'build.gradle.kts', 'gradle.lockfile',
+    'gemfile', 'gemfile.lock', 'composer.json', 'composer.lock', 'package.swift', 'package.resolved',
+    'pubspec.yaml', 'pubspec.lock', 'mix.exs', 'mix.lock']);
 const basename = name => name.split('/').at(-1).toLowerCase();
 function nugetFile(name) {
     const file = basename(name);
     return NUGET_FILES.has(file) || NUGET_EXTENSIONS.has(file.split('.').at(-1));
 }
 function dependencyFile(name) {
-    return nugetFile(name) || OTHER_FILES.has(basename(name)) || /^\.github\/workflows\/[^/]+\.ya?ml$/.test(name);
+    return nugetFile(name) || OTHER_FILES.has(basename(name)) || basename(name).endsWith('.gemspec') ||
+        /^\.github\/workflows\/[^/]+\.ya?ml$/.test(name);
 }
 const escape = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('|', '&#124;').replace(/[\r\n]/g, ' ').slice(0, 600);
 
@@ -65,8 +70,11 @@ function analyze(input) {
     const manifests = new Set(input.changes.map(row => row.manifest));
     if (input.snapshotWarnings) report.reasons.push('Missing/pending graph snapshots reported by GitHub.');
     if (input.truncated) report.reasons.push('Comparison exceeds the bounded report; not all rows were evaluated.');
-    for (const file of relevant.filter(name => !manifests.has(name)))
-        report.reasons.push('No dependency-diff data for changed input: ' + file);
+    const withoutDelta = relevant.filter(name => !manifests.has(name));
+    for (const file of withoutDelta.slice(0, MAX_LISTED_INPUTS))
+        report.reasons.push('Changed dependency input without a returned dependency delta (no dependency change or not parsed): ' + file);
+    if (withoutDelta.length > MAX_LISTED_INPUTS)
+        report.reasons.push('... and ' + (withoutDelta.length - MAX_LISTED_INPUTS) + ' more changed dependency inputs without a returned delta.');
     if (relevant.some(nugetFile))
         report.reasons.push('Resolved NuGet/central-package/transitive coverage is unverified. The existing Quality restore-graph audit remains authoritative.');
     Object.assign(report, summarizeChanges(input.changes));
