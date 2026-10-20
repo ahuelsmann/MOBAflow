@@ -304,7 +304,8 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
                 4. Click "Connect"
 
                 The Z21 uses the UDP port configured in the project's properties (21105 by default).
-                Z21 Finder also probes 21106 as an alternative Z21 port, separate from MOBApi discovery.
+                Z21 Finder also probes UDP 21106 as an alternative Z21 port.
+                MOBApi discovery on the PC also uses UDP 21106, with a different protocol.
 
                 Troubleshooting:
                 - Check your network connection
