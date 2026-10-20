@@ -201,7 +201,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1032",
-      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "path": "Backend/Service/Recording/RecordingJsonReader.cs",
       "count": 3
     },
     {
@@ -348,7 +348,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1064",
-      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "path": "Backend/Service/Recording/RecordingJsonReader.cs",
       "count": 1
     },
     {
