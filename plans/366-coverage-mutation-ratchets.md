@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/366
 **Spec Kit**: Not applicable - regression tests and CI lanes for existing contracts without product behavior
-**Status**: Active; slice 1 ships with this plan
+**Status**: Active; steps 1 and 2 are delivered with this plan in the single issue PR
 
 ## Purpose and scope
 
@@ -24,16 +24,16 @@ a lane the same way locally and in [Quality CI](../.github/workflows/quality.yml
 | `domain` | active | `Domain` | `mutation-domain` (Linux) | 90% |
 | `common` | active | `Common` | `mutation-common` (Windows) | 63% |
 | `speech-base` | active | `Speech.Base` | `mutation-speech-base` (Linux) | 65% |
-| `backend` | **active from slice 1** | `Backend` | `mutation-backend` (Linux) | 43% |
-| `api` | planned (slice 3) | `MOBApi` | - | - |
-| `shared-ui` | planned (slice 4) | `SharedUI` | - | - |
+| `backend` | **active from step 1** | `Backend` | `mutation-backend` (Linux) | 43% |
+| `api` | planned (step 3) | `MOBApi` | - | - |
+| `shared-ui` | planned (step 4) | `SharedUI` | - | - |
 
 The Backend host [`Backend.MutationTests.csproj`](../MutationTest/Backend/Backend.MutationTests.csproj) compiles all
 fixtures under `Test/Backend/`, the workflow end-to-end fixture and the Z21 DCC decoder tests, with the shared fakes
 they need. The MOBApi process fixtures (`MobApiProcessTests`, `RuntimeHubLiveE2ETests`) start real MOBApi processes
 and do not exercise Backend code in-process; they move to the planned `api` lane.
 
-## Backend baseline (slice 1)
+## Backend baseline (step 1)
 
 Local full run on Windows, Stryker.NET 5.0.0, four test processes, 660 passing ordinary tests, main `e0f6b9f6` plus
 the lane host; 35 minutes:
@@ -47,7 +47,7 @@ the lane host; 35 minutes:
 | No coverage | 1,479 |
 | Ignored (block already covered), compile errors | 1,245, 0 |
 
-Largest open areas (survived + no coverage), which feed slices 2 and later:
+Largest open areas (survived + no coverage), which feed step 2 and later:
 
 | File | Survived | No coverage |
 | --- | ---: | ---: |
@@ -62,14 +62,25 @@ Largest open areas (survived + no coverage), which feed slices 2 and later:
 
 These counts are a planning baseline, not a permanent status; later changes need a fresh full report.
 
-The floor is the measured score rounded down to a whole percent. It is a safeguard, not a quality target: slice 2
-closes meaningful gaps and raises it.
+The floor is the measured score rounded down to a whole percent. It is a safeguard, not a quality target: step 2
+closes meaningful gaps, and a fresh full run raises it.
 
-## Independently reviewable delivery slices
+## Delivery steps
+
+Since 2026-10-20 each worked issue has one active delivery PR, so these steps are commits of the RF-09 PR rather than
+separate pull requests.
 
 1. **Backend lane** (with this plan): host, registry, CI job, measured floor.
 2. **Z21 ordering, overload and runtime commands:** negative and failure-path tests for the Z21 receive pipeline,
-   overload handling and the runtime command paths; raise the Backend floor to the measured result.
+   overload handling and the runtime command paths; raise the Backend floor to the measured result. Delivered:
+   `Z21ReceiveTests`, `Z21OperatorCommandTests`, the extended `Z21EventPipelineTests`, `MobaRuntimeServiceCommandTests`
+   and `MobaRuntimeServiceZ21EventTests`. Expected packets and bits come from the Z21 LAN protocol, which exposed two
+   defects, fixed here:
+   - LAN_X_GET_STATUS sent DB0 `0x21` instead of `0x24`, so the Z21 discarded every status request, including the
+     keepalive;
+   - `SystemState.IsProgrammingMode` tested the undefined bit `0x08` instead of `0x20`.
+
+   The floor raise follows from a fresh full run once the queue allocates it.
 3. **MOBApi lane:** command validation and remote command queue bounds; real registration paths, owned processes only
    where required.
 4. **SharedUI lane:** train control, settings, project switches and stale asynchronous responses through the existing
@@ -105,7 +116,7 @@ figure. An empty coverage report with zero instrumented lines is an invalid meas
 
 ## Validation strategy
 
-Per slice:
+Per step:
 
 1. Run the affected ordinary tests; they must be discovered and pass.
 2. Run a focused Stryker diagnosis (`--mutate "**/<File>.cs"`) while working; it is not a lane result.
