@@ -519,6 +519,7 @@
                                 <Button
                                     Padding="4"
                                     VerticalAlignment="Center"
+                                    AutomationProperties.Name="Reset peak current and peak temperature"
                                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                     BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                                     BorderThickness="1"
@@ -625,6 +626,7 @@
                         <Button
                             Grid.Row="0"
                             Grid.Column="0"
+                            AutomationProperties.Name="Toggle brake"
                             Background="{x:Bind ViewModel.BrakeButtonColorHex, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
                             Command="{x:Bind ViewModel.ToggleBrakeCommand}"
                             ContentTemplate="{x:Bind BrakeIconTemplate, Mode=OneWay}"
@@ -634,6 +636,7 @@
                         <Button
                             Grid.Row="0"
                             Grid.Column="1"
+                            AutomationProperties.Name="Toggle door release"
                             Background="{x:Bind ViewModel.DoorReleaseButtonColorHex, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
                             Command="{x:Bind ViewModel.ToggleDoorReleaseCommand}"
                             ContentTemplate="{x:Bind DoorReleaseIconTemplate, Mode=OneWay}"

@@ -405,6 +405,7 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
+                                                AutomationProperties.Name="Section color 1"
                                                 Background="{StaticResource TrackPlanSectionColor1}"
                                                 CornerRadius="4"
                                                 Tag="#FF5733" />
@@ -412,6 +413,7 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
+                                                AutomationProperties.Name="Section color 2"
                                                 Background="{StaticResource TrackPlanSectionColor2}"
                                                 CornerRadius="4"
                                                 Tag="#33FF57" />
@@ -419,6 +421,7 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
+                                                AutomationProperties.Name="Section color 3"
                                                 Background="{StaticResource TrackPlanSectionColor3}"
                                                 CornerRadius="4"
                                                 Tag="#3357FF" />
@@ -426,6 +429,7 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
+                                                AutomationProperties.Name="Section color 4"
                                                 Background="{StaticResource TrackPlanSectionColor4}"
                                                 CornerRadius="4"
                                                 Tag="#FFFF33" />
@@ -433,6 +437,7 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
+                                                AutomationProperties.Name="Section color 5"
                                                 Background="{StaticResource TrackPlanSectionColor5}"
                                                 CornerRadius="4"
                                                 Tag="#FF33FF" />
@@ -440,6 +445,7 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
+                                                AutomationProperties.Name="Section color 6"
                                                 Background="{StaticResource TrackPlanSectionColor6}"
                                                 CornerRadius="4"
                                                 Tag="#33FFFF" />
@@ -447,6 +453,7 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
+                                                AutomationProperties.Name="Section color 7"
                                                 Background="{StaticResource TrackPlanSectionColor7}"
                                                 CornerRadius="4"
                                                 Tag="#FF9933" />
@@ -454,6 +461,7 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
+                                                AutomationProperties.Name="Section color 8"
                                                 Background="{StaticResource TrackPlanSectionColor8}"
                                                 CornerRadius="4"
                                                 Tag="#9933FF" />
