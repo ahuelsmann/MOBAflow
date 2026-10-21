@@ -26,10 +26,10 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 ### Freesound.org (Community Sound Library)
 
 - **Website:** [Freesound.org](https://freesound.org/)
-- **License:** Various Creative Commons licenses, including CC0, CC-BY 3.0, and CC-BY 4.0
+- **Licenses:** CC BY 4.0 for the two gollamar announcement recordings; CC0 1.0 for the Prague Metro Line A chime
 - **Usage:** Workflow sound effects such as station bells, train whistles, and warning signals
 - **Attribution:** Individual sound attributions are listed in [`Sound/Resources/Sounds/ATTRIBUTION.md`](../Sound/Resources/Sounds/ATTRIBUTION.md)
-- **Compliance:** MOBAflow does not distribute the Freesound platform itself. Sound attribution is tracked per file where required by the original license.
+- **Redistribution:** Keep the file-specific attribution and license links with the bundled recordings. The repository's MIT license does not relicense these audio files.
 
 ---
 
@@ -60,6 +60,23 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 - **Usage:** Direct UDP communication with the Z21 digital command station
 - **Legal Notice:** MOBAflow is an independent control application and is not affiliated with Roco or Fleischmann.
 - **Basis:** Publicly documented or reverse-engineered interoperability at the protocol level
+
+---
+
+## Development Skills and Templates
+
+### GitHub Spec Kit
+
+- **Source:** [GitHub Spec Kit v1.1.3](https://github.com/github/spec-kit/tree/v1.1.3)
+- **License:** MIT; the complete original GitHub, Inc. notice is retained in [`.specify/LICENSE`](../.specify/LICENSE).
+- **Scope:** Imported scripts and templates under `.specify/` and the ten `.agents/skills/speckit-*/` skills. Local adaptations retain that notice.
+- **Traceability:** The [source registry](../.agents/skills/sources.json) and integration manifests under `.specify/integrations/` record the imported version and adaptations.
+
+### Adapted Matt Pocock Skills
+
+- **Source:** [Matt Pocock skills at the recorded revision](https://github.com/mattpocock/skills/tree/c55ee46073ed923f86ce59a5eb3b6d895095d1b7)
+- **License:** MIT; original notices are retained with [code review](../.agents/skills/mobaflow-code-review/LICENSE) and [bug diagnosis](../.agents/skills/mobaflow-diagnosing-bugs/LICENSE), including their `.claude/skills/` mirrors.
+- **Scope:** These adapted workflows and the Matt Pocock material in the inactive `skills/` reference snapshot. The repository's own license does not replace upstream copyright notices.
 
 ---
 
