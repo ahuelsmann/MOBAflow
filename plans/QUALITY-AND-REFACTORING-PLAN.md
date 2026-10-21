@@ -144,7 +144,7 @@ dependencies.
 | RF-13 | [#91](https://github.com/ahuelsmann/MOBAflow/issues/91) | Track-plan editor operations are platform-neutral and WinUI remains a thin input and rendering adapter. |
 | RF-14 | [#92](https://github.com/ahuelsmann/MOBAflow/issues/92) | Signal-box property changes flow through commands and ViewModels rather than direct control mutation. |
 | RF-15 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) | Unused synchronous and unsafe path abstractions are removed or hardened. |
-| RF-16 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical workflows pass accessibility, keyboard, contrast, and theme acceptance. |
+| RF-16 | [#374](https://github.com/ahuelsmann/MOBAflow/issues/374) | Critical workflows pass accessibility, keyboard, contrast, and theme acceptance. |
 | RF-17 | [#116](https://github.com/ahuelsmann/MOBAflow/issues/116) | Repository guidance and executable engineering gates describe the same rules. |
 | RF-18 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical throughput, load, telemetry, recovery, and endurance behavior is measured. |
 | RF-19 | [#165](https://github.com/ahuelsmann/MOBAflow/issues/165) | MOBApi and its clients contain no authentication, pairing or credential code; every remote command is validated and the command queue is bounded. |
@@ -244,20 +244,9 @@ shared hex parser ([#287](https://github.com/ahuelsmann/MOBAflow/pull/287)).
 
 ### RF-16: Accessibility and themes
 
-Sequence:
-
-1. inventory critical workflows plus icon-only and custom-drawn controls;
-2. add accessible names, help text, roles, patterns, and automation peers where
-   native semantics are insufficient;
-3. complete keyboard operation, focus order, visible focus, Narrator, and text
-   scaling behavior;
-4. replace general-purpose literal colors with theme resources while retaining
-   fixed railway signal colors only where semantically required;
-5. run Accessibility Insights and Light, Dark, and High Contrast acceptance.
-
-Acceptance anchor: the critical workflow inventory has retained evidence for
-keyboard, Narrator, text scaling, focus, contrast, and all required themes, with
-no unresolved critical accessibility failure.
+The critical workflow inventory, decisions and delivery steps now belong to
+[the RF-16 child plan](374-accessibility-themes.md), owned by
+[issue #374](https://github.com/ahuelsmann/MOBAflow/issues/374).
 
 ### RF-17: Repository instruction cleanup
 
