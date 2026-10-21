@@ -101,10 +101,12 @@
                     Grid.Column="2"
                     Padding="16,8"
                     AccessKey="S"
-                    AutomationProperties.HelpText="Immediately stops the locomotive"
+                    AutomationProperties.AcceleratorKey="Pause"
+                    AutomationProperties.HelpText="Immediately stops the locomotive. Shortcut: Pause, or Space when no button or input has focus"
                     AutomationProperties.Name="Emergency Stop"
                     Command="{x:Bind ViewModel.EmergencyStopCommand}"
-                    Style="{StaticResource DangerButtonStyle}">
+                    Style="{StaticResource DangerButtonStyle}"
+                    ToolTipService.ToolTip="Emergency stop (Pause, or Space when no button or input has focus)">
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <FontIcon
                             FontSize="18"

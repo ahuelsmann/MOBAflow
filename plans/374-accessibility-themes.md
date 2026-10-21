@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/374
 **Spec Kit**: Not applicable - accessibility semantics, theme resources and keyboard access to existing commands without new product behavior; a step that would introduce a new interaction model gets its own Spec Kit feature first
-**Status**: Active; step 1 (inventory) ships with this plan
+**Status**: Active; steps 1 and 2 and the step 3 shortcuts are delivered in the single issue PR
 
 ## Purpose and scope
 
@@ -55,15 +55,19 @@ MOBAsmart: 16 of 23 XAML files already use `SemanticProperties`; the remaining f
 - **Custom-drawn canvases:** Narrator access to the signal box comes from automation peers that expose the existing
   elements and their commands. A new keyboard editing model for the track-plan editor would be new product behavior; it
   needs a Spec Kit feature and a user decision before implementation.
-- **Emergency stop by keyboard:** adding a shortcut to the existing stop and track-power commands is in scope, but the key
-  choice is a user decision (material UX), recorded on #374 before step 3.
+- **Emergency stop by keyboard** (user decision on #374, 2026-10-21): Pause always, and Space unless the focused element
+  uses Space itself, trigger the existing train-control emergency stop of the selected locomotive; Ctrl+P and F10 toggle
+  track power. `OperatorShortcuts` (SharedUI) owns the rule; `OperatorShortcutController` adapts WinUI keys and focus and
+  is attached at startup, so `MainWindow` stays untouched while #293 is open. A global Z21 stop of all locomotives would
+  be a separate Spec Kit feature.
 
 ## Delivery steps
 
 1. **Inventory** (with this plan).
 2. **Accessible names and guard:** the 43 buttons, plus a test that fails on a new unnamed icon-only button.
-3. **Keyboard and Narrator for the critical workflows:** focus order, visible focus, the emergency-stop and track-power
-   shortcuts after the user's key decision, and automation peers for the signal-box canvas.
+3. **Keyboard and Narrator for the critical workflows:** the emergency-stop and track-power shortcuts (delivered; the
+   track-power switch in `MainWindow` gets its shortcut hint after #293), then focus order, visible focus and automation
+   peers for the signal-box canvas.
 4. **Theme resources and High Contrast:** the 12 non-dictionary XAML colors and the general-purpose C# colors;
    `HighContrast` theme dictionaries; a non-color cue for signal aspects.
 5. **MOBAsmart:** TalkBack descriptions for the remaining views and font scaling.

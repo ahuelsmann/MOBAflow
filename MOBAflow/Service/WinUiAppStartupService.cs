@@ -78,6 +78,11 @@ internal sealed class WinUiAppStartupService
 
         var mainWindow = services.GetRequiredService<MainWindow>();
         LogStartupCheckpoint("MainWindow resolved");
+        OperatorShortcutController.Attach(
+            mainWindow,
+            services.GetRequiredService<SharedUI.TrainControl.TrainControlViewModel>().EmergencyStopCommand,
+            mainWindow.ViewModel.SetTrackPowerCommand,
+            () => mainWindow.ViewModel.IsTrackPowerOn);
 
         var shutdownCoordinator = new WinUiShutdownCoordinator(
             mainWindow.PrepareForShutdownAsync,
