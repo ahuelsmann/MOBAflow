@@ -1,7 +1,15 @@
 # Documentation consistency
 
-The [Quality workflow](../.github/workflows/quality.yml) checks generated package
-and mutation facts for every PR. Run from the task worktree root:
+Documentation and the canonical user wiki under `docs/wiki/` are part of each
+assigned issue's delivery. Codex and the existing independent Claude review
+process maintain them in the same leading PR as the implementation. A passing
+structural check alone does not establish semantic accuracy.
+
+## Source-derived facts
+
+The [Quality workflow](../.github/workflows/quality.yml) continues to check
+package references, central versions and active mutation configuration facts.
+Run from the task worktree root:
 
 ```powershell
 python scripts/documentation_consistency.py
@@ -11,63 +19,75 @@ python scripts/Test-DocumentationConsistency.py
 
 `--write` updates only marked source-derived tables and repeated native-package
 version references. Package purposes and license prose remain hand-authored;
-new packages are explicitly flagged for purpose/license review.
+new packages are explicitly flagged for purpose/license review. The offline
+regressions retain generator idempotency, reference/version checks, license and
+surrounding-prose preservation, malformed-input and path protections.
 
-## Semantic maintenance and activation
+## Documentation impact in the existing delivery
 
-The separate [documentation workflow](../.github/workflows/documentation-consistency.yml)
-is **not activated by default**. It reports that state explicitly. Structural
-checks do not establish semantic correctness.
+1. The assigned delivery owner compares the issue's actual base-to-head changes
+   with affected implementations, callers, host composition, developer guidance
+   and the canonical user wiki. Record affected pages and corrections, or a
+   concrete source-grounded reason that no change is necessary, in the PR.
+2. Make necessary corrections in that issue's existing leading PR and assigned
+   worktree. Documentation Lead contributes when documentation expertise is
+   needed; one writer retains ownership until an explicit handover. Do not open
+   a separate documentation slice PR for the same issue.
+3. Give Chief Project Manager the current head/base, documentation/wiki impact,
+   relevant checks, actual acceptance, remaining limits and confirmed writer end.
+   Chief Project Manager alone qualifies the draft and marks it Ready.
+4. The existing Claude plan independently reviews the current comparison,
+   including affected documentation and wiki claims. Reviewers remain separate
+   from implementers/fixers. Source-grounded contradictions are findings; missing
+   evidence is a stated limitation, not a consistency pass. Review is not a Ready
+   prerequisite and no additional review automation is introduced.
+5. After behavior-changing review fixes, reassess documentation/wiki impact and
+   refresh affected evidence. A changed comparison needs fresh independent review
+   through the existing plan. Current CI/Sonar and all actual acceptance still apply.
+6. After the verified merge, Chief Project Manager and the delivery owner confirm
+   the affected documentation against the actual integrated `main`. Record the
+   exact merged commit and result in the issue/PR handover. Any remaining drift
+   stays visible with its owner in the same central queue; do not claim overall
+   currency or completion while an accepted requirement remains open.
 
-Before activating it, configure the following repository values:
+The [PR template](../.github/PULL_REQUEST_TEMPLATE.md) captures the documentation
+impact. [AGENTS.md](../AGENTS.md#completion) and
+[master coordination](../.github/instructions/master-coordination.instructions.md)
+define the existing ownership, review and integration boundaries.
 
-| Name | Type | Purpose |
-| --- | --- | --- |
-| `OPENAI_API_KEY` | Actions secret | API access for two independent, bounded assessments. API usage is billed separately from ChatGPT subscriptions. |
-| `DOCS_AI_MODEL` | Actions variable | A model available to your API project that supports strict structured Responses output. No model is silently selected. |
-| `DOCS_APP_ID` | Actions variable | ID of a GitHub App installed on this repository. |
-| `DOCS_APP_PRIVATE_KEY` | Actions secret | Private key for that App. Grant repository Contents read/write; no administration permission is needed. |
-| `DOCS_AI_ENABLED` | Actions variable | Set to `true` only for the live acceptance test after configuring the other values and API budget. |
+## Subscription usage and removed activation
 
-Use an API project with a suitable budget/limits. No paid API request or GitHub
-App setup was performed during offline implementation. Run a small same-repository
-acceptance PR after merging the workflow, since trusted controls are loaded from
-the base branch. Confirm the following before requiring the check:
+The human decision on 2026-10-21 replaced the separately activated API/GitHub-App
+bot with this existing Codex/Claude delivery process. The API request runner,
+model prompts, privileged publication workflow and their obsolete tests are
+removed. There is no documentation-bot activation, App auto-commit, additional
+API budget or new subscription-to-CI integration to configure.
 
-1. A source change receives the necessary documentation-only commit on the same branch.
-2. Quality and Sonar run again on that new commit; prior-head results do not suffice.
-3. The new head passes the custom **Documentation consistency** check without another
-   automatic commit. Confirm unchanged-documentation and uncertainty cases too.
-4. Add **Documentation consistency** to required checks and require branches to be up
-   to date. Select the check emitted by GitHub Actions, not a target-branch job result.
+Use the existing native clients under their approved subscription login and
+usage limits. Do not silently switch to usage-based API billing, buy extra usage,
+export login tokens to CI or introduce a replacement automation. At an allowance
+limit, coordinate waiting through Chief Project Manager. Existing credentials
+used by other work are not read, changed or deleted by this change.
 
-## Boundaries and failure handling
+The former custom bot check is not a required check. The existing Quality,
+Sonar, instruction and documentation-link gates remain in place. They provide
+structural evidence; semantic acceptance comes from the actual delivery and
+independent review. No branch-protection change is part of this delivery.
 
-The workflow executes scripts/prompts from the base commit. PR files are only
-data and are checked out only for an enabled, trusted same-repository PR; fork
-and untrusted heads never reach the privileged runner. The model has no execution
-tools. A separate publishing job receives the repository-scoped App token after independent review. That token causes normal
-PR workflows to rerun, unlike an ordinary `GITHUB_TOKEN` push.
+## Acceptance and evidence
 
-An update must replace a unique existing passage and quote supplied source
-evidence. Automatic writes cover existing Markdown under `docs/` plus README and
-CONTRIBUTING. Generated facts, licenses, specifications, agent policies, workflows
-and source code cannot be rewritten by AI. The publisher rechecks head/base,
-document hashes, paths, secrets, links and source-derived facts; a push lease
-rejects an intervening human commit.
+T007 now uses a real assigned leading PR with documented developer/wiki impact,
+independent review through the existing Claude plan and an actual integrated-main
+comparison. A synthetic repository test is not that acceptance. T008 confirms
+that the applicable existing deterministic checks remain effective; it does not
+activate the retired API-bot check. Required-rule administration remains outside
+this delivery.
 
-A documentation-only last commit disables further auto-updates, including after
-the bot's commit. If the independent review still finds a problem, correct it
-manually. Forks and untrusted authors need maintainer review and receive no
-automatic writes or API calls. Missing enabled configuration, an oversized context,
-unavailable source evidence, API/scanner errors and incomplete/refused model output
-produce a failed or action-required result rather than a semantic pass. App values
-are checked before any API request; verified corrections whose token creation or
-publication fails are reported as failed, and cancelled runs post no result.
-
-The context limit is one megabyte; each of the two requests has an 8,000-token
-output cap and a timeout. No automatic API retries multiply charges. These limits
-do not guarantee factual correctness. Review documentation alongside code.
+The original offline/API implementation is historical evidence, not proof of
+live API acceptance. The former API/App activation and bot-loop acceptance were
+superseded, not performed successfully. Historical private-review audit items
+remain separately identified; they are not silently treated as closed.
 
 See [the feature specification](../specs/011-documentation-consistency/spec.md)
-and [Issue #266](https://github.com/ahuelsmann/MOBAflow/issues/266) for acceptance status.
+and [Issue #266](https://github.com/ahuelsmann/MOBAflow/issues/266) for the
+requirements, current acceptance evidence and overall completion status.

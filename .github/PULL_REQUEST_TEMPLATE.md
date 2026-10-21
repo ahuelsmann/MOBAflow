@@ -21,6 +21,19 @@
 - [ ] GitHub's SonarCloud analysis is green for the current PR commit and reports zero `OPEN`/`CONFIRMED` issues before review
 - [ ] Manual validation completed or documented as not applicable
 
+## Documentation and wiki impact
+
+<!-- Compare the actual base/head change with implementation, callers and host configuration.
+List affected developer/architecture pages AND canonical docs/wiki pages, with corrections
+or a concrete source-grounded reason no change is needed. Keep changes in this leading PR.
+Include this assessment in the Chief Project Manager handover. Reassess after behavior-changing
+review fixes; confirm affected pages against actual integrated main in the final handover.
+Structural CI alone does not establish semantic consistency. -->
+
+- Developer/architecture documentation:
+- Canonical user wiki (`docs/wiki/`):
+- Source evidence and remaining limitations:
+
 ## Impact and risk
 
 - [ ] No persisted data or schema format changes
