@@ -7,6 +7,7 @@ using Common.Validation;
 using Domain;
 
 using Hubs;
+using ModelBinding;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -71,7 +72,10 @@ public class SolutionController : ControllerBase
     /// Receives solution JSON from MOBAflow WinUI (localhost only).
     /// </summary>
     [HttpPut]
-    public async Task<IActionResult> PutSolution(CancellationToken cancellationToken)
+    public async Task<IActionResult> PutSolution(
+        CancellationToken cancellationToken,
+        [ModelBinder(typeof(FirstHeaderValueModelBinder), Name = "X-MOBAflow-Solution-Path")] string? sourcePath = null,
+        [ModelBinder(typeof(FirstHeaderValueModelBinder), Name = "X-MOBAflow-Active-Project")] string? activeProjectName = null)
     {
 
         using var reader = new StreamReader(Request.Body);
@@ -82,13 +86,6 @@ public class SolutionController : ControllerBase
         {
             return BadRequest(new { error = validationResult.ErrorMessage });
         }
-
-        var sourcePath = Request.Headers.TryGetValue("X-MOBAflow-Solution-Path", out var pathValues)
-            ? pathValues.FirstOrDefault()
-            : null;
-        var activeProjectName = Request.Headers.TryGetValue("X-MOBAflow-Active-Project", out var projectValues)
-            ? projectValues.FirstOrDefault()
-            : null;
 
         _solutionCache.Set(json, sourcePath, activeProjectName);
         // A removed project has no runtime anymore; its last snapshot must not be served or counted.
