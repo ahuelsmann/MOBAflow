@@ -27,7 +27,7 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 
 - **Website:** [Freesound.org](https://freesound.org/)
 - **Licenses:** CC BY 4.0 for the two gollamar announcement recordings; CC0 1.0 for the Prague Metro Line A chime
-- **Usage:** Workflow sound effects such as station bells, train whistles, and warning signals
+- **Usage:** Workflow announcement intros (Announcement-04.wav and Announcement-06.wav) and the Prague Metro Line A chime.
 - **Attribution:** Individual sound attributions are listed in [`Sound/Resources/Sounds/ATTRIBUTION.md`](../Sound/Resources/Sounds/ATTRIBUTION.md)
 - **Redistribution:** Keep the file-specific attribution and license links with the bundled recordings. The repository's MIT license does not relicense these audio files.
 
