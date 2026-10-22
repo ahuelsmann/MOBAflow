@@ -93,7 +93,7 @@ internal sealed class RuntimeConstructionTests
         using var counters = new InPortCounterService(z21.Object, settings);
         using (var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings }))
         {
-            await runtime.ActivateProjectAsync(new Project { Journeys = [new Journey { IsActive = true }] });
+            await runtime.ActivateProjectAsync(new Project { Journeys = [new Journey { IsActive = true }] }).ConfigureAwait(false);
         }
 
         RaiseFeedbackOnInPortOne(z21);
