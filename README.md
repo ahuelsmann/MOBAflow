@@ -150,7 +150,8 @@ standalone hardware color test.
 | Live layout operation | A reachable Roco Z21 and a trusted private LAN; feedback modules for feedback-driven automation |
 
 MOBAflow uses .NET 10. The desktop targets `net10.0-windows10.0.22621.0`;
-MOBAsmart targets `net10.0-android`. See the
+its minimum OS remains Windows build `22621`, while its Windows SDK targeting
+pack is `10.0.28000.87`. MOBAsmart targets `net10.0-android`. See the
 [installation guide](docs/wiki/INSTALLATION.md) for platform setup, mobile
 connection and troubleshooting.
 

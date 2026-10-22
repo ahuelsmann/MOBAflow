@@ -468,7 +468,7 @@ internal sealed class AudioCacheTests
         {
             Assert.That(variants, Has.None.EqualTo(original));
             Assert.That(original, Does.Match("^[A-F0-9]{64}$"));
-            Assert.That(SpeechCacheKey.Fingerprint(["ab", "c"]), Is.Not.EqualTo(SpeechCacheKey.Fingerprint(["a", "bc"])));
+            Assert.That(SpeechCacheKey.Fingerprint((string[])["ab", "c"]), Is.Not.EqualTo(SpeechCacheKey.Fingerprint((string[])["a", "bc"])));
             Assert.That(SpeechCacheKey.Create("p", "o", request with { Text = "e\u0301" }),
                 Is.EqualTo(SpeechCacheKey.Create("p", "o", request with { Text = "\u00e9" })));
         }

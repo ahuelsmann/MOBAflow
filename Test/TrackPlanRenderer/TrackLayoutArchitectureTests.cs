@@ -142,8 +142,8 @@ internal sealed partial class TrackLayoutArchitectureTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(selection.MovingGroup, Is.EquivalentTo([first.Segment.No, second.Segment.No]));
-            Assert.That(plan.Segments.Select(segment => segment.X), Is.EquivalentTo([10, 240.93]));
+            Assert.That(selection.MovingGroup, Is.EquivalentTo((Guid[])[first.Segment.No, second.Segment.No]));
+            Assert.That(plan.Segments.Select(segment => segment.X), Is.EquivalentTo((double[])[10, 240.93]));
         });
     }
 
@@ -188,7 +188,7 @@ internal sealed partial class TrackLayoutArchitectureTests
     {
         var placement = new PlacedSegment(new G231(), 12, 34, 15);
 
-        var scene = TrackPlanRenderSceneBuilder.Build(TrackPlanTestGeometry.PikoA, [placement]);
+        var scene = TrackPlanRenderSceneBuilder.Build(TrackPlanTestGeometry.PikoA, (PlacedSegment[])[placement]);
 
         Assert.That(scene.Items, Has.Count.EqualTo(1));
         Assert.That(scene.Items[0].Id, Is.EqualTo(placement.Segment.No));
@@ -203,7 +203,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         var selected = new HashSet<Guid> { placement.Segment.No };
         var feedback = new Dictionary<Guid, double> { [placement.Segment.No] = 2 };
 
-        var scene = TrackPlanRenderSceneBuilder.Build(TrackPlanTestGeometry.PikoA, [placement], selected, feedback);
+        var scene = TrackPlanRenderSceneBuilder.Build(TrackPlanTestGeometry.PikoA, (PlacedSegment[])[placement], selected, feedback);
 
         Assert.Multiple(() =>
         {
