@@ -49,8 +49,9 @@ the lane host; 35 minutes:
 | Compile errors | 0 reported (see below) |
 
 The reported 0 is probably incomplete: these counts add up to 7,403 scored and ignored mutants with a score
-denominator of 6,158, exactly as in the Linux CI runs below, which exclude 770 compile-error mutants. The same
-Safe-Mode exclusions were therefore most likely present locally but not reported; this is an inference, not proven.
+denominator of 6,158, exactly as in Linux CI job 119686366715 (head `ab25e67`), which excludes 770 compile-error
+mutants. The same Safe-Mode exclusions were therefore most likely present locally but not reported; this is an
+inference, not proven.
 
 Largest open areas (survived + no coverage), which feed step 2 and later:
 
@@ -68,10 +69,10 @@ Largest open areas (survived + no coverage), which feed step 2 and later:
 These counts are a planning baseline, not a permanent status; later changes need a fresh full report.
 
 Linux CI on the combined steps 1 and 2 (head `d1f26fe`, job 119707711457): 745 passing ordinary tests, score 47.43%
-(2,859 killed, 63 timeouts, 2,073 survived, 1,166 no coverage, 1,245 ignored); of 8,173 created mutants, 770 are
-compile errors outside the score. The scored population matches the local baseline (denominator 6,158), so the
-difference from 43.18% reflects the step-2 tests. The floor nevertheless stays at 43%: raising it is the separately
-allocated #366 floor work.
+(2,859 killed, 63 timeouts, 2,073 survived, 1,166 no coverage, 1,245 ignored); of 8,176 created mutants, 770 are
+compile errors outside the score. The scored population matches the local baseline within 3 mutants (denominator
+6,161; the `ab25e67` run, job 119686366715, matched it exactly at 6,158), so the difference from 43.18% reflects
+the step-2 tests. The floor nevertheless stays at 43%: raising it is the separately allocated #366 floor work.
 
 ### Methods outside the Backend mutation gate
 
