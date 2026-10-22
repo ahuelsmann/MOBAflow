@@ -60,7 +60,7 @@ internal sealed class RuntimeConstructionTests
     }
 
     [TestCaseSource(nameof(MissingDependencies))]
-    public void Constructor_RejectsAMissingDependency(Func<InPortCounterService, object> construct)
+    public void Constructor_RejectsAMissingRuntimeDependency(Func<InPortCounterService, object> construct)
     {
         using var counters = new InPortCounterService(Z21, new AppSettings());
 
