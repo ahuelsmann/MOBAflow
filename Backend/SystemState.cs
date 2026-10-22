@@ -66,9 +66,9 @@ public class SystemState
     public bool IsShortCircuit => (CentralState & 0x04) != 0;
 
     /// <summary>
-    /// Gets whether programming mode is active (bit 3 of CentralState set).
+    /// Gets whether programming mode is active (bit 5 of CentralState set).
     /// </summary>
-    public bool IsProgrammingMode => (CentralState & 0x08) != 0;
+    public bool IsProgrammingMode => (CentralState & 0x20) != 0;
 }
 
 /// <summary>
