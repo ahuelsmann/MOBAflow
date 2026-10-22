@@ -45,7 +45,12 @@ the lane host; 35 minutes:
 | Detected through timeout | 74 |
 | Survived | 2,020 |
 | No coverage | 1,479 |
-| Ignored (block already covered), compile errors | 1,245, 0 |
+| Ignored (block already covered) | 1,245 |
+| Compile errors | 0 reported (see below) |
+
+The reported 0 is probably incomplete: these counts add up to 7,403 scored and ignored mutants with a score
+denominator of 6,158, exactly as in the Linux CI runs below, which exclude 770 compile-error mutants. The same
+Safe-Mode exclusions were therefore most likely present locally but not reported; this is an inference, not proven.
 
 Largest open areas (survived + no coverage), which feed step 2 and later:
 
@@ -62,10 +67,32 @@ Largest open areas (survived + no coverage), which feed step 2 and later:
 
 These counts are a planning baseline, not a permanent status; later changes need a fresh full report.
 
-Linux CI on the combined steps 1 and 2 (head `fc01b159`, run 39730443485): 744 passing ordinary tests, score 47.35%
-(2,855 killed, 61 timeouts, 2,070 survived, 1,172 no coverage); 770 mutants did not compile and are outside the
-score, while the local baseline above had none. The two runs therefore count different mutant populations and are not
-comparable; the floor stays at 43% until a comparable full run justifies raising it.
+Linux CI on the combined steps 1 and 2 (head `d1f26fe`, job 119707711457): 745 passing ordinary tests, score 47.43%
+(2,859 killed, 63 timeouts, 2,073 survived, 1,166 no coverage, 1,245 ignored); of 8,173 created mutants, 770 are
+compile errors outside the score. The scored population matches the local baseline (denominator 6,158), so the
+difference from 43.18% reflects the step-2 tests. The floor nevertheless stays at 43%: raising it is the separately
+allocated #366 floor work.
+
+### Methods outside the Backend mutation gate
+
+Stryker.NET 5.0.0 reports CS0165 ("Use of unassigned local variable") at 12 sites during its initial compile and puts
+the affected methods into Safe Mode: all their mutants count as compile errors, so no mutation result gates them.
+The cause is a Stryker instrumentation limitation, not a Backend or test defect: mutating conditions around `out` or
+pattern variables, or removing a `break` inside `try`/`catch`, breaks definite assignment. Paths relative to
+`Backend/`:
+
+- `Service/MobaRuntimeService.RuntimeApi.cs`: `ConnectCoreAsync`
+- `Service/MobaRuntimeService.AutoConnect.cs`: `AttemptZ21ConnectionCoreAsync`
+- `Network/UdpWrapper.cs`: `ReceiverLoopAsync`
+- `Service/Recording/CoreRecordingEventMappers.cs`: `Map` (three overloads)
+- `Service/Recording/RecordingJsonReader.cs`: `RequireInt32`, `RequireInt64`, `ReadGuid`
+- `Service/Recording/RecordingArtifactSerializer.Import.cs`: `ReadEntry`
+- `Manager/JourneyManager.cs`: `QueueMatchingEvents`
+- `Service/TimetableStateStore.cs`: `RecordDepartureAsync`
+
+The first three are core Z21 transport and connect paths; the step-2 protection does not extend to them. Open #366
+floor work: rewrite these methods so that mutations stay definitely assigned, or change the Stryker version, then
+remeasure.
 
 The floor is the measured score rounded down to a whole percent. It is a safeguard, not a quality target: step 2
 closes meaningful gaps, and a fresh full run raises it.

@@ -86,7 +86,9 @@ It runs on Windows in CI because existing tests also cover Windows-specific phot
 The Common configuration limits parallel Stryker test processes to four.
 The Backend group mutates the `Backend` assembly with all tests under `Test/Backend/`, the workflow
 end-to-end fixture and `Test/Z21DccCommandDecoderTests.cs`; new tests under `Test/Backend/` are
-included automatically. It runs on Linux, takes about 35 minutes and is the largest group.
+included automatically. Methods that Stryker puts into Safe Mode are excluded from the score; see
+[methods outside the Backend mutation gate](plans/366-coverage-mutation-ratchets.md#methods-outside-the-backend-mutation-gate).
+It runs on Linux, takes about 35 minutes and is the largest group.
 The portable Speech.Base group runs `AudioCacheTests.cs`, `CachedSpeechOutputTests.cs`,
 `SpeechOutputTests.cs` and `WaveAudioTests.cs` against the entire `Speech.Base` assembly.
 It runs on Linux in every code-relevant PR, using fake providers and players rather than

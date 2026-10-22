@@ -295,7 +295,9 @@ Its four portable Speech fixtures use fake providers/players and four Stryker pr
 host integration cases and the separate Piper/SystemSpeech assemblies are outside this lane.
 Backend mutates the entire assembly with every fixture under `Test/Backend/`, the workflow end-to-end
 fixture and the Z21 DCC decoder tests. It is the largest lane (about 35 minutes with four Stryker
-processes); the MOBApi process fixtures belong to the planned `api` lane.
+processes); the MOBApi process fixtures belong to the planned `api` lane. Methods that Stryker puts into Safe Mode
+are excluded from the score; see
+[methods outside the Backend mutation gate](../plans/366-coverage-mutation-ratchets.md#methods-outside-the-backend-mutation-gate).
 Thresholds come from the configuration files; the Common, Speech.Base and Backend minimums are baseline
 safeguards, not targets for test quality. Speech.Base keeps scheduling-only `ConfigureAwait`
 mutants visible rather than excluding them to inflate the score.
