@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/382
 **Spec Kit**: Not applicable - measurement and verification of existing behavior; telemetry gaps are closed as observability of existing paths, not as new product behavior
-**Status**: Active; step 1 (inventory) ships with this plan
+**Status**: Active; steps 1 and 2 are delivered in the single issue PR
 
 ## Purpose and scope
 
@@ -31,10 +31,12 @@ Recorded on main `f37541d9`.
 
 ## Decisions
 
-- **Benchmarks:** a separate portable `Benchmarks` project with BenchmarkDotNet, outside the test suite and the mandatory
-  CI gates. Benchmarks are noisy on shared runners, so CI runs them only on manual dispatch and archives the results;
-  the maintainer's machine records the baseline. Adding BenchmarkDotNet is a development-only dependency; it is added
-  in step 2 only after the maintainer agrees.
+- **Benchmarks** (user decision on #382, 2026-10-22): BenchmarkDotNet 0.15.8 in the separate portable project
+  `Benchmarks/Moba.Benchmarks`, outside the solution, the test suite and the mandatory CI gates. The manual-only
+  [Benchmarks workflow](../.github/workflows/benchmarks.yml) archives the reports; the maintainer's machine records the
+  baseline. Telemetry uses the built-in `System.Diagnostics.Metrics`, readable with `dotnet-counters`; `dotnet-trace`
+  or the Visual Studio profiler investigate a measured regression. [Benchmarks](../docs/BENCHMARKS.md) explains how to run
+  them.
 - **Load tests:** deterministic NUnit tests where the bound itself is the contract (queue capacity, rejection, order);
   timing-based load (SignalR clients) runs as a benchmark or a manual scenario, never as a flaky mandatory test.
 - **Thresholds:** a regression threshold is agreed per scenario with the maintainer after the first baseline, for example
@@ -45,8 +47,8 @@ Recorded on main `f37541d9`.
 ## Delivery steps
 
 1. **Inventory** (with this plan).
-2. **Benchmarks:** EventBus throughput, Z21 event pipeline enqueue and drain, runtime snapshot serialization;
-   first baselines on the maintainer's machine.
+2. **Benchmarks** (delivered): EventBus publish, Z21 event pipeline enqueue and drain, runtime snapshot JSON round
+   trip; the first baselines on the maintainer's machine are recorded on #382.
 3. **Load tests:** remote command queue under concurrent producers (capacity, rejection, order); SignalR runtime hub
    with several clients against an owned MOBApi process.
 4. **Telemetry:** structured log and counter for rejected remote commands; check the existing pipeline, recovery and

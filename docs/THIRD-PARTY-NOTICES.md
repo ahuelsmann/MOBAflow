@@ -90,6 +90,7 @@ usage can be compared directly with those XML entries. Versions in this section 
 <!-- documentation-facts:packages:start -->
 | Package | Version | Directly referenced in | Purpose |
 | --- | --- | --- | --- |
+| `BenchmarkDotNet` | `0.15.8` | `Benchmarks/Moba.Benchmarks` | Development-only benchmark harness for RF-18 baselines (MIT). |
 | `CommunityToolkit.Maui` | `15.0.1` | `MOBAsmart` | MAUI helpers, converters and behaviors. |
 | `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | Observable properties and relay commands. |
 | `CommunityToolkit.WinUI.Controls.ColorPicker` | `8.2.251219` | `MOBAflow` | WinUI color picker. |
