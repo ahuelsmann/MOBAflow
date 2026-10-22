@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/318
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: Planned; implementation starts with slice 1 after this plan is integrated
+**Status**: In progress; workflow execution and validation (slice 1, #325) and runtime composition (slice 2, #330) are integrated. Issue #318 remains open for the remaining work.
 
 ## Purpose and scope
 
@@ -23,8 +23,8 @@ Counted on main `71830101`; "tests" counts construction sites in `Test/`.
 | `Backend/Service/WorkflowActionHandlers.cs` (7 handlers) | optional `IWorkflowEffectAdapter`, each falls back to its own `ProductionWorkflowEffectAdapter`; optional loggers | 36 | adapter and logger required; DI registers `ProductionWorkflowEffectAdapter` once |
 | `WorkflowService`, `ActionExecutor`, `AnnouncementService` | two convenience `WorkflowService` constructors; `ActionExecutor.CreateWithDefaultHandlers`; optional loggers and event bus; optional `ISpeechOutput` | 25 | one constructor each, everything required; hosts without speech register the existing null speech output, so `IsSpeechOutputAvailable` (always true in both hosts) is removed |
 | `WorkflowValidator`, `ProjectValidator` | `?? new WorkflowEffectPlanner()`, `?? new WorkflowValidator()` | 11 | `ProjectValidator` requires `IWorkflowValidator`; `WorkflowValidator` uses the pure planner directly (see design decisions) |
-| `MobaRuntimeService` | two constructors; `?? new` for `InPortCounterService`, `JourneyManagerFactory`, `IZ21EndpointSource`; optional event bus, interlocking runtime, time provider | 9 | one constructor; every collaborator except the `IZ21EndpointSource` (defaulted only when the host registers none) required and created by `ProjectRuntimeFactory`/DI; `_ownsInPortCounters` follows the factory's ownership instead of the fallback |
-| `JourneyManager`, `JourneyManagerDependencies`, `JourneyManagerFactory` | `?? new` for stop transitions, runtime state store, counters, execution coordinator, `ActionExecutionContext`; factory created with `logger: null` | 7 | dependencies record with required members; factory receives them from DI |
+| `MobaRuntimeService` | two constructors; `?? new` for `InPortCounterService`, `JourneyManagerFactory`, `IZ21EndpointSource`; optional event bus, interlocking runtime, time provider | 9 | one constructor; every collaborator except the `IZ21EndpointSource` (defaulted only when the host registers none) required and created by `ProjectRuntimeFactory`/DI; the runtime borrows the counters, which are owned and disposed by DI or `ProjectRuntime` |
+| `JourneyManager`, `JourneyManagerDependencies`, `JourneyManagerFactory` | `?? new` for stop transitions, runtime state store, counters, execution coordinator, `ActionExecutionContext`; factory created with `logger: null` | 7 | dependencies record with required members; the factory receives shared collaborators from DI and creates a distinct execution coordinator per `Create`; each manager owns and disposes its coordinator, while the caller owns the counters |
 | `PlatformManager` | `?? new ActionExecutionContext { Z21 = z21 }` | 0 | required `ActionExecutionContext` |
 | `Common/Discovery/LanIpv4AddressHelper.AugmentAddresses` | mutable static `Action` set by `MOBAsmart/Service/LanIpv4AddressHelperAndroidBootstrap.cs` | - | injected `ILocalIpv4AddressSource` with the network-interface implementation in `Common` and an Android decorator in MOBAsmart; `Z21DiscoveryService` and `RestApiDiscoveryService` receive it |
 | `MOBAflow/View/SegmentPlanPathBuilder.ScaleMmToPx` | mutable static set by `TrackPlanPage` to the constant 1.0 | - | scale passed by the caller (or one shared constant); no setter |
@@ -88,8 +88,8 @@ portable test of the decorator contract. No app launch, device deployment or har
 ## Risks
 
 - **Test churn.** About 150 construction sites in tests change; helpers keep the diff mechanical and reviewable.
-- **Ownership.** `MobaRuntimeService` currently disposes the counter service only when it created it; the factory
-  must keep exactly one owner.
+- **Ownership.** `MobaRuntimeService` borrows the counter service and never disposes it. DI or `ProjectRuntime`
+  owns and disposes it; retain exactly one owner and a distinct manager-owned coordinator per factory `Create`.
 - **Open PRs.** #293 (RF-24) and other Codex branches touch SharedUI ViewModels and test helpers; slice 4 waits,
   and each slice re-checks open PRs for overlapping files before it starts.
 - **Analyzer baselines:** moved or deleted diagnostics travel with their file; new test helpers need no new
