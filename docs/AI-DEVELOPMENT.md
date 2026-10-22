@@ -17,11 +17,15 @@ transitions, confirmed fixes and ordinary PR administration do not need repeated
 product goals, priorities and material UX decisions, scope expansion, fundamental architecture changes, new
 costs/external commitments and explicitly required practical permissions or acceptance still go to the user.
 
-Across all MOBAflow teams, Codex, Claude and Antigravity, at most five larger tasks may be centrally allocated.
-Before a substantial start or resume, obtain Chief Project Manager's current allocation in the existing queue;
-available capacity alone is not a start assignment. Reconcile owners, actual processes and remote CI. Full
-capacity or unclear ownership blocks another start. Keep one writer per worktree, serialize review/fix/publication
-phases for the same comparison and preserve existing executions. Coordinate safe stopping points with owners.
+Across all MOBAflow teams, Codex, Claude and Antigravity, deliver the prioritized issue together through
+integration in one leading PR, including documentation and wiki corrections. Other issues need Chief Project
+Manager's explicit allocation after qualifying independence in purpose, files, behavior, baselines, build graph
+and execution resources. There is no global one-task or five-task ceiling and no automatic PR per master.
+Assign a Senior Developer as needed; a separate Project Manager is optional for large or complex work.
+Before a substantial start or resume, obtain the current allocation in the existing queue and reconcile owners,
+actual processes and remote CI. Unclear ownership or an unresolved dependency/resource conflict blocks the
+affected start. Keep one writer per worktree, serialize review/fix/publication for each comparison and preserve
+existing executions. Coordinate safe stopping points with owners.
 
 The supplier prepares the Draft with current checks, CI/Sonar and required actual acceptance. Chief Project
 Manager alone verifies handover readiness and sets Ready for review; independent review follows Ready, not the
