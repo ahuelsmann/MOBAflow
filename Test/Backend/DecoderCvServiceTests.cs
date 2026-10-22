@@ -16,7 +16,7 @@ internal sealed class DecoderCvServiceTests
         var profile = new LocomotiveDecoderProfile { Protocol = DecoderProtocol.Dcc, CvSnapshots = [snapshot] };
 
         Assert.Throws<ArgumentException>(() => _service.ReplaceSnapshotValues(profile, snapshot.Id,
-        [
+        (DecoderCvValue[])[
             new DecoderCvValue { Number = 1, Value = 4 },
             new DecoderCvValue { Number = 1, Value = 5 }
         ]));

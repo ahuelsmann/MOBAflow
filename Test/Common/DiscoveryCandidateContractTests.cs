@@ -16,7 +16,7 @@ internal sealed class DiscoveryCandidateContractTests
     public void QuickWindow_NearLowestHostDoesNotWrapToHighestHosts()
     {
         var candidates = RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(
-            [IPAddress.Parse("192.168.10.1")], radius: 3);
+            (IPAddress[])[IPAddress.Parse("192.168.10.1")], radius: 3);
 
         Assert.That(candidates.Select(address => address.ToString()),
             Is.EqualTo(LowestHostNeighbors));
@@ -28,7 +28,7 @@ internal sealed class DiscoveryCandidateContractTests
     public void QuickWindow_NearHighestHostDoesNotWrapToLowestHosts()
     {
         var candidates = RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(
-            [IPAddress.Parse("192.168.10.254")], radius: 3);
+            (IPAddress[])[IPAddress.Parse("192.168.10.254")], radius: 3);
 
         Assert.That(candidates.Select(address => address.ToString()),
             Is.EqualTo(HighestHostNeighbors));
@@ -42,7 +42,7 @@ internal sealed class DiscoveryCandidateContractTests
     public void QuickWindow_RadiusBelowMinimumUsesOneNeighborOnEachSide(int radius)
     {
         var candidates = RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(
-            [IPAddress.Parse("10.20.30.128")], radius);
+            (IPAddress[])[IPAddress.Parse("10.20.30.128")], radius);
 
         Assert.That(candidates.Select(address => address.ToString()),
             Is.EqualTo(MinimumRadiusNeighbors));
@@ -54,7 +54,7 @@ internal sealed class DiscoveryCandidateContractTests
     public void QuickWindow_LargeRadiusStopsAtMaximumAndExcludesNetworkBroadcastAndSelf(int radius)
     {
         var candidates = RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(
-            [IPAddress.Parse("10.20.30.128")], radius);
+            (IPAddress[])[IPAddress.Parse("10.20.30.128")], radius);
 
         Assert.That(candidates, Has.Count.EqualTo(253));
         using (Assert.EnterMultipleScope())
@@ -78,7 +78,7 @@ internal sealed class DiscoveryCandidateContractTests
     public void QuickWindow_DeduplicatesHostsWithoutCollapsingDifferentSubnets()
     {
         var candidates = RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(
-            [IPAddress.Parse("10.168.30.50"), IPAddress.Parse("192.168.30.50"),
+            (IPAddress[])[IPAddress.Parse("10.168.30.50"), IPAddress.Parse("192.168.30.50"),
                 IPAddress.Parse("10.169.30.50"), IPAddress.Parse("10.168.31.50"),
                 IPAddress.Parse("10.168.30.50")], radius: 1);
 
@@ -90,7 +90,7 @@ internal sealed class DiscoveryCandidateContractTests
     [TestCase("203.0.113.50")]
     public void QuickWindow_DoesNotGenerateHostsForNonPrivateIpv4(string local)
     {
-        Assert.That(RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates([IPAddress.Parse(local)]), Is.Empty);
+        Assert.That(RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates((IPAddress[])[IPAddress.Parse(local)]), Is.Empty);
     }
 
     [Test]
@@ -167,8 +167,8 @@ internal sealed class DiscoveryCandidateContractTests
             CurrentIpAddress = " 10.20.30.200 "
         };
         var candidates = RestApiDiscoveryCandidateBuilder.BuildFullProbeOrder(settings,
-            [IPAddress.IPv6Loopback, IPAddress.Parse("10.20.30.50")],
-            [IPAddress.Parse("10.20.30.60"), IPAddress.Parse("10.20.30.40"),
+            (IPAddress[])[IPAddress.IPv6Loopback, IPAddress.Parse("10.20.30.50")],
+            (IPAddress[])[IPAddress.Parse("10.20.30.60"), IPAddress.Parse("10.20.30.40"),
                 IPAddress.Parse("10.20.30.51"), IPAddress.Parse("10.20.30.90"),
                 IPAddress.Parse("10.20.30.40"), IPAddress.IPv6Loopback, IPAddress.Parse("203.0.113.5")]);
 
@@ -191,7 +191,7 @@ internal sealed class DiscoveryCandidateContractTests
     public void FullProbeOrder_EachSubnetOctetMustMatchForProximity(string local, string otherSubnet, string near)
     {
         var candidates = RestApiDiscoveryCandidateBuilder.BuildFullProbeOrder(new RestApiSettings(),
-            [IPAddress.Parse(local)], [IPAddress.Parse(otherSubnet), IPAddress.Parse(near)]);
+            (IPAddress[])[IPAddress.Parse(local)], (IPAddress[])[IPAddress.Parse(otherSubnet), IPAddress.Parse(near)]);
 
         Assert.That(candidates.Select(address => address.ToString()), Is.EqualTo(new[] { near, otherSubnet }));
     }
@@ -202,8 +202,8 @@ internal sealed class DiscoveryCandidateContractTests
     public void FullProbeOrder_UsesClosestOfMultipleLocalAddresses()
     {
         var candidates = RestApiDiscoveryCandidateBuilder.BuildFullProbeOrder(new RestApiSettings(),
-            [IPAddress.Parse("10.20.30.50"), IPAddress.Parse("10.20.30.200")],
-            [IPAddress.Parse("10.20.30.60"), IPAddress.Parse("10.20.30.198"), IPAddress.Parse("10.20.30.51")]);
+            (IPAddress[])[IPAddress.Parse("10.20.30.50"), IPAddress.Parse("10.20.30.200")],
+            (IPAddress[])[IPAddress.Parse("10.20.30.60"), IPAddress.Parse("10.20.30.198"), IPAddress.Parse("10.20.30.51")]);
 
         Assert.That(candidates.Select(address => address.ToString()),
             Is.EqualTo(ClosestLocalHosts));
@@ -215,7 +215,7 @@ internal sealed class DiscoveryCandidateContractTests
     public void FullProbeOrder_NoLocalIpv4UsesAscendingHostNumber()
     {
         var candidates = RestApiDiscoveryCandidateBuilder.BuildFullProbeOrder(new RestApiSettings(),
-            [IPAddress.IPv6Loopback], [IPAddress.Parse("10.20.30.60"), IPAddress.Parse("10.20.30.40")]);
+            (IPAddress[])[IPAddress.IPv6Loopback], (IPAddress[])[IPAddress.Parse("10.20.30.60"), IPAddress.Parse("10.20.30.40")]);
 
         Assert.That(candidates.Select(address => address.ToString()),
             Is.EqualTo(AscendingFallbackHosts));
@@ -239,7 +239,7 @@ internal sealed class DiscoveryCandidateContractTests
         var settings = new RestApiSettings { RecentIpAddresses = ["10.20.30.9"], CurrentIpAddress = "10.20.30.8" };
 
         var candidates = RestApiDiscoveryCandidateBuilder.BuildLocalSubnetProbeOrder(settings,
-            [IPAddress.IPv6Loopback, IPAddress.Parse("203.0.113.50")]);
+            (IPAddress[])[IPAddress.IPv6Loopback, IPAddress.Parse("203.0.113.50")]);
 
         Assert.That(candidates.Select(address => address.ToString()),
             Is.EqualTo(RecentAndSavedHosts));
@@ -259,7 +259,7 @@ internal sealed class DiscoveryCandidateContractTests
     public void Subnets_DifferentOctetsDoNotCollideWhenExcludingLocalHosts(string first, string second)
     {
         var candidates = SubnetCandidateBuilder.BuildCandidates(
-            [IPAddress.Parse(first), IPAddress.Parse(second), IPAddress.Parse(first)]);
+            (IPAddress[])[IPAddress.Parse(first), IPAddress.Parse(second), IPAddress.Parse(first)]);
 
         Assert.That(candidates, Has.Count.EqualTo(506));
         using (Assert.EnterMultipleScope())
@@ -273,7 +273,7 @@ internal sealed class DiscoveryCandidateContractTests
     [Test]
     public void Subnets_EmptyAndIpv6OnlyInputsProduceNoCandidates([Values] bool ipv6Only)
     {
-        Assert.That(SubnetCandidateBuilder.BuildCandidates(ipv6Only ? [IPAddress.IPv6Loopback] : []), Is.Empty);
+        Assert.That(SubnetCandidateBuilder.BuildCandidates(ipv6Only ? (IPAddress[])[IPAddress.IPv6Loopback] : []), Is.Empty);
     }
 
     [Test]

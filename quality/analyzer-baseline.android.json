@@ -201,7 +201,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1032",
-      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "path": "Backend/Service/Recording/RecordingJsonReader.cs",
       "count": 3
     },
     {
@@ -348,7 +348,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1064",
-      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "path": "Backend/Service/Recording/RecordingJsonReader.cs",
       "count": 1
     },
     {
@@ -1195,13 +1195,6 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "Common/Discovery/LanIpv4AddressHelper.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
       "path": "Common/Events/RestApiEvents.cs",
       "count": 2
     },
@@ -1237,15 +1230,15 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "Common/Discovery/LanIpv4AddressHelper.cs",
-      "count": 1
+      "path": "Common/Discovery/MobApiUdpDiscoveryResponder.cs",
+      "count": 2
     },
     {
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "Common/Discovery/MobApiUdpDiscoveryResponder.cs",
-      "count": 2
+      "path": "Common/Discovery/NetworkInterfaceIpv4AddressSource.cs",
+      "count": 1
     },
     {
       "project": "Common",
@@ -1322,7 +1315,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1307",
       "path": "Common/Path/PhotoPathHelper.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Common",
@@ -1787,13 +1780,6 @@
       "count": 1
     },
     {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE2002",
-      "path": "Domain/Project.cs",
-      "count": 1
-    },
-    {
       "project": "MOBAdisplay",
       "targetFramework": "net10.0",
       "ruleId": "CA1001",
@@ -2063,7 +2049,7 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "CA1031",
-      "path": "MOBAsmart/Service/LanIpv4AddressHelperAndroidBootstrap.cs",
+      "path": "MOBAsmart/Service/AndroidLocalIpv4AddressSource.cs",
       "count": 1
     },
     {
@@ -2240,13 +2226,6 @@
       "ruleId": "CA1848",
       "path": "MOBAsmart/Service/RuntimeHubRemoteClient.cs",
       "count": 10
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA1859",
-      "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
-      "count": 2
     },
     {
       "project": "MOBAsmart",

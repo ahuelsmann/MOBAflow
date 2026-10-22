@@ -150,7 +150,8 @@ standalone hardware color test.
 | Live layout operation | A reachable Roco Z21 and a trusted private LAN; feedback modules for feedback-driven automation |
 
 MOBAflow uses .NET 10. The desktop targets `net10.0-windows10.0.22621.0`;
-MOBAsmart targets `net10.0-android`. See the
+its minimum OS remains Windows build `22621`, while its Windows SDK targeting
+pack is `10.0.28000.87`. MOBAsmart targets `net10.0-android`. See the
 [installation guide](docs/wiki/INSTALLATION.md) for platform setup, mobile
 connection and troubleshooting.
 
@@ -177,8 +178,9 @@ dotnet run --project MOBAflow/MOBAflow.csproj
 ### Connect your layout
 
 1. Read the [hardware and liability notes](docs/HARDWARE-DISCLAIMER.md).
-2. In **Settings**, confirm the Z21 IP address and UDP port (`21105` by default).
-3. Create a solution or open the included sample, then select a project.
+2. Create a solution or open the included sample, then select a project.
+3. On **Solution**, use **Z21 Finder** to assign a Z21 to that project and confirm
+   its IP address and UDP port (`21105` by default).
 4. Connect to the Z21 and verify feedback and telemetry in **Overview** or
    **Monitor** before operating trains.
 5. To add MOBAsmart, follow the [Android setup steps](docs/wiki/INSTALLATION.md#first-android-start).

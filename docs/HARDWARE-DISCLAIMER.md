@@ -10,20 +10,24 @@ third-party manufacturers.
 
 ## 🚂 Z21 Hardware Operation
 
-### General Liability Disclaimer
+### Software Limits and Mandatory Rights
 
-**MOBAflow communicates with Roco Z21 Digital Command Stations via UDP
-connections. Usage is entirely at YOUR OWN RISK.**
+MOBAflow communicates with Roco Z21 Digital Command Stations via UDP and sends
+commands to physical hardware. It is not a certified safety system and does not
+guarantee safe wiring, protection against hardware damage, or the integrity of
+a command station's configuration. Hardware installation and repair require the
+manufacturer's guidance and appropriate expertise.
 
-By using MOBAflow, you accept the following conditions:
+The software is supplied under the [MIT License](../LICENSE). This additional
+hardware guidance does not exclude or limit liability where applicable law
+prohibits doing so. In particular, it does not exclude liability for intentional
+acts, gross negligence, culpable injury to life, body or health, or other mandatory
+statutory liability. The original license texts remain unchanged.
 
-#### ❌ **What MOBAflow does NOT provide:**
-
-- ❌ No warranty for the safety of your model railroad layout
-- ❌ No warranty for protection against hardware damage
-- ❌ No warranty for the integrity of your Z21 configuration
-- ❌ No technical support for Z21 hardware failures
-- ❌ No liability for transformer overload, short circuits, or damage
+For the German legal limits, see [section 276(3) BGB](https://www.gesetze-im-internet.de/bgb/__276.html)
+and, where the rules for standard contract terms apply, [section 309 no. 7 BGB](https://www.gesetze-im-internet.de/bgb/__309.html).
+This document is operating guidance, not a safety certification or a determination
+of the legal outcome of an individual case.
 
 #### ✅ **What is YOUR responsibility:**
 
@@ -53,18 +57,26 @@ By using MOBAflow, you accept the following conditions:
 ✓ Z21 in the same network as MOBAflow
 ✓ No firewall blocking of UDP port 21105
 ✓ Static IP for Z21 recommended (avoid DHCP conflicts)
-✓ NAT/Port forwarding over the Internet NOT recommended!
+✓ Do not expose the Z21 or MOBApi through Internet port forwarding
 ```
 
 ### Security Guidelines
 
 ```text
 ✓ Never expose UDP port 21105 to the Internet!
-✓ Use local networks only (LAN/WLAN)
-✓ VPN for remote access (not direct port forwarding)
+✓ Use only trusted private networks and trusted devices
+✓ Restrict firewall access to the trusted private network
 ✓ Regular firmware updates for Z21
-✓ No sensitive data transmitted via MOBAflow
+✓ Check photos and user-entered content before sharing them
 ```
+
+---
+
+MOBApi uses HTTP without sign-in or transport encryption. Devices on the trusted
+home network can read layout data and send commands. Uploaded photos and
+user-entered content can contain personal or sensitive information; their
+sensitivity depends on what the user supplies. See the [security policy](../SECURITY.md)
+and the [MOBAsmart privacy notes](wiki/MOBASMART-USER-GUIDE.md#privacy-and-safety).
 
 ---
 
@@ -152,21 +164,14 @@ If you:
 
 ---
 
-## Final Clarification
+## Operational Summary
 
-**By using MOBAflow, you accept that:**
-
-1. ✅ MOBAflow is provided "AS IS" (as available)
-2. ✅ Usage is entirely your responsibility
-3. ✅ No support is provided for hardware failures or damage
-4. ✅ MOBAflow developers are not liable for model railroad layout
-   damage
-5. ✅ You have read and understood the Z21 documentation
-
-**Safety is your responsibility.** Use MOBAflow only if you
-understand your model railroad layout and follow all safety
-guidelines.
+Read the Z21 manufacturer's documentation, verify the layout and power supply,
+and keep an independent emergency-stop or power-disconnection option within reach.
+Software controls do not replace safe electrical installation or hardware
+protection. Follow the applicable license terms and the mandatory-rights
+clarification above.
 
 ---
 
-> Last Update: February 2026
+> Last Update: 2026-10-20

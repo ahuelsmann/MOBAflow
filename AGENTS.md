@@ -27,9 +27,11 @@ on Windows and Linux.
 
 ## Master coordination and standing mandate
 
-- A human-assigned implementation task includes planning, implementation, validation, a draft PR, independent
-  Claude CLI review, correction of confirmed findings, Ready and squash merge after all current gates pass.
-  The assigned master and Chief Project Manager organize these steps without repeated technical approvals.
+- A human-assigned implementation task includes planning, implementation, validation and a draft PR with current
+  checks, CI/Sonar and required actual acceptance. Chief Project Manager alone verifies handover readiness and
+  marks the PR Ready for review. The existing Claude plan then performs fresh independent review, separate fixes,
+  independent re-review and SHA-bound squash merge after all current gates pass. Review is not a Ready prerequisite.
+  The delivery owner follows through to verified integration without repeated technical approvals.
   An explicit narrower assignment, pause, no-merge instruction or excluded follow-up remains binding;
   do not infer new product work.
 - Art Director owns routine product decisions inside the assigned scope and its delivery; important product goals,
@@ -38,17 +40,26 @@ on Windows and Linux.
   through that queue. Head of Quality, Communications Director, Documentation Lead and Head of DevOps deliver work
   within their assigned roles. Masters hand work over directly and may exchange task-related messages with their
   assigned team and Claude CLI in both directions. The user does not relay messages, inspect code or administer PRs.
-- Across all MOBAflow teams, Codex, Claude and Antigravity, run at most one larger task at a time. Before starting
-  or resuming substantial work, obtain the Chief Project Manager's current execution allocation. Implementation,
-  extensive analysis/documentation, builds, tests, reviews and integration run serially. An occupied or unknown slot
-  blocks another start; preserve existing executions and remote CI and coordinate a safe stopping point with their
-  owner. Short status, handover and blocker communication remains allowed; do not start parallel specialists.
+- Across all MOBAflow teams, Codex, Claude and Antigravity, deliver the prioritized issue together through
+  integration in one leading PR, including its documentation and wiki corrections. Other issues require Chief
+  Project Manager's explicit allocation after qualifying independence in purpose, files, behavior, baselines,
+  build graph and execution resources. There is no global one-task or five-task ceiling and no automatic PR per
+  master. Assign a Senior Developer as needed and a separate Project Manager only for a large or complex task;
+  follow the role naming in master coordination. Before substantial starts/resumes, reconcile actual owners,
+  processes and remote CI in the single queue. Unclear ownership or a concrete dependency/resource conflict
+  blocks the affected start. Keep one writer per worktree and serialize review, fixes and publication for each
+  exact comparison. Preserve existing executions and safe stopping points; allocation never overrides scope,
+  pauses or acceptance requirements.
 - Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
   DevOps may independently consult the Head of UI/UX (Gemini Argon via Antigravity CLI) within assigned work,
   without another human approval. Observe the same execution allocation and serialize callers using the verified
   synchronous CLI contract in master coordination; PR reviews stay with fresh independent Claude sessions.
 - Follow [master coordination](.github/instructions/master-coordination.instructions.md) for ownership,
   Claude review independence, merge evidence, automation and the decisions that still need the user.
+- Use its [handover evidence rules](.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
+  for every team transition: identify the existing task, owner, next recipient, observed phase/status, observation
+  time with time zone, next step and limits. Sending alone proves neither takeover nor completion; preserve newer
+  confirmed evidence.
 
 ## Repository policies
 
@@ -97,7 +108,11 @@ Do not assume every directory is an active project or discover projects inside `
 | `MOBAsmart/` | Android MAUI UI, local/remote runtime coordination and mobile services |
 | `MOBApi/` | ASP.NET Core REST and SignalR host (default REST port 5001) |
 | `MOBAdisplay/` | Display rendering/transport; ESP32-S3 firmware in `esp32/` |
-| `Sound/`, `TrackLibrary.Base/`, `TrackLibrary.PikoA/`, `TrackPlan.Editor/`, `TrackPlan.Renderer/` | Audio, track catalogues, track-plan editor and rendering |
+| `Sound/` | Platform-neutral sound-effect playback contracts and null implementation |
+| `Speech.Base/` | Platform-neutral speech contracts, shared output and audio cache |
+| `Speech.Piper/` | Windows Piper speech synthesis and pronunciation normalization |
+| `Speech.SystemSpeech/` | Windows System.Speech synthesis provider |
+| `TrackLibrary.Base/`, `TrackLibrary.PikoA/`, `TrackPlan.Editor/`, `TrackPlan.Renderer/` | Track catalogues, track-plan editor and rendering |
 | `Test/` | NUnit tests, Moq, test doubles and fixtures; `Analysis/` has separate helper projects |
 | `docs/`, `scripts/`, `.vscode/tasks.json` | Architecture/user docs and development workflows |
 | `.github/workflows/` | GitHub CI and release definitions |
@@ -204,6 +219,10 @@ Review the final diff for unintended edits and architecture regressions. Update 
 change affects its accuracy; keep durable project knowledge here and session progress in the conversation.
 GitHub issues, milestones and Kanban track open work; consult/update a linked issue when the task calls for it,
 without making tracker access a prerequisite for independent local work.
+For every integration, assess architecture/developer documentation and the canonical user wiki under `docs/wiki/`.
+Record the affected pages and corrections, or a concrete reason no change is needed; reassess after behavior-changing
+review fixes and confirm against actual integrated `main`. Coordinate any remaining corrections through Chief Project
+Manager's existing queue without claiming complete documentation currency while known drift remains.
 When committing is requested, use English Conventional Commits. Report the commands/checks run and their outcomes;
 identify unavailable platform/hardware checks and the smallest remaining check without claiming they passed.
 

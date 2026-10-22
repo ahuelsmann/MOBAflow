@@ -4,6 +4,24 @@ Practical guidance for faster local build and deploy loops in MOBAflow and MOBAs
 
 ## MOBAflow (WinUI)
 
+### Windows SDK versions
+
+The Windows TFM and minimum OS remain `10.0.22621.0`. `Directory.Build.targets`
+selects the stable `Microsoft.Windows.SDK.NET.Ref` targeting pack `10.0.28000.87`
+through `WindowsSdkPackageVersion`; the .NET SDK remains `10.0.402`. This avoids
+using a preview .NET SDK or raising the minimum OS just to update the API pack.
+The pack's C#/WinRT analyzer requires a concrete type for collection expressions
+passed through read-only interfaces. Tests use explicit array types, for example
+`(string[])["Ready"]`, so the WinRT trimming/AOT checks remain enabled.
+
+The desktop also pins the stable NuGet build tools in `Directory.Packages.props`:
+`Microsoft.Windows.SDK.BuildTools` `10.0.28000.2705` and
+`Microsoft.Windows.SDK.BuildTools.MSIX` `1.7.260930100`. These are separate from
+Windows App SDK `2.5.1`, which supplies WinUI and the self-contained app runtime.
+The [native Windows SDK installer](https://learn.microsoft.com/en-us/windows/apps/windows-sdk/downloads)
+has its own servicing version, `10.0.28000.2957`; installing it alone does not
+change the .NET targeting pack or the NuGet tools used by this C# build.
+
 **Fast daily compile check:**
 
 ```bash
@@ -60,6 +78,12 @@ The .NET SDK band from `global.json` (10.0.4xx, at least 10.0.402) and the MAUI 
 prerequisites. The workload set version is pinned in the install command, not in `global.json`: a
 `workloadVersion` there would fail every build, including desktop-only builds, on machines without that
 workload set. Install the pinned set explicitly instead of relying on `--skip-manifest-update`.
+The set supplies MAUI SDK `10.0.110` and Android SDK `36.1.118`. The Android
+project's `MauiVersion` and central `Microsoft.Maui.Controls` version are both
+`10.0.120`, keeping the implicit application packages on the same stable release.
+The MAUI `10.0.120` packages require a workload version of at least `10.0.0`;
+the pinned workload meets that requirement. Do not splice a separately published
+MAUI SDK package into the workload or disable its compatibility check.
 From a clean checkout, run the install, restore, publish, and bundle validation defined in CI:
 
 ```powershell
@@ -123,6 +147,10 @@ Open `build.binlog` with [MSBuild Structured Log Viewer](https://msbuildlog.com/
 
 ## CI note
 
+The separate [observational dependency review](DEPENDENCY-REVIEW.md) reports pull-request
+dependency changes and graph limitations. It adds no required gate and does not replace the
+resolved NuGet audit described below. A successful job is not a claim of complete graph coverage.
+
 The public, authoritative pull-request check is `.github/workflows/quality.yml`.
 It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
@@ -152,6 +180,20 @@ fails the step when a selected test is skipped or too few tests run. Locally:
 dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~Moba.Test.Integration.MobApiProcessTests|FullyQualifiedName~Moba.Test.Integration.RuntimeHubLiveE2ETests"
 ```
 
+The `portable-linux` job (check `Portable tests on Linux`) runs the portable
+suite on `ubuntu-latest` for every code-changing PR, every push to `main` and
+manual runs. It is not yet a required check. The filter excludes the `Hardware`
+category, the Windows file-lock test
+`MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource`
+and the Skia fixtures `ClockRendererTests`, `Rgb565ConverterTests` and
+`SkiaFrameRendererTests`, which run in the Windows desktop job.
+`scripts/Test-TestRunResults.ps1` requires at least 2500 passed tests and no
+skipped test; the TRX results are archived for 30 days. Locally:
+
+```powershell
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --configuration Release --filter "TestCategory!=Hardware&FullyQualifiedName!=Moba.Test.Common.MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource&FullyQualifiedName!~ClockRendererTests&FullyQualifiedName!~Rgb565ConverterTests&FullyQualifiedName!~SkiaFrameRendererTests"
+```
+
 Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 `.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
@@ -174,10 +216,10 @@ skipped steps and a skipped job count as successful.
 source and copied fixture input of the mutation project.
 
 The repository consistency job also checks source-derived package and mutation
-documentation facts and runs their offline boundary tests. A separate
-[documentation consistency workflow](DOCUMENTATION-CONSISTENCY.md) supports
-semantic assessment and documentation commits in the existing PR. Its AI portion
-is initially inactive and requires explicit API/App configuration and live acceptance.
+documentation facts and runs their offline boundary tests. Documentation and
+wiki impact beyond these deterministic facts is recorded through the existing
+delivery process and independent Claude PR review; see
+[documentation consistency](DOCUMENTATION-CONSISTENCY.md).
 
 The repository consistency job also lints every workflow with a pinned,
 checksum-verified actionlint release and checks internal documentation links
