@@ -37,7 +37,9 @@ public sealed class MobaRuntimeServiceDependencies
 
     /// <summary>
     /// Gets the Z21 endpoint source, or null to connect to the Z21 of the project the runtime runs
-    /// (that source depends on the runtime's own active project, so the runtime creates it).
+    /// (that source depends on the runtime's own active project, so the runtime creates it). Production hosts
+    /// provide a source: MOBAsmart registers one for its selected project and <c>ProjectRuntimeFactory</c> passes
+    /// one per project; the default applies only when the host registers none.
     /// </summary>
     public IZ21EndpointSource? EndpointSource { get; init; }
 }
@@ -118,7 +120,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _settings = dependencies.Settings;
         _logger = logger;
         _eventBus = dependencies.EventBus;
-        // Without a source of its own (MOBAsmart), the runtime connects to the Z21 of the project it runs.
+        // When the host registers no source, the runtime connects to the Z21 of the project it runs.
         _endpointSource = dependencies.EndpointSource ?? new ProjectZ21EndpointSource(() => _activeProjectContext?.ActiveProject);
         _interlockingRuntime = dependencies.InterlockingRuntime;
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;

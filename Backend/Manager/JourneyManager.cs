@@ -369,7 +369,6 @@ public partial class JourneyManager : IJourneyManager
         JourneyRuntimeTransitionKind kind,
         int? inPort = null)
     {
-
         var stationIndex = state.CurrentStationId is Guid stationId
             ? journey.Stations.FindIndex(station => station.Id == stationId)
             : state.CurrentPos;

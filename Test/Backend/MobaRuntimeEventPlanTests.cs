@@ -36,21 +36,26 @@ internal sealed partial class MobaRuntimeEventPlanTests : IDisposable
         var oldProject = new Project { Name = "Old", Journeys = [journey], Workflows = [workflow] };
         var newProject = new Project { Name = "New", Journeys = [journey], Workflows = [workflow] };
         var queuedProjects = new List<Guid>();
-        var coordinator = new Mock<IWorkflowExecutionCoordinator>();
-        coordinator.Setup(value => value.EnqueueAsync(It.IsAny<QueuedWorkflowExecution>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((QueuedWorkflowExecution execution, CancellationToken _) =>
-            {
-                queuedProjects.Add(execution.RequestFactory().Project.Id);
-                return new WorkflowExecutionResult
+        // Each manager owns and disposes its coordinator; only the counters and the recorder are shared.
+        JourneyManagerDependencies Dependencies()
+        {
+            var coordinator = new Mock<IWorkflowExecutionCoordinator>();
+            coordinator.Setup(value => value.EnqueueAsync(It.IsAny<QueuedWorkflowExecution>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((QueuedWorkflowExecution execution, CancellationToken _) =>
                 {
-                    ExecutionId = Guid.NewGuid(),
-                    WorkflowId = workflow.Id,
-                    SourceCorrelationId = execution.SourceCorrelationId,
-                    Status = WorkflowExecutionStatus.Succeeded
-                };
-            });
-        var dependencies = TestRuntimes.JourneyDependencies(counters, coordinator: coordinator.Object);
-        using var oldManager = TestRuntimes.JourneyManager(z21.Object, oldProject, dependencies);
+                    queuedProjects.Add(execution.RequestFactory().Project.Id);
+                    return new WorkflowExecutionResult
+                    {
+                        ExecutionId = Guid.NewGuid(),
+                        WorkflowId = workflow.Id,
+                        SourceCorrelationId = execution.SourceCorrelationId,
+                        Status = WorkflowExecutionStatus.Succeeded
+                    };
+                });
+            return TestRuntimes.JourneyDependencies(counters, coordinator: coordinator.Object);
+        }
+
+        using var oldManager = TestRuntimes.JourneyManager(z21.Object, oldProject, Dependencies());
         JourneyManager? newManager = null;
         try
         {
@@ -59,13 +64,13 @@ internal sealed partial class MobaRuntimeEventPlanTests : IDisposable
                 {
                     if (args.Snapshot.Count == 1)
                     {
-                        newManager = TestRuntimes.JourneyManager(z21.Object, newProject, dependencies);
+                        newManager = TestRuntimes.JourneyManager(z21.Object, newProject, Dependencies());
                         if (disposeDuringNotification)
                             oldManager.Dispose();
                     }
                 };
             else
-                newManager = TestRuntimes.JourneyManager(z21.Object, newProject, dependencies);
+                newManager = TestRuntimes.JourneyManager(z21.Object, newProject, Dependencies());
 
             Feedback(z21, 1);
             List<Guid> expectedProjects = disposeDuringNotification

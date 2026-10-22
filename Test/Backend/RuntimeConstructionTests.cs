@@ -85,6 +85,50 @@ internal sealed class RuntimeConstructionTests
         }
     }
 
+    [Test]
+    public async Task RuntimeDispose_LeavesItsInjectedInPortCountersCounting()
+    {
+        var z21 = new Mock<IZ21>();
+        var settings = CountingSettings();
+        using var counters = new InPortCounterService(z21.Object, settings);
+        using (var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings }))
+        {
+            await runtime.ActivateProjectAsync(new Project { Journeys = [new Journey { IsActive = true }] });
+        }
+
+        RaiseFeedbackOnInPortOne(z21);
+
+        Assert.That(counters.GetSnapshot().Single(counter => counter.InPort == 1).Count, Is.EqualTo(1),
+            "The runtime borrows its counters; disposing it must not dispose them.");
+        Assert.DoesNotThrow(counters.ResetAll);
+    }
+
+    [Test]
+    public void JourneyManagerDispose_DisposesItsCoordinatorOnceAndLeavesCountersCounting()
+    {
+        var z21 = new Mock<IZ21>();
+        using var counters = new InPortCounterService(z21.Object, CountingSettings());
+        var coordinator = new Mock<IWorkflowExecutionCoordinator>();
+        var manager = TestRuntimes.JourneyManager(z21.Object, new Project(),
+            TestRuntimes.JourneyDependencies(counters, coordinator: coordinator.Object));
+
+        manager.Dispose();
+        RaiseFeedbackOnInPortOne(z21);
+
+        coordinator.Verify(value => value.Dispose(), Times.Once);
+        Assert.That(counters.GetSnapshot().Single(counter => counter.InPort == 1).Count, Is.EqualTo(1),
+            "The journey manager owns its coordinator but borrows its counters.");
+    }
+
+    private static AppSettings CountingSettings() =>
+        new() { Counter = { CountOfFeedbackPoints = 1, UseTimerFilter = false } };
+
+    private static void RaiseFeedbackOnInPortOne(Mock<IZ21> z21)
+    {
+        byte[] packet = [0x0F, 0x00, 0x80, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        z21.Raise(source => source.Received += null, new FeedbackResult(packet));
+    }
+
     private static TestCaseData Case(string name, Func<InPortCounterService, object> construct) =>
         new TestCaseData(construct).SetArgDisplayNames(name);
 
