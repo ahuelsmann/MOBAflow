@@ -3932,6 +3932,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/MobaRuntimeServiceCommandTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceLocomotiveStateTests.cs",
       "count": 1
     },
@@ -3954,6 +3961,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceTrackPowerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/MobaRuntimeServiceZ21EventTests.cs",
       "count": 1
     },
     {
@@ -4219,7 +4233,21 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/Z21OperatorCommandTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/Z21ProtocolTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/Z21ReceiveTests.cs",
       "count": 1
     },
     {
@@ -6131,7 +6159,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Backend/Z21EventPipelineTests.cs",
-      "count": 13
+      "count": 9
     },
     {
       "project": "Test",
@@ -7259,13 +7287,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Backend/Z21CommandTests.cs",
       "count": 11
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Backend/Z21EventPipelineTests.cs",
-      "count": 4
     },
     {
       "project": "Test",

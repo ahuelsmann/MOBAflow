@@ -137,7 +137,7 @@ dependencies.
 | RF-06 | [#90](https://github.com/ahuelsmann/MOBAflow/issues/90) | Release and CI run an explicit analyzer baseline and reject new unapproved diagnostics. |
 | RF-07 | [#360](https://github.com/ahuelsmann/MOBAflow/issues/360) | Every supported delivery target has a reproducible mandatory clean-build lane. |
 | RF-08 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
-| RF-09 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Risk-critical behavior has non-decreasing coverage and mutation protection. |
+| RF-09 | [#366](https://github.com/ahuelsmann/MOBAflow/issues/366) | Risk-critical behavior has non-decreasing coverage and mutation protection. |
 | RF-10 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Formatting drift fails CI without obscuring functional changes. |
 | RF-11 | [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
 | RF-12 | [#242](https://github.com/ahuelsmann/MOBAflow/issues/242) | Mobile session, discovery, runtime projection, synchronization, and upload concerns are separated. |
@@ -195,18 +195,9 @@ does not regress.
 
 ### RF-09: Coverage and mutation ratchets
 
-Sequence:
-
-1. protect Z21 ordering and overload behavior;
-2. protect MOBApi command validation and remote command queue bounds;
-3. establish the Backend and API mutation lanes;
-4. extend measured lanes to Common and SharedUI;
-5. extend further only where the tooling is technically suitable.
-
-Acceptance anchor: existing coverage thresholds do not decrease without an
-approved rationale; security and concurrency paths include negative and
-failure-path assertions; every activated mutation lane records a baseline and
-adopts a non-decreasing ratchet.
+The baseline, lane order, triage rules and delivery slices now belong to
+[the RF-09 child plan](366-coverage-mutation-ratchets.md), owned by
+[issue #366](https://github.com/ahuelsmann/MOBAflow/issues/366).
 
 ### RF-10: Formatting baseline and gate
 

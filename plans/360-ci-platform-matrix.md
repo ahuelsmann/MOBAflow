@@ -23,7 +23,7 @@ Recorded on main `f4756172`. The CI lanes are jobs of [Quality CI](../.github/wo
 | MOBApi host and its process integration tests | `dotnet build MOBApi/MOBApi.csproj` | `display-protocol` (MOBApi process integration) and the `desktop` test graph | yes, when code changes |
 | Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (pinned PlatformIO) | firmware build when firmware paths change |
 | Android app (`MOBAsmart`) Release AAB | release workflow steps; `scripts/Test-AndroidAppBundle.ps1` | `android-release` | **no**: only on manual `workflow_dispatch` with `validate_android` ([recorded maintainer decision](https://github.com/ahuelsmann/MOBAflow/issues/360#issuecomment-6256088821)) |
-| Mutation lanes (`domain`, `common`, `speech-base` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-speech-base` | all run by change scope; only Domain mutation testing is a required check; further lanes belong to RF-09 |
+| Mutation lanes (`domain`, `common`, `speech-base`, `backend` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-speech-base`, `mutation-backend` | all run by change scope; only Domain mutation testing is a required check; further lanes belong to [RF-09](366-coverage-mutation-ratchets.md) |
 | Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule | yes |
 | Release package | [Release Studio](../.github/workflows/release-studio.yml) | manual release workflow | release only |
 
