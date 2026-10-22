@@ -3848,6 +3848,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Architecture/ThemeDictionaryArchitectureTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/ActionExecutorTests.cs",
       "count": 1
     },

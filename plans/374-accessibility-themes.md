@@ -72,8 +72,11 @@ MOBAsmart: 16 of 23 XAML files already use `SemanticProperties`; the remaining f
 3. **Keyboard and Narrator for the critical workflows:** the emergency-stop and track-power shortcuts and the signal-box
    focus layer (delivered; the track-power switch in `MainWindow` gets its shortcut hint after #293), then focus order and
    visible focus on the remaining critical pages.
-4. **Theme resources and High Contrast:** the 12 non-dictionary XAML colors and the general-purpose C# colors;
-   `HighContrast` theme dictionaries; a non-color cue for signal aspects.
+4. **Theme resources and High Contrast:** delivered in part: a `HighContrast` theme dictionary that maps every app brush
+   to Windows contrast colors (guarded by `ThemeDictionaryArchitectureTests`), panel accent strips and Track Plan labels,
+   feedback glow and validation colors as theme brushes, and `ThemeResourceResolver` following the Windows contrast
+   theme for Win2D drawing. Open: a non-color cue for signal aspects and the remaining fixed colors after a High Contrast
+   check.
 5. **MOBAsmart:** TalkBack descriptions for the remaining views and font scaling.
 6. **Acceptance and completion:** Accessibility Insights FastPass on every critical surface; Narrator, keyboard only and
    200% text size; Light, Dark and High Contrast. Evidence is recorded on #374; then documentation and plan removal.

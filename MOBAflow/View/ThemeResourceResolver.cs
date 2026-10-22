@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 
 using Windows.UI;
+using Windows.UI.ViewManagement;
 
 /// <summary>
 /// Resolves theme-aware resources based on a <see cref="FrameworkElement"/>'s
@@ -18,6 +19,8 @@ using Windows.UI;
 /// </summary>
 internal static class ThemeResourceResolver
 {
+    private static readonly Lazy<AccessibilitySettings> HighContrastSettings = new(() => new AccessibilitySettings());
+
     /// <summary>
     /// Returns the brush registered under <paramref name="key"/> in the theme dictionary that
     /// matches <paramref name="element"/>'s <see cref="FrameworkElement.ActualTheme"/>.
@@ -62,6 +65,17 @@ internal static class ThemeResourceResolver
     public static FrameworkElement? GetDefaultThemeRoot()
         => App.MainWindow?.Content as FrameworkElement;
 
+    /// <summary>
+    /// Returns an app theme color with the given alpha (0-255), for drawing code that fades a themed color.
+    /// </summary>
+    public static Color ResolveColorWithAlpha(FrameworkElement? element, string key, Color fallback, byte alpha)
+    {
+        var color = ResolveColor(element, key, fallback);
+        return Color.FromArgb(alpha, color.R, color.G, color.B);
+    }
+
+    private static bool IsHighContrast() => HighContrastSettings.Value.HighContrast;
+
     private static ElementTheme GetEffectiveTheme(FrameworkElement? element)
     {
         var theme = element?.ActualTheme ?? ElementTheme.Default;
@@ -84,7 +98,10 @@ internal static class ThemeResourceResolver
             return false;
         }
 
-        var themeKey = GetEffectiveTheme(element) == ElementTheme.Dark ? "Dark" : "Light";
+        // A Windows contrast theme overrides the app's light/dark choice, as XAML ThemeResource lookups do.
+        var themeKey = IsHighContrast()
+            ? "HighContrast"
+            : GetEffectiveTheme(element) == ElementTheme.Dark ? "Dark" : "Light";
 
         if (TryResolveFromDictionary(Application.Current.Resources, themeKey, key, out value))
             return true;
