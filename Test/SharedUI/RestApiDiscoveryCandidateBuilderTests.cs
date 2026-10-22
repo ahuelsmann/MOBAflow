@@ -10,6 +10,12 @@ using Moba.SharedUI.Mobile;
 [TestFixture]
 internal sealed class RestApiDiscoveryCandidateBuilderTests
 {
+    private static readonly string[] ExpectedFullProbeOrder =
+        ["192.168.0.34", "192.168.0.51", "192.168.0.33", "192.168.0.79"];
+
+    private static readonly string[] ExpectedQuickRecentOrder =
+        ["192.168.0.51", "10.20.30.40", "172.16.0.20"];
+
     [Test]
     public void BuildFullProbeOrder_PreservesExplicitSavedAddressAfterRecentAndSubnet()
     {
@@ -32,10 +38,7 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
         Assert.Multiple(() =>
         {
             Assert.That(order[0].ToString(), Is.EqualTo("192.168.0.34"));
-            Assert.That(order.Select(ip => ip.ToString()), Is.EqualTo(new[]
-            {
-                "192.168.0.34", "192.168.0.51", "192.168.0.33", "192.168.0.79"
-            }));
+            Assert.That(order.Select(ip => ip.ToString()), Is.EqualTo(ExpectedFullProbeOrder));
             Assert.That(RestApiDiscoveryCandidateBuilder.ShouldProbeSavedIp(settings.CurrentIpAddress), Is.True);
         });
     }
@@ -80,7 +83,7 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(order.Take(3).Select(address => address.ToString()),
-                Is.EqualTo(new[] { "192.168.0.51", "10.20.30.40", "172.16.0.20" }));
+                Is.EqualTo(ExpectedQuickRecentOrder));
             Assert.That(order.Count(address => address.Equals(IPAddress.Parse("192.168.0.51"))), Is.EqualTo(1));
         }
     }
