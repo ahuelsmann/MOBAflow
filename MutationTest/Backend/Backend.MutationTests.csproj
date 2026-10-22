@@ -31,6 +31,7 @@
     <Compile Include="..\..\Test\GlobalUsings.cs" Link="GlobalUsings.cs" />
     <Compile Include="..\..\Test\Helpers\ManualTimeProvider.cs" Link="Helpers\ManualTimeProvider.cs" />
     <Compile Include="..\..\Test\Helpers\TestProjectRuntimeHost.cs" Link="Helpers\TestProjectRuntimeHost.cs" />
+    <Compile Include="..\..\Test\Helpers\TestRuntimes.cs" Link="Helpers\TestRuntimes.cs" />
     <Compile Include="..\..\Test\Helpers\TestWorkflowServices.cs" Link="Helpers\TestWorkflowServices.cs" />
     <Compile Include="..\..\Test\MOBAdisplay\ManualTimeProvider.cs" Link="MOBAdisplay\ManualTimeProvider.cs" />
     <Compile Include="..\..\Test\Mocks\FakeUdpClientWrapper.cs" Link="Mocks\FakeUdpClientWrapper.cs" />
