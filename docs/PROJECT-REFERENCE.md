@@ -337,7 +337,14 @@ MOBApi has no authentication: every REST and SignalR operation is available over
 plain HTTP to every device in the home network, as described in the
 [operating model](../SECURITY.md#operating-model). Every remote command passes one
 admission step that validates its values before it is forwarded to MOBAflow or
-queued; the fallback queue holds at most 128 commands.
+queued; the fallback queue holds at most 128 commands. Every command that this
+admission step rejects (failed validation or full queue) increments the counter
+`moba.runtime_commands.rejected` of the meter `Moba.MOBApi`, tagged with `reason`
+(`invalid` or `queue_full`) and `command`; a full queue is also logged as a
+warning. Malformed requests that the REST or SignalR boundary rejects earlier
+(for example a missing body or an unparsable project, signal or aspect value) are
+not counted. Watch the counter live with
+`dotnet-counters monitor --name MOBApi --counters Moba.MOBApi`.
 
 MOBAflow starts MOBApi from an isolated copy of its build output so updates and
 cleanup do not race the running process.
