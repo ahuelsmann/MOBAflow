@@ -11,9 +11,6 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
-#if ANDROID
-        LanIpv4AddressHelperAndroidBootstrap.Register();
-#endif
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()

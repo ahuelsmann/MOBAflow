@@ -11,6 +11,39 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Threading;
 
+/// <summary>Groups the collaborators of one <see cref="MobaRuntimeService"/>; the caller owns all of them.</summary>
+public sealed class MobaRuntimeServiceDependencies
+{
+    /// <summary>Gets the Z21 connection of the runtime.</summary>
+    public required IZ21 Z21 { get; init; }
+
+    /// <summary>Gets the factory for per-run action execution contexts.</summary>
+    public required ActionExecutionContextFactory ExecutionContextFactory { get; init; }
+
+    /// <summary>Gets the application settings.</summary>
+    public required AppSettings Settings { get; init; }
+
+    /// <summary>Gets the event bus for runtime and journey events.</summary>
+    public required IEventBus EventBus { get; init; }
+
+    /// <summary>Gets the factory for the journey manager of the active project.</summary>
+    public required JourneyManagerFactory JourneyManagerFactory { get; init; }
+
+    /// <summary>Gets the interlocking runtime activated with the project.</summary>
+    public required IInterlockingRuntime InterlockingRuntime { get; init; }
+
+    /// <summary>Gets the InPort counters; the runtime subscribes to them but does not dispose them.</summary>
+    public required InPortCounterService InPortCounterService { get; init; }
+
+    /// <summary>
+    /// Gets the Z21 endpoint source, or null to connect to the Z21 of the project the runtime runs
+    /// (that source depends on the runtime's own active project, so the runtime creates it). Production hosts
+    /// provide a source: MOBAsmart registers one for its selected project and <c>ProjectRuntimeFactory</c> passes
+    /// one per project; the default applies only when the host registers none.
+    /// </summary>
+    public IZ21EndpointSource? EndpointSource { get; init; }
+}
+
 /// <summary>
 /// In-process runtime owning Z21 connection state and the active project execution context.
 /// Implementation is split across partial files for readability (runtime API, Z21 handlers, auto-connect, helpers, snapshot).
@@ -22,11 +55,10 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private readonly JourneyManagerFactory _journeyManagerFactory;
     private readonly AppSettings _settings;
     private readonly ILogger<MobaRuntimeService> _logger;
-    private readonly IEventBus? _eventBus;
+    private readonly IEventBus _eventBus;
     private readonly IZ21EndpointSource _endpointSource;
-    private readonly IInterlockingRuntime? _interlockingRuntime;
+    private readonly IInterlockingRuntime _interlockingRuntime;
     private readonly InPortCounterService _inPortCounters;
-    private readonly bool _ownsInPortCounters;
 
     private ActiveProjectContext? _activeProjectContext;
     private Timer? _z21AutoConnectTimer;
@@ -69,58 +101,28 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="MobaRuntimeService"/> class.
     /// </summary>
-    public MobaRuntimeService(
-        IZ21 z21,
-        IWorkflowService workflowService,
-        ActionExecutionContext executionContext,
-        AppSettings settings,
-        ILogger<MobaRuntimeService> logger,
-        IEventBus? eventBus = null,
-        IInterlockingRuntime? interlockingRuntime = null,
-        InPortCounterService? inPortCounterService = null)
-        : this(
-            z21,
-            workflowService,
-            new ActionExecutionContextFactory(executionContext),
-            settings,
-            logger,
-            eventBus,
-            interlockingRuntime: interlockingRuntime,
-            inPortCounterService: inPortCounterService)
+    public MobaRuntimeService(MobaRuntimeServiceDependencies dependencies, ILogger<MobaRuntimeService> logger)
     {
-    }
-
-    public MobaRuntimeService(
-        IZ21 z21,
-        IWorkflowService workflowService,
-        ActionExecutionContextFactory executionContextFactory,
-        AppSettings settings,
-        ILogger<MobaRuntimeService> logger,
-        IEventBus? eventBus = null,
-        JourneyManagerFactory? journeyManagerFactory = null,
-        TimeProvider? timeProvider = null,
-        IInterlockingRuntime? interlockingRuntime = null,
-        InPortCounterService? inPortCounterService = null,
-        IZ21EndpointSource? endpointSource = null)
-    {
-        ArgumentNullException.ThrowIfNull(z21);
-        ArgumentNullException.ThrowIfNull(workflowService);
-        ArgumentNullException.ThrowIfNull(executionContextFactory);
-        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(dependencies);
+        ArgumentNullException.ThrowIfNull(dependencies.Z21);
+        ArgumentNullException.ThrowIfNull(dependencies.ExecutionContextFactory);
+        ArgumentNullException.ThrowIfNull(dependencies.Settings);
+        ArgumentNullException.ThrowIfNull(dependencies.EventBus);
+        ArgumentNullException.ThrowIfNull(dependencies.JourneyManagerFactory);
+        ArgumentNullException.ThrowIfNull(dependencies.InterlockingRuntime);
+        ArgumentNullException.ThrowIfNull(dependencies.InPortCounterService);
         ArgumentNullException.ThrowIfNull(logger);
 
-        _z21 = z21;
-        _executionContextFactory = executionContextFactory;
-        _inPortCounters = inPortCounterService ?? new InPortCounterService(z21, settings, timeProvider);
-        _ownsInPortCounters = inPortCounterService == null;
-        _journeyManagerFactory = journeyManagerFactory ?? new JourneyManagerFactory(
-            z21, workflowService, new JourneyManagerDependencies { InPortCounterService = _inPortCounters }, logger: null);
-        _settings = settings;
+        _z21 = dependencies.Z21;
+        _executionContextFactory = dependencies.ExecutionContextFactory;
+        _inPortCounters = dependencies.InPortCounterService;
+        _journeyManagerFactory = dependencies.JourneyManagerFactory;
+        _settings = dependencies.Settings;
         _logger = logger;
-        _eventBus = eventBus;
-        // Without a source of its own (MOBAsmart), the runtime connects to the Z21 of the project it runs.
-        _endpointSource = endpointSource ?? new ProjectZ21EndpointSource(() => _activeProjectContext?.ActiveProject);
-        _interlockingRuntime = interlockingRuntime;
+        _eventBus = dependencies.EventBus;
+        // When the host registers no source, the runtime connects to the Z21 of the project it runs.
+        _endpointSource = dependencies.EndpointSource ?? new ProjectZ21EndpointSource(() => _activeProjectContext?.ActiveProject);
+        _interlockingRuntime = dependencies.InterlockingRuntime;
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
         _inPortCounters.SnapshotChanged += OnJourneyRuntimeChanged;
         _z21.OnConnectionLost += OnZ21ConnectionLost;
@@ -189,7 +191,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         StopAutoConnectTimer();
         ReplaceActiveProjectContext(null);
         _inPortCounters.SnapshotChanged -= OnJourneyRuntimeChanged;
-        if (_ownsInPortCounters) _inPortCounters.Dispose();
         _startLock.Dispose();
         _projectActivationLock.Dispose();
     }
@@ -210,7 +211,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     {
         var snapshot = CreateSnapshot();
         Current = snapshot;
-        _eventBus?.Publish(new RuntimeSnapshotChangedEvent(snapshot));
+        _eventBus.Publish(new RuntimeSnapshotChangedEvent(snapshot));
     }
 
     private MobaRuntimeSnapshot CreateSnapshot()

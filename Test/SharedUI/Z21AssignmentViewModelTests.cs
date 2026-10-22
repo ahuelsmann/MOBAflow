@@ -85,6 +85,31 @@ internal sealed class Z21AssignmentViewModelTests
     }
 
     [Test]
+    public async Task AssignToSelectedProject_UsesTheSameAssignmentRulesAndRefreshesTheFinder()
+    {
+        var viewModel = Create(TwoProjects(firstProjectZ21: string.Empty), out var session);
+        await viewModel.SearchCommand.ExecuteAsync(null).ConfigureAwait(false);
+        var candidate = viewModel.UnassignedZ21s[0];
+        var first = session.SolutionViewModel!.Projects[0];
+        var second = session.SolutionViewModel.Projects[1];
+        session.SelectedProject = first;
+
+        viewModel.AssignToSelectedProjectCommand.Execute(candidate);
+        session.SelectedProject = second;
+        viewModel.AssignToSelectedProjectCommand.Execute(candidate);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(first.Model.Z21.IpAddress, Is.EqualTo(candidate.IpAddress));
+            Assert.That(first.Model.Z21.Port, Is.EqualTo(candidate.Port));
+            Assert.That(first.Model.Z21.SerialNumber, Is.EqualTo(candidate.SerialNumber));
+            Assert.That(second.Z21IpAddress, Is.Empty, "Double-click must not take a Z21 owned by another project.");
+            Assert.That(session.SelectedProject, Is.SameAs(second));
+            Assert.That(viewModel.UnassignedZ21s.Select(z21 => z21.IpAddress), Is.EqualTo(SecondAddress));
+        }
+    }
+
+    [Test]
     public async Task RemoveZ21_MakesTheZ21AvailableAgain()
     {
         var solution = TwoProjects(firstProjectZ21: "192.168.0.111");
@@ -150,7 +175,7 @@ internal sealed class Z21AssignmentViewModelTests
     {
         var discovery = new Mock<IZ21DiscoveryService>();
         discovery.Setup(value => value.DiscoverAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync((DiscoveredZ21[])[
                 new DiscoveredZ21("192.168.0.111", 21105, 1001),
                 new DiscoveredZ21("192.168.0.112", 21105, 2002)
             ]);

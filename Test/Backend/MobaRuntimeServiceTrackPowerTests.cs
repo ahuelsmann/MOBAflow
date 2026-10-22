@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
-using Microsoft.Extensions.Logging;
+using Moba.Test.Helpers;
 
 using Moba.Backend;
 using Moba.Backend.Interface;
@@ -15,8 +15,12 @@ using Moq;
 /// Verifies track power synchronization behavior between runtime commands and Z21 status events.
 /// </summary>
 [TestFixture]
-internal sealed class MobaRuntimeServiceTrackPowerTests
+internal sealed partial class MobaRuntimeServiceTrackPowerTests : IDisposable
 {
+    private readonly TestRuntimes _runtimes = new();
+
+    public void Dispose() => _runtimes.Dispose();
+
     [Test]
     public async Task SetTrackPowerAsync_OnlySendsCommand_StateChangesOnSystemStateEvent()
     {
@@ -124,17 +128,7 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21, AppSettings? settings = null)
-    {
-        var workflowServiceMock = new Mock<IWorkflowService>();
-        var loggerMock = new Mock<ILogger<MobaRuntimeService>>();
-
-        return new MobaRuntimeService(
-            z21,
-            workflowServiceMock.Object,
-            new ActionExecutionContext { Z21 = z21 },
-            // Without an active project the runtime has no Z21 to connect to.
-            settings ?? new AppSettings(),
-            loggerMock.Object);
-    }
+    // Without an active project the runtime has no Z21 to connect to.
+    private MobaRuntimeService CreateRuntime(IZ21 z21, AppSettings? settings = null) =>
+        _runtimes.Create(z21, new TestRuntimeOptions { Settings = settings });
 }

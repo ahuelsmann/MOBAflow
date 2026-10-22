@@ -3,6 +3,9 @@ namespace Moba.Test.Backend;
 
 using Moba.Backend.Discovery;
 using Moba.Backend.Protocol;
+using Moba.Common.Discovery;
+
+using Moq;
 
 using System.Net;
 
@@ -61,5 +64,27 @@ internal sealed class Z21DiscoveryServiceTests
         var sender = new IPEndPoint(IPAddress.Parse("192.168.0.111"), 21105);
 
         Assert.That(Z21DiscoveryService.TryReadSerialNumberResponse(packet, sender, out _), Is.False);
+    }
+
+    [Test]
+    public void Constructor_RequiresALocalAddressSource()
+    {
+        Assert.Throws<ArgumentNullException>(() => _ = new Z21DiscoveryService(null!));
+    }
+
+    [Test]
+    public async Task DiscoverAllAsync_WithoutLocalAddresses_QueriesTheSourcePerPortAndFindsNothing()
+    {
+        var addresses = new Mock<ILocalIpv4AddressSource>();
+        addresses.Setup(source => source.GetCandidateLocalIpv4Addresses()).Returns([]);
+
+        var found = await new Z21DiscoveryService(addresses.Object).DiscoverAllAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(found, Is.Empty, "Without local addresses there is no subnet to scan.");
+            addresses.Verify(source => source.GetCandidateLocalIpv4Addresses(), Times.Exactly(2),
+                "Each discovery port asks the injected source.");
+        }
     }
 }

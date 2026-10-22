@@ -170,7 +170,6 @@ public sealed partial class TrackPlanPage
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         InterlockingViewModel.StartObserving();
-        SegmentPlanPathBuilder.ScaleMmToPx = ScaleMmToPx;
         PopulateToolbox();
         SetupCanvas();
         SetupZoom();
@@ -1105,7 +1104,7 @@ public sealed partial class TrackPlanPage
     private void CreateGhost(PlacedSegment placed)
     {
         ClearGhost();
-        _ghostShape = SegmentPlanPathBuilder.CreatePath(placed, isGhost: true, isSelected: false);
+        _ghostShape = SegmentPlanPathBuilder.CreatePath(placed, ScaleMmToPx, isGhost: true, isSelected: false);
         if (_ghostLayer != null)
         {
             _ghostLayer.Children.Add(_ghostShape);

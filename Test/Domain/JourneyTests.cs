@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Domain;
 
+using Moba.Domain.Enum;
+
 [TestFixture]
 internal class JourneyTests
 {
@@ -74,5 +76,59 @@ internal class JourneyTests
 
         journey.Stations.Remove(station);
         Assert.That(journey.Stations, Is.Empty);
+    }
+
+    private static Journey ThreeStops() =>
+        new() { Stations = [new Station { Name = "Porta" }, new Station { Name = "Minden" }, new Station { Name = "Bielefeld" }] };
+
+    [TestCase(0, 1)]
+    [TestCase(1, 2)]
+    [TestCase(-1, 0)]
+    public void ResolveStopTransition_NextMovesOneStopAndStartsAtTheFirstStopWhenTheCurrentOneIsUnknown(int current, int expected)
+    {
+        var target = ThreeStops().ResolveStopTransition(current, new JourneyStopTransition { Mode = JourneyStopTransitionMode.Next });
+
+        Assert.That(target, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void ResolveStopTransition_NextAtTheLastStopAndNoneKeepTheCurrentStop()
+    {
+        var journey = ThreeStops();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(journey.ResolveStopTransition(2, new JourneyStopTransition { Mode = JourneyStopTransitionMode.Next }), Is.Null);
+            Assert.That(journey.ResolveStopTransition(1, new JourneyStopTransition { Mode = JourneyStopTransitionMode.None }), Is.Null);
+        }
+    }
+
+    [Test]
+    public void ResolveStopTransition_SpecificStationFindsItsStopOrRejectsAForeignStation()
+    {
+        var journey = ThreeStops();
+        var target = journey.Stations[2].Id;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(journey.ResolveStopTransition(0,
+                new JourneyStopTransition { Mode = JourneyStopTransitionMode.SpecificStation, StationId = target }), Is.EqualTo(2));
+            Assert.Throws<InvalidOperationException>(() => journey.ResolveStopTransition(0,
+                new JourneyStopTransition { Mode = JourneyStopTransitionMode.SpecificStation, StationId = Guid.NewGuid() }));
+            Assert.Throws<ArgumentNullException>(() => journey.ResolveStopTransition(0, null!));
+        }
+    }
+
+    [Test]
+    public void IndexOfStop_PrefersTheStationIdOverThePosition()
+    {
+        var journey = ThreeStops();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(journey.IndexOfStop(journey.Stations[1].Id, fallbackPosition: 0), Is.EqualTo(1));
+            Assert.That(journey.IndexOfStop(null, fallbackPosition: 2), Is.EqualTo(2));
+            Assert.That(journey.IndexOfStop(Guid.NewGuid(), fallbackPosition: 2), Is.EqualTo(-1));
+        }
     }
 }

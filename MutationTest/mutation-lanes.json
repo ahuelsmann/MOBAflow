@@ -15,12 +15,13 @@
     },
     {
       "name": "backend",
-      "status": "planned",
-      "test-directories": [
-        "Test/Backend",
-        "Test/Integration"
+      "status": "active",
+      "stryker-config": "MutationTest/stryker-backend-config.json",
+      "test-directories": ["Test/Backend"],
+      "test-files": [
+        "Test/Integration/WorkflowExecutionEndToEndTests.cs",
+        "Test/Z21DccCommandDecoderTests.cs"
       ],
-      "test-files": ["Test/Z21DccCommandDecoderTests.cs"],
       "production-projects": ["Backend/Backend.csproj"]
     },
     {
@@ -54,6 +55,10 @@
       "name": "api",
       "status": "planned",
       "test-directories": ["Test/MOBApi"],
+      "test-files": [
+        "Test/Integration/MobApiProcessTests.cs",
+        "Test/Integration/RuntimeHubLiveE2ETests.cs"
+      ],
       "production-projects": ["MOBApi/MOBApi.csproj"]
     },
     {

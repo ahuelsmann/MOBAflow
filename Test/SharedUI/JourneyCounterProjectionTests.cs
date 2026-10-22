@@ -24,7 +24,7 @@ public sealed partial class JourneyCounterProjectionTests
         var feedbackTime = new DateTimeOffset(2026, 9, 10, 12, 0, 0, TimeSpan.Zero);
         await using var fixture = new ProjectionFixture(initial: new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(7, ulong.MaxValue, feedbackTime, TimeSpan.FromSeconds(20))]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(7, ulong.MaxValue, feedbackTime, TimeSpan.FromSeconds(20))]
         });
 
         var statistic = fixture.ViewModel.Statistics.Single(item => item.InPort == 7);
@@ -44,7 +44,7 @@ public sealed partial class JourneyCounterProjectionTests
     {
         await using var fixture = new ProjectionFixture(initial: new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(1, 42, null, null), new InPortCounterSnapshot(7, 19, null, null)]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 42, null, null), new InPortCounterSnapshot(7, 19, null, null)]
         });
         fixture.ViewModel.InitializeStatisticsFromFeedbackPoints();
         fixture.ViewModel.SelectedProject = new ProjectViewModel(new Project { Name = "Another layout" });
@@ -60,7 +60,7 @@ public sealed partial class JourneyCounterProjectionTests
         fixture.ViewModel.Statistics.CollectionChanged += (_, _) => collectionChanges++;
         fixture.Publish(new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(1, 43, null, null), new InPortCounterSnapshot(7, 19, null, null)]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 43, null, null), new InPortCounterSnapshot(7, 19, null, null)]
         });
         Assert.That(collectionChanges, Is.Zero);
         fixture.Settings.Counter.CountOfFeedbackPoints = 7;
@@ -122,7 +122,7 @@ public sealed partial class JourneyCounterProjectionTests
         var journey = CreateJourney("Active");
         journey.IsActive = true;
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
-        fixture.Publish(new MobaRuntimeSnapshot { InPortCounters = [new InPortCounterSnapshot(1, 18, null, null)] });
+        fixture.Publish(new MobaRuntimeSnapshot { InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 18, null, null)] });
 
         Assert.That(fixture.ViewModel.ResetCountersCommand.CanExecute(null), Is.True);
         await fixture.ViewModel.ResetCountersCommand.ExecuteAsync(null);

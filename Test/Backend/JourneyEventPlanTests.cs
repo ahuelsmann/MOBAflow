@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Manager;
@@ -218,7 +219,7 @@ public sealed class JourneyEventPlanTests
                 Events = [new JourneyEvent { InPort = 1, Count = 1, WorkflowId = fixture.Workflow.Id }]
             }
         };
-        fixture.Project.Journeys.AddRange([secondJourney, inactiveJourney]);
+        fixture.Project.Journeys.AddRange((Journey[])[secondJourney, inactiveJourney]);
         using var manager = fixture.CreateManager();
 
         await fixture.RaiseAsync(1, manager);
@@ -679,8 +680,9 @@ public sealed class JourneyEventPlanTests
         InPortCounterService counters,
         IJourneyRuntimeStateStore? store,
         IEventBus? eventBus)
-        : JourneyManager(z21, project, workflowService,
-            dependencies: new JourneyManagerDependencies { InPortCounterService = counters, RuntimeStateStore = store, EventBus = eventBus })
+        : JourneyManager(project, new ActionExecutionContext { Z21 = z21 },
+            TestRuntimes.JourneyDependencies(counters, workflowService, runtimeStateStore: store, eventBus: eventBus),
+            NullLogger<JourneyManager>.Instance)
     {
         public Task LastProcessing { get; private set; } = Task.CompletedTask;
 

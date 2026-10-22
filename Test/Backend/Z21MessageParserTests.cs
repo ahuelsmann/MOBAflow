@@ -10,14 +10,23 @@ internal class Z21MessageParserTests
     [Test]
     public void TryParseXBusStatus_ParsesFlagsFromLanXStatusChanged()
     {
-        // 07-00-40-00 62 00 07 -> status changed with flags 0x07 (emergency + trackoff + short)
-        var data = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x62, 0x00, 0x07 };
+        // 08-00-40-00 62 22 07 47 -> status changed with flags 0x07 (emergency + trackoff + short)
+        var data = new byte[] { 0x08, 0x00, 0x40, 0x00, 0x62, 0x22, 0x07, 0x47 };
         var status = Z21MessageParser.TryParseXBusStatus(data);
         Assert.That(status, Is.Not.Null);
         Assert.That(status!.EmergencyStop, Is.True);
         Assert.That(status.TrackOff, Is.True);
         Assert.That(status.ShortCircuit, Is.True);
         Assert.That(status.Programming, Is.False);
+    }
+
+    [Test]
+    public void TryParseXBusStatus_TruncatedLanXStatusChanged_ReturnsNull()
+    {
+        // 07-00-40-00 62 22 07 -> LAN_X_STATUS_CHANGED without its XOR byte (spec: 8 bytes)
+        var data = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x62, 0x22, 0x07 };
+
+        Assert.That(Z21MessageParser.TryParseXBusStatus(data), Is.Null);
     }
 
     [Test]

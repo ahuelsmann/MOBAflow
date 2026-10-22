@@ -128,14 +128,17 @@ internal sealed partial class SolutionPage
         }
     }
 
-    private void ProjectListView_DragOver(object sender, DragEventArgs e)
+    private void ProjectCard_DragOver(object sender, DragEventArgs e)
     {
+        e.Handled = true;
+        e.AcceptedOperation = DataPackageOperation.None;
         if (!e.DataView.Properties.TryGetValue(Z21DragKey, out var value) || value is not Z21AssignmentCandidate z21)
         {
             return;
         }
 
-        var project = ProjectAt(e.OriginalSource);
+        // The card owns the project context; OriginalSource can be a ListView template visual.
+        var project = ProjectAt(sender);
         var canAssign = project is not null && Z21Assignment.CanAssignToProject(z21, project);
         e.AcceptedOperation = canAssign ? DataPackageOperation.Link : DataPackageOperation.None;
         e.DragUIOverride.Caption = (project, canAssign) switch
@@ -149,13 +152,16 @@ internal sealed partial class SolutionPage
         e.DragUIOverride.IsGlyphVisible = true;
     }
 
-    private void ProjectListView_Drop(object sender, DragEventArgs e)
+    private void ProjectCard_Drop(object sender, DragEventArgs e)
     {
+        e.Handled = true;
+        e.AcceptedOperation = DataPackageOperation.None;
         if (e.DataView.Properties.TryGetValue(Z21DragKey, out var value)
             && value is Z21AssignmentCandidate z21
-            && ProjectAt(e.OriginalSource) is { } project)
+            && ProjectAt(sender) is { } project
+            && Z21Assignment.AssignToProject(z21, project))
         {
-            Z21Assignment.AssignToProject(z21, project);
+            e.AcceptedOperation = DataPackageOperation.Link;
         }
     }
 

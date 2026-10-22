@@ -15,7 +15,7 @@ internal class SubnetCandidateBuilderTests
     public void BuildCandidates_ReturnsHostsForEachDistinctSubnet()
     {
         var candidates = SubnetCandidateBuilder.BuildCandidates(
-            [
+            (IPAddress[])[
                 IPAddress.Parse("192.168.0.25"),
                 IPAddress.Parse("10.0.0.8")
             ]);
@@ -34,7 +34,7 @@ internal class SubnetCandidateBuilderTests
     public void BuildCandidates_DeduplicatesRepeatedSubnetAddresses()
     {
         var candidates = SubnetCandidateBuilder.BuildCandidates(
-            [
+            (IPAddress[])[
                 IPAddress.Parse("192.168.0.25"),
                 IPAddress.Parse("192.168.0.30")
             ]);

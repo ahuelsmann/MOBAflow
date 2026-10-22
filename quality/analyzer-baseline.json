@@ -201,7 +201,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1032",
-      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "path": "Backend/Service/Recording/RecordingJsonReader.cs",
       "count": 3
     },
     {
@@ -223,13 +223,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Backend/FeedbackResult.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "Backend/Manager/JourneyManager.cs",
       "count": 1
     },
     {
@@ -348,7 +341,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1064",
-      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "path": "Backend/Service/Recording/RecordingJsonReader.cs",
       "count": 1
     },
     {
@@ -1195,13 +1188,6 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "Common/Discovery/LanIpv4AddressHelper.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
       "path": "Common/Events/RestApiEvents.cs",
       "count": 2
     },
@@ -1237,15 +1223,15 @@
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "Common/Discovery/LanIpv4AddressHelper.cs",
-      "count": 1
+      "path": "Common/Discovery/MobApiUdpDiscoveryResponder.cs",
+      "count": 2
     },
     {
       "project": "Common",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "Common/Discovery/MobApiUdpDiscoveryResponder.cs",
-      "count": 2
+      "path": "Common/Discovery/NetworkInterfaceIpv4AddressSource.cs",
+      "count": 1
     },
     {
       "project": "Common",
@@ -1322,7 +1308,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1307",
       "path": "Common/Path/PhotoPathHelper.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Common",
@@ -1784,13 +1770,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE2002",
       "path": "Domain/City.cs",
-      "count": 1
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE2002",
-      "path": "Domain/Project.cs",
       "count": 1
     },
     {
@@ -3911,6 +3890,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/MobaRuntimeServiceCommandTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceLocomotiveStateTests.cs",
       "count": 1
     },
@@ -3933,6 +3919,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceTrackPowerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/MobaRuntimeServiceZ21EventTests.cs",
       "count": 1
     },
     {
@@ -4010,6 +4003,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/ResultTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/RuntimeConstructionTests.cs",
       "count": 1
     },
     {
@@ -4198,7 +4198,21 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/Z21OperatorCommandTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/Z21ProtocolTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/Z21ReceiveTests.cs",
       "count": 1
     },
     {
@@ -6110,7 +6124,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Backend/Z21EventPipelineTests.cs",
-      "count": 13
+      "count": 9
     },
     {
       "project": "Test",
@@ -7238,13 +7252,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Backend/Z21CommandTests.cs",
       "count": 11
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Backend/Z21EventPipelineTests.cs",
-      "count": 4
     },
     {
       "project": "Test",
