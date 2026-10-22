@@ -146,7 +146,7 @@ dependencies.
 | RF-15 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) | Unused synchronous and unsafe path abstractions are removed or hardened. |
 | RF-16 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical workflows pass accessibility, keyboard, contrast, and theme acceptance. |
 | RF-17 | [#116](https://github.com/ahuelsmann/MOBAflow/issues/116) | Repository guidance and executable engineering gates describe the same rules. |
-| RF-18 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical throughput, load, telemetry, recovery, and endurance behavior is measured. |
+| RF-18 | [#382](https://github.com/ahuelsmann/MOBAflow/issues/382) | Critical throughput, load, telemetry, recovery, and endurance behavior is measured. |
 | RF-19 | [#165](https://github.com/ahuelsmann/MOBAflow/issues/165) | MOBApi and its clients contain no authentication, pairing or credential code; every remote command is validated and the command queue is bounded. |
 | RF-20 | [#183](https://github.com/ahuelsmann/MOBAflow/issues/183) | Architecture tests enforce the project dependency and namespace rules of the whole solution. |
 | RF-21 | [#185](https://github.com/ahuelsmann/MOBAflow/issues/185) | Unused and misplaced types are removed or moved to the project that owns them. |
@@ -267,19 +267,9 @@ check or explicit review owner detects future drift.
 
 ### RF-18: Performance and operational verification
 
-Sequence:
-
-1. benchmark EventBus throughput and runtime-snapshot serialization;
-2. load-test SignalR behavior and the bounded remote command queue;
-3. measure MAUI startup and binding costs;
-4. run firmware endurance scenarios with packet loss and Wi-Fi reconnection;
-5. verify structured telemetry for dropped events, rejected commands, queue
-   overload, recovery, and failed shutdown.
-
-Acceptance anchor: each critical scenario records its environment, baseline,
-limit, agreed regression threshold, and normal and failure results; required
-hardware evidence covers recovery and endurance; the work consumes RF-04,
-RF-07, and RF-19 guarantees without reopening their implementation scope.
+The scenario inventory, decisions and delivery steps now belong to
+[the RF-18 child plan](382-operational-verification.md), owned by
+[issue #382](https://github.com/ahuelsmann/MOBAflow/issues/382).
 
 ### RF-19: Remove the MOBApi control-plane security
 

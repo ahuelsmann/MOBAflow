@@ -83,13 +83,14 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 ## Direct Package Inventory
 
 The following table is generated from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and the `PackageReference` entries in tracked project files and build-wide props/targets.
-Conditional references and all three mutation test hosts are included; this is a source inventory,
+Conditional references and every mutation test host under `MutationTest/` are included; this is a source inventory,
 not a resolved per-platform restore graph. Each package has its own row so its version and
 usage can be compared directly with those XML entries. Versions in this section must not be edited independently of the central package catalog.
 
 <!-- documentation-facts:packages:start -->
 | Package | Version | Directly referenced in | Purpose |
 | --- | --- | --- | --- |
+| `BenchmarkDotNet` | `0.15.8` | `Benchmarks/Moba.Benchmarks` | Development-only benchmark harness for RF-18 baselines (MIT). |
 | `CommunityToolkit.Maui` | `15.0.1` | `MOBAsmart` | MAUI helpers, converters and behaviors. |
 | `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | Observable properties and relay commands. |
 | `CommunityToolkit.WinUI.Controls.ColorPicker` | `8.2.251219` | `MOBAflow` | WinUI color picker. |
