@@ -21,7 +21,7 @@ Recorded on main `9d35158a`. "Desktop" means MOBAflow (WinUI); MOBAsmart is list
 | --- | --- | --- |
 | Connect to the Z21, switch track power, emergency stop | `MainWindow` shell, `OverviewPage`, `SettingsPage` | Safety: stopping trains must never depend on the mouse |
 | Drive a locomotive (speed, direction, functions, stop) | `TrainControlPage`, `LocomotivesPage` | Most frequent operator task |
-| Operate the signal box (signals, switches, routes) | `SignalBoxPage`, `SignalBoxCanvasControl`, `SignalBoxPropertiesControl` | Custom-drawn canvas without automation peers |
+| Operate the signal box (signals, switches, routes) | `SignalBoxPage`, `SignalBoxCanvasControl`, `SignalBoxPropertiesControl` | Elements selectable only by pointer, no accessible names |
 | Run and reset journeys | `JourneysPage`, `StationsPage`, `TrainsPage`, `JourneyMapPage` | Automation start and recovery |
 | Open, save and switch projects | `SolutionPage`, `MainWindow` | Data safety |
 | Edit the track plan | `TrackPlanPage` (Win2D canvas) | Custom-drawn editor, most unnamed buttons |
@@ -36,7 +36,7 @@ Static scan of the 44 desktop XAML files and the desktop/SharedUI C# sources:
 | Buttons without an accessible name (no `Content` text, `Label` or `AutomationProperties.Name`) | 43 | `TrackPlanPage` 8; `JourneysPage`, `MonitorPage`, `StationsPage`, `TrainsPage` 4 each; `Generic.xaml`, `EntityTemplates.xaml`, `SolutionPage`, `TrainControlPage` 3 each; wagon and locomotive pages 2 each; `FunctionSymbolPickerWindow` 1 |
 | ... of those with only a tooltip | 31 | A tooltip is not an accessible name for Narrator |
 | `AutomationProperties.Name` already set | 57 | Mostly `RecorderPage`, `WorkflowsPage`, `InfoPage`, `EventManagerPage`, `TrainControlPage` |
-| Custom-drawn surfaces (Win2D) without automation peers | 3 | `SignalBoxCanvasControl`, `SignalBoxPage`, `TrackPlanPage` |
+| Drawn surfaces without accessible elements | 2 | `SignalBoxCanvasControl` (XAML templates), `TrackPlanPage` (Win2D) |
 | Literal XAML colors outside color dictionaries | 12 | `TrackPlanPage` 8, `Generic.xaml` 3, `SignalBoxToolboxControl` 1 |
 | Literal XAML colors in color dictionaries | 149 | `App.xaml` 70 (theme dictionaries), `SignalGraphics` 46, `SignalBoxColors` 15, `TrackGraphics` 15, `Icons` 3 |
 | `Colors.*` / `Color.FromArgb` in C# | 91 | `TrackPlanPage.xaml.cs` 24, `GaugeVisualRules` 13, `BrakeAndDoorState` 6, `KsSignalScreen` 5, others below 5 |
@@ -52,9 +52,13 @@ MOBAsmart: 16 of 23 XAML files already use `SemanticProperties`; the remaining f
 - **Fixed colors:** railway signal aspects (`SignalGraphics`, `SignalBoxColors`, `KsSignalScreen`), track graphics and
   gauge danger ranges keep fixed values because their meaning is the color. In High Contrast they still need a shape or
   text cue, so meaning is never conveyed by color alone. All other literal colors move to `ThemeResource` brushes.
-- **Custom-drawn canvases:** Narrator access to the signal box comes from automation peers that expose the existing
-  elements and their commands. A new keyboard editing model for the track-plan editor would be new product behavior; it
-  needs a Spec Kit feature and a user decision before implementation.
+- **Signal box** (user decision on #374, 2026-10-22: Tab and Enter): the signal box draws its elements with XAML
+  templates, not Win2D. A transparent focus layer above the drawing gives every element a focusable button with the
+  accessible name from `SignalBoxElementDescriptions` (SharedUI, for example "Signal A1, Ks1"); Enter or Space selects
+  the element like a click, and operation continues in the properties panel. The layer is not hit-testable, so pointer
+  selection, drag and drop and panning stay unchanged. Tab follows the element order of the plan.
+- **Track plan:** a keyboard editing model for the track-plan editor would be new product behavior; it needs a Spec Kit
+  feature and a user decision before implementation.
 - **Emergency stop by keyboard** (user decision on #374, 2026-10-21): Pause always, and Space unless the focused element
   uses Space itself, trigger the existing train-control emergency stop of the selected locomotive; Ctrl+P and F10 toggle
   track power. `OperatorShortcuts` (SharedUI) owns the rule; `OperatorShortcutController` adapts WinUI keys and focus and
@@ -65,9 +69,9 @@ MOBAsmart: 16 of 23 XAML files already use `SemanticProperties`; the remaining f
 
 1. **Inventory** (with this plan).
 2. **Accessible names and guard:** the 43 buttons, plus a test that fails on a new unnamed icon-only button.
-3. **Keyboard and Narrator for the critical workflows:** the emergency-stop and track-power shortcuts (delivered; the
-   track-power switch in `MainWindow` gets its shortcut hint after #293), then focus order, visible focus and automation
-   peers for the signal-box canvas.
+3. **Keyboard and Narrator for the critical workflows:** the emergency-stop and track-power shortcuts and the signal-box
+   focus layer (delivered; the track-power switch in `MainWindow` gets its shortcut hint after #293), then focus order and
+   visible focus on the remaining critical pages.
 4. **Theme resources and High Contrast:** the 12 non-dictionary XAML colors and the general-purpose C# colors;
    `HighContrast` theme dictionaries; a non-color cue for signal aspects.
 5. **MOBAsmart:** TalkBack descriptions for the remaining views and font scaling.
@@ -91,5 +95,5 @@ MOBAsmart: 16 of 23 XAML files already use `SemanticProperties`; the remaining f
 
 - **Tooltip text quality:** tooltips written for sighted users may be too short as names; each name is reviewed, not
   copied blindly.
-- **Win2D canvases:** automation peers for custom-drawn content are the largest technical risk; if a peer cannot expose
-  an element reliably, the side panels' existing controls become the documented accessible path.
+- **Track-plan canvas (Win2D):** custom-drawn content cannot carry automation peers as easily as the signal box; if it
+  cannot expose an element reliably, the side panels' existing controls become the documented accessible path.

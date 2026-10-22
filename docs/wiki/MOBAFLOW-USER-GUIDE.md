@@ -226,6 +226,11 @@ The Signal Box editor manages signals, switches and routes. Signal aspects can
 be operated against a connected Z21. Viessmann multiplex mappings and per-output
 polarity are available for supported signal configurations.
 
+Without a mouse, press **Tab** to move from element to element on the plan; the
+focused element shows a frame, and Narrator reads its kind, name and state, for
+example "Signal A1, Ks1". **Enter** or **Space** selects it, and the properties
+panel then offers its controls.
+
 ### Matrix Images and ESP32 Display
 
 **Matrix Images** provides a 5x5 color editor whose images are stored in the
