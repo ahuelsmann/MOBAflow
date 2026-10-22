@@ -62,6 +62,11 @@ Largest open areas (survived + no coverage), which feed step 2 and later:
 
 These counts are a planning baseline, not a permanent status; later changes need a fresh full report.
 
+Linux CI on the combined steps 1 and 2 (head `fc01b159`, run 39730443485): 744 passing ordinary tests, score 47.35%
+(2,855 killed, 61 timeouts, 2,070 survived, 1,172 no coverage); 770 mutants did not compile and are outside the
+score, while the local baseline above had none. The two runs therefore count different mutant populations and are not
+comparable; the floor stays at 43% until a comparable full run justifies raising it.
+
 The floor is the measured score rounded down to a whole percent. It is a safeguard, not a quality target: step 2
 closes meaningful gaps, and a fresh full run raises it.
 
