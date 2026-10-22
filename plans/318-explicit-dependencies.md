@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/318
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: In progress; workflow execution and validation (slice 1, #325) and runtime composition (slice 2, #330) are integrated. Issue #318 remains open for the remaining work.
+**Status**: In progress; workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330) and static hooks (slice 3, #335) are integrated. Issue #318 remains open for slices 4 and 5.
 
 ## Purpose and scope
 
