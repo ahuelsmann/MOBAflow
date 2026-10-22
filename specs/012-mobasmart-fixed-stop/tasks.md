@@ -59,3 +59,5 @@ Assessment after implementation: 8 FRs, 4 SCs, 7 acceptance scenarios, all 15 ex
 
 - [ ] T016 Complete the remaining actual Android scrolling, selection, system-text/theme, short-height and TalkBack evidence in specs/012-mobasmart-fixed-stop/quickstart.md per FR-005/006/008, SC-001/002/003 and T006/T010 (partial, HIGH); preserve specific unexecuted cases and offline command limits.
 - [ ] T017 Complete draft PR publication and current-commit CI/Sonar verification in specs/012-mobasmart-fixed-stop/quickstart.md per plan: Sonar gates and T014/T015 (partial, MEDIUM); keep the PR draft and do not infer readiness from local checks.
+
+Technical integration on 2026-10-22 adds current portable Release (3,034 passed; one explicit real-display case not executed), strict portable/Android baselines and Android Release AAB evidence to quickstart.md. Two feature-test awaits were corrected for CA2007 without changing baselines or product commands. The later main update changes one plan only. These local checks do not close T006/T010/T016 or the current-head remote gates in T015/T017; Windows checks remain CI-only under the explicit user-data boundary.

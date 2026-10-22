@@ -70,3 +70,32 @@ The following record was originally committed as `18aa971d8d1e250ea21c0bb52314a5
 Only this historical publication record and the completed T014 publication checkbox are recovered in the new isolated technical-handoff context, starting at PR head `321d6d26862ccae72962234bdbcd666e63043309`. The original local commits `18aa971d` and `c1d0d8b6`, their worktree and ignored acceptance artifacts remain preserved. No historical main merge is imported here.
 
 The earlier implementation, build and emulator entries above retain their original scope and do not describe a currently running acceptance session or authorize restarting one. T006/T010/T016 remain open for practical acceptance; T015/T017 remain open for current-comparison CI/Sonar and delivery evidence. This documentation recovery makes no new build, test, CI/Sonar or device-acceptance claim. Main integration and technical validation require the next centrally allocated serial phase; this phase performs no remote publication, review, Ready or merge action.
+
+## Technical integration and local validation: 2026-10-22
+
+The separately allocated technical phase merged main `0ed1bbcf8a0b67a46ec4cd05920f171b1c2d85c4` once, without conflicts, as `b2b4887aeacbe2385aa9de60f22dcde4c0f3d164`. Current runtime factories, Android discovery registration, MAUI 10.0.120, Test SDK 18.11.0 and the #383 metrics tests were retained. The strict portable gate identified two additional CA2007 diagnostics in the new STOP test. Adding `ConfigureAwait(false)` to its bounded motion wait and command await fixes those diagnostics without changing the platform-neutral assertions, product behavior or analyzer baselines. The tested file has Git blob `3137e3f36677e4cc2589855bb7e8d313ee425f7f`.
+
+All .NET commands ran serially, using SDK/workload set 10.0.402. No app, emulator, device or hardware was started.
+
+```powershell
+dotnet restore Test/Test.csproj -p:TargetFrameworks=net10.0 -p:IncludeMobaSmartTests=false --disable-parallel -m:1 -nr:false
+dotnet build Test/Test.csproj -c Release -p:TargetFrameworks=net10.0 -f net10.0 --no-restore -m:1 -nr:false -t:Rebuild -p:IncludeMobaSmartTests=false -p:MobaAnalyzerGate=true -p:UseSharedCompilation=false
+# After the two-await correction, repeat the build without -t:Rebuild.
+./scripts/Test-AnalyzerBaseline.ps1 -SarifRoot artifacts/analyzers/Release/net10.0 -BaselinePath quality/analyzer-baseline.json
+dotnet test Test/Test.csproj -c Release -p:TargetFrameworks=net10.0 -f net10.0 --no-build --no-restore -m:1 -nr:false -p:IncludeMobaSmartTests=false --logger "trx;LogFileName=issue304-current-main-portable.trx"
+dotnet restore MOBAsmart/MOBAsmart.csproj --property:Configuration=Release --force-evaluate -m:1 -nr:false
+dotnet publish MOBAsmart/MOBAsmart.csproj --framework net10.0-android --configuration Release --no-restore -m:1 -nr:false -p:MobaAnalyzerGate=true -p:UseSharedCompilation=false
+./scripts/Test-AnalyzerBaseline.ps1 -SarifRoot artifacts/analyzers/Release -BaselinePath quality/analyzer-baseline.android.json
+```
+
+- Portable Release compilation passed. The full analyzer graph matched the unchanged baseline: **3,208 diagnostics in 1,129 groups**. Its SARIF files were then preserved under `artifacts/issue304-integration-20261022/portable-analyzer-Release`, leaving a separate clean output root for the Android graph.
+- Full portable Release tests: **3,034 executed and passed, zero failures**. The TRX discovers 3,035 cases; the additional explicitly marked real-display test `SustainedRefresh_MeetsAcceptanceThresholds` is `NotExecuted`. All six feature fixtures ran (39/39), including both current-target/nonzero-speed directions and both invalid-address cases. The three current `RuntimeCommandMetricsTests` also passed. TRX: `Test/TestResults/issue304-current-main-portable.trx`.
+- Android Release restore and publish passed. Evaluated properties are `AnyCPU`, `AnyCPU`, `android-arm64;android-x64` and `aab`. Its complete separate analyzer graph matched the unchanged Android baseline: **1,500 diagnostics in 549 groups**.
+- Both publish-directory bundles passed `scripts/Test-AndroidAppBundle.ps1 -BundlePath <bundle>`: required manifest/resources/Dex entries and exactly `arm64-v8a`/`x86_64` native ABIs. No APK was produced in that directory. `com.mobaflow.mobasmart-Signed.aab`: 48,111,874 bytes, SHA256 `ECA33E5CC51BD0909E8E7718B1E25D82E0E6A6E6760E74571788D08FB1E724CF`; unsigned `com.mobaflow.mobasmart.aab`: 47,910,499 bytes, SHA256 `F1CA94B94E04E121F51A60E4F141930C4E3E2E47A5EF797A439BA1D551A74475`.
+- Local Windows compilation/tests were not run: the Windows test graph references the WinUI project, which copies `MOBAflow/solution.json` as content. The explicit user-data boundary forbids reading, hashing, copying or staging that file; neither the project graph nor its content-copy behavior was bypassed. Regular Windows CI evidence remains required.
+
+All build/test processes had ended before the subsequent, centrally qualified documentation-only main update `f2f388d3213b442a13169dd41c554ee1dbf1a3a6` was merged as `2bdd0073df10dd8947077386b8446701020bd9b2`. That incoming change affects only `plans/318-explicit-dependencies.md`; product, tests, packages, build settings and baselines are unchanged. The compilation/test inputs above therefore remain unchanged; no repeat build is claimed for the later documentation snapshot.
+
+Documentation assessment: the merged `docs/wiki/MOBASMART-USER-GUIDE.md` describes the actual fixed header and selected-locomotive STOP. Runtime/gateway ownership is unchanged, so no further architecture-document correction is required for this delta. Integration owners must confirm this assessment against the eventual integrated main.
+
+Practical acceptance remains **OPEN** under [#365](https://github.com/ahuelsmann/MOBAflow/issues/365): Android Light/Dark, 200% text, short viewport, long names, A-to-B-to-A at F31 and TalkBack are not established by these local gates. T006/T010/T016 and current-comparison CI/Sonar T015/T017 remain open. The PR remains Draft; this record does not claim Ready, independent review or integration.

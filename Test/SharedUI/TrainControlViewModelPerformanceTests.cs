@@ -109,10 +109,10 @@ internal sealed class TrainControlViewModelPerformanceTests
         viewModel.Functions[31].IsOn = true;
         var functionStates = viewModel.Functions.Select(function => function.IsOn).ToArray();
         viewModel.Speed = 30;
-        await moving.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        await moving.Task.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
         runtime.Invocations.Clear();
 
-        await viewModel.EmergencyStopCommand.ExecuteAsync(null);
+        await viewModel.EmergencyStopCommand.ExecuteAsync(null).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
