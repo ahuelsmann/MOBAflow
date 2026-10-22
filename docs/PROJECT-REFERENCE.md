@@ -288,6 +288,9 @@ current session. It does not persist capabilities, identities, session IDs, or
 credentials. No production destination-display workflow service is wired into
 the default action handler yet.
 
+The frame scheduler options have no target address by default. The UDP frame sender rejects an
+unconfigured address before creating a transport connection.
+
 `MOBAdisplay/esp32/src/main.cpp` implements the current 240x280 receiver: Wi-Fi
 setup/status endpoints, a length-safe version-1 parser, bounded replay
 protection, `FrameAssembler` staging and atomic TFT presentation.
@@ -332,6 +335,12 @@ The default HTTP port is `5001`. `UdpDiscoveryService` runs in standalone MOBApi
 unless `MOBAFLOW_DISCOVERY_IN_WINUI` indicates that the WinUI host owns
 discovery. Discovery responses carry the address and HTTP port
 (`MOBAFLOW_REST_API|ip|port`).
+
+MOBAsmart's quick HTTP discovery pass uses the same private IPv4 candidate
+filter as its full subnet scan: recent addresses first, then nearby hosts, with
+duplicates removed. Explicit saved addresses have no special factory-address
+exception. Its named HTTP clients and SignalR HTTP transport target MOBApi
+directly and do not automatically follow HTTP redirects.
 
 MOBApi has no authentication: every REST and SignalR operation is available over
 plain HTTP to every device in the home network, as described in the

@@ -219,13 +219,9 @@ public class RestApiDiscoveryService : IRestDiscoveryService
         }
 
         // Recently used addresses first, then the addresses near this device; each address once.
-        var recentIps = (_appSettings.RestApi.RecentIpAddresses ?? [])
-            .Select(recent => IPAddress.TryParse(recent?.Trim(), out var recentIp) ? recentIp : null)
-            .OfType<IPAddress>();
-        var candidates = recentIps
-            .Concat(RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(localAddresses))
-            .DistinctBy(ip => ip.ToString(), StringComparer.Ordinal)
-            .ToList();
+        var candidates = RestApiDiscoveryCandidateBuilder.BuildQuickProbeOrder(
+            _appSettings.RestApi,
+            localAddresses);
 
         if (candidates.Count == 0)
         {
