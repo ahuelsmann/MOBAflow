@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/382
 **Spec Kit**: Not applicable - measurement and verification of existing behavior; telemetry gaps are closed as observability of existing paths, not as new product behavior
-**Status**: Active; steps 1 and 2 are delivered in the single issue PR
+**Status**: Active; steps 1 and 2 and the first part of step 4 are delivered in the single issue PR
 
 ## Purpose and scope
 
@@ -51,8 +51,9 @@ Recorded on main `f37541d9`.
    trip; the first baselines on the maintainer's machine are recorded on #382.
 3. **Load tests:** remote command queue under concurrent producers (capacity, rejection, order); SignalR runtime hub
    with several clients against an owned MOBApi process.
-4. **Telemetry:** structured log and counter for rejected remote commands; check the existing pipeline, recovery and
-   shutdown signals end to end.
+4. **Telemetry:** rejected remote commands (delivered): the counter `moba.runtime_commands.rejected` of the meter
+   `Moba.MOBApi` (`System.Diagnostics.Metrics`, tags `reason` and `command`) and a structured warning for a full
+   queue. Still open: check the existing pipeline, recovery and shutdown signals end to end.
 5. **Device and hardware measurements** with the maintainer: MAUI startup and binding cost, ESP32 endurance with packet
    loss and Wi-Fi reconnection.
 6. **Thresholds, documentation and completion.**
