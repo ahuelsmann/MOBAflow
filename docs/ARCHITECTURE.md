@@ -606,6 +606,7 @@ MOBAsmart/
 MOBApi/
 ├── Controllers/        # REST API Controllers
 ├── Hubs/               # SignalR Hubs
+├── ModelBinding/       # Parameter-scoped HTTP header binding
 └── Service/            # API Services
 ```
 

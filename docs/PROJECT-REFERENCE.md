@@ -320,6 +320,14 @@ MOBApi maps controllers plus two SignalR hubs.
 | `/runtime-hub` | Live runtime and solution notifications |
 | `/photos-hub` | Photo notifications |
 
+`PUT /api/solution` validates and caches the raw JSON body. Its optional
+`X-MOBAflow-Solution-Path` and `X-MOBAflow-Active-Project` headers supply metadata.
+Each uses a parameter-scoped binder that keeps the first value exposed by ASP.NET Core,
+including an empty or whitespace value, without joining repeated values or splitting
+commas. A missing header remains `null`; Kestrel removes HTTP optional whitespace on
+the wire before binding. Invalid solution JSON returns `400` without changing the
+solution or snapshot caches or broadcasting a solution update.
+
 The default HTTP port is `5001`. `UdpDiscoveryService` runs in standalone MOBApi
 unless `MOBAFLOW_DISCOVERY_IN_WINUI` indicates that the WinUI host owns
 discovery. Discovery responses carry the address and HTTP port
