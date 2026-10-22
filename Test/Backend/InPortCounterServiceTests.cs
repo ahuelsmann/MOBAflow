@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
 using Moba.Backend;
 using Moba.Backend.Interface;
-using Moba.Backend.Manager;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Domain;
@@ -65,8 +65,7 @@ public sealed class InPortCounterServiceTests
         var z21 = new Mock<IZ21>();
         using var counters = CreateCounters(z21);
         var project = new Project { Journeys = [new Journey { IsActive = true }] };
-        using var manager = new JourneyManager(z21.Object, project, Mock.Of<IWorkflowService>(),
-            dependencies: new JourneyManagerDependencies { InPortCounterService = counters });
+        using var manager = TestRuntimes.JourneyManager(z21.Object, project, TestRuntimes.JourneyDependencies(counters));
         Raise(z21, 1);
         var generation = counters.Generation;
 
@@ -85,14 +84,12 @@ public sealed class InPortCounterServiceTests
         var z21 = new Mock<IZ21>();
         using var counters = CreateCounters(z21);
         var project = new Project { Journeys = [new Journey { EventPlan = new JourneyEventPlan() }] };
-        using (var first = new JourneyManager(z21.Object, project, Mock.Of<IWorkflowService>(),
-                   dependencies: new JourneyManagerDependencies { InPortCounterService = counters }))
+        using (var first = TestRuntimes.JourneyManager(z21.Object, project, TestRuntimes.JourneyDependencies(counters)))
         {
             Raise(z21, 1);
         }
 
-        using (var second = new JourneyManager(z21.Object, project, Mock.Of<IWorkflowService>(),
-                   dependencies: new JourneyManagerDependencies { InPortCounterService = counters }))
+        using (var second = TestRuntimes.JourneyManager(z21.Object, project, TestRuntimes.JourneyDependencies(counters)))
         {
             Raise(z21, 1);
             Assert.That(counters.GetSnapshot().Single().Count, Is.EqualTo(2UL));
@@ -190,8 +187,8 @@ public sealed class InPortCounterServiceTests
                     Status = WorkflowExecutionStatus.Succeeded
                 };
             });
-        using var manager = new JourneyManager(z21.Object, new Project { Journeys = [journey], Workflows = [workflow] },
-            workflowService.Object, dependencies: new JourneyManagerDependencies { InPortCounterService = counters });
+        using var manager = TestRuntimes.JourneyManager(z21.Object, new Project { Journeys = [journey], Workflows = [workflow] },
+            TestRuntimes.JourneyDependencies(counters, workflowService.Object));
         var oldActivation = Task.Run(() => Raise(z21, 1));
         try
         {
