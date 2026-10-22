@@ -53,7 +53,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
         };
         var operations = new RecordingOperations(state);
         var issue = new TimetableIssue(TimetableIssueKind.PlatformConflict, service.Id, Guid.NewGuid(), "Platform overlap");
-        using var context = CreateContext(project, operations, new TimetableEvaluationResult([issue]), TimeSpan.FromMinutes(4));
+        using var context = CreateContext(project, operations, new TimetableEvaluationResult((TimetableIssue[])[issue]), TimeSpan.FromMinutes(4));
 
         // Act
         await context.ViewModel.RefreshAsync();
@@ -275,7 +275,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
     {
         var project = CreateProject();
         var issue = new TimetableIssue(TimetableIssueKind.PlatformConflict, project.TimetableServices[0].Id, null, "Overlap");
-        using var context = CreateContext(project, new RecordingOperations(), new TimetableEvaluationResult([issue]));
+        using var context = CreateContext(project, new RecordingOperations(), new TimetableEvaluationResult((TimetableIssue[])[issue]));
         await context.ViewModel.RefreshAsync().ConfigureAwait(false);
         SelectFirstServiceAndCall(context.ViewModel);
         Assert.That(context.ViewModel.HasIssues, Is.True);
@@ -364,7 +364,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
         var operations = new Mock<ITimetableOperationsService>();
         operations.Setup(value => value.GetStatesAsync(project.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<TimetableServiceState>());
-        using var context = CreateContext(project, operations.Object, new TimetableEvaluationResult([issue]));
+        using var context = CreateContext(project, operations.Object, new TimetableEvaluationResult((TimetableIssue[])[issue]));
         await context.ViewModel.RefreshAsync().ConfigureAwait(false);
         SelectFirstServiceAndCall(context.ViewModel);
         var clearedIssuesNotified = false;
@@ -602,7 +602,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
         var project = CreateProject();
         var projection = new RecordingProjectionService
         {
-            Result = new TimetableProjectionResult(0, [project.Journeys[0].Id])
+            Result = new TimetableProjectionResult(0, (Guid[])[project.Journeys[0].Id])
         };
         using var context = CreateContext(project, new RecordingOperations(), projection: projection);
         await context.ViewModel.RefreshAsync();
