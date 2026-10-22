@@ -55,3 +55,18 @@ Pending gates: actual Android Light/Dark/system-text/short-height/long-name/F31 
 
 - Internal documentation links passed: 477 links. Spec Kit PullRequest governance passed. Changed-file secrets, staged line-ending checks and diff whitespace review passed (final staging rechecked before commit).
 - Convergence inspected all 8 functional requirements, 4 success criteria, 7 acceptance scenarios, 15 existing tasks, 7 plan decision groups and 6 constitution principles. No additional product-code gap was found. Phase 7 tasks T016/T017 retain the partially completed Android and publication/CI evidence; this is not a full product acceptance claim.
+
+## Historical publication evidence: 2026-10-15, 21:48 CEST
+
+The following record was originally committed as `18aa971d8d1e250ea21c0bb52314a5477ef69cfe` at 2026-10-15T21:48:41+02:00. It is restored here on 2026-10-22 from the preserved original worktree. These are historical observations, not current-head validation results.
+
+- Implementation commit: `a27664b2910a2ea4fa631ff17a268cd83728c79d`; base `6888b0d9239bee3b623fbca0f6ae9d71fe7ec185`. The explicit task-branch push succeeded; no main push was performed.
+- [Draft PR #308](https://github.com/ahuelsmann/MOBAflow/pull/308) was created, linked to #304 and attached to the implementation chat. Designer and Architekt completed read-only final assessments of that implementation commit without concrete findings; the earlier independent Pruefer assessment covered the unchanged product diff. These assessments do not certify a later comparison or replace its required independent review.
+- At that observation, the initial GitHub checks were queued/running. Sonar PR status was `NONE` with no conditions; the issues query returned zero OPEN/CONFIRMED. This was not an acceptance result because analysis of that head had not completed. Installed Sonar CLI 1.4.0 lacked `quality-gate status`; the read-only `sonar api get /api/qualitygates/project_status` endpoint supplied the status. No local code analysis or integration hooks were run.
+- The PR was kept draft. Those local results did not authorize a Ready or merge action.
+
+### Bounded documentation recovery: 2026-10-22
+
+Only this historical publication record and the completed T014 publication checkbox are recovered in the new isolated technical-handoff context, starting at PR head `321d6d26862ccae72962234bdbcd666e63043309`. The original local commits `18aa971d` and `c1d0d8b6`, their worktree and ignored acceptance artifacts remain preserved. No historical main merge is imported here.
+
+The earlier implementation, build and emulator entries above retain their original scope and do not describe a currently running acceptance session or authorize restarting one. T006/T010/T016 remain open for practical acceptance; T015/T017 remain open for current-comparison CI/Sonar and delivery evidence. This documentation recovery makes no new build, test, CI/Sonar or device-acceptance claim. Main integration and technical validation require the next centrally allocated serial phase; this phase performs no remote publication, review, Ready or merge action.

@@ -42,7 +42,7 @@ No shared model/service prerequisites or package changes.
 - [x] T011 Restore and FastDebug-compile MOBAsmart/MOBAsmart.csproj for net10.0-android and rerun affected Test/Test.csproj regressions after edits (FR-008).
 - [x] T012 [P] Update docs/wiki/MOBASMART-USER-GUIDE.md and actual evidence/limits in specs/012-mobasmart-fixed-stop/quickstart.md.
 - [x] T013 Run scripts/Test-SpecKitGovernance.ps1, documentation links, scripts/Test-LineEndings.ps1 including staged mode, changed-file secrets and git diff checks; record convergence in specs/012-mobasmart-fixed-stop/tasks.md.
-- [ ] T014 Commit only owned files, explicitly push codex/issue-304-mobasmart-fixed-stop and create/attach a draft PR linked to #304; record URL in specs/012-mobasmart-fixed-stop/quickstart.md.
+- [x] T014 Commit only owned files, explicitly push codex/issue-304-mobasmart-fixed-stop and create/attach a draft PR linked to #304; record URL in specs/012-mobasmart-fixed-stop/quickstart.md. Completed at the historical 2026-10-15 publication; evidence restored on 2026-10-22. This checkbox does not claim a new push or current-head CI/acceptance.
 - [ ] T015 Verify current-head GitHub CI/Sonar and zero OPEN/CONFIRMED PR issues; preserve draft and pending Android acceptance in specs/012-mobasmart-fixed-stop/quickstart.md.
 
 ## Dependencies and Execution Order
