@@ -21,7 +21,7 @@ Recorded on main `f37541d9`.
 | Scenario | Code under test | Existing bound or signal | Gap |
 | --- | --- | --- | --- |
 | EventBus publish throughput | `Common/Events/EventBus` | handler failure count (`IEventBusDiagnostics`) | no benchmark or baseline |
-| Z21 event ordering under load | `Backend/Service/Z21EventPipeline` | capacity 1,024; snapshot with queue depth, peak, enqueued, published, rejected, dispatch and subscriber failures, shutdown timeouts; an overload test arrives with #367 (`Z21ReceiveTests`) | no throughput baseline |
+| Z21 event ordering under load | `Backend/Service/Z21EventPipeline` | capacity 1,024; snapshot with queue depth, peak, enqueued, published, rejected, dispatch and subscriber failures, shutdown timeouts; an overload test is on main since #367 (`Z21ReceiveTests`) | no throughput baseline |
 | Runtime snapshot serialization | `Contracts/Runtime/MobaRuntimeSnapshot` (JSON over REST and SignalR) | none | no size or time baseline |
 | Remote command queue bounds | `MOBApi/Service/RuntimeCommandQueue`, `RuntimeCommandAdmission` | capacity 128; a full queue rejects with `queue_full` | rejection is neither logged nor counted |
 | SignalR runtime hub load | `MOBApi/Hubs/RuntimeHub` | broadcast state on the Overview page ("Hub broadcast") | no multi-client load test or limit |
