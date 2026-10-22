@@ -6,7 +6,10 @@
 
 Every change MUST respect the existing layer boundaries. `Common`, `Domain`, and
 `Backend` remain platform-independent and MUST NOT reference WinUI or MAUI.
-Shared ViewModels depend on `IMobaRuntime`, not on transport-specific clients.
+Shared ViewModels read runtime state through `IRuntimeSnapshotProvider`,
+`IConnectionRuntime` and `ITrafficMonitor`, and send operator commands through
+`IRuntimeCommandGateway`. Hosts create and register the gateways; ViewModels MUST
+preserve local/remote routing without owning the runtime.
 Z21 events cross into the UI through `UiThreadEventBusDecorator`; EventBus
 handlers MUST update state directly and MUST NOT add another dispatcher call.
 Platform-specific behavior belongs in the corresponding host or adapter layer.
@@ -76,8 +79,8 @@ Valid findings MUST NOT be suppressed, excluded, or hidden by lowering a gate.
 - Windows-only and Android-only projects MUST be validated on matching hosts.
   Cross-platform projects and `Test/Test.csproj` remain the portable validation
   path.
-- Master data is served by `MasterDataStore`; runtime project state comes from
-  immutable `IMobaRuntime.CurrentSnapshot` snapshots.
+- Master data is served by `MasterDataStore`; shared ViewModels read immutable
+  runtime snapshots through `IRuntimeSnapshotProvider` as defined in `AGENTS.md`.
 - Star-sized resizable layout values MUST be persisted as star values; pixel
   widths are reserved for intentionally fixed UI regions.
 - UI resources MUST meet the repository's Fluent Design and accessibility rules.
@@ -125,4 +128,4 @@ semantic versioning: MAJOR for incompatible governance changes, MINOR for new or
 materially expanded principles, and PATCH for clarifications. Every plan and
 review MUST verify compliance; unresolved violations block implementation.
 
-**Version**: 4.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-25
+**Version**: 4.0.1 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-10-20

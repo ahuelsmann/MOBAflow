@@ -1,87 +1,32 @@
 # MOBAflow Audio Library - Attribution
 
-This file tracks the attribution requirements for CC-BY licensed sounds used in MOBAflow.
+These bundled recordings retain their own licenses. MOBAflow's MIT license does
+not replace the audio licenses. Include this attribution file when redistributing
+the recordings.
 
-## 📜 License Types Used
+| Repository file | Title | Creator | Source | License |
+| --- | --- | --- | --- | --- |
+| `273231__gollamar__announcement-04.wav` | Announcement-04.wav | gollamar | [Freesound 273231](https://freesound.org/people/gollamar/sounds/273231/) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `273646__gollamar__announcement-06.wav` | Announcement-06.wav | gollamar | [Freesound 273646](https://freesound.org/people/gollamar/sounds/273646/) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `Station/724058__chungus43a__prague-metro-line-a-chime.wav` | Prague Metro Line A Chime | chungus43A | [Freesound 724058](https://freesound.org/people/chungus43A/sounds/724058/) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 
-- **CC0 (Public Domain):** No attribution required
-- **CC-BY 4.0:** Attribution required (listed below)
-- **CC-BY 3.0:** Attribution required (listed below)
+The linked Freesound pages were checked on 2026-10-21 and list the titles,
+creators and licenses shown above. For both gollamar recordings, the creator
+reports recording with a Yamaha PF-1000 and Zoom H5 and editing with Audacity.
+This describes the creator's processing, not any later processing for MOBAflow.
 
----
+Git records no changes to the two gollamar recordings after their import on
+2025-12-29. Local processing before that import was not documented. The retained
+audio files have not been changed by the attribution corrections.
 
-## 🎵 Sound Attributions
+Freesound requires sign-in to download the original WAV files. No comparison
+with authenticated original downloads has been performed; the repository files
+are not claimed to be byte-identical to those originals.
 
-### Station Sounds
+The [CC BY 4.0 legal code](https://creativecommons.org/licenses/by/4.0/legalcode.en)
+sets out the attribution requirements and its warranty disclaimer. CC0 does not
+require attribution; the third recording is listed to retain its provenance.
 
-**arrival_bell.wav**
-- Source: [Add Freesound.org link when downloaded]
-- Author: [Add username]
-- License: [CC0 / CC-BY 4.0 / CC-BY 3.0]
-- Modifications: None / Trimmed / Normalized
-
-**departure_bell.wav**
-- Source: [Add link]
-- Author: [Add username]
-- License: [Add license]
-
-**gong.wav**
-- Source: [Add link]
-- Author: [Add username]
-- License: [Add license]
-
----
-
-### Train Sounds
-
-**whistle_short.wav**
-- Source: [Add link]
-- Author: [Add username]
-- License: [Add license]
-
-**whistle_long.wav**
-- Source: [Add link]
-- Author: [Add username]
-- License: [Add license]
-
----
-
-### Signal Sounds
-
-**warning_beep.wav**
-- Source: [Add link]
-- Author: [Add username]
-- License: [Add license]
-
----
-
-## 📝 How to Add Attribution
-
-When downloading a sound that requires attribution (CC-BY):
-
-1. Copy the Freesound.org URL
-2. Note the username
-3. Note the license type
-4. Add to this file
-
-**Template:**
-```
-**filename.wav**
-- Source: https://freesound.org/people/[username]/sounds/[id]/
-- Author: [username]
-- License: CC-BY 4.0
-- Modifications: [None / Trimmed to 3s / Normalized to -3dB]
-```
-
----
-
-## ✅ CC0 Sounds (No Attribution Required)
-
-If all sounds are CC0, you can delete this file or just note:
-
-> All sounds in MOBAflow Audio Library are licensed under CC0 (Public Domain).
-> No attribution required.
-
----
-
-**Last Updated:** 2025-12-24
+Before adding a recording, establish its source and redistribution rights, then
+record its actual filename, title, creator, source URL, license URL and any changes.
+Do not assign a license or claim that a recording is unmodified without evidence.

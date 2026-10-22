@@ -13,8 +13,10 @@ using System.Net.Sockets;
 /// Discovers Z21 command stations on the local network by scanning the subnet for UDP ports 21105/21106
 /// and verifying responses with the Z21 handshake (LAN_SYSTEMSTATE_GETDATA) or serial-number request.
 /// </summary>
-public sealed class Z21DiscoveryService : IZ21DiscoveryService
+public sealed class Z21DiscoveryService(ILocalIpv4AddressSource localAddresses) : IZ21DiscoveryService
 {
+    private readonly ILocalIpv4AddressSource _localAddresses = localAddresses ?? throw new ArgumentNullException(nameof(localAddresses));
+
     private static readonly int[] DiscoveryPorts = [Z21Protocol.DefaultPort, Z21Protocol.AlternativePort];
 
     private const int SendReceiveTimeoutMs = 400;
@@ -90,10 +92,10 @@ public sealed class Z21DiscoveryService : IZ21DiscoveryService
         return true;
     }
 
-    private static async Task<List<DiscoveredZ21>> CollectSerialNumberResponsesAsync(int port, CancellationToken cancellationToken)
+    private async Task<List<DiscoveredZ21>> CollectSerialNumberResponsesAsync(int port, CancellationToken cancellationToken)
     {
         var found = new List<DiscoveredZ21>();
-        var candidates = SubnetCandidateBuilder.BuildCandidates(LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses());
+        var candidates = SubnetCandidateBuilder.BuildCandidates(_localAddresses.GetCandidateLocalIpv4Addresses());
         if (candidates.Count == 0)
         {
             return found;
@@ -145,10 +147,9 @@ public sealed class Z21DiscoveryService : IZ21DiscoveryService
             ? BinaryPrimitives.ReadUInt32BigEndian(address.GetAddressBytes())
             : uint.MaxValue;
 
-    private static async Task<string?> ScanSubnetsAsync(int port, CancellationToken cancellationToken)
+    private async Task<string?> ScanSubnetsAsync(int port, CancellationToken cancellationToken)
     {
-        var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
-        var candidates = SubnetCandidateBuilder.BuildCandidates(localAddresses);
+        var candidates = SubnetCandidateBuilder.BuildCandidates(_localAddresses.GetCandidateLocalIpv4Addresses());
         if (candidates.Count == 0)
         {
             return null;

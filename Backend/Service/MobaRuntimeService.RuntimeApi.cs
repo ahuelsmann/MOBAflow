@@ -107,12 +107,9 @@ public sealed partial class MobaRuntimeService
         var nextContext = new ActiveProjectContext(activeProject, journeyManager);
         ReplaceActiveProjectContext(nextContext);
 
-        if (_interlockingRuntime != null)
-        {
-            await _interlockingRuntime.ActivateAsync(activeProject.Interlocking, cancellationToken).ConfigureAwait(false);
-            if (_z21.IsConnected)
-                await _interlockingRuntime.SynchronizeAsync(cancellationToken).ConfigureAwait(false);
-        }
+        await _interlockingRuntime.ActivateAsync(activeProject.Interlocking, cancellationToken).ConfigureAwait(false);
+        if (_z21.IsConnected)
+            await _interlockingRuntime.SynchronizeAsync(cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
             "Activated project '{ProjectName}' for runtime with {JourneyCount} journeys",

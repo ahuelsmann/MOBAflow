@@ -17,10 +17,14 @@ persisted data, integrations and build entry points.
 
 ```text
 Domain/                 Persisted models, enums and JSON converters
+Contracts/              Runtime, command, hub and discovery wire contracts
 Common/                 Configuration, events, validation, discovery and helpers
 Backend/                Z21 protocol, runtime, journey and workflow services
 SharedUI/               Cross-platform ViewModels and UI-facing services
-Sound/                  Audio and speech abstractions/implementations
+Sound/                  Platform-neutral sound-effect playback contracts and null player
+Speech.Base/            Speech contracts, shared output and audio cache
+Speech.Piper/           Windows Piper synthesis and pronunciation normalization
+Speech.SystemSpeech/    Windows System.Speech synthesis provider
 MOBAflow/               Windows WinUI app
 MOBAsmart/              Android MAUI app
 MOBApi/                 REST and SignalR host
@@ -62,9 +66,13 @@ consumes queued remote commands.
 | Layer | Responsibility |
 | --- | --- |
 | `Domain` | Serializable models and workflow payloads without platform dependencies |
-| `Common` | Configuration, EventBus contracts, validation, discovery and runtime DTOs |
+| `Contracts` | Runtime snapshots, remote commands, typed RuntimeHub roles and discovery wire contracts |
+| `Common` | Configuration, EventBus contracts, validation, discovery and platform-neutral helpers |
 | `Backend` | Runtime orchestration, Z21 communication, feedback, journeys and workflows |
 | `SharedUI` | Observable state and commands shared by WinUI and MAUI |
+| `Sound` | Sound-effect playback contract and null implementation; platform playback lives in the host |
+| `Speech.Base` | Platform-neutral speech/provider contracts, shared speech output and cache |
+| `Speech.Piper`, `Speech.SystemSpeech` | Windows speech synthesis providers; MOBAsmart includes neither provider |
 | App hosts | Platform UI, lifecycle, files, network wiring and process management |
 
 ## Runtime and threading
@@ -115,8 +123,11 @@ The mobile responsibilities are split into:
 
 These services are application singletons. [`MauiViewModel`](../SharedUI/Mobile/MauiViewModel.cs) creates its
 [`MobileAppLifecycle`](../SharedUI/Mobile/MobileAppLifecycle.cs) and keeps UI projection,
-subscriptions, the health-check loop and cancellation ownership. `SolutionSession`
-remains the owner of the loaded solution and project selection. Session loss or a
+subscriptions, the health-check loop and cancellation ownership.
+[`MobileSolutionContext`](../SharedUI/Service/MobileSolutionContext.cs), registered by MAUI as `IProjectContext`,
+owns the phone's loaded solution and project selection. `SolutionRemoteLoader` applies imported or cached
+solutions to that context. The desktop registers its separate `SolutionSession` as `ISolutionSession`,
+`IProjectContext` and `IJourneySelectionContext`. Session loss or a
 connection-toggle change resets the initial-import flag; shutdown cancels work
 and releases subscriptions. See [the architecture flows](ARCHITECTURE.md#-data-flow)
 for the state and lifecycle boundaries.
@@ -309,6 +320,14 @@ MOBApi maps controllers plus two SignalR hubs.
 | `/runtime-hub` | Live runtime and solution notifications |
 | `/photos-hub` | Photo notifications |
 
+`PUT /api/solution` validates and caches the raw JSON body. Its optional
+`X-MOBAflow-Solution-Path` and `X-MOBAflow-Active-Project` headers supply metadata.
+Each uses a parameter-scoped binder that keeps the first value exposed by ASP.NET Core,
+including an empty or whitespace value, without joining repeated values or splitting
+commas. A missing header remains `null`; Kestrel removes HTTP optional whitespace on
+the wire before binding. Invalid solution JSON returns `400` without changing the
+solution or snapshot caches or broadcasting a solution update.
+
 The default HTTP port is `5001`. `UdpDiscoveryService` runs in standalone MOBApi
 unless `MOBAFLOW_DISCOVERY_IN_WINUI` indicates that the WinUI host owns
 discovery. Discovery responses carry the address and HTTP port
@@ -318,7 +337,14 @@ MOBApi has no authentication: every REST and SignalR operation is available over
 plain HTTP to every device in the home network, as described in the
 [operating model](../SECURITY.md#operating-model). Every remote command passes one
 admission step that validates its values before it is forwarded to MOBAflow or
-queued; the fallback queue holds at most 128 commands.
+queued; the fallback queue holds at most 128 commands. Every command that this
+admission step rejects (failed validation or full queue) increments the counter
+`moba.runtime_commands.rejected` of the meter `Moba.MOBApi`, tagged with `reason`
+(`invalid` or `queue_full`) and `command`; a full queue is also logged as a
+warning. Malformed requests that the REST or SignalR boundary rejects earlier
+(for example a missing body or an unparsable project, signal or aspect value) are
+not counted. Watch the counter live with
+`dotnet-counters monitor --name MOBApi --counters Moba.MOBApi`.
 
 MOBAflow starts MOBApi from an isolated copy of its build output so updates and
 cleanup do not race the running process.

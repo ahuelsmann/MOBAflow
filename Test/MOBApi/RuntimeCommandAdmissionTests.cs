@@ -54,7 +54,7 @@ internal sealed class RuntimeCommandAdmissionTests
     public void Enqueue_InvalidCommand_IsRejectedAndNotQueued()
     {
         var queue = new RuntimeCommandQueue(capacity: 4);
-        var admission = new RuntimeCommandAdmission(queue, KnownProject());
+        var admission = TestCommandAdmission.Create(queue, KnownProject());
 
         var result = admission.Enqueue(ValidDrive(0));
 
@@ -69,7 +69,7 @@ internal sealed class RuntimeCommandAdmissionTests
     [Test]
     public void Enqueue_WhenQueueIsFull_ReturnsQueueFull()
     {
-        var admission = new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 1), KnownProject());
+        var admission = TestCommandAdmission.Create(new RuntimeCommandQueue(capacity: 1), KnownProject());
         admission.Enqueue(ValidDrive(1));
 
         var result = admission.Enqueue(ValidDrive(2));
@@ -165,7 +165,7 @@ internal sealed class RuntimeCommandAdmissionTests
     public void Enqueue_CommandForUnknownProject_IsRejectedAndNotQueued()
     {
         var queue = new RuntimeCommandQueue(capacity: 4);
-        var admission = new RuntimeCommandAdmission(queue, KnownProject());
+        var admission = TestCommandAdmission.Create(queue, KnownProject());
 
         var result = admission.Enqueue(ValidDrive(3) with { ProjectId = Guid.NewGuid() });
 
@@ -180,7 +180,7 @@ internal sealed class RuntimeCommandAdmissionTests
     [Test]
     public void Enqueue_CommandWithoutProject_IsRejected()
     {
-        var admission = new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 4), KnownProject());
+        var admission = TestCommandAdmission.Create(new RuntimeCommandQueue(capacity: 4), KnownProject());
 
         var result = admission.Enqueue(ValidDrive(3) with { ProjectId = Guid.Empty });
 
@@ -240,7 +240,7 @@ internal sealed class RuntimeCommandAdmissionTests
                 new Mock<ISolutionCache>().Object,
                 hostRegistry.Object,
                 new Mock<IRuntimeBroadcastMetrics>().Object,
-                new RuntimeCommandAdmission(Queue, KnownProject()),
+                TestCommandAdmission.Create(Queue, KnownProject()),
                 new Mock<IRuntimeRemoteRegistry>().Object)
             {
                 Clients = clients.Object

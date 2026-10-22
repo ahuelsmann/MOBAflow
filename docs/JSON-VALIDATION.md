@@ -259,7 +259,7 @@ public async Task<(Solution? solution, string? path, string? error)> LoadAsync()
 
     try
     {
-        var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default);
+        var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
         return (sol, result.Path, null);
     }
     catch (JsonException ex)
@@ -269,14 +269,31 @@ public async Task<(Solution? solution, string? path, string? error)> LoadAsync()
 }
 ```
 
-### In `MainWindowViewModel`
+### In `SolutionSession`
+
+[`SolutionSession`](../SharedUI/Service/SolutionSession.cs) coordinates loading through
+[`ISolutionIoService`](../SharedUI/Interface/ISolutionIoService.cs). The WinUI host binds
+that contract to [`SolutionFileService`](../MOBAflow/Service/SolutionFileService.cs),
+which owns the picker, file read, validation and deserialization. The session then
+handles errors and applies a successful result on the UI thread:
 
 ```csharp
-var (loadedSolution, path, error) = await _ioService.LoadAsync();
-
-if (!string.IsNullOrEmpty(error))
+public async Task LoadSolutionAsync()
 {
-    throw new InvalidOperationException($"Failed to load solution: {error}");
+    if (!_solutionIo.CanPersist)
+        return;
+
+    var (loadedSolution, path, error) = await _solutionIo.LoadAsync().ConfigureAwait(false);
+    ApplyLoadResult(loadedSolution, path, error);
+}
+
+private void ApplyLoadResult(Solution? loadedSolution, string? path, string? error)
+{
+    if (!string.IsNullOrEmpty(error))
+        throw new InvalidOperationException($"Failed to load solution: {error}");
+
+    if (loadedSolution != null && path != null)
+        _uiDispatcher.InvokeOnUi(() => ApplyLoadedSolution(loadedSolution, path));
 }
 ```
 

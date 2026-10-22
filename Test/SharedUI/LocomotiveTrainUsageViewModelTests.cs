@@ -70,7 +70,7 @@ internal static class LocomotiveTrainUsageViewModelTests
         var fixture = new TestProjectRuntimeHost();
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = CreateProject();
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var actual = fixture.Host;
         var reader = new Mock<ILocomotiveTrainRuntimeUsageReader>();
         reader.Setup(value => value.ReadAsync(It.IsAny<LocomotiveTrainUsageRequest>(), It.IsAny<CancellationToken>()))

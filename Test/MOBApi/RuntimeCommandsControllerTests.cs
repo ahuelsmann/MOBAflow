@@ -95,7 +95,7 @@ internal sealed class RuntimeCommandsControllerTests
         var queue = new RuntimeCommandQueue(capacity: 1);
         var controller = new JourneyProgressController(
             SnapshotWithJourneys(firstJourney, secondJourney),
-            new RuntimeCommandAdmission(queue, KnownProject()))
+            TestCommandAdmission.Create(queue, KnownProject()))
         {
             ControllerContext = LoopbackContext()
         };
@@ -117,7 +117,7 @@ internal sealed class RuntimeCommandsControllerTests
     {
         var controller = new JourneyProgressController(
             SnapshotWithJourneys(Guid.NewGuid()),
-            new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 1), KnownProject()))
+            TestCommandAdmission.Create(new RuntimeCommandQueue(capacity: 1), KnownProject()))
         {
             ControllerContext = LoopbackContext()
         };
@@ -128,7 +128,7 @@ internal sealed class RuntimeCommandsControllerTests
     private static RuntimeCommandsController CreateController(int capacity)
     {
         var queue = new RuntimeCommandQueue(capacity);
-        return new RuntimeCommandsController(new RuntimeCommandAdmission(queue, KnownProject()));
+        return new RuntimeCommandsController(TestCommandAdmission.Create(queue, KnownProject()));
     }
 
     /// <summary>A synchronized solution that contains only <see cref="Project"/>.</summary>

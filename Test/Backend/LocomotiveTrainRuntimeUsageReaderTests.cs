@@ -25,7 +25,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         var fixture = new TestProjectRuntimeHost(analyzer.Object);
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = CreateProject();
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var reader = fixture.Host;
         foreach (var z21 in fixture.Z21s) z21.Invocations.Clear();
 
@@ -71,7 +71,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = CreateProject();
         var other = new Project();
-        await fixture.Host.LoadAsync([project, other]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project, other]).ConfigureAwait(false);
         fixture.Host.SelectProject(other.Id);
         var originalName = project.Trains[0].Name;
         project.Trains[0].Name = "Unsaved replacement";
@@ -109,7 +109,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         var project = CreateProject();
         var target = project.Locomotives[0];
         project.Locomotives.Clear();
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         project.Locomotives.Add(target);
 
         var observation = await ((ILocomotiveTrainRuntimeUsageReader)fixture.Host).ReadAsync(Request(project)).ConfigureAwait(false);
@@ -130,7 +130,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = CreateProject();
         project.Trains.Clear();
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
 
         var observed = await ((ILocomotiveTrainRuntimeUsageReader)fixture.Host).ReadAsync(Request(project)).ConfigureAwait(false);
 
@@ -151,7 +151,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         var project = CreateProject();
         var reader = fixture.Host;
         var absent = await reader.ReadAsync(Request(project)).ConfigureAwait(false);
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var foreign = new Project { Id = project.Id };
         var mismatch = await reader.ReadAsync(new(Guid.NewGuid(), foreign, foreign.Id)).ConfigureAwait(false);
 
@@ -172,7 +172,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         var fixture = new TestProjectRuntimeHost();
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = CreateProject();
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var reader = fixture.Host;
         var observation = await reader.ReadAsync(Request(project)).ConfigureAwait(false);
         Assert.That(await reader.IsCurrentAsync(observation with { RequestId = Guid.NewGuid() }).ConfigureAwait(false),
@@ -190,7 +190,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         var fixture = new TestProjectRuntimeHost();
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = CreateProject();
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var reader = fixture.Host;
         var observation = await reader.ReadAsync(Request(project)).ConfigureAwait(false);
 
@@ -222,7 +222,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         var owned = new TestProjectRuntimeHost(analyzer.Object);
         await using var ownedLifetime = owned.ConfigureAwait(false);
         fixture = owned;
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var reader = fixture.Host;
 
         var observation = await reader.ReadAsync(Request(project)).ConfigureAwait(false);
@@ -251,7 +251,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         await using var ownedLifetime = owned.ConfigureAwait(false);
         fixture = owned;
         var project = CreateProject();
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
 
         var observation = await ((ILocomotiveTrainRuntimeUsageReader)fixture.Host).ReadAsync(Request(project)).ConfigureAwait(false);
         await disposal!.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
@@ -272,7 +272,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         var fixture = new TestProjectRuntimeHost(analyzer.Object);
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = CreateProject();
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var reader = fixture.Host;
 
         Assert.That((await reader.ReadAsync(Request(project)).ConfigureAwait(false)).LoadedDefinitionCoverage.Reason,
@@ -292,7 +292,7 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         var fixture = new TestProjectRuntimeHost(analyzer.Object);
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = CreateProject();
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var owner = fixture.Host.Get(project.Id);
         var before = fixture.Host.Snapshots.Single();
         foreach (var z21 in fixture.Z21s) z21.Invocations.Clear();

@@ -41,12 +41,15 @@ public class RestApiDiscoveryService : IRestDiscoveryService
 
     private readonly AppSettings _appSettings;
     private readonly HttpClient _lanProbeHttpClient;
+    private readonly ILocalIpv4AddressSource _localAddresses;
 
-    public RestApiDiscoveryService(AppSettings appSettings, IHttpClientFactory httpClientFactory)
+    public RestApiDiscoveryService(AppSettings appSettings, IHttpClientFactory httpClientFactory, ILocalIpv4AddressSource localAddresses)
     {
         ArgumentNullException.ThrowIfNull(appSettings);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
+        ArgumentNullException.ThrowIfNull(localAddresses);
         _appSettings = appSettings;
+        _localAddresses = localAddresses;
         _lanProbeHttpClient = httpClientFactory.CreateClient(MobiHttpClientNames.LanDiscovery);
     }
 
@@ -66,7 +69,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService
         CancellationToken cancellationToken = default)
     {
         var restPort = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
-        var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
+        var localAddresses = _localAddresses.GetCandidateLocalIpv4Addresses();
 
         var quickTask = TryDiscoverByQuickHttpProbeAsync(localAddresses, restPort, cancellationToken);
         var udpTask = TryDiscoverByUdpAsync(localAddresses, cancellationToken);
@@ -111,7 +114,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService
         CancellationToken cancellationToken = default)
     {
         var restPort = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
-        var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
+        var localAddresses = _localAddresses.GetCandidateLocalIpv4Addresses();
 
         try
         {

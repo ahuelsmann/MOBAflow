@@ -280,7 +280,7 @@ internal sealed class RecorderPageViewModelTests
                 "journey.transition",
                 "information",
                 null,
-                [new RecordingEntityReference("journey", journeyId)],
+                (RecordingEntityReference[])[new RecordingEntityReference("journey", journeyId)],
                 JsonSerializer.SerializeToElement(new { value = 1 }),
                 "Journey entry",
                 RecordingReplayApplicability.DisplayOnly),
@@ -293,7 +293,7 @@ internal sealed class RecorderPageViewModelTests
                 "z21.feedback.activated",
                 "information",
                 null,
-                [new RecordingEntityReference("feedback", Guid.Parse("aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb"))],
+                (RecordingEntityReference[])[new RecordingEntityReference("feedback", Guid.Parse("aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb"))],
                 JsonSerializer.SerializeToElement(new { value = 2 }),
                 "Feedback entry",
                 RecordingReplayApplicability.DisplayOnly)
