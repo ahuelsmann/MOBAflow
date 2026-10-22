@@ -146,7 +146,9 @@ Main pushes and manual runs enable the remaining scopes. See
 [Build Performance](BUILD-PERFORMANCE.md#ci-note) and
 [`Get-QualityChangeScope.ps1`](../scripts/Get-QualityChangeScope.ps1) for the exact selection.
 [Documentation consistency](DOCUMENTATION-CONSISTENCY.md) describes the always-on
-generated-fact checks and the separately activated semantic maintenance workflow.
+generated-fact checks and source-grounded developer/wiki maintenance in the same
+issue/PR through existing Codex delivery, independent Claude review and actual-main
+verification. No separate documentation API or App bot is activated.
 See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
 Create Draft PRs. Chief Project Manager alone marks ready after checking the current comparison, applicable CI,
