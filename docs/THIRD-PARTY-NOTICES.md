@@ -83,7 +83,7 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 ## Direct Package Inventory
 
 The following table is generated from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and the `PackageReference` entries in tracked project files and build-wide props/targets.
-Conditional references and all three mutation test hosts are included; this is a source inventory,
+Conditional references and every mutation test host under `MutationTest/` are included; this is a source inventory,
 not a resolved per-platform restore graph. Each package has its own row so its version and
 usage can be compared directly with those XML entries. Versions in this section must not be edited independently of the central package catalog.
 
