@@ -24,7 +24,7 @@ internal sealed class RestApiRuntimeHubServiceTests
         var projectRuntimes = new TestProjectRuntimeHost();
         await using var lifetime = projectRuntimes.ConfigureAwait(false);
         var station = TestProjectRuntimeHost.Project("Station", "192.168.0.111");
-        await projectRuntimes.Host.LoadAsync([station]).ConfigureAwait(false);
+        await projectRuntimes.Host.LoadAsync((Project[])[station]).ConfigureAwait(false);
         var runtimeHubHostClient = ConnectedHostClient();
         using var mobApiClient = new LocalMobApiClient(new AppSettings());
         var service = new RestApiRuntimeHubService(
@@ -56,7 +56,7 @@ internal sealed class RestApiRuntimeHubServiceTests
         await using var lifetime = projectRuntimes.ConfigureAwait(false);
         var station = TestProjectRuntimeHost.Project("Station", "192.168.0.111");
         var yard = TestProjectRuntimeHost.Project("Yard", "192.168.0.112");
-        await projectRuntimes.Host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await projectRuntimes.Host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
         var pushed = new List<MobaRuntimeSnapshot>();
         var bothPushed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var runtimeHubHostClient = ConnectedHostClient();
@@ -105,7 +105,7 @@ internal sealed class RestApiRuntimeHubServiceTests
         await using var lifetime = projectRuntimes.ConfigureAwait(false);
         var station = TestProjectRuntimeHost.Project("Station", "192.168.0.111");
         var yard = TestProjectRuntimeHost.Project("Yard", "192.168.0.112");
-        await projectRuntimes.Host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await projectRuntimes.Host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
         var yardPushed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var runtimeHubHostClient = ConnectedHostClient();
         runtimeHubHostClient

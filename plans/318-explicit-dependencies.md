@@ -26,7 +26,7 @@ Counted on main `71830101`; "tests" counts construction sites in `Test/`.
 | `MobaRuntimeService` | two constructors; `?? new` for `InPortCounterService`, `JourneyManagerFactory`, `IZ21EndpointSource`; optional event bus, interlocking runtime, time provider | 9 | one constructor; every collaborator required and created by `ProjectRuntimeFactory`/DI; `_ownsInPortCounters` follows the factory's ownership instead of the fallback |
 | `JourneyManager`, `JourneyManagerDependencies`, `JourneyManagerFactory` | `?? new` for stop transitions, runtime state store, counters, execution coordinator, `ActionExecutionContext`; factory created with `logger: null` | 7 | dependencies record with required members; factory receives them from DI |
 | `PlatformManager` | `?? new ActionExecutionContext { Z21 = z21 }` | 0 | required `ActionExecutionContextFactory` |
-| `Common/Discovery/LanIpv4AddressHelper.AugmentAddresses` | mutable static `Action` set by `MOBAsmart/Service/LanIpv4AddressHelperAndroidBootstrap.cs` | - | injected `ILocalAddressSource` with the network-interface implementation in `Common` and an Android decorator in MOBAsmart; `Z21DiscoveryService` and `RestApiDiscoveryService` receive it |
+| `Common/Discovery/LanIpv4AddressHelper.AugmentAddresses` | mutable static `Action` set by `MOBAsmart/Service/LanIpv4AddressHelperAndroidBootstrap.cs` | - | injected `ILocalIpv4AddressSource` with the network-interface implementation in `Common` and an Android decorator in MOBAsmart; `Z21DiscoveryService` and `RestApiDiscoveryService` receive it |
 | `MOBAflow/View/SegmentPlanPathBuilder.ScaleMmToPx` | mutable static set by `TrackPlanPage` to the constant 1.0 | - | scale passed by the caller (or one shared constant); no setter |
 | `SharedUI/ViewModel/WorkflowLibraryViewModel` | `?? new NullDialogService()`, `?? new WorkflowValidator()`; `WorkflowLibraryRuntimeServices.ExecutionContext` | 19 | required dialog service and `IWorkflowValidator`; the test-run path receives a narrow workflow-run service instead of the runtime context |
 | `SolutionViewModel`, `ProjectViewModel`, `WorkflowViewModel`, `JourneyViewModel`, `AudioViewModel`, `CommandViewModel` | optional dispatcher, `IIoService`, sound player, `ILoggerFactory`/logger(s) | 48+ | the creating session passes one required services record (`SolutionViewModelServices`, a new type that slice 4 of this plan creates; RF-25 does not depend on RF-29 for it); tests build ViewModels through one helper |
@@ -64,7 +64,7 @@ Kept as is: value options with documented defaults (`RecorderOptions`, `Recordin
    `AnnouncementService`, `ProductionWorkflowEffectAdapter`, `WorkflowValidator`, `ProjectValidator`; DI registrations in `MobaBackendServiceCollectionExtensions`.
 2. **Runtime composition (Backend).** `MobaRuntimeService` with one constructor, `JourneyManager` dependencies,
    `JourneyManagerFactory`, `PlatformManager`, `ProjectRuntimeFactory`; ownership tests for the counter service.
-3. **Static hooks.** `ILocalAddressSource` replaces `LanIpv4AddressHelper.AugmentAddresses` (MOBAsmart registers
+3. **Static hooks.** `ILocalIpv4AddressSource` replaces `LanIpv4AddressHelper.AugmentAddresses` (MOBAsmart registers
    the Android decorator); `SegmentPlanPathBuilder.ScaleMmToPx` loses its setter.
 4. **SharedUI ViewModels.** Starts after RF-24 slice 3b (#293), which changes `MainWindowViewModel` and the shared
    test helpers. `WorkflowLibraryViewModel`, the model-wrapper ViewModels, `SolutionSession`, train-control and

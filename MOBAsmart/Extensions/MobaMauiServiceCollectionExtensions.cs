@@ -6,6 +6,7 @@ using Backend;
 using Backend.Interface;
 using Backend.Service;
 using Common.Configuration;
+using Common.Discovery;
 using Common.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -56,6 +57,9 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddLogging();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
         services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
+        services.AddSingleton<NetworkInterfaceIpv4AddressSource>();
+        services.AddSingleton<ILocalIpv4AddressSource>(sp =>
+            new AndroidLocalIpv4AddressSource(sp.GetRequiredService<NetworkInterfaceIpv4AddressSource>()));
         services.AddMobaBackendServices();
 
         return services;

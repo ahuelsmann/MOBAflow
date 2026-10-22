@@ -303,7 +303,9 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
                 3. Enter the IP address of the Z21 (default: 192.168.0.111)
                 4. Click "Connect"
 
-                The Z21 is addressed via UDP on port 21105.
+                The Z21 uses the UDP port configured in the project's properties (21105 by default).
+                Z21 Finder also probes UDP 21106 as an alternative Z21 port.
+                MOBApi discovery on the PC also uses UDP 21106, with a different protocol.
 
                 Troubleshooting:
                 - Check your network connection
@@ -604,7 +606,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
                 2. Is PC on the same network?
                 3. Is IP address correct? (default: 192.168.0.111)
                 4. Can you access Z21 Maintenance Tool?
-                5. Is UDP port 21105 blocked by firewall?
+                5. Is the project's configured Z21 UDP port blocked by firewall? (21105 by default)
 
                 Test:
                 - Ping 192.168.0.111 in command prompt

@@ -135,13 +135,13 @@ internal sealed class MauiViewModelInitializationTests
         var lastFeedback = DateTimeOffset.UtcNow;
         var local = new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(1, 5, lastFeedback, TimeSpan.FromSeconds(20))]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 5, lastFeedback, TimeSpan.FromSeconds(20))]
         };
         eventBus.Publish(new RuntimeSnapshotChangedEvent(local));
         eventBus.Publish(new RuntimeSnapshotChangedEvent(local));
         eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(1, 99, lastFeedback, null)]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 99, lastFeedback, null)]
         }));
         viewModel.IncrementFeedbackPointsCommand.Execute(null);
 
@@ -169,7 +169,7 @@ internal sealed class MauiViewModelInitializationTests
         viewModel.CountOfFeedbackPoints = 1;
         eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(1, 7, null, null)]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 7, null, null)]
         }));
 
         var reset = viewModel.ResetCountersCommand.ExecuteAsync(null);
@@ -200,7 +200,7 @@ internal sealed class MauiViewModelInitializationTests
         viewModel.CountOfFeedbackPoints = 1;
         eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(1, 7, null, null)]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 7, null, null)]
         }));
 
         await viewModel.ResetCountersCommand.ExecuteAsync(null).ConfigureAwait(true);

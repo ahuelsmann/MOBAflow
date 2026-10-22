@@ -106,4 +106,46 @@ internal class WorkflowTests
         Assert.That(action.DelayAfterMs, Is.EqualTo(100));
         Assert.That(action.Audio, Is.Null);
     }
+
+    [Test]
+    public void FindStructureIssues_ReportsAWorkflowWithoutActionsOnce()
+    {
+        var issues = new Workflow { Actions = [] }.FindStructureIssues();
+
+        Assert.That(issues, Is.EqualTo(new[] { new WorkflowStructureIssue(WorkflowStructureIssueKind.EmptyWorkflow, null, "actions") }));
+    }
+
+    [Test]
+    public void FindStructureIssues_ReportsActionProblemsInActionOrder()
+    {
+        var repeated = Guid.NewGuid();
+        var workflow = new Workflow
+        {
+            Actions =
+            [
+                new WorkflowAction { Id = repeated },
+                null!,
+                new WorkflowAction { Id = Guid.Empty, DelayAfterMs = -1 },
+                new WorkflowAction { Id = repeated }
+            ]
+        };
+
+        var issues = workflow.FindStructureIssues();
+
+        Assert.That(issues, Is.EqualTo(new[]
+        {
+            new WorkflowStructureIssue(WorkflowStructureIssueKind.NullAction, 1, "actions[1]"),
+            new WorkflowStructureIssue(WorkflowStructureIssueKind.EmptyActionId, 2, "actions[2].id"),
+            new WorkflowStructureIssue(WorkflowStructureIssueKind.NegativeDelay, 2, "actions[2].delayAfterMs"),
+            new WorkflowStructureIssue(WorkflowStructureIssueKind.DuplicateActionId, 3, "actions[3].id")
+        }));
+    }
+
+    [Test]
+    public void FindStructureIssues_IsEmptyForAWellFormedWorkflow()
+    {
+        var workflow = new Workflow { Actions = [new WorkflowAction { Id = Guid.NewGuid(), DelayAfterMs = 0 }] };
+
+        Assert.That(workflow.FindStructureIssues(), Is.Empty);
+    }
 }

@@ -135,9 +135,9 @@ dependencies.
 | RF-04 | [#43](https://github.com/ahuelsmann/MOBAflow/issues/43) | Z21 events are processed in deterministic FIFO order with defined overload and shutdown behavior. |
 | RF-05 | [#51](https://github.com/ahuelsmann/MOBAflow/issues/51) | A clean Android Release restore produces a validated AAB locally and in mandatory CI. |
 | RF-06 | [#90](https://github.com/ahuelsmann/MOBAflow/issues/90) | Release and CI run an explicit analyzer baseline and reject new unapproved diagnostics. |
-| RF-07 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Every supported delivery target has a reproducible mandatory clean-build lane. |
+| RF-07 | [#360](https://github.com/ahuelsmann/MOBAflow/issues/360) | Every supported delivery target has a reproducible mandatory clean-build lane. |
 | RF-08 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
-| RF-09 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Risk-critical behavior has non-decreasing coverage and mutation protection. |
+| RF-09 | [#366](https://github.com/ahuelsmann/MOBAflow/issues/366) | Risk-critical behavior has non-decreasing coverage and mutation protection. |
 | RF-10 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Formatting drift fails CI without obscuring functional changes. |
 | RF-11 | [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
 | RF-12 | [#242](https://github.com/ahuelsmann/MOBAflow/issues/242) | Mobile session, discovery, runtime projection, synchronization, and upload concerns are separated. |
@@ -155,11 +155,11 @@ dependencies.
 | RF-24 | [#219](https://github.com/ahuelsmann/MOBAflow/issues/219) | `MainWindowViewModel` is a shell; each page area has its own focused ViewModel. |
 | RF-25 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Constructors declare real dependencies; no hidden optional services, fallbacks or mutable static hooks. |
 | RF-26 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | `Common` is split by responsibility: shared contracts, host-owned UI settings and presentation helpers. |
-| RF-27 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Domain classes own the rules and state transitions that need only domain data. |
+| RF-27 | [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) | Domain classes own the rules and state transitions that need only domain data. |
 | RF-28 | [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
 | RF-29 | [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) | Platform-specific sound and file services live in platform adapters with one role per class. |
 | RF-30 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
-| RF-31 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | The remaining oversized code-behind and recording classes are split by responsibility. |
+| RF-31 | [#349](https://github.com/ahuelsmann/MOBAflow/issues/349) | The remaining oversized code-behind and recording classes are split by responsibility. |
 
 The phrase "until child creation" is traceability, not workflow status. Issue #47
 remains authoritative for whether a child package is proposed, active, blocked,
@@ -174,19 +174,9 @@ updates issue #47, and remains inside the package and feature-scope boundaries.
 
 ### RF-07: Complete the CI platform matrix
 
-Sequence:
-
-1. inventory every supported deliverable and document its clean local command;
-2. make cross-platform .NET, Windows/WinUI, Android/MAUI Release, and ESP32
-   PlatformIO builds repeatable;
-3. add resolved transitive dependency auditing and the applicable test and
-   coverage gates;
-4. add mutation and formatting lanes only after RF-09 and RF-10 establish their
-   baselines.
-
-Acceptance anchor: every supported deliverable is reproduced from a clean
-checkout with the documented local command and an equivalent mandatory CI lane;
-required artifacts and tests are retained as workflow evidence.
+The deliverable inventory, decisions and delivery slices now belong to
+[the RF-07 child plan](360-ci-platform-matrix.md), owned by
+[issue #360](https://github.com/ahuelsmann/MOBAflow/issues/360).
 
 ### RF-08: Compile MAUI XAML bindings
 
@@ -205,18 +195,9 @@ does not regress.
 
 ### RF-09: Coverage and mutation ratchets
 
-Sequence:
-
-1. protect Z21 ordering and overload behavior;
-2. protect MOBApi command validation and remote command queue bounds;
-3. establish the Backend and API mutation lanes;
-4. extend measured lanes to Common and SharedUI;
-5. extend further only where the tooling is technically suitable.
-
-Acceptance anchor: existing coverage thresholds do not decrease without an
-approved rationale; security and concurrency paths include negative and
-failure-path assertions; every activated mutation lane records a baseline and
-adopts a non-decreasing ratchet.
+The baseline, lane order, triage rules and delivery slices now belong to
+[the RF-09 child plan](366-coverage-mutation-ratchets.md), owned by
+[issue #366](https://github.com/ahuelsmann/MOBAflow/issues/366).
 
 ### RF-10: Formatting baseline and gate
 
@@ -330,7 +311,9 @@ Sequence:
    `Domain/Matrix` and `Domain/Display`;
 2. move the `Moba.TrackPlan.Renderer` types declared in `TrackLibrary.PikoA`
    into a namespace of their project;
-3. move `Common/Speech/PiperPronunciationNormalizer` into `Sound`.
+3. move `Common/Speech/PiperPronunciationNormalizer` into `Sound`. The speech
+   providers ([#250](https://github.com/ahuelsmann/MOBAflow/pull/250)) later
+   moved it to `Speech.Piper/PiperPronunciationNormalizer.cs`.
 
 Acceptance anchor: each removed type had no reference; moved types keep their
 behavior and tests; builds of all affected targets pass.
@@ -417,17 +400,11 @@ removed fields.
 
 ### RF-27: Move domain rules into the domain model
 
-Sequence:
-
-1. inventory rules in Backend services and ViewModels that need only domain
-   data, for example journey stop transitions, workflow structure validation
-   and address conflicts;
-2. move each rule into the owning domain class behind a characterization test;
-3. keep persistence, time and hardware effects out of `Domain`.
-
-Acceptance anchor: moved rules are tested at the domain level; services
-delegate to domain methods instead of duplicating the rule; the JSON format
-stays unchanged.
+Child issue [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) owns this package and its status; the
+remaining inventory is tracked in [the RF-27 child plan](339-domain-rules.md). Delivered slices (#341, #346) moved
+the journey stop rules and the workflow/project structure rules onto the domain objects; this does not complete
+RF-27. Cross-entity validators with user-facing findings stay in `Backend/Service` (see
+[the Domain layer](../docs/ARCHITECTURE.md#1-domain-layer-domain)).
 
 ### RF-28: Consolidate the track-plan model
 
@@ -439,9 +416,11 @@ The page layout restore/save moves with RF-24 slice 6, which centralizes layout 
 
 ### RF-29: Platform adapters for sound and files
 
-The extraction order, source inventory, design and validation now belong to
-[the RF-29 child plan](313-platform-adapters.md), owned by
-[issue #313](https://github.com/ahuelsmann/MOBAflow/issues/313).
+Child issue [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) owns this package and its status; the
+remaining maintainer desktop acceptance is listed in [the RF-29 child plan](313-platform-adapters.md). Outcome:
+`Sound` holds only the platform-neutral contract and its null object, MOBAflow owns the WAV player, and each file
+role has its own interface and implementation class (see
+[the platform adapter rule](../docs/ARCHITECTURE.md#platform-adapter-rule)).
 
 ### RF-30: Repository and test layout
 
@@ -465,17 +444,9 @@ CI runs every test project.
 
 ### RF-31: Reduce the remaining oversized classes
 
-After characterization tests, split by responsibility:
-
-1. `HelpPage.xaml.cs`: move navigation and section state into a ViewModel and
-   panel layout persistence into the RF-24 layout service;
-2. `SignalBoxPropertiesControl.xaml.cs` and `MainWindow.xaml.cs`: keep only
-   view lifecycle and visual adaptation in code-behind;
-3. `RecordingSessionService` and the recording artifact import: separate
-   session lifecycle, event capture and file format handling.
-
-Acceptance anchor: each resulting class has one reason to change; code-behind
-contains no feature behavior; recording round-trip tests pass unchanged.
+The inventory, decisions and delivery slices now belong to
+[the RF-31 child plan](349-oversized-classes.md), owned by
+[issue #349](https://github.com/ahuelsmann/MOBAflow/issues/349).
 
 ## Spec Kit classification of RF-19 through RF-31
 

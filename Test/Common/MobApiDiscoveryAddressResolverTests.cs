@@ -17,6 +17,7 @@ using System.Text;
 internal sealed partial class MobApiDiscoveryAddressResolverTests
 {
     private static readonly string[] ExpectedPrivateAddresses = ["10.20.30.40", "172.16.0.1", "192.168.10.2"];
+    private static readonly string[] ExpectedMergedAddresses = ["192.168.10.2", "10.20.30.40", "172.16.0.1"];
 
     [TestCase(int.MinValue)]
     [TestCase(-1)]
@@ -53,6 +54,29 @@ internal sealed partial class MobApiDiscoveryAddressResolverTests
         {
             Assert.That(result.Select(address => address.ToString()), Is.EqualTo(ExpectedPrivateAddresses));
             Assert.That(addresses, Is.EqualTo(original));
+        }
+    }
+
+    [Test]
+    public void AddressMerge_KeepsInterfaceAddressesFirstAndAddsOnlyNewPrivateAddresses()
+    {
+        var interfaceAddresses = ParseAddresses("192.168.10.2|10.20.30.40").ToList();
+        var additionalAddresses = ParseAddresses("10.20.30.40|127.0.0.1|198.51.100.1|::1|172.16.0.1").ToList();
+
+        var result = LanIpv4AddressHelper.MergePrivateIpv4Addresses(interfaceAddresses, additionalAddresses);
+
+        Assert.That(result.Select(address => address.ToString()), Is.EqualTo(ExpectedMergedAddresses));
+    }
+
+    [Test]
+    public void AddressMerge_RejectsNullInput()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Assert.Throws<ArgumentNullException>(() => LanIpv4AddressHelper.MergePrivateIpv4Addresses(null!, []))!.ParamName,
+                Is.EqualTo("interfaceAddresses"));
+            Assert.That(Assert.Throws<ArgumentNullException>(() => LanIpv4AddressHelper.MergePrivateIpv4Addresses([], null!))!.ParamName,
+                Is.EqualTo("additionalAddresses"));
         }
     }
 
@@ -572,5 +596,19 @@ internal sealed partial class MobApiDiscoveryAddressResolverTests
         network.SetupGet(adapter => adapter.NetworkInterfaceType).Returns(type);
         network.SetupGet(adapter => adapter.Name).Returns(name!);
         return network.Object;
+    }
+
+    [Test]
+    public void NetworkInterfaceSource_ReturnsOnlyDistinctPrivateIpv4Addresses()
+    {
+        var addresses = new NetworkInterfaceIpv4AddressSource().GetCandidateLocalIpv4Addresses();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(addresses, Is.Unique);
+            Assert.That(addresses, Has.All.Matches<IPAddress>(address =>
+                address is { AddressFamily: AddressFamily.InterNetwork } && !IPAddress.IsLoopback(address)
+                && SubnetCandidateBuilder.IsPrivateIPv4(address)));
+        }
     }
 }

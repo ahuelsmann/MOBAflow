@@ -4,6 +4,8 @@ namespace Moba.Test.Domain;
 [TestFixture]
 internal class ProjectTests
 {
+    private static readonly int[] SecondAndFourthWorkflow = [1, 3];
+
     [Test]
     public void Constructor_InitializesDefaults()
     {
@@ -134,5 +136,23 @@ internal class ProjectTests
 
         project.Locomotives.Remove(loco);
         Assert.That(project.Locomotives, Is.Empty);
+    }
+
+    [Test]
+    public void FindWorkflowsWithInvalidIds_FlagsEmptyAndRepeatedIdsButNotTheirFirstUse()
+    {
+        var shared = Guid.NewGuid();
+        var project = new Project
+        {
+            Workflows =
+            [
+                new Workflow { Id = shared },
+                new Workflow { Id = Guid.Empty },
+                new Workflow { Id = Guid.NewGuid() },
+                new Workflow { Id = shared }
+            ]
+        };
+
+        Assert.That(project.FindWorkflowsWithInvalidIds(), Is.EquivalentTo(SecondAndFourthWorkflow));
     }
 }

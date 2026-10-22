@@ -3,6 +3,7 @@
 namespace Moba.Backend;
 
 using Common.Configuration;
+using Common.Discovery;
 using Common.Events;
 using Common.IO;
 using Common.Multiplex;
@@ -72,6 +73,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<RecordingArtifactSerializer>();
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
+        services.TryAddSingleton<ILocalIpv4AddressSource, NetworkInterfaceIpv4AddressSource>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
         services.TryAddSingleton<IZ21, Z21>();
         services.TryAddSingleton<IWorkflowValidator, WorkflowValidator>();

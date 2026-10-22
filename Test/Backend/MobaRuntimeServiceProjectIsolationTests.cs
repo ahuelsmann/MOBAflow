@@ -74,7 +74,7 @@ internal sealed partial class MobaRuntimeServiceProjectIsolationTests : IDisposa
         var fixture = new Moba.Test.Helpers.TestProjectRuntimeHost();
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = new Project { Name = "Original context" };
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var owner = fixture.Host.Get(project.Id)!;
         var otherContext = new Project { Name = "Another active project" };
         await owner.Runtime.ActivateProjectAsync(otherContext).ConfigureAwait(false);

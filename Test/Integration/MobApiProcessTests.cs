@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Moba.Contracts.Runtime;
 using System.Net;
 using System.Net.Http.Json;
+using System.Net.Sockets;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Channels;
 using Moba.Contracts.Discovery;
 
@@ -19,6 +22,117 @@ using Moba.Contracts.Discovery;
 internal sealed class MobApiProcessTests
 {
     private static readonly Guid ProjectId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+    private static readonly TestCaseData[] SolutionHeaderCases =
+    [
+        new TestCaseData(Array.Empty<string>(), null, null).SetName("SolutionHeaders_Missing"),
+        new TestCaseData(new[] { "X-MOBAflow-Solution-Path: C:/Layouts/test.json" }, "C:/Layouts/test.json", null)
+            .SetName("SolutionHeaders_PathOnly"),
+        new TestCaseData(new[] { "X-MOBAflow-Active-Project: Station" }, null, "Station")
+            .SetName("SolutionHeaders_ProjectOnly"),
+        new TestCaseData(
+            new[] { "X-MOBAflow-Solution-Path: C:/Layouts/test.json", "X-MOBAflow-Active-Project: Station" },
+            "C:/Layouts/test.json", "Station").SetName("SolutionHeaders_Both"),
+        new TestCaseData(
+            new[] { "X-MOBAflow-Solution-Path: C:/Layouts/a,b.json", "X-MOBAflow-Active-Project: Station, Yard" },
+            "C:/Layouts/a,b.json", "Station, Yard").SetName("SolutionHeaders_CommasRemainInOneValue"),
+        new TestCaseData(
+            new[]
+            {
+                "X-MOBAflow-Solution-Path: C:/Layouts/first.json", "X-MOBAflow-Solution-Path: C:/Layouts/second.json",
+                "X-MOBAflow-Active-Project: First, Yard", "X-MOBAflow-Active-Project: Second"
+            }, "C:/Layouts/first.json", "First, Yard").SetName("SolutionHeaders_RepeatedFirstWins"),
+        new TestCaseData(new[] { "X-MOBAflow-Solution-Path:", "X-MOBAflow-Active-Project:" }, "", "")
+            .SetName("SolutionHeaders_EmptyIsNotMissing"),
+        // Kestrel removes HTTP optional whitespace before exposing header values to model binding.
+        new TestCaseData(new[] { "X-MOBAflow-Solution-Path:   ", "X-MOBAflow-Active-Project:\t " }, "", "")
+            .SetName("SolutionHeaders_WhitespaceOnTheWire"),
+        new TestCaseData(
+            new[]
+            {
+                "X-MOBAflow-Solution-Path:", "X-MOBAflow-Solution-Path: later",
+                "X-MOBAflow-Active-Project:", "X-MOBAflow-Active-Project: later"
+            }, "", "").SetName("SolutionHeaders_EmptyFirstWins")
+    ];
+
+    [TestCaseSource(nameof(SolutionHeaderCases))]
+    [CancelAfter(45_000)]
+    public async Task SolutionPut_PreservesHeaderMetadataAndRawJson(string[] headerLines, string? sourcePath, string? activeProject)
+    {
+        var server = await MobaApiProcess.StartAsync(MobaApiProcess.GetAvailablePort()).ConfigureAwait(false);
+        await using var serverLifetime = server.ConfigureAwait(false);
+        var json = $$"""
+            {
+              "name": "Layout \u00dc",
+              "schemaVersion": {{Moba.Domain.Solution.CurrentSchemaVersion}},
+              "projects": [{"id":"{{ProjectId}}", "name":"Body project"}]
+            }
+            """;
+
+        var statusLine = await PutRawSolutionAsync(server.BaseUri, json, headerLines).ConfigureAwait(false);
+        using var metadataResponse = await server.SendAsync(HttpMethod.Get, "api/solution/meta").ConfigureAwait(false);
+        using var metadata = JsonDocument.Parse(await metadataResponse.Content.ReadAsStringAsync().ConfigureAwait(false));
+        using var solutionResponse = await server.SendAsync(HttpMethod.Get, "api/solution").ConfigureAwait(false);
+        var cachedJson = await solutionResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(statusLine, Is.EqualTo("HTTP/1.1 200 OK"));
+            Assert.That(metadataResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(metadata.RootElement.GetProperty("sourcePath").GetString(), Is.EqualTo(sourcePath));
+            Assert.That(metadata.RootElement.GetProperty("activeProjectName").GetString(), Is.EqualTo(activeProject));
+            Assert.That(metadata.RootElement.GetProperty("firstProjectName").GetString(), Is.EqualTo(activeProject ?? "Body project"));
+            Assert.That(solutionResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(cachedJson, Is.EqualTo(json));
+        }
+    }
+
+    [TestCase("not json")]
+    [TestCase("{}")]
+    [CancelAfter(45_000)]
+    public async Task SolutionPut_InvalidBodyDoesNotReplaceCachedSolutionOrMetadata(string invalidJson)
+    {
+        var server = await MobaApiProcess.StartAsync(MobaApiProcess.GetAvailablePort()).ConfigureAwait(false);
+        await using var serverLifetime = server.ConfigureAwait(false);
+        await server.PublishSolutionAsync(ProjectId).ConfigureAwait(false);
+        using var originalSolution = await server.SendAsync(HttpMethod.Get, "api/solution").ConfigureAwait(false);
+        var originalJson = await originalSolution.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var originalMetadata = await server.SendAsync(HttpMethod.Get, "api/solution/meta").ConfigureAwait(false);
+        var originalMetaJson = await originalMetadata.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        var statusLine = await PutRawSolutionAsync(server.BaseUri, invalidJson,
+            ["X-MOBAflow-Solution-Path: rejected", "X-MOBAflow-Active-Project: rejected"]).ConfigureAwait(false);
+        using var solution = await server.SendAsync(HttpMethod.Get, "api/solution").ConfigureAwait(false);
+        using var metadata = await server.SendAsync(HttpMethod.Get, "api/solution/meta").ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(statusLine, Is.EqualTo("HTTP/1.1 400 Bad Request"));
+            Assert.That(await solution.Content.ReadAsStringAsync().ConfigureAwait(false), Is.EqualTo(originalJson));
+            Assert.That(await metadata.Content.ReadAsStringAsync().ConfigureAwait(false), Is.EqualTo(originalMetaJson));
+        }
+    }
+
+    private static async Task<string?> PutRawSolutionAsync(Uri baseUri, string json, string[] headerLines)
+    {
+        // Raw header lines avoid HttpClient joining repeated values before Kestrel receives them.
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        using var client = new TcpClient();
+        await client.ConnectAsync(baseUri.Host, baseUri.Port, timeout.Token).ConfigureAwait(false);
+        var stream = client.GetStream();
+        await using var streamLifetime = stream.ConfigureAwait(false);
+        var request = new StringBuilder()
+            .Append("PUT /api/solution HTTP/1.1\r\nHost: ").Append(baseUri.Authority)
+            .Append("\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: ")
+            .Append(Encoding.UTF8.GetByteCount(json).ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Append("\r\n");
+        foreach (var line in headerLines)
+            request.Append(line).Append("\r\n");
+        request.Append("\r\n").Append(json);
+        await stream.WriteAsync(Encoding.UTF8.GetBytes(request.ToString()), timeout.Token).ConfigureAwait(false);
+        using var reader = new StreamReader(stream);
+        return await reader.ReadLineAsync(timeout.Token).ConfigureAwait(false);
+    }
 
     [Test]
     [CancelAfter(45_000)]

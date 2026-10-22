@@ -219,7 +219,7 @@ public sealed class JourneyEventPlanTests
                 Events = [new JourneyEvent { InPort = 1, Count = 1, WorkflowId = fixture.Workflow.Id }]
             }
         };
-        fixture.Project.Journeys.AddRange([secondJourney, inactiveJourney]);
+        fixture.Project.Journeys.AddRange((Journey[])[secondJourney, inactiveJourney]);
         using var manager = fixture.CreateManager();
 
         await fixture.RaiseAsync(1, manager);

@@ -15,7 +15,7 @@ internal sealed class PathToSvgConverterTests
     public void ToSvgPath_LineSegment_TranslatesToWorldCoordinates()
     {
         IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands =
-        [
+        (SegmentLocalPathBuilder.PathCommand[])[
             new SegmentLocalPathBuilder.MoveTo(0, 0),
             new SegmentLocalPathBuilder.LineTo(10, 0)
         ];
@@ -29,7 +29,7 @@ internal sealed class PathToSvgConverterTests
     public void ToSvgPath_RotatedLine_AppliesRotationAroundOrigin()
     {
         IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands =
-        [
+        (SegmentLocalPathBuilder.PathCommand[])[
             new SegmentLocalPathBuilder.MoveTo(0, 0),
             new SegmentLocalPathBuilder.LineTo(10, 0)
         ];
@@ -43,7 +43,7 @@ internal sealed class PathToSvgConverterTests
     public void ToSvgPath_ArcSegment_EmitsSvgArcCommand()
     {
         IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands =
-        [
+        (SegmentLocalPathBuilder.PathCommand[])[
             new SegmentLocalPathBuilder.MoveTo(0, 0),
             new SegmentLocalPathBuilder.ArcTo(10, 0, 5, Clockwise: true, LargeArc: false)
         ];
@@ -57,7 +57,7 @@ internal sealed class PathToSvgConverterTests
     public void ToPathDataString_AppliesScaleAndOffset()
     {
         IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands =
-        [
+        (SegmentLocalPathBuilder.PathCommand[])[
             new SegmentLocalPathBuilder.MoveTo(0, 0),
             new SegmentLocalPathBuilder.LineTo(10, 0)
         ];
