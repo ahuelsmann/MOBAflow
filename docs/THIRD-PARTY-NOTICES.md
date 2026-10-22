@@ -106,8 +106,10 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `Microsoft.Extensions.Logging.Console` | `10.0.13` | `Test` | Console logging output. |
 | `Microsoft.Extensions.Options` | `10.0.13` | `Sound` | Typed configuration options. |
 | `Microsoft.Graphics.Win2D` | `1.4.0` | `MOBAflow` | Windows GPU-accelerated 2D rendering. |
-| `Microsoft.Maui.Controls` | `10.0.110` | `MOBAsmart` | Android MAUI UI framework. |
-| `Microsoft.NET.Test.Sdk` | `18.10.1` | `MutationTest`, `MutationTest/Common`, `MutationTest/Speech.Base`, `Test` | Test execution host. |
+| `Microsoft.Maui.Controls` | `10.0.120` | `MOBAsmart` | Android MAUI UI framework. |
+| `Microsoft.NET.Test.Sdk` | `18.11.0` | `MutationTest`, `MutationTest/Common`, `MutationTest/Speech.Base`, `Test` | Test execution host. |
+| `Microsoft.Windows.SDK.BuildTools` | `10.0.28000.2705` | `MOBAflow` | Windows SDK build tools under Microsoft's SDK license; development only. |
+| `Microsoft.Windows.SDK.BuildTools.MSIX` | `1.7.260930100` | `MOBAflow` | Windows packaging build tools under Microsoft's SDK license; development only. |
 | `Microsoft.WindowsAppSDK` | `2.5.1` | `MOBAflow` | Windows desktop UI and runtime. |
 | `Microsoft.Xaml.Behaviors.WinUI.Managed` | `3.0.1` | `MOBAflow` | WinUI XAML behaviors. |
 | `MinVer` | `8.0.0` | Build-wide via `Directory.Build.props` | Build-time versions from Git tags. |
@@ -124,10 +126,10 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `Serilog.Sinks.Debug` | `3.0.0` | `MOBAflow` | Debug logging output. |
 | `Serilog.Sinks.File` | `7.0.0` | `MOBAflow` | File logging output. |
 | `SkiaSharp` | `4.153.1` | `MOBAdisplay`, `MOBAflow` | Display frame and image rendering. |
-| `System.Drawing.Common` | `10.0.12` | `MOBAdisplay` | Image conversion utilities. |
-| `System.Formats.Nrbf` | `10.0.12` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
-| `System.Speech` | `10.0.12` | `Speech.SystemSpeech` | Windows text-to-speech. |
-| `System.Windows.Extensions` | `10.0.12` | `MOBAflow` | Windows audio APIs. |
+| `System.Drawing.Common` | `10.0.13` | `MOBAdisplay` | Image conversion utilities. |
+| `System.Formats.Nrbf` | `10.0.13` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
+| `System.Speech` | `10.0.13` | `Speech.SystemSpeech` | Windows text-to-speech. |
+| `System.Windows.Extensions` | `10.0.13` | `MOBAflow` | Windows audio APIs. |
 | `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | Android startup integration. |
 <!-- documentation-facts:packages:end -->
 
@@ -160,6 +162,10 @@ The currently referenced direct dependencies primarily fall under the following 
 | BSD-3-Clause | Moq |
 
 The authoritative license for a package is the license metadata published by its upstream project or NuGet package page.
+The Windows SDK build tools use Microsoft's SDK license rather than the repository's MIT license:
+see [Windows SDK BuildTools license](https://aka.ms/WinSDKLicenseURL) and the
+[`sdk_license.txt` supplied with BuildTools.MSIX](https://www.nuget.org/packages/Microsoft.Windows.SDK.BuildTools.MSIX/1.7.260930100/License).
+Both were already transitive Windows App SDK build dependencies; their explicit references pin the build-tool versions.
 Before shipping a release with newly added dependencies, verify the package's current license and attribution requirements.
 
 ---
@@ -189,6 +195,6 @@ We are grateful to the open-source maintainers and standards authors whose work 
 
 ---
 
-**Last Updated:** 2026-10-16
+**Last Updated:** 2026-10-21
 **Scope:** Current direct dependencies and external interoperability surface  
 **License:** MIT License (see [LICENSE](../LICENSE))

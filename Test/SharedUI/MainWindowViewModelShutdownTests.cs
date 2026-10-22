@@ -107,7 +107,7 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
     {
         var solution = new Solution { Projects = [new Project { Name = "Station" }] };
         var host = new Mock<IProjectRuntimeHost>();
-        host.SetupGet(value => value.ConnectedProjectIds).Returns([solution.Projects[0].Id]);
+        host.SetupGet(value => value.ConnectedProjectIds).Returns((Guid[])[solution.Projects[0].Id]);
         var dialog = new Mock<IDialogService>();
         dialog.Setup(value => value.ShowConfirmationAsync(
                 "Stop all trains?", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
@@ -130,7 +130,7 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
     {
         var solution = new Solution { Projects = [new Project { Name = "Station" }] };
         var host = new Mock<IProjectRuntimeHost>();
-        host.SetupGet(value => value.ConnectedProjectIds).Returns([solution.Projects[0].Id]);
+        host.SetupGet(value => value.ConnectedProjectIds).Returns((Guid[])[solution.Projects[0].Id]);
         var dialog = new Mock<IDialogService>();
         dialog.Setup(value => value.ShowConfirmationAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
