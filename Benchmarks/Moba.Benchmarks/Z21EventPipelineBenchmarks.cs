@@ -14,7 +14,7 @@ using Moba.Common.Events;
 [MemoryDiagnoser]
 public class Z21EventPipelineBenchmarks
 {
-    private EventBus _bus = null!;
+    private EventBus _bus = new(NullLogger<EventBus>.Instance);
 
     [Params(100, 1000)]
     public int Events { get; set; }

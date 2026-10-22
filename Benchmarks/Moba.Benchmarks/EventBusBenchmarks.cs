@@ -11,7 +11,7 @@ using Moba.Common.Events;
 [MemoryDiagnoser]
 public class EventBusBenchmarks
 {
-    private EventBus _bus = null!;
+    private EventBus _bus = new(NullLogger<EventBus>.Instance);
     private int _received;
 
     [Params(1, 10)]

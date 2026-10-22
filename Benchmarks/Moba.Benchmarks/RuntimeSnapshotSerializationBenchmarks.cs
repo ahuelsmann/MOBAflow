@@ -11,7 +11,7 @@ using Moba.Contracts.Runtime;
 [MemoryDiagnoser]
 public class RuntimeSnapshotSerializationBenchmarks
 {
-    private MobaRuntimeSnapshot _snapshot = null!;
+    private MobaRuntimeSnapshot _snapshot = new();
     private string _json = string.Empty;
 
     /// <summary>Number of locomotives, journeys and signal-box elements each.</summary>
