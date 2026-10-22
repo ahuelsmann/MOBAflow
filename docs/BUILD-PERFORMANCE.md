@@ -192,10 +192,10 @@ skipped steps and a skipped job count as successful.
 source and copied fixture input of the mutation project.
 
 The repository consistency job also checks source-derived package and mutation
-documentation facts and runs their offline boundary tests. A separate
-[documentation consistency workflow](DOCUMENTATION-CONSISTENCY.md) supports
-semantic assessment and documentation commits in the existing PR. Its AI portion
-is initially inactive and requires explicit API/App configuration and live acceptance.
+documentation facts and runs their offline boundary tests. Documentation and
+wiki impact beyond these deterministic facts is recorded through the existing
+delivery process and independent Claude PR review; see
+[documentation consistency](DOCUMENTATION-CONSISTENCY.md).
 
 The repository consistency job also lints every workflow with a pinned,
 checksum-verified actionlint release and checks internal documentation links

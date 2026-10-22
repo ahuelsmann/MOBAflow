@@ -42,7 +42,7 @@ Required gate inventory for later autonomous delivery:
 | Analyzer/baseline | scripts/Test-AnalyzerBaseline.ps1 and relevant baseline files; missing/empty/invalid SARIF or failed producer => failure, no baseline mutation |
 | Text/index | scripts/Test-LineEndings.ps1 including Staged; meaningful mixed/incorrect staged content must produce failure |
 | Specification/instructions | Test-SpecKitGovernance.ps1, Test-InstructionConsistency.ps1 where applicable; missing required issue/sections => failure |
-| Links/documentation | Test-DocumentationLinks.ps1 and documentation-consistency workflow; broken relevant links => failure |
+| Links/documentation | Test-DocumentationLinks.ps1 and the Quality fact check (`scripts/documentation_consistency.py` with `scripts/Test-DocumentationConsistency.py`); broken relevant links => failure |
 | Tests/mutation/firmware/security | Existing affected Quality jobs; zero intended tests, failed relevant mutation/firmware/security gate => no pass |
 | Sonar | Actual current PR commit check success and OPEN/CONFIRMED count zero; missing/NONE/auth error => unknown/blocked |
 | Independent review | Fresh actual Opus 5.5+ identity, context sufficiency, exact comparison, findings/response, actual end; self/stale/lower/absent model => failure |

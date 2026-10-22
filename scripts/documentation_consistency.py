@@ -175,7 +175,6 @@ def fact_updates(root):
     return changes
 
 
-
 def main():
     import argparse
     parser = argparse.ArgumentParser()
