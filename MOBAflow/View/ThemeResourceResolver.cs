@@ -98,16 +98,22 @@ internal static class ThemeResourceResolver
             return false;
         }
 
-        // A Windows contrast theme overrides the app's light/dark choice, as XAML ThemeResource lookups do.
-        var themeKey = IsHighContrast()
-            ? "HighContrast"
-            : GetEffectiveTheme(element) == ElementTheme.Dark ? "Dark" : "Light";
-
-        if (TryResolveFromDictionary(Application.Current.Resources, themeKey, key, out value))
+        if (TryResolveFromDictionary(Application.Current.Resources, GetThemeDictionaryKey(element), key, out value))
             return true;
 
         value = null!;
         return false;
+    }
+
+    // A Windows contrast theme overrides the app's light/dark choice, as XAML ThemeResource lookups do.
+    private static string GetThemeDictionaryKey(FrameworkElement? element)
+    {
+        if (IsHighContrast())
+        {
+            return "HighContrast";
+        }
+
+        return GetEffectiveTheme(element) == ElementTheme.Dark ? "Dark" : "Light";
     }
 
     private static bool TryResolveFromDictionary<T>(
