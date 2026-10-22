@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
@@ -41,20 +42,21 @@ internal sealed class RuntimeConstructionTests
         yield return Case("journey logger", counters => new JourneyManager(
             new Project(), Context(), TestRuntimes.JourneyDependencies(counters), null!));
         yield return Case("factory workflows", _ => new JourneyManagerFactory(null!, new JourneyStopTransitionService(),
-            new NullJourneyRuntimeStateStore(), Bus, TimeProvider.System, NullLogger<JourneyManager>.Instance));
+            new NullJourneyRuntimeStateStore(), Bus, TimeProvider.System, NullLoggerFactory.Instance));
         yield return Case("factory stop transitions", _ => new JourneyManagerFactory(Workflows, null!,
-            new NullJourneyRuntimeStateStore(), Bus, TimeProvider.System, NullLogger<JourneyManager>.Instance));
+            new NullJourneyRuntimeStateStore(), Bus, TimeProvider.System, NullLoggerFactory.Instance));
         yield return Case("factory state store", _ => new JourneyManagerFactory(Workflows, new JourneyStopTransitionService(),
-            null!, Bus, TimeProvider.System, NullLogger<JourneyManager>.Instance));
+            null!, Bus, TimeProvider.System, NullLoggerFactory.Instance));
         yield return Case("factory event bus", _ => new JourneyManagerFactory(Workflows, new JourneyStopTransitionService(),
-            new NullJourneyRuntimeStateStore(), null!, TimeProvider.System, NullLogger<JourneyManager>.Instance));
+            new NullJourneyRuntimeStateStore(), null!, TimeProvider.System, NullLoggerFactory.Instance));
         yield return Case("factory time", _ => new JourneyManagerFactory(Workflows, new JourneyStopTransitionService(),
-            new NullJourneyRuntimeStateStore(), Bus, null!, NullLogger<JourneyManager>.Instance));
+            new NullJourneyRuntimeStateStore(), Bus, null!, NullLoggerFactory.Instance));
         yield return Case("factory logger", _ => new JourneyManagerFactory(Workflows, new JourneyStopTransitionService(),
             new NullJourneyRuntimeStateStore(), Bus, TimeProvider.System, null!));
         yield return Case("platform context", _ => new PlatformManager(Z21, new Project(), new Station(), Workflows,
             null!, NullLogger<PlatformManager>.Instance));
         yield return Case("platform logger", _ => new PlatformManager(Z21, new Project(), new Station(), Workflows, Context(), null!));
+        yield return Case("platform factory logger", _ => new PlatformManagerFactory(Z21, Workflows, null!));
     }
 
     [TestCaseSource(nameof(MissingDependencies))]
@@ -63,6 +65,24 @@ internal sealed class RuntimeConstructionTests
         using var counters = new InPortCounterService(Z21, new AppSettings());
 
         Assert.Throws<ArgumentNullException>(() => construct(counters));
+    }
+
+    [Test]
+    public void Factories_LogEachManagerUnderItsOwnCategory()
+    {
+        var loggers = new Mock<ILoggerFactory>();
+        loggers.Setup(factory => factory.CreateLogger(It.IsAny<string>())).Returns(NullLogger.Instance);
+        using var counters = new InPortCounterService(Z21, new AppSettings());
+        var journeys = new JourneyManagerFactory(Workflows, new JourneyStopTransitionService(),
+            new NullJourneyRuntimeStateStore(), Bus, TimeProvider.System, loggers.Object);
+        var platforms = new PlatformManagerFactory(Z21, Workflows, loggers.Object);
+
+        using (journeys.Create(new Project(), Context(), counters))
+        using (platforms.Create(new Project(), new Station(), Context()))
+        {
+            loggers.Verify(factory => factory.CreateLogger(typeof(JourneyManager).FullName!), Times.Once);
+            loggers.Verify(factory => factory.CreateLogger(typeof(PlatformManager).FullName!), Times.Once);
+        }
     }
 
     private static TestCaseData Case(string name, Func<InPortCounterService, object> construct) =>

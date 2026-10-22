@@ -126,7 +126,7 @@ public static class MobaBackendServiceCollectionExtensions
                     sp.GetRequiredService<IJourneyRuntimeStateStore>(),
                     sp.GetRequiredService<IEventBus>(),
                     sp.GetRequiredService<TimeProvider>(),
-                    sp.GetRequiredService<ILogger<JourneyManager>>()),
+                    sp.GetRequiredService<ILoggerFactory>()),
                 InterlockingRuntime = sp.GetRequiredService<IInterlockingRuntime>(),
                 InPortCounterService = sp.GetRequiredService<InPortCounterService>(),
                 EndpointSource = sp.GetService<IZ21EndpointSource>()

@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Domain;
+using Moba.Test.Helpers;
 
 using Moq;
 
@@ -16,11 +16,15 @@ using Moq;
 /// the failure and offline paths.
 /// </summary>
 [TestFixture]
-internal sealed class MobaRuntimeServiceCommandTests
+internal sealed partial class MobaRuntimeServiceCommandTests : IDisposable
 {
     private const string MultiplexerArticle = "5229";
     private const string MainSignalArticle = "4046";
     private const int SignalBaseAddress = 201;
+
+    private readonly TestRuntimes _runtimes = new();
+
+    public void Dispose() => _runtimes.Dispose();
 
     [Test]
     public async Task SetTrackPowerAsync_SendsOffWithoutOn()
@@ -468,11 +472,6 @@ internal sealed class MobaRuntimeServiceCommandTests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21, AppSettings? settings = null) =>
-        new(
-            z21,
-            new Mock<IWorkflowService>().Object,
-            new ActionExecutionContext { Z21 = z21 },
-            settings ?? new AppSettings(),
-            new Mock<ILogger<MobaRuntimeService>>().Object);
+    private MobaRuntimeService CreateRuntime(IZ21 z21, AppSettings? settings = null) =>
+        _runtimes.Create(z21, new TestRuntimeOptions { Settings = settings });
 }

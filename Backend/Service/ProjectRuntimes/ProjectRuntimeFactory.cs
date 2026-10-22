@@ -79,7 +79,7 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
                     shared.RuntimeStateStore,
                     bus,
                     shared.TimeProvider,
-                    loggers.CreateLogger<JourneyManager>()),
+                    loggers),
                 InterlockingRuntime = interlocking,
                 InPortCounterService = counters,
                 EndpointSource = new ProjectZ21EndpointSource(project, unavailableReason)

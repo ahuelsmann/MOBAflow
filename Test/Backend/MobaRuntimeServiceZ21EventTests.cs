@@ -1,13 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
-using Microsoft.Extensions.Logging;
-
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Protocol;
 using Moba.Backend.Service;
-using Moba.Common.Configuration;
+using Moba.Test.Helpers;
 
 using Moq;
 
@@ -16,8 +14,12 @@ using Moq;
 /// an unexpected connection loss.
 /// </summary>
 [TestFixture]
-internal sealed class MobaRuntimeServiceZ21EventTests
+internal sealed partial class MobaRuntimeServiceZ21EventTests : IDisposable
 {
+    private readonly TestRuntimes _runtimes = new();
+
+    public void Dispose() => _runtimes.Dispose();
+
     [Test]
     public void ConnectionConfirmation_EndsConnectingAndRemembersTheSuccessfulConnection()
     {
@@ -145,11 +147,5 @@ internal sealed class MobaRuntimeServiceZ21EventTests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21) =>
-        new(
-            z21,
-            new Mock<IWorkflowService>().Object,
-            new ActionExecutionContext { Z21 = z21 },
-            new AppSettings(),
-            new Mock<ILogger<MobaRuntimeService>>().Object);
+    private MobaRuntimeService CreateRuntime(IZ21 z21) => _runtimes.Create(z21);
 }

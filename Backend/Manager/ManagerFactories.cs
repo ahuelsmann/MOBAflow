@@ -52,14 +52,14 @@ public sealed class JourneyManagerFactory(
     IJourneyRuntimeStateStore runtimeStateStore,
     IEventBus eventBus,
     TimeProvider timeProvider,
-    ILogger<JourneyManager> logger)
+    ILoggerFactory loggerFactory)
 {
     private readonly IWorkflowService _workflowService = workflowService ?? throw new ArgumentNullException(nameof(workflowService));
     private readonly IJourneyStopTransitionService _stopTransitionService = stopTransitionService ?? throw new ArgumentNullException(nameof(stopTransitionService));
     private readonly IJourneyRuntimeStateStore _runtimeStateStore = runtimeStateStore ?? throw new ArgumentNullException(nameof(runtimeStateStore));
     private readonly IEventBus _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
-    private readonly ILogger<JourneyManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
 
     public IJourneyManager Create(Project project, ActionExecutionContext executionContext, InPortCounterService counters) =>
         new JourneyManager(
@@ -73,14 +73,19 @@ public sealed class JourneyManagerFactory(
                 ExecutionCoordinator = new WorkflowExecutionCoordinator(_workflowService, _timeProvider),
                 InPortCounterService = counters
             },
-            _logger);
+            _loggerFactory.CreateLogger<JourneyManager>());
 }
 
+/// <summary>
+/// Creates the platform manager of a station; each manager logs under the <see cref="PlatformManager"/> category.
+/// </summary>
 public sealed class PlatformManagerFactory(
     IZ21 z21,
     IWorkflowService workflowService,
-    ILogger<PlatformManager> logger)
+    ILoggerFactory loggerFactory)
 {
+    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+
     public IPlatformManager Create(Project project, Station station, ActionExecutionContext executionContext) =>
-        new PlatformManager(z21, project, station, workflowService, executionContext, logger);
+        new PlatformManager(z21, project, station, workflowService, executionContext, _loggerFactory.CreateLogger<PlatformManager>());
 }

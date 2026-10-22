@@ -69,7 +69,7 @@ internal sealed partial class TestRuntimes : IDisposable
     /// <summary>A journey manager factory with production stop transitions and no runtime checkpoints.</summary>
     public static JourneyManagerFactory JourneyManagers(IWorkflowService workflowService, IEventBus? eventBus = null) =>
         new(workflowService, new JourneyStopTransitionService(), new NullJourneyRuntimeStateStore(),
-            eventBus ?? new EventBus(NullLogger<EventBus>.Instance), TimeProvider.System, NullLogger<JourneyManager>.Instance);
+            eventBus ?? new EventBus(NullLogger<EventBus>.Instance), TimeProvider.System, NullLoggerFactory.Instance);
 
     /// <summary>
     /// Journey manager collaborators around <paramref name="counters"/>; the manager disposes the coordinator,
