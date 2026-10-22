@@ -12,6 +12,7 @@ using Moba.Common.Events;
 public class EventBusBenchmarks
 {
     private EventBus _bus = new(NullLogger<EventBus>.Instance);
+    private FeedbackReceivedEvent _feedback = new(5);
     private int _received;
 
     [Params(1, 10)]
@@ -21,6 +22,7 @@ public class EventBusBenchmarks
     public void Setup()
     {
         _bus = new EventBus(NullLogger<EventBus>.Instance);
+        _feedback = new FeedbackReceivedEvent(5);
         for (var index = 0; index < Subscribers; index++)
         {
             _bus.Subscribe<FeedbackReceivedEvent>(_ => _received++);
@@ -30,7 +32,7 @@ public class EventBusBenchmarks
     [Benchmark]
     public int PublishFeedback()
     {
-        _bus.Publish(new FeedbackReceivedEvent(5));
+        _bus.Publish(_feedback);
         return _received;
     }
 }

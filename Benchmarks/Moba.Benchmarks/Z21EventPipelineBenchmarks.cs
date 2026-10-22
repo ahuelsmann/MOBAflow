@@ -10,6 +10,8 @@ using Moba.Common.Events;
 
 /// <summary>
 /// Throughput of the ordered Z21 event pipeline: enqueue a burst of feedback events and drain them to the event bus.
+/// Each operation pushes one burst through a freshly started pipeline, so the result includes pipeline start-up and
+/// shutdown; it is a relative baseline on the same machine, not the pure enqueue and drain cost.
 /// </summary>
 [MemoryDiagnoser]
 public class Z21EventPipelineBenchmarks

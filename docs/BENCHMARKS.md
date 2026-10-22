@@ -10,7 +10,7 @@ part of the test suite, the solution file or the mandatory CI gates.
 | Benchmark | Code under test | Parameters |
 | --- | --- | --- |
 | `EventBusBenchmarks.PublishFeedback` | publishing a feedback event on the shared `EventBus` | 1 and 10 subscribers |
-| `Z21EventPipelineBenchmarks.EnqueueAndDrain` | queueing feedback events in the ordered Z21 event pipeline and draining them to the event bus | 100 and 1,000 events |
+| `Z21EventPipelineBenchmarks.EnqueueAndDrain` | queueing feedback events in the ordered Z21 event pipeline and draining them to the event bus; each operation pushes one burst through a freshly started pipeline, so the result includes pipeline start-up and shutdown and is a relative baseline on the same machine, not the pure enqueue and drain cost | 100 and 1,000 events |
 | `RuntimeSnapshotSerializationBenchmarks.Serialize` / `Deserialize` | the JSON round trip of the runtime snapshot that MOBApi and SignalR send | 10 and 100 locomotives, journeys and signal-box elements |
 
 Each benchmark also reports allocated memory.

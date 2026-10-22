@@ -48,7 +48,7 @@ Recorded on main `f37541d9`.
 
 1. **Inventory** (with this plan).
 2. **Benchmarks** (delivered): EventBus publish, Z21 event pipeline enqueue and drain, runtime snapshot JSON round
-   trip; the first baselines on the maintainer's machine are recorded on #382.
+   trip; the first baseline on the maintainer's machine is still open and will be recorded on #382.
 3. **Load tests:** remote command queue under concurrent producers (capacity, rejection, order); SignalR runtime hub
    with several clients against an owned MOBApi process.
 4. **Telemetry:** rejected remote commands (delivered): the counter `moba.runtime_commands.rejected` of the meter
