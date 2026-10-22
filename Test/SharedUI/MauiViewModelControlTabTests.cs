@@ -22,7 +22,7 @@ internal sealed class MauiViewModelControlTabTests
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(new MobaRuntimeSnapshot
         {
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
@@ -47,7 +47,7 @@ internal sealed class MauiViewModelControlTabTests
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(new MobaRuntimeSnapshot
         {
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"),
@@ -157,7 +157,7 @@ internal sealed class MauiViewModelControlTabTests
         eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
@@ -200,7 +200,7 @@ internal sealed class MauiViewModelControlTabTests
         eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = br110Id,
@@ -228,7 +228,7 @@ internal sealed class MauiViewModelControlTabTests
         var viewModel = CreateViewModel(eventBus: eventBus);
         viewModel.SetControlTabActive(true);
         eventBus.Publish(new LocomotiveFleetUpdatedEvent(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot
             {
                 LocomotiveId = locomotiveId,
@@ -239,7 +239,7 @@ internal sealed class MauiViewModelControlTabTests
         ]));
         var originalInstance = trainControl.ProjectLocomotives[0];
         eventBus.Publish(new LocomotiveFleetUpdatedEvent(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot
             {
                 LocomotiveId = locomotiveId,
@@ -261,7 +261,7 @@ internal sealed class MauiViewModelControlTabTests
         var viewModel = CreateViewModel(eventBus: eventBus);
         viewModel.SetControlTabActive(false);
         viewModel.RestoreCachedLocomotiveFleet(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot
             {
                 LocomotiveId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
@@ -353,7 +353,7 @@ internal sealed class MauiViewModelControlTabTests
         var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
         var viewModel = CreateViewModel(projectContext, eventBus: eventBus, mobileRuntimeCoordinator: coordinator);
         viewModel.RestoreCachedLocomotiveFleet(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot
             {
                 LocomotiveId = br110Id,
@@ -423,7 +423,7 @@ internal sealed class MauiViewModelControlTabTests
         eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = br110Id,

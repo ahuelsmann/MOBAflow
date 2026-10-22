@@ -1,58 +1,60 @@
 # Implementation Plan: Documentation consistency
 
-**Branch**: `codex/documentation-consistency` | **Date**: 2026-10-13 | **Spec**: [spec.md](spec.md)
-**GitHub Issue**: #266
+**Branch**: `codex/issue-266-subscription-documentation-workflow`
+**Date**: 2026-10-21
+**Spec**: [spec.md](spec.md)
+**GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/266
 **Spec Kit**: Required
-**Status**: Implemented offline; live activation pending
+**Status**: Subscription-based delivery; acceptance tracked in the source issue
 
 ## Summary
 
-Use Python standard-library controls for deterministic source facts, bounded
-structured Responses API output, independent verification and guarded publication.
-No new .NET dependencies or product changes. Quality runs generators and offline
-regressions. A separate, initially inactive target-event workflow reads trusted
-base controls and treats the head checkout strictly as data.
+Retain Python standard-library generation and validation of package/mutation
+facts. Replace the separately activated API/App documentation bot with the
+existing assigned Codex delivery, independent Claude plan and verified-main
+handover. Necessary documentation and canonical wiki corrections belong in the
+same issue's leading PR. No extra provider budget, credentials or automation.
 
 ## Constitution Check
 
-- Product layers, EventBus, DI, runtime behavior and UI themes are unaffected.
-- Work uses an isolated task worktree and draft PR, with no application/hardware launch.
-- Tests use synthetic repositories, fake model replies and fake GitHub responses.
-- API credentials and publication credentials are separate; the model receives no tools.
-- Spec/plan/tasks reference #266; feature records remain under this directory.
-- Changed files are scanned and normalized; Sonar runs only in PR CI.
-- Draft creation follows the maintainer's existing exception for missing local Sonar
-  access. Current-head Sonar and zero open/confirmed findings remain review gates.
+- Product layers, EventBus, DI, runtime, UI, persistence and protocols are unchanged.
+- Use the existing dedicated task worktree, one writer and one leading draft PR.
+- Preserve deterministic facts, file guards, relevant regressions and current CI/Sonar.
+- No application, device, hardware, provider request or subscription login in CI.
+- Chief Project Manager alone qualifies Ready; the existing independent Claude plan
+  owns review, separate fixes, re-review and SHA-bound squash merge.
+- Preserve unrelated work, credentials and historical evidence; distinguish retired
+  activation requirements from successful real acceptance.
 
 ## Design and analysis
 
-1. `documentation_consistency.py` owns central-version/reference inventory, active
-   mutation configuration facts, path boundaries, source context and bounded edits.
-2. `run_documentation_consistency.py` separates assessment, publication and reporting.
-   Two independent API requests use strict JSON schemas, no tool access and no stored
-   response. Gitleaks scans context before submission and proposals before publication.
-3. `documentation-consistency.yml` executes base controls, uploads data-only results,
-   then acquires a contents-write App token in a separate publishing job. The normal
-   job token reports a check attached to the event head, not the target branch.
-4. `Quality` continuously checks generated facts and offline regressions. Generated
-   tables have explicit markers; AI cannot edit them or change license prose.
-5. Avoid persistent bot state: inspect the latest commit's paths to stop another
-   auto-update after a documentation-only commit. Manual correction is the fallback.
+1. Keep `documentation_consistency.py`'s source-derived facts, CLI and file guards.
+   Remove helpers used only by the retired AI proposal/publication path.
+2. Remove `run_documentation_consistency.py`, its model prompts and the privileged
+   target-event documentation workflow. Remove tests for that deleted behavior;
+   retain the ten applicable fact-generation/file-boundary regressions unchanged.
+3. Preserve Quality's existing generator and offline-test entry points without
+   changing SDK, package, build, baseline or mutation configuration files.
+4. Update the documentation guide, AI development reference and PR impact template:
+   source-grounded developer/wiki assessment, same-PR corrections, complete handover,
+   independent review, reassessment after fixes and actual-main confirmation.
+5. Record T007's new real-PR acceptance and T008's existing deterministic gates.
+   Do not add a required API-bot check or administer branch protection.
 
-Official references reviewed on 2026-10-13:
-- [Structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
-- [GitHub target events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)
-- [GitHub token event behavior](https://docs.github.com/en/actions/concepts/security/github_token)
-- [Check runs](https://docs.github.com/en/rest/checks/runs)
+The earlier API design was superseded by the explicit human decision on
+2026-10-21. Its offline evidence remains historical. No API acceptance, provider
+configuration or App auto-commit is reported as performed.
 
 ## Validation Strategy
 
-- Run `python scripts/Test-DocumentationConsistency.py` and the facts checker.
-- Parse workflows and lint with the same pinned actionlint version used by Quality.
-- Run instruction consistency, documentation links, Spec Kit governance, changed/staged
-  line endings and deterministic changed-file secrets scanning.
-- Smoke-build the source context against the real task diff without calling the API.
-- No .NET build validates these standalone Python/workflow boundaries; the existing
-  product CI jobs remain enabled for the script/workflow change.
-- Live acceptance must verify API access/model support, App permissions, one justified
-  auto-commit, no loop, and rerun Quality/Sonar on the updated head before activation.
+- Run `scripts/Test-DocumentationConsistency.py` and the deterministic facts checker.
+- Review removal of API/publication callers and stale configuration references.
+- Run instruction consistency, Spec Kit governance and internal Markdown-link checks.
+- Run changed/staged line-ending, diff and deterministic secrets checks.
+- Keep current-head PR CI/Sonar with zero OPEN/CONFIRMED PR findings; no product
+  build/test is required locally for these Python/docs/workflow boundaries.
+- T007 requires a real PR's documented developer/wiki impact, independent review
+  in the existing Claude plan and actual integrated-main verification.
+- T008 confirms effective existing deterministic gates; the retired custom bot
+  check is not required and no ruleset change is part of the implementation.
+- Record final exact-commit acceptance, limitations and closure in the source issue.
