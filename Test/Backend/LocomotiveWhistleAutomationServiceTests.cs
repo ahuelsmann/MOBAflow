@@ -15,6 +15,15 @@ using System.Threading.Channels;
 
 internal sealed class LocomotiveWhistleAutomationServiceTests
 {
+    private static readonly string[] AllRuleErrors =
+    [
+        "A locomotive is required.",
+        "Feedback input must be positive.",
+        "Function must be between F0 and F31.",
+        "Delay must not be negative.",
+        "Active duration must be positive."
+    ];
+
     [Test]
     public async Task CounterFilteredActivation_StillReachesRawWhistleConsumer()
     {
@@ -193,7 +202,28 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
             ActiveDurationMilliseconds = 0
         });
 
-        Assert.That(errors, Has.Count.EqualTo(5));
+        Assert.That(errors, Is.EqualTo(AllRuleErrors));
+    }
+
+    [Test]
+    public void Validate_AcceptsTheBoundaryValues()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        using var service = new LocomotiveWhistleAutomationService(
+            eventBus, new RecordingGateway(), NullLogger<LocomotiveWhistleAutomationService>.Instance);
+        var locomotiveId = Guid.NewGuid();
+
+        var lowest = service.Validate(new LocomotiveWhistleRule
+        {
+            LocomotiveId = locomotiveId, InPort = 1, FunctionIndex = 0, DelayMilliseconds = 0, ActiveDurationMilliseconds = 1
+        });
+        var highest = service.Validate(new LocomotiveWhistleRule { LocomotiveId = locomotiveId, InPort = 1, FunctionIndex = 31 });
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(lowest, Is.Empty);
+            Assert.That(highest, Is.Empty);
+        }
     }
 
     [Test]
