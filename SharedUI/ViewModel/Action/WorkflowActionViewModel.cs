@@ -15,6 +15,11 @@ public abstract class WorkflowActionViewModel : ObservableObject
     #region Fields
     // Model
     private readonly WorkflowAction _action;
+    private double _canvasX;
+    private double _canvasY;
+    private bool _hasCustomPosition;
+    private bool _hasValidationIssue;
+    private string _validationMessage = string.Empty;
     #endregion
 
     /// <summary>
@@ -53,7 +58,13 @@ public abstract class WorkflowActionViewModel : ObservableObject
     public uint Number
     {
         get => _action.Number;
-        set => SetProperty(_action.Number, value, _action, (a, v) => a.Number = v);
+        set
+        {
+            if (SetProperty(_action.Number, value, _action, (a, v) => a.Number = v))
+            {
+                OnPropertyChanged(nameof(StepLabel));
+            }
+        }
     }
 
     /// <summary>
@@ -62,13 +73,136 @@ public abstract class WorkflowActionViewModel : ObservableObject
     public int DelayAfterMs
     {
         get => _action.DelayAfterMs;
-        set => SetProperty(_action.DelayAfterMs, value, _action, (a, v) => a.DelayAfterMs = v);
+        set
+        {
+            if (SetProperty(_action.DelayAfterMs, value, _action, (a, v) => a.DelayAfterMs = v))
+            {
+                OnPropertyChanged(nameof(HasDelayAfter));
+                OnPropertyChanged(nameof(DelayBadgeText));
+            }
+        }
     }
 
     /// <summary>
     /// Gets the concrete type of the underlying workflow action.
     /// </summary>
     public ActionType Type => _action.Type;
+
+    /// <summary>
+    /// Gets the formatted step badge label (e.g. "Step #1").
+    /// </summary>
+    public string StepLabel => $"Step #{Number}";
+
+    /// <summary>
+    /// Gets whether a post-action delay is configured on this step.
+    /// </summary>
+    public bool HasDelayAfter => DelayAfterMs > 0;
+
+    /// <summary>
+    /// Gets the formatted delay badge text shown on graph connectors when <see cref="DelayAfterMs"/> is positive.
+    /// </summary>
+    public string DelayBadgeText => DelayAfterMs > 0 ? $"+{DelayAfterMs} ms" : string.Empty;
+
+    /// <summary>
+    /// Gets a human-readable display label for <see cref="Type"/>.
+    /// </summary>
+    public string TypeDisplayName => Type switch
+    {
+        ActionType.Announcement => "Announcement",
+        ActionType.Audio => "Audio Playback",
+        ActionType.Command => "DCC Command",
+        ActionType.ExecuteScript => "PowerShell Script",
+        ActionType.SelectSignalAspect => "Signal Aspect",
+        ActionType.TrainDestinationDisplay => "Destination Display",
+        ActionType.ChangeJourneyStop => "Journey Stop",
+        _ => "Invalid Action"
+    };
+
+    /// <summary>
+    /// Gets the Fluent glyph icon representing <see cref="Type"/> on graph node cards.
+    /// </summary>
+    public string IconGlyph => Type switch
+    {
+        ActionType.Announcement => "\uE720",
+        ActionType.Audio => "\uE8D6",
+        ActionType.Command => "\uE945",
+        ActionType.ExecuteScript => "\uE756",
+        ActionType.SelectSignalAspect => "\uE819",
+        ActionType.TrainDestinationDisplay => "\uE7F4",
+        ActionType.ChangeJourneyStop => "\uE815",
+        _ => "\uE783"
+    };
+
+    /// <summary>
+    /// Gets a concise parameter summary pill text for graph node cards.
+    /// </summary>
+    public virtual string ParameterSummary => TypeDisplayName;
+
+    /// <summary>
+    /// Gets or sets the horizontal position of the node card on the workflow graph canvas.
+    /// </summary>
+    public double CanvasX
+    {
+        get => _canvasX;
+        set => SetProperty(ref _canvasX, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the vertical position of the node card on the workflow graph canvas.
+    /// </summary>
+    public double CanvasY
+    {
+        get => _canvasY;
+        set => SetProperty(ref _canvasY, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether the operator manually positioned this node on the graph canvas.
+    /// </summary>
+    public bool HasCustomPosition
+    {
+        get => _hasCustomPosition;
+        set => SetProperty(ref _hasCustomPosition, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether the workflow validator reported an issue for this step.
+    /// </summary>
+    public bool HasValidationIssue
+    {
+        get => _hasValidationIssue;
+        set
+        {
+            if (SetProperty(ref _hasValidationIssue, value))
+            {
+                OnPropertyChanged(nameof(IsValidAction));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the validation message associated with this step, if any.
+    /// </summary>
+    public string ValidationMessage
+    {
+        get => _validationMessage;
+        set => SetProperty(ref _validationMessage, value);
+    }
+
+    /// <summary>
+    /// Gets whether the action has a valid payload and no active validation issues.
+    /// </summary>
+    public bool IsValidAction => _action.HasPayload && !_hasValidationIssue;
+
+    /// <summary>
+    /// Updates the node card's 2D canvas coordinates.
+    /// </summary>
+    public void SetCanvasPosition(double x, double y, bool isCustomPosition = false)
+    {
+        CanvasX = x;
+        CanvasY = y;
+        HasCustomPosition = isCustomPosition;
+    }
 
     /// <summary>
     /// Gets the underlying WorkflowAction (for serialization).

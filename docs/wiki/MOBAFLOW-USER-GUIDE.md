@@ -163,7 +163,12 @@ runtime handler.
 
 Use **Workflows** for library-focused authoring. Create or duplicate a workflow,
 add and reorder actions, select an action, and edit its settings in the properties
-pane. Use the up/down commands or drag an action to change its execution order.
+pane. Switch between **List** and **Graph** in the **Actions** column header to
+edit the same sequential action list as either a compact table or an interactive
+2D node graph. In **Graph** view, a read-only **Workflow Trigger** node shows
+assigned journey events above Step #1, dashed Bézier connectors link steps in
+execution order (with +ms badges when **Delay after** is set), and node cards
+can be dragged freely on the dot grid or aligned with **Auto layout**.
 Workflow settings contain its name and description. Deleting a referenced workflow
 is blocked until its event assignments are removed or reassigned.
 

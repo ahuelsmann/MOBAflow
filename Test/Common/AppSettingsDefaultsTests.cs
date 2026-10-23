@@ -306,6 +306,7 @@ internal class AppSettingsDefaultsTests
         Assert.That(layout.WorkflowsPage.IsWorkflowListExpanded, Is.True);
         Assert.That(layout.WorkflowsPage.IsActionsExpanded, Is.True);
         Assert.That(layout.WorkflowsPage.IsPropertiesExpanded, Is.True);
+        Assert.That(layout.WorkflowsPage.IsGraphViewActive, Is.True);
         Assert.That(layout.LocomotivesPage.IsListExpanded, Is.True);
         Assert.That(layout.LocomotivesPage.IsPropertiesExpanded, Is.True);
         Assert.That(layout.PassengerWagonPage.IsListExpanded, Is.True);
@@ -342,7 +343,7 @@ internal class AppSettingsDefaultsTests
         Assert.That(layout.StationsPage.WorkflowLibraryColumnWidth, Is.GreaterThan(0));
         Assert.That(layout.StationsPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.WorkflowsPage.WorkflowListColumnWidth, Is.GreaterThan(0));
-        Assert.That(layout.WorkflowsPage.ActionsColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.WorkflowsPage.ActionsColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.WorkflowsPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.LocomotivesPage.ListColumnWidth, Is.GreaterThan(0));
         Assert.That(layout.LocomotivesPage.PropertiesColumnStarValue, Is.GreaterThan(0));

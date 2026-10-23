@@ -21,7 +21,7 @@ using Windows.UI.Core;
 
 /// <summary>
 /// Workflows page displaying workflows and actions with properties panel.
-/// Supports drag and drop of workflows to stations.
+/// Supports both tabular list view and graphical node-graph view, plus drag and drop of workflows to stations.
 /// </summary>
 internal sealed partial class WorkflowsPage
 {
@@ -32,7 +32,7 @@ internal sealed partial class WorkflowsPage
     public MainWindowViewModel ViewModel { get; }
 
     private double _workflowsExpandedWidth = 200;
-    private double _actionsExpandedWidth = 300;
+    private double _actionsExpandedStarValue = 2;
     private double _propertiesExpandedStarValue = 1;
 
     public WorkflowsPage(
@@ -103,15 +103,15 @@ internal sealed partial class WorkflowsPage
         {
             if (!ViewModel.IsWorkflowActionsExpanded)
             {
-                if (ColActions.Width.IsAbsolute)
+                if (ColActions.Width.IsStar)
                 {
-                    _actionsExpandedWidth = ColActions.Width.Value;
+                    _actionsExpandedStarValue = ColActions.Width.Value;
                 }
                 ColActions.Width = GridLength.Auto;
             }
             else
             {
-                ColActions.Width = new GridLength(_actionsExpandedWidth);
+                ColActions.Width = new GridLength(_actionsExpandedStarValue, GridUnitType.Star);
             }
         }
         else if (e.PropertyName == nameof(ViewModel.IsWorkflowPropertiesExpanded))
@@ -139,41 +139,26 @@ internal sealed partial class WorkflowsPage
         {
             _workflowsExpandedWidth = layout.WorkflowListColumnWidth;
         }
-        if (layout.ActionsColumnWidth > 0)
+        if (layout.ActionsColumnStarValue > 0)
         {
-            _actionsExpandedWidth = layout.ActionsColumnWidth;
+            _actionsExpandedStarValue = layout.ActionsColumnStarValue;
         }
         if (layout.PropertiesColumnStarValue > 0)
         {
             _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
         }
 
-        if (layout.IsWorkflowListExpanded)
-        {
-            ColWorkflows.Width = new GridLength(_workflowsExpandedWidth);
-        }
-        else
-        {
-            ColWorkflows.Width = GridLength.Auto;
-        }
+        ColWorkflows.Width = layout.IsWorkflowListExpanded
+            ? new GridLength(_workflowsExpandedWidth)
+            : GridLength.Auto;
 
-        if (layout.IsActionsExpanded)
-        {
-            ColActions.Width = new GridLength(_actionsExpandedWidth);
-        }
-        else
-        {
-            ColActions.Width = GridLength.Auto;
-        }
+        ColActions.Width = layout.IsActionsExpanded
+            ? new GridLength(_actionsExpandedStarValue, GridUnitType.Star)
+            : GridLength.Auto;
 
-        if (layout.IsPropertiesExpanded)
-        {
-            ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
-        }
-        else
-        {
-            ColProperties.Width = GridLength.Auto;
-        }
+        ColProperties.Width = layout.IsPropertiesExpanded
+            ? new GridLength(_propertiesExpandedStarValue, GridUnitType.Star)
+            : GridLength.Auto;
 
         if (ViewModel.IsWorkflowListExpanded != layout.IsWorkflowListExpanded)
         {
@@ -187,6 +172,10 @@ internal sealed partial class WorkflowsPage
         {
             ViewModel.IsWorkflowPropertiesExpanded = layout.IsPropertiesExpanded;
         }
+        if (ViewModel.WorkflowLibrary.IsGraphViewActive != layout.IsGraphViewActive)
+        {
+            ViewModel.WorkflowLibrary.IsGraphViewActive = layout.IsGraphViewActive;
+        }
     }
 
     private void SaveLayout()
@@ -196,6 +185,7 @@ internal sealed partial class WorkflowsPage
         layout.IsWorkflowListExpanded = ViewModel.IsWorkflowListExpanded;
         layout.IsActionsExpanded = ViewModel.IsWorkflowActionsExpanded;
         layout.IsPropertiesExpanded = ViewModel.IsWorkflowPropertiesExpanded;
+        layout.IsGraphViewActive = ViewModel.WorkflowLibrary.IsGraphViewActive;
 
         if (ColWorkflows.Width.IsAbsolute)
         {
@@ -206,13 +196,13 @@ internal sealed partial class WorkflowsPage
             layout.WorkflowListColumnWidth = _workflowsExpandedWidth;
         }
 
-        if (ColActions.Width.IsAbsolute)
+        if (ColActions.Width.IsStar)
         {
-            layout.ActionsColumnWidth = ColActions.Width.Value;
+            layout.ActionsColumnStarValue = ColActions.Width.Value;
         }
         else if (!ViewModel.IsWorkflowActionsExpanded)
         {
-            layout.ActionsColumnWidth = _actionsExpandedWidth;
+            layout.ActionsColumnStarValue = _actionsExpandedStarValue;
         }
 
         if (ColProperties.Width.IsStar)

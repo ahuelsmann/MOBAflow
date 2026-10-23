@@ -51,8 +51,13 @@ public sealed partial class AudioViewModel : WorkflowActionViewModel
                 return;
             AudioPayload.FilePath = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
+
+    /// <inheritdoc />
+    public override string ParameterSummary =>
+        string.IsNullOrWhiteSpace(FilePath) ? "(No audio file)" : Path.GetFileName(FilePath);
 
     /// <summary>
     /// Command to browse for an audio file.

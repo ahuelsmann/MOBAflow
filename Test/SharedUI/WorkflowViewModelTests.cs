@@ -230,4 +230,96 @@ internal class WorkflowViewModelTests
 
         Assert.That(projectViewModel.Workflows.Single(), Is.SameAs(original));
     }
+
+    [Test]
+    public void AutoLayoutActions_PositionsNodesInGridAndPreservesCustomPositionsUntilReset()
+    {
+        var workflow = new Workflow();
+        var vm = new WorkflowViewModel(workflow);
+        for (var i = 0; i < 5; i++)
+        {
+            vm.AddActionCommand.Execute(ActionType.Audio);
+        }
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(vm.Actions[0].CanvasX, Is.EqualTo(WorkflowViewModel.FirstActionCanvasX));
+            Assert.That(vm.Actions[0].CanvasY, Is.EqualTo(WorkflowViewModel.FirstActionCanvasY));
+            Assert.That(vm.Actions[1].CanvasY, Is.EqualTo(WorkflowViewModel.FirstActionCanvasY + WorkflowViewModel.RowSpacingY));
+            Assert.That(vm.Actions[4].CanvasX, Is.EqualTo(WorkflowViewModel.FirstActionCanvasX + WorkflowViewModel.ColumnSpacingX));
+            Assert.That(vm.Actions[4].CanvasY, Is.EqualTo(WorkflowViewModel.FirstActionCanvasY));
+        }
+
+        var actionsChangedCount = 0;
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(WorkflowViewModel.Actions))
+                actionsChangedCount++;
+        };
+
+        vm.Actions[0].SetCanvasPosition(420, 300, isCustomPosition: true);
+        Assert.That(actionsChangedCount, Is.Zero);
+
+        vm.AutoLayoutActions(forceResetCustomPositions: false);
+        Assert.That(vm.Actions[0].CanvasX, Is.EqualTo(420));
+        Assert.That(vm.Actions[0].CanvasY, Is.EqualTo(300));
+
+        vm.ResetActionLayoutCommand.Execute(null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(vm.Actions[0].HasCustomPosition, Is.False);
+            Assert.That(vm.Actions[0].CanvasX, Is.EqualTo(WorkflowViewModel.FirstActionCanvasX));
+            Assert.That(vm.Actions[0].CanvasY, Is.EqualTo(WorkflowViewModel.FirstActionCanvasY));
+        }
+    }
+
+    [Test]
+    public void ActionNodePresentationProperties_ProvideBadgesAndRaisePropertyChanged()
+    {
+        var vm = new WorkflowViewModel(new Workflow());
+        vm.AddActionCommand.Execute(ActionType.Announcement);
+        vm.AddActionCommand.Execute(ActionType.Audio);
+        vm.AddActionCommand.Execute(ActionType.Command);
+        vm.AddActionCommand.Execute(ActionType.SelectSignalAspect);
+        vm.AddActionCommand.Execute(ActionType.ExecuteScript);
+        vm.AddActionCommand.Execute(ActionType.TrainDestinationDisplay);
+        vm.AddActionCommand.Execute(ActionType.ChangeJourneyStop);
+
+        var announcement = (AnnouncementViewModel)vm.Actions[0];
+        var audio = (AudioViewModel)vm.Actions[1];
+        var command = (CommandViewModel)vm.Actions[2];
+        var signal = (SelectSignalAspectViewModel)vm.Actions[3];
+        var script = (PowerShellActionViewModel)vm.Actions[4];
+        var display = (TrainDestinationDisplayViewModel)vm.Actions[5];
+        var stop = (ChangeJourneyStopViewModel)vm.Actions[6];
+
+        var summaryChanged = false;
+        audio.PropertyChanged += (_, e) => summaryChanged |= e.PropertyName == nameof(WorkflowActionViewModel.ParameterSummary);
+        audio.FilePath = @"C:\sounds\horn.wav";
+        audio.DelayAfterMs = 1500;
+
+        announcement.Message = "Welcome aboard";
+        command.Address = 24;
+        command.Speed = 60;
+        signal.BaseAddress = 12;
+        signal.SignalAspect = SignalAspect.Hp0;
+        script.ScriptPath = @"C:\scripts\depart.ps1";
+        script.Arguments = "-Fast";
+        stop.MoveToNextStop = true;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(summaryChanged, Is.True);
+            Assert.That(audio.ParameterSummary, Is.EqualTo("horn.wav"));
+            Assert.That(audio.HasDelayAfter, Is.True);
+            Assert.That(audio.DelayBadgeText, Is.EqualTo("+1500 ms"));
+            Assert.That(audio.StepLabel, Is.EqualTo("Step #2"));
+            Assert.That(announcement.ParameterSummary, Does.Contain("Welcome aboard"));
+            Assert.That(command.ParameterSummary, Is.EqualTo("Addr 24 · Speed 60 · Forward"));
+            Assert.That(signal.ParameterSummary, Does.Contain("Addr 12").And.Contain("Hp0"));
+            Assert.That(script.ParameterSummary, Is.EqualTo("depart.ps1 -Fast"));
+            Assert.That(display.ParameterSummary, Is.EqualTo("No display device selected"));
+            Assert.That(stop.ParameterSummary, Is.EqualTo("Move to next stop"));
+        }
+    }
 }

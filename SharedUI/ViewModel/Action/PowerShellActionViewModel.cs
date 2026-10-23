@@ -29,6 +29,7 @@ public sealed class PowerShellActionViewModel : WorkflowActionViewModel
                 return;
             Payload.ScriptPath = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
 
@@ -44,6 +45,15 @@ public sealed class PowerShellActionViewModel : WorkflowActionViewModel
                 return;
             Payload.Arguments = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
+
+    /// <inheritdoc />
+    public override string ParameterSummary =>
+        string.IsNullOrWhiteSpace(ScriptPath)
+            ? "(No script selected)"
+            : string.IsNullOrWhiteSpace(Arguments)
+                ? Path.GetFileName(ScriptPath)
+                : $"{Path.GetFileName(ScriptPath)} {Arguments}";
 }
