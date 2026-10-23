@@ -70,10 +70,19 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
     }
 
     /// <inheritdoc />
-    public override string ParameterSummary =>
-        string.IsNullOrWhiteSpace(Message)
-            ? VoiceName
-            : $"{VoiceName}: {(Message.Length > 28 ? string.Concat(Message.AsSpan(0, 28), "...") : Message)}";
+    public override string ParameterSummary
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Message))
+            {
+                return VoiceName;
+            }
+
+            var preview = Message.Length > 28 ? string.Concat(Message.AsSpan(0, 28), "...") : Message;
+            return $"{VoiceName}: {preview}";
+        }
+    }
 
     /// <summary>
     /// Returns a human-readable description of the announcement for debugging and UI display.

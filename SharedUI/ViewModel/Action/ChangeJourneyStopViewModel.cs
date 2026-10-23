@@ -38,10 +38,18 @@ public sealed class ChangeJourneyStopViewModel : WorkflowActionViewModel
     }
 
     /// <inheritdoc />
-    public override string ParameterSummary =>
-        MoveToNextStop
-            ? "Move to next stop"
-            : string.IsNullOrWhiteSpace(TargetStationId)
+    public override string ParameterSummary
+    {
+        get
+        {
+            if (MoveToNextStop)
+            {
+                return "Move to next stop";
+            }
+
+            return string.IsNullOrWhiteSpace(TargetStationId)
                 ? "Target station (unset)"
                 : $"Station {TargetStationId[..Math.Min(8, TargetStationId.Length)]}";
+        }
+    }
 }
