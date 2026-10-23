@@ -11,10 +11,6 @@ using Domain.Enum;
 /// </summary>
 public sealed class AnnouncementViewModel : WorkflowActionViewModel
 {
-    #region Fields
-    // (No additional fields - inherits from WorkflowActionViewModel)
-    #endregion
-
     /// <summary>
     /// Initializes a new instance of the <see cref="AnnouncementViewModel"/> class for the given workflow action.
     /// </summary>
@@ -38,6 +34,7 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
                 return;
             AnnouncementPayload.Message = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
 
@@ -53,6 +50,7 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
                 return;
             AnnouncementPayload.VoiceName = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
 
@@ -70,6 +68,12 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
             OnPropertyChanged();
         }
     }
+
+    /// <inheritdoc />
+    public override string ParameterSummary =>
+        string.IsNullOrWhiteSpace(Message)
+            ? VoiceName
+            : $"{VoiceName}: {(Message.Length > 28 ? string.Concat(Message.AsSpan(0, 28), "...") : Message)}";
 
     /// <summary>
     /// Returns a human-readable description of the announcement for debugging and UI display.

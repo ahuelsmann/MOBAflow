@@ -17,7 +17,13 @@ public sealed class ChangeJourneyStopViewModel : WorkflowActionViewModel
     public bool MoveToNextStop
     {
         get => Payload.MoveToNextStop;
-        set => SetProperty(Payload.MoveToNextStop, value, Payload, (payload, next) => payload.MoveToNextStop = next);
+        set
+        {
+            if (SetProperty(Payload.MoveToNextStop, value, Payload, (payload, next) => payload.MoveToNextStop = next))
+            {
+                OnPropertyChanged(nameof(ParameterSummary));
+            }
+        }
     }
 
     public string TargetStationId
@@ -27,6 +33,15 @@ public sealed class ChangeJourneyStopViewModel : WorkflowActionViewModel
         {
             Payload.TargetStationId = Guid.TryParse(value, out var id) ? id : null;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
+
+    /// <inheritdoc />
+    public override string ParameterSummary =>
+        MoveToNextStop
+            ? "Move to next stop"
+            : string.IsNullOrWhiteSpace(TargetStationId)
+                ? "Target station (unset)"
+                : $"Station {TargetStationId[..Math.Min(8, TargetStationId.Length)]}";
 }

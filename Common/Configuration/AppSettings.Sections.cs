@@ -744,7 +744,8 @@ public class WorkflowsPageLayoutSettings
     public bool IsActionsExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
     public double WorkflowListColumnWidth { get; set; } = 200;
-    public double ActionsColumnWidth { get; set; } = 300;
+    public bool IsGraphViewActive { get; set; } = true;
+    public double ActionsColumnStarValue { get; set; } = 2;
     public double PropertiesColumnStarValue { get; set; } = 1;
 }
 
