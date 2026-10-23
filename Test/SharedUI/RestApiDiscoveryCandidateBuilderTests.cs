@@ -13,6 +13,9 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
     private static readonly string[] ExpectedFullProbeOrder =
         ["192.168.0.34", "192.168.0.51", "192.168.0.33", "192.168.0.79"];
 
+    private static readonly IPAddress[] QuickLocalAddresses =
+        [IPAddress.Parse("192.168.0.50")];
+
     private static readonly string[] ExpectedQuickRecentOrder =
         ["192.168.0.51", "10.20.30.40", "172.16.0.20"];
 
@@ -63,10 +66,10 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
         var settings = new RestApiSettings { RecentIpAddresses = [recent] };
 
         var order = RestApiDiscoveryCandidateBuilder.BuildQuickProbeOrder(
-            settings, [IPAddress.Parse("192.168.0.50")]);
+            settings, QuickLocalAddresses);
 
         Assert.That(order, Is.EqualTo(RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(
-            [IPAddress.Parse("192.168.0.50")])));
+            QuickLocalAddresses)));
     }
 
     [Test]
@@ -78,7 +81,7 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
         };
 
         var order = RestApiDiscoveryCandidateBuilder.BuildQuickProbeOrder(
-            settings, [IPAddress.Parse("192.168.0.50")]);
+            settings, QuickLocalAddresses);
 
         using (Assert.EnterMultipleScope())
         {
