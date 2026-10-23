@@ -276,6 +276,53 @@ internal class WorkflowViewModelTests
         }
     }
 
+    [TestCase("", "TestVoice")]
+    [TestCase("  ", "TestVoice")]
+    [TestCase("Welcome", "TestVoice: Welcome")]
+    [TestCase("1234567890123456789012345678", "TestVoice: 1234567890123456789012345678")]
+    [TestCase("12345678901234567890123456789", "TestVoice: 1234567890123456789012345678...")]
+    public void AnnouncementSummaryPreservesEmptyAndTruncationBoundaries(string message, string expected)
+    {
+        var announcement = new AnnouncementViewModel(new WorkflowAction { Type = ActionType.Announcement })
+        {
+            VoiceName = "TestVoice",
+            Message = message
+        };
+
+        Assert.That(announcement.ParameterSummary, Is.EqualTo(expected));
+    }
+
+    [TestCase(true, "", "Move to next stop")]
+    [TestCase(false, "", "Target station (unset)")]
+    [TestCase(false, "invalid", "Target station (unset)")]
+    [TestCase(false, "12345678-1234-1234-1234-123456789abc", "Station 12345678")]
+    [TestCase(true, "12345678-1234-1234-1234-123456789abc", "Move to next stop")]
+    public void JourneyStopSummaryPreservesNextAndExplicitTargetModes(bool moveNext, string target, string expected)
+    {
+        var stop = new ChangeJourneyStopViewModel(new WorkflowAction { Type = ActionType.ChangeJourneyStop })
+        {
+            MoveToNextStop = moveNext,
+            TargetStationId = target
+        };
+
+        Assert.That(stop.ParameterSummary, Is.EqualTo(expected));
+    }
+
+    [TestCase("", "-Fast", "(No script selected)")]
+    [TestCase("  ", "-Fast", "(No script selected)")]
+    [TestCase(@"C:\scripts\depart.ps1", "", "depart.ps1")]
+    [TestCase("/opt/scripts/depart.ps1", "  ", "depart.ps1")]
+    public void ScriptSummaryPreservesMissingPathAndArguments(string path, string arguments, string expected)
+    {
+        var script = new PowerShellActionViewModel(new WorkflowAction { Type = ActionType.ExecuteScript })
+        {
+            ScriptPath = path,
+            Arguments = arguments
+        };
+
+        Assert.That(script.ParameterSummary, Is.EqualTo(expected));
+    }
+
     [Test]
     public void ActionNodePresentationProperties_ProvideBadgesAndRaisePropertyChanged()
     {

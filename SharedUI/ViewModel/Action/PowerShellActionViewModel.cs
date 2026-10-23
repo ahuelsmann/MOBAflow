@@ -50,10 +50,17 @@ public sealed class PowerShellActionViewModel : WorkflowActionViewModel
     }
 
     /// <inheritdoc />
-    public override string ParameterSummary =>
-        string.IsNullOrWhiteSpace(ScriptPath)
-            ? "(No script selected)"
-            : string.IsNullOrWhiteSpace(Arguments)
-                ? ExtractFileName(ScriptPath)
-                : $"{ExtractFileName(ScriptPath)} {Arguments}";
+    public override string ParameterSummary
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ScriptPath))
+            {
+                return "(No script selected)";
+            }
+
+            var fileName = ExtractFileName(ScriptPath);
+            return string.IsNullOrWhiteSpace(Arguments) ? fileName : $"{fileName} {Arguments}";
+        }
+    }
 }

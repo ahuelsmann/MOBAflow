@@ -25,6 +25,9 @@ using Windows.UI.Core;
 /// </summary>
 internal sealed partial class WorkflowGraphCanvasControl : UserControl
 {
+    private const string CaptionTextStyleKey = "CaptionTextBlockStyle";
+    private const string SecondaryTextBrushKey = "TextFillColorSecondaryBrush";
+    private const string CardStrokeBrushKey = "CardStrokeColorDefaultBrush";
     private const double GridSnapSize = 20.0;
     private const double DotGridSpacing = 24.0;
     private const double CardWidth = WorkflowViewModel.ActionNodeWidth;
@@ -61,7 +64,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         InitializeComponent();
         Loaded += OnControlLoaded;
         Unloaded += OnControlUnloaded;
-        ActualThemeChanged += OnActualThemeChanged;
+        ActualThemeChanged += (_, _) => OnActualThemeChanged();
     }
 
     private static void OnLibraryViewModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -83,7 +86,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         DetachLibrary();
     }
 
-    private void OnActualThemeChanged(FrameworkElement sender, object args)
+    private void OnActualThemeChanged()
     {
         RenderDotGrid();
         RebuildGraph();
@@ -332,8 +335,8 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
 
         _triggerSubtitleText = new TextBlock
         {
-            Style = GetThemeStyle("CaptionTextBlockStyle"),
-            Foreground = GetThemeBrush("TextFillColorSecondaryBrush"),
+            Style = GetThemeStyle(CaptionTextStyleKey),
+            Foreground = GetThemeBrush(SecondaryTextBrushKey),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
         Grid.SetRow(_triggerSubtitleText, 1);
@@ -352,7 +355,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             Margin = new Thickness(0, 0, 0, PortSize / 2),
             CornerRadius = new CornerRadius(8),
             Background = GetThemeBrush("CardBackgroundFillColorSecondaryBrush"),
-            BorderBrush = GetThemeBrush("CardStrokeColorDefaultBrush"),
+            BorderBrush = GetThemeBrush(CardStrokeBrushKey),
             BorderThickness = new Thickness(1),
             Child = cardGrid
         };
@@ -390,7 +393,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         _triggerSubtitleText.Text = _subscribedLibrary?.TriggerSummaryText ?? "Manual / Unassigned";
         _triggerStatusDot.Fill = GetThemeBrush(hasTriggers
             ? "SystemFillColorSuccessBrush"
-            : "TextFillColorSecondaryBrush");
+            : SecondaryTextBrushKey);
     }
 
     private ActionNodeVisuals CreateActionNodeCard(WorkflowActionViewModel action)
@@ -438,8 +441,8 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         var subtitleText = new TextBlock
         {
             Text = action.TypeDisplayName,
-            Style = GetThemeStyle("CaptionTextBlockStyle"),
-            Foreground = GetThemeBrush("TextFillColorSecondaryBrush"),
+            Style = GetThemeStyle(CaptionTextStyleKey),
+            Foreground = GetThemeBrush(SecondaryTextBrushKey),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
 
@@ -447,7 +450,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         var parameterPillText = new TextBlock
         {
             Text = action.ParameterSummary,
-            Style = GetThemeStyle("CaptionTextBlockStyle"),
+            Style = GetThemeStyle(CaptionTextStyleKey),
             Foreground = GetThemeBrush("TextFillColorPrimaryBrush"),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
@@ -457,7 +460,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             Padding = new Thickness(8, 3, 8, 3),
             CornerRadius = new CornerRadius(4),
             Background = GetThemeBrush("SubtleFillColorSecondaryBrush"),
-            BorderBrush = GetThemeBrush("CardStrokeColorDefaultBrush"),
+            BorderBrush = GetThemeBrush(CardStrokeBrushKey),
             BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Left,
             MaxWidth = CardWidth - 28,
@@ -472,8 +475,8 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         var stepText = new TextBlock
         {
             Text = action.StepLabel,
-            Style = GetThemeStyle("CaptionTextBlockStyle"),
-            Foreground = GetThemeBrush("TextFillColorSecondaryBrush"),
+            Style = GetThemeStyle(CaptionTextStyleKey),
+            Foreground = GetThemeBrush(SecondaryTextBrushKey),
             VerticalAlignment = VerticalAlignment.Center
         };
 
@@ -524,7 +527,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             Margin = new Thickness(0, PortSize / 2, 0, PortSize / 2),
             CornerRadius = new CornerRadius(8),
             Background = GetThemeBrush("CardBackgroundFillColorDefaultBrush"),
-            BorderBrush = GetThemeBrush("CardStrokeColorDefaultBrush"),
+            BorderBrush = GetThemeBrush(CardStrokeBrushKey),
             BorderThickness = new Thickness(1),
             Child = contentStack
         };
@@ -578,7 +581,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         Width = PortSize,
         Height = PortSize,
         Fill = GetThemeBrush("CardBackgroundFillColorDefaultBrush"),
-        Stroke = GetThemeBrush("TextFillColorSecondaryBrush"),
+        Stroke = GetThemeBrush(SecondaryTextBrushKey),
         StrokeThickness = 1.5
     };
 
@@ -588,11 +591,13 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             ? "SystemFillColorSuccessBrush"
             : "SystemFillColorCriticalBrush");
 
-        var tooltip = action.IsValidAction
-            ? "Action payload is valid"
-            : string.IsNullOrWhiteSpace(action.ValidationMessage)
+        var tooltip = "Action payload is valid";
+        if (!action.IsValidAction)
+        {
+            tooltip = string.IsNullOrWhiteSpace(action.ValidationMessage)
                 ? "Action has an invalid or missing payload"
                 : action.ValidationMessage;
+        }
         ToolTipService.SetToolTip(visuals.StatusDot, tooltip);
     }
 
@@ -600,7 +605,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
     {
         var selectedAction = _subscribedLibrary?.SelectedAction;
         var accentBrush = GetThemeBrush("AccentFillColorDefaultBrush");
-        var defaultStrokeBrush = GetThemeBrush("CardStrokeColorDefaultBrush");
+        var defaultStrokeBrush = GetThemeBrush(CardStrokeBrushKey);
 
         foreach (var (action, visuals) in _actionVisuals)
         {
@@ -627,7 +632,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         }
 
         var actions = _subscribedWorkflow.Actions;
-        var strokeBrush = GetThemeBrush("TextFillColorSecondaryBrush");
+        var strokeBrush = GetThemeBrush(SecondaryTextBrushKey);
 
         // 1. Trigger Node (bottom port) -> Step #1 (top port)
         var triggerOutput = new Point(
@@ -711,13 +716,13 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
                 Padding = new Thickness(7, 2, 7, 2),
                 CornerRadius = new CornerRadius(10),
                 Background = GetThemeBrush("CardBackgroundFillColorDefaultBrush"),
-                BorderBrush = GetThemeBrush("CardStrokeColorDefaultBrush"),
+                BorderBrush = GetThemeBrush(CardStrokeBrushKey),
                 BorderThickness = new Thickness(1),
                 Child = new TextBlock
                 {
                     Text = $"⏱ {delayBadgeText}",
-                    Style = GetThemeStyle("CaptionTextBlockStyle"),
-                    Foreground = GetThemeBrush("TextFillColorSecondaryBrush")
+                    Style = GetThemeStyle(CaptionTextStyleKey),
+                    Foreground = GetThemeBrush(SecondaryTextBrushKey)
                 }
             };
             badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
@@ -754,9 +759,9 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
 
     private void OnTriggerCardTapped(object sender, TappedRoutedEventArgs e)
     {
-        if (_subscribedLibrary?.ShowWorkflowSettingsCommand.CanExecute(null) == true)
+        if (_subscribedLibrary is { } library && library.ShowWorkflowSettingsCommand.CanExecute(null))
         {
-            _subscribedLibrary.ShowWorkflowSettingsCommand.Execute(null);
+            library.ShowWorkflowSettingsCommand.Execute(null);
             UpdateSelectionVisuals();
         }
         e.Handled = true;
@@ -842,25 +847,26 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
     private void OnCanvasBackgroundPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         if (ReferenceEquals(e.OriginalSource, CanvasHost) &&
-            _subscribedLibrary?.ShowWorkflowSettingsCommand.CanExecute(null) == true)
+            _subscribedLibrary is { } library && library.ShowWorkflowSettingsCommand.CanExecute(null))
         {
-            _subscribedLibrary.ShowWorkflowSettingsCommand.Execute(null);
+            library.ShowWorkflowSettingsCommand.Execute(null);
             UpdateSelectionVisuals();
         }
     }
 
     private void OnAutoLayoutClicked(object sender, RoutedEventArgs e)
     {
-        if (_subscribedLibrary?.AutoLayoutSelectedWorkflowCommand.CanExecute(null) == true)
+        if (_subscribedLibrary is { } library && library.AutoLayoutSelectedWorkflowCommand.CanExecute(null))
         {
-            _subscribedLibrary.AutoLayoutSelectedWorkflowCommand.Execute(null);
+            library.AutoLayoutSelectedWorkflowCommand.Execute(null);
             RenderConnections();
         }
     }
 
     private void OnResetZoomClicked(object sender, RoutedEventArgs e)
     {
-        _ = CanvasScrollViewer.ChangeView(0, 0, 1.0f);
+        var scrollViewer = (ScrollViewer)FindName(nameof(CanvasScrollViewer));
+        _ = scrollViewer.ChangeView(0, 0, 1.0f);
     }
 
     private void OnRootKeyDown(object sender, KeyRoutedEventArgs e)
