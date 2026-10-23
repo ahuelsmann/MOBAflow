@@ -54,6 +54,6 @@ public sealed class PowerShellActionViewModel : WorkflowActionViewModel
         string.IsNullOrWhiteSpace(ScriptPath)
             ? "(No script selected)"
             : string.IsNullOrWhiteSpace(Arguments)
-                ? Path.GetFileName(ScriptPath)
-                : $"{Path.GetFileName(ScriptPath)} {Arguments}";
+                ? ExtractFileName(ScriptPath)
+                : $"{ExtractFileName(ScriptPath)} {Arguments}";
 }
