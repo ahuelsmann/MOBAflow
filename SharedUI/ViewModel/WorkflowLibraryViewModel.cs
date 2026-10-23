@@ -83,20 +83,26 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     [ObservableProperty]
     private string _lastDryRunStatus = "Not run";
 
-    [ObservableProperty]
     private bool _isGraphViewActive = true;
+
+    /// <summary>Gets or sets whether the graphical node canvas is active.</summary>
+    public bool IsGraphViewActive
+    {
+        get => _isGraphViewActive;
+        set
+        {
+            if (SetProperty(ref _isGraphViewActive, value))
+            {
+                OnPropertyChanged(nameof(IsListViewActive));
+            }
+        }
+    }
 
     /// <summary>Gets or sets whether the tabular action list view is active (inverse of <see cref="IsGraphViewActive"/>).</summary>
     public bool IsListViewActive
     {
         get => !IsGraphViewActive;
         set => IsGraphViewActive = !value;
-    }
-
-    partial void OnIsGraphViewActiveChanged(bool value)
-    {
-        _ = value;
-        OnPropertyChanged(nameof(IsListViewActive));
     }
 
     /// <summary>Creates a shared workflow-library coordinator.</summary>

@@ -213,4 +213,26 @@ public abstract class WorkflowActionViewModel : ObservableObject
     /// Gets the wrapped domain action for derived editors (payloads).
     /// </summary>
     protected WorkflowAction UnderlyingAction => _action;
+
+    /// <summary>
+    /// Extracts the terminal file name from a Windows or POSIX path regardless of the current operating system.
+    /// </summary>
+    protected static string ExtractFileName(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = path.AsSpan().Trim().TrimEnd(['\\', '/']);
+        if (trimmed.IsEmpty)
+        {
+            return path.Trim();
+        }
+
+        var separatorIndex = trimmed.LastIndexOfAny('\\', '/');
+        return separatorIndex >= 0
+            ? trimmed[(separatorIndex + 1)..].ToString()
+            : trimmed.ToString();
+    }
 }

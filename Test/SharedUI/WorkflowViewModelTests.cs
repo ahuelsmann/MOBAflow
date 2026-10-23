@@ -261,8 +261,11 @@ internal class WorkflowViewModelTests
         Assert.That(actionsChangedCount, Is.Zero);
 
         vm.AutoLayoutActions(forceResetCustomPositions: false);
-        Assert.That(vm.Actions[0].CanvasX, Is.EqualTo(420));
-        Assert.That(vm.Actions[0].CanvasY, Is.EqualTo(300));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(vm.Actions[0].CanvasX, Is.EqualTo(420));
+            Assert.That(vm.Actions[0].CanvasY, Is.EqualTo(300));
+        }
 
         vm.ResetActionLayoutCommand.Execute(null);
         using (Assert.EnterMultipleScope())
@@ -320,6 +323,14 @@ internal class WorkflowViewModelTests
             Assert.That(script.ParameterSummary, Is.EqualTo("depart.ps1 -Fast"));
             Assert.That(display.ParameterSummary, Is.EqualTo("No display device selected"));
             Assert.That(stop.ParameterSummary, Is.EqualTo("Move to next stop"));
+        }
+
+        audio.FilePath = "/opt/sounds/whistle.wav";
+        script.ScriptPath = "/opt/scripts/arrive.ps1";
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(audio.ParameterSummary, Is.EqualTo("whistle.wav"));
+            Assert.That(script.ParameterSummary, Is.EqualTo("arrive.ps1 -Fast"));
         }
     }
 }

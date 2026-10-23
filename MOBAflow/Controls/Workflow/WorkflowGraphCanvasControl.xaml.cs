@@ -23,7 +23,7 @@ using Windows.UI.Core;
 /// Interactive 2D node-graph canvas for editing sequential workflow actions.
 /// Synchronizes selection, ordering, and parameters 1:1 with the tabular action list.
 /// </summary>
-public sealed partial class WorkflowGraphCanvasControl : UserControl
+internal sealed partial class WorkflowGraphCanvasControl : UserControl
 {
     private const double GridSnapSize = 20.0;
     private const double DotGridSpacing = 24.0;
@@ -227,9 +227,9 @@ public sealed partial class WorkflowGraphCanvasControl : UserControl
         var width = DotGridCanvas.Width;
         var height = DotGridCanvas.Height;
 
-        for (double y = DotGridSpacing; y < height; y += DotGridSpacing)
+        for (var y = DotGridSpacing; y < height; y += DotGridSpacing)
         {
-            for (double x = DotGridSpacing; x < width; x += DotGridSpacing)
+            for (var x = DotGridSpacing; x < width; x += DotGridSpacing)
             {
                 var dot = new Ellipse
                 {
@@ -573,7 +573,7 @@ public sealed partial class WorkflowGraphCanvasControl : UserControl
         return visuals;
     }
 
-    private Ellipse CreatePortEllipse() => new()
+    private static Ellipse CreatePortEllipse() => new()
     {
         Width = PortSize,
         Height = PortSize,
@@ -582,7 +582,7 @@ public sealed partial class WorkflowGraphCanvasControl : UserControl
         StrokeThickness = 1.5
     };
 
-    private void UpdateActionStatusVisuals(WorkflowActionViewModel action, ActionNodeVisuals visuals)
+    private static void UpdateActionStatusVisuals(WorkflowActionViewModel action, ActionNodeVisuals visuals)
     {
         visuals.StatusDot.Fill = GetThemeBrush(action.IsValidAction
             ? "SystemFillColorSuccessBrush"

@@ -400,7 +400,7 @@ public sealed class WorkflowLibraryViewModelTests
     }
 
     [Test]
-    public void GraphViewModeAndTriggerSummary_ReflectProjectReferencesAndAutoLayout()
+    public void GraphViewModeAndTriggerSummaryReflectProjectReferencesAndAutoLayout()
     {
         var triggeredWorkflow = new Workflow { Name = "Triggered", Actions = [Command("Step 1")] };
         var manualWorkflow = new Workflow { Name = "Manual", Actions = [Command("Step 1")] };
@@ -433,8 +433,11 @@ public sealed class WorkflowLibraryViewModelTests
         var step = library.SelectedWorkflow!.Actions[0];
         step.SetCanvasPosition(500, 440, isCustomPosition: true);
         library.AutoLayoutSelectedWorkflowCommand.Execute(null);
-        Assert.That(step.HasCustomPosition, Is.False);
-        Assert.That(step.CanvasX, Is.EqualTo(WorkflowViewModel.FirstActionCanvasX));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(step.HasCustomPosition, Is.False);
+            Assert.That(step.CanvasX, Is.EqualTo(WorkflowViewModel.FirstActionCanvasX));
+        }
 
         library.SelectWorkflowCommand.Execute(project.Workflows[1]);
         using (Assert.EnterMultipleScope())
