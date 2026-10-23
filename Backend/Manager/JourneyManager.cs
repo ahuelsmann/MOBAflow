@@ -2,7 +2,6 @@
 
 namespace Moba.Backend.Manager;
 
-using Common.Configuration;
 using Common.Events;
 using Common.Extension;
 
@@ -11,32 +10,29 @@ using Domain;
 using Interface;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 using Service;
 
 /// <summary>
-/// Groups optional journey runtime collaborators so the manager constructor stays focused on required dependencies.
+/// Collaborators of one <see cref="JourneyManager"/>. The manager owns <see cref="ExecutionCoordinator"/> and
+/// disposes it; the caller owns every other member.
 /// </summary>
 public sealed class JourneyManagerDependencies
 {
     /// <summary>Gets the service that applies stop transitions.</summary>
-    public IJourneyStopTransitionService? StopTransitionService { get; init; }
+    public required IJourneyStopTransitionService StopTransitionService { get; init; }
 
     /// <summary>Gets the store used to persist journey runtime checkpoints.</summary>
-    public IJourneyRuntimeStateStore? RuntimeStateStore { get; init; }
-
-    /// <summary>Gets the time source used by workflow coordination.</summary>
-    public TimeProvider? TimeProvider { get; init; }
+    public required IJourneyRuntimeStateStore RuntimeStateStore { get; init; }
 
     /// <summary>Gets the event bus used to publish immutable journey runtime transitions.</summary>
-    public IEventBus? EventBus { get; init; }
+    public required IEventBus EventBus { get; init; }
 
-    /// <summary>Gets an optional pre-composed workflow execution coordinator.</summary>
-    public IWorkflowExecutionCoordinator? ExecutionCoordinator { get; init; }
+    /// <summary>Gets the workflow execution coordinator of this manager; the manager disposes it.</summary>
+    public required IWorkflowExecutionCoordinator ExecutionCoordinator { get; init; }
 
-    /// <summary>Gets the application-owned input counter service.</summary>
-    public InPortCounterService? InPortCounterService { get; init; }
+    /// <summary>Gets the InPort counter service that reports feedback to the manager.</summary>
+    public required InPortCounterService InPortCounterService { get; init; }
 }
 
 /// <summary>
@@ -49,15 +45,13 @@ public partial class JourneyManager : IJourneyManager
     private readonly Lock _stateSync = new();
     private readonly ActionExecutionContextFactory _executionContextFactory;
     private readonly IWorkflowExecutionCoordinator _executionCoordinator;
-    private readonly bool _ownsExecutionCoordinator;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
     private Project _project;
     private readonly ILogger<JourneyManager> _logger;
     private readonly IJourneyStopTransitionService _stopTransitionService;
     private readonly IJourneyRuntimeStateStore _runtimeStateStore;
-    private readonly IEventBus? _eventBus;
+    private readonly IEventBus _eventBus;
     private readonly InPortCounterService _inPortCounterService;
-    private readonly bool _ownsInPortCounterService;
     private bool _disposed;
 
     /// <summary>
@@ -90,33 +84,33 @@ public partial class JourneyManager : IJourneyManager
     /// <summary>
     /// Initializes a new instance of the JourneyManager class.
     /// </summary>
-    /// <param name="z21">Z21 command station used by the default counter service and action context</param>
     /// <param name="project">Project containing journeys, stations, and workflows for reference resolution</param>
-    /// <param name="workflowService">Service for executing workflows</param>
-    /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
-    /// <param name="logger">Optional logger for structured diagnostics</param>
-    /// <param name="dependencies">Optional collaborators</param>
+    /// <param name="executionContext">Execution context for the workflows of the journeys</param>
+    /// <param name="dependencies">Collaborators of this manager</param>
+    /// <param name="logger">Logger for structured diagnostics</param>
     public JourneyManager(
-        IZ21 z21,
         Project project,
-        IWorkflowService workflowService,
-        ActionExecutionContext? executionContext = null,
-        ILogger<JourneyManager>? logger = null,
-        JourneyManagerDependencies? dependencies = null)
+        ActionExecutionContext executionContext,
+        JourneyManagerDependencies dependencies,
+        ILogger<JourneyManager> logger)
     {
-        dependencies ??= new JourneyManagerDependencies();
+        ArgumentNullException.ThrowIfNull(project);
+        ArgumentNullException.ThrowIfNull(executionContext);
+        ArgumentNullException.ThrowIfNull(dependencies);
+        ArgumentNullException.ThrowIfNull(dependencies.StopTransitionService);
+        ArgumentNullException.ThrowIfNull(dependencies.RuntimeStateStore);
+        ArgumentNullException.ThrowIfNull(dependencies.EventBus);
+        ArgumentNullException.ThrowIfNull(dependencies.ExecutionCoordinator);
+        ArgumentNullException.ThrowIfNull(dependencies.InPortCounterService);
+        ArgumentNullException.ThrowIfNull(logger);
         _project = project;
-        _logger = logger ?? NullLogger<JourneyManager>.Instance;
-        _stopTransitionService = dependencies.StopTransitionService ?? new JourneyStopTransitionService();
-        _runtimeStateStore = dependencies.RuntimeStateStore ?? new NullJourneyRuntimeStateStore();
+        _logger = logger;
+        _stopTransitionService = dependencies.StopTransitionService;
+        _runtimeStateStore = dependencies.RuntimeStateStore;
         _eventBus = dependencies.EventBus;
-        _ownsExecutionCoordinator = dependencies.ExecutionCoordinator is null;
-        _ownsInPortCounterService = dependencies.InPortCounterService is null;
-        _inPortCounterService = dependencies.InPortCounterService
-            ?? new InPortCounterService(z21, new AppSettings { Counter = { UseTimerFilter = false } }, dependencies.TimeProvider);
-        _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
-        _executionCoordinator = dependencies.ExecutionCoordinator
-            ?? new WorkflowExecutionCoordinator(workflowService, dependencies.TimeProvider ?? TimeProvider.System);
+        _inPortCounterService = dependencies.InPortCounterService;
+        _executionContextFactory = new ActionExecutionContextFactory(executionContext);
+        _executionCoordinator = dependencies.ExecutionCoordinator;
 
         foreach (var journey in project.Journeys)
         {
@@ -375,8 +369,6 @@ public partial class JourneyManager : IJourneyManager
         JourneyRuntimeTransitionKind kind,
         int? inPort = null)
     {
-        if (_eventBus is null) return;
-
         var stationIndex = state.CurrentStationId is Guid stationId
             ? journey.Stations.FindIndex(station => station.Id == stationId)
             : state.CurrentPos;
@@ -443,22 +435,7 @@ public partial class JourneyManager : IJourneyManager
 
             _disposed = true;
             _inPortCounterService.RemoveJourneyFeedbackHandler(OnInPortCounted);
-            if (_ownsExecutionCoordinator)
-            {
-                _executionCoordinator.Dispose();
-            }
-            else
-            {
-                foreach (var journeyId in _states.Keys)
-                {
-                    _executionCoordinator.CancelOwner(journeyId);
-                }
-            }
-
-            if (_ownsInPortCounterService)
-            {
-                _inPortCounterService.Dispose();
-            }
+            _executionCoordinator.Dispose();
         }
     }
 
