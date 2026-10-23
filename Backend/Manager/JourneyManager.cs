@@ -146,9 +146,7 @@ public partial class JourneyManager : IJourneyManager
 
                 // Progress is kept by stop id; the stop's position and name follow the edited journey.
                 state.IsActive = journey.IsActive;
-                var position = state.CurrentStationId is Guid stationId
-                    ? journey.Stations.FindIndex(station => station.Id == stationId)
-                    : -1;
+                var position = journey.IndexOfStop(state.CurrentStationId, fallbackPosition: -1);
                 if (position >= 0)
                 {
                     state.CurrentPos = position;
@@ -164,7 +162,7 @@ public partial class JourneyManager : IJourneyManager
     private JourneySessionState CreateInitialState(Guid projectId, Journey journey)
     {
         var checkpoint = _runtimeStateStore.Load(projectId, journey.Id);
-        var checkpointPosition = journey.Stations.FindIndex(station => station.Id == checkpoint?.CurrentStationId);
+        var checkpointPosition = journey.IndexOfStop(checkpoint?.CurrentStationId, fallbackPosition: -1);
         var position = checkpointPosition >= 0 ? checkpointPosition : 0;
         var station = journey.Stations.ElementAtOrDefault(position);
         return new JourneySessionState
@@ -322,9 +320,7 @@ public partial class JourneyManager : IJourneyManager
 
     private static Station? GetCurrentStation(Journey journey, JourneySessionState state)
     {
-        var currentStationIndex = state.CurrentStationId.HasValue
-            ? journey.Stations.FindIndex(station => station.Id == state.CurrentStationId!.Value)
-            : state.CurrentPos;
+        var currentStationIndex = journey.IndexOfStop(state.CurrentStationId, state.CurrentPos);
         if (currentStationIndex < 0 || currentStationIndex >= journey.Stations.Count)
         {
             return null;
@@ -369,9 +365,7 @@ public partial class JourneyManager : IJourneyManager
         JourneyRuntimeTransitionKind kind,
         int? inPort = null)
     {
-        var stationIndex = state.CurrentStationId is Guid stationId
-            ? journey.Stations.FindIndex(station => station.Id == stationId)
-            : state.CurrentPos;
+        var stationIndex = journey.IndexOfStop(state.CurrentStationId, state.CurrentPos);
         _eventBus.Publish(new JourneyRuntimeTransitionEvent(
             _project.Id,
             journey.Id,
