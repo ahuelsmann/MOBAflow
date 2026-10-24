@@ -399,6 +399,54 @@ public sealed class WorkflowLibraryViewModelTests
         Assert.That(library.CreateWorkflowCommand.CanExecute(null), Is.True);
     }
 
+    [Test]
+    public void GraphViewModeAndTriggerSummaryReflectProjectReferencesAndAutoLayout()
+    {
+        var triggeredWorkflow = new Workflow { Name = "Triggered", Actions = [Command("Step 1")] };
+        var manualWorkflow = new Workflow { Name = "Manual", Actions = [Command("Step 1")] };
+        var journey = new Journey
+        {
+            Name = "IC 2020",
+            EventPlan = new JourneyEventPlan
+            {
+                Events = [new JourneyEvent { InPort = 7, Count = 1, WorkflowId = triggeredWorkflow.Id }]
+            }
+        };
+        var project = new ProjectViewModel(new Project
+        {
+            Workflows = [triggeredWorkflow, manualWorkflow],
+            Journeys = [journey]
+        });
+        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project), new TestDialogService(true));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(library.IsGraphViewActive, Is.True);
+            Assert.That(library.IsListViewActive, Is.False);
+            Assert.That(library.HasAssignedTriggers, Is.True);
+            Assert.That(library.TriggerSummaryText, Is.EqualTo("IC 2020 · InPort 7, count 1"));
+        }
+
+        library.IsListViewActive = true;
+        Assert.That(library.IsGraphViewActive, Is.False);
+
+        var step = library.SelectedWorkflow!.Actions[0];
+        step.SetCanvasPosition(500, 440, isCustomPosition: true);
+        library.AutoLayoutSelectedWorkflowCommand.Execute(null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(step.HasCustomPosition, Is.False);
+            Assert.That(step.CanvasX, Is.EqualTo(WorkflowViewModel.FirstActionCanvasX));
+        }
+
+        library.SelectWorkflowCommand.Execute(project.Workflows[1]);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(library.HasAssignedTriggers, Is.False);
+            Assert.That(library.TriggerSummaryText, Is.EqualTo("Manual / Unassigned"));
+        }
+    }
+
     private static WorkflowAction Command(string name) => new() { Name = name, Type = ActionType.Command, Command = new() { BytesBase64 = "AA==" } };
 
     private static WorkflowLifecycleEvent CreateLifecycleEvent(Guid workflowId, long sequence) => new()
