@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/382
 **Spec Kit**: Not applicable - measurement and verification of existing behavior; telemetry gaps are closed as observability of existing paths, not as new product behavior
-**Status**: Active; steps 1 and 2 and the first part of step 4 are delivered (#383); step 3 is in its own issue PR
+**Status**: Active; steps 1 and 2 and the first part of step 4 are delivered (#383); step 3 and the rest of step 4 are in the open issue PR
 
 ## Purpose and scope
 
@@ -21,13 +21,13 @@ Recorded on main `f37541d9`.
 | Scenario | Code under test | Existing bound or signal | Gap |
 | --- | --- | --- | --- |
 | EventBus publish throughput | `Common/Events/EventBus` | handler failure count (`IEventBusDiagnostics`) | no benchmark or baseline |
-| Z21 event ordering under load | `Backend/Service/Z21EventPipeline` | capacity 1,024; snapshot with queue depth, peak, enqueued, published, rejected, dispatch and subscriber failures, shutdown timeouts; an overload test is on main since #367 (`Z21ReceiveTests`) | no throughput baseline |
+| Z21 event ordering under load | `Backend/Service/Z21EventPipeline` | capacity 1,024; snapshot with queue depth, peak, enqueued, published, rejected, dispatch and subscriber failures, shutdown timeouts; an overload test is on main since #367 (`Z21ReceiveTests`); rejections and dispatch failures are counted (step 4) | no throughput baseline |
 | Runtime snapshot serialization | `Contracts/Runtime/MobaRuntimeSnapshot` (JSON over REST and SignalR) | none | no size or time baseline |
 | Remote command queue bounds | `MOBApi/Service/RuntimeCommandQueue`, `RuntimeCommandAdmission` | capacity 128; a full queue rejects with `queue_full`; rejections are counted and logged since #383 | covered by step 3 |
 | SignalR runtime hub load | `MOBApi/Hubs/RuntimeHub` | broadcast state on the Overview page ("Hub broadcast") | multi-client test in step 3; no timing limit yet |
 | MAUI startup and binding cost | `MOBAsmart` | `MauiViewModelPerformanceTests` covers refresh behavior, not timing | no device measurement |
 | ESP32 endurance | `MOBAdisplay/esp32` | length-safe UDP parser (RF-01), provisioning (RF-02) | no packet-loss or Wi-Fi reconnection run |
-| Recovery and failed shutdown | Z21 reconnect, project runtime disposal, pipeline drain | `ShutdownTimeouts`, fail-safe state in the runtime snapshot | not measured end to end |
+| Recovery and failed shutdown | Z21 reconnect, project runtime disposal, pipeline drain | `ShutdownTimeouts`, fail-safe state in the runtime snapshot; counters on the meter `Moba.Backend` (step 4) | no endurance run (step 5) |
 
 ## Decisions
 
@@ -63,7 +63,10 @@ Recorded on main `f37541d9`.
      existing MOBApi process integration step.
 4. **Telemetry:** rejected remote commands (delivered): the counter `moba.runtime_commands.rejected` of the meter
    `Moba.MOBApi` (`System.Diagnostics.Metrics`, tags `reason` and `command`) and a structured warning for a full
-   queue. Still open: check the existing pipeline, recovery and shutdown signals end to end.
+   queue. Pipeline, recovery and shutdown signals (delivered with step 3): the meter `Moba.Backend` counts
+   rejected Z21 events and failed dispatches (tag `event_type`), pipeline drains that exceeded their timeout, and
+   fail-safe states after an unexpected connection loss. Each counter accompanies the existing log entry.
+   `BackendTelemetryTests` checks counter and log for every path through the real pipeline and runtime.
 5. **Device and hardware measurements** with the maintainer: MAUI startup and binding cost, ESP32 endurance with packet
    loss and Wi-Fi reconnection.
 6. **Thresholds, documentation and completion.**

@@ -639,6 +639,16 @@ to the UI thread; ViewModels apply snapshots without a second dispatch.
 MOBAsmart instead reads its local runtime and combines local, remote and cached
 state through the mobile components below.
 
+The pipeline holds at most 1,024 events. Its failure paths are logged and counted on the meter
+`Moba.Backend` ([`BackendTelemetry`](../Backend/Service/BackendTelemetry.cs)):
+
+- `moba.z21.events.rejected`: events rejected while the pipeline is full or stopped, tagged `event_type`;
+- `moba.z21.events.dispatch_failed`: events whose publication failed, tagged `event_type`;
+- `moba.z21.pipeline.shutdown_timeouts`: drains that exceeded their timeout during shutdown;
+- `moba.runtime.fail_safe_triggered`: fail-safe states after an unexpected loss of the Z21 connection.
+
+Watch them live with `dotnet-counters monitor --name MOBAflow --counters Moba.Backend`.
+
 ### Command Execution Flow
 
 ```mermaid
