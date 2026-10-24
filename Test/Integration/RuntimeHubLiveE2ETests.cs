@@ -183,6 +183,100 @@ internal sealed class RuntimeHubLiveE2ETests
     }
 
     [Test]
+    public async Task SeveralRemotes_ReceiveOnlyTheirProjectsSnapshotsInOrder_AndEveryCommandReachesTheHost()
+    {
+        // Load scenario (RF-18): counts and order are the contract; the timeout only guards against a hang.
+        const int pushesPerProject = 20;
+        const int commandsPerRemote = 10;
+        var secondProject = Guid.Parse("12121212-3434-5656-7878-909090909090");
+        Guid[] projects = [ProjectId, secondProject];
+        await PublishSolutionAsync(projects).ConfigureAwait(false);
+        var drives = new System.Collections.Concurrent.ConcurrentQueue<(int Address, int Speed)>();
+        var allDrives = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var hostHub = new HubConnectionBuilder().WithUrl($"{BaseUrl}/runtime-hub").Build();
+        await using var hostLifetime = hostHub.ConfigureAwait(false);
+        hostHub.On<string, int, int, bool>(nameof(IRuntimeHubHostCallbacks.ExecuteSetLocomotiveDrive), (_, address, speed, _) =>
+        {
+            drives.Enqueue((address, speed));
+            if (drives.Count == projects.Length * 3 * commandsPerRemote)
+                allDrives.TrySetResult();
+            return Task.CompletedTask;
+        });
+        await hostHub.StartAsync().ConfigureAwait(false);
+        await hostHub.InvokeAsync(nameof(IRuntimeHubHostMethods.RegisterHost)).ConfigureAwait(false);
+        var remotes = new List<(Guid Project, int Address, HubConnection Hub, List<MobaRuntimeSnapshot> Received, TaskCompletionSource Final)>();
+        try
+        {
+            for (var index = 0; index < projects.Length * 3; index++)
+            {
+                var project = projects[index % projects.Length];
+                var received = new List<MobaRuntimeSnapshot>();
+                var final = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var hub = new HubConnectionBuilder().WithUrl($"{BaseUrl}/runtime-hub").Build();
+                hub.On<string>(nameof(IRuntimeHubRemoteCallbacks.SnapshotUpdated), json =>
+                {
+                    var snapshot = RuntimeJsonSerializer.Deserialize(json)!;
+                    lock (received)
+                        received.Add(snapshot);
+                    if (snapshot.StatusText == $"load {pushesPerProject - 1}")
+                        final.TrySetResult();
+                    return Task.CompletedTask;
+                });
+                await hub.StartAsync().ConfigureAwait(false);
+                await hub.InvokeAsync(nameof(IRuntimeHubRemoteMethods.RegisterRemote), $"load-remote-{index}", project.ToString())
+                    .ConfigureAwait(false);
+                remotes.Add((project, 10 + index, hub, received, final));
+            }
+
+            for (var push = 0; push < pushesPerProject; push++)
+            {
+                foreach (var project in projects)
+                {
+                    var snapshot = new MobaRuntimeSnapshot { ProjectId = project, IsConnected = true, StatusText = $"load {push}" };
+                    await hostHub.InvokeAsync(nameof(IRuntimeHubHostMethods.PushSnapshot), RuntimeJsonSerializer.Serialize(snapshot))
+                        .ConfigureAwait(false);
+                }
+            }
+
+            await Task.WhenAll(remotes.Select(remote => Task.Run(async () =>
+            {
+                for (var speed = 1; speed <= commandsPerRemote; speed++)
+                {
+                    await remote.Hub.InvokeAsync(
+                            nameof(IRuntimeHubRemoteMethods.SetLocomotiveDrive), remote.Project.ToString(), remote.Address, speed, true)
+                        .ConfigureAwait(false);
+                }
+            }))).ConfigureAwait(false);
+            await Task.WhenAll(remotes.Select(remote => remote.Final.Task).Append(allDrives.Task))
+                .WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+            using (Assert.EnterMultipleScope())
+            {
+                foreach (var remote in remotes)
+                {
+                    List<MobaRuntimeSnapshot> received;
+                    lock (remote.Received)
+                        received = [.. remote.Received];
+                    var pushes = received.Where(snapshot => snapshot.StatusText.StartsWith("load ", StringComparison.Ordinal))
+                        .Select(snapshot => int.Parse(snapshot.StatusText[5..], System.Globalization.CultureInfo.InvariantCulture))
+                        .ToList();
+                    Assert.That(received.Select(snapshot => snapshot.ProjectId), Has.All.EqualTo(remote.Project), $"remote {remote.Address}");
+                    Assert.That(pushes, Is.Ordered.And.Unique, $"remote {remote.Address}");
+                    Assert.That(pushes.LastOrDefault(), Is.EqualTo(pushesPerProject - 1), $"remote {remote.Address}");
+                    Assert.That(
+                        drives.Where(drive => drive.Address == remote.Address).Select(drive => drive.Speed),
+                        Is.EqualTo(Enumerable.Range(1, commandsPerRemote)),
+                        $"remote {remote.Address}");
+                }
+            }
+        }
+        finally
+        {
+            foreach (var remote in remotes)
+                await remote.Hub.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+    [Test]
     public async Task SolutionPut_Should_NotifyRemoteWithoutProject()
     {
         var solutionUpdated = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -208,11 +302,15 @@ internal sealed class RuntimeHubLiveE2ETests
     }
 
     /// <summary>Synchronizes a solution that contains <see cref="ProjectId"/>; commands name known projects only.</summary>
-    private async Task PublishSolutionAsync()
+    private Task PublishSolutionAsync() => PublishSolutionAsync([ProjectId]);
+
+    /// <summary>Synchronizes a solution with <paramref name="projectIds"/>; commands name known projects only.</summary>
+    private async Task PublishSolutionAsync(IEnumerable<Guid> projectIds)
     {
         using var http = new HttpClient { BaseAddress = new Uri(BaseUrl) };
+        var projects = string.Join(",", projectIds.Select(id => $$"""{"id":"{{id}}","name":"E2E {{id:N}}"}"""));
         var solutionJson =
-            $$"""{"name":"E2E","schemaVersion":{{Solution.CurrentSchemaVersion}},"projects":[{"id":"{{ProjectId}}","name":"E2E"}]}""";
+            $$"""{"name":"E2E","schemaVersion":{{Solution.CurrentSchemaVersion}},"projects":[{{projects}}]}""";
         using var content = new StringContent(solutionJson, Encoding.UTF8, "application/json");
         using var response = await http.PutAsync(new Uri("/api/solution", UriKind.Relative), content).ConfigureAwait(false);
         Assert.That(response.IsSuccessStatusCode, Is.True, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
