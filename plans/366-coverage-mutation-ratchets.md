@@ -122,7 +122,9 @@ separate pull requests.
 3. **MOBApi lane:** command validation and remote command queue bounds; real registration paths, owned processes only
    where required. Delivered: the `api` lane with its host, Stryker configuration and the `mutation-api` CI job.
    - **Measurement:** the first local run (Windows, Stryker.NET 5.0.0, four processes) scored 38.42%. After the new tests
-     it scored 44.63%: 187 killed, 81 survived, 151 without coverage, 124 ignored, 36 compile errors. The floor is 44%.
+     it scored 44.63%: 187 killed, 81 survived, 151 without coverage, 124 ignored, 36 compile errors. Linux CI on head
+     `8f478154` (run 40103237430) gives the same score with the same 36 compile errors, so the runs are comparable.
+     The floor is 44%.
    - **New tests:** missing REST requests and every queued command field; null commands at the admission and the queue;
      the `queue_full` code; the debug log and the counter metadata; the hub's project and signal checks; the queue reason
      when queueing fails after validation; snapshots from a connection that is not the host.
