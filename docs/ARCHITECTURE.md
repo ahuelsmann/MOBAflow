@@ -322,7 +322,7 @@ runtime services.
   [the mobile session boundary](#mobasmart-session-and-projection).
 - Shared ViewModels and host services reach solution ownership through those
   contracts. The existing shell/composition, WinUI page bindings, column-width
-  behavior, MonitorPageViewModel, EventManagerViewModel and Android shutdown
+  behavior, MonitorPageViewModel and Android shutdown
   lookup remain explicitly named in
   [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs).
   RF-24 removes the page, layout and shell-state dependencies; RF-23 adds no new
@@ -395,7 +395,7 @@ runtime services.
   runtime's project snapshot; runtime ownership and operator command routing are unchanged.
 - TrainsPage retains only visual layout and drag/drop coordination. Its architecture guard rejects
   MainWindowViewModel dependencies. The superseded Train partial is removed; the shell retains
-  its runtime-refresh helper for station/journey editors until their own extraction.
+  its runtime snapshot projection until the later counter/status extraction.
 
 **Station and platform presentation (RF-24 slice 3a):**
 
@@ -413,7 +413,35 @@ runtime services.
   workflow behavior stays in the existing editor. Remaining workflow presentation is a later slice.
 - StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
   unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
-  central layout persistence remains planned. The shell retains the journey runtime-refresh helper.
+  central layout persistence remains planned.
+
+**Journey and city presentation (RF-24 slice 3b):**
+
+- The host owns one JourneysPageViewModel shared by JourneysPage, the shell reset command,
+  EventManager status and deferred city-library loading. Its required dependencies are the
+  session, command gateway, UI dispatcher, city/settings services,
+  shared layout widths and logger. The Journey shell partial and city members are removed.
+- The session keeps canonical project/journey selection and journey property tracking.
+  The page owns journey/station CRUD, city search/loading, ItemClicked properties, selected
+  station and open station-editor tracking, and panel expansion. Search and reordering replace
+  the list source and reset its selection; a valid open station editor retains its properties
+  and auto-save subscription even when the station is filtered out. Selecting a different station,
+  closing/replacing the editor, changing journey/project/solution, refreshing station wrappers or
+  disposal releases that tracking.
+  A clicked journey remains the properties object when
+  WinUI subsequently updates the canonical selection. Project changes publish the new items source
+  before selecting its first journey through the session; journey/project/solution changes,
+  station refresh and disposal detach obsolete
+  station wrappers and collection subscriptions. Disposal does not remove session-owned journey tracking.
+- Journey reset uses the injected IRuntimeCommandGateway. Runtime snapshot projection remains
+  in the shell until the counter/status slice; no runtime lifecycle or routing is introduced.
+  EventManagerViewModel reads IProjectContext, the existing workflow library and journey-page
+  status directly. The architecture guard rejects shell dependencies in it and JourneysPage.
+  Its reset-all counter binding receives the existing shell command from navigation composition;
+  counter behavior remains with the later counter/status slice.
+- Deferred city loading uses the existing ICityService and UI dispatcher, and ignores queued
+  completion after disposal. JourneysPage retains visual layout/drag-drop coordination and
+  load/unload subscriptions; existing width keys and central-layout follow-up remain unchanged.
 
 **Settings presentation (RF-24 slice 1):**
 
@@ -748,7 +776,8 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `JourneysPageViewModel`,
+`ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;

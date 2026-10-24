@@ -9,10 +9,9 @@ using Common.Events;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
+using SharedUI.ViewModel;
 
 using System.Diagnostics;
-
-using View;
 
 /// <summary>
 /// Defers non-critical initialization until after the main window is visible.
@@ -22,8 +21,8 @@ internal class PostStartupInitializationService
 {
     private static readonly TimeSpan MinimumIndicatorDuration = TimeSpan.FromSeconds(1.5);
     private readonly IEventBus _eventBus;
-    private readonly HealthCheckService _healthCheckService;
-    private readonly MainWindow _mainWindow;
+    private readonly Action _initializeSpeechHealthChecks;
+    private readonly JourneysPageViewModel _journeysPage;
     private readonly AppSettings _appSettings;
     private readonly MasterDataStore _masterDataStore;
     private readonly RestApiProcessService _restApiProcessService;
@@ -31,16 +30,16 @@ internal class PostStartupInitializationService
 
     public PostStartupInitializationService(
         IEventBus eventBus,
-        HealthCheckService healthCheckService,
-        MainWindow mainWindow,
+        Action initializeSpeechHealthChecks,
+        JourneysPageViewModel journeysPage,
         AppSettings appSettings,
         MasterDataStore masterDataStore,
         RestApiProcessService restApiProcessService,
         ILogger<PostStartupInitializationService> logger)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _healthCheckService = healthCheckService;
-        _mainWindow = mainWindow;
+        _initializeSpeechHealthChecks = initializeSpeechHealthChecks ?? throw new ArgumentNullException(nameof(initializeSpeechHealthChecks));
+        _journeysPage = journeysPage;
         _appSettings = appSettings;
         _masterDataStore = masterDataStore ?? throw new ArgumentNullException(nameof(masterDataStore));
         _restApiProcessService = restApiProcessService;
@@ -107,7 +106,7 @@ internal class PostStartupInitializationService
     /// <summary>
     /// Loads the central master data file (Cities + Locomotives) into the <see cref="MasterDataStore"/>,
     /// initializes the TrainClassLibrary from the same file and refreshes the City Library
-    /// in the MainWindowViewModel so that the Journeys page shows the loaded cities.
+    /// in the journey editor so that the Journeys page shows the loaded cities.
     /// </summary>
     private async Task InitializeMasterDataAsync(CancellationToken cancellationToken)
     {
@@ -128,9 +127,9 @@ internal class PostStartupInitializationService
             // Refresh City Library in UI after master data has been loaded
             try
             {
-                await _mainWindow.ViewModel.LoadCityLibraryAsync().ConfigureAwait(false);
+                await _journeysPage.LoadCityLibraryAsync().ConfigureAwait(false);
                 _logger.LogInformation("[PostStartup] City Library refreshed: {Cities} cities",
-                    _mainWindow.ViewModel.CityLibrary.Count);
+                    _journeysPage.CityLibrary.Count);
             }
             catch (Exception ex)
             {
@@ -182,7 +181,7 @@ internal class PostStartupInitializationService
             cancellationToken.ThrowIfCancellationRequested();
             _logger.LogInformation("[PostStartup] Starting HealthCheckService");
             _eventBus.Publish(new PostStartupStatusEvent(true, "Starting health checks..."));
-            _mainWindow.InitializeHealthChecks(_healthCheckService);
+            _initializeSpeechHealthChecks();
             _logger.LogInformation("[PostStartup] HealthCheckService started");
         }
         catch (Exception ex)

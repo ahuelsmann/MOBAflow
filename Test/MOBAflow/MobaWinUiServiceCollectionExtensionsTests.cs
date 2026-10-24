@@ -20,6 +20,7 @@ using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
 using Moba.Speech.Base;
+using Moba.Test.Helpers;
 using Moba.Test.Speech;
 using Moq;
 
@@ -275,6 +276,49 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         shell.WorkflowSearchText = "Shell filter";
         Assert.That(library.SearchText, Is.EqualTo("Shell filter"));
         Assert.That(searchNotifications, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task JourneyEditorSharesHostSelectionLayoutAndStatusWithoutShellDependency()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        var gateway = new Mock<IRuntimeCommandGateway>();
+        gateway.Setup(value => value.ResetJourneyAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var io = TestFileServices.CreateMock();
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
+            .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
+        var provider = CreateValidatorServiceProvider(services =>
+        {
+            services.AddSingleton(gateway.Object);
+            services.AddSingleton(io.Object);
+        });
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var journeys = provider.GetRequiredService<JourneysPageViewModel>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        var session = provider.GetRequiredService<ISolutionSession>();
+        session.CurrentSolutionPath = "host-journeys-test.json";
+        var editor = provider.GetRequiredService<EventManagerViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(shell.JourneysPage, Is.SameAs(journeys));
+            Assert.That(provider.GetRequiredService<JourneysPageViewModel>(), Is.SameAs(journeys));
+            Assert.That(editor.JourneysPage, Is.SameAs(journeys));
+            Assert.That(editor.ResetCountersCommand, Is.SameAs(shell.ResetCountersCommand));
+            Assert.That(editor.WorkflowLibrary, Is.SameAs(provider.GetRequiredService<WorkflowLibraryViewModel>()));
+            Assert.That(journeys.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
+        }
+        journeys.AddJourneyCommand.Execute(null);
+        var selected = journeys.SelectedJourney!;
+        Assert.That(session.SelectedJourney, Is.SameAs(selected));
+        Assert.That(editor.SelectedJourney, Is.SameAs(selected));
+        await journeys.ResetJourneyCommand.ExecuteAsync(null).ConfigureAwait(false);
+        gateway.Verify(value => value.ResetJourneyAsync(selected.Id, It.IsAny<CancellationToken>()), Times.Once);
+        var notifications = new List<string?>();
+        journeys.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+        Assert.That(await shell.PrepareForShutdownAsync().ConfigureAwait(false), Is.True);
+        session.SelectedJourney = null;
+        Assert.That(notifications, Is.Empty);
     }
 
     private static ServiceProvider CreatePlatformServiceProvider()
