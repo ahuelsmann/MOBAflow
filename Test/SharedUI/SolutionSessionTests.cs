@@ -21,6 +21,7 @@ using Moba.Test.Helpers;
 internal sealed partial class SolutionSessionTests
 {
     private static readonly string[] LoadedProjectNames = ["A", "B"];
+    private static readonly string[] OriginalProjectNames = ["Original"];
 
     [Test]
     public void Constructor_AddsUntitledProjectToEmptySolutionAndSelectsIt()
@@ -85,7 +86,7 @@ internal sealed partial class SolutionSessionTests
     {
         var session = CreateSession(new Solution(), out var io, out _);
         session.CurrentSolutionPath = "layout.json";
-        io.Setup(value => value.SaveAsync(session.Solution, "layout.json")).ReturnsAsync((true, "layout.json", (string?)null));
+        io.Setup(value => value.SaveAsync(It.Is<Solution>(saved => saved.Projects.Count == session.Solution.Projects.Count), "layout.json")).ReturnsAsync((true, "layout.json", (string?)null));
         var saving = 0;
         session.SolutionSaving += (_, _) => saving++;
 
@@ -311,6 +312,89 @@ internal sealed partial class SolutionSessionTests
         Assert.That(eventContext, Is.SameAs(uiContext));
     }
 
+    [Test]
+    public async Task QueuedSaveOfAnEarlierSolution_NeitherWritesTheLoadedProjectsNorRestoresItsPath()
+    {
+        var session = CreateSession(new Solution { Projects = [new Project { Name = "A1" }] }, out var io, out _);
+        session.CurrentSolutionPath = "a.json";
+        var firstWrite = new TaskCompletionSource<(bool, string?, string?)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var writes = new System.Collections.Concurrent.ConcurrentQueue<(string Path, string[] Projects)>();
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
+            .Returns((Solution solution, string path) =>
+            {
+                writes.Enqueue((path, [.. solution.Projects.Select(project => project.Name)]));
+                return writes.Count == 1 ? firstWrite.Task : Task.FromResult((true, (string?)path, (string?)null));
+            });
+        var loaded = new Solution { Projects = [new Project { Name = "B1" }] };
+        io.Setup(value => value.LoadFromPathAsync("b.json")).ReturnsAsync((loaded, "b.json", (string?)null));
+
+        var writing = session.SaveSolutionInternalAsync();
+        var queued = session.SaveSolutionInternalAsync();
+        await session.LoadSolutionFromPathAsync("b.json").ConfigureAwait(false);
+        firstWrite.SetResult((true, "a.json", null));
+        await Task.WhenAll(writing, queued).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(writes.Select(write => write.Path), Has.All.EqualTo("a.json"));
+            Assert.That(writes.SelectMany(write => write.Projects), Has.All.EqualTo("A1"));
+            Assert.That(session.CurrentSolutionPath, Is.EqualTo("b.json"));
+            Assert.That(session.HasUnsavedChanges, Is.False);
+            Assert.That(session.SolutionSaveState, Is.EqualTo(SolutionSaveState.Saved));
+        }
+    }
+
+    [Test]
+    public async Task Save_TakesItsSnapshotOnTheUiThread_AndWritesThatSnapshot()
+    {
+        var uiQueue = new Queue<Action>();
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(uiQueue.Enqueue);
+        var session = CreateSession(new Solution { Projects = [new Project { Name = "Original" }] }, dispatcher.Object, out var io, out _);
+        session.CurrentSolutionPath = "layout.json";
+        Solution? written = null;
+        string[] writtenNames = [];
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), "layout.json"))
+            .Returns((Solution solution, string path) =>
+            {
+                written = solution;
+                writtenNames = [.. solution.Projects.Select(project => project.Name)];
+                return Task.FromResult((true, (string?)path, (string?)null));
+            });
+        var saving = 0;
+        session.SolutionSaving += (_, _) => saving++;
+
+        var save = session.SaveSolutionInternalAsync();
+        var savingBeforeUi = saving;
+        while (uiQueue.TryDequeue(out var action))
+            action();
+        session.Solution.Projects[0].Name = "Edited after the snapshot";
+        await save.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(savingBeforeUi, Is.Zero, "SolutionSaving waits for the UI thread.");
+            Assert.That(saving, Is.EqualTo(1));
+            Assert.That(written, Is.Not.SameAs(session.Solution), "The write uses a snapshot, not the live solution.");
+            Assert.That(writtenNames, Is.EqualTo(OriginalProjectNames));
+        }
+    }
+
+    [Test]
+    public void LateEditOfAnEarlierProject_RefreshesThatProjectsRuntime()
+    {
+        var first = new Project { Name = "A", Workflows = [new Workflow { Name = "W" }] };
+        var second = new Project { Name = "B" };
+        var session = CreateSession(new Solution { Projects = [first, second] }, out _, out var runtime);
+        var workflowOfFirst = session.SelectedProject!.Workflows[0];
+        session.SelectedProject = session.SolutionViewModel!.Projects[1];
+        runtime.Invocations.Clear();
+
+        workflowOfFirst.Name = "Edited late";
+
+        runtime.Verify(value => value.UpdateAsync(first, It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.UpdateAsync(second, It.IsAny<CancellationToken>()), Times.Never);
+    }
     private sealed class TestUiContext : SynchronizationContext
     {
         public override void Post(SendOrPostCallback callback, object? state)
@@ -336,16 +420,25 @@ internal sealed partial class SolutionSessionTests
         out Mock<ISolutionIoService> io,
         out Mock<IProjectRuntimeHost> runtime)
     {
-        io = TestFileServices.CreateMock();
-        runtime = new Mock<IProjectRuntimeHost>();
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
         dispatcher.Setup(value => value.InvokeOnUiAsync(It.IsAny<Func<Task<SolutionSaveResult>>>()))
             .Returns<Func<Task<SolutionSaveResult>>>(func => func());
+        return CreateSession(solution, dispatcher.Object, out io, out runtime);
+    }
+
+    private static SolutionSession CreateSession(
+        Solution solution,
+        IUiDispatcher dispatcher,
+        out Mock<ISolutionIoService> io,
+        out Mock<IProjectRuntimeHost> runtime)
+    {
+        io = TestFileServices.CreateMock();
+        runtime = new Mock<IProjectRuntimeHost>();
         return new SolutionSession(
             solution,
             io.Object,
-            dispatcher.Object,
+            dispatcher,
             runtime.Object,
             NullLogger<SolutionSession>.Instance);
     }
