@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/366
 **Spec Kit**: Not applicable - regression tests and CI lanes for existing contracts without product behavior
-**Status**: Active; steps 1 and 2 are delivered with this plan in the single issue PR
+**Status**: Active; steps 1 and 2 are delivered (#367); step 3 is in its own issue PR
 
 ## Purpose and scope
 
@@ -25,13 +25,16 @@ a lane the same way locally and in [Quality CI](../.github/workflows/quality.yml
 | `common` | active | `Common` | `mutation-common` (Windows) | 63% |
 | `speech-base` | active | `Speech.Base` | `mutation-speech-base` (Linux) | 65% |
 | `backend` | **active from step 1** | `Backend` | `mutation-backend` (Linux) | 43% |
-| `api` | planned (step 3) | `MOBApi` | - | - |
+| `api` | **active from step 3** | `MOBApi` | `mutation-api` (Linux) | 44% |
+| `api-process` | planned | `MOBApi` | - | - |
 | `shared-ui` | planned (step 4) | `SharedUI` | - | - |
 
 The Backend host [`Backend.MutationTests.csproj`](../MutationTest/Backend/Backend.MutationTests.csproj) compiles all
 fixtures under `Test/Backend/`, the workflow end-to-end fixture and the Z21 DCC decoder tests, with the shared fakes
-they need. The MOBApi process fixtures (`MobApiProcessTests`, `RuntimeHubLiveE2ETests`) start real MOBApi processes
-and do not exercise Backend code in-process; they move to the planned `api` lane.
+they need. The MOBApi host [`Api.MutationTests.csproj`](../MutationTest/Api/Api.MutationTests.csproj) compiles the
+in-process fixtures under `Test/MOBApi/`. The MOBApi process fixtures (`MobApiProcessTests`, `RuntimeHubLiveE2ETests`)
+start real MOBApi processes and cannot detect mutants of the in-process assembly; they stay in the planned
+`api-process` lane.
 
 ## Backend baseline (step 1)
 
@@ -117,7 +120,22 @@ separate pull requests.
 
    The floor raise follows from a fresh full run once the queue allocates it.
 3. **MOBApi lane:** command validation and remote command queue bounds; real registration paths, owned processes only
-   where required.
+   where required. Delivered: the `api` lane with its host, Stryker configuration and the `mutation-api` CI job.
+   - **Measurement:** the first local run (Windows, Stryker.NET 5.0.0, four processes) scored 38.42%. After the new tests
+     it scored 44.63%: 187 killed, 81 survived, 151 without coverage, 124 ignored, 36 compile errors. The floor is 44%.
+   - **New tests:** missing REST requests and every queued command field; null commands at the admission and the queue;
+     the `queue_full` code; the debug log and the counter metadata; the hub's project and signal checks; the queue reason
+     when queueing fails after validation; snapshots from a connection that is not the host.
+   - **Equivalent survivors in the command path:**
+     - `ConfigureAwait(false)` to `true` in the hub (scheduling only);
+     - `BoundedChannelFullMode.Wait` removed (the channel default is `Wait`);
+     - `!TryDequeue || command == null` to `&&` (a successful read never returns null, because the queue rejects null);
+     - `parsed != Guid.Empty` in `RuntimeHub.ParseProject`, and `ThrowIfNull` in the admission's validation: the admission
+       and the validator reject the same input with the same message or exception.
+   - **Safe Mode:** Stryker reports CS0165 for `RuntimeHub.PushSnapshot` (the `entry` variable assigned in `try`), so its
+     mutants count as compile errors outside the score.
+   - **Open in the lane:** remote and host registration, disconnect handling, `Program`, the discovery service and the
+     photo and solution controllers have no in-process tests yet. A later floor raise follows from new tests there.
 4. **SharedUI lane:** train control, settings, project switches and stale asynchronous responses through the existing
    runtime interfaces.
 5. **Completion:** further lanes only where the tooling is technically suitable (Sound, display, rendering by measured

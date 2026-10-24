@@ -53,8 +53,15 @@
     },
     {
       "name": "api",
-      "status": "planned",
+      "status": "active",
+      "stryker-config": "MutationTest/stryker-api-config.json",
       "test-directories": ["Test/MOBApi"],
+      "production-projects": ["MOBApi/MOBApi.csproj"]
+    },
+    {
+      "name": "api-process",
+      "status": "planned",
+      "test-directories": [],
       "test-files": [
         "Test/Integration/MobApiProcessTests.cs",
         "Test/Integration/RuntimeHubLiveE2ETests.cs"
