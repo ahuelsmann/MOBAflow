@@ -27,6 +27,22 @@ internal sealed class KsSignalAspectNamesTests
         Assert.That(KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs1, is4046: true), Is.EqualTo("Ks1+G"));
         Assert.That(KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks1Blink, is4046: true), Is.EqualTo("Ks2+K+G"));
     }
+
+    [Test]
+    public void GetAspectDescription_Should_Describe4046LightCombinationsOnlyFor4046()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(KsSignalAspectNames.GetAspectDescription(SignalAspect.Hp0, is4046: true), Is.EqualTo("Hp 0 - Stop"));
+            Assert.That(KsSignalAspectNames.GetAspectDescription(SignalAspect.Ks2, is4046: false), Is.EqualTo("Ks 2 - Expect stop"));
+            Assert.That(KsSignalAspectNames.GetAspectDescription(SignalAspect.Ks2, is4046: true),
+                Is.EqualTo("Ks 2 with white marker light at the top left"));
+            Assert.That(KsSignalAspectNames.GetAspectDescription(SignalAspect.Ra12, is4046: false), Is.EqualTo("Sh 1/Ra 12 - Shunting allowed"));
+            Assert.That(KsSignalAspectNames.GetAspectDescription(SignalAspect.Zs7, is4046: true), Is.EqualTo("Zs 7 - Caution signal (3x yellow)"));
+            Assert.That(Enum.GetValues<SignalAspect>().Select(aspect => KsSignalAspectNames.GetAspectDescription(aspect, is4046: false)),
+                Has.All.Not.Empty);
+        }
+    }
 }
 
 [TestFixture]

@@ -47,4 +47,37 @@ public static class KsSignalAspectNames
             _ => aspect.ToString()
         };
     }
+
+    /// <summary>
+    /// Describes what <paramref name="aspect"/> shows, for tooltips. The 4046 signal with speed indicators
+    /// reuses several aspect slots for its own light combinations.
+    /// </summary>
+    public static string GetAspectDescription(SignalAspect aspect, bool is4046)
+    {
+        return aspect switch
+        {
+            SignalAspect.Hp0 => "Hp 0 - Stop",
+            SignalAspect.Ks1 => "Ks 1 - Proceed",
+            SignalAspect.Ks2 => is4046
+                ? "Ks 2 with white marker light at the top left"
+                : "Ks 2 - Expect stop",
+            SignalAspect.Ks1Blink => is4046
+                ? "Ks 2 with white marker light at the top left and top speed indicator"
+                : "Ks 1 flashing - Proceed with speed pre-indicator",
+            SignalAspect.Kennlicht => is4046
+                ? "Only white marker light at the top left"
+                : "Marker light - Signal disabled for operations",
+            SignalAspect.Dunkel => is4046
+                ? "Green flashing with white marker light at the top left and top/bottom speed indicators"
+                : "Dark mode - Signal inactive",
+            SignalAspect.Ra12 => is4046
+                ? "Hp0 with white marker light at the bottom for shunting movements"
+                : "Sh 1/Ra 12 - Shunting allowed",
+            SignalAspect.Zs1 => is4046
+                ? "Ks 1 with top speed indicator"
+                : "Zs 1 - Substitute signal (white flashing)",
+            SignalAspect.Zs7 => "Zs 7 - Caution signal (3x yellow)",
+            _ => aspect.ToString()
+        };
+    }
 }
