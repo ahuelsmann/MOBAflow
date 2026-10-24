@@ -15,6 +15,8 @@ The older `specs/002-workflow-action-sequences/` package belongs to Issue #132 a
 
 The approved Option A remains a visual projection of the ordered action list. This phase fixes
 13 OPEN/CONFIRMED Sonar findings and prepares practical acceptance without starting applications.
+That correction was delivered at f5eba239. The new 2026-10-24 phase addresses the
+observed Light-theme acceptance failure WF388-LIGHT-01 in the same PR.
 It adds no feature, dependencies, runtime command, domain schema, migration or execution path.
 
 ## User stories and acceptance
@@ -48,6 +50,27 @@ or passed UI acceptance without evidence. Apps, API hosts, workflows and hardwar
 - **FR-004**: Prepare the US2 acceptance package; actual UI execution remains a separate open gate.
 - **FR-005**: Keep the existing branch/worktree/Draft PR, one writer, protected operator solution,
   current CI/Sonar checks and explicit source/process handoff boundaries.
+- **FR-006**: Resolve all theme-dependent graph brushes through element-scoped XAML
+  ThemeResource references, including after a Dark -> Light -> Dark switch.
+- **FR-007**: Keep trigger/action titles, descriptions, parameter summaries, step numbers,
+  icons, ports, connections, delay badges, status and selected borders readable in both themes
+  without a replacement hardcoded palette or changing selection, commands or layout.
+- **FR-008**: Preserve the live f5 program and its data. Build separately, excluding the protected
+  operator solution, and prepare a new exact-head isolated candidate with fresh disposable data.
+- **FR-009**: Include the native WinUI MUI payload with its relative language paths in the new
+  candidate and verify its source/target hashes; DLL dependency lists alone are insufficient.
+
+### US3 - Keep the graph readable when the effective theme changes (P1)
+
+As a workflow author, I can read the same graph in Light and Dark without losing descriptions,
+parameters, steps or sequence lines. The f5 human test accepted Dark appearance and List/Graph
+synchronization, but Light failed: explicit brush lookups remained light on the light surface.
+
+1. Switch Dark -> Light -> Dark with trigger, action and selection present; every listed visual
+   in FR-007 follows its element's effective theme.
+2. Select an action and the trigger, edit a parameter and add/remove a delay; emphasis and text
+   remain readable, and the existing order, summary and command behavior stays unchanged.
+3. Repeat the same checks on the new candidate; historical f5 results are not new-head passes.
 
 ## Success criteria and edges
 
@@ -55,8 +78,13 @@ or passed UI acceptance without evidence. Apps, API hosts, workflows and hardwar
 - **SC-002**: The resulting PR commit has green required CI and a green Sonar check plus zero
   OPEN/CONFIRMED issues. A green check alone does not meet this criterion.
 - **SC-003**: Documentation records the actual build and remaining manual acceptance separately.
+- **SC-004**: Compile the new XAML, run the relevant existing behavior regressions and unchanged
+  analyzer gates, then hand the new candidate to Chief PM for actual Light/Dark inspection.
+  Static and automated checks do not substitute for that manual acceptance.
 
 Edges include null library, false CanExecute, whitespace/empty strings, messages of 28 and 29
 characters, empty/valid target IDs, both file separators and absent script arguments.
 Platforms are portable SharedUI and Windows WinUI. JSON, defaults, public API, Z21 and persisted
 layout behavior remain unchanged. `MOBAflow/solution.json` is excluded from all handling.
+Theme edges include an inherited theme different from Application.RequestedTheme, initial load
+in either theme, theme switching, unassigned/assigned triggers, invalid actions and selected cards.
