@@ -19,3 +19,21 @@
   Any unproven startup condition remains a named blocker in the acceptance recipe.
 
 No unresolved product decision remains for the code correction scope.
+
+## WF388-LIGHT-01: effective element theme
+
+- Evidence: the 2026-10-24 human f5 Light screenshot shows light descriptions, parameters, step
+  numbers and lines on a light graph surface. Direct Application.Current.Resources brush lookup
+  in the canvas does not preserve a ThemeResource expression on each generated element.
+- Decision: move brush assignments into control-local XAML Style setters and keep the generated
+  visuals and existing ActualThemeChanged refresh. A selected border changes style, not a cached
+  application brush. Existing WinUI theme keys and text styles supply the palette.
+- Rationale: ThemeResource is re-evaluated on theme changes at the target element. Microsoft
+  explicitly supports ThemeResource in Style setters: [XAML theme resources](https://learn.microsoft.com/windows/uwp/design/controls-and-patterns/xaml-theme-resources).
+- Rejected: handcoded Light/Dark colors, forcing Application.RequestedTheme, manual traversal of
+  internal WinUI dictionaries, a new resource-resolver abstraction or global theme/DI changes.
+- Package evidence: the self-contained SDK payload explicitly copies native/**/*.mui preserving
+  relative language paths. The initial f5 candidate omitted all 172 files; matching-source MUI
+  supplementation resolved its startup failure in Root's controlled normal launch. Carry that
+  payload into every new candidate; do not infer completeness from deps.json runtime DLLs.
+- No unresolved design choice remains. This source phase does not grant app-launch authority.

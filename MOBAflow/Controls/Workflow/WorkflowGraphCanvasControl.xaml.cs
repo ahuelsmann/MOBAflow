@@ -25,9 +25,9 @@ using Windows.UI.Core;
 /// </summary>
 internal sealed partial class WorkflowGraphCanvasControl : UserControl
 {
-    private const string CaptionTextStyleKey = "CaptionTextBlockStyle";
-    private const string SecondaryTextBrushKey = "TextFillColorSecondaryBrush";
-    private const string CardStrokeBrushKey = "CardStrokeColorDefaultBrush";
+    private const string CaptionTextStyleKey = "GraphCaptionTextStyle";
+    private const string TitleTextStyleKey = "GraphTitleTextStyle";
+    private const string CardStyleKey = "GraphCardStyle";
     private const double GridSnapSize = 20.0;
     private const double DotGridSpacing = 24.0;
     private const double CardWidth = WorkflowViewModel.ActionNodeWidth;
@@ -226,7 +226,6 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
     private void RenderDotGrid()
     {
         DotGridCanvas.Children.Clear();
-        var dotBrush = GetThemeBrush("ControlStrokeColorDefaultBrush");
         var width = DotGridCanvas.Width;
         var height = DotGridCanvas.Height;
 
@@ -238,7 +237,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
                 {
                     Width = 2,
                     Height = 2,
-                    Fill = dotBrush,
+                    Style = GetGraphStyle("GraphDotStyle"),
                     Opacity = 0.55
                 };
                 Canvas.SetLeft(dot, x - 1);
@@ -310,13 +309,13 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         {
             Glyph = "\uE945",
             FontSize = 14,
-            Foreground = GetThemeBrush("AccentTextFillColorPrimaryBrush")
+            Style = GetGraphStyle("GraphTriggerIconStyle")
         };
 
         var title = new TextBlock
         {
             Text = "Workflow Trigger",
-            Style = GetThemeStyle("BodyStrongTextBlockStyle"),
+            Style = GetGraphStyle(TitleTextStyleKey),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
         Grid.SetColumn(title, 1);
@@ -335,8 +334,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
 
         _triggerSubtitleText = new TextBlock
         {
-            Style = GetThemeStyle(CaptionTextStyleKey),
-            Foreground = GetThemeBrush(SecondaryTextBrushKey),
+            Style = GetGraphStyle(CaptionTextStyleKey),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
         Grid.SetRow(_triggerSubtitleText, 1);
@@ -354,8 +352,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         {
             Margin = new Thickness(0, 0, 0, PortSize / 2),
             CornerRadius = new CornerRadius(8),
-            Background = GetThemeBrush("CardBackgroundFillColorSecondaryBrush"),
-            BorderBrush = GetThemeBrush(CardStrokeBrushKey),
+            Style = GetGraphStyle("GraphTriggerCardStyle"),
             BorderThickness = new Thickness(1),
             Child = cardGrid
         };
@@ -391,9 +388,9 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
 
         var hasTriggers = _subscribedLibrary?.HasAssignedTriggers == true;
         _triggerSubtitleText.Text = _subscribedLibrary?.TriggerSummaryText ?? "Manual / Unassigned";
-        _triggerStatusDot.Fill = GetThemeBrush(hasTriggers
-            ? "SystemFillColorSuccessBrush"
-            : SecondaryTextBrushKey);
+        _triggerStatusDot.Style = GetGraphStyle(hasTriggers
+            ? "GraphSuccessStatusStyle"
+            : "GraphUnassignedStatusStyle");
     }
 
     private ActionNodeVisuals CreateActionNodeCard(WorkflowActionViewModel action)
@@ -414,13 +411,13 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         {
             Glyph = action.IconGlyph,
             FontSize = 14,
-            Foreground = GetThemeBrush("TextFillColorPrimaryBrush")
+            Style = GetGraphStyle("GraphActionIconStyle")
         };
 
         var titleText = new TextBlock
         {
             Text = string.IsNullOrWhiteSpace(action.Name) ? action.TypeDisplayName : action.Name,
-            Style = GetThemeStyle("BodyStrongTextBlockStyle"),
+            Style = GetGraphStyle(TitleTextStyleKey),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
         Grid.SetColumn(titleText, 1);
@@ -441,8 +438,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         var subtitleText = new TextBlock
         {
             Text = action.TypeDisplayName,
-            Style = GetThemeStyle(CaptionTextStyleKey),
-            Foreground = GetThemeBrush(SecondaryTextBrushKey),
+            Style = GetGraphStyle(CaptionTextStyleKey),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
 
@@ -450,8 +446,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         var parameterPillText = new TextBlock
         {
             Text = action.ParameterSummary,
-            Style = GetThemeStyle(CaptionTextStyleKey),
-            Foreground = GetThemeBrush("TextFillColorPrimaryBrush"),
+            Style = GetGraphStyle("GraphParameterTextStyle"),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
 
@@ -459,8 +454,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         {
             Padding = new Thickness(8, 3, 8, 3),
             CornerRadius = new CornerRadius(4),
-            Background = GetThemeBrush("SubtleFillColorSecondaryBrush"),
-            BorderBrush = GetThemeBrush(CardStrokeBrushKey),
+            Style = GetGraphStyle("GraphParameterPillStyle"),
             BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Left,
             MaxWidth = CardWidth - 28,
@@ -475,8 +469,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         var stepText = new TextBlock
         {
             Text = action.StepLabel,
-            Style = GetThemeStyle(CaptionTextStyleKey),
-            Foreground = GetThemeBrush(SecondaryTextBrushKey),
+            Style = GetGraphStyle(CaptionTextStyleKey),
             VerticalAlignment = VerticalAlignment.Center
         };
 
@@ -526,8 +519,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         {
             Margin = new Thickness(0, PortSize / 2, 0, PortSize / 2),
             CornerRadius = new CornerRadius(8),
-            Background = GetThemeBrush("CardBackgroundFillColorDefaultBrush"),
-            BorderBrush = GetThemeBrush(CardStrokeBrushKey),
+            Style = GetGraphStyle(CardStyleKey),
             BorderThickness = new Thickness(1),
             Child = contentStack
         };
@@ -576,20 +568,19 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         return visuals;
     }
 
-    private static Ellipse CreatePortEllipse() => new()
+    private Ellipse CreatePortEllipse() => new()
     {
         Width = PortSize,
         Height = PortSize,
-        Fill = GetThemeBrush("CardBackgroundFillColorDefaultBrush"),
-        Stroke = GetThemeBrush(SecondaryTextBrushKey),
+        Style = GetGraphStyle("GraphPortStyle"),
         StrokeThickness = 1.5
     };
 
-    private static void UpdateActionStatusVisuals(WorkflowActionViewModel action, ActionNodeVisuals visuals)
+    private void UpdateActionStatusVisuals(WorkflowActionViewModel action, ActionNodeVisuals visuals)
     {
-        visuals.StatusDot.Fill = GetThemeBrush(action.IsValidAction
-            ? "SystemFillColorSuccessBrush"
-            : "SystemFillColorCriticalBrush");
+        visuals.StatusDot.Style = GetGraphStyle(action.IsValidAction
+            ? "GraphSuccessStatusStyle"
+            : "GraphCriticalStatusStyle");
 
         var tooltip = "Action payload is valid";
         if (!action.IsValidAction)
@@ -604,13 +595,11 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
     private void UpdateSelectionVisuals()
     {
         var selectedAction = _subscribedLibrary?.SelectedAction;
-        var accentBrush = GetThemeBrush("AccentFillColorDefaultBrush");
-        var defaultStrokeBrush = GetThemeBrush(CardStrokeBrushKey);
 
         foreach (var (action, visuals) in _actionVisuals)
         {
             var isSelected = ReferenceEquals(action, selectedAction);
-            visuals.CardBorder.BorderBrush = isSelected ? accentBrush : defaultStrokeBrush;
+            visuals.CardBorder.Style = GetGraphStyle(isSelected ? "GraphSelectedCardStyle" : CardStyleKey);
             visuals.CardBorder.BorderThickness = isSelected ? new Thickness(2) : new Thickness(1);
         }
 
@@ -618,7 +607,9 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             triggerGrid.Children.FirstOrDefault() is Border triggerBorder)
         {
             var isWorkflowSettingsSelected = _subscribedLibrary?.SelectedWorkflow != null && selectedAction == null;
-            triggerBorder.BorderBrush = isWorkflowSettingsSelected ? accentBrush : defaultStrokeBrush;
+            triggerBorder.Style = GetGraphStyle(isWorkflowSettingsSelected
+                ? "GraphSelectedTriggerCardStyle"
+                : "GraphTriggerCardStyle");
             triggerBorder.BorderThickness = isWorkflowSettingsSelected ? new Thickness(2) : new Thickness(1);
         }
     }
@@ -632,7 +623,6 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         }
 
         var actions = _subscribedWorkflow.Actions;
-        var strokeBrush = GetThemeBrush(SecondaryTextBrushKey);
 
         // 1. Trigger Node (bottom port) -> Step #1 (top port)
         var triggerOutput = new Point(
@@ -641,7 +631,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         var firstInput = new Point(
             actions[0].CanvasX + (CardWidth / 2.0),
             actions[0].CanvasY);
-        AddBezierConnection(triggerOutput, firstInput, strokeBrush, delayBadgeText: null);
+        AddBezierConnection(triggerOutput, firstInput, delayBadgeText: null);
 
         // 2. Sequential connections Step #i -> Step #i+1
         for (var i = 0; i < actions.Count - 1; i++)
@@ -656,11 +646,11 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
                 target.CanvasY);
 
             var badgeText = source.HasDelayAfter ? source.DelayBadgeText : null;
-            AddBezierConnection(startPoint, endPoint, strokeBrush, badgeText);
+            AddBezierConnection(startPoint, endPoint, badgeText);
         }
     }
 
-    private void AddBezierConnection(Point start, Point end, Brush strokeBrush, string? delayBadgeText)
+    private void AddBezierConnection(Point start, Point end, string? delayBadgeText)
     {
         var verticalSpan = Math.Abs(end.Y - start.Y);
         var horizontalSpan = Math.Abs(end.X - start.X);
@@ -689,7 +679,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         var path = new Path
         {
             Data = geometry,
-            Stroke = strokeBrush,
+            Style = GetGraphStyle("GraphConnectionStyle"),
             StrokeThickness = 1.75,
             StrokeDashArray = dashArray
         };
@@ -698,7 +688,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         // Arrowhead pointing into the top port of the target node
         var arrowPolygon = new Polygon
         {
-            Fill = strokeBrush,
+            Style = GetGraphStyle("GraphArrowStyle"),
             Points =
             [
                 new Point(end.X, end.Y),
@@ -715,14 +705,12 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             {
                 Padding = new Thickness(7, 2, 7, 2),
                 CornerRadius = new CornerRadius(10),
-                Background = GetThemeBrush("CardBackgroundFillColorDefaultBrush"),
-                BorderBrush = GetThemeBrush(CardStrokeBrushKey),
+                Style = GetGraphStyle(CardStyleKey),
                 BorderThickness = new Thickness(1),
                 Child = new TextBlock
                 {
                     Text = $"⏱ {delayBadgeText}",
-                    Style = GetThemeStyle(CaptionTextStyleKey),
-                    Foreground = GetThemeBrush(SecondaryTextBrushKey)
+                    Style = GetGraphStyle(CaptionTextStyleKey)
                 }
             };
             badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
@@ -895,29 +883,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         }
     }
 
-    private static Brush GetThemeBrush(string resourceKey)
-    {
-        if (Application.Current?.Resources != null &&
-            Application.Current.Resources.TryGetValue(resourceKey, out var value) &&
-            value is Brush brush)
-        {
-            return brush;
-        }
-
-        return new SolidColorBrush(Microsoft.UI.Colors.Gray);
-    }
-
-    private static Style? GetThemeStyle(string resourceKey)
-    {
-        if (Application.Current?.Resources != null &&
-            Application.Current.Resources.TryGetValue(resourceKey, out var value) &&
-            value is Style style)
-        {
-            return style;
-        }
-
-        return null;
-    }
+    private Style GetGraphStyle(string resourceKey) => (Style)Resources[resourceKey];
 
     private sealed record ActionNodeVisuals(
         Border RootCard,

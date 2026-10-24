@@ -3,9 +3,9 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/378
 **Spec Kit**: Required
 **Branch**: codex/issue-378-graphical-workflow-editor
-**Date**: 2026-10-23
+**Date**: 2026-10-24
 **Spec**: [spec.md](spec.md)
-**Status**: Planned correction phase; practical UI acceptance remains open
+**Status**: f5 quality correction delivered; Light-theme follow-up planned before new code
 
 ## Summary and provenance
 
@@ -80,3 +80,49 @@ count. Assess convergence before the source/process-END handoff to Chief PM.
 No constitutional exception or feature extension is needed. The temporary build exclusion is
 local validation protection, not a shipped build-graph change. Practical acceptance stays open
 until a separately authorized operator actually performs it.
+
+## 2026-10-24 follow-up: WF388-LIGHT-01
+
+The human f5 acceptance found unreadable Light graph descriptions, parameters, steps, icons,
+ports and connections. Dark appearance and List/Graph item synchronization were accepted on f5
+only. This phase corrects visual theme behavior; the earlier output-preservation requirement
+continues to govern summaries, commands, ordering, persistence and runtime behavior.
+
+### Research and design
+
+`GetThemeBrush` currently materializes brushes from `Application.Current.Resources`, while the
+window changes its element theme. Rebuilding the graph repeats the application-scoped lookup.
+Replace that lookup with graph-local XAML styles whose brush setters use ThemeResource. Apply
+those styles to the actual generated TextBlock, FontIcon, Border, Ellipse, Path and Polygon.
+Reuse existing text styles and brush keys; do not introduce a new palette or resource resolver.
+Normal/selected trigger and action border styles retain the existing emphasis and backgrounds.
+Keep ActualThemeChanged refresh, event subscriptions, dimensions, commands and geometry intact.
+
+Only `MOBAflow/Controls/Workflow/WorkflowGraphCanvasControl.xaml` and its `.xaml.cs` require
+production edits. No shared ViewModel, DI, domain, runtime, dependency or baseline changes.
+The current source files are disjoint from PRs #293, #308, #384, #392, #394 and #395. The user wiki
+shares a path with #392; its existing graph instructions remain accurate, so record the concrete
+no-change assessment here/quickstart rather than editing that other owner's section.
+
+### Validation and delivery
+
+Run the existing focused workflow/library/defaults and XAML icon regressions, compile WinUI and
+compare complete analyzer outputs to the unchanged baselines. The changed work is declarative
+visual styling: there is no new shared logic to test, and no source-text snapshot test is added.
+Compilation validates style target/property compatibility; actual contrast/theme switching stays
+with Chief PM and the human. Record this limit instead of calling static markup checks UI passes.
+Re-run Spec Kit analysis before the code phase and convergence after implementation/checks.
+
+Update quickstart with time-bound f5 observations, the Light failure and the native MUI packaging
+contract. Publish a normal fix on the same Draft #388 only after current ownership/CI preflight.
+Build the committed head separately and prepare a new ignored candidate with 172 native MUI
+files, generated runtime and shipped assets, a hash manifest, fresh configuration and disposable
+fixtures. Never replace files in the live JADE f5 package; never start the new app here.
+
+### Constitution re-check
+
+I/V: two WinUI visual files only, no layer, DI or execution change. II: ThemeResource setters use
+the actual element context and existing English labels; Light/Dark manual evidence remains open.
+III: existing behavior regressions plus WinUI/analyzer checks, with the UI limit explicit.
+IV: same issue/spec/tasks and unchanged data/API/layout. VI: unchanged gates, scans before reads
+and publication, current-head CI/Sonar before Root's readiness assessment. No exception required.
