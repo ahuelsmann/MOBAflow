@@ -49,8 +49,18 @@
                     <SolidColorBrush x:Key="TrackPlanValidationOverlapFillBrush" Color="#FFE81123" />
                     <SolidColorBrush x:Key="TrackPlanValidationOverlapStrokeBrush" Color="#FFB40014" />
                     <SolidColorBrush x:Key="TrackPlanValidationGroupStrokeBrush" Color="#FF0078D7" />
+                    <!--  TrackPlan labels and the Z21 feedback glow (drawn with Win2D)  -->
+                    <SolidColorBrush x:Key="TrackPlanLabelBackgroundBrush" Color="#EBFAFAFA" />
+                    <SolidColorBrush x:Key="TrackPlanLabelTextBrush" Color="#FF141414" />
+                    <SolidColorBrush x:Key="TrackPlanLabelBorderBrush" Color="#A0282828" />
+                    <SolidColorBrush x:Key="TrackPlanFeedbackGlowOuterBrush" Color="#FFFFB400" />
+                    <SolidColorBrush x:Key="TrackPlanFeedbackGlowInnerBrush" Color="#FFFFD700" />
                     <!--  Icons (Icons.xaml): schwarz im Light-Theme  -->
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="#FF000000" />
+                    <!--  Panel kind accent strips (Generic.xaml): helper, collection, properties  -->
+                    <SolidColorBrush x:Key="MobaPanelAccentHelperBrush" Color="#FFFFE666" />
+                    <SolidColorBrush x:Key="MobaPanelAccentCollectionBrush" Color="#FF0078D4" />
+                    <SolidColorBrush x:Key="MobaPanelAccentPropertiesBrush" Color="#FFFF8C00" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FF1F1F1F" />
@@ -85,8 +95,60 @@
                     <SolidColorBrush x:Key="TrackPlanValidationOverlapFillBrush" Color="#FFE81123" />
                     <SolidColorBrush x:Key="TrackPlanValidationOverlapStrokeBrush" Color="#FFB40014" />
                     <SolidColorBrush x:Key="TrackPlanValidationGroupStrokeBrush" Color="#FF60CDFF" />
+                    <!--  TrackPlan labels and the Z21 feedback glow (drawn with Win2D)  -->
+                    <SolidColorBrush x:Key="TrackPlanLabelBackgroundBrush" Color="#EB202020" />
+                    <SolidColorBrush x:Key="TrackPlanLabelTextBrush" Color="#FFF0F0F0" />
+                    <SolidColorBrush x:Key="TrackPlanLabelBorderBrush" Color="#A0B4B4B4" />
+                    <SolidColorBrush x:Key="TrackPlanFeedbackGlowOuterBrush" Color="#FFFFB400" />
+                    <SolidColorBrush x:Key="TrackPlanFeedbackGlowInnerBrush" Color="#FFFFD700" />
                     <!--  Icons (Icons.xaml): white in dark theme  -->
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="#FFFFFFFF" />
+                    <!--  Panel kind accent strips (Generic.xaml): helper, collection, properties  -->
+                    <SolidColorBrush x:Key="MobaPanelAccentHelperBrush" Color="#FFFFE666" />
+                    <SolidColorBrush x:Key="MobaPanelAccentCollectionBrush" Color="#FF0078D4" />
+                    <SolidColorBrush x:Key="MobaPanelAccentPropertiesBrush" Color="#FFFF8C00" />
+                </ResourceDictionary>
+                <!--  High Contrast: Windows contrast theme colors only, so the user's chosen theme decides every color  -->
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="SurfaceBackgroundFillColorDefaultBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="MobaTextLabelMutedBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="FunctionButtonOffBackgroundBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+                    <SolidColorBrush x:Key="FunctionButtonOffBorderBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
+                    <SolidColorBrush x:Key="SignalHousingBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="SignalLampOffBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+                    <SolidColorBrush x:Key="SignalBoxTrackBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="SignalPreviewBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBorderBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundPointerOverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundPressedBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundDisabledBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundDisabledBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+                    <SolidColorBrush x:Key="MobaPreviewBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="MobaPreviewBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaPreviewBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaFeedbackCardForegroundBrush" Color="{ThemeResource SystemColorHighlightTextColor}" />
+                    <SolidColorBrush x:Key="MatrixCellOffBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+                    <SolidColorBrush x:Key="TrackPlanStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="TrackPlanStrokeSelectedBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="TrackPlanGridMinorBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+                    <SolidColorBrush x:Key="TrackPlanGridMajorBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOpenEndFillBrush" Color="{ThemeResource SystemColorHotlightColor}" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOpenEndStrokeBrush" Color="{ThemeResource SystemColorHotlightColor}" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOverlapFillBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOverlapStrokeBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="TrackPlanValidationGroupStrokeBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="TrackPlanLabelBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="TrackPlanLabelTextBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="TrackPlanLabelBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="TrackPlanFeedbackGlowOuterBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="TrackPlanFeedbackGlowInnerBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="IconStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaPanelAccentHelperBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaPanelAccentCollectionBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaPanelAccentPropertiesBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 

@@ -39,12 +39,14 @@
                 <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button
                         Padding="4"
+                        AutomationProperties.Name="Create a new MOBA project"
                         Command="{x:Bind ViewModel.AddProjectCommand}"
                         ToolTipService.ToolTip="Create a new MOBA project">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
                     </Button>
                     <Button
                         Padding="4"
+                        AutomationProperties.Name="Remove the selected project"
                         Command="{x:Bind ViewModel.DeleteProjectCommand}"
                         ToolTipService.ToolTip="Remove the selected project">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
@@ -113,6 +115,7 @@
             <controls:CollapsibleColumnHelper.HeaderActions>
                 <Button
                     Padding="4"
+                    AutomationProperties.Name="Search the network for Z21 command stations"
                     Command="{x:Bind Z21Assignment.SearchCommand}"
                     ToolTipService.ToolTip="Search the network for Z21 command stations">
                     <FontIcon FontSize="14" Glyph="&#xE72C;" />

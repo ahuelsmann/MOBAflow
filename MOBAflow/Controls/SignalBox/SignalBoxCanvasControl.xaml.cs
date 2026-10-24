@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
+using SharedUI.Service;
 using SharedUI.ViewModel;
 using System;
 using Windows.ApplicationModel.DataTransfer;
@@ -24,6 +25,18 @@ public class GridCoordinateConverter : IValueConverter
         }
         return 0.0;
     }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>Converts a signal-box element into the name a screen reader speaks.</summary>
+internal sealed partial class SignalBoxElementDescriptionConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language) =>
+        value is SbElement element ? SignalBoxElementDescriptions.Describe(element) : string.Empty;
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
@@ -238,6 +251,15 @@ public sealed partial class SignalBoxCanvasControl
         }
 
         PlanViewModel.ClearSelection();
+    }
+
+    // The focus layer lets keyboard and screen-reader users select an element: Enter or Space acts like a click.
+    private void OnElementFocusTargetClick(object sender, RoutedEventArgs e)
+    {
+        if (PlanViewModel != null && sender is FrameworkElement { DataContext: SbElement element })
+        {
+            PlanViewModel.SelectedElement = element;
+        }
     }
 
     private void OnCanvasPointerMoved(object sender, PointerRoutedEventArgs e)

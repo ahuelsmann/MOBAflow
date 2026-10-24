@@ -8,6 +8,23 @@
 
     <UserControl.Resources>
         <local:GridCoordinateConverter x:Key="GridConverter" />
+        <local:SignalBoxElementDescriptionConverter x:Key="DescriptionConverter" />
+
+        <!--  Focus layer: one transparent, named button per element for keyboard and screen-reader selection  -->
+        <DataTemplate x:Key="ElementFocusTargetTemplate" x:DataType="domain:SbElement">
+            <Canvas Width="1920" Height="1080">
+                <Button
+                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneTime}"
+                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneTime}"
+                    Width="60"
+                    Height="60"
+                    Padding="0"
+                    AutomationProperties.Name="{Binding Converter={StaticResource DescriptionConverter}}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Click="OnElementFocusTargetClick" />
+            </Canvas>
+        </DataTemplate>
 
         <DataTemplate x:Key="StraightTrackTemplate" x:DataType="domain:SbTrackStraight">
             <Canvas
@@ -197,6 +214,18 @@
                             Background="Transparent"
                             DragOver="OnCanvasDragOver"
                             Drop="OnCanvasDrop" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+            <!--  Not hit-testable, so pointer selection, drag and drop and panning keep working unchanged  -->
+            <ItemsControl
+                IsHitTestVisible="False"
+                IsTabStop="False"
+                ItemTemplate="{StaticResource ElementFocusTargetTemplate}"
+                ItemsSource="{x:Bind PlanViewModel.Elements, Mode=OneWay}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas Width="1920" Height="1080" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
