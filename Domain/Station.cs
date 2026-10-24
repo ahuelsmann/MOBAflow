@@ -86,4 +86,15 @@ public class Station
     /// Upcoming feature: Travel connections.
     /// </summary>
     public List<ConnectingService> Connections { get; set; }
+
+    /// <summary>
+    /// Resolves the platform this station uses: the platform named by <see cref="PlatformId"/>, otherwise the first
+    /// platform.
+    /// </summary>
+    /// <returns>The platform, or <see langword="null"/> when the station has no platforms.</returns>
+    public Platform? ResolvePlatform()
+    {
+        var selected = PlatformId is Guid platformId ? Platforms.Find(platform => platform.Id == platformId) : null;
+        return selected ?? Platforms.FirstOrDefault();
+    }
 }

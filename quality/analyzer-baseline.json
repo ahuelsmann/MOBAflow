@@ -4562,6 +4562,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Domain/LocomotiveWhistleRuleTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Domain/PersistedDomainDefaultsTests.cs",
       "count": 1
     },
@@ -4591,6 +4598,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Domain/SolutionLoadFailureTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Domain/StationTests.cs",
       "count": 1
     },
     {
