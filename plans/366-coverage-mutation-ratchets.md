@@ -24,7 +24,7 @@ a lane the same way locally and in [Quality CI](../.github/workflows/quality.yml
 | `domain` | active | `Domain` | `mutation-domain` (Linux) | 90% |
 | `common` | active | `Common` | `mutation-common` (Windows) | 63% |
 | `speech-base` | active | `Speech.Base` | `mutation-speech-base` (Linux) | 65% |
-| `backend` | **active from step 1** | `Backend` | `mutation-backend` (Linux) | 43% |
+| `backend` | **active from step 1** | `Backend` | `mutation-backend` (Linux) | 47% (raised from 43%) |
 | `api` | **active from step 3** | `MOBApi` | `mutation-api` (Linux) | 44% |
 | `api-process` | planned | `MOBApi` | - | - |
 | `shared-ui` | planned (step 4) | `SharedUI` | - | - |
@@ -76,8 +76,26 @@ Linux CI on the combined steps 1 and 2 (head `d1f26fe`, job 119707711457): 745 p
 compile errors outside the score, giving a score denominator of 6,161 (the `ab25e67` run, job 119686366715: 6,158).
 The aggregate denominators are close to the local baseline, but the runs differ in platform and in reported compile
 errors, and the mutant identities were not compared. The scores are therefore not shown to be comparable, and the
-difference from the local 43.18% is not attributed to the step-2 tests. The floor stays at 43% until a comparable
-full run (same platform, same compile-error set), which is the separately allocated #366 floor work.
+difference from the local 43.18% is not attributed to the step-2 tests. The floor stayed at 43% until a comparable
+full run (same platform, same compile-error set).
+
+**Floor raise to 47%** (RF-09 floor work, in the step 3 PR): seven Linux CI runs of the `mutation-backend` job on heads
+over main `f2f388d3` are comparable. They use the same platform, Stryker.NET 5.0.0, 764-765 passing ordinary tests and
+771 compile-error mutants each.
+
+| Run | Head | Score |
+| --- | --- | ---: |
+| 40100277723 | `941806e6` (#395) | 47.53% |
+| 40103237430 | `8f478154` (#396) | 47.48% |
+| 40104956089 | `84412d1a` (#388) | 47.53% |
+| 40111333629 | `9980041b` (#396) | 47.48% |
+| 40113333329 | `c6aea928` (#394) | 47.54% |
+| 40113416185 | `f4b9939c` (#392) | 47.56% |
+| 40113496260 | `a4a638c1` (#395) | 47.56% |
+
+The lowest score is 47.48%, so the floor is 47%. The mutant identities were not compared one by one; the equal
+compile-error count, platform and tool version make these runs the comparable set the plan asked for. Local Windows
+runs are not used for this floor.
 
 ### Methods outside the Backend mutation gate
 
@@ -118,7 +136,7 @@ separate pull requests.
      keepalive;
    - `SystemState.IsProgrammingMode` tested the undefined bit `0x08` instead of `0x20`.
 
-   The floor raise follows from a fresh full run once the queue allocates it.
+   The floor was raised to 47% from comparable Linux CI runs; see the Backend baseline above.
 3. **MOBApi lane:** command validation and remote command queue bounds; real registration paths, owned processes only
    where required. Delivered: the `api` lane with its host, Stryker configuration and the `mutation-api` CI job.
    - **Measurement:** the first local run (Windows, Stryker.NET 5.0.0, four processes) scored 38.42%. After the new tests
