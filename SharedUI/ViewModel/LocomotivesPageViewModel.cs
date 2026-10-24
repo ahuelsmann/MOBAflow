@@ -13,8 +13,14 @@ using Service;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-/// <summary>The locomotive page's existing management and read-only usage projections, composed by its host.</summary>
-public sealed record LocomotivePageAnalysis(LocomotiveManagementViewModel Management, LocomotiveTrainUsageViewModel Usage);
+/// <summary>
+/// The locomotive page's existing management and read-only usage projections and the runtime control state that
+/// guards deletion, composed by its host.
+/// </summary>
+public sealed record LocomotivePageAnalysis(
+    LocomotiveManagementViewModel Management,
+    LocomotiveTrainUsageViewModel Usage,
+    RuntimeLocomotiveControl Control);
 
 /// <summary>Owns the locomotive editor shared by the locomotive page and train library.</summary>
 public sealed partial class LocomotivesPageViewModel : ObservableObject, IDisposable
@@ -25,6 +31,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     private readonly ISettingsService _settingsService;
     private readonly ILogger<LocomotivesPageViewModel> _logger;
     private readonly Action<string> _showPhotoInExplorer;
+    private readonly RuntimeLocomotiveControl _control;
     private ProjectViewModel? _observedProject;
     private List<LocomotiveViewModel> _filteredLocomotiveLibrary = [];
     private bool _isLocomotivesListExpanded;
@@ -47,6 +54,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         ArgumentNullException.ThrowIfNull(analysis);
         ArgumentNullException.ThrowIfNull(analysis.Management);
         ArgumentNullException.ThrowIfNull(analysis.Usage);
+        ArgumentNullException.ThrowIfNull(analysis.Control);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
@@ -58,10 +66,12 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         LayoutColumnWidths = layoutColumnWidths;
         Management = analysis.Management;
         Usage = analysis.Usage;
+        _control = analysis.Control;
         _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage.IsListExpanded;
         _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage.IsPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
         _session.SolutionReplacing += OnSolutionReplacing;
+        _control.Changed += OnLocomotiveControlChanged;
         ObserveProject(_session.SelectedProject);
     }
 
@@ -143,7 +153,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
             newValue.PropertyChanged += OnLocomotivePropertyChanged;
             _session.TrackChanges(newValue);
         }
-        DeleteLocomotiveCommand.NotifyCanExecuteChanged();
+        NotifyDeleteStateChanged();
         Usage.SetTarget(SelectedProject?.Model, newValue?.Model.Id);
         RefreshManagement();
     }
@@ -210,6 +220,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         Usage.Dispose();
         _session.PropertyChanged -= OnSessionPropertyChanged;
         _session.SolutionReplacing -= OnSolutionReplacing;
+        _control.Changed -= OnLocomotiveControlChanged;
         // Shutdown may continue off the UI thread: release subscriptions without changing bound state.
         if (_observedProject is not null)
             _observedProject.Locomotives.CollectionChanged -= OnLocomotivesChanged;
@@ -315,6 +326,13 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
             return;
         }
 
+        // A controlled locomotive must stay, also at speed 0 and when the command is invoked without CanExecute.
+        if (_control.IsControlled(selectedProject.Model.Id, selectedLoco.Model))
+        {
+            LogLocomotiveDeleteBlocked(_logger, selectedLoco.Name);
+            return;
+        }
+
         var locomotiveName = selectedLoco.Name;
         var locoModel = selectedLoco.Model;
 
@@ -334,7 +352,30 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         SaveChanges("Save rolling stock");
     }
 
-    private bool CanDeleteLocomotive() => SelectedLocomotive != null;
+    /// <summary>
+    /// Gets why the selected locomotive cannot be deleted, or <see langword="null"/> when it can: a locomotive that
+    /// its project's runtime controls stays, at any speed.
+    /// </summary>
+    public string? DeleteLocomotiveBlockedReason =>
+        IsDeleteLocomotiveBlocked ? "Stop controlling this locomotive before you delete it." : null;
+
+    /// <summary>Gets whether the selected locomotive is controlled by its runtime and therefore cannot be deleted.</summary>
+    public bool IsDeleteLocomotiveBlocked => IsSelectedLocomotiveControlled();
+
+    private bool CanDeleteLocomotive() => SelectedLocomotive != null && !IsSelectedLocomotiveControlled();
+
+    private bool IsSelectedLocomotiveControlled() =>
+        SelectedLocomotive?.Model is { } locomotive && SelectedProject?.Model is { } project
+        && _control.IsControlled(project.Id, locomotive);
+
+    private void OnLocomotiveControlChanged(object? sender, EventArgs e) => NotifyDeleteStateChanged();
+
+    private void NotifyDeleteStateChanged()
+    {
+        DeleteLocomotiveCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(IsDeleteLocomotiveBlocked));
+        OnPropertyChanged(nameof(DeleteLocomotiveBlockedReason));
+    }
     #endregion
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot add locomotive: No project selected")]
@@ -342,6 +383,9 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Added new locomotive: {Name}")]
     private static partial void LogLocomotiveAdded(ILogger logger, string name);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Locomotive {Name} was not deleted because its runtime controls it")]
+    private static partial void LogLocomotiveDeleteBlocked(ILogger logger, string name);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Deleted locomotive: {Name}")]
     private static partial void LogLocomotiveDeleted(ILogger logger, string name);
