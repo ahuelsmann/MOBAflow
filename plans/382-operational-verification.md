@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/382
 **Spec Kit**: Not applicable - measurement and verification of existing behavior; telemetry gaps are closed as observability of existing paths, not as new product behavior
-**Status**: Active; steps 1 and 2 and the first part of step 4 are delivered in the single issue PR
+**Status**: Active; steps 1 and 2 and the first part of step 4 are delivered (#383); step 3 is in its own issue PR
 
 ## Purpose and scope
 
@@ -23,8 +23,8 @@ Recorded on main `f37541d9`.
 | EventBus publish throughput | `Common/Events/EventBus` | handler failure count (`IEventBusDiagnostics`) | no benchmark or baseline |
 | Z21 event ordering under load | `Backend/Service/Z21EventPipeline` | capacity 1,024; snapshot with queue depth, peak, enqueued, published, rejected, dispatch and subscriber failures, shutdown timeouts; an overload test is on main since #367 (`Z21ReceiveTests`) | no throughput baseline |
 | Runtime snapshot serialization | `Contracts/Runtime/MobaRuntimeSnapshot` (JSON over REST and SignalR) | none | no size or time baseline |
-| Remote command queue bounds | `MOBApi/Service/RuntimeCommandQueue`, `RuntimeCommandAdmission` | capacity 128; a full queue rejects with `queue_full` | rejection is neither logged nor counted |
-| SignalR runtime hub load | `MOBApi/Hubs/RuntimeHub` | broadcast state on the Overview page ("Hub broadcast") | no multi-client load test or limit |
+| Remote command queue bounds | `MOBApi/Service/RuntimeCommandQueue`, `RuntimeCommandAdmission` | capacity 128; a full queue rejects with `queue_full`; rejections are counted and logged since #383 | covered by step 3 |
+| SignalR runtime hub load | `MOBApi/Hubs/RuntimeHub` | broadcast state on the Overview page ("Hub broadcast") | multi-client test in step 3; no timing limit yet |
 | MAUI startup and binding cost | `MOBAsmart` | `MauiViewModelPerformanceTests` covers refresh behavior, not timing | no device measurement |
 | ESP32 endurance | `MOBAdisplay/esp32` | length-safe UDP parser (RF-01), provisioning (RF-02) | no packet-loss or Wi-Fi reconnection run |
 | Recovery and failed shutdown | Z21 reconnect, project runtime disposal, pipeline drain | `ShutdownTimeouts`, fail-safe state in the runtime snapshot | not measured end to end |
@@ -49,8 +49,18 @@ Recorded on main `f37541d9`.
 1. **Inventory** (with this plan).
 2. **Benchmarks** (delivered): EventBus publish, Z21 event pipeline enqueue and drain, runtime snapshot JSON round
    trip; the first baseline on the maintainer's machine is still open and will be recorded on #382.
-3. **Load tests:** remote command queue under concurrent producers (capacity, rejection, order); SignalR runtime hub
-   with several clients against an owned MOBApi process.
+3. **Load tests** (delivered): remote command queue under concurrent producers (capacity, rejection, order); SignalR
+   runtime hub with several clients against an owned MOBApi process.
+   - `Test/MOBApi/RuntimeCommandLoadTests`: eight producers send 64 commands each.
+     - Into the default queue of 128, exactly 128 are accepted and every other command is rejected as `queue_full`.
+     - With a concurrent consumer, no accepted command is lost.
+     - In both cases, each producer's accepted commands keep their order.
+   - `RuntimeHubLiveE2ETests.SeveralRemotes_ReceiveOnlyTheirProjectsSnapshotsInOrder_AndEveryCommandReachesTheHost`: two
+     projects with three remotes each, and 20 snapshot pushes per project.
+     - Every remote receives only its project's snapshots, in order and up to the last one.
+     - Ten drive commands per remote all reach the host in each remote's order.
+   - Both assert counts and order, not timing. A 30-second timeout only guards against a hang, and the hub test runs in the
+     existing MOBApi process integration step.
 4. **Telemetry:** rejected remote commands (delivered): the counter `moba.runtime_commands.rejected` of the meter
    `Moba.MOBApi` (`System.Diagnostics.Metrics`, tags `reason` and `command`) and a structured warning for a full
    queue. Still open: check the existing pipeline, recovery and shutdown signals end to end.
@@ -68,8 +78,8 @@ Recorded on main `f37541d9`.
 
 - RF-04 and RF-19 are complete. RF-07 is active; its Linux lane already runs the portable suite, and the benchmark job
   follows its manual-lane pattern.
-- Open PRs: #367 (RF-09) adds Z21 receive and overload tests that step 2 reuses, and #330 (RF-25) changes runtime
-  composition. Steps that touch the same files wait for their integration.
+- #367 (RF-09, Z21 receive and overload tests) and #330 (RF-25, runtime composition) are integrated. The open RF-09
+  PR #396 also adds tests under `Test/MOBApi/`; whichever of it and this step 3 integrates second merges main once.
 
 ## Risks
 
