@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Moba.Test</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\SharedUI\SharedUI.csproj" />
+    <!-- SignalBoxPropertiesViewModelTests is a part of TrackLayoutArchitectureTests, which uses the track-plan projects. -->
+    <ProjectReference Include="..\..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+    <ProjectReference Include="..\..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Test\SharedUI\**\*.cs" Link="SharedUI\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\..\Test\TrackPlanRenderer\TrackLayoutArchitectureTests*.cs" Link="TrackPlanRenderer\%(Filename)%(Extension)" />
+    <!-- Shared fakes and builders of the main test project. -->
+    <Compile Include="..\..\Test\GlobalUsings.cs" Link="GlobalUsings.cs" />
+    <Compile Include="..\..\Test\Helpers\**\*.cs" Link="Helpers\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
