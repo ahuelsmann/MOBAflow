@@ -23,6 +23,22 @@ Input: [spec.md](spec.md).
    before waiting for `_projectActivationLock`. The signal-box change chain in `MainWindowViewModel.Signals.cs` uses
    `ConfigureAwait(true)` so it calls the runtime and the save on the UI context.
 
+## Corrections after the review of `eeba64f3`
+
+Planned on 2026-10-24 before the corrective code, from the two Codex review findings on PR #394.
+
+6. **Snapshot inside the write lock (FR-007):** the cause of P1 is that the snapshot is taken before the save waits for
+   `_saveSemaphore`; its continuation (`RunContinuationsAsynchronously`) can then reach the lock after a newer save.
+   The save now enters the lock first and takes its UI-thread snapshot inside it. Writes are serialized, so each later
+   write holds a state at least as new as the one before. The generation check stays at snapshot time.
+7. **Edit version for every save (FR-008):** the snapshot records the edit version (`_saveRequestedVersion`) it
+   contains. A completed save reports Saved only if no edit followed; otherwise the solution stays dirty. A manual save
+   that is not the latest then requests a follow-up save, which writes the newer state to the path the save just set.
+   Auto-saves need no follow-up: the edit that made them stale requested its own save.
+8. **Picker on the UI thread (FR-009):** Save As runs through the same UI-thread helper as the snapshot, because the
+   save continuation is no longer on the UI thread. The UI helper uses `InvokeOnUi` and a completion source, so no new
+   dispatcher method is needed.
+
 ## Constitution Check
 
 - Shared logic stays in `SharedUI` and `Backend`; no WinUI or MAUI types enter them.

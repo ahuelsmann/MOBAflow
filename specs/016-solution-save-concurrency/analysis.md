@@ -19,6 +19,16 @@ It is a post-implementation consistency check, not an earlier `/analyze` run.
 No requirement lacks a task, and no task lacks a requirement. The `MainWindowViewModel.Solution.cs` part is out of scope
 by the CPM disposition and tracked by T009.
 
+## Review findings on `eeba64f3` (2026-10-24)
+
+| Finding | Cause | Requirement | Planned correction |
+| --- | --- | --- | --- |
+| P1 save order (`PRRT_kwDOMgU7j86v6uLP`) | snapshot before the write lock; continuations race for it | FR-007 | plan step 6 |
+| P2 Save As edit loss (`PRRT_kwDOMgU7j86v6uLV`) | snapshot before the picker; manual completion ignores later edits; pathless auto-saves write nothing | FR-008 | plan step 7 |
+| Related: picker off the UI thread | the save continuation runs on the thread pool after the snapshot await | FR-009 | plan step 8 |
+
+Both findings are real; the earlier tests did not cover queued saves racing each other or edits during Save As.
+
 ## Convergence (current state)
 
 - **Implemented and verified locally on `142e6b69`:**

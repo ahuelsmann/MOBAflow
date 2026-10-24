@@ -25,3 +25,11 @@ Input: [spec.md](spec.md), [plan.md](plan.md).
 - [ ] T009 Once a permitted common stand with PR #293 exists: reconcile the removed `RefreshProjectRuntimeSnapshot` without adding an owner parameter, and validate Journey add/delete, edits of project A while B is selected, editor changes and the retained wrappers through the corrected session path (combined portable and Windows test validation)
 - [ ] T010 Re-run CI and the Sonar quality gate on the combined head; update [analysis.md](analysis.md)
 - [ ] T011 Close #390 only after T009 and T010; until then the PR references #390 without closing it
+
+## Review corrections (planned 2026-10-24 before the corrective code)
+
+- [X] T012 Extend spec, plan, tasks and analysis for the two review findings (FR-007, FR-008, FR-009)
+- [ ] T013 Add deterministic regression tests: a queued save writes the state current when it may write; edits during a pending Save As are saved to the chosen file and the solution is not reported saved early; Save As runs on the UI dispatcher
+- [ ] T014 Take the snapshot inside the write lock; record and check the edit version for every save; request a follow-up save after a stale manual save; open the Save As picker on the UI thread (FR-007, FR-008, FR-009)
+- [ ] T015 Run validation: light checks now; portable and Windows test suites and analyzer gates only in a centrally allocated local window after the #293 build, otherwise through CI
+- [ ] T016 Push to PR #394; CI green and the Sonar quality gate at zero OPEN/CONFIRMED issues; resolve the two review threads with the evidence

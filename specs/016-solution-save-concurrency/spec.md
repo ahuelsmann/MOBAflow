@@ -57,6 +57,17 @@ An operator edits solution A; an auto-save is still waiting. The operator opens 
 1. **Given** project A is no longer selected, **When** a tracked object of A changes (for example an asynchronous
    editor completing), **Then** A's runtime is refreshed, not the runtime of the selected project B.
 
+### User Story 4 - Saves keep their order and Save As keeps later edits (Priority: P1)
+
+Added after the Codex review of `eeba64f3` (threads `PRRT_kwDOMgU7j86v6uLP` and `PRRT_kwDOMgU7j86v6uLV`).
+
+**Acceptance Scenarios**:
+
+1. **Given** a save is writing and a second save is queued, **When** the model changes before the queued save may write,
+   **Then** the queued save writes the newer state; a write never replaces a newer write with an older snapshot.
+2. **Given** a new solution without a path, **When** the operator edits while the Save As picker is open, **Then** after
+   the picker returns the edit is also saved to the chosen file, and the solution is only reported as saved once it is.
+
 ### Edge Cases
 
 - New solution while a save is pending: same rule as loading (a new generation).
@@ -71,6 +82,12 @@ An operator edits solution A; an auto-save is still waiting. The operator opens 
 - **FR-004**: The runtime MUST copy the editor project before it waits for its activation lock.
 - **FR-005**: A tracked change MUST refresh the runtime of the project that owns the changed object.
 - **FR-006**: The persisted file format MUST NOT change.
+- **FR-007** (review finding P1, 2026-10-24): Saves MUST be written in the order of their snapshots; an older snapshot
+  MUST NOT overwrite a newer write of the same solution.
+- **FR-008** (review finding P2, 2026-10-24): An edit made while a manual save is in progress (for example while the Save
+  As picker is open) MUST NOT be lost. If the written snapshot is older than the latest edit, the solution stays dirty
+  and the newer state is saved to the new path.
+- **FR-009**: The Save As picker MUST be opened on the UI thread.
 
 ## Out of scope
 
