@@ -29,7 +29,34 @@ by the CPM disposition and tracked by T009.
 
 Both findings are real; the earlier tests did not cover queued saves racing each other or edits during Save As.
 
+### Correction and evidence (2026-10-25)
+
+The correction follows plan steps 6-8 without deviation. It was validated in the serial local window that the Chief
+Project Manager allocated on PR #394 (comment 6388299721), after the #293 build window ended. All runs used
+`-nodeReuse:false` and `-p:UseSharedCompilation=false`.
+
+| Requirement | Test | Before the correction (`eeba64f3` `SolutionSession.cs`) | After |
+| --- | --- | --- | --- |
+| FR-007 | `QueuedSave_WritesTheStateCurrentWhenItMayWrite_NotAnOlderSnapshot` | failed | passed |
+| FR-008 | `EditDuringSaveAs_IsSavedToTheChosenFile_AndTheSolutionIsNotReportedSavedEarly` | failed | passed |
+| FR-009 | `SaveAs_OpensThePickerThroughTheUiDispatcher` | failed | passed |
+
+- **The red-before check:** the earlier `SolutionSession.cs` was put back only for the test run; afterwards the file was
+  restored and checked to be identical to the commit.
+- **A flaw in the first version of the FR-009 test:** it compared against the test's start thread, which changes after
+  its first `await`. It now compares against the thread that runs the UI action. It failed again on the old code and
+  passed in 10 of 10 runs of `SolutionSessionTests` with the correction.
+- **Unrelated failure:** one portable run failed in `RecordingSessionServiceTests.Stop_Should_BeSingleShotAndReturnTheSameArtifact`
+  (Backend recording code that this PR does not touch). It passed 10 of 10 times in isolation and in the next full run.
+
 ## Convergence (current state)
+
+- **Review corrections, validated locally on the correction head:**
+  - `SolutionSessionTests` 22 passed on both target frameworks;
+  - portable suite 3037 passed and Windows suite 3142 passed, both with a hang guard;
+  - MOBAflow FastDebug build: 0 warnings;
+  - analyzer gates match without baseline changes (cross-platform 3208, Windows 2455), after an NUnit2045 finding was fixed in code.
+- **CI and Sonar on the pushed correction head:** pending, see PR #394.
 
 - **Implemented and verified locally on `142e6b69`:**
   - portable suite 3034 passed and Windows suite 3136 passed, both with a hang guard;

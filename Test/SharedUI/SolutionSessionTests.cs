@@ -462,8 +462,8 @@ internal sealed partial class SolutionSessionTests
     public async Task SaveAs_OpensThePickerThroughTheUiDispatcher()
     {
         var uiQueue = new System.Collections.Concurrent.ConcurrentQueue<Action>();
-        var uiThread = Environment.CurrentManagedThreadId;
-        var runningUiAction = false;
+        // The test drains the UI queue itself; the thread that runs an action at that moment is the UI thread.
+        var uiThread = -1;
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(uiQueue.Enqueue);
         var session = CreateSession(new Solution(), dispatcher.Object, out var io, out _);
@@ -471,7 +471,7 @@ internal sealed partial class SolutionSessionTests
         io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>()))
             .Returns(() =>
             {
-                pickerOnUi = runningUiAction && Environment.CurrentManagedThreadId == uiThread;
+                pickerOnUi = Environment.CurrentManagedThreadId == Volatile.Read(ref uiThread);
                 return Task.FromResult((true, (string?)"picked.json", (string?)null));
             });
 
@@ -481,9 +481,9 @@ internal sealed partial class SolutionSessionTests
         {
             if (uiQueue.TryDequeue(out var action))
             {
-                runningUiAction = true;
+                Volatile.Write(ref uiThread, Environment.CurrentManagedThreadId);
                 action();
-                runningUiAction = false;
+                Volatile.Write(ref uiThread, -1);
             }
             else
             {
@@ -491,8 +491,13 @@ internal sealed partial class SolutionSessionTests
             }
         }
 
-        Assert.That(await save.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(true), Is.True);
-        Assert.That(pickerOnUi, Is.True);
+        var saved = await save.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(true);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(saved, Is.True);
+            Assert.That(pickerOnUi, Is.True);
+        }
     }
 
     private static async Task WaitUntilAsync(Func<bool> condition)
