@@ -13,10 +13,7 @@ using Moba.SharedUI.TrainControl;
 
 using Moq;
 
-using System.Diagnostics.CodeAnalysis;
-
 [TestFixture]
-[SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit creates this fixture through reflection.")]
 internal sealed class TrainControlViewModelConnectionTests
 {
     [Test]

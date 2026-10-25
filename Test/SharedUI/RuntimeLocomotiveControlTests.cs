@@ -108,7 +108,7 @@ internal sealed class RuntimeLocomotiveControlTests
     // The runtime replaces its current snapshot, then publishes it.
     private static void Publish(Mock<IProjectRuntimeSnapshots> snapshots, MobaRuntimeSnapshot snapshot)
     {
-        snapshots.SetupGet(value => value.Snapshots).Returns([snapshot]);
+        snapshots.SetupGet(value => value.Snapshots).Returns(new[] { snapshot });
         snapshots.Raise(value => value.RuntimeSnapshotChanged += null, new ProjectRuntimeSnapshotEventArgs(snapshot));
     }
 
