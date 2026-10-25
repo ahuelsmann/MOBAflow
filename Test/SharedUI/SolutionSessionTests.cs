@@ -433,19 +433,22 @@ internal sealed partial class SolutionSessionTests
         var picker = new TaskCompletionSource<(bool, string?, string?)>(TaskCreationOptions.RunContinuationsAsynchronously);
         io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>())).Returns(picker.Task);
         var followUp = new TaskCompletionSource<string[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        // The follow-up write waits until the test has seen the state between Save As and the follow-up save.
+        var followUpWrite = new TaskCompletionSource<(bool, string?, string?)>(TaskCreationOptions.RunContinuationsAsynchronously);
         io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), "chosen.json"))
             .Returns((Solution solution, string path) =>
             {
                 followUp.TrySetResult([.. solution.Projects.Select(project => project.Name)]);
-                return Task.FromResult((true, (string?)path, (string?)null));
+                return followUpWrite.Task;
             });
 
         var saveAs = session.SaveAsync(allowPathSelection: true);
         session.SelectedProject!.Name = "Edited while picking";
         picker.SetResult((true, "chosen.json", null));
         var saved = await saveAs.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        var unsavedRightAfterSaveAs = session.HasUnsavedChanges;
         var followUpNames = await followUp.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var unsavedRightAfterSaveAs = session.HasUnsavedChanges;
+        followUpWrite.SetResult((true, "chosen.json", null));
         await WaitUntilAsync(() => session.SolutionSaveState == SolutionSaveState.Saved).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
