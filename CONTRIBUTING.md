@@ -107,6 +107,7 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 ./scripts/Invoke-MutationLane.ps1 -LaneName common -OutputPath artifacts/mutation/common-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName backend -OutputPath artifacts/mutation/backend-local
+./scripts/Invoke-MutationLane.ps1 -LaneName api -OutputPath artifacts/mutation/api-local
 ```
 
 A mutation score is valid only with a passing ordinary test baseline. The same runner is used
@@ -118,8 +119,8 @@ Missing files, filters, stale reports and unexecuted mutations fail the job. A t
 cover a particular mutant is not forced to run against it; Stryker keeps its coverage-based selection.
 See [Build Performance](docs/BUILD-PERFORMANCE.md#active-mutation-lanes) for job selection.
 The quality pipeline runs selected groups and archives the HTML/JSON reports. The minimum scores
-are 90% for `Domain`, initially 65% for `Speech.Base`, 63% for `Common` and 43% for `Backend`. The
-Speech.Base, Common and Backend thresholds are baseline safeguards, not quality targets: close meaningful gaps first,
+are 90% for `Domain`, initially 65% for `Speech.Base`, 63% for `Common`, 47% for `Backend` and 44% for `MOBApi`. The
+Speech.Base, Common, Backend and MOBApi thresholds are baseline safeguards, not quality targets: close meaningful gaps first,
 then raise the thresholds as results improve. Surviving mutations, including scheduling-only
 `ConfigureAwait` changes, remain in the report and score; the lane does not hide them with exclusions.
 Extending coverage to the rest of the solution remains separate, unfinished work.
