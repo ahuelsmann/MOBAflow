@@ -67,6 +67,12 @@ this feature reads.
 - **FR-004**: The rule MUST read the existing runtime snapshots (`IProjectRuntimeSnapshots`); the ViewModel does not
   duplicate runtime state.
 - **FR-005**: The control state MUST update on the UI thread, and only when the set of controlled addresses changes.
+- **FR-006** (review, 2026-10-25): Changing the selected locomotive's digital address MUST update the delete state and its
+  explanation without waiting for a runtime snapshot.
+- **FR-007** (review, 2026-10-25): The control state MUST follow each project's current snapshot: a late event of an
+  older snapshot MUST NOT replace a newer state, and a snapshot published while the service starts MUST NOT be lost.
+- **FR-008** (review, 2026-10-25): When the Z21 connection becomes active, Train Control MUST request the locomotive it
+  selected while disconnected, so that locomotive counts as controlled.
 
 ## Success Criteria
 

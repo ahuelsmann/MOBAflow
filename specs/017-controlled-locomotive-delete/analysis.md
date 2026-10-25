@@ -18,6 +18,26 @@ It is a post-implementation consistency check, not an earlier `/analyze` run.
 Every requirement has a task and evidence. The open question about Train Control when its locomotive disappears through
 another path is outside this scope and stays recorded in the spec.
 
+## Review corrections (2026-10-25)
+
+| Requirement | Test | Before (`fece7a2a`) | After (`76e044d0`) |
+| --- | --- | --- | --- |
+| FR-006 | `AddressChange_UpdatesTheDeleteState_WithoutARuntimeSnapshot` | failed | passed |
+| FR-007 | `LateEventOfAnOlderSnapshot_DoesNotReplaceTheCurrentState` | failed | passed |
+| FR-007 | `SnapshotPublishedWhileTheCurrentOnesAreRead_IsNotLost` | failed | passed |
+| FR-008 | `Connecting_RequestsTheLocomotiveSelectedWhileDisconnected` | failed | passed |
+
+The test helpers now replace the current snapshot before they publish it, as the runtime does.
+
+Validation on the correction:
+- Portable suite: 3042 passed. Windows suite: 3147 passed.
+- Analyzer gates match (cross-platform 3210, Windows 2457). The only addition is one CA1812 entry per Test TFM for the
+  new fixture.
+- Two Windows-only CsWinRT1032 findings in the new test helpers were fixed in code.
+
+The user wiki needs no change: it already says that Delete is unavailable while the runtime controls the locomotive.
+The corrections make that statement hold in more cases; they add no new behavior for the user.
+
 ## Convergence (current state)
 
 - **Implemented and verified locally on `0136b5d7`:**

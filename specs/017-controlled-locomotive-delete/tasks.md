@@ -22,3 +22,9 @@ Input: [spec.md](spec.md), [plan.md](plan.md).
 
 - [X] T007 Record the Spec Kit artifacts (this directory) and link them from #389 and PR #392
 - [ ] T008 Practical acceptance W6 in #365 with the maintainer (Z21, locomotive, launch approval), in Light and Dark; record the result on #389
+
+## Review corrections (2026-10-25)
+
+- [X] T009 Add regression tests that fail on the previous code: `AddressChange_UpdatesTheDeleteState_WithoutARuntimeSnapshot`, `LateEventOfAnOlderSnapshot_DoesNotReplaceTheCurrentState`, `SnapshotPublishedWhileTheCurrentOnesAreRead_IsNotLost`, `TrainControlViewModelConnectionTests.Connecting_RequestsTheLocomotiveSelectedWhileDisconnected`
+- [X] T010 Notify the delete state on address edits; refresh from the current snapshots one at a time and subscribe first; request the selected locomotive on connect (FR-006, FR-007, FR-008)
+- [X] T011 Run the validation (portable and Windows suites, analyzer gates); push; answer and resolve the five review threads
