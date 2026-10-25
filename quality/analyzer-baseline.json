@@ -3848,6 +3848,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/BackendTelemetryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/DecoderCvServiceTests.cs",
       "count": 1
     },
@@ -4829,6 +4836,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeCommandAdmissionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBApi/RuntimeCommandLoadTests.cs",
       "count": 1
     },
     {
