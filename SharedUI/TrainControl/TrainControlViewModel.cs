@@ -1240,6 +1240,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         RefreshLocomotiveCommandCanExecute();
         StatusMessage = isConnected ? "Z21 Connected" : "Z21 Disconnected";
+
+        // A locomotive selected while disconnected was not requested; request it now, as a new selection would.
+        if (isConnected && LocoAddress is >= 1 and <= 9999)
+        {
+            QueueBackgroundTask(RequestLocoInfoAsync(), "Request locomotive info");
+        }
     }
 
     private void ApplyLocomotiveState(LocomotiveRuntimeSnapshot locomotiveState)

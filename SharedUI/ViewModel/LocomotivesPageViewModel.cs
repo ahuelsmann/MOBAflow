@@ -200,6 +200,10 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
             OnPropertyChanged(nameof(FilteredLocomotiveLibrary));
         if (e.PropertyName is nameof(LocomotiveViewModel.Name) or nameof(LocomotiveViewModel.DigitalAddress))
             RefreshManagement();
+
+        // Whether the runtime controls the locomotive depends on its address.
+        if (e.PropertyName == nameof(LocomotiveViewModel.DigitalAddress))
+            NotifyDeleteStateChanged();
     }
 
     private void RefreshManagement() => Management.SetContext(_disposed ? null : SelectedProject?.Model, SelectedLocomotive?.Model);

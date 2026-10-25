@@ -60,6 +60,44 @@ internal sealed class RuntimeLocomotiveControlTests
         snapshots.VerifyRemove(value => value.RuntimeSnapshotChanged -= It.IsAny<EventHandler<ProjectRuntimeSnapshotEventArgs>>(), Times.Once);
     }
 
+    [Test]
+    public void LateEventOfAnOlderSnapshot_DoesNotReplaceTheCurrentState()
+    {
+        var older = Snapshot(isConnected: true, (5, 0));
+        var snapshots = Snapshots(Snapshot(isConnected: true, (5, 0), (7, 0)));
+        using var control = new RuntimeLocomotiveControl(snapshots.Object, Dispatcher());
+
+        // Published concurrently, the older snapshot's event arrives after the newer snapshot became current.
+        snapshots.Raise(value => value.RuntimeSnapshotChanged += null, new ProjectRuntimeSnapshotEventArgs(older));
+
+        Assert.That(control.IsControlled(ProjectId, new Locomotive { DigitalAddress = 7 }), Is.True);
+    }
+
+    [Test]
+    public void SnapshotPublishedWhileTheCurrentOnesAreRead_IsNotLost()
+    {
+        MobaRuntimeSnapshot[] current = [Snapshot(isConnected: true, (5, 0))];
+        var snapshots = new Mock<IProjectRuntimeSnapshots>();
+        var published = false;
+        snapshots.SetupGet(value => value.Snapshots).Returns(() =>
+        {
+            var read = current;
+            if (!published)
+            {
+                // The runtime publishes a newer snapshot while the control reads the current ones.
+                published = true;
+                current = [Snapshot(isConnected: true, (5, 0), (7, 0))];
+                snapshots.Raise(value => value.RuntimeSnapshotChanged += null, new ProjectRuntimeSnapshotEventArgs(current[0]));
+            }
+
+            return read;
+        });
+
+        using var control = new RuntimeLocomotiveControl(snapshots.Object, Dispatcher());
+
+        Assert.That(control.IsControlled(ProjectId, new Locomotive { DigitalAddress = 7 }), Is.True);
+    }
+
     private static Mock<IProjectRuntimeSnapshots> Snapshots(params MobaRuntimeSnapshot[] current)
     {
         var snapshots = new Mock<IProjectRuntimeSnapshots>();
@@ -67,8 +105,12 @@ internal sealed class RuntimeLocomotiveControlTests
         return snapshots;
     }
 
-    private static void Publish(Mock<IProjectRuntimeSnapshots> snapshots, MobaRuntimeSnapshot snapshot) =>
+    // The runtime replaces its current snapshot, then publishes it.
+    private static void Publish(Mock<IProjectRuntimeSnapshots> snapshots, MobaRuntimeSnapshot snapshot)
+    {
+        snapshots.SetupGet(value => value.Snapshots).Returns([snapshot]);
         snapshots.Raise(value => value.RuntimeSnapshotChanged += null, new ProjectRuntimeSnapshotEventArgs(snapshot));
+    }
 
     private static MobaRuntimeSnapshot Snapshot(bool isConnected, params (int Address, int Speed)[] locomotives) => new()
     {

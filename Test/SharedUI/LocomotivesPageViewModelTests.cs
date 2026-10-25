@@ -27,6 +27,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     private Mock<Action<string>> _explorer = null!;
     private LocomotiveTrainUsageViewModel _usage = null!;
     private Mock<IProjectRuntimeSnapshots> _runtimeSnapshots = null!;
+    private readonly Dictionary<Guid, MobaRuntimeSnapshot> _currentSnapshots = [];
     private RuntimeLocomotiveControl _control = null!;
 
     [SetUp]
@@ -54,7 +55,8 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         _explorer = new Mock<Action<string>>();
         _usage = TestRollingStockPages.CreateUsage(_session);
         _runtimeSnapshots = new Mock<IProjectRuntimeSnapshots>();
-        _runtimeSnapshots.SetupGet(value => value.Snapshots).Returns([]);
+        _currentSnapshots.Clear();
+        _runtimeSnapshots.SetupGet(value => value.Snapshots).Returns(() => [.. _currentSnapshots.Values]);
         _control = new RuntimeLocomotiveControl(_runtimeSnapshots.Object, dispatcher.Object);
         _page = new LocomotivesPageViewModel(_session, TestFileServices.Photos(_io.Object), _persistence.Object,
             new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, _usage, _control),
@@ -309,6 +311,32 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         }
     }
 
+    [Test]
+    public void AddressChange_UpdatesTheDeleteState_WithoutARuntimeSnapshot()
+    {
+        var locomotive = AddLocomotiveWithAddress(7);
+        PublishRuntime(isConnected: true, (3, 0));
+        var canDeleteBefore = _page.DeleteLocomotiveCommand.CanExecute(null);
+        var commandNotifications = 0;
+        var blockedNotifications = 0;
+        _page.DeleteLocomotiveCommand.CanExecuteChanged += (_, _) => commandNotifications++;
+        _page.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(LocomotivesPageViewModel.IsDeleteLocomotiveBlocked))
+                blockedNotifications++;
+        };
+
+        locomotive.DigitalAddress = 3;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(canDeleteBefore, Is.True);
+            Assert.That(commandNotifications, Is.EqualTo(1));
+            Assert.That(blockedNotifications, Is.EqualTo(1));
+            Assert.That(_page.IsDeleteLocomotiveBlocked, Is.True);
+        }
+    }
+
     private LocomotiveViewModel AddLocomotiveWithAddress(uint address)
     {
         _page.AddLocomotiveCommand.Execute(null);
@@ -330,6 +358,8 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
                 locomotive => locomotive.Address,
                 locomotive => new LocomotiveRuntimeSnapshot { Address = locomotive.Address, Speed = locomotive.Speed })
         };
+        // The runtime replaces its current snapshot, then publishes it.
+        _currentSnapshots[projectId] = snapshot;
         _runtimeSnapshots.Raise(value => value.RuntimeSnapshotChanged += null, new ProjectRuntimeSnapshotEventArgs(snapshot));
     }
 }
