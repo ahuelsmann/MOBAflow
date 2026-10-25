@@ -516,12 +516,33 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
         try
         {
-            var snapshot = await OnUiAsync(() => Task.FromResult(TakeSnapshot(generation))).ConfigureAwait(false);
-            if (snapshot is null)
-                return false;
+            var saved = false;
+            var path = currentPath;
+            while (await OnUiAsync(() => Task.FromResult(TakeSnapshot(generation))).ConfigureAwait(false) is { } snapshot)
+            {
+                var (success, writtenPath, error) =
+                    await SaveAtPathAsync(snapshot.Solution, path, allowPathSelection).ConfigureAwait(false);
+                if (!success || writtenPath is null)
+                {
+                    if (!string.IsNullOrEmpty(error))
+                        throw new InvalidOperationException($"Failed to save solution: {error}");
 
-            var result = await SaveAtPathAsync(snapshot.Solution, currentPath, allowPathSelection).ConfigureAwait(false);
-            return CompleteSave(result, generation, snapshot.EditVersion, isManualSave: !autoSaveRequestVersion.HasValue);
+                    return saved;
+                }
+
+                saved = true;
+                path = writtenPath;
+                var isLatest = await OnUiAsync(() => Task.FromResult(
+                    ApplySuccessfulSave(writtenPath, generation, snapshot.EditVersion))).ConfigureAwait(false);
+
+                // An auto-save that is not the latest is followed by the save of the newer edit. A manual save is not:
+                // edits made while its picker was open could not be saved without a path, and a caller such as New
+                // replaces the solution once the save returns. It writes them to its path before it completes.
+                if (isLatest || autoSaveRequestVersion.HasValue)
+                    break;
+            }
+
+            return saved;
         }
         finally
         {
@@ -599,45 +620,25 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         return (false, null, null);
     }
 
-    private bool CompleteSave((bool success, string? path, string? error) result, long generation, long editVersion, bool isManualSave)
+    /// <summary>
+    /// Applies a written snapshot on the UI thread and returns <see langword="true"/> when no later edit needs saving.
+    /// </summary>
+    private bool ApplySuccessfulSave(string path, long generation, long editVersion)
     {
-        if (result.success && result.path != null)
-        {
-            ApplySuccessfulSave(result.path, generation, editVersion, isManualSave);
+        // The file of an earlier solution was written; the loaded solution keeps its own path and state.
+        if (generation != Volatile.Read(ref _solutionGeneration))
             return true;
-        }
 
-        if (!string.IsNullOrEmpty(result.error))
-            throw new InvalidOperationException($"Failed to save solution: {result.error}");
-
-        return false;
-    }
-
-    private void ApplySuccessfulSave(string path, long generation, long editVersion, bool isManualSave)
-    {
-        // The written snapshot holds every edit up to its edit version; a later edit keeps the solution dirty.
+        // Read on the UI thread, where edits happen: an earlier edit is in the snapshot or keeps the solution dirty,
+        // and a later edit already sees the new path and saves itself.
         var isLatest = editVersion == Volatile.Read(ref _saveRequestedVersion);
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            // The file of an earlier solution was written; the loaded solution keeps its own path and state.
-            if (generation != Volatile.Read(ref _solutionGeneration))
-            {
-                return;
-            }
-
-            CurrentSolutionPath = path;
-            HasUnsavedChanges = !isLatest;
-            SolutionSaveState = isLatest ? SolutionSaveState.Saved : SolutionSaveState.Saving;
-            SolutionSaveStatusText = isLatest ? "Saved" : "Saving";
-
-            // An auto-save that is not the latest is followed by the save of the newer edit. A manual save is not:
-            // edits made while its picker was open could not be saved without a path, so save them to the new path now.
-            if (!isLatest && isManualSave)
-            {
-                SaveSolutionInternalAsync().Observe(ex => LogAutoSaveFailed(_logger, ex));
-            }
-        });
+        CurrentSolutionPath = path;
+        HasUnsavedChanges = !isLatest;
+        SolutionSaveState = isLatest ? SolutionSaveState.Saved : SolutionSaveState.Saving;
+        SolutionSaveStatusText = isLatest ? "Saved" : "Saving";
+        return isLatest;
     }
+
     private void ReleaseSaveSemaphore()
     {
         try
