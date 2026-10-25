@@ -64,12 +64,6 @@ public static class JourneyStationProjection
     private static Station? At(Journey? journey, int index) =>
         journey is null || index < 0 || index >= journey.Stations.Count ? null : journey.Stations[index];
 
-    private static string ResolvePlatform(Station station)
-    {
-        var platform = station.PlatformId.HasValue
-            ? station.Platforms.FirstOrDefault(candidate => candidate.Id == station.PlatformId.Value)
-            : null;
-        platform ??= station.Platforms.FirstOrDefault();
-        return platform?.Number.ToString(CultureInfo.CurrentCulture) ?? Placeholder;
-    }
+    private static string ResolvePlatform(Station station) =>
+        station.ResolvePlatform()?.Number.ToString(CultureInfo.CurrentCulture) ?? Placeholder;
 }
