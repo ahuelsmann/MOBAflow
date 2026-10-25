@@ -318,6 +318,17 @@ runtime services.
 - `SolutionSession` is the desktop owner of the loaded solution, selected project
   and journey, dirty state and auto-save. The WinUI host registers the same instance as
   `ISolutionSession`, `IProjectContext` and `IJourneySelectionContext`.
+- Saves are written one at a time, and each takes its snapshot on the UI thread once it may write:
+  `SolutionSaving` subscribers run there, the file receives a copy of the solution, never the live
+  model, and a later write never holds an older state. The Save As picker also runs on the UI thread.
+- Each snapshot records the edits it contains. When a write finishes, the UI thread checks whether
+  an edit followed: only then does the save report Saved. A manual save (Save, Save As, the save
+  before New) returns only once its file holds the latest edit, so edits made while its picker was
+  open are written to the chosen file before New replaces the solution.
+- Each loaded or new solution is a new generation; a save of an earlier generation is not
+  started, and a finished one does not change the path or save state of the current solution.
+- A change of a tracked object refreshes the runtime of the project that was selected when the
+  object was tracked, so a late change after a project switch reaches the right runtime.
 - MOBAsmart uses `MobileSolutionContext` as its `IProjectContext`, as described in
   [the mobile session boundary](#mobasmart-session-and-projection).
 - Shared ViewModels and host services reach solution ownership through those
@@ -481,6 +492,8 @@ runtime services.
   (`CloneForRuntime`, JSON round-trip via `JsonOptions.Compact`), because it reads
   journeys, stations and workflows on background threads while the editor changes
   them on the UI thread. Runtime mutations never touch the editor model.
+- `ActivateProjectAsync` and `UpdateProjectAsync` take that copy on the caller's thread before they
+  wait for the activation lock; callers pass the editor project from the UI thread.
 - The solution session refreshes the snapshot after every saved change through
   `IConnectionRuntime.UpdateProjectAsync`, without re-activation: journey progress
   (`JourneySessionState`, kept by stop id), running workflows and signal aspects are

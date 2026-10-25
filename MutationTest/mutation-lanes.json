@@ -130,7 +130,8 @@
       "test-files": [
         "Test/Speech/LocalSpeechProviderTests.cs",
         "Test/Speech/PcmWavePostProcessorTests.cs",
-        "Test/Speech/PiperPronunciationNormalizerTests.cs"
+        "Test/Speech/PiperPronunciationNormalizerTests.cs",
+        "Test/Speech/PiperProcessRunnerTests.cs"
       ],
       "production-projects": ["Speech.Piper/Speech.Piper.csproj"]
     },
