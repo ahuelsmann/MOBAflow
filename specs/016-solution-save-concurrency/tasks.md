@@ -32,4 +32,11 @@ Input: [spec.md](spec.md), [plan.md](plan.md).
 - [X] T013 Add deterministic regression tests: a queued save writes the state current when it may write; edits during a pending Save As are saved to the chosen file and the solution is not reported saved early; Save As runs on the UI dispatcher
 - [X] T014 Take the snapshot inside the write lock; record and check the edit version for every save; request a follow-up save after a stale manual save; open the Save As picker on the UI thread (FR-007, FR-008, FR-009)
 - [X] T015 Run validation: light checks now; portable and Windows test suites and analyzer gates only in a centrally allocated local window after the #293 build, otherwise through CI (done in the window allocated on PR #394, comment 6388299721)
-- [ ] T016 Push to PR #394; CI green and the Sonar quality gate at zero OPEN/CONFIRMED issues; resolve the two review threads with the evidence
+- [X] T016 Push to PR #394; CI green and the Sonar quality gate at zero OPEN/CONFIRMED issues; resolve the two review threads with the evidence
+
+## Second review corrections (2026-10-25)
+
+- [X] T017 Extend spec, plan and analysis for the second review findings (FR-010)
+- [X] T018 Add regression tests: an edit before the Save As completion reaches the UI thread is written to the chosen file; New writes the edits made while its picker was open before it replaces the solution; Save As completes only once the later edit is written
+- [X] T019 Decide the completion on the UI thread and let a manual save write until its file holds the latest edit (FR-010)
+- [ ] T020 Push to PR #394; CI green and the Sonar quality gate at zero OPEN/CONFIRMED issues; resolve the three review threads with the evidence

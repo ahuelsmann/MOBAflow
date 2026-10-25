@@ -49,6 +49,28 @@ Project Manager allocated on PR #394 (comment 6388299721), after the #293 build 
 - **Unrelated failure:** one portable run failed in `RecordingSessionServiceTests.Stop_Should_BeSingleShotAndReturnTheSameArtifact`
   (Backend recording code that this PR does not touch). It passed 10 of 10 times in isolation and in the next full run.
 
+## Second review findings (2026-10-25)
+
+| Finding | Cause | Requirement | Correction |
+| --- | --- | --- | --- |
+| Codex P2 on `44a1b23f` (`PRRT_kwDOMgU7j86wExO_`) | the edit version was compared before the UI completion was queued; an edit in between, without a path yet, was reported as saved and not written | FR-010 | plan step 9 |
+| Claude review on `f849f92f` (`PRRT_kwDOMgU7j86wExWR`) | the follow-up of a manual save was a separate save; New could replace the solution before its snapshot ran | FR-010 | plan step 9 |
+| Claude review on `f849f92f` (`PRRT_kwDOMgU7j86wExSx`) | the Save As test read state that the concurrent follow-up could already clear | test only | already corrected in `f849f92f` (the follow-up write is held); Portable tests on Linux passed on that head |
+
+| Test | Before (`f849f92f` `SolutionSession.cs`, 5 runs) | After (10 runs) |
+| --- | --- | --- |
+| `EditBeforeTheSaveCompletesOnTheUiThread_IsWrittenToTheChosenFile` | failed 5 of 5 | passed 10 of 10 |
+| `EditDuringSaveAs_IsSavedToTheChosenFile_AndTheSolutionIsNotReportedSavedEarly` (now also asserts that Save As completes only after the follow-up write) | failed 5 of 5 | passed 10 of 10 |
+| `NewSolution_SavesTheEditsMadeWhileItsPickerWasOpen_BeforeReplacingTheSolution` | failed 2 of 5: the old order depends on a thread-pool race | passed 10 of 10 |
+
+The New test runs the test thread as the UI thread: dispatcher actions and UI continuations share one queue, as on a
+real UI thread. With the correction the order is serial, so the test is deterministic.
+
+Validation on the correction (2026-10-25):
+- `SolutionSessionTests` passed 24 of 24.
+- Portable suite: 3039 passed. Windows suite: 3144 passed. Both ran with a hang guard.
+- Analyzer gates match without baseline changes (cross-platform 3208, Windows 2455).
+
 ## Convergence (current state)
 
 - **Review corrections, validated locally on the correction head:**

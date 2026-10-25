@@ -67,6 +67,10 @@ Added after the Codex review of `eeba64f3` (threads `PRRT_kwDOMgU7j86v6uLP` and 
    **Then** the queued save writes the newer state; a write never replaces a newer write with an older snapshot.
 2. **Given** a new solution without a path, **When** the operator edits while the Save As picker is open, **Then** after
    the picker returns the edit is also saved to the chosen file, and the solution is only reported as saved once it is.
+3. **Given** a Save As file was just written, **When** the operator edits before its completion reaches the UI thread,
+   **Then** that edit is also written to the chosen file (second review, `PRRT_kwDOMgU7j86wExO_`).
+4. **Given** New asks to save unsaved changes, **When** the operator edits while the picker is open, **Then** the edit
+   is written to the chosen file before New replaces the solution (second review, `PRRT_kwDOMgU7j86wExWR`).
 
 ### Edge Cases
 
@@ -88,6 +92,9 @@ Added after the Codex review of `eeba64f3` (threads `PRRT_kwDOMgU7j86v6uLP` and 
   As picker is open) MUST NOT be lost. If the written snapshot is older than the latest edit, the solution stays dirty
   and the newer state is saved to the new path.
 - **FR-009**: The Save As picker MUST be opened on the UI thread.
+- **FR-010** (second review, 2026-10-25): Whether a written snapshot holds the latest edit MUST be decided on the UI
+  thread when the save completes, not before. A manual save MUST return only once its file holds the latest edit, so a
+  caller such as New does not replace the solution before the edits made while its picker was open are written.
 
 ## Out of scope
 

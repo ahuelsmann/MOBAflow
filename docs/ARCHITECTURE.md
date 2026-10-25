@@ -321,8 +321,10 @@ runtime services.
 - Saves are written one at a time, and each takes its snapshot on the UI thread once it may write:
   `SolutionSaving` subscribers run there, the file receives a copy of the solution, never the live
   model, and a later write never holds an older state. The Save As picker also runs on the UI thread.
-- Each snapshot records the edits it contains. A save reports Saved only if no edit followed; edits
-  made while a Save As picker was open are saved to the chosen file right after it.
+- Each snapshot records the edits it contains. When a write finishes, the UI thread checks whether
+  an edit followed: only then does the save report Saved. A manual save (Save, Save As, the save
+  before New) returns only once its file holds the latest edit, so edits made while its picker was
+  open are written to the chosen file before New replaces the solution.
 - Each loaded or new solution is a new generation; a save of an earlier generation is not
   started, and a finished one does not change the path or save state of the current solution.
 - A change of a tracked object refreshes the runtime of the project that was selected when the

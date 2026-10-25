@@ -39,6 +39,17 @@ Planned on 2026-10-24 before the corrective code, from the two Codex review find
    save continuation is no longer on the UI thread. The UI helper uses `InvokeOnUi` and a completion source, so no new
    dispatcher method is needed.
 
+## Corrections after the review of `44a1b23f` and `f849f92f`
+
+Planned on 2026-10-25 from the Codex finding `PRRT_kwDOMgU7j86wExO_` and the Claude review finding `PRRT_kwDOMgU7j86wExWR`.
+
+9. **Completion decided on the UI thread; a manual save completes when the file is current (FR-010):** the edit version
+   was compared before the UI completion was queued, so an edit in between could be reported as saved without being
+   written. `ApplySuccessfulSave` now runs through the UI helper, compares the version there and returns whether the
+   snapshot is the latest. A manual save that is not the latest takes the next snapshot and writes it to the same path
+   while it still holds the write lock, instead of starting a separate save. It returns only when its file holds the
+   latest edit, so `NewSolutionAsync` cannot replace the solution before that write. Auto-saves keep their behavior.
+
 ## Constitution Check
 
 - Shared logic stays in `SharedUI` and `Backend`; no WinUI or MAUI types enter them.
