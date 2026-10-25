@@ -191,13 +191,13 @@ internal sealed class RuntimeHubLiveE2ETests
         var secondProject = Guid.Parse("12121212-3434-5656-7878-909090909090");
         Guid[] projects = [ProjectId, secondProject];
         await PublishSolutionAsync(projects).ConfigureAwait(false);
-        var drives = new System.Collections.Concurrent.ConcurrentQueue<(int Address, int Speed)>();
+        var drives = new System.Collections.Concurrent.ConcurrentQueue<(Guid Project, int Address, int Speed)>();
         var allDrives = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var hostHub = new HubConnectionBuilder().WithUrl($"{BaseUrl}/runtime-hub").Build();
         await using var hostLifetime = hostHub.ConfigureAwait(false);
-        hostHub.On<string, int, int, bool>(nameof(IRuntimeHubHostCallbacks.ExecuteSetLocomotiveDrive), (_, address, speed, _) =>
+        hostHub.On<string, int, int, bool>(nameof(IRuntimeHubHostCallbacks.ExecuteSetLocomotiveDrive), (projectId, address, speed, _) =>
         {
-            drives.Enqueue((address, speed));
+            drives.Enqueue((Guid.Parse(projectId), address, speed));
             if (drives.Count == projects.Length * 3 * commandsPerRemote)
                 allDrives.TrySetResult();
             return Task.CompletedTask;
@@ -263,9 +263,14 @@ internal sealed class RuntimeHubLiveE2ETests
                     Assert.That(received.Select(snapshot => snapshot.ProjectId), Has.All.EqualTo(remote.Project), $"remote {remote.Address}");
                     Assert.That(pushes, Is.Ordered.And.Unique, $"remote {remote.Address}");
                     Assert.That(pushes.LastOrDefault(), Is.EqualTo(pushesPerProject - 1), $"remote {remote.Address}");
+                    var remoteDrives = drives.Where(drive => drive.Address == remote.Address).ToList();
                     Assert.That(
-                        drives.Where(drive => drive.Address == remote.Address).Select(drive => drive.Speed),
+                        remoteDrives.Select(drive => drive.Speed),
                         Is.EqualTo(Enumerable.Range(1, commandsPerRemote)),
+                        $"remote {remote.Address}");
+                    Assert.That(
+                        remoteDrives.Select(drive => drive.Project),
+                        Has.All.EqualTo(remote.Project),
                         $"remote {remote.Address}");
                 }
             }
@@ -276,6 +281,7 @@ internal sealed class RuntimeHubLiveE2ETests
                 await remote.Hub.DisposeAsync().ConfigureAwait(false);
         }
     }
+
     [Test]
     public async Task SolutionPut_Should_NotifyRemoteWithoutProject()
     {
