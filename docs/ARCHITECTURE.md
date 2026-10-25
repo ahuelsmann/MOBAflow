@@ -154,7 +154,10 @@ domain issue records, or throws a domain exception for an invalid request. Not e
 [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) tracks the remaining inventory. `Journey.ResolveStopTransition`
 and `Journey.IndexOfStop` decide stop changes; `ResolveStopTransition` throws `InvalidOperationException` when the
 configured target station is not a stop of the journey. `JourneyStopTransitionService` only applies the result to
-the runtime `JourneySessionState`. `Workflow.FindStructureIssues` returns `IReadOnlyList<WorkflowStructureIssue>`
+the runtime `JourneySessionState`, and `JourneyManager` finds the current stop only through `Journey.IndexOfStop`.
+`Station.ResolvePlatform` returns the selected platform or the first one, for announcements and the train-control
+timetable strip. `LocomotiveWhistleRule.FindIssues` returns the `LocomotiveWhistleRuleIssue` values that keep a
+rule from running; `LocomotiveWhistleAutomationService` turns them into English messages. `Workflow.FindStructureIssues` returns `IReadOnlyList<WorkflowStructureIssue>`
 with issue kinds and field paths; `WorkflowValidator` turns them into coded, user-facing issues and adds the payload
 checks. `Project.FindWorkflowsWithInvalidIds` returns an `IReadOnlySet<int>` of zero-based positions in
 `Project.Workflows` whose ID is empty or repeats an earlier one; the Backend maps those positions to user-facing
