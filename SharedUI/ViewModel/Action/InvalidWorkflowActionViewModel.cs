@@ -8,4 +8,7 @@ public sealed class InvalidWorkflowActionViewModel(WorkflowAction action) : Work
 {
     /// <summary>Gets the recovery instruction displayed instead of a typed payload editor.</summary>
     public string ValidationHint { get; } = "This action is invalid or unsupported. Remove it and add a new action with the required settings.";
+
+    /// <inheritdoc />
+    public override string ParameterSummary => "Invalid or missing payload";
 }

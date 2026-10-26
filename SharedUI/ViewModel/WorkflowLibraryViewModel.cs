@@ -83,6 +83,28 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     [ObservableProperty]
     private string _lastDryRunStatus = "Not run";
 
+    private bool _isGraphViewActive = true;
+
+    /// <summary>Gets or sets whether the graphical node canvas is active.</summary>
+    public bool IsGraphViewActive
+    {
+        get => _isGraphViewActive;
+        set
+        {
+            if (SetProperty(ref _isGraphViewActive, value))
+            {
+                OnPropertyChanged(nameof(IsListViewActive));
+            }
+        }
+    }
+
+    /// <summary>Gets or sets whether the tabular action list view is active (inverse of <see cref="IsGraphViewActive"/>).</summary>
+    public bool IsListViewActive
+    {
+        get => !IsGraphViewActive;
+        set => IsGraphViewActive = !value;
+    }
+
     /// <summary>Creates a shared workflow-library coordinator.</summary>
     public WorkflowLibraryViewModel(
         IProjectContext projectContext,
@@ -136,6 +158,32 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     /// <summary>Gets the selected action editor, or general workflow settings.</summary>
     public object? SelectedEditorObject => (object?)this.SelectedAction ?? this.SelectedWorkflow;
 
+    /// <summary>Gets whether the selected workflow is referenced by at least one journey event trigger.</summary>
+    public bool HasAssignedTriggers =>
+        _projectContext.SelectedProject?.Model is { } project &&
+        SelectedWorkflow is { } workflow &&
+        FindReferences(project, workflow.Id).Count > 0;
+
+    /// <summary>Gets a concise trigger summary displayed on the read-only start node in the workflow graph.</summary>
+    public string TriggerSummaryText
+    {
+        get
+        {
+            if (_projectContext.SelectedProject?.Model is not { } project || SelectedWorkflow is not { } workflow)
+                return "No workflow selected";
+
+            var refs = FindReferences(project, workflow.Id);
+            if (refs.Count == 0)
+                return "Manual / Unassigned";
+
+            if (refs.Count == 1)
+                return $"{refs[0].OwnerName} · {refs[0].Location.Replace("Event: ", string.Empty, StringComparison.Ordinal)}";
+
+            var owners = string.Join(", ", refs.Select(r => r.OwnerName).Distinct().Take(2));
+            return $"{refs.Count} triggers ({owners})";
+        }
+    }
+
     partial void OnSearchTextChanged(string value)
     {
         _ = value;
@@ -149,6 +197,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         Validate();
         RefreshTrace();
         OnPropertyChanged(nameof(CanDryRun));
+        OnPropertyChanged(nameof(HasAssignedTriggers));
+        OnPropertyChanged(nameof(TriggerSummaryText));
         DryRunSelectedWorkflowCommand.NotifyCanExecuteChanged();
         CancelDryRunCommand.NotifyCanExecuteChanged();
         DuplicateSelectedWorkflowCommand.NotifyCanExecuteChanged();
@@ -176,6 +226,10 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     /// <summary>Shows general settings independently of action selection.</summary>
     [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
     private void ShowWorkflowSettings() => SelectedAction = null;
+
+    /// <summary>Resets all action node positions in the selected workflow to the automatic grid layout.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
+    private void AutoLayoutSelectedWorkflow() => SelectedWorkflow?.ResetActionLayout();
 
     /// <summary>Adds an action without losing its owning workflow during selection notifications.</summary>
     [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
@@ -229,6 +283,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     {
         OnPropertyChanged(nameof(HasWorkflowSelection));
         ShowWorkflowSettingsCommand.NotifyCanExecuteChanged();
+        AutoLayoutSelectedWorkflowCommand.NotifyCanExecuteChanged();
         AddActionCommand.NotifyCanExecuteChanged();
         DeleteSelectedActionCommand.NotifyCanExecuteChanged();
         MoveSelectedActionUpCommand.NotifyCanExecuteChanged();
@@ -477,6 +532,18 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
                 ValidationIssues.Add(issue);
             }
         }
+
+        if (SelectedWorkflow != null)
+        {
+            foreach (var action in SelectedWorkflow.Actions)
+            {
+                var stepIssues = ValidationIssues.Where(issue => issue.StepId == action.Id).ToList();
+                action.HasValidationIssue = stepIssues.Count > 0;
+                action.ValidationMessage = stepIssues.Count > 0
+                    ? string.Join(Environment.NewLine, stepIssues.Select(issue => issue.Message))
+                    : string.Empty;
+            }
+        }
     }
 
     /// <summary>Selects the workflow and action identified by one validation issue.</summary>
@@ -612,6 +679,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             if (SelectedAction != null && !selectedWorkflow.Actions.Contains(SelectedAction))
                 SelectedAction = null;
             OnPropertyChanged(nameof(ActionListHint));
+            OnPropertyChanged(nameof(HasAssignedTriggers));
+            OnPropertyChanged(nameof(TriggerSummaryText));
             NotifyActionCommands();
         }
         if (!_suppressAutoSave)
@@ -631,6 +700,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     private void NotifyCatalogChanged()
     {
         OnPropertyChanged(nameof(ActionListHint));
+        OnPropertyChanged(nameof(HasAssignedTriggers));
+        OnPropertyChanged(nameof(TriggerSummaryText));
         CreateWorkflowCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(Workflows));
         OnPropertyChanged(nameof(FilteredWorkflows));
