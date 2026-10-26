@@ -27,6 +27,18 @@ internal sealed partial class ManualTimeProvider(DateTimeOffset start) : TimePro
         return timer;
     }
 
+    /// <summary>Gets the number of timers that wait for a due time.</summary>
+    public int PendingTimerCount
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _timers.Count;
+            }
+        }
+    }
+
     /// <summary>Moves the clock forward and fires every timer that became due.</summary>
     public void Advance(TimeSpan duration)
     {
