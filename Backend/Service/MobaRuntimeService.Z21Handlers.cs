@@ -102,7 +102,7 @@ public sealed partial class MobaRuntimeService
             return;
         }
 
-        _eventBus?.Publish(new JourneyStationReachedEvent(
+        _eventBus.Publish(new JourneyStationReachedEvent(
             _activeProjectContext.ActiveProject.Id,
             args.JourneyId,
             args.SessionState.RunId,
@@ -160,7 +160,7 @@ public sealed partial class MobaRuntimeService
     private void OnTrafficPacketLogged(object? sender, Z21TrafficPacket packet)
     {
         _ = sender;
-        _eventBus?.Publish(new Z21TrafficPacketLoggedEvent(packet));
+        _eventBus.Publish(new Z21TrafficPacketLoggedEvent(packet));
     }
 
     private void TriggerFailSafe(string reason)
@@ -172,5 +172,6 @@ public sealed partial class MobaRuntimeService
         _isManualDisconnectRequested = false;
         _isZ21Connecting = false;
         _isOperatorAckRequired = true;
+        BackendTelemetry.RecordFailSafeTrigger();
     }
 }

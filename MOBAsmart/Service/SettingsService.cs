@@ -6,7 +6,6 @@ using Common.Configuration;
 using SharedUI.Interface;
 
 using System.Text.Json;
-using SharedUI.Mobile;
 
 /// <summary>
 /// MAUI-specific settings service for reading and writing application settings.
@@ -66,21 +65,6 @@ public class SettingsService : ISettingsService
                         loadedRestApi.Port = 5001;
                     }
 
-                    if (string.Equals(
-                            loadedRestApi.CurrentIpAddress?.Trim(),
-                            RestApiDiscoveryCandidateBuilder.LegacyFactoryDefaultIp,
-                            StringComparison.Ordinal))
-                    {
-                        loadedRestApi.CurrentIpAddress = string.Empty;
-                    }
-
-                    loadedRestApi.RecentIpAddresses = (loadedRestApi.RecentIpAddresses ?? [])
-                        .Where(ip => !string.Equals(
-                            ip?.Trim(),
-                            RestApiDiscoveryCandidateBuilder.LegacyFactoryDefaultIp,
-                            StringComparison.Ordinal))
-                        .ToList();
-
                     if (loadedSettings.Counter.CountOfFeedbackPoints != loadedFeedbackPointCount)
                     {
                         loadedSettings.Counter.CountOfFeedbackPoints = loadedFeedbackPointCount;
@@ -106,7 +90,7 @@ public class SettingsService : ISettingsService
                         loadedSettings.MauiTrainControlHost.SelectedLocomotiveFromProjectId;
                     _settings.RestApi.CurrentIpAddress = loadedRestApi.CurrentIpAddress ?? string.Empty;
                     _settings.RestApi.Port = loadedRestApi.Port;
-                    _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses;
+                    _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses ?? [];
                     _settings.RestApi.IsConnectionEnabled = loadedRestApi.IsConnectionEnabled;
 
                     _isLoaded = true;

@@ -17,11 +17,15 @@ transitions, confirmed fixes and ordinary PR administration do not need repeated
 product goals, priorities and material UX decisions, scope expansion, fundamental architecture changes, new
 costs/external commitments and explicitly required practical permissions or acceptance still go to the user.
 
-Across all MOBAflow teams, Codex, Claude and Antigravity, at most five larger tasks may be centrally allocated.
-Before a substantial start or resume, obtain Chief Project Manager's current allocation in the existing queue;
-available capacity alone is not a start assignment. Reconcile owners, actual processes and remote CI. Full
-capacity or unclear ownership blocks another start. Keep one writer per worktree, serialize review/fix/publication
-phases for the same comparison and preserve existing executions. Coordinate safe stopping points with owners.
+Across all MOBAflow teams, Codex, Claude and Antigravity, deliver the prioritized issue together through
+integration in one leading PR, including documentation and wiki corrections. Other issues need Chief Project
+Manager's explicit allocation after qualifying independence in purpose, files, behavior, baselines, build graph
+and execution resources. There is no global one-task or five-task ceiling and no automatic PR per master.
+Assign a Senior Developer as needed; a separate Project Manager is optional for large or complex work.
+Before a substantial start or resume, obtain the current allocation in the existing queue and reconcile owners,
+actual processes and remote CI. Unclear ownership or an unresolved dependency/resource conflict blocks the
+affected start. Keep one writer per worktree, serialize review/fix/publication for each comparison and preserve
+existing executions. Coordinate safe stopping points with owners.
 
 The supplier prepares the Draft with current checks, CI/Sonar and required actual acceptance. Chief Project
 Manager alone verifies handover readiness and sets Ready for review; independent review follows Ready, not the
@@ -146,7 +150,9 @@ Main pushes and manual runs enable the remaining scopes. See
 [Build Performance](BUILD-PERFORMANCE.md#ci-note) and
 [`Get-QualityChangeScope.ps1`](../scripts/Get-QualityChangeScope.ps1) for the exact selection.
 [Documentation consistency](DOCUMENTATION-CONSISTENCY.md) describes the always-on
-generated-fact checks and the separately activated semantic maintenance workflow.
+generated-fact checks and source-grounded developer/wiki maintenance in the same
+issue/PR through existing Codex delivery, independent Claude review and actual-main
+verification. No separate documentation API or App bot is activated.
 See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
 Create Draft PRs. Chief Project Manager alone marks ready after checking the current comparison, applicable CI,

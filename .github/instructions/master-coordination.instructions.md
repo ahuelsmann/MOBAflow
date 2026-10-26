@@ -15,9 +15,10 @@ assignment includes the delivery steps below unless explicitly limited.
   and required actual acceptance. Chief Project Manager alone verifies handover readiness and sets Ready for review.
   The existing Claude plan then owns fresh independent review, separate fixes, independent re-review and SHA-bound
   squash merge; independent review is not a Ready prerequisite. Follow through to verified integration.
-  Ordinary commits, pushes, PR updates,
-  team handovers and review-thread responses/resolution are included. Resolve findings only with evidence or an
-  explicit reason; never dismiss an unresolved defect to unblock integration.
+  Ordinary commits, pushes, PR updates, team handovers and review-thread responses/resolution are included.
+  Resolve a review finding by fixing it or with evidence that it does not apply. A finding left unfixed needs
+  a fresh independent Claude review that accepts the evidence, or a human decision; the fixer or merger never
+  dismisses it alone to unblock integration. This finding disposition does not move review before Ready.
 - Do not ask again at a technical phase boundary. Requesting a draft as an intermediate deliverable does not
   cancel the standing mandate. Explicit "draft only", "no Ready/merge", pause, read-only restrictions, protected
   worktrees and excluded slices remain binding until the human specifically changes them.
@@ -33,7 +34,7 @@ assignment includes the delivery steps below unless explicitly limited.
 | --- | --- |
 | Human | Product goals, priorities, material user-experience choices, fundamental architecture changes, new costs/external commitments and authorized practical acceptance |
 | Art Director | Clarify the outcome, coordinate the assigned team, complete planning/implementation, assess the result and hand it over |
-| Chief Project Manager (formerly Issue Master) | Own the single execution and integration queue, allocate up to five larger tasks, verify Draft handover readiness, alone set Ready for review, coordinate the existing Claude plan and independently verify actual squash merges |
+| Chief Project Manager (formerly Issue Master) | Own the single execution and integration queue, prioritize issue delivery and qualify independent work, verify Draft handover readiness, alone set Ready for review, coordinate the existing Claude plan and independently verify actual squash merges |
 | Technical Director | Coordinate technical resources, responsibilities and conflicts through the Chief Project Manager; maintain no second execution or integration queue |
 | Head of Quality | Coordinate assigned quality work and advise delivery owners on relevant risks; preserve existing approval and integration ownership |
 | Communications Director | Coordinate assigned communication work and related design questions; preserve existing publication and integration limits |
@@ -50,6 +51,11 @@ Include documentation/wiki impact and a confirmed writer stop in that handover. 
 ownership and verifies the Ready transition. The package remains allocated through the existing Claude plan and
 actual integration or an explicitly coordinated safe handoff. Other larger tasks need their own current allocation;
 spare capacity alone authorizes no start. Fixes go to one named writer; the user is not the messenger.
+
+Use one leading delivery PR per issue, including its documentation, wiki and acceptance corrections. Masters
+contribute to that delivery instead of opening a PR per role. Assign a Senior Developer when the implementation
+needs one; add a Project Manager only when the task's size or complexity needs separate coordination. Name these
+assignments `Senior Developer - Issue <number> <keyword>` and `Project Manager - Issue <number> <keyword>`.
 
 For existing work, preserve current writers, queue positions, uncommitted changes and active CLI executions.
 Reconcile the latest human instructions before takeover. Do not blindly restart workers, copy interrupted work
@@ -84,21 +90,22 @@ or use a no-resume instruction to justify a competing writer.
   permissions/security settings or bypass a communication restriction. A local reply collected through an
   already agreed callback is valid when permitted; it does not authorize a blocked outbound send.
 
-## Up to five allocated tasks in one queue
+## Prioritized issue delivery in one queue
 
-- Across every MOBAflow team and Codex, Claude and Antigravity, allocate at most five larger tasks at a time.
-  This includes implementation/refactoring, extensive analysis, audits or documentation, builds, test/mutation
-  runs, reviews, longer UX/CLI consultations and integration. Keep one writer per worktree and serialize review,
-  fixes and publication for each exact comparison. An isolated worktree or different client is not an allocation.
+- Across every MOBAflow team and Codex, Claude and Antigravity, work together on the prioritized issue through
+  verified integration in its one leading PR. Other issues may proceed only when Chief Project Manager has
+  qualified their independence in purpose, affected files, behavior, analyzer baselines, build graph and execution
+  resources. There is no global one-task or five-task ceiling, and no automatic PR per master. Keep one writer
+  per worktree and serialize review, fixes and publication for each exact comparison. An isolated worktree or
+  different client is not an allocation.
 - Before every substantial start or resume, coordinate the current task, owner and actual execution state with
   Chief Project Manager in the existing queue. This includes Claude-owned refactorings and automated follow-ups.
-  Full capacity or unclear actual ownership blocks a new start. Reconcile active allocations, worker/CLI processes
-  and remote CI; an idle chat alone proves no capacity. One occupied place does not block other explicitly allocated
-  packages. Five is a ceiling, not an instruction to fill unused places. An allocation is internal coordination,
-  not another human approval; required dependencies still apply.
+  Unclear ownership or an unresolved dependency/resource conflict blocks the affected start. Reconcile active
+  allocations, worker/CLI processes and remote CI; an idle chat alone proves neither independence nor capacity.
+  An allocation is internal coordination, not another human approval; required dependencies still apply.
 - Preserve running work, ownership, results and restrictions. If execution overlaps or ownership is unclear,
   coordinate the next safe stopping point with the owner and Chief Project Manager; do not blindly interrupt,
-  restart or duplicate processes or cancel CI to free an allocation. Resume only after the central reconciliation.
+  restart or duplicate processes or cancel CI to make room. Resume only after the central reconciliation.
 - Technical Director coordinates resources and responsibilities through Chief Project Manager's queue without
   creating another queue, lock, permit or scheduling mechanism. Only the responsible owner changes existing
   operational state. Allocated capacity does not expand scope or override explicit pauses or acceptance gates.
@@ -161,9 +168,21 @@ Verified on 2026-10-16 through Claude coordination and a two-turn Codex exchange
 
 The desktop-app conversation has a separate history and is not this CLI address. Do not use its ID, clone it or
 create a substitute. Update this contact definition only after an authorized handover and verified replacement.
-Record the active caller, target ID and open questions in the existing master handover.
+Chief Project Manager's existing handover records the active caller, target ID and open questions for this
+conversation. Before sending, obtain confirmed caller ownership there and verify that the target is idle.
+If either ownership or execution state is unclear, do not send. Retain ownership until actual completion;
+after a timeout reconcile the original execution before any retry, then record its end and release the caller.
 
-From the actual MOBAflow checkout on Windows, use the installed executable:
+Do not infer a sandbox or read-only access from Antigravity's plan mode. Neither `--mode plan` nor the working
+directory enforces a file-access boundary; absolute paths, parent paths and tools may reach other accessible host files.
+Without verified isolation, treat the process's entire accessible host context as exposed. Establish the actual
+OS/tool permissions before contact; do not invoke it with credentials or unrelated sensitive files accessible.
+If the required access boundary cannot be established, report that concrete limitation to Chief Project Manager.
+Run agy from the caller's own task worktree or a clean worktree that no other writer uses, never from the shared
+checkout or another writer's worktree. This reduces accidental task-file changes; it does not isolate the host.
+Check `git status` there after each call and report unexpected changes instead of silently keeping or discarding
+them. This check detects only changes in that worktree, not reads or changes elsewhere.
+On Windows, use the installed executable:
 
 ```powershell
 & "$env:LOCALAPPDATA\agy\bin\agy.exe" `
@@ -181,8 +200,8 @@ The full path also works when the shell's PATH predates installation. On another
 - Use only serial synchronous request/response. Prefix messages with `[Von: Codex]` or `[Von: Claude]` and identify
   the originating master in the message. Read
   `response` and answer `An Codex:` / `An Claude:` questions in the same conversation. Coordinate the active caller
-  with Chief Project Manager, the other masters and Claude before sending, under the same central execution
-  allocation. Verify the target is idle, wait for actual process completion, then release the conversation. The Head
+  through Chief Project Manager's existing handover before sending, under the same central execution
+  allocation and confirmed caller ownership. Wait for actual process completion, then release the conversation. The Head
   starts no active callbacks, `claude`/`codex` calls, file inboxes or timers.
 - Keep `--mode plan` and real tool permissions narrow. Do not combine it with `--disable-slash-commands`, use
   `--continue`, bypass permissions or silently substitute a conversation/model. Prompts and plan mode alone are
@@ -190,13 +209,16 @@ The full path also works when the shell's PATH predates installation. On another
   progress communication. After a timeout inspect ongoing execution before retrying; never duplicate a possibly
   active request.
 - Verify actual completion, model and response content. Exit zero or aggregate conversation counters alone do not
-  prove delivery of an answer. Supply only relevant context, with exact SHAs/evidence where applicable, and enforce
-  the active secrets-before-read policy in delegated work too. Never send credentials; distinguish observations
-  from assumptions.
+  prove delivery of an answer. Supply only relevant context, with exact SHAs/evidence where applicable.
+  Argon may read files itself and send their content to Google; plan mode does not enforce read or write limits.
+  Apply the active secrets-before-read policy to supplied context and delegated reads, including tracked,
+  untracked and ignored files. A scanned worktree does not authorize reading elsewhere. Never send credentials
+  in prompts or expose unrelated sensitive files; distinguish observations from assumptions.
 - Advice adds no universal review or approval gate and cannot replace tests, required practical acceptance or a
   fresh independent Claude PR review. It grants no new product, app, hardware, publication or merge authority.
-  Preserve the named writer and Chief Project Manager's exclusive execution and integration queue. The Head
-  changes only its own task worktrees/branches and submits assigned implementation as draft PRs.
+  Preserve the named writer and Chief Project Manager's exclusive execution and integration queue. This shared
+  CLI contact is advisory only: it does not implement, commit, push or open PRs. Implementation by the Head needs
+  a separate explicit human assignment, central allocation and its own task worktree; consultation grants none.
 
 Sources (checked 2026-10-16): [Antigravity CLI headless mode](https://antigravity.google/docs/cli/headless/) and
 [resume](https://antigravity.google/docs/cli/commands/resume/) document explicit conversation IDs and the headless

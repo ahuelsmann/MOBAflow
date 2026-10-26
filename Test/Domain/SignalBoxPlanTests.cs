@@ -93,7 +93,7 @@ internal class SignalBoxPlanTests
         var trackA = new SbTrackStraight { X = 0, Y = 0 };
         var trackB = new SbTrackStraight { X = 1, Y = 0 };
         var trackC = new SbTrackStraight { X = 2, Y = 0 };
-        _plan.Elements.AddRange([trackA, trackB, trackC]);
+        _plan.Elements.AddRange((global::Moba.Domain.SbElement[])[trackA, trackB, trackC]);
         _plan.AddConnection(new SignalBoxConnection { FromElementId = trackA.Id, ToElementId = trackB.Id });
         _plan.AddConnection(new SignalBoxConnection { FromElementId = trackB.Id, ToElementId = trackC.Id });
 
@@ -111,7 +111,7 @@ internal class SignalBoxPlanTests
     {
         var trackA = new SbTrackStraight { X = 0, Y = 0 };
         var trackB = new SbTrackStraight { X = 1, Y = 0 };
-        _plan.Elements.AddRange([trackA, trackB]);
+        _plan.Elements.AddRange((global::Moba.Domain.SbElement[])[trackA, trackB]);
 
         _plan.AddConnection(new SignalBoxConnection
         {
@@ -165,7 +165,7 @@ internal class SignalBoxPlanTests
     {
         var trackA = new SbTrackStraight { X = 0, Y = 0 };
         var trackB = new SbTrackStraight { X = 1, Y = 0 };
-        _plan.Elements.AddRange([trackA, trackB]);
+        _plan.Elements.AddRange((global::Moba.Domain.SbElement[])[trackA, trackB]);
         _plan.AddConnection(new SignalBoxConnection { FromElementId = trackA.Id, ToElementId = trackB.Id });
 
         var result = _plan.RemoveConnection(trackA.Id, trackB.Id);
@@ -195,7 +195,7 @@ internal class SignalBoxPlanTests
         var sameSource = new SignalBoxConnection { FromElementId = sourceA.Id, ToElementId = targetB.Id };
         var sameTarget = new SignalBoxConnection { FromElementId = sourceB.Id, ToElementId = targetA.Id };
         var exact = new SignalBoxConnection { FromElementId = sourceA.Id, ToElementId = targetA.Id };
-        _plan.Connections.AddRange([sameSource, sameTarget, exact]);
+        _plan.Connections.AddRange((global::Moba.Domain.SignalBoxConnection[])[sameSource, sameTarget, exact]);
 
         var removed = _plan.RemoveConnection(sourceA.Id, targetA.Id);
 
@@ -232,7 +232,7 @@ internal class SignalBoxPlanTests
     {
         var trackA = new SbTrackStraight { X = 0, Y = 0 };
         var trackB = new SbTrackStraight { X = 1, Y = 0 };
-        _plan.Elements.AddRange([trackA, trackB]);
+        _plan.Elements.AddRange((global::Moba.Domain.SbElement[])[trackA, trackB]);
         _plan.AddConnection(new SignalBoxConnection { FromElementId = trackA.Id, ToElementId = trackB.Id });
 
         _plan.Clear();

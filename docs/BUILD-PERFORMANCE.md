@@ -4,6 +4,24 @@ Practical guidance for faster local build and deploy loops in MOBAflow and MOBAs
 
 ## MOBAflow (WinUI)
 
+### Windows SDK versions
+
+The Windows TFM and minimum OS remain `10.0.22621.0`. `Directory.Build.targets`
+selects the stable `Microsoft.Windows.SDK.NET.Ref` targeting pack `10.0.28000.87`
+through `WindowsSdkPackageVersion`; the .NET SDK remains `10.0.402`. This avoids
+using a preview .NET SDK or raising the minimum OS just to update the API pack.
+The pack's C#/WinRT analyzer requires a concrete type for collection expressions
+passed through read-only interfaces. Tests use explicit array types, for example
+`(string[])["Ready"]`, so the WinRT trimming/AOT checks remain enabled.
+
+The desktop also pins the stable NuGet build tools in `Directory.Packages.props`:
+`Microsoft.Windows.SDK.BuildTools` `10.0.28000.2705` and
+`Microsoft.Windows.SDK.BuildTools.MSIX` `1.7.260930100`. These are separate from
+Windows App SDK `2.5.1`, which supplies WinUI and the self-contained app runtime.
+The [native Windows SDK installer](https://learn.microsoft.com/en-us/windows/apps/windows-sdk/downloads)
+has its own servicing version, `10.0.28000.2957`; installing it alone does not
+change the .NET targeting pack or the NuGet tools used by this C# build.
+
 **Fast daily compile check:**
 
 ```bash
@@ -60,6 +78,12 @@ The .NET SDK band from `global.json` (10.0.4xx, at least 10.0.402) and the MAUI 
 prerequisites. The workload set version is pinned in the install command, not in `global.json`: a
 `workloadVersion` there would fail every build, including desktop-only builds, on machines without that
 workload set. Install the pinned set explicitly instead of relying on `--skip-manifest-update`.
+The set supplies MAUI SDK `10.0.110` and Android SDK `36.1.118`. The Android
+project's `MauiVersion` and central `Microsoft.Maui.Controls` version are both
+`10.0.120`, keeping the implicit application packages on the same stable release.
+The MAUI `10.0.120` packages require a workload version of at least `10.0.0`;
+the pinned workload meets that requirement. Do not splice a separately published
+MAUI SDK package into the workload or disable its compatibility check.
 From a clean checkout, run the install, restore, publish, and bundle validation defined in CI:
 
 ```powershell
@@ -123,6 +147,10 @@ Open `build.binlog` with [MSBuild Structured Log Viewer](https://msbuildlog.com/
 
 ## CI note
 
+The separate [observational dependency review](DEPENDENCY-REVIEW.md) reports pull-request
+dependency changes and graph limitations. It adds no required gate and does not replace the
+resolved NuGet audit described below. A successful job is not a claim of complete graph coverage.
+
 The public, authoritative pull-request check is `.github/workflows/quality.yml`.
 It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
@@ -171,14 +199,14 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main` and manual runs classify all scopes as enabled. Other PR changes enable
-desktop, display, Common and Speech.Base mutation jobs; Domain mutation and ESP32 firmware
+desktop, display, Common, Speech.Base and Backend mutation jobs; Domain mutation and ESP32 firmware
 steps also depend on their input paths. Android runs only with the manual
 `validate_android` input. A skipped check is not evidence that tests ran.
 
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
 when `MOBAdisplay/esp32/` changes or an unknown input path requires them. The
-Common and Speech.Base mutation jobs run for every code-relevant PR. Domain mutation testing runs when
+Common, Speech.Base and Backend mutation jobs run for every code-relevant PR. Domain mutation testing runs when
 `Domain/`, its linked tests and fixture data (`Test/TestFile/`), `MutationTest/`
 or the .NET build configuration change. A path outside the known .NET areas,
 such as a workflow, a script or a new top-level folder, enables both firmware
@@ -188,10 +216,10 @@ skipped steps and a skipped job count as successful.
 source and copied fixture input of the mutation project.
 
 The repository consistency job also checks source-derived package and mutation
-documentation facts and runs their offline boundary tests. A separate
-[documentation consistency workflow](DOCUMENTATION-CONSISTENCY.md) supports
-semantic assessment and documentation commits in the existing PR. Its AI portion
-is initially inactive and requires explicit API/App configuration and live acceptance.
+documentation facts and runs their offline boundary tests. Documentation and
+wiki impact beyond these deterministic facts is recorded through the existing
+delivery process and independent Claude PR review; see
+[documentation consistency](DOCUMENTATION-CONSISTENCY.md).
 
 The repository consistency job also lints every workflow with a pinned,
 checksum-verified actionlint release and checks internal documentation links
@@ -252,19 +280,28 @@ test-case filters. Planned lanes remain explicitly outside the mutation guarante
 | Active lane | Production project | Test project | Stryker configuration | Break threshold |
 | --- | --- | --- | --- | --- |
 | domain | `Domain/Domain.csproj` | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% |
+| backend | `Backend/Backend.csproj` | `MutationTest/Backend/Backend.MutationTests.csproj` | [`stryker-backend-config.json`](../MutationTest/stryker-backend-config.json) | 47% |
 | common | `Common/Common.csproj` | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% |
+| api | `MOBApi/MOBApi.csproj` | `MutationTest/Api/Api.MutationTests.csproj` | [`stryker-api-config.json`](../MutationTest/stryker-api-config.json) | 44% |
 | speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% |
 <!-- documentation-facts:mutation:end -->
 
-Domain runs when its inputs change; Common and Speech.Base run for every code-relevant PR.
-All three also run on main pushes and manual Quality runs. Domain and Speech.Base run on
+Domain runs when its inputs change; Common, Speech.Base, Backend and MOBApi run for every code-relevant PR.
+All five also run on main pushes and manual Quality runs. Domain, Speech.Base, Backend and MOBApi run on
 Linux. Common uses Windows because its existing fixtures include Windows-specific
 photo paths. Its concurrency is limited to four test processes. The Common lane includes selected Backend test
 fixtures for Common contracts and `SpeechSettingsTests.cs`; it does not mutate Backend production code.
 Speech.Base mutates the entire assembly, including the audio cache, shared synthesis and WAV handling.
 Its four portable Speech fixtures use fake providers/players and four Stryker processes. Windows-only
 host integration cases and the separate Piper/SystemSpeech assemblies are outside this lane.
-Thresholds come from the configuration files; the Common and Speech.Base minimums are baseline
+Backend mutates the entire assembly with every fixture under `Test/Backend/`, the workflow end-to-end
+fixture and the Z21 DCC decoder tests. It is the largest lane (about 35 minutes with four Stryker
+processes). The MOBApi lane mutates `MOBApi` with the in-process fixtures under `Test/MOBApi/` (about two
+minutes locally); the MOBApi process fixtures start real processes, cannot detect mutants and stay in the planned
+`api-process` lane. Methods that Stryker puts into Safe Mode
+are excluded from the score; see
+[methods outside the Backend mutation gate](../plans/366-coverage-mutation-ratchets.md#methods-outside-the-backend-mutation-gate).
+Thresholds come from the configuration files; the Common, Speech.Base, Backend and MOBApi minimums are baseline
 safeguards, not targets for test quality. Speech.Base keeps scheduling-only `ConfigureAwait`
 mutants visible rather than excluding them to inflate the score.
 
@@ -278,9 +315,11 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 ./scripts/Invoke-MutationLane.ps1 -LaneName domain -OutputPath artifacts/mutation/domain-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName common -OutputPath artifacts/mutation/common-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
+./scripts/Invoke-MutationLane.ps1 -LaneName backend -OutputPath artifacts/mutation/backend-local
+./scripts/Invoke-MutationLane.ps1 -LaneName api -OutputPath artifacts/mutation/api-local
 ```
 
-On Linux, run the Domain and Speech.Base lanes; omit the Windows-specific Common lane. Run
+On Linux, run the Domain, Speech.Base, Backend and MOBApi lanes; omit the Windows-specific Common lane. Run
 Stryker and ordinary builds/tests sequentially: Stryker recreates shared
 intermediate files. CI uses the same runner, which requires a nonempty, fully passing ordinary-test
 TRX baseline before starting Stryker. It validates the new JSON report's production root, registered

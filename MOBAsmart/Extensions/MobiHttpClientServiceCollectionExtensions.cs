@@ -50,14 +50,14 @@ public static class MobiHttpClientServiceCollectionExtensions
 #if ANDROID
         return new AndroidMessageHandler
         {
-            AllowAutoRedirect = true,
+            AllowAutoRedirect = false,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
             // Route RFC1918 MOBApi/health checks directly; system VPN/proxy often breaks LAN (see SocksSocketImpl in logs).
             UseProxy = false,
         };
 #else
-        return new HttpClientHandler();
+        return new HttpClientHandler { AllowAutoRedirect = false };
 #endif
     }
 }

@@ -188,7 +188,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         viewModel.RestoreCachedSignalBoxElements(
 
-        [
+        (SignalBoxElementRuntimeSnapshot[])[
 
             new SignalBoxElementRuntimeSnapshot
 
@@ -301,7 +301,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         viewModel.RestoreCachedSignalBoxElements(
 
-        [
+        (SignalBoxElementRuntimeSnapshot[])[
 
             new SignalBoxElementRuntimeSnapshot
 
@@ -397,7 +397,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
             new SolutionSyncMeta(DateTimeOffset.UtcNow, "Cached", "myMOBA"),
 
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
 
                 new SignalBoxElementRuntimeSnapshot
 
@@ -419,7 +419,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
             ],
 
-            [
+            (LocomotiveFleetSnapshot[])[
 
                 new LocomotiveFleetSnapshot
 
@@ -459,7 +459,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = elementId,
@@ -491,7 +491,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
             SignalBoxElements =
 
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
 
                 new SignalBoxElementRuntimeSnapshot
 
@@ -1113,7 +1113,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         var projectContext = CreateProjectContext(new Solution { Name = "Layout", Projects = [station, yard] });
         var viewModel = CreateViewModel(eventBus, projectContext: projectContext);
         viewModel.RestoreCachedLocomotiveFleet(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot { LocomotiveId = Guid.NewGuid(), Name = "BR 110 of Station", DigitalAddress = 3 }
         ]);
 
@@ -1138,7 +1138,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             projectContext: context, mobileRuntimeCoordinator: coordinator);
         viewModel.SetControlTabActive(true);
         IReadOnlyList<LocomotiveFleetSnapshot> oldFleet =
-        [
+        (LocomotiveFleetSnapshot[])[
             new() { LocomotiveId = locomotive.Id, Name = locomotive.Name, DigitalAddress = 3 }
         ];
         runtime.SetupGet(value => value.Current).Returns(new MobaRuntimeSnapshot { LocomotiveFleet = oldFleet });

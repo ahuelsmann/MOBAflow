@@ -1,0 +1,65 @@
+name: Dependency review (observational)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dependency-review:
+    name: Dependency review (observational)
+    if: ${{ github.repository == 'ahuelsmann/MOBAflow' && !github.event.repository.private &&
+      (github.event.action != 'edited' || github.event.changes.base != null) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Normal PR event, read-only token, no application secrets or saved checkout credentials.
+      - name: Check out the exact PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Test dependency-report fixtures
+        run: node --test scripts/dependency-review.test.cjs
+
+      - name: Report exact comparison and graph limits
+        id: report
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const {run} = require('./scripts/dependency-review.cjs');
+            await run({github, context, core});
+
+      - name: Official GitHub dependency review in warning mode
+        id: official
+        if: ${{ steps.report.outputs.official-action-allowed == 'true' }}
+        continue-on-error: true
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          warn-only: true
+          fail-on-scopes: runtime, development, unknown
+          comment-summary-in-pr: never
+          license-check: false
+          show-openssf-scorecard: false
+          retry-on-snapshot-warnings: false
+
+      - name: Record official execution outcome separately
+        if: ${{ always() }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          OFFICIAL_OUTCOME: ${{ steps.official.outcome }}
+          REPORT_OUTCOME: ${{ steps.report.outcome }}
+        with:
+          script: |
+            const official = process.env.OFFICIAL_OUTCOME;
+            const reporter = process.env.REPORT_OUTCOME;
+            const failed = official === 'failure' || reporter !== 'success';
+            await core.summary.addRaw('\n## Execution qualification\n' +
+              (failed ? '**FAILED**: a reporting/API action failed. No clean result.\n' :
+                'Official action outcome: ' + official + '. Skipped is not a clean scan.\n') +
+              'Unchanged findings require the existing full-graph NuGet audit. Required checks are unchanged.\n').write();
+            if (failed) core.warning('Dependency review FAILED; job success is not security clearance.');

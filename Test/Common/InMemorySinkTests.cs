@@ -27,7 +27,7 @@ internal sealed class InMemorySinkTests
         var timestamp = new DateTimeOffset(2026, 10, 9, 12, 34, 56, TimeSpan.Zero).AddMilliseconds(123);
         var logEvent = new LogEvent(timestamp, level, null,
             new MessageTemplateParser().Parse("Train {Number} stopped"),
-            [new LogEventProperty("Number", new ScalarValue(42)),
+            (LogEventProperty[])[new LogEventProperty("Number", new ScalarValue(42)),
              new LogEventProperty("SourceContext", new ScalarValue("Moba.Backend.JourneyManager"))]);
 
         new InMemorySink().Emit(logEvent);

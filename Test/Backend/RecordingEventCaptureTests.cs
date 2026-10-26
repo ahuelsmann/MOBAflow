@@ -135,7 +135,7 @@ internal sealed class RecordingEventCaptureTests
         await using var session = CreateSession();
         session.Start(new RecordingSessionStartRequest("Failure isolation", "1.0"));
         var inner = new EventBus(NullLogger<EventBus>.Instance);
-        var registry = new RecordingEventMapperRegistry([new ThrowingMapper()]);
+        var registry = new RecordingEventMapperRegistry((IRecordingEventMapper[])[new ThrowingMapper()]);
         var recorder = new RecordingEventBusDecorator(
             inner,
             session,
@@ -322,7 +322,7 @@ internal sealed class RecordingEventCaptureTests
             inner,
             session,
             new RecordingEventMapperRegistry(
-            [
+            (IRecordingEventMapper[])[
                 new Z21RecordingEventMapper(),
                 new RuntimeSnapshotRecordingEventMapper(),
                 new JourneyRecordingEventMapper(),
@@ -334,7 +334,7 @@ internal sealed class RecordingEventCaptureTests
 
     private sealed class ThrowingMapper : IRecordingEventMapper
     {
-        public IReadOnlyCollection<Type> EventTypes { get; } = [typeof(TestEvent)];
+        public IReadOnlyCollection<Type> EventTypes { get; } = (Type[])[typeof(TestEvent)];
 
         public RecordingEntryProjection Map(IEvent sourceEvent) =>
             throw new InvalidOperationException("Expected mapper failure.");

@@ -12,8 +12,30 @@ using System.Net.Sockets;
 /// </summary>
 public static class RestApiDiscoveryCandidateBuilder
 {
-    /// <summary>Factory default that must not be prioritized before subnet scan (often wrong on real networks).</summary>
-    public const string LegacyFactoryDefaultIp = "192.168.0.79";
+    /// <summary>
+    /// Recent private IPv4 endpoints followed by nearby LAN hosts, with each address probed once.
+    /// </summary>
+    public static IReadOnlyList<IPAddress> BuildQuickProbeOrder(
+        RestApiSettings settings,
+        IReadOnlyList<IPAddress> localAddresses)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(localAddresses);
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var result = new List<IPAddress>();
+        foreach (var recent in settings.RecentIpAddresses ?? [])
+        {
+            TryAddString(recent, seen, result);
+        }
+
+        foreach (var candidate in BuildQuickWindowCandidates(localAddresses))
+        {
+            TryAddAddress(candidate, seen, result);
+        }
+
+        return result;
+    }
 
     /// <summary>
     /// Hosts near the device's own IPv4 address in the same /24 (fast path before a full subnet scan).
@@ -124,7 +146,6 @@ public static class RestApiDiscoveryCandidateBuilder
 
     /// <summary>
     /// Full probe order: recent successful IPs, proximity-ordered subnet, then saved IP (if any).
-    /// Does not prioritize the legacy factory default before LAN scan.
     /// </summary>
     public static IReadOnlyList<IPAddress> BuildFullProbeOrder(
         RestApiSettings settings,
@@ -163,13 +184,7 @@ public static class RestApiDiscoveryCandidateBuilder
             return false;
         }
 
-        var trimmed = savedIp.Trim();
-        if (string.Equals(trimmed, LegacyFactoryDefaultIp, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        return IPAddress.TryParse(trimmed, out _);
+        return IPAddress.TryParse(savedIp.Trim(), out _);
     }
 
     private static IEnumerable<IPAddress> OrderByProximity(

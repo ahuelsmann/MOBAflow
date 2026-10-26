@@ -162,6 +162,8 @@ public static class Z21MessageParser
                 break;
             case Z21Protocol.XHeader.X_STATUS_CHANGED:
                 // LAN_X_STATUS_CHANGED (0x62): [xHeader, DB0, status, XOR]
+                // The complete frame is 8 bytes; reject truncated frames instead of reading the XOR as status.
+                if (data.Length < 8) return null;
                 status = data[6];
                 break;
             default:

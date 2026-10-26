@@ -7,7 +7,7 @@
       "path": ".agents/skills/speckit-analyze",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -16,7 +16,7 @@
       "path": ".agents/skills/speckit-checklist",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -25,7 +25,7 @@
       "path": ".agents/skills/speckit-clarify",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -34,7 +34,7 @@
       "path": ".agents/skills/speckit-constitution",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -43,7 +43,7 @@
       "path": ".agents/skills/speckit-converge",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -52,7 +52,7 @@
       "path": ".agents/skills/speckit-implement",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -61,7 +61,7 @@
       "path": ".agents/skills/speckit-plan",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -70,7 +70,7 @@
       "path": ".agents/skills/speckit-specify",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -79,7 +79,7 @@
       "path": ".agents/skills/speckit-tasks",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "None."
     },
@@ -88,7 +88,7 @@
       "path": ".agents/skills/speckit-taskstoissues",
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
-      "license": "MIT",
+      "license": ".specify/LICENSE",
       "manifest": ".specify/integrations/codex.manifest.json",
       "localChanges": "Uses scripts/Resolve-GitHubRepository.ps1; expected managed-file modification; see docs/SPEC-KIT.md."
     },
@@ -107,7 +107,7 @@
       "source": "https://github.com/mattpocock/skills/tree/c55ee46073ed923f86ce59a5eb3b6d895095d1b7/skills/engineering/code-review",
       "revision": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
       "license": ".agents/skills/mobaflow-code-review/LICENSE",
-      "localChanges": "Adapted for MOBAflow instructions, scoped validation, native tools and explicit launch/hardware authorization; removed required delegation/foreign bootstrap and Bash loop dependency; routes PR reviews after Chief Project Manager sets Ready through the existing Claude plan with independent Opus 5.5-or-higher review, separate fixes and re-review, at most five centrally allocated tasks, and documented developer/user-wiki impact."
+      "localChanges": "Adapted for MOBAflow instructions, scoped validation, native tools and explicit launch/hardware authorization; removed required delegation/foreign bootstrap and Bash loop dependency; routes PR reviews after Chief Project Manager sets Ready through the existing Claude plan with independent Opus 5.5-or-higher review, separate fixes and re-review, one central issue delivery queue with explicitly qualified independent work, and documented developer/user-wiki impact."
     },
     {
       "name": "mobaflow-diagnosing-bugs",
