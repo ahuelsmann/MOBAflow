@@ -57,6 +57,9 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
             released[5] = 0;
             (int, int, bool) on = (12, 2, true);
             (int, int, bool) off = (12, 2, false);
+            // The service starts its "off" timer on a thread-pool continuation after "on"; the clock may only
+            // move once that timer exists, and "off" arrives on another continuation after the timer fired.
+            var idleTimers = clock.PendingTimerCount;
 
             udp.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
             var firstRaw = await NextAsync(rawFeedback.Reader).ConfigureAwait(false);
@@ -65,7 +68,9 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
                 Assert.That(firstRaw, Is.EqualTo(5));
                 Assert.That(gateway.Commands, Is.EqualTo(new[] { on }));
             }
+            await WaitUntilAsync(() => clock.PendingTimerCount > idleTimers).ConfigureAwait(false);
             clock.Advance(TimeSpan.FromSeconds(1));
+            await WaitUntilAsync(() => gateway.Commands.Count == 2).ConfigureAwait(false);
             Assert.That(gateway.Commands, Is.EqualTo(new[] { on, off }));
 
             udp.RaiseReceived(released);
@@ -76,7 +81,9 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
                 Assert.That(secondRaw, Is.EqualTo(5));
                 Assert.That(gateway.Commands, Is.EqualTo(new[] { on, off, on }));
             }
+            await WaitUntilAsync(() => clock.PendingTimerCount > idleTimers).ConfigureAwait(false);
             clock.Advance(TimeSpan.FromSeconds(1));
+            await WaitUntilAsync(() => gateway.Commands.Count == 4).ConfigureAwait(false);
 
             using (Assert.EnterMultipleScope())
             {
@@ -94,6 +101,17 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
 
     private static Task<int> NextAsync(ChannelReader<int> reader) =>
         reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5));
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (!condition())
+        {
+            if (DateTime.UtcNow > deadline)
+                Assert.Fail("The whistle service did not reach the expected state within 5 seconds.");
+            await Task.Delay(10).ConfigureAwait(false);
+        }
+    }
 
     [Test]
     public async Task HandleFeedbackAsync_SendsDelayedMomentaryFunction()
