@@ -15,12 +15,13 @@
     },
     {
       "name": "backend",
-      "status": "planned",
-      "test-directories": [
-        "Test/Backend",
-        "Test/Integration"
+      "status": "active",
+      "stryker-config": "MutationTest/stryker-backend-config.json",
+      "test-directories": ["Test/Backend"],
+      "test-files": [
+        "Test/Integration/WorkflowExecutionEndToEndTests.cs",
+        "Test/Z21DccCommandDecoderTests.cs"
       ],
-      "test-files": ["Test/Z21DccCommandDecoderTests.cs"],
       "production-projects": ["Backend/Backend.csproj"]
     },
     {
@@ -52,8 +53,19 @@
     },
     {
       "name": "api",
-      "status": "planned",
+      "status": "active",
+      "stryker-config": "MutationTest/stryker-api-config.json",
       "test-directories": ["Test/MOBApi"],
+      "production-projects": ["MOBApi/MOBApi.csproj"]
+    },
+    {
+      "name": "api-process",
+      "status": "planned",
+      "test-directories": [],
+      "test-files": [
+        "Test/Integration/MobApiProcessTests.cs",
+        "Test/Integration/RuntimeHubLiveE2ETests.cs"
+      ],
       "production-projects": ["MOBApi/MOBApi.csproj"]
     },
     {
@@ -125,7 +137,8 @@
       "test-files": [
         "Test/Speech/LocalSpeechProviderTests.cs",
         "Test/Speech/PcmWavePostProcessorTests.cs",
-        "Test/Speech/PiperPronunciationNormalizerTests.cs"
+        "Test/Speech/PiperPronunciationNormalizerTests.cs",
+        "Test/Speech/PiperProcessRunnerTests.cs"
       ],
       "production-projects": ["Speech.Piper/Speech.Piper.csproj"]
     },

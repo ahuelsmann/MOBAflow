@@ -20,7 +20,7 @@ internal sealed class Z21AssignmentDiagnosticsTests
         var station = Project("Station", string.Empty);
         var yard = Project("Yard", string.Empty);
 
-        Assert.That(Z21AssignmentDiagnostics.Analyze(yard, [station, yard]), Is.Empty);
+        Assert.That(Z21AssignmentDiagnostics.Analyze(yard, (Project[])[station, yard]), Is.Empty);
     }
 
     [Test]
@@ -48,7 +48,7 @@ internal sealed class Z21AssignmentDiagnosticsTests
         var station = Project("Station", "192.168.0.111", port: 21105);
         var yard = Project("Yard", "192.168.0.111", port: 21106);
 
-        Assert.That(Z21AssignmentDiagnostics.Analyze(yard, [station, yard]), Has.Count.EqualTo(1));
+        Assert.That(Z21AssignmentDiagnostics.Analyze(yard, (Project[])[station, yard]), Has.Count.EqualTo(1));
     }
 
     [Test]
@@ -57,7 +57,7 @@ internal sealed class Z21AssignmentDiagnosticsTests
         var station = Project("Station", "192.168.0.111");
         var yard = Project("Yard", "192.168.0.112");
 
-        Assert.That(Z21AssignmentDiagnostics.Analyze(station, [station, yard]), Is.Empty);
+        Assert.That(Z21AssignmentDiagnostics.Analyze(station, (Project[])[station, yard]), Is.Empty);
     }
 
     [Test]

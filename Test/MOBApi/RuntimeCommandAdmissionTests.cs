@@ -54,7 +54,7 @@ internal sealed class RuntimeCommandAdmissionTests
     public void Enqueue_InvalidCommand_IsRejectedAndNotQueued()
     {
         var queue = new RuntimeCommandQueue(capacity: 4);
-        var admission = new RuntimeCommandAdmission(queue, KnownProject());
+        var admission = TestCommandAdmission.Create(queue, KnownProject());
 
         var result = admission.Enqueue(ValidDrive(0));
 
@@ -69,12 +69,30 @@ internal sealed class RuntimeCommandAdmissionTests
     [Test]
     public void Enqueue_WhenQueueIsFull_ReturnsQueueFull()
     {
-        var admission = new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 1), KnownProject());
+        var admission = TestCommandAdmission.Create(new RuntimeCommandQueue(capacity: 1), KnownProject());
         admission.Enqueue(ValidDrive(1));
 
         var result = admission.Enqueue(ValidDrive(2));
 
-        Assert.That(result.Status, Is.EqualTo(RuntimeCommandAdmissionStatus.QueueFull));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Status, Is.EqualTo(RuntimeCommandAdmissionStatus.QueueFull));
+            Assert.That(result.Error, Is.EqualTo("queue_full"));
+        }
+    }
+
+    [Test]
+    public void MissingCommands_AreRejectedByTheAdmissionAndTheQueue()
+    {
+        var queue = new RuntimeCommandQueue(capacity: 4);
+        var admission = TestCommandAdmission.Create(queue, KnownProject());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(() => admission.Validate(null!), Throws.ArgumentNullException);
+            Assert.That(() => admission.Enqueue(null!), Throws.ArgumentNullException);
+            Assert.That(() => queue.TryEnqueue(null!), Throws.ArgumentNullException);
+        }
     }
 
     [TestCase(HubCommand.Drive, nameof(IRuntimeHubHostCallbacks.ExecuteSetLocomotiveDrive))]
@@ -165,7 +183,7 @@ internal sealed class RuntimeCommandAdmissionTests
     public void Enqueue_CommandForUnknownProject_IsRejectedAndNotQueued()
     {
         var queue = new RuntimeCommandQueue(capacity: 4);
-        var admission = new RuntimeCommandAdmission(queue, KnownProject());
+        var admission = TestCommandAdmission.Create(queue, KnownProject());
 
         var result = admission.Enqueue(ValidDrive(3) with { ProjectId = Guid.NewGuid() });
 
@@ -180,21 +198,57 @@ internal sealed class RuntimeCommandAdmissionTests
     [Test]
     public void Enqueue_CommandWithoutProject_IsRejected()
     {
-        var admission = new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 4), KnownProject());
+        var admission = TestCommandAdmission.Create(new RuntimeCommandQueue(capacity: 4), KnownProject());
 
         var result = admission.Enqueue(ValidDrive(3) with { ProjectId = Guid.Empty });
 
         Assert.That(result.Error, Is.EqualTo("ProjectId is required."));
     }
 
-    [Test]
-    public async Task HubCommand_WithoutProject_IsRejected()
+    [TestCase("")]
+    [TestCase("00000000-0000-0000-0000-000000000000")]
+    [TestCase("not-a-project")]
+    public async Task HubCommand_WithoutProject_IsRejected(string projectId)
     {
         var fixture = new HubFixture(hostConnectionId: "host-1");
 
-        await Assert.ThatAsync(() => fixture.Hub.SetLocomotiveDrive(string.Empty, 3, 40, forward: true),
-            Throws.TypeOf<HubException>()).ConfigureAwait(false);
+        await Assert.ThatAsync(() => fixture.Hub.SetLocomotiveDrive(projectId, 3, 40, forward: true),
+            Throws.TypeOf<HubException>().With.Message.EqualTo("ProjectId is required.")).ConfigureAwait(false);
         Assert.That(fixture.HostProxy.Invocations, Is.Empty);
+    }
+
+    [TestCase("not-a-signal", nameof(SignalAspect.Hp0), "Invalid signal id.")]
+    [TestCase("8f7c5a9e-2b1d-4c3e-9a6f-0d1e2f3a4b5c", "NoSuchAspect", "Invalid signal aspect.")]
+    public async Task HubSignalAspect_WithInvalidSignalOrAspect_IsRejected(string signalId, string aspect, string message)
+    {
+        var fixture = new HubFixture(hostConnectionId: "host-1");
+
+        await Assert.ThatAsync(() => fixture.Hub.SetSignalAspect(Project.ToString(), signalId, aspect),
+            Throws.TypeOf<HubException>().With.Message.EqualTo(message)).ConfigureAwait(false);
+        Assert.That(fixture.HostProxy.Invocations, Is.Empty);
+    }
+
+    [Test]
+    public async Task HubCommand_RejectedWhenQueued_ReportsTheQueueReason()
+    {
+        // The project can leave the synchronized solution between validation and queueing.
+        var admission = new Mock<IRuntimeCommandAdmission>();
+        admission.Setup(value => value.Validate(It.IsAny<RuntimeCommandEnvelope>())).Returns(RuntimeCommandAdmissionResult.Accepted);
+        admission.Setup(value => value.Enqueue(It.IsAny<RuntimeCommandEnvelope>()))
+            .Returns(new RuntimeCommandAdmissionResult(RuntimeCommandAdmissionStatus.Invalid, "Unknown project."));
+        var fixture = new HubFixture(hostConnectionId: null, admission: admission.Object);
+
+        await Assert.ThatAsync(() => fixture.Hub.SetLocomotiveDrive(Project.ToString(), 3, 40, forward: true),
+            Throws.TypeOf<HubException>().With.Message.EqualTo("Unknown project.")).ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task HubSnapshot_FromAConnectionThatIsNotTheHost_IsRejected()
+    {
+        var fixture = new HubFixture(hostConnectionId: "host-1", connectionId: "remote-1");
+
+        await Assert.ThatAsync(() => fixture.Hub.PushSnapshot("{}"),
+            Throws.TypeOf<HubException>().With.Message.EqualTo("Connection is not registered as runtime host.")).ConfigureAwait(false);
     }
 
     /// <summary>A synchronized solution that contains only <see cref="Project"/>.</summary>
@@ -227,11 +281,18 @@ internal sealed class RuntimeCommandAdmissionTests
 
     private sealed class HubFixture
     {
-        public HubFixture(string? hostConnectionId, int queueCapacity = 8)
+        public HubFixture(
+            string? hostConnectionId,
+            int queueCapacity = 8,
+            IRuntimeCommandAdmission? admission = null,
+            string connectionId = "connection-1")
         {
             Queue = new RuntimeCommandQueue(queueCapacity);
             var hostRegistry = new Mock<IRuntimeHostRegistry>();
             hostRegistry.SetupGet(registry => registry.HostConnectionId).Returns(hostConnectionId);
+            hostRegistry.Setup(registry => registry.IsHost(It.IsAny<string>())).Returns<string>(id => id == hostConnectionId);
+            var context = new Mock<HubCallerContext>();
+            context.SetupGet(value => value.ConnectionId).Returns(connectionId);
             var clients = new Mock<IHubCallerClients<IRuntimeHubCallbacks>>();
             clients.Setup(candidate => candidate.Client(It.IsAny<string>())).Returns(HostProxy.Object);
 
@@ -240,10 +301,11 @@ internal sealed class RuntimeCommandAdmissionTests
                 new Mock<ISolutionCache>().Object,
                 hostRegistry.Object,
                 new Mock<IRuntimeBroadcastMetrics>().Object,
-                new RuntimeCommandAdmission(Queue, KnownProject()),
+                admission ?? TestCommandAdmission.Create(Queue, KnownProject()),
                 new Mock<IRuntimeRemoteRegistry>().Object)
             {
-                Clients = clients.Object
+                Clients = clients.Object,
+                Context = context.Object
             };
         }
 

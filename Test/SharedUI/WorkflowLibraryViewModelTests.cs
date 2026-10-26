@@ -270,7 +270,7 @@ public sealed class WorkflowLibraryViewModelTests
                 WorkflowId = workflow.Id,
                 SourceCorrelationId = Guid.NewGuid(),
                 Status = WorkflowExecutionStatus.Succeeded,
-                PlannedEffects = [plannedEffect]
+                PlannedEffects = (WorkflowPlannedEffect[])[plannedEffect]
             });
         var executionContext = new ActionExecutionContext { Z21 = Mock.Of<IZ21>() };
         using var library = new WorkflowLibraryViewModel(

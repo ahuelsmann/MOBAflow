@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using Moba.Contracts.Runtime;
+using Moba.Domain;
 using Moba.MOBApi.Controllers;
 using Moba.MOBApi.Service;
 
@@ -95,7 +96,7 @@ internal sealed class RuntimeCommandsControllerTests
         var queue = new RuntimeCommandQueue(capacity: 1);
         var controller = new JourneyProgressController(
             SnapshotWithJourneys(firstJourney, secondJourney),
-            new RuntimeCommandAdmission(queue, KnownProject()))
+            TestCommandAdmission.Create(queue, KnownProject()))
         {
             ControllerContext = LoopbackContext()
         };
@@ -117,7 +118,7 @@ internal sealed class RuntimeCommandsControllerTests
     {
         var controller = new JourneyProgressController(
             SnapshotWithJourneys(Guid.NewGuid()),
-            new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 1), KnownProject()))
+            TestCommandAdmission.Create(new RuntimeCommandQueue(capacity: 1), KnownProject()))
         {
             ControllerContext = LoopbackContext()
         };
@@ -125,10 +126,70 @@ internal sealed class RuntimeCommandsControllerTests
         Assert.That(controller.Reset(Guid.NewGuid()), Is.InstanceOf<NotFoundObjectResult>());
     }
 
+    [Test]
+    public void MissingRequests_ReturnBadRequestWithTheirReason()
+    {
+        var controller = CreateController(capacity: 4);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(ErrorOf(controller.EnqueueSignalAspect(null)), Is.EqualTo("SignalId is required."));
+            Assert.That(ErrorOf(controller.EnqueueLocomotiveDrive(null)), Is.EqualTo("Address is required."));
+            Assert.That(ErrorOf(controller.EnqueueLocomotiveFunction(null)), Is.EqualTo("Address is required."));
+            Assert.That(() => controller.DequeuePending(null!), Throws.ArgumentNullException);
+        }
+    }
+
+    [Test]
+    public void AcceptedCommands_AreQueuedWithEveryField_AndReturnedInOrder()
+    {
+        var queue = new RuntimeCommandQueue(capacity: 4);
+        var controller = new RuntimeCommandsController(TestCommandAdmission.Create(queue, KnownProject()));
+        var signalId = Guid.NewGuid();
+        controller.EnqueueSignalAspect(new RuntimeCommandsController.SetSignalAspectRequest(Project, signalId, SignalAspect.Ks1));
+        controller.EnqueueLocomotiveDrive(new RuntimeCommandsController.SetLocomotiveDriveRequest(Project, 3, 40, false));
+        controller.EnqueueLocomotiveFunction(new RuntimeCommandsController.SetLocomotiveFunctionRequest(Project, 4, 5, true));
+
+        var pending = Enumerable.Range(0, 3)
+            .Select(_ => Payload((RuntimeCommandEnvelope?)((OkObjectResult)controller.DequeuePending(queue)).Value))
+            .ToList();
+        var afterLast = controller.DequeuePending(queue);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(pending, Is.EqualTo(new[]
+            {
+                new RuntimeCommandEnvelope
+                {
+                    ProjectId = Project, Type = RuntimeCommandType.SetSignalAspect, SignalId = signalId, SignalAspect = SignalAspect.Ks1
+                },
+                new RuntimeCommandEnvelope
+                {
+                    ProjectId = Project, Type = RuntimeCommandType.SetLocomotiveDrive, LocomotiveAddress = 3, Speed = 40, Forward = false
+                },
+                new RuntimeCommandEnvelope
+                {
+                    ProjectId = Project, Type = RuntimeCommandType.SetLocomotiveFunction, LocomotiveAddress = 4, FunctionIndex = 5,
+                    FunctionIsOn = true
+                }
+            }.Select(Payload)));
+            Assert.That(afterLast, Is.InstanceOf<NoContentResult>());
+        }
+    }
+
+    private static string? ErrorOf(IActionResult result)
+    {
+        var value = ((BadRequestObjectResult)result).Value!;
+        return value.GetType().GetProperty("error")!.GetValue(value) as string;
+    }
+
+    /// <summary>Clears the generated command id and timestamp so only the command payload is compared.</summary>
+    private static RuntimeCommandEnvelope? Payload(RuntimeCommandEnvelope? command) =>
+        command is null ? null : command with { CommandId = Guid.Empty, CreatedAt = default };
     private static RuntimeCommandsController CreateController(int capacity)
     {
         var queue = new RuntimeCommandQueue(capacity);
-        return new RuntimeCommandsController(new RuntimeCommandAdmission(queue, KnownProject()));
+        return new RuntimeCommandsController(TestCommandAdmission.Create(queue, KnownProject()));
     }
 
     /// <summary>A synchronized solution that contains only <see cref="Project"/>.</summary>

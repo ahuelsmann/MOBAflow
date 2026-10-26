@@ -43,6 +43,7 @@ public static class MobiLanHttpClientFactory
     {
         return new SocketsHttpHandler
         {
+            AllowAutoRedirect = false,
             UseProxy = false,
             AutomaticDecompression = DecompressionMethods.None,
             ConnectTimeout = connectTimeout,
@@ -91,7 +92,7 @@ public static class MobiLanHttpClientFactory
 #if ANDROID
         return new AndroidMessageHandler
         {
-            AllowAutoRedirect = true,
+            AllowAutoRedirect = false,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
             UseProxy = false,

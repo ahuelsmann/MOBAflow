@@ -42,56 +42,50 @@ public interface IPlatformManager : IDisposable
     void ResetAll();
 }
 
+/// <summary>
+/// Creates the journey manager of an activated project. Each manager receives its own workflow execution
+/// coordinator and disposes it; the shared collaborators belong to the caller.
+/// </summary>
 public sealed class JourneyManagerFactory(
-    IZ21 z21,
     IWorkflowService workflowService,
-    JourneyManagerDependencies dependencies,
-    ILogger<JourneyManager>? logger)
+    IJourneyStopTransitionService stopTransitionService,
+    IJourneyRuntimeStateStore runtimeStateStore,
+    IEventBus eventBus,
+    TimeProvider timeProvider,
+    ILoggerFactory loggerFactory)
 {
-    private readonly JourneyManagerDependencies _dependencies = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
+    private readonly IWorkflowService _workflowService = workflowService ?? throw new ArgumentNullException(nameof(workflowService));
+    private readonly IJourneyStopTransitionService _stopTransitionService = stopTransitionService ?? throw new ArgumentNullException(nameof(stopTransitionService));
+    private readonly IJourneyRuntimeStateStore _runtimeStateStore = runtimeStateStore ?? throw new ArgumentNullException(nameof(runtimeStateStore));
+    private readonly IEventBus _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+    private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
 
-    public JourneyManagerFactory(
-        IZ21 z21,
-        IWorkflowService workflowService,
-        IJourneyStopTransitionService? stopTransitionService = null,
-        IJourneyRuntimeStateStore? runtimeStateStore = null,
-        ILogger<JourneyManager>? logger = null,
-        TimeProvider? timeProvider = null,
-        IEventBus? eventBus = null)
-        : this(z21, workflowService, new JourneyManagerDependencies
-        {
-            StopTransitionService = stopTransitionService,
-            RuntimeStateStore = runtimeStateStore,
-            TimeProvider = timeProvider,
-            EventBus = eventBus
-        }, logger)
-    {
-    }
-
-    public IJourneyManager Create(Project project, ActionExecutionContext executionContext,
-        InPortCounterService? counters = null) =>
+    public IJourneyManager Create(Project project, ActionExecutionContext executionContext, InPortCounterService counters) =>
         new JourneyManager(
-            z21,
             project,
-            workflowService,
             executionContext,
-            logger,
             new JourneyManagerDependencies
             {
-                StopTransitionService = _dependencies.StopTransitionService,
-                RuntimeStateStore = _dependencies.RuntimeStateStore,
-                TimeProvider = _dependencies.TimeProvider,
-                EventBus = _dependencies.EventBus,
-                ExecutionCoordinator = _dependencies.ExecutionCoordinator,
-                InPortCounterService = counters ?? _dependencies.InPortCounterService
-            });
+                StopTransitionService = _stopTransitionService,
+                RuntimeStateStore = _runtimeStateStore,
+                EventBus = _eventBus,
+                ExecutionCoordinator = new WorkflowExecutionCoordinator(_workflowService, _timeProvider),
+                InPortCounterService = counters
+            },
+            _loggerFactory.CreateLogger<JourneyManager>());
 }
 
+/// <summary>
+/// Creates the platform manager of a station; each manager logs under the <see cref="PlatformManager"/> category.
+/// </summary>
 public sealed class PlatformManagerFactory(
     IZ21 z21,
     IWorkflowService workflowService,
-    ILogger<PlatformManager>? logger = null)
+    ILoggerFactory loggerFactory)
 {
-    public IPlatformManager Create(Project project, Station station, ActionExecutionContext? executionContext = null) =>
-        new PlatformManager(z21, project, station, workflowService, executionContext, logger);
+    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+
+    public IPlatformManager Create(Project project, Station station, ActionExecutionContext executionContext) =>
+        new PlatformManager(z21, project, station, workflowService, executionContext, _loggerFactory.CreateLogger<PlatformManager>());
 }

@@ -137,7 +137,7 @@ dependencies.
 | RF-06 | [#90](https://github.com/ahuelsmann/MOBAflow/issues/90) | Release and CI run an explicit analyzer baseline and reject new unapproved diagnostics. |
 | RF-07 | [#360](https://github.com/ahuelsmann/MOBAflow/issues/360) | Every supported delivery target has a reproducible mandatory clean-build lane. |
 | RF-08 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
-| RF-09 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Risk-critical behavior has non-decreasing coverage and mutation protection. |
+| RF-09 | [#366](https://github.com/ahuelsmann/MOBAflow/issues/366) | Risk-critical behavior has non-decreasing coverage and mutation protection. |
 | RF-10 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Formatting drift fails CI without obscuring functional changes. |
 | RF-11 | [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
 | RF-12 | [#242](https://github.com/ahuelsmann/MOBAflow/issues/242) | Mobile session, discovery, runtime projection, synchronization, and upload concerns are separated. |
@@ -146,7 +146,7 @@ dependencies.
 | RF-15 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) | Unused synchronous and unsafe path abstractions are removed or hardened. |
 | RF-16 | [#374](https://github.com/ahuelsmann/MOBAflow/issues/374) | Critical workflows pass accessibility, keyboard, contrast, and theme acceptance. |
 | RF-17 | [#116](https://github.com/ahuelsmann/MOBAflow/issues/116) | Repository guidance and executable engineering gates describe the same rules. |
-| RF-18 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical throughput, load, telemetry, recovery, and endurance behavior is measured. |
+| RF-18 | [#382](https://github.com/ahuelsmann/MOBAflow/issues/382) | Critical throughput, load, telemetry, recovery, and endurance behavior is measured. |
 | RF-19 | [#165](https://github.com/ahuelsmann/MOBAflow/issues/165) | MOBApi and its clients contain no authentication, pairing or credential code; every remote command is validated and the command queue is bounded. |
 | RF-20 | [#183](https://github.com/ahuelsmann/MOBAflow/issues/183) | Architecture tests enforce the project dependency and namespace rules of the whole solution. |
 | RF-21 | [#185](https://github.com/ahuelsmann/MOBAflow/issues/185) | Unused and misplaced types are removed or moved to the project that owns them. |
@@ -195,18 +195,9 @@ does not regress.
 
 ### RF-09: Coverage and mutation ratchets
 
-Sequence:
-
-1. protect Z21 ordering and overload behavior;
-2. protect MOBApi command validation and remote command queue bounds;
-3. establish the Backend and API mutation lanes;
-4. extend measured lanes to Common and SharedUI;
-5. extend further only where the tooling is technically suitable.
-
-Acceptance anchor: existing coverage thresholds do not decrease without an
-approved rationale; security and concurrency paths include negative and
-failure-path assertions; every activated mutation lane records a baseline and
-adopts a non-decreasing ratchet.
+The baseline, lane order, triage rules and delivery slices now belong to
+[the RF-09 child plan](366-coverage-mutation-ratchets.md), owned by
+[issue #366](https://github.com/ahuelsmann/MOBAflow/issues/366).
 
 ### RF-10: Formatting baseline and gate
 
@@ -265,19 +256,9 @@ check or explicit review owner detects future drift.
 
 ### RF-18: Performance and operational verification
 
-Sequence:
-
-1. benchmark EventBus throughput and runtime-snapshot serialization;
-2. load-test SignalR behavior and the bounded remote command queue;
-3. measure MAUI startup and binding costs;
-4. run firmware endurance scenarios with packet loss and Wi-Fi reconnection;
-5. verify structured telemetry for dropped events, rejected commands, queue
-   overload, recovery, and failed shutdown.
-
-Acceptance anchor: each critical scenario records its environment, baseline,
-limit, agreed regression threshold, and normal and failure results; required
-hardware evidence covers recovery and endurance; the work consumes RF-04,
-RF-07, and RF-19 guarantees without reopening their implementation scope.
+The scenario inventory, decisions and delivery steps now belong to
+[the RF-18 child plan](382-operational-verification.md), owned by
+[issue #382](https://github.com/ahuelsmann/MOBAflow/issues/382).
 
 ### RF-19: Remove the MOBApi control-plane security
 

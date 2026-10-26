@@ -288,6 +288,9 @@ current session. It does not persist capabilities, identities, session IDs, or
 credentials. No production destination-display workflow service is wired into
 the default action handler yet.
 
+The frame scheduler options have no target address by default. The UDP frame sender rejects an
+unconfigured address before creating a transport connection.
+
 `MOBAdisplay/esp32/src/main.cpp` implements the current 240x280 receiver: Wi-Fi
 setup/status endpoints, a length-safe version-1 parser, bounded replay
 protection, `FrameAssembler` staging and atomic TFT presentation.
@@ -320,16 +323,37 @@ MOBApi maps controllers plus two SignalR hubs.
 | `/runtime-hub` | Live runtime and solution notifications |
 | `/photos-hub` | Photo notifications |
 
+`PUT /api/solution` validates and caches the raw JSON body. Its optional
+`X-MOBAflow-Solution-Path` and `X-MOBAflow-Active-Project` headers supply metadata.
+Each uses a parameter-scoped binder that keeps the first value exposed by ASP.NET Core,
+including an empty or whitespace value, without joining repeated values or splitting
+commas. A missing header remains `null`; Kestrel removes HTTP optional whitespace on
+the wire before binding. Invalid solution JSON returns `400` without changing the
+solution or snapshot caches or broadcasting a solution update.
+
 The default HTTP port is `5001`. `UdpDiscoveryService` runs in standalone MOBApi
 unless `MOBAFLOW_DISCOVERY_IN_WINUI` indicates that the WinUI host owns
 discovery. Discovery responses carry the address and HTTP port
 (`MOBAFLOW_REST_API|ip|port`).
 
+MOBAsmart's quick HTTP discovery pass uses the same private IPv4 candidate
+filter as its full subnet scan: recent addresses first, then nearby hosts, with
+duplicates removed. Explicit saved addresses have no special factory-address
+exception. Its named HTTP clients and SignalR HTTP transport target MOBApi
+directly and do not automatically follow HTTP redirects.
+
 MOBApi has no authentication: every REST and SignalR operation is available over
 plain HTTP to every device in the home network, as described in the
 [operating model](../SECURITY.md#operating-model). Every remote command passes one
 admission step that validates its values before it is forwarded to MOBAflow or
-queued; the fallback queue holds at most 128 commands.
+queued; the fallback queue holds at most 128 commands. Every command that this
+admission step rejects (failed validation or full queue) increments the counter
+`moba.runtime_commands.rejected` of the meter `Moba.MOBApi`, tagged with `reason`
+(`invalid` or `queue_full`) and `command`; a full queue is also logged as a
+warning. Malformed requests that the REST or SignalR boundary rejects earlier
+(for example a missing body or an unparsable project, signal or aspect value) are
+not counted. Watch the counter live with
+`dotnet-counters monitor --name MOBApi --counters Moba.MOBApi`.
 
 MOBAflow starts MOBApi from an isolated copy of its build output so updates and
 cleanup do not race the running process.
