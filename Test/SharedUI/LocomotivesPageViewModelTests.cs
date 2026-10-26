@@ -26,6 +26,9 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     private LocomotivesPageViewModel _page = null!;
     private Mock<Action<string>> _explorer = null!;
     private LocomotiveTrainUsageViewModel _usage = null!;
+    private Mock<IProjectRuntimeSnapshots> _runtimeSnapshots = null!;
+    private readonly Dictionary<Guid, MobaRuntimeSnapshot> _currentSnapshots = [];
+    private RuntimeLocomotiveControl _control = null!;
 
     [SetUp]
     public void SetUp()
@@ -51,8 +54,12 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: _session);
         _explorer = new Mock<Action<string>>();
         _usage = TestRollingStockPages.CreateUsage(_session);
+        _runtimeSnapshots = new Mock<IProjectRuntimeSnapshots>();
+        _currentSnapshots.Clear();
+        _runtimeSnapshots.SetupGet(value => value.Snapshots).Returns(() => _currentSnapshots.Values.ToArray());
+        _control = new RuntimeLocomotiveControl(_runtimeSnapshots.Object, dispatcher.Object);
         _page = new LocomotivesPageViewModel(_session, TestFileServices.Photos(_io.Object), _persistence.Object,
-            new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, _usage),
+            new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, _usage, _control),
             NullLogger<LocomotivesPageViewModel>.Instance, _explorer.Object);
     }
 
@@ -61,6 +68,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     {
         _page.Dispose();
         _usage.Dispose();
+        _control.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -221,5 +229,137 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         {
             File.Delete(temporaryPhoto);
         }
+    }
+
+    [Test]
+    public void ControlledLocomotive_CannotBeDeletedAtSpeedZero_AndExplainsWhy()
+    {
+        var locomotive = AddLocomotiveWithAddress(3);
+
+        PublishRuntime(isConnected: true, (3, 0));
+        _page.DeleteLocomotiveCommand.Execute(null);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_page.DeleteLocomotiveCommand.CanExecute(null), Is.False);
+            Assert.That(_page.IsDeleteLocomotiveBlocked, Is.True);
+            Assert.That(_page.DeleteLocomotiveBlockedReason, Is.EqualTo("Stop controlling this locomotive before you delete it."));
+            Assert.That(_session.SelectedProject!.Model.Locomotives, Does.Contain(locomotive.Model));
+            Assert.That(_page.SelectedLocomotive, Is.SameAs(locomotive));
+        }
+    }
+
+    [Test]
+    public void DrivingLocomotive_CannotBeDeleted()
+    {
+        AddLocomotiveWithAddress(3);
+
+        PublishRuntime(isConnected: true, (3, 40));
+
+        Assert.That(_page.DeleteLocomotiveCommand.CanExecute(null), Is.False);
+    }
+
+    [Test]
+    public void UncontrolledLocomotives_CanBeDeleted()
+    {
+        AddLocomotiveWithAddress(3);
+        PublishRuntime(isConnected: true, (4, 20));
+        var otherAddress = _page.DeleteLocomotiveCommand.CanExecute(null);
+        PublishRuntime(isConnected: false, (3, 0));
+        var disconnected = _page.DeleteLocomotiveCommand.CanExecute(null);
+        _page.SelectedLocomotive!.DigitalAddress = null;
+        PublishRuntime(isConnected: true, (3, 0));
+        var withoutAddress = _page.DeleteLocomotiveCommand.CanExecute(null);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(otherAddress, Is.True);
+            Assert.That(disconnected, Is.True);
+            Assert.That(withoutAddress, Is.True);
+            Assert.That(_page.DeleteLocomotiveBlockedReason, Is.Null);
+        }
+    }
+
+    [Test]
+    public void AnotherProjectsRuntime_DoesNotBlockTheSelectedProject()
+    {
+        AddLocomotiveWithAddress(3);
+
+        PublishRuntime(Guid.NewGuid(), isConnected: true, (3, 0));
+
+        Assert.That(_page.DeleteLocomotiveCommand.CanExecute(null), Is.True);
+    }
+
+    [Test]
+    public void ReleasedLocomotive_CanBeDeletedAgain_AndNotifiesTheCommand()
+    {
+        var locomotive = AddLocomotiveWithAddress(3);
+        PublishRuntime(isConnected: true, (3, 0));
+        var notifications = 0;
+        _page.DeleteLocomotiveCommand.CanExecuteChanged += (_, _) => notifications++;
+
+        PublishRuntime(isConnected: true);
+        var notifiedOnRelease = notifications;
+        var canDelete = _page.DeleteLocomotiveCommand.CanExecute(null);
+        _page.DeleteLocomotiveCommand.Execute(null);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(notifiedOnRelease, Is.EqualTo(1));
+            Assert.That(canDelete, Is.True);
+            Assert.That(_session.SelectedProject!.Model.Locomotives, Does.Not.Contain(locomotive.Model));
+        }
+    }
+
+    [Test]
+    public void AddressChange_UpdatesTheDeleteState_WithoutARuntimeSnapshot()
+    {
+        var locomotive = AddLocomotiveWithAddress(7);
+        PublishRuntime(isConnected: true, (3, 0));
+        var canDeleteBefore = _page.DeleteLocomotiveCommand.CanExecute(null);
+        var commandNotifications = 0;
+        var blockedNotifications = 0;
+        _page.DeleteLocomotiveCommand.CanExecuteChanged += (_, _) => commandNotifications++;
+        _page.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(LocomotivesPageViewModel.IsDeleteLocomotiveBlocked))
+                blockedNotifications++;
+        };
+
+        locomotive.DigitalAddress = 3;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(canDeleteBefore, Is.True);
+            Assert.That(commandNotifications, Is.EqualTo(1));
+            Assert.That(blockedNotifications, Is.EqualTo(1));
+            Assert.That(_page.IsDeleteLocomotiveBlocked, Is.True);
+        }
+    }
+
+    private LocomotiveViewModel AddLocomotiveWithAddress(uint address)
+    {
+        _page.AddLocomotiveCommand.Execute(null);
+        var locomotive = _page.SelectedLocomotive!;
+        locomotive.DigitalAddress = address;
+        return locomotive;
+    }
+
+    private void PublishRuntime(bool isConnected, params (int Address, int Speed)[] locomotives) =>
+        PublishRuntime(_session.SelectedProject!.Model.Id, isConnected, locomotives);
+
+    private void PublishRuntime(Guid projectId, bool isConnected, params (int Address, int Speed)[] locomotives)
+    {
+        var snapshot = new MobaRuntimeSnapshot
+        {
+            ProjectId = projectId,
+            IsConnected = isConnected,
+            LocomotiveStates = locomotives.ToDictionary(
+                locomotive => locomotive.Address,
+                locomotive => new LocomotiveRuntimeSnapshot { Address = locomotive.Address, Speed = locomotive.Speed })
+        };
+        // The runtime replaces its current snapshot, then publishes it.
+        _currentSnapshots[projectId] = snapshot;
+        _runtimeSnapshots.Raise(value => value.RuntimeSnapshotChanged += null, new ProjectRuntimeSnapshotEventArgs(snapshot));
     }
 }

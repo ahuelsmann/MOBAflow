@@ -308,13 +308,15 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<LayoutColumnWidthsViewModel>();
         services.AddSingleton<LocomotiveManagementViewModel>();
         services.AddSingleton<LocomotiveTrainUsageViewModel>();
+        services.AddSingleton(sp => new RuntimeLocomotiveControl(
+            sp.GetRequiredService<IProjectRuntimeSnapshots>(), sp.GetRequiredService<IUiDispatcher>()));
         services.AddSingleton(sp => new LocomotivesPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<PhotoAssignmentService>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             new LocomotivePageAnalysis(sp.GetRequiredService<LocomotiveManagementViewModel>(),
-                sp.GetRequiredService<LocomotiveTrainUsageViewModel>()),
+                sp.GetRequiredService<LocomotiveTrainUsageViewModel>(), sp.GetRequiredService<RuntimeLocomotiveControl>()),
             sp.GetRequiredService<ILogger<LocomotivesPageViewModel>>(),
             showPhotoInExplorer: fullPath => System.Diagnostics.Process.Start(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
