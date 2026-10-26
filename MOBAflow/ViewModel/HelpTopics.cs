@@ -2,7 +2,7 @@
 namespace Moba.WinUI.ViewModel;
 
 /// <summary>A help category with its sections, in display order.</summary>
-internal sealed record HelpCategory(string Title, bool IsExpandedByDefault, IReadOnlyList<string> Sections);
+internal sealed record HelpCategory(string Title, bool IsExpandedByDefault, string[] Sections);
 
 /// <summary>
 /// The desktop help topics: the category tree and the text of each section.
@@ -16,7 +16,7 @@ internal static class HelpTopics
     public const string MissingSectionText = "Select a topic from the menu.";
 
     /// <summary>Gets the help categories in display order.</summary>
-    public static IReadOnlyList<HelpCategory> Categories { get; } =
+    public static HelpCategory[] Categories { get; } =
     [
         new("Getting Started", true, ["Welcome", "Installation", "Z21 Connection", "First Ride"]),
         new("Train Control", false, ["Speed Control", "Functions F0-F28", "Direction", "Emergency Stop"]),
