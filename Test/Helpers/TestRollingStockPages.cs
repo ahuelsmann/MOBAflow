@@ -101,6 +101,18 @@ internal sealed partial class TestRollingStockPages : IDisposable
         _pages.Add(page);
         return page;
     }
+    public JourneysPageViewModel GetJourneysPage(ISolutionSession session,
+        IRuntimeCommandGateway gateway, IUiDispatcher dispatcher)
+    {
+        var persistence = new Mock<ISettingsService>();
+        persistence.Setup(service => service.GetSettings()).Returns(new AppSettings());
+        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        var page = new JourneysPageViewModel(session, gateway, dispatcher, Mock.Of<ICityService>(),
+            persistence.Object, new LayoutColumnWidthsViewModel(), NullLogger<JourneysPageViewModel>.Instance);
+        _pages.Add(page);
+        return page;
+    }
+
     public void Dispose()
     {
         foreach (var page in _pages)

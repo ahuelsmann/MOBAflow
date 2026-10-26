@@ -2504,13 +2504,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
       "count": 1
     },
@@ -2778,7 +2771,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2946,20 +2939,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/Action/WorkflowActionViewModelFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Solution.cs",
       "count": 1
     },
     {
@@ -3371,13 +3350,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "IDE0053",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0290",
       "path": "SharedUI/Service/FeedbackCounterEngine.cs",
       "count": 1
@@ -3576,7 +3548,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 22
+      "count": 16
     },
     {
       "project": "SharedUI",
@@ -3591,13 +3563,6 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",

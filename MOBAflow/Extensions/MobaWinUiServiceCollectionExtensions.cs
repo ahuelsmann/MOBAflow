@@ -370,6 +370,7 @@ public static class MobaWinUiServiceCollectionExtensions
                 EventBus = sp.GetRequiredService<IEventBus>()
             }));
         services.AddSingleton<StationsPageViewModel>();
+        services.AddSingleton<JourneysPageViewModel>();
         services.AddSingleton<TrainsPageViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
@@ -378,13 +379,12 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<ITrafficMonitor>(),
             sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<SettingsPageViewModel>(),
             sp.GetRequiredService<TrainsPageViewModel>(),
             sp.GetRequiredService<StationsPageViewModel>(),
+            sp.GetRequiredService<JourneysPageViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
-            sp.GetRequiredService<ICityService>(),
             sp.GetRequiredService<ISettingsService>(),
             dialogService: sp.GetService<IDialogService>(),
             projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>()));
@@ -433,7 +433,20 @@ public static class MobaWinUiServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<PostStartupInitializationService>();
+        services.AddSingleton(sp =>
+        {
+            var window = sp.GetRequiredService<MainWindow>();
+            var healthChecks = sp.GetRequiredService<HealthCheckService>();
+            // The host owns attaching health events to its window; startup only invokes that action.
+            return new PostStartupInitializationService(
+                sp.GetRequiredService<IEventBus>(),
+                () => window.InitializeHealthChecks(healthChecks),
+                sp.GetRequiredService<JourneysPageViewModel>(),
+                sp.GetRequiredService<AppSettings>(),
+                sp.GetRequiredService<MasterDataStore>(),
+                sp.GetRequiredService<RestApiProcessService>(),
+                sp.GetRequiredService<ILogger<PostStartupInitializationService>>());
+        });
         services.AddSingleton<SpeechHealthCheck>();
 
         return services;

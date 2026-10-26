@@ -16,12 +16,6 @@ public partial class MainWindowViewModel
         CurrentSelectedObject = item);
 
     /// <summary>
-    /// Command for JourneysPage - sets JourneysPageSelectedObject.
-    /// Used for: Journeys, Stations
-    /// </summary>
-    public ICommand JourneysPageItemClickedCommand => field ??= new RelayCommand<object?>(item => JourneysPageSelectedObject = item);
-
-    /// <summary>
     /// Command for WorkflowsPage - sets WorkflowsPageSelectedObject.
     /// Used for: Workflows, Actions
     /// </summary>
