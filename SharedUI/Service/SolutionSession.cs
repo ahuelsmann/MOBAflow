@@ -15,6 +15,8 @@ using Interface;
 using Microsoft.Extensions.Logging;
 
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 using ViewModel;
 
@@ -60,7 +62,15 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
     private int _autoSaveSuppressionCount;
     private int _drainStarted;
+
+    /// <summary>Counts edits that requested a save; a save snapshot records the count it contains.</summary>
     private long _saveRequestedVersion;
+
+    /// <summary>Changes on the UI thread whenever the solution is replaced; a save only applies to its own generation.</summary>
+    private long _solutionGeneration;
+
+    /// <summary>The project each tracked source belonged to when it was tracked, for runtime refreshes after a project switch.</summary>
+    private readonly ConditionalWeakTable<object, ProjectViewModel> _trackedOwners = [];
     private bool _isShuttingDown;
 
     /// <summary>
@@ -170,6 +180,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         }
 
         var currentPath = CurrentSolutionPath;
+        var generation = Volatile.Read(ref _solutionGeneration);
         if (_isShuttingDown || string.IsNullOrWhiteSpace(currentPath))
         {
             SetSaveStatus(
@@ -182,7 +193,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
         try
         {
-            await SaveCoreAsync(currentPath, allowPathSelection: false, requestVersion).ConfigureAwait(false);
+            await SaveCoreAsync(currentPath, allowPathSelection: false, generation, requestVersion).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
                                    or InvalidOperationException or NotSupportedException)
@@ -206,19 +217,20 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
     /// <inheritdoc />
     public Task<bool> SaveAsync(bool allowPathSelection) =>
-        SaveCoreAsync(CurrentSolutionPath, allowPathSelection);
+        SaveCoreAsync(CurrentSolutionPath, allowPathSelection, Volatile.Read(ref _solutionGeneration));
 
     /// <inheritdoc />
     public async Task NewSolutionAsync()
     {
         // Stay on the UI thread: the following steps change collections bound to the UI.
-        if (HasUnsavedChanges && !await SaveCoreAsync(CurrentSolutionPath, allowPathSelection: true).ConfigureAwait(true))
+        if (HasUnsavedChanges && !await SaveCoreAsync(CurrentSolutionPath, allowPathSelection: true, Volatile.Read(ref _solutionGeneration)).ConfigureAwait(true))
         {
             return;
         }
 
         using (SuppressAutoSave())
         {
+            Interlocked.Increment(ref _solutionGeneration);
             Solution.Projects.Clear();
             Solution.Name = "New Solution";
 
@@ -321,6 +333,10 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         ArgumentNullException.ThrowIfNull(source);
         source.PropertyChanged -= OnTrackedModelPropertyChanged;
         source.PropertyChanged += OnTrackedModelPropertyChanged;
+        if (SelectedProject is { } owner)
+        {
+            _trackedOwners.AddOrUpdate(source, owner);
+        }
     }
 
     /// <inheritdoc />
@@ -407,9 +423,10 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
             return;
         }
 
-        // The runtime reads a snapshot of the project; refresh it so the change takes effect immediately.
+        // The runtime reads a snapshot of the project; refresh it so the change takes effect immediately. A change can
+        // arrive after another project was selected, so the runtime of the project that owns the source is refreshed.
         // A new Z21 assignment needs a new runtime on the new connection.
-        if (SelectedProject is { } project)
+        if (OwnerOf(sender) is { } project)
         {
             var update = sender is ProjectViewModel
                 && e.PropertyName is nameof(ProjectViewModel.Z21IpAddress) or nameof(ProjectViewModel.Z21Port)
@@ -440,6 +457,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     {
         using (SuppressAutoSave())
         {
+            Interlocked.Increment(ref _solutionGeneration);
             ClearSelection();
 
             Solution.Projects.Clear();
@@ -477,7 +495,18 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         SelectedJourney = null;
     }
 
-    private async Task<bool> SaveCoreAsync(string? currentPath, bool allowPathSelection, long? autoSaveRequestVersion = null)
+    private ProjectViewModel? OwnerOf(object? sender) => sender switch
+    {
+        ProjectViewModel project => project,
+        not null when _trackedOwners.TryGetValue(sender, out var owner) => owner,
+        _ => SelectedProject
+    };
+
+    // Saves enter the write lock before they take their snapshot, so writes happen in snapshot order and a later write
+    // never holds an older state. The snapshot is taken on the UI thread: SolutionSaving subscribers and the
+    // serialization see one consistent state, and a snapshot is only written to the path of its own solution.
+    private async Task<bool> SaveCoreAsync(
+        string? currentPath, bool allowPathSelection, long generation, long? autoSaveRequestVersion = null)
     {
         if (!_solutionIo.CanPersist || _isShuttingDown)
             return false;
@@ -487,10 +516,33 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
         try
         {
-            SolutionSaving?.Invoke(this, EventArgs.Empty);
+            var saved = false;
+            var path = currentPath;
+            while (await OnUiAsync(() => Task.FromResult(TakeSnapshot(generation))).ConfigureAwait(false) is { } snapshot)
+            {
+                var (success, writtenPath, error) =
+                    await SaveAtPathAsync(snapshot.Solution, path, allowPathSelection).ConfigureAwait(false);
+                if (!success || writtenPath is null)
+                {
+                    if (!string.IsNullOrEmpty(error))
+                        throw new InvalidOperationException($"Failed to save solution: {error}");
 
-            var result = await SaveAtPathAsync(currentPath, allowPathSelection).ConfigureAwait(false);
-            return CompleteSave(result, autoSaveRequestVersion);
+                    return saved;
+                }
+
+                saved = true;
+                path = writtenPath;
+                var isLatest = await OnUiAsync(() => Task.FromResult(
+                    ApplySuccessfulSave(writtenPath, generation, snapshot.EditVersion))).ConfigureAwait(false);
+
+                // An auto-save that is not the latest is followed by the save of the newer edit. A manual save is not:
+                // edits made while its picker was open could not be saved without a path, and a caller such as New
+                // replaces the solution once the save returns. It writes them to its path before it completes.
+                if (isLatest || autoSaveRequestVersion.HasValue)
+                    break;
+            }
+
+            return saved;
         }
         finally
         {
@@ -511,41 +563,80 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         }
     }
 
-    private async Task<(bool success, string? path, string? error)> SaveAtPathAsync(string? currentPath, bool allowPathSelection)
+    /// <summary>Runs <paramref name="work"/> on the UI thread (inline when already there) and returns its result.</summary>
+    private Task<T> OnUiAsync<T>(Func<Task<T>> work)
+    {
+        var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            try
+            {
+                _ = CompleteFromAsync(work(), completion);
+            }
+            catch (Exception ex) when (completion.TrySetException(ex))
+            {
+                // The awaiting save receives the failure, as it did when SolutionSaving ran inside the save.
+            }
+        });
+        return completion.Task;
+    }
+
+    private static async Task CompleteFromAsync<T>(Task<T> work, TaskCompletionSource<T> completion)
+    {
+        try
+        {
+            completion.TrySetResult(await work.ConfigureAwait(false));
+        }
+        catch (Exception ex) when (completion.TrySetException(ex))
+        {
+            // Forwarded to the awaiting save.
+        }
+    }
+
+    private SaveSnapshot? TakeSnapshot(long generation)
+    {
+        // A solution replaced since the request is not saved under its old path.
+        if (generation != Volatile.Read(ref _solutionGeneration))
+            return null;
+
+        SolutionSaving?.Invoke(this, EventArgs.Empty);
+        return new SaveSnapshot(CopyForSave(Solution), Volatile.Read(ref _saveRequestedVersion));
+    }
+
+    private static Solution CopyForSave(Solution solution) =>
+        JsonSerializer.Deserialize<Solution>(JsonSerializer.Serialize(solution, JsonOptions.Default), JsonOptions.Default)
+        ?? throw new InvalidOperationException("The solution could not be copied for saving.");
+
+    private async Task<(bool success, string? path, string? error)> SaveAtPathAsync(
+        Solution snapshot, string? currentPath, bool allowPathSelection)
     {
         if (!string.IsNullOrWhiteSpace(currentPath))
-            return await _solutionIo.SaveAsync(Solution, currentPath).ConfigureAwait(false);
+            return await _solutionIo.SaveAsync(snapshot, currentPath).ConfigureAwait(false);
 
+        // The picker belongs to the UI thread; the save continues on the thread pool after the snapshot.
         if (allowPathSelection)
-            return await _solutionIo.SaveAsAsync(Solution).ConfigureAwait(false);
+            return await OnUiAsync(() => _solutionIo.SaveAsAsync(snapshot)).ConfigureAwait(false);
 
         return (false, null, null);
     }
 
-    private bool CompleteSave((bool success, string? path, string? error) result, long? autoSaveRequestVersion)
+    /// <summary>
+    /// Applies a written snapshot on the UI thread and returns <see langword="true"/> when no later edit needs saving.
+    /// </summary>
+    private bool ApplySuccessfulSave(string path, long generation, long editVersion)
     {
-        if (result.success && result.path != null)
-        {
-            ApplySuccessfulSave(result.path, autoSaveRequestVersion);
+        // The file of an earlier solution was written; the loaded solution keeps its own path and state.
+        if (generation != Volatile.Read(ref _solutionGeneration))
             return true;
-        }
 
-        if (!string.IsNullOrEmpty(result.error))
-            throw new InvalidOperationException($"Failed to save solution: {result.error}");
-
-        return false;
-    }
-
-    private void ApplySuccessfulSave(string path, long? autoSaveRequestVersion)
-    {
-        var isLatestAutoSave = !autoSaveRequestVersion.HasValue || IsLatestAutoSaveRequest(autoSaveRequestVersion.Value);
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            CurrentSolutionPath = path;
-            HasUnsavedChanges = !isLatestAutoSave;
-            SolutionSaveState = isLatestAutoSave ? SolutionSaveState.Saved : SolutionSaveState.Saving;
-            SolutionSaveStatusText = isLatestAutoSave ? "Saved" : "Saving";
-        });
+        // Read on the UI thread, where edits happen: an earlier edit is in the snapshot or keeps the solution dirty,
+        // and a later edit already sees the new path and saves itself.
+        var isLatest = editVersion == Volatile.Read(ref _saveRequestedVersion);
+        CurrentSolutionPath = path;
+        HasUnsavedChanges = !isLatest;
+        SolutionSaveState = isLatest ? SolutionSaveState.Saved : SolutionSaveState.Saving;
+        SolutionSaveStatusText = isLatest ? "Saved" : "Saving";
+        return isLatest;
     }
 
     private void ReleaseSaveSemaphore()
@@ -570,6 +661,9 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     }
 
     private bool IsLatestAutoSaveRequest(long version) => version == Volatile.Read(ref _saveRequestedVersion);
+
+    /// <summary>A copy of the solution and the edit version it contains.</summary>
+    private sealed record SaveSnapshot(Solution Solution, long EditVersion);
 
     private void SetSaveStatus(SolutionSaveState state, string text)
     {
