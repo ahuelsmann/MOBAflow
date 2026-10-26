@@ -292,6 +292,8 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             services.AddSingleton(gateway.Object);
             services.AddSingleton(io.Object);
+            // Saves take their snapshot through the dispatcher, so the shutdown save needs one that runs its work.
+            services.AddSingleton<IUiDispatcher>(new ImmediateUiDispatcher());
         });
         await using var providerLifetime = provider.ConfigureAwait(false);
         var journeys = provider.GetRequiredService<JourneysPageViewModel>();
@@ -414,6 +416,25 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>())
             .Build();
+    }
+
+    private sealed class ImmediateUiDispatcher : IUiDispatcher
+    {
+        public void InvokeOnUi(Action action) => action();
+
+        public Task InvokeOnUiAsync(Func<Task> asyncAction) => asyncAction();
+
+        public Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc) => asyncFunc();
+
+        public void InvokeOnUiHighPriority(Action action) => action();
+
+        public void InvokeOnUiLowPriority(Action action) => action();
+
+        public Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
+        {
+            _ = priority;
+            return asyncAction();
+        }
     }
 }
 #endif
