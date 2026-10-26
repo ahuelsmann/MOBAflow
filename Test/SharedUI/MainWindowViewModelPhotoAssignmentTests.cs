@@ -128,13 +128,13 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             mobaRuntimeMock.Object,
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             stationEventBus1,
-            uiDispatcherMock.Object,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null),
             _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntimeMock.Object, new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
             }, stationEventBus1),
+            _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(mobaRuntimeMock.Object), uiDispatcherMock.Object),
             locomotiveSession1,
             loggerMock.Object);
     }
@@ -401,10 +401,10 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             runtime.Object,
             new LocalRuntimeCommandGateway(runtime.Object),
             stationEventBus2,
-            dispatcher.Object,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession2, runtime.Object, io.Object),
             _rollingStockPages.GetStationsPage(locomotiveSession2, runtime.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus2),
+            _rollingStockPages.GetJourneysPage(locomotiveSession2, new LocalRuntimeCommandGateway(runtime.Object), dispatcher.Object),
             locomotiveSession2,
             NullLogger<MainWindowViewModel>.Instance)
         {

@@ -2,8 +2,8 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Active; slice 1 (Settings) integrated through #248; slice 2a (Locomotives) integrated through #257; slice 2b (Wagons) integrated through #264; slice 2c (Train composition) integrated through #272; slice 3a (Stations/platforms) implemented with validation/review tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives integrated at 656bc630; wagons integrated at c4e427d0; train composition starts from main c4e427d084af05eb6db5c6196ffa529a0fd3ac4c; train composition integrated at f6ad0853; station/platform implementation starts from main 28fafa8ef5f9dac2b76233cb2966f00a43fef1b1 and is synchronized with main 947327d5d73a1c6f8f684e0f0f5f91e64f54f1d7 on 2026-10-13
+**Status**: Active; slices 1, 2a, 2b, 2c and 3a integrated through #248, #257, #264, #272 and #282; slice 3b (Journeys/cities) implemented with validation tracked in #219; later slices planned
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main 91f80ab5d0639f2df76b533441b37bf02acd0b3f on 2026-10-17.
 
 ## Purpose and scope
 
@@ -32,9 +32,9 @@ The maintainer authorized the Settings slice on 2026-10-11. It starts from integ
 #191 and FR-001/SC-004 now agree with
 [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs):
 existing shell/composition, WinUI page bindings/navigation, grid-column persistence,
-MonitorPageViewModel, EventManagerViewModel and Android shutdown lookup are named residuals.
+MonitorPageViewModel and Android shutdown lookup remain named residuals; 3b removes the EventManagerViewModel shell dependency.
 PostStartupInitializationService already uses the session and is not a shell exception.
-SettingsPage, LocomotivesPage, PassengerWagonPage, GoodsWagonPage, TrainsPage and StationsPage reject shell dependencies even while other pages remain allowed.
+SettingsPage, LocomotivesPage, PassengerWagonPage, GoodsWagonPage, TrainsPage, StationsPage and JourneysPage reject shell dependencies even while other pages remain allowed.
 The remaining core retains selected-project projections, operating state and shutdown;
 ISolutionSession owns the solution and canonical selection, and operator commands stay on
 IRuntimeCommandGateway. Settings extraction changes neither boundary.
@@ -44,20 +44,20 @@ without provider implementation or project changes.
 ## Source inventory and proposed owners
 
 The source links below reflect the refreshed integrated slice; counts describe the original inventory. Line counts are file-size
-observations, not coverage or quality metrics. The Settings and rolling-stock slices remove their superseded shell partials. Stock editing and train composition now belong to focused page ViewModels; the shell retains narrow uploaded-photo routing and the journey runtime-refresh helper.
+observations, not coverage or quality metrics. The Settings, rolling-stock and journey slices remove their superseded shell partials. Stock editing and train composition belong to focused page ViewModels; the shell retains narrow uploaded-photo routing and runtime snapshot projection for the later status slice.
 
 | Responsibility and evidence | Proposed boundary | Existing behavior to preserve |
 | --- | --- | --- |
 | [SettingsPageViewModel](../SharedUI/ViewModel/SettingsPageViewModel.cs), extracted from the settings partial; [SettingsPage](../MOBAflow/View/SettingsPage.xaml.cs):24-36 and its layout partial | Focused SettingsPageViewModel using AppSettings, ISettingsService and existing speech-test integration | Setter equality checks, notifications, immediate persistence, reset, feature availability, Piper voices, speech success/failure |
 | [LocomotivesPageViewModel](../SharedUI/ViewModel/LocomotivesPageViewModel.cs), extracted locomotive editor; focused [WagonsPageViewModel](../SharedUI/ViewModel/WagonsPageViewModel.cs) and [TrainsPageViewModel](../SharedUI/ViewModel/TrainsPageViewModel.cs) (originally 482 and 264 lines) | Focused locomotive, passenger/goods wagon and train page state; reuse LocomotiveManagementViewModel | CRUD, filtered lists, rename selection identity, composition ordering and photo assignment to the initiating context |
-| [StationsPageViewModel](../SharedUI/ViewModel/StationsPageViewModel.cs), extracted station/platform editor; [Journey partial](../SharedUI/ViewModel/MainWindowViewModel.Journey.cs), 223 lines; city commands in the core file | Stations and journey page ViewModels reading IProjectContext/IJourneySelectionContext | Shared journey selection, stations/platforms, city library, command availability, nested model change tracking |
+| [StationsPageViewModel](../SharedUI/ViewModel/StationsPageViewModel.cs), extracted station/platform editor; [JourneysPageViewModel](../SharedUI/ViewModel/JourneysPageViewModel.cs), extracted journey/city editor | Focused page ViewModels using the session's canonical selection | Shared journey selection, stations/platforms, city library, command availability, nested model change tracking |
 | [Workflow partial](../SharedUI/ViewModel/MainWindowViewModel.Workflow.cs), 187 lines; [WorkflowsPage](../MOBAflow/View/WorkflowsPage.xaml):32 onwards | Register and inject the existing WorkflowLibraryViewModel; add only page presentation state that it lacks | Selection, action editing/order, validation, dry-run cancellation, trace and editor state; no second workflow engine |
 | Counter, Diagnostics, HealthStatus, RestApiStatus and SyncDiagnostics partials | Focused counter/diagnostic/status projections using existing runtime query contracts and EventBus | Counter errors and reset result, filters, health/API status, sync state and project isolation |
 | [LayoutPanels](../SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs), 337 lines; [SettingsPageViewModel.Layout](../SharedUI/ViewModel/SettingsPageViewModel.Layout.cs), extracted from the settings layout partial; [GridColumnResizeBehavior](../MOBAflow/Behavior/GridColumnResizeBehavior.cs):474 onwards | One layout persistence service; reuse LayoutColumnWidthsViewModel | Panel expansion, section usage/order, setting keys, star-column values and intentionally fixed pixels |
 
-[MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs) constructs
-WorkflowLibraryViewModel and subscribes to session/runtime/status/photo events. It also owns project
-CRUD, city operations and shutdown coordination outside the named extraction partials.
+[MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs) shares the host-owned
+WorkflowLibraryViewModel through StationsPage and subscribes to session/runtime/status/photo events. It also owns project
+CRUD and shutdown coordination outside the named extraction partials. Journey/city state is extracted in 3b.
 [MobaWinUiServiceCollectionExtensions](../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs)
 registers session/context aliases and constructs the shell. The extraction must update this actual
 composition root rather than introducing another registration path.
@@ -66,8 +66,8 @@ Additional consumers are part of RF-24 acceptance, not incidental cleanup:
 
 - [MonitorPageViewModel](../SharedUI/ViewModel/MonitorPageViewModel.cs):25,54,79 reads shell traffic
   and connection state; move to ITrafficMonitor and IConnectionRuntime plus a focused UI projection.
-- [EventManagerViewModel](../SharedUI/ViewModel/EventManagerViewModel.cs) reads shell command/status
-  and workflow state; reuse journey context, workflow library and focused status contracts.
+- [EventManagerViewModel](../SharedUI/ViewModel/EventManagerViewModel.cs) now reads the session,
+  shared workflow library and journey-page status directly; its shell dependency is removed in 3b.
 - [NavigationRegistration](../MOBAflow/Service/NavigationRegistration.cs) creates shell-bound pages;
   switch each page factory together with its XAML and constructor.
 - [MainWindow.xaml](../MOBAflow/View/MainWindow.xaml):353-362 binds speech selection, and its
@@ -133,7 +133,7 @@ Refresh the base and update this plan from evidence after each integrated slice.
      train/vehicle selection, search, train CRUD, composition insertion/removal/reordering and persisted
      panel expansion. TrainsPage receives this focused DI instance, sharing the existing locomotive
      and wagon editors, session and column widths. The Train partial and its shell selection/layout
-     members are removed; the runtime refresh helper remains in the shell for station/journey consumers.
+     members are removed; the remaining station/journey runtime refresh helper is removed in 3b below.
      Session-owned train property tracking is preserved. Tests cover vehicle references, ordering and
      direction, duplicate prevention, project replacement, callback disposal, auto-save suppression,
      layout persistence and shared host identity. The maintainer reported the UI check as unremarkable
@@ -141,7 +141,7 @@ Refresh the base and update this plan from evidence after each integrated slice.
      acceptance of slice 2c; it does not close the other slices or the programme-wide UI criteria.
 3. **Stations/journeys:** keep canonical project/journey selection in the session and move
    page commands and auto-save tracking with their owners, preserving the RF-23 lifecycle.
-   - **3a Stations/platforms (implemented; validation/review tracked in #219):** StationsPageViewModel
+   - **3a Stations/platforms (integrated through #282; manual UI acceptance open):** StationsPageViewModel
      owns station/platform selection, properties, CRUD and panel expansion. StationsPage receives
      the focused host-owned editor; the Stations shell partial and its layout members are removed.
      Selected station/platform property tracking and collection subscriptions detach on selection,
@@ -152,9 +152,21 @@ Refresh the base and update this plan from evidence after each integrated slice.
      Tests cover persistence, references, CRUD/defaults, command availability, replacement,
      stale subscriptions, auto-save suppression, layout and actual-host shared identity.
      Manual station/platform UI acceptance remains open.
-   - **3b Journeys/cities:** planned. Extract the remaining journey/city presentation, including
-     ItemClicked commands and selection hooks. Classify solution/project UI and signal/journey
-     commands without changing the RF-23 lifecycle.
+   - **3b Journeys/cities (implemented; validation tracked in #219):** JourneysPageViewModel owns
+     journey/station CRUD, city loading/search, ItemClicked properties, selected-station tracking,
+     reset and persisted panel expansion. The host registers one instance for JourneysPage,
+     the shell reset surface, EventManager status and deferred city loading. The Journey shell
+     partial, city members, selection hooks and journey layout members are removed.
+     Project changes select the first journey through the same session; station selection and
+     discarded wrappers detach on journey/project/solution changes, refresh and disposal.
+     The session retains canonical project/journey selection, journey tracking, auto-save and
+     runtime ownership. Reset uses the injected IRuntimeCommandGateway. EventManager now reads
+     the session, existing workflow library and journey status without a shell dependency.
+     Navigation composition supplies the existing reset-all counter command; its behavior stays
+     with the later counter/status slice.
+     Tests cover defaults, CRUD, selection/ItemClicked, nested persistence, suppression,
+     stale wrappers/subscriptions, ordering, gateway routing, city dispatch/late completion,
+     layout and actual-host shared identity. Manual theme/UI acceptance remains open.
 4. **Workflows:** the shared library DI registration is established by 3a; move remaining page state,
    update workflow and EventManager bindings, and remove shell construction/forwarding.
    Preserve one library instance shared by existing workflow surfaces.
@@ -169,6 +181,88 @@ Refresh the base and update this plan from evidence after each integrated slice.
 For every slice, the implementing PR owns the exact test count, build result, manual acceptance
 and CI/Sonar evidence. A file moves only with its callers, notifications, subscriptions and tests.
 Rollback is a revert to the preceding validated slice; do not retain a parallel legacy implementation.
+
+### Remaining shell responsibility classification after 3b
+
+| Members | Owner and next boundary |
+| --- | --- |
+| Solution new/open/save, stop confirmation and shutdown | Host/shell actions delegating to ISolutionSession; preserve RF-23 runtime lifecycle and persistence ownership. |
+| Add/DeleteProject, generic ItemClicked, CurrentSelectedObject, Solution-page expansion | Solution/project UI to extract during slice 6's final shell audit; selection stays in the session. |
+| WorkflowsPage ItemClicked, selected action and page presentation | Slice 4; reuse the already registered WorkflowLibraryViewModel. EventManager's journey status is already extracted in 3b. |
+| Journey runtime projection in Z21/Counter partials | Slice 5's runtime/status projection; continue reading snapshots and updating the existing wrappers without runtime ownership. |
+| Connect/disconnect, track power, feedback simulation, raw turnout and operating-state commands | Classify and extract focused control/status collaborators in slice 5; operator mutations keep the injected gateway, lifecycle stays with the host/session. |
+| SetSignalAspect and ordered ApplySignalBoxElementChange | Signal-box editor collaborator in slice 6's final shell audit. Preserve configuration-update/command/save order and the gateway; no signal behavior changes in 3b. |
+| Remaining page layout and GridColumnResizeBehavior shell lookup | Slice 6's single persistence boundary; keep serialized keys and star-column semantics. |
+
+## Slice 3b local validation (2026-10-15, refreshed 2026-10-16)
+
+The source is synchronized with main `22346a7d523de58a6d97284f4afbace10d0c4969`.
+MOBAsmart (Android) and both full Release test graphs were rebuilt with `-m:1 -t:Rebuild
+-p:MobaAnalyzerGate=true -p:UseSharedCompilation=false`; the Windows graph includes the active
+WinUI pages and normal MOBApi build/copy dependency. The exact analyzer gates match 3,235
+diagnostics in 1,128 groups (portable), 2,471 in 947 groups (Windows) and 1,509 in 551 groups
+(Android). The portable and Android baselines only remove or decrease diagnostics made obsolete
+by extraction; no new diagnostic group or increased count is accepted.
+
+Full Release suites ran sequentially from the compiled outputs with `--no-build --no-restore`:
+2,802 portable and 2,923 Windows tests passed with no failures. The explicit sustained-refresh
+test is not executed. The portable run excludes the eight MOBApi process-start cases
+(`MobApiProcessTests`, `RuntimeHubLiveE2ETests`), which CI runs. Earlier counts (2,793 portable,
+2,874 Windows) predate this synchronization; the Windows count was not confirmed by a final run. 31
+page regression cases extend the existing JourneyCounterProjectionTests fixture; actual-host DI
+also verifies shared editor/session/layout identity, the existing reset-all counter command,
+injected journey-reset routing and shutdown unsubscription. Documentation links (475), instruction
+consistency, secrets, diff and line-ending checks pass. The implementing draft PR owns current
+remote CI/Sonar evidence; local checks do not establish a remote gate result.
+
+The selection regression follows the documented WinUI event order: ItemClick precedes
+SelectionChanged when item clicks and selection are enabled together. The focused regression
+failed before the fix because the properties object and title were cleared, then passed after
+the fix for both event orders. The selected journey remains owned by the session, while the
+clicked journey's properties survive its selection notification and old station tracking is detached.
+The project-switch regression also failed before restoring the original notification order:
+the page now publishes the new project/items source before selecting its first journey.
+Programmatic journey switches test clearing both old station and old journey properties.
+
+The station editor regressions follow the [WinUI Selector implementation](https://github.com/microsoft/microsoft-ui-xaml/blob/8463f45162149de0ec3ad7df752596893fe3e13e/dxaml/xcp/dxaml/lib/Selector_Partial.cpp#L371-L395):
+replacing ItemsSource clears list selection. Ten focused reset/editor-lifetime cases failed before
+the fix. A valid open station editor now retains its properties and auto-save ownership through
+search and reordering, including when search hides that station. Selecting a different station,
+closing/replacing the editor, journey/project/solution changes, wrapper replacement and disposal
+detach its subscription.
+Both station-click event orders verify that the old station stops saving and the new one saves
+exactly once. The diagnosis uses source inspection and bounded tests without starting the app.
+
+Earlier portable/Windows checks used the process-local `MSBuildEnableWorkloadResolver=false`
+property; the refreshed runs use the installed SDK 10.0.402 workloads without it. Analyzer and
+XAML gates remain enabled. Android Release compilation and its analyzer gate pass; AAB
+validation remains unverified. No machine-wide repair/install was performed. Manual Light/Dark/High Contrast,
+accessibility and app/device checks remain open; no application or hardware was started.
+
+## Slice 3b integration refresh (2026-10-17)
+
+The current source includes main `91f80ab5d0639f2df76b533441b37bf02acd0b3f` and preserves
+all intervening PR commits and the interrupted P3 changes. Two journey regression fixtures
+still referenced the removed `IIoService` after the file-role split. They now use the existing
+`TestFileServices.CreateMock()` helper and `ISolutionIoService`, including its persistence capability.
+The station editor fix and its behavior assertions remain intact.
+
+Both Release graphs were rebuilt with analyzers enabled, including active WinUI XAML and the
+normal MOBApi dependency. The final integration includes RF-25's required workflow dependencies
+and its DI/test updates; the complete affected graphs and suites were rechecked for that change.
+The baselines inherited from main pass unchanged: 3,201 diagnostics / 1,122 groups (portable)
+and 2,456 / 946 (Windows).
+
+The final sequential runs passed 2,909 portable and 3,031 Windows tests. All 41 journey fixture
+cases pass, including 13 station search/reorder/editor-lifetime cases. The portable run excludes
+the eight MOBApi process-start cases listed above; CI owns those cases. The explicit
+sustained-refresh test is not executed. Internal documentation links (513), instruction
+consistency, secrets, diff and line-ending checks pass.
+
+The preceding dated Android evidence is historical; this refresh does not claim a new local
+Android Release/AAB result. Current remote CI and Sonar evidence belongs to the exact pushed
+head of draft PR #293. Manual Light/Dark/High Contrast, accessibility and app/device acceptance
+remain open. No application, debugger, device or hardware was started.
 
 ## Validation strategy
 
