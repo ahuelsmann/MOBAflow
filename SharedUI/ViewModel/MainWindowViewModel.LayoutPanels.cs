@@ -6,9 +6,6 @@ using CommunityToolkit.Mvvm.Input;
 
 public partial class MainWindowViewModel
 {
-    private bool _isJourneyListExpanded = true;
-    private bool _isStationListExpanded = true;
-    private bool _isJourneyPropertiesExpanded = true;
     private bool _isProjectListExpanded = true;
     private bool _isWorkflowListExpanded = true;
     private bool _isWorkflowActionsExpanded = true;
@@ -35,36 +32,6 @@ public partial class MainWindowViewModel
         {
             if (SetProperty(ref _isMonitorActivityLogExpanded, value))
                 PersistLayoutState(layout => layout.MonitorPage.IsActivityLogExpanded = value);
-        }
-    }
-
-    public bool IsJourneyListExpanded
-    {
-        get => _isJourneyListExpanded;
-        set
-        {
-            if (SetProperty(ref _isJourneyListExpanded, value))
-                PersistLayoutState(layout => layout.JourneysPage.IsJourneyListExpanded = value);
-        }
-    }
-
-    public bool IsStationListExpanded
-    {
-        get => _isStationListExpanded;
-        set
-        {
-            if (SetProperty(ref _isStationListExpanded, value))
-                PersistLayoutState(layout => layout.JourneysPage.IsStationListExpanded = value);
-        }
-    }
-
-    public bool IsJourneyPropertiesExpanded
-    {
-        get => _isJourneyPropertiesExpanded;
-        set
-        {
-            if (SetProperty(ref _isJourneyPropertiesExpanded, value))
-                PersistLayoutState(layout => layout.JourneysPage.IsJourneyPropertiesExpanded = value);
         }
     }
 
@@ -144,10 +111,6 @@ public partial class MainWindowViewModel
 
     private void InitializeLayoutPanelStates()
     {
-        _isJourneyListExpanded = _settings.Layout.JourneysPage.IsJourneyListExpanded;
-        _isStationListExpanded = _settings.Layout.JourneysPage.IsStationListExpanded;
-        _isCityLibraryVisible = _settings.Layout.JourneysPage.IsCityLibraryExpanded;
-        _isJourneyPropertiesExpanded = _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded;
         _isProjectListExpanded = _settings.Layout.SolutionPage.IsProjectListExpanded;
         _isProjectPropertiesExpanded = _settings.Layout.SolutionPage.IsPropertiesExpanded;
         _isWorkflowListExpanded = _settings.Layout.WorkflowsPage.IsWorkflowListExpanded;
