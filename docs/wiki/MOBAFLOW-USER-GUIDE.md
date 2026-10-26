@@ -226,6 +226,11 @@ The Signal Box editor manages signals, switches and routes. Signal aspects can
 be operated against a connected Z21. Viessmann multiplex mappings and per-output
 polarity are available for supported signal configurations.
 
+Without a mouse, press **Tab** to move from element to element on the plan; the
+focused element shows a frame, and Narrator reads its kind, name and state, for
+example "Signal A1, Ks1". **Enter** or **Space** selects it, and the properties
+panel then offers its controls.
+
 ### Matrix Images and ESP32 Display
 
 **Matrix Images** provides a 5x5 color editor whose images are stored in the
@@ -296,7 +301,21 @@ The Track Plan page supports the shortcuts implemented directly by that editor:
 With an Event Manager row focused, **Up/Down/Home/End** navigate, **Delete** removes
 the event, **Ctrl+Delete** removes its workflow, **Ctrl+D** duplicates it and
 **Alt+Up/Down** move it. These shortcuts do not delete events while a property input
-is focused. Other global shortcuts are not currently defined.
+is focused.
+
+## Operator shortcuts
+
+These shortcuts work on every page:
+
+| Key | Action |
+| --- | --- |
+| Pause | Emergency stop: the locomotive selected in Train Control goes to speed step 0 |
+| Space | Same emergency stop, unless a button, switch, list, menu or text input has focus; then Space keeps its normal meaning |
+| Ctrl+P or F10 | Switch track power on or off |
+
+The emergency stop affects only the locomotive selected in Train Control; it does
+not stop other locomotives. Both shortcuts do nothing while the command is
+unavailable, for example without a Z21 connection or a selected locomotive.
 
 ## Troubleshooting
 

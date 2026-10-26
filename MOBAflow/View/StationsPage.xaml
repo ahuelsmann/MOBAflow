@@ -42,12 +42,14 @@
                 <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button
                         Padding="4"
+                        AutomationProperties.Name="Create a new station"
                         Command="{x:Bind ViewModel.AddProjectStationCommand}"
                         ToolTipService.ToolTip="Create a new station">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
                     </Button>
                     <Button
                         Padding="4"
+                        AutomationProperties.Name="Remove the selected station"
                         Command="{x:Bind ViewModel.DeleteProjectStationCommand}"
                         ToolTipService.ToolTip="Remove the selected station">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
@@ -88,12 +90,14 @@
                 <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button
                         Padding="4"
+                        AutomationProperties.Name="Create a new platform"
                         Command="{x:Bind ViewModel.AddPlatformToProjectStationCommand}"
                         ToolTipService.ToolTip="Create a new platform">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
                     </Button>
                     <Button
                         Padding="4"
+                        AutomationProperties.Name="Remove the selected platform"
                         Command="{x:Bind ViewModel.DeleteProjectStationPlatformCommand}"
                         ToolTipService.ToolTip="Remove the selected platform">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />

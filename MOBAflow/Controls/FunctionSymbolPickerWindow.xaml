@@ -79,6 +79,7 @@
                     <DataTemplate x:DataType="controls:FunctionSymbolItem">
                         <Button
                             Margin="2"
+                            AutomationProperties.Name="{x:Bind DisplayName}"
                             Click="SymbolButton_Click"
                             Style="{StaticResource SymbolButtonStyle}"
                             Tag="{x:Bind FileName}"
