@@ -26,6 +26,9 @@ Inventory on main `de4af109`:
 
 ## Independently reviewable delivery slices
 
+Slices 1 and 2 were integrated as separate pull requests. Since 2026-10-20 each worked issue has one active delivery
+PR, so slices 3 and 4 and the later ones are commits of that single RF-31 PR.
+
 1. **Recording session validation and drop bookkeeping** (with this plan). The existing
    `RecordingSessionServiceTests`, `RecordingArtifactSerializerTests`, `RecordingEventCaptureTests` and
    `RecordingReplayServiceTests` (129 tests) stay unchanged and green; the extracted classes are internal and
