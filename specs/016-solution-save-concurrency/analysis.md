@@ -87,10 +87,19 @@ Validation on the correction (2026-10-25):
   - Backend mutation host: 765 passed.
   - Each of the four characterization tests failed on the previous code.
 - **CI on `142e6b69`:** all checks green, SonarCloud zero OPEN/CONFIRMED issues.
-- **Not converged yet:**
-  - T009: combined validation with PR #293.
-  - T010: CI on the combined head.
-  - T011: closure of #390.
+- **Combined with PR #293 (integrated as #401, 2026-10-26):**
+  - T009: #401 removed `MainWindowViewModel.RefreshProjectRuntimeSnapshot` without an owner parameter. Journey add and
+    delete in `JourneysPageViewModel` change the tracked project's collections; `ProjectViewModel` raises its count
+    properties, and `SolutionSession.OnTrackedModelPropertyChanged` refreshes the runtime of the owning project and
+    auto-saves. `JourneysPageViewModelTests.JourneyCrudPreservesDefaultsSessionSelectionAndSavedModels` and
+    `StationAndJourneyEditsAutoSaveAndRefreshTheCurrentRuntime` cover add, delete and editor changes;
+    `SolutionSessionTests.LateEditOfAnEarlierProject_RefreshesThatProjectsRuntime` covers an edit of project A while B
+    is selected. The station and train pages still refresh the selected project, but only from synchronous commands
+    on that same project, so they cannot target another project.
+  - T010: on the combined head `cf861879` the portable and Windows suites, SonarCloud and the other required checks
+    passed. The Windows suite first hit its time limit because a new #401 DI test used an empty dispatcher mock for
+    the shutdown save; the test now runs dispatcher work and the suite passes.
+  - T011: #390 is closed by the PR that records this convergence.
 - **Known costs:** every save serializes twice (snapshot and file).
 - **Practical acceptance:** none required beyond the automated tests. An optional manual check: open another solution
   while an auto-save is pending, and confirm that both files keep their own projects.

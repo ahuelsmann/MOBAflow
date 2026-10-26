@@ -22,9 +22,9 @@ Input: [spec.md](spec.md), [plan.md](plan.md).
 ## Remaining
 
 - [X] T008 Record the Spec Kit artifacts (this directory) and link them from #390 and PR #394
-- [ ] T009 Once a permitted common stand with PR #293 exists: reconcile the removed `RefreshProjectRuntimeSnapshot` without adding an owner parameter, and validate Journey add/delete, edits of project A while B is selected, editor changes and the retained wrappers through the corrected session path (combined portable and Windows test validation)
-- [ ] T010 Re-run CI and the Sonar quality gate on the combined head; update [analysis.md](analysis.md)
-- [ ] T011 Close #390 only after T009 and T010; until then the PR references #390 without closing it
+- [X] T009 Once a permitted common stand with PR #293 exists: reconcile the removed `RefreshProjectRuntimeSnapshot` without adding an owner parameter, and validate Journey add/delete, edits of project A while B is selected, editor changes and the retained wrappers through the corrected session path (combined portable and Windows test validation)
+- [X] T010 Re-run CI and the Sonar quality gate on the combined head; update [analysis.md](analysis.md)
+- [X] T011 Close #390 only after T009 and T010; until then the PR references #390 without closing it
 
 ## Review corrections (planned 2026-10-24 before the corrective code)
 
