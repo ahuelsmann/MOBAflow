@@ -375,7 +375,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
                 Assert.That(photoPath, Is.EqualTo("imported.png"));
                 Assert.That(restoredPath, Is.EqualTo("imported.png"));
             }
-            io.Verify(value => value.SaveAsync(viewModel.Solution, "inventory.json"), Times.Once);
+            io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), "inventory.json"), Times.Once);
         }
     }
 

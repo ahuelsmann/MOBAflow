@@ -49,6 +49,19 @@ internal sealed partial class UdpDisplayDatagramTransportTests
     }
 
     [Test]
+    public async Task UdpDisplayFrameSender_Should_RequireConfiguredAddressBeforeCreatingConnection()
+    {
+        var connections = new ConnectionRecorder();
+        using var sender = new UdpDisplayFrameSender(connections.Create);
+
+        await Assert.ThrowsAsync<ArgumentException>(async () =>
+            await sender.SendFrameAsync(ExpectedDatagram, new FrameLoopOptions()).ConfigureAwait(false))
+            .ConfigureAwait(false);
+
+        Assert.That(connections.Count, Is.Zero);
+    }
+
+    [Test]
     public async Task UdpDisplayFrameSender_Should_ReuseConnectionForSameEndpoint()
     {
         // Arrange

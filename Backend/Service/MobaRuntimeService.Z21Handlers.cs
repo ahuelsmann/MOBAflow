@@ -172,5 +172,6 @@ public sealed partial class MobaRuntimeService
         _isManualDisconnectRequested = false;
         _isZ21Connecting = false;
         _isOperatorAckRequired = true;
+        BackendTelemetry.RecordFailSafeTrigger();
     }
 }
