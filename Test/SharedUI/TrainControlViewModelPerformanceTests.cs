@@ -15,6 +15,7 @@ using Moba.Contracts.Runtime;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.TrainControl;
+using Moba.SharedUI.ViewModel;
 
 using Moq;
 
@@ -86,6 +87,58 @@ internal sealed class TrainControlViewModelPerformanceTests
                 It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task EmergencyStop_AfterSelectionChange_UsesCurrentTargetAndPreservesFunctions(bool forward)
+    {
+        var runtime = CreateConnectedRuntimeMock();
+        var moving = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        runtime.Setup(service => service.SetLocomotiveDriveAsync(
+                42, 30, forward, It.IsAny<CancellationToken>()))
+            .Callback(() => moving.TrySetResult())
+            .Returns(Task.CompletedTask);
+        using var viewModel = CreateViewModel(runtime.Object);
+        var locomotiveA = new LocomotiveViewModel(new Locomotive { Name = "Harbor Pilot A", DigitalAddress = 7 });
+        var locomotiveB = new LocomotiveViewModel(new Locomotive { Name = "Harbor Pilot B", DigitalAddress = 42 });
+        viewModel.SelectedLocomotiveFromProject = locomotiveA;
+        viewModel.SelectedLocomotiveFromProject = locomotiveB;
+        viewModel.IsForward = forward;
+        viewModel.Functions[0].IsOn = true;
+        viewModel.Functions[31].IsOn = true;
+        var functionStates = viewModel.Functions.Select(function => function.IsOn).ToArray();
+        viewModel.Speed = 30;
+        await moving.Task.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+        runtime.Invocations.Clear();
+
+        await viewModel.EmergencyStopCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.LocomotiveTitle, Is.EqualTo(locomotiveB.Name));
+            Assert.That(viewModel.LocoAddress, Is.EqualTo(42));
+            Assert.That(viewModel.Speed, Is.Zero);
+            Assert.That(viewModel.IsForward, Is.EqualTo(forward));
+            Assert.That(viewModel.Functions.Select(function => function.IsOn), Is.EqualTo(functionStates));
+        }
+        // This verifies command target/state, not exactly-once transport: the existing speed debounce is unchanged.
+        runtime.Verify(service => service.SetLocomotiveDriveAsync(42, 0, forward, It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+        runtime.Verify(service => service.SetLocomotiveDriveAsync(7, It.IsAny<int>(), It.IsAny<bool>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        runtime.Verify(service => service.SetLocomotiveFunctionAsync(It.IsAny<int>(), It.IsAny<int>(),
+            It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestCase(0)]
+    [TestCase(10000)]
+    public void EmergencyStop_InvalidAddress_IsUnavailable(int address)
+    {
+        using var viewModel = CreateViewModel();
+        viewModel.LocoAddress = address;
+
+        Assert.That(viewModel.EmergencyStopCommand.CanExecute(null), Is.False);
     }
 
     private static TrainControlViewModel CreateViewModel(

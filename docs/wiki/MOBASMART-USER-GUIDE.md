@@ -89,10 +89,16 @@ Selecting a locomotive here makes it available to the Control tab.
 
 The Control tab is the mobile throttle:
 
-- emergency stop;
+- STOP for the selected locomotive;
 - speed slider and speed presets;
 - direction control; and
 - functions F0-F31 with the names and symbols from the project.
+
+The locomotive name, DCC address and **STOP / Selected loco** stay at the top
+while the speed, direction and function area scrolls. STOP applies only to the
+locomotive shown in that header; it is not an all-trains emergency stop.
+Long names use two display lines and an ellipsis; their full text remains
+available to accessibility services.
 
 Controls are available when the app can execute through a local Z21 connection
 or an active MOBAflow runtime session.
