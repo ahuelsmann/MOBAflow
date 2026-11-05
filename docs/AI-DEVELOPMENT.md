@@ -12,12 +12,13 @@ unless explicitly limited. Art Director owns routine product decisions inside th
 implementation, and hands work directly to Chief Project Manager (formerly Issue Master). Since 2026-11-05 the
 Chief Operating Officer (COO, Claude) owns the single execution and integration queue, the Ready transition and
 the merge decision; Chief Project Manager, Project Manager and Technical Director (Codex) coordinate resources,
-responsibilities and handovers through that queue. Documentation Lead and Head of DevOps deliver assigned
-documentation/user guidance and GitHub/repository/CI infrastructure work respectively, under the same standing
-mandate. Technical transitions, confirmed fixes and ordinary PR administration do not need repeated human
-approval. Important product goals, priorities and material UX decisions, scope expansion, fundamental
-architecture changes, new costs/external commitments and explicitly required practical permissions or acceptance
-still go to the user.
+responsibilities and handovers through that queue. Solution Architect (Claude) owns the technical solution design
+within assigned scope and prepares fundamental architecture decisions for the user. Documentation Lead and Head
+of DevOps deliver assigned documentation/user guidance and GitHub/repository/CI infrastructure work respectively,
+under the same standing mandate. Technical transitions, confirmed fixes and ordinary PR administration do not
+need repeated human approval. Important product goals, priorities and material UX decisions, scope expansion,
+fundamental architecture changes, new costs/external commitments and explicitly required practical permissions or
+acceptance still go to the user.
 
 Across all MOBAflow teams, Codex, Claude and Antigravity, deliver the prioritized issue together through
 integration in one leading PR, including documentation and wiki corrections. Other issues need Chief Project

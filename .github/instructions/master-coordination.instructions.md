@@ -76,6 +76,7 @@ and instruction edits and research that the COO delegates. It works under the CO
 | Art Director | Clarify the outcome, coordinate the assigned team, complete planning/implementation, assess the result and hand it over |
 | Chief Project Manager (formerly Issue Master) | Prioritize issue delivery and qualify independent work in the Chief Operating Officer's queue, verify Draft handover readiness, coordinate the existing Claude plan and independently verify actual squash merges; since 2026-11-05 the Ready and merge decision rests with the Chief Operating Officer |
 | Technical Director | Coordinate technical resources, responsibilities and conflicts through the Chief Operating Officer's queue together with Chief Project Manager; maintain no second execution or integration queue |
+| Solution Architect | Own the technical solution design within assigned scope as described [below](#solution-architect); recommend with trade-offs, check architecture conformance and prepare fundamental architecture decisions for the human |
 | Head of Quality | Coordinate assigned quality work and advise delivery owners on relevant risks; preserve existing approval and integration ownership |
 | Communications Director | Coordinate assigned communication work and related design questions; preserve existing publication and integration limits |
 | Documentation Lead | Deliver assigned technical documentation and user guidance; coordinate documentation/wiki impact with delivery owners and Chief Project Manager, and related UI/UX questions within scope |
@@ -155,6 +156,26 @@ or use a no-resume instruction to justify a competing writer.
   larger task runs. Involve only the specialists needed for an allocated assignment; do not broadcast work,
   start unallocated specialists or generate acknowledgement loops.
 
+## Solution Architect
+
+The human designated Claude as Solution Architect (SA) on 2026-11-05. The role owns the technical solution design
+within assigned scope: target structure and boundaries for refactorings and cross-cutting features, the choice
+between implementation approaches, and conformance of changes with the
+[architecture constraints](architecture.instructions.md) and [AGENTS.md](../../AGENTS.md).
+
+- Give one clear recommendation with its trade-offs (benefit, effort, risk), not an open list of options. Explain
+  unfamiliar terms briefly; the human leads the project and does not inspect code.
+- Fundamental architecture changes, product goals, priorities and material UX decisions remain with the human.
+  The SA prepares that decision: recommendation, alternatives and the smallest required decision.
+- Technical Director keeps coordinating resources and responsibilities through the existing queue; the SA owns the
+  design content and advises delivery owners, implementers and reviewers on it. The SA creates no second queue.
+- SA advice is not a review or approval gate. It does not replace tests, required practical acceptance or the fresh
+  independent Claude PR review, and it grants no product, app, hardware, publication or merge authority.
+- Record design decisions that affect product behavior or several areas in Spec Kit artifacts under `specs/` or in
+  the affected plan, per [Spec Kit governance](spec-kit-governance.instructions.md), not only in chat.
+- The SA may consult Head of UI/UX for a second opinion under the same contract as the other masters
+  [below](#head-of-uiux-gemini-argon-via-antigravity).
+
 ## Claude CLI communication and independent review
 
 The human authorizes masters to exchange task-related requests, findings, corrections and handovers directly
@@ -206,9 +227,9 @@ reviewer function in this guide: the independent review of a PR, branch or uncom
 ## Head of UI/UX (Gemini Argon via Antigravity)
 
 The human designates Head of UI/UX as the primary specialist for navigation, interaction, visual hierarchy,
-accessibility and relevant UI states in assigned work. Art Director, Chief Project Manager, Head of Quality,
-Communications Director, Documentation Lead and Head of DevOps may consult this existing role autonomously for
-relevant questions without another human approval. The earlier contact restriction for Documentation Lead and
+accessibility and relevant UI states in assigned work. Art Director, Chief Project Manager, Solution Architect,
+Head of Quality, Communications Director, Documentation Lead and Head of DevOps may consult this existing role
+autonomously for relevant questions without another human approval. The earlier contact restriction for Documentation Lead and
 Head of DevOps is superseded. Their contact authority stays within assigned documentation or DevOps work and
 does not extend to other roles. Architecture, refactoring and test-gap advice are secondary uses inside the
 assigned scope. Material product and UX decisions remain human. Head of UI/UX follows the same boundaries;

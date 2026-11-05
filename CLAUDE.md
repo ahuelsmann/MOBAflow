@@ -24,8 +24,10 @@ reviews code written in the same session. Product goals, priorities, material UX
 justified no-change results and reassessment after functional fixes.
 Use the guide's [handover evidence rules](.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
 for observed timestamps, actual takeover and delayed or blocked messages; sender success alone proves no handover.
-Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
-DevOps may independently consult the Head of UI/UX (Gemini Argon via Antigravity) within assigned work,
+Solution Architect (Claude) owns the technical solution design within assigned scope; fundamental architecture
+changes remain with the user. Art Director, Chief Project Manager, Solution Architect, Head of Quality,
+Communications Director, Documentation Lead and Head of DevOps may independently consult the Head of UI/UX
+(Gemini Argon via Antigravity) within assigned work,
 using that guide's synchronous CLI contract and the same central execution and caller coordination.
 This advice does not replace the Claude review. Claude Code loads the MOBAflow review and
 diagnosis skills from `.claude/skills/`, which mirror `.agents/skills/`; change both copies together
