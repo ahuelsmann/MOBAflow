@@ -485,6 +485,15 @@ jobs:
             -Path artifacts/TestResults/mobapi/mobapi-integration.trx `
             -MinimumPassed 6
 
+      # ubuntu-latest moved to ubuntu-26.04 with CPython 3.14. PlatformIO builds its ESP-IDF environment from this
+      # interpreter, and the pinned idf-component-manager pulls pydantic-core 2.33.2, which has no 3.14 wheel and
+      # fails to build from source (PyO3 0.24 supports up to 3.13). Pin 3.13 so pip keeps using prebuilt wheels.
+      - name: Install Python for PlatformIO
+        if: ${{ needs.changes.outputs.firmware != 'false' }}
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+
       - name: Install pinned PlatformIO
         if: ${{ needs.changes.outputs.firmware != 'false' }}
         shell: bash
