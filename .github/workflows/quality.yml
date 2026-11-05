@@ -356,7 +356,7 @@ jobs:
     name: Backend mutation testing
     needs: changes
     if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
-    # The largest lane: a local run with four Stryker processes takes about 35 minutes.
+    # A local run with four Stryker processes takes about 35 minutes.
     runs-on: ubuntu-latest
     timeout-minutes: 60
 

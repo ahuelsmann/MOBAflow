@@ -144,8 +144,9 @@ A skipped job does not prove its checks ran. For a slow job, compare step timest
 successful runs before assuming a hang. Avoid exposing secrets while reading/downloading logs.
 Quality always runs repository consistency checks. Documentation-only PRs skip
 product build/test and mutation jobs. Code-relevant PRs run desktop, display and
-Common mutation checks; Domain mutation and firmware steps also depend on input
-paths. Android Release AAB runs only on manual dispatch with `validate_android=true`.
+the Common, Speech.Base, Backend, MOBApi and SharedUI mutation checks; Domain mutation
+and firmware steps also depend on input paths. Android Release AAB runs only on manual
+dispatch with `validate_android=true`.
 Main pushes and manual runs enable the remaining scopes. See
 [Build Performance](BUILD-PERFORMANCE.md#ci-note) and
 [`Get-QualityChangeScope.ps1`](../scripts/Get-QualityChangeScope.ps1) for the exact selection.

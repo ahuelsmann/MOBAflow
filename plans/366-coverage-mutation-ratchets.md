@@ -160,14 +160,16 @@ separate pull requests.
      photo and solution controllers have no in-process tests yet. A later floor raise follows from new tests there.
 4. **SharedUI lane:** train control, settings, project switches and stale asynchronous responses through the existing
    runtime interfaces. Delivered: the `shared-ui` lane with its host, Stryker configuration and the `mutation-shared-ui`
-   CI job.
+   CI job at the measured floor. Protection of train control, settings, project switches and stale asynchronous responses
+   stays open; see the largest open areas below.
    - **Measurement:** local full run on Linux (Stryker.NET 5.0.0, four processes, .NET SDK 10.0.114, 831 passing
      ordinary tests, main `0c03126` plus the lane host), 63 minutes: 37.29% with 3,233 killed, 38 timeouts, 2,907
-     survived, 2,594 without coverage, 2,072 ignored and 1,184 compile errors. The floor is 37%; the CI run on the pull
-     request confirms it with the SDK from `global.json`.
+     survived, 2,594 without coverage, 2,072 ignored and 1,184 compile errors. The floor is 37%. The CI measurement of
+     `mutation-shared-ui` with the SDK from `global.json` (score, counts and run ID) is still to be recorded here.
    - **Host preparation:** the disabled `MauiAdapterDispatchTests.cs` (`#if false`, its type no longer exists) is
      removed, because its commented-out fixture counted as a registered test file without tests. Three wagon page tests
-     get unique method names (`Wagon...`), because the run guard maps tests to files by method name.
+     get unique method names (`Wagon...`), because the run guard compares the ordinary-baseline test names with the test
+     names in Stryker's `testFiles` report and requires the same set.
    - **Safe Mode:** Stryker reports CS0165 (variable assigned in `try` or an out argument) in
      `SignalBoxPropertiesViewModel` (`SetElementName`, `SelectMultiplexer`, `Rotate`), `SignalBoxRuntimeSync.ApplyToPlan`,
      `PageLayoutViewModel` (`ApplyToGrid`, `UpdateFromGrid`) and `MauiViewModel.OnSelectedProjectIndexChanged`; their mutants count as
@@ -221,7 +223,8 @@ launch, train movement or layout action is part of this plan; tests use fakes an
 
 ## Risks
 
-- **CI duration:** the Backend lane is the largest; its job timeout follows the measured duration. If it outgrows the
-  timeout, split the lane by namespace rather than excluding mutants.
+- **CI duration:** the SharedUI lane is the largest (about 12,000 mutants, 63 minutes locally; job timeout 100 minutes),
+  followed by Backend (about 35 minutes; timeout 60 minutes); each job timeout follows the measured duration. If a lane
+  outgrows its timeout, split the lane by namespace rather than excluding mutants.
 - **Flaky timing tests:** a mutant that changes a delay can turn a wall-clock test into a timeout; such tests move to
   `TimeProvider`-based fakes instead of being excluded.

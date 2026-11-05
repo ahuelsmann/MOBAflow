@@ -296,12 +296,12 @@ Speech.Base mutates the entire assembly, including the audio cache, shared synth
 Its four portable Speech fixtures use fake providers/players and four Stryker processes. Windows-only
 host integration cases and the separate Piper/SystemSpeech assemblies are outside this lane.
 Backend mutates the entire assembly with every fixture under `Test/Backend/`, the workflow end-to-end
-fixture and the Z21 DCC decoder tests. It is the largest lane (about 35 minutes with four Stryker
+fixture and the Z21 DCC decoder tests (about 35 minutes with four Stryker
 processes). The MOBApi lane mutates `MOBApi` with the in-process fixtures under `Test/MOBApi/` (about two
 minutes locally); the MOBApi process fixtures start real processes, cannot detect mutants and stay in the planned
 `api-process` lane. The SharedUI lane mutates `SharedUI` with every fixture under `Test/SharedUI/`, the track-layout
-architecture fixture parts that `SignalBoxPropertiesViewModelTests` extends, and the shared test helpers (about
-63 minutes locally with four Stryker processes). Methods that Stryker puts into Safe Mode
+architecture fixture parts that `SignalBoxPropertiesViewModelTests` extends, and the shared test helpers. It is the
+largest lane (about 12,000 mutants and 63 minutes locally with four Stryker processes). Methods that Stryker puts into Safe Mode
 are excluded from the score; see
 [methods outside the Backend mutation gate](../plans/366-coverage-mutation-ratchets.md#methods-outside-the-backend-mutation-gate).
 Thresholds come from the configuration files; the Common, Speech.Base, Backend, SharedUI and MOBApi minimums are baseline
