@@ -199,14 +199,14 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main` and manual runs classify all scopes as enabled. Other PR changes enable
-desktop, display, Common, Speech.Base and Backend mutation jobs; Domain mutation and ESP32 firmware
+desktop, display, Common, Speech.Base, Backend, MOBApi and SharedUI mutation jobs; Domain mutation and ESP32 firmware
 steps also depend on their input paths. Android runs only with the manual
 `validate_android` input. A skipped check is not evidence that tests ran.
 
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
 when `MOBAdisplay/esp32/` changes or an unknown input path requires them. The
-Common, Speech.Base and Backend mutation jobs run for every code-relevant PR. Domain mutation testing runs when
+Common, Speech.Base, Backend, MOBApi and SharedUI mutation jobs run for every code-relevant PR. Domain mutation testing runs when
 `Domain/`, its linked tests and fixture data (`Test/TestFile/`), `MutationTest/`
 or the .NET build configuration change. A path outside the known .NET areas,
 such as a workflow, a script or a new top-level folder, enables both firmware
