@@ -12,9 +12,11 @@ assignment includes the delivery steps below unless explicitly limited.
 ## Standing authority and limits
 
 - Complete assigned work through planning, implementation, relevant validation and a draft PR with current CI/Sonar
-  and required actual acceptance. Chief Project Manager alone verifies handover readiness and sets Ready for review.
-  The existing Claude plan then owns fresh independent review, separate fixes, independent re-review and SHA-bound
-  squash merge; independent review is not a Ready prerequisite. Follow through to verified integration.
+  and required actual acceptance. Chief Project Manager verifies handover readiness; since 2026-11-05 the Chief
+  Operating Officer (Claude) owns the execution and integration queue, the Ready transition and the merge decision
+  as described [below](#chief-operating-officer). The existing Claude plan then owns fresh independent review,
+  separate fixes, independent re-review and SHA-bound squash merge; independent review is not a Ready prerequisite.
+  Follow through to verified integration.
   Ordinary commits, pushes, PR updates, team handovers and review-thread responses/resolution are included.
   Resolve a review finding by fixing it or with evidence that it does not apply. A finding left unfixed needs
   a fresh independent Claude review that accepts the evidence, or a human decision; the fixer or merger never
@@ -28,28 +30,67 @@ assignment includes the delivery steps below unless explicitly limited.
   starts, device deployment, live railroad actions and firmware flashing still need explicit authorization.
   Required manual acceptance cannot be invented, waived or reported as passed without evidence.
 
+## Chief Operating Officer
+
+The human designated Claude as Chief Operating Officer (COO) on 2026-11-05: the overall project lead across all
+MOBAflow teams and clients. Since that date the COO owns the single execution and integration queue that this
+guide previously assigned to Chief Project Manager alone: the order of work, the assignment of one Senior
+Developer agent per issue, the checks before merge and the merge decision. Chief Project Manager, Project Manager
+and Technical Director (Codex) coordinate through that queue; their handover verification and merge checks inform
+the COO's decision and are no longer a separate gate. Where this guide still names Chief Project Manager as the
+sole queue owner or the Ready/merge decider, read it with this change.
+
+- Product goals, priorities, material UX decisions and the manual acceptance list in issue #365 remain with the
+  human. The COO prepares those decisions with a recommendation, alternatives and the smallest required decision.
+- The COO assigns one Senior Developer agent per issue where the implementation needs one and keeps one writer per
+  worktree. Allocation stays internal coordination, not new human authority; explicit pauses, no-merge
+  instructions, excluded slices and acceptance requirements remain binding.
+- Before merge the COO verifies the gates listed under [Ready handoff, integration and
+  completion](#ready-handoff-integration-and-completion): live head/base, required checks, current-commit Sonar,
+  a fresh independent review, documentation/wiki impact and required manual acceptance. The COO merges by squash
+  against the reviewed head and never bypasses GitHub protection.
+- The fresh independent review rule is unchanged: a COO coordination or fix session does not review or approve its
+  own work; it dispatches the review to a separate [Senior Code Reviewer](#senior-code-reviewer) session.
+- The COO creates no second queue, lock or automation. App, debugger or watch starts, device deployment, live
+  railroad actions and firmware flashing still need their explicit authorization.
+
+## Executive Assistant
+
+The Executive Assistant is the COO's Claude cloud session, designated on 2026-11-05 for portable work that needs
+no local worktree, device or desktop app: issue and PR triage, status collection, handover notes, documentation
+and instruction edits and research that the COO delegates. It works under the COO's allocation in the same queue.
+
+- The Executive Assistant holds no authority of its own: no allocation, Ready, merge, publication or hardware
+  decision. It reports to the COO, who decides.
+- It delivers through the same branch/PR route and handover evidence rules as every other agent; a cloud result is
+  a report until the COO or the named owner has verified it.
+- Work that needs the local machine, a device, the WinUI app or a secret stays with a local session.
+
 ## Responsibilities and handover
 
 | Owner | Responsibility |
 | --- | --- |
 | Human | Product goals, priorities, material user-experience choices, fundamental architecture changes, new costs/external commitments and authorized practical acceptance |
+| Chief Operating Officer (Claude, since 2026-11-05) | Overall project lead as described [below](#chief-operating-officer): own the single execution and integration queue, the order of work, one Senior Developer agent per issue, the checks before merge and the merge decision |
+| Executive Assistant (Claude cloud session) | Portable work delegated by the Chief Operating Officer as described [below](#executive-assistant); no allocation, Ready, merge or publication authority of its own |
 | Art Director | Clarify the outcome, coordinate the assigned team, complete planning/implementation, assess the result and hand it over |
-| Chief Project Manager (formerly Issue Master) | Own the single execution and integration queue, prioritize issue delivery and qualify independent work, verify Draft handover readiness, alone set Ready for review, coordinate the existing Claude plan and independently verify actual squash merges |
-| Technical Director | Coordinate technical resources, responsibilities and conflicts through the Chief Project Manager; maintain no second execution or integration queue |
+| Chief Project Manager (formerly Issue Master) | Prioritize issue delivery and qualify independent work in the Chief Operating Officer's queue, verify Draft handover readiness, coordinate the existing Claude plan and independently verify actual squash merges; since 2026-11-05 the Ready and merge decision rests with the Chief Operating Officer |
+| Technical Director | Coordinate technical resources, responsibilities and conflicts through the Chief Operating Officer's queue together with Chief Project Manager; maintain no second execution or integration queue |
 | Head of Quality | Coordinate assigned quality work and advise delivery owners on relevant risks; preserve existing approval and integration ownership |
 | Communications Director | Coordinate assigned communication work and related design questions; preserve existing publication and integration limits |
 | Documentation Lead | Deliver assigned technical documentation and user guidance; coordinate documentation/wiki impact with delivery owners and Chief Project Manager, and related UI/UX questions within scope |
 | Head of DevOps | Deliver assigned GitHub/repository and CI infrastructure work; execute quality controls defined with Head of Quality and coordinate relevant UI/UX questions; no new product, release or publication authority |
 | Assigned implementer | Own the task worktree until an acknowledged writer handover; report actual checks and remaining limits |
-| Claude reviewer | Independently review the exact change against requirements and rules; report findings without editing or self-approval |
+| Senior Code Reviewer (Claude reviewer) | Independently review the exact PR, branch or diff with the `mobaflow-code-review` skill as described [below](#senior-code-reviewer); report findings ranked by severity without editing, approving or merging |
 | Head of UI/UX | Primary UI/UX specialist (Gemini Argon via Antigravity CLI); advises masters and delivery owners as described [below](#head-of-uiux-gemini-argon-via-antigravity) |
 
 The standing delivery mandate applies to each master within its human-assigned role and scope. Each task has
 one delivery owner and one writer per worktree. The delivery owner hands integration directly to Chief Project
-Manager with issue/scope, PR URL, worktree/branch, exact head/base, checks, acceptance requirements and restrictions.
-Include documentation/wiki impact and a confirmed writer stop in that handover. Chief Project Manager acknowledges
-ownership and verifies the Ready transition. The package remains allocated through the existing Claude plan and
-actual integration or an explicitly coordinated safe handoff. Other larger tasks need their own current allocation;
+Manager in the Chief Operating Officer's queue with issue/scope, PR URL, worktree/branch, exact head/base, checks,
+acceptance requirements and restrictions. Include documentation/wiki impact and a confirmed writer stop in that
+handover. Chief Project Manager acknowledges ownership and verifies handover readiness; the Chief Operating
+Officer decides Ready and merge. The package remains allocated through the existing Claude plan and actual
+integration or an explicitly coordinated safe handoff. Other larger tasks need their own current allocation;
 spare capacity alone authorizes no start. Fixes go to one named writer; the user is not the messenger.
 
 Use one leading delivery PR per issue, including its documentation, wiki and acceptance corrections. Masters
@@ -106,9 +147,10 @@ or use a no-resume instruction to justify a competing writer.
 - Preserve running work, ownership, results and restrictions. If execution overlaps or ownership is unclear,
   coordinate the next safe stopping point with the owner and Chief Project Manager; do not blindly interrupt,
   restart or duplicate processes or cancel CI to make room. Resume only after the central reconciliation.
-- Technical Director coordinates resources and responsibilities through Chief Project Manager's queue without
-  creating another queue, lock, permit or scheduling mechanism. Only the responsible owner changes existing
-  operational state. Allocated capacity does not expand scope or override explicit pauses or acceptance gates.
+- Technical Director coordinates resources and responsibilities through the Chief Operating Officer's queue, together
+  with Chief Project Manager, without creating another queue, lock, permit or scheduling mechanism. Only the
+  responsible owner changes existing operational state. Allocated capacity does not expand scope or override
+  explicit pauses or acceptance gates.
 - Communicate primarily master to master. Short status, handover and blocker exchanges may continue while a
   larger task runs. Involve only the specialists needed for an allocated assignment; do not broadcast work,
   start unallocated specialists or generate acknowledgement loops.
@@ -119,9 +161,10 @@ The human authorizes masters to exchange task-related requests, findings, correc
 with each other, their assigned team and Claude CLI in both directions. Agent messages convey work under that
 mandate; they are not new human authority and cannot override stops.
 
-- Only the existing Claude plan dispatches PR reviews and merge after Chief Project Manager sets Ready. Suppliers
-  and masters do not request a second review, add an automation or merge concurrently. Ready hands off the same
-  allocated package; it does not declare the review passed or free its place in the queue.
+- Only the existing Claude plan, under the Chief Operating Officer since 2026-11-05, dispatches PR reviews and
+  merge after Ready. Suppliers and masters do not request a second review, add an automation or merge
+  concurrently. Ready hands off the same allocated package; it does not declare the review passed or free its
+  place in the queue.
 - Run every actual PR review, including review after fixes, in a fresh independent Claude session without
   implementation chat history. An implementer, resumed coordination session, Codex self-review or earlier PR
   review does not qualify. Reviews and fixes use Claude Opus 5.5 or higher; verify actual model and completion,
@@ -144,6 +187,21 @@ mandate; they are not new human authority and cannot override stops.
   masters/team. Avoid unchanged acknowledgements and communication loops.
 - Obtain only narrow task permissions. Do not bypass sandbox/tool approval, disable protection or read credentials.
   Diagnose real access failures within a bounded attempt; never replace missing review with confidence alone.
+
+## Senior Code Reviewer
+
+The human designated Claude as Senior Code Reviewer on 2026-11-05. The role is the named owner of the Claude
+reviewer function in this guide: the independent review of a PR, branch or uncommitted diff with the
+`mobaflow-code-review` skill against its requirements and repository rules.
+
+- Report verified findings ranked by severity with file/line, trigger, consequence and evidence; separate
+  introduced defects from existing debt and preferences. Do not fix, commit, approve or merge unless the human
+  asks for it explicitly; a requested fix then follows the separate-fixer rule and needs its own fresh re-review.
+- The reviewer never reviews code written in the same session. The fresh-independent-session rule
+  [above](#claude-cli-communication-and-independent-review) applies unchanged, including the Opus 5.5-or-higher
+  model requirement and the read-only private review.
+- A review is not a merge decision. The Chief Operating Officer weighs the findings in the queue; the reviewer
+  neither sets Ready nor merges.
 
 ## Head of UI/UX (Gemini Argon via Antigravity)
 
@@ -216,7 +274,7 @@ The full path also works when the shell's PATH predates installation. On another
   in prompts or expose unrelated sensitive files; distinguish observations from assumptions.
 - Advice adds no universal review or approval gate and cannot replace tests, required practical acceptance or a
   fresh independent Claude PR review. It grants no new product, app, hardware, publication or merge authority.
-  Preserve the named writer and Chief Project Manager's exclusive execution and integration queue. This shared
+  Preserve the named writer and the Chief Operating Officer's single execution and integration queue. This shared
   CLI contact is advisory only: it does not implement, commit, push or open PRs. Implementation by the Head needs
   a separate explicit human assignment, central allocation and its own task worktree; consultation grants none.
 
@@ -226,10 +284,12 @@ message protocol.
 
 ## Ready handoff, integration and completion
 
-Chief Project Manager owns the central Ready transition and coordinates the existing Claude plan in the same
-queue. The supplier hands over a Draft with exact head/base, scope, checks, current CI/Sonar, actual acceptance,
-documentation/wiki impact and writer stop. Verify applicable gates before Ready, including current-commit Sonar
-success with zero OPEN/CONFIRMED PR issues. Independent review follows Ready; it is not its prerequisite.
+Chief Project Manager verifies the central Ready handover and coordinates the existing Claude plan in the same
+queue; since 2026-11-05 the [Chief Operating Officer](#chief-operating-officer) owns that queue, the Ready
+transition and the merge decision. The supplier hands over a Draft with exact head/base, scope, checks, current
+CI/Sonar, actual acceptance, documentation/wiki impact and writer stop. Verify applicable gates before Ready,
+including current-commit Sonar success with zero OPEN/CONFIRMED PR issues. Independent review follows Ready; it
+is not its prerequisite.
 
 Use existing coordination state, not a second queue or merge permit. Before synchronization or Ready, scan/read
 that state and reconcile exact comparison, allocation and ownership. An active stop, wrong owner/comparison or
