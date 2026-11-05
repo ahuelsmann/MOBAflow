@@ -124,12 +124,13 @@ implementations belong in the host that uses the role.
   new/load/save, with `CanPersist`), `IFilePickerService` (open and save pickers) and `IPhotoStorageService`
   (vehicle photos below the photo root). MOBAflow implements them in `SolutionFileService`, `FilePickerService`
   and `PhotoStorageService`; the first two get the main window ID from `WinUiWindowContext`, and
-  `SolutionFileService` also gets the XAML root there for its dialogs. Only MOBAflow uses the file roles.
-  `NullSolutionIoService` (`CanPersist` is false) and `NullFilePickerService` serve tests and hosts without
-  files: `SolutionSession`, `MobileSolutionContext` and the solution, project and workflow wrappers receive the
-  picker, the preview sound player and the logger factory through the required `SolutionViewModelServices`
-  record, which each host registers (MOBAsmart with `NullFilePickerService` and `NullSoundPlayer`).
-  Consumers request only the role they use; there is no aggregate file interface.
+  `SolutionFileService` also gets the XAML root there for its dialogs. Only MOBAflow implements the file roles
+  and registers `ISolutionIoService`; MOBAsmart has no solution file access and registers
+  `NullFilePickerService` as its `IFilePickerService`. `SolutionSession`, `MobileSolutionContext` and the
+  solution, project and workflow wrappers receive the picker, the preview sound player and the logger factory
+  through the required `SolutionViewModelServices` record, which each host registers (MOBAsmart with
+  `NullFilePickerService` and `NullSoundPlayer`). `NullSolutionIoService` (`CanPersist` is false) serves tests
+  only. Consumers request only the role they use; there is no aggregate file interface.
   `PhotoAssignmentService` combines picking and storing for the locomotive and wagon pages.
 
 ### 1. **Domain Layer** (`Domain/`)
