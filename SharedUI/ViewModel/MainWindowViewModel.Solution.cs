@@ -203,13 +203,9 @@ public partial class MainWindowViewModel
     /// </summary>
     private void ClearAllSelections()
     {
+        // The shared workflow library follows the cleared project selection itself.
         SelectedProject = null;
         SelectedJourney = null;
-
-        // Workflows Page
-        SelectedWorkflow = null;
-        SelectedAction = null;
-        WorkflowsPageSelectedObject = null;
 
         // General
         CurrentSelectedObject = null;
