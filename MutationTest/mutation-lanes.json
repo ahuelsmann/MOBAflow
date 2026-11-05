@@ -47,7 +47,8 @@
     },
     {
       "name": "shared-ui",
-      "status": "planned",
+      "status": "active",
+      "stryker-config": "MutationTest/stryker-shared-ui-config.json",
       "test-directories": ["Test/SharedUI"],
       "production-projects": ["SharedUI/SharedUI.csproj"]
     },
