@@ -2503,13 +2503,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1003",
       "path": "SharedUI/Interface/IPhotoHubClient.cs",
       "count": 2
@@ -3030,7 +3023,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3259,13 +3252,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
       "count": 8
@@ -3318,13 +3304,6 @@
       "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0019",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3548,7 +3527,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 16
+      "count": 13
     },
     {
       "project": "SharedUI",

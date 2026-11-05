@@ -368,6 +368,7 @@ public static class MobaWinUiServiceCollectionExtensions
                 EventBus = sp.GetRequiredService<IEventBus>()
             }));
         services.AddSingleton<StationsPageViewModel>();
+        services.AddSingleton<WorkflowsPageViewModel>();
         services.AddSingleton<JourneysPageViewModel>();
         services.AddSingleton<TrainsPageViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
