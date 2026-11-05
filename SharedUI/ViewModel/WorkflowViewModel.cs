@@ -7,7 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Interface;
-using Microsoft.Extensions.Logging;
 using Service;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -32,7 +31,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         _model = model;
         _model.Actions ??= [];
         _actionViewModelFactory = new WorkflowActionViewModelFactory(
-            services.FilePicker, services.SoundPlayer, services.LoggerFactory.CreateLogger<CommandViewModel>());
+            services.FilePicker, services.SoundPlayer, services.LoggerFactory);
         Actions = [];
         foreach (var action in model.Actions)
         {

@@ -123,7 +123,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     public ObservableCollection<WorkflowPlannedEffect> PlannedEffects { get; } = [];
 
     /// <summary>Gets whether a dry run is available for the current selection.</summary>
-    public bool CanDryRun => SelectedWorkflow != null;
+    public bool CanDryRun => this.SelectedWorkflow != null;
 
     /// <summary>Gets the selected action editor, or general workflow settings.</summary>
     public object? SelectedEditorObject => (object?)this.SelectedAction ?? this.SelectedWorkflow;

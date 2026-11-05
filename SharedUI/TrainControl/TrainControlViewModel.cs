@@ -1412,9 +1412,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
             StatusMessage = $"Loco {LocoAddress}: {Speed} {(newDirection ? "forward" : "backward")}";
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            _logger.LogDebug("Ramp operation cancelled");
+            _logger.LogDebug(ex, "Ramp operation cancelled");
         }
         catch (Exception ex)
         {
@@ -1605,9 +1605,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             StatusMessage = $"Loco {LocoAddress}: all functions OFF";
             _logger.LogDebug("All functions turned off for loco {Address}", LocoAddress);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            _logger.LogDebug("All-functions-off cancelled for loco {Address}", LocoAddress);
+            _logger.LogDebug(ex, "All-functions-off cancelled for loco {Address}", LocoAddress);
         }
         catch (Exception ex)
         {

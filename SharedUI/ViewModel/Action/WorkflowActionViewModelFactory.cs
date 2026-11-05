@@ -17,10 +17,10 @@ using Sound;
 public sealed class WorkflowActionViewModelFactory(
     IFilePickerService filePicker,
     ISoundPlayer soundPlayer,
-    ILogger<CommandViewModel> commandLogger)
+    ILoggerFactory loggerFactory)
 {
     private readonly IReadOnlyDictionary<ActionType, WorkflowActionViewModelDescriptor> _descriptors =
-        WorkflowActionViewModelDescriptors.Create(filePicker, soundPlayer, commandLogger);
+        WorkflowActionViewModelDescriptors.Create(filePicker, soundPlayer, loggerFactory.CreateLogger<CommandViewModel>());
 
     public WorkflowAction CreateDefaultAction(ActionType actionType, uint number)
     {
