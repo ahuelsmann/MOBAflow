@@ -268,7 +268,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     }
 
     [Test]
-    public async Task WorkflowEditorSharesTheHostLibraryWithStationsAndEventManagerWithoutShellDependency()
+    public async Task WorkflowEditorSharesTheHostLibraryWithStationsAndEventManager()
     {
         var provider = CreateValidatorServiceProvider();
         await using var providerLifetime = provider.ConfigureAwait(false);
@@ -276,6 +276,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         var workflows = provider.GetRequiredService<WorkflowsPageViewModel>();
         var library = provider.GetRequiredService<WorkflowLibraryViewModel>();
         var session = provider.GetRequiredService<ISolutionSession>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
         var editor = provider.GetRequiredService<EventManagerViewModel>();
         using (Assert.EnterMultipleScope())
         {
@@ -297,10 +298,9 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(workflows.WorkflowLibrary.FilteredWorkflows.Single().Name, Is.EqualTo("Arrival"));
             Assert.That(editor.WorkflowLibrary.FilteredWorkflows.Single().Name, Is.EqualTo("Arrival"));
         }
-        var shell = provider.GetRequiredService<MainWindowViewModel>();
         Assert.That(await shell.PrepareForShutdownAsync().ConfigureAwait(false), Is.True);
         session.SelectedProject = new ProjectViewModel(new Project { Workflows = [new Workflow { Name = "Late" }] });
-        Assert.That(library.SelectedWorkflow, Is.Null, "Shutdown disposes the shared library once.");
+        Assert.That(library.SelectedWorkflow, Is.Null, "Shutdown disposed the shared library.");
     }
 
     [Test]

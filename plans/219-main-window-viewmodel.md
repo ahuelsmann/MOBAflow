@@ -279,14 +279,17 @@ remain open. No application, debugger, device or hardware was started.
 
 ## Slice 4 local validation (2026-11-05)
 
-The source starts from main `0c031269`. The portable suite passed 3,115 tests and the Windows suite
-3,223 tests, each with zero failures and zero skips; the Windows run excluded MOBAsmart tests as in
-CI. The MOBAflow FastDebug compile check, including the WorkflowsPage bindings, passed with zero
-warnings. Both Release analyzer gates match exactly: 3,194 diagnostics in 1,126 groups (portable)
-and 2,461 in 958 (Windows). The portable and Android baselines only drop the three diagnostics of
-the removed Workflow partial and lower the shell's MVVMTK0042 count from 16 to 13; each test
-baseline adds the usual CA1812 entry for the new fixture. No Android build was run locally, so the
-Android baseline change mirrors the shared SharedUI net10.0 entries and is verified by CI.
+The source starts from main `0c031269`. After the review follow-up, the portable suite passed 3,118
+tests and the Windows suite 3,226 tests, each with zero failures and zero skips; the Windows run
+excluded MOBAsmart tests as in CI. The MOBAflow FastDebug compile check, including the WorkflowsPage
+bindings, passed with zero warnings before that follow-up, which changed no WinUI file. Both Release
+analyzer gates match exactly: 3,193 diagnostics in 1,126 groups (portable) and 2,461 in 958
+(Windows). The portable and Android baselines only drop the three diagnostics of the removed
+Workflow partial, lower the shell's MVVMTK0042 count from 16 to 13 and its CA1848 count from 6 to 5
+for the removed unused helper; each test baseline adds the usual CA1812 entry for the new fixture. The Android baseline change mirrors the
+shared SharedUI net10.0 entries and is not verified yet: no Android build was run locally, and the
+`android-release` job reads that baseline only in a manual Quality run with `validate_android`.
+That dispatch is the remaining check.
 Documentation links (623), secrets and line-ending checks pass. No application, device or hardware
 was started; manual Light/Dark/High Contrast and accessibility acceptance remain open in #365.
 

@@ -8,7 +8,8 @@ using System.Windows.Input;
 public partial class MainWindowViewModel
 {
     /// <summary>
-    /// Command exposed for View (Event-to-Command) to handle ListView item clicks on the Solution page.
+    /// Sets the properties-panel object for a ListView item click. No page binds it at present;
+    /// slice 6's shell audit classifies it together with <see cref="CurrentSelectedObject"/>.
     /// </summary>
     public ICommand ItemClickedCommand => field ??= new RelayCommand<object?>(item =>
         // Set the selected item to display in the properties panel

@@ -3023,7 +3023,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "SharedUI",

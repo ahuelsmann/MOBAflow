@@ -17,13 +17,6 @@ using Moq;
 [TestFixture]
 internal sealed partial class WorkflowsPageViewModelTests : IDisposable
 {
-    private static readonly string[] ExpansionProperties =
-    [
-        nameof(WorkflowsPageViewModel.IsWorkflowListExpanded),
-        nameof(WorkflowsPageViewModel.IsWorkflowActionsExpanded),
-        nameof(WorkflowsPageViewModel.IsWorkflowPropertiesExpanded)
-    ];
-
     private SolutionSession _session = null!;
     private Mock<ISettingsService> _persistence = null!;
     private AppSettings _settings = null!;
@@ -86,28 +79,59 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
         Assert.That(page.WorkflowLibrary.SelectedWorkflow, Is.Null);
     }
 
-    [Test]
-    public void Layout_UsesPersistedDefaultsAndSavesOnlyActualChanges()
+    /// <summary>Each flag reads and writes its own key: one flag differs from the other two in every case.</summary>
+    [TestCase(nameof(WorkflowsPageViewModel.IsWorkflowListExpanded))]
+    [TestCase(nameof(WorkflowsPageViewModel.IsWorkflowActionsExpanded))]
+    [TestCase(nameof(WorkflowsPageViewModel.IsWorkflowPropertiesExpanded))]
+    public void Layout_FlagReadsAndWritesItsOwnKey(string flag)
     {
         using var assertions = Assert.EnterMultipleScope();
         var layout = _settings.Layout.WorkflowsPage;
-        layout.IsWorkflowListExpanded = false;
-        layout.IsActionsExpanded = false;
-        layout.IsPropertiesExpanded = false;
+        layout.IsWorkflowListExpanded = flag != nameof(WorkflowsPageViewModel.IsWorkflowListExpanded);
+        layout.IsActionsExpanded = flag != nameof(WorkflowsPageViewModel.IsWorkflowActionsExpanded);
+        layout.IsPropertiesExpanded = flag != nameof(WorkflowsPageViewModel.IsWorkflowPropertiesExpanded);
         var page = CreatePage();
-        Assert.That(page.IsWorkflowListExpanded, Is.False);
-        Assert.That(page.IsWorkflowActionsExpanded, Is.False);
-        Assert.That(page.IsWorkflowPropertiesExpanded, Is.False);
-        page.IsWorkflowListExpanded = false;
-        _persistence.Verify(value => value.SaveSettingsAsync(_settings), Times.Never);
+        Assert.That(page.IsWorkflowListExpanded, Is.EqualTo(layout.IsWorkflowListExpanded), "list read");
+        Assert.That(page.IsWorkflowActionsExpanded, Is.EqualTo(layout.IsActionsExpanded), "actions read");
+        Assert.That(page.IsWorkflowPropertiesExpanded, Is.EqualTo(layout.IsPropertiesExpanded), "properties read");
+        var notifications = new List<string?>();
+        page.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+
+        // The cleared flag becomes true; the other two keep their value.
+        Set(page, flag, true);
+
+        Assert.That(layout.IsWorkflowListExpanded, Is.True, "list key");
+        Assert.That(layout.IsActionsExpanded, Is.True, "actions key");
+        Assert.That(layout.IsPropertiesExpanded, Is.True, "properties key");
+        Assert.That(notifications, Is.EqualTo(new[] { flag }).AsCollection);
+        _persistence.Verify(value => value.SaveSettingsAsync(_settings), Times.Once);
+    }
+
+    [Test]
+    public void Layout_UnchangedValueIsNeitherNotifiedNorSaved()
+    {
+        var page = CreatePage();
         var notifications = new List<string?>();
         page.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
         page.IsWorkflowListExpanded = true;
         page.IsWorkflowActionsExpanded = true;
         page.IsWorkflowPropertiesExpanded = true;
-        Assert.That(layout.IsWorkflowListExpanded && layout.IsActionsExpanded && layout.IsPropertiesExpanded, Is.True);
-        Assert.That(notifications, Is.EqualTo(ExpansionProperties));
-        _persistence.Verify(value => value.SaveSettingsAsync(_settings), Times.Exactly(3));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(notifications, Is.Empty);
+            _persistence.Verify(value => value.SaveSettingsAsync(_settings), Times.Never);
+        }
+    }
+
+    private static void Set(WorkflowsPageViewModel page, string flag, bool value)
+    {
+        switch (flag)
+        {
+            case nameof(WorkflowsPageViewModel.IsWorkflowListExpanded): page.IsWorkflowListExpanded = value; break;
+            case nameof(WorkflowsPageViewModel.IsWorkflowActionsExpanded): page.IsWorkflowActionsExpanded = value; break;
+            case nameof(WorkflowsPageViewModel.IsWorkflowPropertiesExpanded): page.IsWorkflowPropertiesExpanded = value; break;
+            default: throw new ArgumentOutOfRangeException(nameof(flag), flag, "Unknown layout flag.");
+        }
     }
 
     [Test]

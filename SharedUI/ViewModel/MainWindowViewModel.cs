@@ -435,11 +435,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsService.SaveSettingsAsync(_settings).Observe(ex => _logger.LogWarning(ex, "Persist MainWindow settings failed"));
     }
 
-    private void ObserveBackgroundTask(Task task, string operationName)
-    {
-        task.Observe(ex => _logger.LogWarning(ex, "{OperationName} failed", operationName));
-    }
-
     [RelayCommand]
     private void ExitApplication()
     {
