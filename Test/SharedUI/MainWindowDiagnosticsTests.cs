@@ -5,7 +5,6 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging;
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
@@ -283,7 +282,7 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null, usageReader),
-            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus1),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtime.Object), dispatcher.Object),
             locomotiveSession1,
             new Mock<ILogger<MainWindowViewModel>>().Object,

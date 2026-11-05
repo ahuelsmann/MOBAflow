@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public sealed partial class MobileSolutionSynchronizer
 {
-    private readonly ISolutionRemoteLoader? _solutionRemoteLoader;
+    private readonly ISolutionRemoteLoader _solutionRemoteLoader;
     private readonly ILogger<MobileSolutionSynchronizer> _logger;
     private readonly Lock _catalogImportGate = new();
     private Task _lastCatalogImport = Task.CompletedTask;
@@ -22,12 +22,13 @@ public sealed partial class MobileSolutionSynchronizer
     /// Initializes a new instance of the <see cref="MobileSolutionSynchronizer"/> class.
     /// </summary>
     /// <param name="logger">Logger for diagnostics.</param>
-    /// <param name="solutionRemoteLoader">Optional: loads the solution from MOBApi or the phone's cache.</param>
+    /// <param name="solutionRemoteLoader">Loads the solution from MOBApi or the phone's cache.</param>
     public MobileSolutionSynchronizer(
         ILogger<MobileSolutionSynchronizer> logger,
-        ISolutionRemoteLoader? solutionRemoteLoader = null)
+        ISolutionRemoteLoader solutionRemoteLoader)
     {
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(solutionRemoteLoader);
         _logger = logger;
         _solutionRemoteLoader = solutionRemoteLoader;
     }
@@ -79,7 +80,7 @@ public sealed partial class MobileSolutionSynchronizer
                 return false;
             }
 
-            if (_solutionRemoteLoader is not null && endpoint() is { } target)
+            if (endpoint() is { } target)
             {
                 try
                 {
@@ -108,7 +109,7 @@ public sealed partial class MobileSolutionSynchronizer
     public Task SyncAfterPushAsync(MobaflowEndpoint endpoint, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(endpoint);
-        return _solutionRemoteLoader is null || _initialCatalogApplied
+        return _initialCatalogApplied
             ? Task.CompletedTask
             : _solutionRemoteLoader.ForceSyncAsync(endpoint.IpAddress, endpoint.Port, cancellationToken);
     }
@@ -119,7 +120,7 @@ public sealed partial class MobileSolutionSynchronizer
     public Task SyncIfNeededAsync(MobaflowEndpoint endpoint, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(endpoint);
-        return _solutionRemoteLoader is null || !_initialCatalogApplied
+        return !_initialCatalogApplied
             ? Task.CompletedTask
             : _solutionRemoteLoader.SyncIfNeededAsync(endpoint.IpAddress, endpoint.Port, cancellationToken);
     }
@@ -127,18 +128,13 @@ public sealed partial class MobileSolutionSynchronizer
     /// <summary>
     /// On-demand sync for the Control tab: loads the cached solution when the selected project has no
     /// locomotives, then forces a sync from <paramref name="endpoint"/> until the catalog is shown. Returns false
-    /// when no remote sync is possible (no loader or no endpoint).
+    /// when no remote sync is possible (no endpoint).
     /// </summary>
     public async Task<bool> RequestSyncAsync(
         bool selectedProjectHasLocomotives,
         MobaflowEndpoint? endpoint,
         CancellationToken cancellationToken)
     {
-        if (_solutionRemoteLoader is null)
-        {
-            return false;
-        }
-
         if (!selectedProjectHasLocomotives)
         {
             try

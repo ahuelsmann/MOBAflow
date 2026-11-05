@@ -20,7 +20,7 @@ public sealed partial class AudioViewModel : WorkflowActionViewModel
 {
     #region Fields
     private readonly IFilePickerService _filePicker;
-    private readonly ISoundPlayer? _soundPlayer;
+    private readonly ISoundPlayer _soundPlayer;
     #endregion
 
     /// <summary>
@@ -28,10 +28,11 @@ public sealed partial class AudioViewModel : WorkflowActionViewModel
     /// </summary>
     /// <param name="action">The underlying workflow action that defines this audio playback.</param>
     /// <param name="filePicker">Service used to browse for audio files.</param>
-    /// <param name="soundPlayer">Optional sound player used to preview the selected audio file.</param>
-    public AudioViewModel(WorkflowAction action, IFilePickerService filePicker, ISoundPlayer? soundPlayer = null) : base(action, ActionType.Audio)
+    /// <param name="soundPlayer">Sound player used to preview the selected audio file.</param>
+    public AudioViewModel(WorkflowAction action, IFilePickerService filePicker, ISoundPlayer soundPlayer) : base(action, ActionType.Audio)
     {
         ArgumentNullException.ThrowIfNull(filePicker);
+        ArgumentNullException.ThrowIfNull(soundPlayer);
         _filePicker = filePicker;
         _soundPlayer = soundPlayer;
         action.Audio ??= new AudioActionPayload();
@@ -73,13 +74,13 @@ public sealed partial class AudioViewModel : WorkflowActionViewModel
     [RelayCommand(CanExecute = nameof(CanPlayAudio))]
     private async Task PlayAudioAsync()
     {
-        if (_soundPlayer != null && !string.IsNullOrWhiteSpace(FilePath))
+        if (!string.IsNullOrWhiteSpace(FilePath))
         {
             await _soundPlayer.PlayAsync(FilePath);
         }
     }
 
-    private bool CanPlayAudio() => _soundPlayer != null && !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
+    private bool CanPlayAudio() => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
 
     /// <summary>
     /// Returns a human-readable description of the audio action for debugging and UI display.

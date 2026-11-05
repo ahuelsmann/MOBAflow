@@ -7,9 +7,9 @@ internal sealed class FeedbackCounterEngine
 {
     private readonly TimeProvider _timeProvider;
 
-    public FeedbackCounterEngine(TimeProvider? timeProvider = null)
+    public FeedbackCounterEngine(TimeProvider timeProvider)
     {
-        _timeProvider = timeProvider ?? TimeProvider.System;
+        _timeProvider = timeProvider;
     }
 
     public FeedbackCounterUpdate ApplyFeedback(

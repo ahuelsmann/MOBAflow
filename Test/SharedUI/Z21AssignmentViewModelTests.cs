@@ -150,7 +150,7 @@ internal sealed class Z21AssignmentViewModelTests
     [Test]
     public void ChangingTheIpAddress_ForgetsTheSerialNumber()
     {
-        var project = new ProjectViewModel(new Project { Z21 = { IpAddress = "192.168.0.111", SerialNumber = 1001 } });
+        var project = new ProjectViewModel(new Project { Z21 = { IpAddress = "192.168.0.111", SerialNumber = 1001 } }, TestViewModelServices.Default);
 
         project.Z21IpAddress = " 192.168.0.120 ";
 
@@ -192,6 +192,6 @@ internal sealed class Z21AssignmentViewModelTests
             TestFileServices.CreateMock().Object,
             dispatcher.Object,
             new Mock<IProjectRuntimeHost>().Object,
-            NullLogger<SolutionSession>.Instance);
+            NullLogger<SolutionSession>.Instance, TestViewModelServices.Default);
     }
 }

@@ -125,9 +125,11 @@ implementations belong in the host that uses the role.
   (vehicle photos below the photo root). MOBAflow implements them in `SolutionFileService`, `FilePickerService`
   and `PhotoStorageService`; the first two get the main window ID from `WinUiWindowContext`, and
   `SolutionFileService` also gets the XAML root there for its dialogs. Only MOBAflow uses the file roles.
-  `NullSolutionIoService` (`CanPersist` is false) and `NullFilePickerService` serve tests; `SolutionSession`
-  (when no `SolutionViewModelServices` is passed) and `WorkflowViewModel` (when no picker is passed) fall back to
-  `NullFilePickerService`. Consumers request only the role they use; there is no aggregate file interface.
+  `NullSolutionIoService` (`CanPersist` is false) and `NullFilePickerService` serve tests and hosts without
+  files: `SolutionSession`, `MobileSolutionContext` and the solution, project and workflow wrappers receive the
+  picker, the preview sound player and the logger factory through the required `SolutionViewModelServices`
+  record, which each host registers (MOBAsmart with `NullFilePickerService` and `NullSoundPlayer`).
+  Consumers request only the role they use; there is no aggregate file interface.
   `PhotoAssignmentService` combines picking and storing for the locomotive and wagon pages.
 
 ### 1. **Domain Layer** (`Domain/`)
@@ -423,8 +425,10 @@ runtime services.
   The session still owns persistence and updates the current runtime snapshot for model edits.
 - One WorkflowLibraryViewModel is registered through host DI and shared by the station workflow
   library and the other workflow surfaces. Search uses the same library state through
-  every access path. Runtime services, execution context and EventBus are composed in the host;
-  workflow behavior stays in the existing editor.
+  every access path. The host supplies the dialog service, `IWorkflowValidator`, `IWorkflowDryRunService`
+  (the Backend service that owns the runtime execution context for the test run), `IWorkflowTraceStore`,
+  EventBus and logger as required constructor dependencies; the library never holds the runtime
+  `ActionExecutionContext`. Workflow behavior stays in the existing editor.
 - StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
   unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
   central layout persistence remains planned.

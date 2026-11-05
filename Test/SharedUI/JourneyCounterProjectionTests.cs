@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
-using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
@@ -47,7 +46,7 @@ public sealed partial class JourneyCounterProjectionTests
             InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 42, null, null), new InPortCounterSnapshot(7, 19, null, null)]
         });
         fixture.ViewModel.InitializeStatisticsFromFeedbackPoints();
-        fixture.ViewModel.SelectedProject = new ProjectViewModel(new Project { Name = "Another layout" });
+        fixture.ViewModel.SelectedProject = new ProjectViewModel(new Project { Name = "Another layout" }, TestViewModelServices.Default);
         fixture.Settings.Counter.CountOfFeedbackPoints = 1;
         fixture.ViewModel.InitializeStatisticsFromFeedbackPoints();
 
@@ -257,7 +256,7 @@ public sealed partial class JourneyCounterProjectionTests
                 stationEventBus1,
                 TestSettingsPages.Create(Settings, dispatcher.Object),
                 _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object),
-                _rollingStockPages.GetStationsPage(locomotiveSession1, Runtime.Object, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, stationEventBus1),
+                _rollingStockPages.GetStationsPage(locomotiveSession1, Runtime.Object, stationEventBus1),
                 _rollingStockPages.GetJourneysPage(locomotiveSession1, Gateway.Object, dispatcher.Object),
                 locomotiveSession1,
                 NullLogger<MainWindowViewModel>.Instance);
