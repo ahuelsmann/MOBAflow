@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/366
 **Spec Kit**: Not applicable - regression tests and CI lanes for existing contracts without product behavior
-**Status**: Active; steps 1 and 2 are delivered (#367); step 3 is in its own issue PR
+**Status**: Active; steps 1 to 3 are delivered (#367, #396); step 4 (SharedUI lane) is in its own issue PR
 
 ## Purpose and scope
 
@@ -27,14 +27,16 @@ a lane the same way locally and in [Quality CI](../.github/workflows/quality.yml
 | `backend` | **active from step 1** | `Backend` | `mutation-backend` (Linux) | 47% (raised from 43%) |
 | `api` | **active from step 3** | `MOBApi` | `mutation-api` (Linux) | 44% |
 | `api-process` | planned | `MOBApi` | - | - |
-| `shared-ui` | planned (step 4) | `SharedUI` | - | - |
+| `shared-ui` | **active from step 4** | `SharedUI` | `mutation-shared-ui` (Linux) | 37% |
 
 The Backend host [`Backend.MutationTests.csproj`](../MutationTest/Backend/Backend.MutationTests.csproj) compiles all
 fixtures under `Test/Backend/`, the workflow end-to-end fixture and the Z21 DCC decoder tests, with the shared fakes
 they need. The MOBApi host [`Api.MutationTests.csproj`](../MutationTest/Api/Api.MutationTests.csproj) compiles the
 in-process fixtures under `Test/MOBApi/`. The MOBApi process fixtures (`MobApiProcessTests`, `RuntimeHubLiveE2ETests`)
 start real MOBApi processes and cannot detect mutants of the in-process assembly; they stay in the planned
-`api-process` lane.
+`api-process` lane. The SharedUI host [`SharedUI.MutationTests.csproj`](../MutationTest/SharedUI/SharedUI.MutationTests.csproj)
+compiles every fixture under `Test/SharedUI/`, the `TrackLayoutArchitectureTests` parts that
+`SignalBoxPropertiesViewModelTests` extends, and the shared test helpers.
 
 ## Backend baseline (step 1)
 
@@ -157,7 +159,24 @@ separate pull requests.
    - **Open in the lane:** remote and host registration, disconnect handling, `Program`, the discovery service and the
      photo and solution controllers have no in-process tests yet. A later floor raise follows from new tests there.
 4. **SharedUI lane:** train control, settings, project switches and stale asynchronous responses through the existing
-   runtime interfaces.
+   runtime interfaces. Delivered: the `shared-ui` lane with its host, Stryker configuration and the `mutation-shared-ui`
+   CI job.
+   - **Measurement:** local full run on Linux (Stryker.NET 5.0.0, four processes, .NET SDK 10.0.114, 831 passing
+     ordinary tests, main `0c03126` plus the lane host), 63 minutes: 37.29% with 3,233 killed, 38 timeouts, 2,907
+     survived, 2,594 without coverage, 2,072 ignored and 1,184 compile errors. The floor is 37%; the CI run on the pull
+     request confirms it with the SDK from `global.json`.
+   - **Host preparation:** the disabled `MauiAdapterDispatchTests.cs` (`#if false`, its type no longer exists) is
+     removed, because its commented-out fixture counted as a registered test file without tests. Three wagon page tests
+     get unique method names (`Wagon...`), because the run guard maps tests to files by method name.
+   - **Safe Mode:** Stryker reports CS0165 (variable assigned in `try` or an out argument) in
+     `SignalBoxPropertiesViewModel` (`SetElementName`, `SelectMultiplexer`, `Rotate`), `SignalBoxRuntimeSync.ApplyToPlan`,
+     `PageLayoutViewModel` (`ApplyToGrid`, `UpdateFromGrid`) and `MauiViewModel.OnSelectedProjectIndexChanged`; their mutants count as
+     compile errors outside the score.
+   - **Largest open areas (survived + no coverage):** `TrainControlViewModel` 605, `MauiViewModel` 374,
+     `SettingsPageViewModel` 250, `RecorderPageViewModel` 208, `TimetablePageViewModel` 185,
+     `MauiViewModel.MobaflowConnection` 162, `WorkflowLibraryViewModel` 161, `DisplayViewModel` 144,
+     `MainWindowViewModel` 118 and `MainWindowViewModel.SyncDiagnostics` 111. New tests there raise the floor later;
+     the ViewModels under active RF-24 extraction wait for that work.
 5. **Completion:** further lanes only where the tooling is technically suitable (Sound, display, rendering by measured
    risk); RF-07 records the final mutation lanes in its deliverable inventory.
 

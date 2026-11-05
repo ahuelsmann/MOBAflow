@@ -282,12 +282,13 @@ test-case filters. Planned lanes remain explicitly outside the mutation guarante
 | domain | `Domain/Domain.csproj` | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% |
 | backend | `Backend/Backend.csproj` | `MutationTest/Backend/Backend.MutationTests.csproj` | [`stryker-backend-config.json`](../MutationTest/stryker-backend-config.json) | 47% |
 | common | `Common/Common.csproj` | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% |
+| shared-ui | `SharedUI/SharedUI.csproj` | `MutationTest/SharedUI/SharedUI.MutationTests.csproj` | [`stryker-shared-ui-config.json`](../MutationTest/stryker-shared-ui-config.json) | 37% |
 | api | `MOBApi/MOBApi.csproj` | `MutationTest/Api/Api.MutationTests.csproj` | [`stryker-api-config.json`](../MutationTest/stryker-api-config.json) | 44% |
 | speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% |
 <!-- documentation-facts:mutation:end -->
 
-Domain runs when its inputs change; Common, Speech.Base, Backend and MOBApi run for every code-relevant PR.
-All five also run on main pushes and manual Quality runs. Domain, Speech.Base, Backend and MOBApi run on
+Domain runs when its inputs change; Common, Speech.Base, Backend, SharedUI and MOBApi run for every code-relevant PR.
+All six also run on main pushes and manual Quality runs. Domain, Speech.Base, Backend, SharedUI and MOBApi run on
 Linux. Common uses Windows because its existing fixtures include Windows-specific
 photo paths. Its concurrency is limited to four test processes. The Common lane includes selected Backend test
 fixtures for Common contracts and `SpeechSettingsTests.cs`; it does not mutate Backend production code.
@@ -298,10 +299,12 @@ Backend mutates the entire assembly with every fixture under `Test/Backend/`, th
 fixture and the Z21 DCC decoder tests. It is the largest lane (about 35 minutes with four Stryker
 processes). The MOBApi lane mutates `MOBApi` with the in-process fixtures under `Test/MOBApi/` (about two
 minutes locally); the MOBApi process fixtures start real processes, cannot detect mutants and stay in the planned
-`api-process` lane. Methods that Stryker puts into Safe Mode
+`api-process` lane. The SharedUI lane mutates `SharedUI` with every fixture under `Test/SharedUI/`, the track-layout
+architecture fixture parts that `SignalBoxPropertiesViewModelTests` extends, and the shared test helpers (about
+63 minutes locally with four Stryker processes). Methods that Stryker puts into Safe Mode
 are excluded from the score; see
 [methods outside the Backend mutation gate](../plans/366-coverage-mutation-ratchets.md#methods-outside-the-backend-mutation-gate).
-Thresholds come from the configuration files; the Common, Speech.Base, Backend and MOBApi minimums are baseline
+Thresholds come from the configuration files; the Common, Speech.Base, Backend, SharedUI and MOBApi minimums are baseline
 safeguards, not targets for test quality. Speech.Base keeps scheduling-only `ConfigureAwait`
 mutants visible rather than excluding them to inflate the score.
 
@@ -317,9 +320,10 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 ./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName backend -OutputPath artifacts/mutation/backend-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName api -OutputPath artifacts/mutation/api-local
+./scripts/Invoke-MutationLane.ps1 -LaneName shared-ui -OutputPath artifacts/mutation/shared-ui-local
 ```
 
-On Linux, run the Domain, Speech.Base, Backend and MOBApi lanes; omit the Windows-specific Common lane. Run
+On Linux, run the Domain, Speech.Base, Backend, MOBApi and SharedUI lanes; omit the Windows-specific Common lane. Run
 Stryker and ordinary builds/tests sequentially: Stryker recreates shared
 intermediate files. CI uses the same runner, which requires a nonempty, fully passing ordinary-test
 TRX baseline before starting Stryker. It validates the new JSON report's production root, registered

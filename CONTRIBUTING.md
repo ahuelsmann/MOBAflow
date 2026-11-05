@@ -108,6 +108,7 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 ./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName backend -OutputPath artifacts/mutation/backend-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName api -OutputPath artifacts/mutation/api-local
+./scripts/Invoke-MutationLane.ps1 -LaneName shared-ui -OutputPath artifacts/mutation/shared-ui-local
 ```
 
 A mutation score is valid only with a passing ordinary test baseline. The same runner is used
