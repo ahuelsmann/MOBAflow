@@ -221,9 +221,9 @@ Rollback is a revert to the preceding validated slice; do not retain a parallel 
 
 Resolved against main `a2b36f11` (after #409 and #412). Slice 5 extracts the counter, traffic, diagnostics,
 health and synchronization projections. It adds no runtime ownership, no new command and no persisted-format
-change. It is delivered as two sequential draft PRs from `claude/issue-219-rf24-slice-5` (5a first): 5b alone
-changes the status bar and the shell's operating-state inputs and carries the RF-25 overlap described below, and
-each half stays at the size of #401. Both follow the pattern of #401 and #409: one focused ViewModel per
+change. It is delivered as two sequential draft PRs on their own branches after allocation (5a first), and only
+after #414 is integrated (see the overlap check below): 5b alone changes the status bar and the shell's
+operating-state inputs, and each half stays at the size of #401. Both follow the pattern of #401 and #409: one focused ViewModel per
 responsibility in `SharedUI/ViewModel/`, required constructor dependencies, one host-owned singleton registered in
 `MobaWinUiServiceCollectionExtensions`, pages receive the instance directly, the shell exposes an instance only where
 a shell surface binds it, and superseded partials are removed with their tests moved rather than duplicated.
@@ -340,16 +340,17 @@ updating. Record the result in #365 with commit, environment and omissions. No h
 
 ### Overlap check (observed 2026-11-05, local time)
 
-- **RF-25 slice 4 (#318, branch `claude/issue-318-shared-ui-dependencies`):** the branch is not on GitHub and has no
-  Draft PR; the local branch has no commit beyond main `a2b36f11`, so the file comparison is pending. From the
-  [RF-25 plan](318-explicit-dependencies.md), its slice 4 changes the remaining optional services of SharedUI
-  ViewModels, which in the shell are `ISettingsService?`, `IDialogService?` and `IProjectDiagnosticsService?` in
-  `MainWindowViewModel.cs` and `.Diagnostics.cs`, the shell registration in `MobaWinUiServiceCollectionExtensions.cs`
-  and the ten shell construction sites in tests. Slice 5b removes `IProjectDiagnosticsService?` from exactly those
-  files, and both 5a and 5b edit the shell constructor and its construction sites. Rule: before 5a and again before 5b
-  starts, re-check that branch and the PR list; a commit there that touches `MainWindowViewModel*.cs`, the WinUI
-  composition root or those test files is a concrete overlap, and the slice waits for the integration of #318 and
-  rebases. Today there is none.
+- **RF-25 slice 4 (#318, Draft PR #414 on branch `claude/issue-318-shared-ui-dependencies`):** concrete overlap,
+  verified with `gh pr diff 414 --name-only`. #414 changes these slice 5 files: `MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs`,
+  `Test/Helpers/TestRollingStockPages.cs`, `Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs`,
+  `Test/MOBAflow/RestApiStatusServiceTests.cs`, `Test/SharedUI/JourneyCounterProjectionTests.cs`,
+  `MainWindowDiagnosticsTests.cs`, `MainWindowViewModelPhotoAssignmentTests.cs`, `MainWindowViewModelShutdownTests.cs`,
+  `MainWindowViewModelSignalBoxTests.cs`, `MainWindowViewModelStartupAutoSaveTests.cs`, `JourneyMapViewModelTests.cs`,
+  `TimetablePageViewModelTests.cs`, `TrainControlViewModelCleanupTests.cs`, `docs/ARCHITECTURE.md`,
+  `quality/analyzer-baseline.json` and `quality/analyzer-baseline.windows.json`. It does not change
+  `MainWindowViewModel*.cs`, the pages or the Android baseline. By the Project Manager's rule, slice 5
+  implementation (5a and 5b) waits for the integration of #414 and starts from the main that contains it; the
+  construction-site and helper changes above are then rebased onto #414's required-dependency helpers.
 - **#410 (`claude/issue-366-shared-ui-lane`):** no file overlap. It changes the quality workflow, the mutation lane
   configuration and scripts, `SharedUI/Properties/AssemblyAttributes.cs`, `MauiAdapterDispatchTests.cs`,
   `WagonsPageViewModelTests.cs`, documentation and the #360/#366 plans; slice 5 touches none of them. Sequencing
