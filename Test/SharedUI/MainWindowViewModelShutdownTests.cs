@@ -149,6 +149,21 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
         }
     }
 
+    [Test]
+    public async Task PrepareForShutdownAsync_DisposesTheSharedWorkflowLibrary()
+    {
+        var solution = new Solution { Projects = [new Project { Workflows = [new Workflow { Name = "Departure" }] }] };
+        var viewModel = CreateViewModel(CreateMobaRuntimeMock(), solution: solution);
+        var library = viewModel.StationsPage.WorkflowLibrary;
+        Assert.That(library.SelectedWorkflow, Is.SameAs(viewModel.SelectedProject!.Workflows[0]));
+
+        await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+
+        // A disposed library no longer follows the session's project selection.
+        viewModel.SelectedProject = new ProjectViewModel(new Project { Workflows = [new Workflow { Name = "Late" }] });
+        Assert.That(library.SelectedWorkflow, Is.Null);
+    }
+
     private static Mock<IMobaRuntime> CreateMobaRuntimeMock()
     {
         var mobaRuntimeMock = new Mock<IMobaRuntime>();

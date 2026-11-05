@@ -7,9 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 public partial class MainWindowViewModel
 {
     private bool _isProjectListExpanded = true;
-    private bool _isWorkflowListExpanded = true;
-    private bool _isWorkflowActionsExpanded = true;
-    private bool _isWorkflowPropertiesExpanded = true;
     private bool _isSignalBoxToolboxExpanded = true;
     private bool _isSignalBoxPropertiesExpanded = true;
     private bool _isMonitorTrafficExpanded = true;
@@ -56,36 +53,6 @@ public partial class MainWindowViewModel
         }
     }
 
-    public bool IsWorkflowListExpanded
-    {
-        get => _isWorkflowListExpanded;
-        set
-        {
-            if (SetProperty(ref _isWorkflowListExpanded, value))
-                PersistLayoutState(layout => layout.WorkflowsPage.IsWorkflowListExpanded = value);
-        }
-    }
-
-    public bool IsWorkflowActionsExpanded
-    {
-        get => _isWorkflowActionsExpanded;
-        set
-        {
-            if (SetProperty(ref _isWorkflowActionsExpanded, value))
-                PersistLayoutState(layout => layout.WorkflowsPage.IsActionsExpanded = value);
-        }
-    }
-
-    public bool IsWorkflowPropertiesExpanded
-    {
-        get => _isWorkflowPropertiesExpanded;
-        set
-        {
-            if (SetProperty(ref _isWorkflowPropertiesExpanded, value))
-                PersistLayoutState(layout => layout.WorkflowsPage.IsPropertiesExpanded = value);
-        }
-    }
-
     public bool IsSignalBoxToolboxExpanded
     {
         get => _isSignalBoxToolboxExpanded;
@@ -113,9 +80,6 @@ public partial class MainWindowViewModel
     {
         _isProjectListExpanded = _settings.Layout.SolutionPage.IsProjectListExpanded;
         _isProjectPropertiesExpanded = _settings.Layout.SolutionPage.IsPropertiesExpanded;
-        _isWorkflowListExpanded = _settings.Layout.WorkflowsPage.IsWorkflowListExpanded;
-        _isWorkflowActionsExpanded = _settings.Layout.WorkflowsPage.IsActionsExpanded;
-        _isWorkflowPropertiesExpanded = _settings.Layout.WorkflowsPage.IsPropertiesExpanded;
         _isSignalBoxToolboxExpanded = _settings.Layout.SignalBoxPage.IsToolboxExpanded;
         _isSignalBoxPropertiesExpanded = _settings.Layout.SignalBoxPage.IsPropertiesExpanded;
         _isMonitorTrafficExpanded = _settings.Layout.MonitorPage.IsTrafficExpanded;
