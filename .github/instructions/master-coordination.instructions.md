@@ -44,10 +44,13 @@ ownership, prioritization and allocation do not move, and the COO opens no queue
   human. The COO prepares those decisions with a recommendation, alternatives and the smallest required decision.
 - The COO starts no agent outside the current allocation and keeps one writer per worktree. Explicit pauses,
   no-merge instructions, excluded slices and acceptance requirements remain binding.
-- Before Ready and merge the COO verifies the gates listed under [Ready handoff, integration and
-  completion](#ready-handoff-integration-and-completion): live head/base, required checks, current-commit Sonar,
-  a fresh independent review, documentation/wiki impact and required manual acceptance. The COO merges by squash
-  against the reviewed head and never bypasses GitHub protection.
+- Before Ready the COO verifies the handover gates listed under [Ready handoff, integration and
+  completion](#ready-handoff-integration-and-completion): exact head/base, current CI and current-commit Sonar
+  with zero OPEN/CONFIRMED PR issues, required actual acceptance, documentation/wiki impact and writer stop.
+  Independent review follows Ready and is not its prerequisite.
+- Before merge the COO additionally verifies live head/base, mergeability, current required checks, the fresh
+  independent review of that exact comparison, resolved threads and any active stop or no-merge restriction. The
+  COO merges by squash against the reviewed head and never bypasses GitHub protection.
 - The fresh independent review rule is unchanged: a COO coordination or fix session does not review or approve its
   own work; it dispatches the review to a separate [Senior Code Reviewer](#senior-code-reviewer) session.
 - The COO creates no second queue, lock, permit or automation. App, debugger or watch starts, device deployment,
