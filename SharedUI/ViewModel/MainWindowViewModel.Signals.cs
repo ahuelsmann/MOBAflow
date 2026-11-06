@@ -60,23 +60,24 @@ public partial class MainWindowViewModel
         Project? project,
         bool requiresSignalCommand)
     {
-        // A failed earlier change was reported to its own caller; it must not block later changes.
-        await Task.WhenAny(previousChange).ConfigureAwait(false);
+        // A failed earlier change was reported to its own caller; it must not block later changes. Each step returns
+        // to the UI context: the runtime copy and the save snapshot read the editor model, which the UI thread changes.
+        await Task.WhenAny(previousChange).ConfigureAwait(true);
 
         if (requiresPersistence && project is not null)
         {
             // Refresh the runtime's project snapshot so the aspect uses the edited configuration.
-            await _runtimeConnection.UpdateProjectAsync(project).ConfigureAwait(false);
+            await _runtimeConnection.UpdateProjectAsync(project).ConfigureAwait(true);
         }
 
         if (requiresSignalCommand && element is SbSignal signal)
         {
-            await SetSignalAspectAsync(signal).ConfigureAwait(false);
+            await SetSignalAspectAsync(signal).ConfigureAwait(true);
         }
 
         if (requiresPersistence)
         {
-            await SaveSolutionInternalAsync().ConfigureAwait(false);
+            await SaveSolutionInternalAsync().ConfigureAwait(true);
         }
     }
 

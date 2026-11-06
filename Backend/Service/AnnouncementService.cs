@@ -122,7 +122,7 @@ public class AnnouncementService : IAnnouncementService
         text = ReplaceToken(text, "StationNumber", stationIndex.ToString());
 
         // Replace {TrackNumber} if available
-        var platformNumber = ResolvePlatformNumber(station);
+        var platformNumber = station.ResolvePlatform()?.Number;
         if (platformNumber.HasValue)
         {
             text = ReplaceToken(text, "TrackNumber", platformNumber.Value.ToString());
@@ -216,19 +216,5 @@ public class AnnouncementService : IAnnouncementService
         }
 
         return replaced;
-    }
-
-    private static uint? ResolvePlatformNumber(Station station)
-    {
-        if (station.PlatformId.HasValue)
-        {
-            var platform = station.Platforms.FirstOrDefault(platform => platform.Id == station.PlatformId.Value);
-            if (platform != null)
-            {
-                return platform.Number;
-            }
-        }
-
-        return station.Platforms.FirstOrDefault()?.Number;
     }
 }

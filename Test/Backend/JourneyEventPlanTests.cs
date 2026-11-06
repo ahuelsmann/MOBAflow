@@ -464,6 +464,64 @@ public sealed class JourneyEventPlanTests
     }
 
     [Test]
+    public async Task EditedJourneyKeepsTheCurrentStopByIdentity()
+    {
+        using var fixture = new EventPlanFixture();
+        var first = new Station { Name = "A" };
+        var second = new Station { Name = "B" };
+        var third = new Station { Name = "C" };
+        fixture.Journey.Stations = [first, second, third];
+        var manager = fixture.Manager;
+        fixture.SetupNextStopActions(times: 1);
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+
+        fixture.Journey.Stations = [second, third, first];
+        manager.UpdateDefinitions(fixture.Project);
+        var state = manager.GetState(fixture.Journey.Id)!;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(state.CurrentStationId, Is.EqualTo(second.Id));
+            Assert.That(state.CurrentPos, Is.Zero);
+            Assert.That(state.CurrentStationName, Is.EqualTo("B"));
+        }
+    }
+
+    [Test]
+    public async Task RemovedCurrentStopKeepsItsPositionAndGivesTheNextWorkflowNoCurrentStation()
+    {
+        using var fixture = new EventPlanFixture();
+        var first = new Station { Name = "A" };
+        var second = new Station { Name = "B" };
+        fixture.Journey.Stations = [first, second];
+        fixture.Journey.EventPlan.Events.Add(new JourneyEvent { InPort = 2, Count = 1, WorkflowId = fixture.Workflow.Id });
+        var manager = fixture.Manager;
+        fixture.SetupNextStopActions(times: 1);
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+
+        fixture.Journey.Stations = [first];
+        manager.UpdateDefinitions(fixture.Project);
+        var state = manager.GetState(fixture.Journey.Id)!;
+        var kept = (state.CurrentStationId, state.CurrentPos, state.CurrentStationName);
+        // The next workflow only records its context, so the context shows what the manager created.
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns((WorkflowExecutionRequest request, CancellationToken _) =>
+            {
+                fixture.Requests.Enqueue(request);
+                return Task.FromResult(Success(request));
+            });
+        await fixture.RaiseAsync(2).ConfigureAwait(false);
+        var context = fixture.Requests.Last().Context;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(kept, Is.EqualTo((second.Id, 1, "B")));
+            Assert.That(context.CurrentStation, Is.Null);
+            Assert.That(context.CurrentStationIndex, Is.EqualTo(1));
+        }
+    }
+
+    [Test]
     public async Task DisabledAndUnassignedEventsDoNotStartWorkflows()
     {
         using var fixture = new EventPlanFixture();

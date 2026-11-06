@@ -70,6 +70,31 @@ internal sealed partial class RuntimeCommandMetricsTests
         Assert.That(recorder.Rejections, Is.Empty);
     }
 
+    [Test]
+    public void InvalidCommand_IsLoggedAsDebugWithItsReason()
+    {
+        var logger = new RecordingLogger();
+        var admission = TestCommandAdmission.Create(new RuntimeCommandQueue(capacity: 4), KnownProject(), logger);
+
+        admission.Validate(Drive(0));
+
+        Assert.That(logger.Entries, Has.Exactly(1).Matches<(LogLevel Level, string Message)>(
+            entry => entry.Level == LogLevel.Debug && entry.Message.Contains("rejected as invalid", StringComparison.Ordinal)));
+    }
+
+    [Test]
+    public void RejectionCounter_DescribesItsUnitAndMeaning()
+    {
+        using var recorder = new RejectionRecorder();
+        TestCommandAdmission.Create(new RuntimeCommandQueue(capacity: 4), KnownProject()).Validate(Drive(0));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(recorder.Instrument?.Unit, Is.EqualTo("{command}"));
+            Assert.That(recorder.Instrument?.Description,
+                Is.EqualTo("Remote runtime commands rejected as invalid or because the bounded queue was full."));
+        }
+    }
     private static RuntimeCommandEnvelope Drive(int address) => new()
     {
         ProjectId = Project,
@@ -98,6 +123,7 @@ internal sealed partial class RuntimeCommandMetricsTests
             {
                 if (instrument.Meter.Name == RuntimeCommandAdmission.MeterName && instrument.Name == RuntimeCommandAdmission.RejectedCommandsName)
                 {
+                    Instrument = instrument;
                     listener.EnableMeasurementEvents(instrument);
                 }
             };
@@ -119,8 +145,23 @@ internal sealed partial class RuntimeCommandMetricsTests
             _listener.Start();
         }
 
+        public Instrument? Instrument { get; private set; }
+
         public IReadOnlyList<(string Reason, string Command)> Rejections => _rejections;
 
         public void Dispose() => _listener.Dispose();
+    }
+
+    /// <summary>Records formatted log entries; every level is enabled.</summary>
+    private sealed class RecordingLogger : ILogger<RuntimeCommandAdmission>
+    {
+        public List<(LogLevel Level, string Message)> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            Entries.Add((logLevel, formatter(state, exception)));
     }
 }

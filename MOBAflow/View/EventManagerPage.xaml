@@ -34,7 +34,7 @@
                     <FontIcon Glyph="&#xE712;" FontSize="16" />
                     <Button.Flyout>
                         <MenuFlyout>
-                            <MenuFlyoutItem Text="Reset all InPort counters" Command="{x:Bind ViewModel.MainWindow.ResetCountersCommand}" />
+                            <MenuFlyoutItem Text="Reset all InPort counters" Command="{x:Bind ViewModel.ResetCountersCommand}" />
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
@@ -208,7 +208,7 @@
                 </controls:CollapsibleColumnProperties.PanelContent>
             </controls:CollapsibleColumnProperties>
         </Grid>
-        <TextBlock Grid.Row="3" Text="{x:Bind ViewModel.MainWindow.JourneyCommandStatus, Mode=OneWay}" TextWrapping="Wrap"
+        <TextBlock Grid.Row="3" Text="{x:Bind ViewModel.JourneysPage.JourneyCommandStatus, Mode=OneWay}" TextWrapping="Wrap"
                    Visibility="{x:Bind ViewModel.HasCommandStatus, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                    AutomationProperties.LiveSetting="Polite" />
     </Grid>

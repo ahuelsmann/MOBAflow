@@ -149,9 +149,8 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Called when SelectedProject changes.
     /// Re-initializes track statistics based on the new project's FeedbackPoints.
-    /// Auto-selects first journey if available.
     /// </summary>
-    private void HandleSelectedProjectChanged(ProjectViewModel? newValue)
+    private void HandleSelectedProjectChanged()
     {
         RefreshProjectDiagnostics();
 
@@ -159,24 +158,6 @@ public partial class MainWindowViewModel
         // so no Enqueue needed – only one PropertyChanged, no CollectionChanged during binding.
         InitializeStatisticsFromFeedbackPoints();
         ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
-
-        if (newValue != null)
-        {
-            // Auto-select first journey when project is selected
-            if (newValue.Journeys.Count > 0)
-            {
-                SelectedJourney = newValue.Journeys.FirstOrDefault();
-            }
-            else
-            {
-                SelectedJourney = null;
-            }
-        }
-        else
-        {
-            // Clear journey selection when no project is selected
-            SelectedJourney = null;
-        }
 
         UpdateSolutionLoadedStatus();
     }
@@ -196,13 +177,16 @@ public partial class MainWindowViewModel
         catch (Exception ex)
         {
             CounterCommandStatus = ex.Message;
-            LogJourneyCommandFailure(_logger, ex, "Resetting InPort counters");
+            LogCounterCommandFailure(_logger, ex, "Resetting InPort counters");
         }
     }
 
     #endregion
 
     #region Counter Event Handlers (Feedback Processing)
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "{Operation} failed")]
+    private static partial void LogCounterCommandFailure(ILogger logger, Exception exception, string operation);
 
     /// <summary>
     /// Projects the authoritative session counters from the selected runtime.

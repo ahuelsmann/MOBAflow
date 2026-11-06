@@ -2490,6 +2490,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/BackendTelemetryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/DecoderCvServiceTests.cs",
       "count": 1
     },
@@ -3204,6 +3211,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Domain/LocomotiveWhistleRuleTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Domain/PersistedDomainDefaultsTests.cs",
       "count": 1
     },
@@ -3233,6 +3247,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Domain/SolutionLoadFailureTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/Domain/StationTests.cs",
       "count": 1
     },
     {
@@ -3421,6 +3442,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAflow/HelpPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs",
       "count": 1
     },
@@ -3513,6 +3541,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeCommandAdmissionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBApi/RuntimeCommandLoadTests.cs",
       "count": 1
     },
     {
@@ -3939,6 +3974,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/WorkflowsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/Z21AssignmentViewModelTests.cs",
       "count": 1
     },
@@ -3968,6 +4010,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Speech/PcmWavePostProcessorTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/Speech/PiperProcessRunnerTests.cs",
       "count": 1
     },
     {

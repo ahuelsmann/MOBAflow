@@ -160,6 +160,31 @@ internal sealed partial class MobaRuntimeServiceProjectIsolationTests : IDisposa
     }
 
     [Test]
+    public async Task UpdateProjectAsync_CopiesTheProjectWhenCalled_NotAfterWaitingForActivation()
+    {
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var interlocking = new Mock<IInterlockingRuntime>();
+        using var runtime = CreateRuntime(CreateZ21Mock().Object, interlockingRuntime: interlocking.Object);
+        var project = new Project();
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
+        interlocking.Setup(value => value.ActivateAsync(It.IsAny<InterlockingDefinition>(), It.IsAny<CancellationToken>()))
+            .Returns(() => { entered.TrySetResult(); return release.Task; });
+        var activation = runtime.ActivateProjectAsync(project);
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var requested = new Journey { Name = "Requested" };
+        var editable = new Project { Id = project.Id, Journeys = [requested] };
+
+        var update = runtime.UpdateProjectAsync(editable);
+        // The editor keeps changing its model while the update waits for the activation.
+        editable.Journeys.Add(new Journey { Name = "Added later" });
+        release.TrySetResult();
+        await Task.WhenAll(activation, update).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        Assert.That(runtime.Current.JourneyStates.Keys, Is.EquivalentTo(new[] { requested.Id }));
+    }
+
+    [Test]
     public async Task EditingProjectAfterActivation_DoesNotAffectRuntime()
     {
         var z21Mock = CreateZ21Mock();

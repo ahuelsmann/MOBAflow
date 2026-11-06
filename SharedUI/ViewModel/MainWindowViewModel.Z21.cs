@@ -88,16 +88,6 @@ public partial class MainWindowViewModel
         await _runtimeCommandGateway.SimulateFeedbackAsync(inPort).ConfigureAwait(false);
     }
 
-    private bool CanResetJourney() => SelectedJourney != null;
-
-    [RelayCommand(CanExecute = nameof(CanResetJourney))]
-    private async Task ResetJourney()
-    {
-        if (SelectedJourney == null) return;
-
-        await ResetJourneyCounter().ConfigureAwait(true);
-    }
-
     [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
     private async Task SetTrackPowerAsync(bool turnOn)
     {
@@ -207,8 +197,6 @@ public partial class MainWindowViewModel
         ConnectCommand.NotifyCanExecuteChanged();
         DisconnectCommand.NotifyCanExecuteChanged();
         SetTrackPowerCommand.NotifyCanExecuteChanged();
-        ResetJourneyCommand.NotifyCanExecuteChanged();
-        ResetJourneyCounterCommand.NotifyCanExecuteChanged();
         AcknowledgeOperatingStateCommand.NotifyCanExecuteChanged();
     }
     #endregion

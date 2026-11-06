@@ -176,7 +176,7 @@ try {
     Assert-Fails $runGuard $parameters 'zero tests is not validation' 'Only 0 tests passed'
     Remove-Item -LiteralPath $parameters.ReportPath
     Assert-Fails $runGuard $parameters 'missing mutation report' 'does not exist'
-    foreach ($lane in @('backend', 'common', 'domain', 'speech-base')) {
+    foreach ($lane in @('api', 'backend', 'common', 'domain', 'speech-base')) {
         Assert-Fails (Join-Path $PSScriptRoot 'Invoke-MutationLane.ps1') @{ LaneName = $lane; OutputPath = $fixture } `
             "runner accepts $lane but rejects pre-existing outputs" 'already exists'
     }

@@ -111,6 +111,7 @@ public sealed class Z21EventPipeline : IAsyncDisposable
             if (!_acceptingEvents || !_channel.Writer.TryWrite(new QueuedEvent(eventType, () => _eventBus.Publish(@event))))
             {
                 Interlocked.Increment(ref _rejectedEvents);
+                BackendTelemetry.RecordRejectedZ21Event(eventType);
                 _logger?.LogWarning(
                     "Z21 event rejected. EventType={EventType}, QueueDepth={QueueDepth}, Capacity={Capacity}",
                     eventType,
@@ -163,6 +164,7 @@ public sealed class Z21EventPipeline : IAsyncDisposable
         catch (TimeoutException)
         {
             Interlocked.Increment(ref _shutdownTimeouts);
+            BackendTelemetry.RecordPipelineShutdownTimeout();
             _logger?.LogWarning(
                 "Z21 event pipeline drain timed out. QueueDepth={QueueDepth}, TimeoutMilliseconds={TimeoutMilliseconds}",
                 GetSnapshot().QueueDepth,
@@ -237,6 +239,7 @@ public sealed class Z21EventPipeline : IAsyncDisposable
                 catch (Exception ex)
                 {
                     Interlocked.Increment(ref _dispatchFailures);
+                    BackendTelemetry.RecordFailedZ21Dispatch(queuedEvent.EventType);
                     _logger?.LogError(ex, "Z21 event dispatch failed. EventType={EventType}", queuedEvent.EventType);
                 }
             }

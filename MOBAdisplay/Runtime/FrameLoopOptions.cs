@@ -3,8 +3,8 @@ namespace Moba.Display.Runtime;
 
 public sealed class FrameLoopOptions
 {
-    /// <summary>Wi-Fi target ESP32 address (UDP).</summary>
-    public string IpAddress { get; init; } = "192.168.0.82";
+    /// <summary>Explicitly configured Wi-Fi target ESP32 address (UDP).</summary>
+    public string IpAddress { get; init; } = string.Empty;
 
     /// <summary>UDP destination port.</summary>
     public int Port { get; init; } = 4210;

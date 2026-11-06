@@ -138,16 +138,16 @@ internal sealed class DiscoveryCandidateContractTests
     [TestCase("")]
     [TestCase(" \t")]
     [TestCase("not-an-address")]
-    [TestCase("192.168.0.79")]
-    [TestCase(" 192.168.0.79 ")]
-    public void SavedIp_MissingInvalidOrFactoryDefaultIsNotPrioritized(string? saved)
+    public void SavedIp_MissingOrInvalidAddressIsNotProbed(string? saved)
     {
         Assert.That(RestApiDiscoveryCandidateBuilder.ShouldProbeSavedIp(saved), Is.False);
     }
 
     [TestCase("10.20.30.40")]
     [TestCase(" 192.168.10.40 ")]
-    public void SavedIp_ValidNonDefaultAddressIsAccepted(string saved)
+    [TestCase("192.168.0.79")]
+    [TestCase(" 192.168.0.79 ")]
+    public void SavedIp_ValidExplicitAddressIsAccepted(string saved)
     {
         Assert.That(RestApiDiscoveryCandidateBuilder.ShouldProbeSavedIp(saved), Is.True);
     }
