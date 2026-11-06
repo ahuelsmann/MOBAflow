@@ -301,8 +301,8 @@ processes). The MOBApi lane mutates `MOBApi` with the in-process fixtures under 
 minutes locally); the MOBApi process fixtures start real processes, cannot detect mutants and stay in the planned
 `api-process` lane. The SharedUI lane mutates `SharedUI` with every fixture under `Test/SharedUI/`, the track-layout
 architecture fixture parts that `SignalBoxPropertiesViewModelTests` extends, and the shared test helpers. It is the
-largest lane (about 12,000 mutants and 63 minutes locally with four Stryker processes). Methods that Stryker puts into Safe Mode
-are excluded from the score; see
+largest lane (about 12,000 mutants; 63 minutes locally and 51 minutes in CI with four Stryker processes). Methods that
+Stryker puts into Safe Mode are excluded from the score; see
 [methods outside the Backend mutation gate](../plans/366-coverage-mutation-ratchets.md#methods-outside-the-backend-mutation-gate).
 Thresholds come from the configuration files; the Common, Speech.Base, Backend, SharedUI and MOBApi minimums are baseline
 safeguards, not targets for test quality. Speech.Base keeps scheduling-only `ConfigureAwait`

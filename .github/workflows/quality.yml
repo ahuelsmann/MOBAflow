@@ -428,7 +428,7 @@ jobs:
     name: SharedUI mutation testing
     needs: changes
     if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
-    # A local Linux run with four Stryker processes takes about 63 minutes.
+    # A local Linux run with four Stryker processes takes about 63 minutes; the first CI run took 51 minutes.
     runs-on: ubuntu-latest
     timeout-minutes: 100
 
