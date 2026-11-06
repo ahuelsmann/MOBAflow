@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/366
 **Spec Kit**: Not applicable - regression tests and CI lanes for existing contracts without product behavior
-**Status**: Active; steps 1 to 3 are delivered (#367, #396); step 4 (SharedUI lane) is in its own issue PR
+**Status**: Active; steps 1 to 4 are delivered (#367, #396, #410: SharedUI lane); step 5 (completion) is open
 
 ## Purpose and scope
 
@@ -173,10 +173,25 @@ separate pull requests.
      removed, because its commented-out fixture counted as a registered test file without tests. Three wagon page tests
      get unique method names (`Wagon...`), because the run guard compares the ordinary-baseline test names with the test
      names in Stryker's `testFiles` report and requires the same set.
-   - **Safe Mode:** Stryker reports CS0165 (variable assigned in `try` or an out argument) in
-     `SignalBoxPropertiesViewModel` (`SetElementName`, `SelectMultiplexer`, `Rotate`), `SignalBoxRuntimeSync.ApplyToPlan`,
-     `PageLayoutViewModel` (`ApplyToGrid`, `UpdateFromGrid`) and `MauiViewModel.OnSelectedProjectIndexChanged`; their mutants count as
-     compile errors outside the score.
+   - **Safe Mode:** the CI log of run 42096429242 (job 127488290417) has 18 `Safe Mode!` sites whose mutants count as
+     compile errors outside the score (1,183). Seventeen are CS0165 (a variable assigned in `try` or through an out
+     argument reads as unassigned once mutated):
+     - `ViewModel/ColumnViewModel.cs`: `ApplyToColumnDefinition`
+     - `ViewModel/JourneysPageViewModel.cs`: `AddJourney`, `DeleteJourney`, `DeleteStation` (two sites), `ResetJourney`,
+       `AddStationToSelectedJourney`
+     - `TrainControl/TrainControlViewModel.cs`: `TryRestoreSelectedLocomotiveFromProject`, `ApplySystemStateFromRuntime`
+     - `ViewModel/TimetablePageViewModel.cs`: `RefreshAsync`
+     - `Mobile/MauiViewModel.Project.cs`: `OnSelectedProjectIndexChanged`
+     - `ViewModel/SignalBoxPropertiesViewModel.cs`: `SetElementName`, `SelectMultiplexer`, `Rotate`
+     - `Service/SignalBoxRuntimeSync.cs`: `ApplyToPlan`
+     - `ViewModel/PageLayoutViewModel.cs`: `ApplyToGrid`, `UpdateFromGrid`
+
+     The eighteenth has a different cause: in `ViewModel/LocomotiveTrainUsageViewModel.cs` a mutant at the `Concat` call
+     (line 73) fails with CS0411 (the type arguments of `AsyncEnumerable.Concat` cannot be inferred), and Stryker removes
+     every mutation in the whole file. Open #366 floor work, as for Backend above: rewrite these methods so that
+     mutations stay definitely assigned (and make the `Concat` type arguments explicit), or change the Stryker version,
+     then remeasure. New tests for these methods cannot move the score until their sites are out of Safe Mode; this
+     applies to the `TrainControlViewModel` and `TimetablePageViewModel` areas named next.
    - **Largest open areas (survived + no coverage):** `TrainControlViewModel` 605, `MauiViewModel` 374,
      `SettingsPageViewModel` 250, `RecorderPageViewModel` 208, `TimetablePageViewModel` 185,
      `MauiViewModel.MobaflowConnection` 162, `WorkflowLibraryViewModel` 161, `DisplayViewModel` 144,
