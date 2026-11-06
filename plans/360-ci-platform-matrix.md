@@ -18,19 +18,20 @@ Recorded on main `f4756172`. The CI lanes are jobs of [Quality CI](../.github/wo
 
 | Deliverable | Local command (from [AGENTS.md](../AGENTS.md)) | CI lane | Runs on PRs / required check |
 | --- | --- | --- | --- |
-| Portable libraries and their tests (`Domain`, `Contracts`, `Common`, `Backend`, `SharedUI`, …) on Linux | `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0` | `portable-linux` (**new in slice 1**) | runs when code changes; **not yet a required check** (open step of slice 1) |
+| Portable libraries and their tests (`Domain`, `Contracts`, `Common`, `Backend`, `SharedUI`, …) on Linux | `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0` | `portable-linux` (**new in slice 1**) | yes, when code changes; a required check (ruleset 24007434, read on 2026-11-06) |
 | Windows desktop (`MOBAflow`) and the Windows test suite, coverage ratchet, analyzer gates, NuGet audit | `dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false` | `desktop` | yes, when code changes |
 | MOBApi host and its process integration tests | `dotnet build MOBApi/MOBApi.csproj` | `display-protocol` (MOBApi process integration) and the `desktop` test graph | yes, when code changes |
 | Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (pinned PlatformIO) | firmware build when firmware paths change |
 | Android app (`MOBAsmart`) Release AAB | release workflow steps; `scripts/Test-AndroidAppBundle.ps1` | `android-release` | **no**: only on manual `workflow_dispatch` with `validate_android` ([recorded maintainer decision](https://github.com/ahuelsmann/MOBAflow/issues/360#issuecomment-6256088821)) |
-| Mutation lanes (`domain`, `common`, `speech-base`, `backend`, `api` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-speech-base`, `mutation-backend`, `mutation-api` | all run by change scope; only Domain mutation testing is a required check; further lanes belong to [RF-09](366-coverage-mutation-ratchets.md) |
+| Mutation lanes (`domain`, `common`, `speech-base`, `backend`, `api`, `shared-ui` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-speech-base`, `mutation-backend`, `mutation-api`, `mutation-shared-ui` | all run by change scope; only Domain mutation testing is a required check; further lanes belong to [RF-09](366-coverage-mutation-ratchets.md) |
 | Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule | yes |
 | Release package | [Release Studio](../.github/workflows/release-studio.yml) | manual release workflow | release only |
 
-Required (merge-blocking) checks are those of the `main` branch ruleset 24007434, verified on 2026-10-19:
-Repository instruction consistency; Windows desktop build, tests, and coverage; Display protocol host, parser, and
-firmware; Android Release AAB; Domain mutation testing; SonarCloud Code Analysis. Other lanes run but do not block
-a merge.
+Required (merge-blocking) checks are those of the `main` branch ruleset 24007434 (last changed 2026-10-19, read
+again on 2026-11-06): Repository instruction consistency; Windows desktop build, tests, and coverage; Display protocol
+host, parser, and firmware; Android Release AAB; Domain mutation testing; SonarCloud Code Analysis; Portable tests on
+Linux. The ruleset also requires the branch to be up to date with `main` (strict status checks). The other mutation
+lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) run but do not block a merge.
 
 ## Design decisions
 
@@ -57,8 +58,8 @@ a merge.
 
 ## Independently reviewable delivery slices
 
-1. **Inventory and Linux lane** (with this plan). Open step: a maintainer adds the check name
-   `Portable tests on Linux` to the `main` ruleset so the lane becomes a required check.
+1. **Inventory and Linux lane** (with this plan). The check name `Portable tests on Linux` is in the `main` ruleset,
+   so the lane is a required check; this slice is complete.
 2. **Android Release lane policy:** settled by the recorded maintainer decision to retain manual validation.
 3. **Mutation and formatting lanes** after RF-09 and RF-10, documentation and completion.
 
