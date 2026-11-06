@@ -2,6 +2,7 @@
 
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Events;
@@ -23,9 +24,9 @@ public sealed class WorkflowLibraryViewModelTests
     [Test]
     public async Task CreateWorkflowCommand_AddsEmptyActionListThroughProjectWrapper()
     {
-        var project = new ProjectViewModel(new Project());
+        var project = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         var context = new TestProjectContext(project);
-        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        using var library = TestWorkflowLibraries.Create(context, new TestDialogService(true));
         await library.CreateWorkflowCommand.ExecuteAsync(null);
         using (Assert.EnterMultipleScope())
         {
@@ -42,9 +43,9 @@ public sealed class WorkflowLibraryViewModelTests
     {
         var action = Command("Command");
         var source = new Workflow { Name = "Source", Actions = [action, Command("Second")] };
-        var project = new ProjectViewModel(new Project { Workflows = [source] });
+        var project = new ProjectViewModel(new Project { Workflows = [source] }, TestViewModelServices.Default);
         var context = new TestProjectContext(project);
-        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        using var library = TestWorkflowLibraries.Create(context, new TestDialogService(true));
         await library.DuplicateSelectedWorkflowCommand.ExecuteAsync(null);
         var duplicate = library.SelectedWorkflow!.Model;
         using (Assert.EnterMultipleScope())
@@ -70,10 +71,10 @@ public sealed class WorkflowLibraryViewModelTests
             Name = "Regional",
             EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 1, Count = 3, WorkflowId = target.Id }, new JourneyEvent { InPort = 2, Count = 5, WorkflowId = target.Id }] }
         };
-        var project = new ProjectViewModel(new Project { Workflows = [target], Journeys = [journey] });
+        var project = new ProjectViewModel(new Project { Workflows = [target], Journeys = [journey] }, TestViewModelServices.Default);
         var context = new TestProjectContext(project);
         var dialog = new TestDialogService(true);
-        using var library = new WorkflowLibraryViewModel(context, dialog);
+        using var library = TestWorkflowLibraries.Create(context, dialog);
         await library.DeleteSelectedWorkflowCommand.ExecuteAsync(null);
         using (Assert.EnterMultipleScope())
         {
@@ -89,9 +90,9 @@ public sealed class WorkflowLibraryViewModelTests
     public async Task DeleteSelectedWorkflowCommand_DeletesConfirmedUnreferencedWorkflow()
     {
         var workflow = new Workflow { Name = "Unused" };
-        var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] });
+        var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] }, TestViewModelServices.Default);
         var context = new TestProjectContext(projectViewModel);
-        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        using var library = TestWorkflowLibraries.Create(context, new TestDialogService(true));
 
         await library.DeleteSelectedWorkflowCommand.ExecuteAsync(null);
 
@@ -110,9 +111,9 @@ public sealed class WorkflowLibraryViewModelTests
         var delay = Command("Wait");
         delay.DelayAfterMs = 100;
         var workflow = new Workflow { Actions = [delay] };
-        var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] });
+        var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] }, TestViewModelServices.Default);
         var context = new TestProjectContext(projectViewModel);
-        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        using var library = TestWorkflowLibraries.Create(context, new TestDialogService(true));
 
         library.SelectedWorkflow!.Actions.Single().DelayAfterMs = 200;
         await context.Saved.Task.WaitAsync(TimeSpan.FromSeconds(1));
@@ -129,9 +130,9 @@ public sealed class WorkflowLibraryViewModelTests
     {
         var first = new Workflow { Name = "First" };
         var second = new Workflow { Name = "Second" };
-        var projectViewModel = new ProjectViewModel(new Project { Workflows = [first, second] });
+        var projectViewModel = new ProjectViewModel(new Project { Workflows = [first, second] }, TestViewModelServices.Default);
         var context = new TestProjectContext(projectViewModel);
-        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        using var library = TestWorkflowLibraries.Create(context, new TestDialogService(true));
         var selected = projectViewModel.Workflows[1];
         library.SelectWorkflowCommand.Execute(selected);
 
@@ -148,8 +149,8 @@ public sealed class WorkflowLibraryViewModelTests
     public void ValidateCommand_ProjectsNavigationReadyIssuesForSelectedWorkflow()
     {
         var workflow = new Workflow { Name = "Invalid" };
-        var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] });
-        using var library = new WorkflowLibraryViewModel(
+        var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] }, TestViewModelServices.Default);
+        using var library = TestWorkflowLibraries.Create(
             new TestProjectContext(projectViewModel),
             new TestDialogService(true));
 
@@ -165,8 +166,8 @@ public sealed class WorkflowLibraryViewModelTests
     {
         var first = Command("First");
         var second = Command("Second");
-        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Actions = [first, second] }] });
-        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project), new TestDialogService(true));
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Actions = [first, second] }] }, TestViewModelServices.Default);
+        using var library = TestWorkflowLibraries.Create(new TestProjectContext(project), new TestDialogService(true));
         var selected = library.SelectedAction;
         library.MoveSelectedActionDownCommand.Execute(null);
         var reopened = JsonSerializer.Deserialize<Project>(JsonSerializer.Serialize(project.Model, JsonOptions.Compact), JsonOptions.Compact)!;
@@ -183,8 +184,8 @@ public sealed class WorkflowLibraryViewModelTests
     [Test]
     public void ActionEditingDoesNotResetCatalogSelectionAndSelectsNewAction()
     {
-        var project = new ProjectViewModel(new Project { Workflows = [new Workflow()] });
-        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project), new TestDialogService(true));
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow()] }, TestViewModelServices.Default);
+        using var library = TestWorkflowLibraries.Create(new TestProjectContext(project), new TestDialogService(true));
         var workflow = library.SelectedWorkflow;
         // A ListView can clear selection when its ItemsSource is replaced.
         library.PropertyChanged += (_, e) =>
@@ -219,8 +220,8 @@ public sealed class WorkflowLibraryViewModelTests
     [TestCase(ActionType.ChangeJourneyStop)]
     public void AddActionProvidesTypedEditor(ActionType type)
     {
-        var project = new ProjectViewModel(new Project { Workflows = [new Workflow()] });
-        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project), new TestDialogService(true));
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow()] }, TestViewModelServices.Default);
+        using var library = TestWorkflowLibraries.Create(new TestProjectContext(project), new TestDialogService(true));
         library.AddActionCommand.Execute(type);
         using (Assert.EnterMultipleScope())
         {
@@ -234,9 +235,9 @@ public sealed class WorkflowLibraryViewModelTests
     [Test]
     public void ProjectChangeClearsPreviousActionSelection()
     {
-        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Actions = [Command("First")] }] });
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Actions = [Command("First")] }] }, TestViewModelServices.Default);
         var context = new TestProjectContext(project);
-        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        using var library = TestWorkflowLibraries.Create(context, new TestDialogService(true));
         context.SelectedProject = null;
         using (Assert.EnterMultipleScope())
         {
@@ -251,19 +252,15 @@ public sealed class WorkflowLibraryViewModelTests
     {
         var workflow = new Workflow { Name = "Preview", Actions = [Command("Preview")] };
         var project = new Project { Workflows = [workflow] };
-        var projectViewModel = new ProjectViewModel(project);
+        var projectViewModel = new ProjectViewModel(project, TestViewModelServices.Default);
         var plannedEffect = new WorkflowPlannedEffect(
             ActionType.Command,
             WorkflowEffectCategory.CommandStation,
             "Send command",
             []);
-        WorkflowExecutionRequest? capturedRequest = null;
-        var workflowService = new Mock<IWorkflowService>();
-        workflowService
-            .Setup(service => service.ExecuteAsync(
-                It.IsAny<WorkflowExecutionRequest>(),
-                It.IsAny<CancellationToken>()))
-            .Callback<WorkflowExecutionRequest, CancellationToken>((request, _) => capturedRequest = request)
+        var dryRunService = new Mock<IWorkflowDryRunService>();
+        dryRunService
+            .Setup(service => service.DryRunAsync(project, workflow, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new WorkflowExecutionResult
             {
                 ExecutionId = Guid.NewGuid(),
@@ -272,32 +269,21 @@ public sealed class WorkflowLibraryViewModelTests
                 Status = WorkflowExecutionStatus.Succeeded,
                 PlannedEffects = (WorkflowPlannedEffect[])[plannedEffect]
             });
-        var executionContext = new ActionExecutionContext { Z21 = Mock.Of<IZ21>() };
-        using var library = new WorkflowLibraryViewModel(
+        using var library = TestWorkflowLibraries.Create(
             new TestProjectContext(projectViewModel),
             new TestDialogService(true),
-            runtimeServices: new WorkflowLibraryRuntimeServices
-            {
-                WorkflowService = workflowService.Object,
-                ExecutionContext = executionContext
-            });
+            dryRunService: dryRunService.Object);
 
         await library.DryRunSelectedWorkflowCommand.ExecuteAsync(null);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(capturedRequest, Is.Not.Null);
-            Assert.That(capturedRequest!.Mode, Is.EqualTo(WorkflowRunMode.DryRun));
-            Assert.That(capturedRequest.Project, Is.SameAs(project));
-            Assert.That(capturedRequest.Workflow, Is.SameAs(workflow));
             Assert.That(library.PlannedEffects, Is.EqualTo(new[] { plannedEffect }));
             Assert.That(library.LastDryRunStatus, Is.EqualTo(nameof(WorkflowExecutionStatus.Succeeded)));
             Assert.That(library.IsDryRunRunning, Is.False);
         }
-        workflowService.Verify(
-            service => service.ExecuteAsync(
-                It.IsAny<WorkflowExecutionRequest>(),
-                It.IsAny<CancellationToken>()),
+        dryRunService.Verify(
+            service => service.DryRunAsync(project, workflow, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -309,18 +295,15 @@ public sealed class WorkflowLibraryViewModelTests
         var projectViewModel = new ProjectViewModel(new Project
         {
             Workflows = [firstWorkflow, secondWorkflow]
-        });
+        }, TestViewModelServices.Default);
         var traceStore = new WorkflowTraceStore();
         traceStore.Append(CreateLifecycleEvent(firstWorkflow.Id, 1));
         traceStore.Append(CreateLifecycleEvent(secondWorkflow.Id, 2));
         traceStore.Append(CreateLifecycleEvent(firstWorkflow.Id, 3));
-        using var library = new WorkflowLibraryViewModel(
+        using var library = TestWorkflowLibraries.Create(
             new TestProjectContext(projectViewModel),
             new TestDialogService(true),
-            runtimeServices: new WorkflowLibraryRuntimeServices
-            {
-                TraceStore = traceStore
-            });
+            traceStore: traceStore);
 
         Assert.That(library.TraceEntries.Select(entry => entry.Sequence), Is.EqualTo(new long[] { 3, 1 }));
 
@@ -342,8 +325,8 @@ public sealed class WorkflowLibraryViewModelTests
         var projectViewModel = new ProjectViewModel(new Project
         {
             Workflows = [firstWorkflow, affectedWorkflow]
-        });
-        using var library = new WorkflowLibraryViewModel(
+        }, TestViewModelServices.Default);
+        using var library = TestWorkflowLibraries.Create(
             new TestProjectContext(projectViewModel),
             new TestDialogService(true));
         var issue = new WorkflowValidationIssue(
@@ -366,9 +349,9 @@ public sealed class WorkflowLibraryViewModelTests
     [Test]
     public void ClearingActionsDetachesRemovedActionAndSavesEmptyList()
     {
-        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Actions = [Command("First")] }] });
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Actions = [Command("First")] }] }, TestViewModelServices.Default);
         var context = new TestProjectContext(project);
-        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        using var library = TestWorkflowLibraries.Create(context, new TestDialogService(true));
         var oldAction = library.SelectedAction!;
         library.SelectedWorkflow!.Actions.Clear();
         var savesAfterClear = context.SaveCount;
@@ -385,8 +368,8 @@ public sealed class WorkflowLibraryViewModelTests
     [Test]
     public void EmptyProjectChangesRefreshGuidanceAndCreationAvailability()
     {
-        var context = new TestProjectContext(new ProjectViewModel(new Project()));
-        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        var context = new TestProjectContext(new ProjectViewModel(new Project(), TestViewModelServices.Default));
+        using var library = TestWorkflowLibraries.Create(context, new TestDialogService(true));
         var guidanceChanged = false;
         library.PropertyChanged += (_, e) => guidanceChanged |= e.PropertyName == nameof(library.ActionListHint);
         context.SelectedProject = null;
@@ -395,7 +378,7 @@ public sealed class WorkflowLibraryViewModelTests
             Assert.That(guidanceChanged, Is.True);
             Assert.That(library.CreateWorkflowCommand.CanExecute(null), Is.False);
         }
-        context.SelectedProject = new ProjectViewModel(new Project());
+        context.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         Assert.That(library.CreateWorkflowCommand.CanExecute(null), Is.True);
     }
 

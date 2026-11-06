@@ -662,7 +662,7 @@ internal sealed partial class SolutionSessionTests
             io.Object,
             dispatcher,
             runtime.Object,
-            NullLogger<SolutionSession>.Instance);
+            NullLogger<SolutionSession>.Instance, TestViewModelServices.Default);
     }
 
     private sealed partial class ChangeSource : System.ComponentModel.INotifyPropertyChanged

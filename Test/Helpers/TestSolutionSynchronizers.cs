@@ -8,10 +8,10 @@ using Moba.SharedUI.Interface;
 using Moba.SharedUI.Mobile;
 
 /// <summary>
-/// Creates the solution synchronizer for mobile ViewModel tests.
+/// Creates the solution synchronizer for mobile ViewModel tests over the test's own remote loader.
 /// </summary>
 internal static class TestSolutionSynchronizers
 {
-    public static MobileSolutionSynchronizer Create(ISolutionRemoteLoader? solutionRemoteLoader = null) =>
+    public static MobileSolutionSynchronizer Create(ISolutionRemoteLoader solutionRemoteLoader) =>
         new(NullLogger<MobileSolutionSynchronizer>.Instance, solutionRemoteLoader);
 }

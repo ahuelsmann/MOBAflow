@@ -121,7 +121,7 @@ internal sealed partial class WagonsPageViewModelTests : IDisposable
         _io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
         project.PassengerWagons.Clear();
         project.GoodsWagons.Clear();
-        _session.SelectedProject = new ProjectViewModel(new Project());
+        _session.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(notifications, Is.Zero);

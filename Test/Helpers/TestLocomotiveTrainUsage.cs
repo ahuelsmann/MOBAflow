@@ -33,7 +33,7 @@ internal static class TestLocomotiveTrainUsage
     {
         var session = new Mock<ISolutionSession>();
         session.SetupGet(value => value.Solution).Returns(new Solution { Projects = [project] });
-        session.SetupGet(value => value.SelectedProject).Returns(new ProjectViewModel(project));
+        session.SetupGet(value => value.SelectedProject).Returns(new ProjectViewModel(project, TestViewModelServices.Default));
         return session;
     }
 

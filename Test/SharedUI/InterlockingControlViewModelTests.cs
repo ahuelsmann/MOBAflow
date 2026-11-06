@@ -2,6 +2,7 @@
 
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Events;
 using Moba.Backend.Interface;
@@ -326,7 +327,7 @@ internal static partial class InterlockingControlViewModelTests
         SolutionSaveState saveState = SolutionSaveState.Saved,
         string saveStatusText = "Saved") : IProjectContext
     {
-        private ProjectViewModel? _selectedProject = new(project);
+        private ProjectViewModel? _selectedProject = new(project, TestViewModelServices.Default);
         private JourneyViewModel? _selectedJourney;
 
         public event PropertyChangedEventHandler? PropertyChanged;

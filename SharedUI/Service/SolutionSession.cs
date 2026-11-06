@@ -81,26 +81,27 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     /// <param name="uiDispatcher">Dispatcher for state bound to the UI.</param>
     /// <param name="projectRuntimes">Creates and discards one runtime per project of the solution.</param>
     /// <param name="logger">Logger for background failures.</param>
-    /// <param name="viewModelServices">Services passed to the solution and project view models; file picking is unavailable when omitted.</param>
+    /// <param name="viewModelServices">Services passed to the solution, project and workflow view models.</param>
     public SolutionSession(
         Solution solution,
         ISolutionIoService solutionIo,
         IUiDispatcher uiDispatcher,
         IProjectRuntimeHost projectRuntimes,
         ILogger<SolutionSession> logger,
-        SolutionViewModelServices? viewModelServices = null)
+        SolutionViewModelServices viewModelServices)
     {
         ArgumentNullException.ThrowIfNull(solution);
         ArgumentNullException.ThrowIfNull(solutionIo);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(projectRuntimes);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(viewModelServices);
 
         _solutionIo = solutionIo;
         _uiDispatcher = uiDispatcher;
         _projectRuntimes = projectRuntimes;
         _logger = logger;
-        _viewModelServices = viewModelServices ?? new SolutionViewModelServices(new NullFilePickerService());
+        _viewModelServices = viewModelServices;
 
         // Ensure the solution always has at least one project.
         if (solution.Projects.Count == 0)
@@ -109,7 +110,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         }
 
         Solution = solution;
-        SolutionViewModel = new SolutionViewModel(solution, _uiDispatcher, _viewModelServices.FilePicker, _viewModelServices.SoundPlayer, _viewModelServices.LoggerFactory);
+        SolutionViewModel = new SolutionViewModel(solution, _viewModelServices);
         HasSolution = solution.Projects.Count > 0;
         SelectedProject = SolutionViewModel.Projects.FirstOrDefault();
     }
@@ -304,7 +305,7 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         Solution.Projects.Add(project);
         _projectRuntimes.AddAsync(project).Observe(ex => LogProjectActivationFailed(_logger, ex));
 
-        var projectViewModel = new ProjectViewModel(project, _uiDispatcher, _viewModelServices.FilePicker, _viewModelServices.SoundPlayer, _viewModelServices.LoggerFactory);
+        var projectViewModel = new ProjectViewModel(project, _viewModelServices);
         SolutionViewModel!.Projects.Add(projectViewModel);
 
         SelectedProject = projectViewModel;

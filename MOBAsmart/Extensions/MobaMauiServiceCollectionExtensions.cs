@@ -57,6 +57,13 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddLogging();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
         services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
+        // The phone has no file picker or function-symbol editor; the view models get the null objects.
+        services.AddSingleton<IFilePickerService, NullFilePickerService>();
+        services.AddSingleton<IFunctionAppearancePicker, NullFunctionAppearancePicker>();
+        services.AddSingleton(sp => new SolutionViewModelServices(
+            sp.GetRequiredService<IFilePickerService>(),
+            sp.GetRequiredService<ISoundPlayer>(),
+            sp.GetRequiredService<ILoggerFactory>()));
         services.AddSingleton<NetworkInterfaceIpv4AddressSource>();
         services.AddSingleton<ILocalIpv4AddressSource>(sp =>
             new AndroidLocalIpv4AddressSource(sp.GetRequiredService<NetworkInterfaceIpv4AddressSource>()));
@@ -185,6 +192,7 @@ public static class MobaMauiServiceCollectionExtensions
                 sp.GetRequiredService<ILogger<TrainControlViewModel>>(),
                 sp.GetRequiredService<IUiDispatcher>(),
                 sp.GetRequiredService<IEventBus>(),
+                sp.GetRequiredService<IFunctionAppearancePicker>(),
                 mobileRuntimeCoordinator: coordinator,
                 options: sp.GetRequiredService<TrainControlViewModelOptions>());
         });
