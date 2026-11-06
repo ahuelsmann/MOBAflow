@@ -2,7 +2,8 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/357
 **Spec Kit**: Not applicable - build-quality change without behavior change
-**Status**: Active; slice 1 ships with this plan
+**Status**: Active; slice 1 ships with this plan. Blocked on integrated main since MAUI 10.0.120 (#381): the
+`ControlPage` binding below is an Android Release build error, so slice 1 needs the slice 2 fix or a decision first.
 
 ## Purpose and scope
 
@@ -35,16 +36,21 @@ Six files already declare `x:DataType`; `XC0103` comes from CommunityToolkit.Mau
   element; the binding semantics are unchanged, and the compiler now validates each path.
 - **Ancestor bindings in templates (slice 2).** The `ControlPage` binding reaches the page's ViewModel through
   `BindingContext.…`; with compilation it is resolved against the template's `FunctionButtonViewModel` and reports
-  `XC0045`. Slice 2 gives that binding the page ViewModel as its typed source (for example `x:DataType` on the
-  element that holds it), so the command path is compiled and checked.
+  `XC0045`. XamlC honours `TreatWarningsAsErrors`, which `Directory.Build.props` sets for Release, and exempts only
+  `XC0022`, `XC0023` and `XC0025` (`Microsoft.Maui.Controls.targets`, MAUI 10.0.120). The `XC0045` is therefore a
+  warning in FastDebug but an **error** in Android Release, and the Release AAB job fails until it is fixed.
+  Slice 2 gives that binding the page ViewModel as its typed source (for example `x:DataType` on the element that
+  holds it), so the command path is compiled and checked.
 - **Gate.** After slice 2, slice 3 treats `XC0022`, `XC0025` and `XC0045` as errors in `MOBAsmart.csproj`, so CI
   rejects new uncompiled or wrong bindings.
 
 ## Independently reviewable delivery slices
 
-1. **Enable compilation and the three self-bound controls** (with this plan): 90 → 6 warnings, all in the two
-   #308 files.
-2. **`FunctionToggleView` and `ControlPage`** after #308.
+1. **Enable compilation and the three self-bound controls** (with this plan): 90 `XC0025` → 2 `XC0022` warnings in
+   `FunctionToggleView` plus 1 `XC0045` in `ControlPage` (each printed twice in the log). Measured on main
+   `c0b728ef` with MAUI 10.0.120: the `XC0045` fails the Android Release build, so this slice cannot integrate
+   alone.
+2. **`FunctionToggleView` and `ControlPage`** after #308, or folded into slice 1 if #308 waits.
 3. **Warnings as errors, documentation and completion.**
 
 ## Validation strategy
