@@ -155,7 +155,7 @@ internal static class NavigationRegistration
         // Manual registrations for pages with custom DI requirements
         // JourneysPage: requires AppSettings + ISettingsService injection
         services.AddSingleton(sp => new JourneysPage(
-            sp.GetRequiredService<MainWindowViewModel>(),
+            sp.GetRequiredService<JourneysPageViewModel>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetService<ISettingsService>()));
         pages.Add(new PageMetadata(
@@ -189,7 +189,11 @@ internal static class NavigationRegistration
             PathIconData: null,
             IsBold: false));
 
-        services.AddSingleton<EventManagerViewModel>();
+        services.AddSingleton(sp => new EventManagerViewModel(
+            sp.GetRequiredService<IProjectContext>(),
+            sp.GetRequiredService<WorkflowLibraryViewModel>(),
+            sp.GetRequiredService<JourneysPageViewModel>(),
+            sp.GetRequiredService<MainWindowViewModel>().ResetCountersCommand));
         services.AddSingleton(sp => new EventManagerPage(
             sp.GetRequiredService<EventManagerViewModel>(),
             sp.GetRequiredService<AppSettings>(),

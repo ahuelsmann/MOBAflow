@@ -16,7 +16,7 @@ internal sealed class RuntimeJsonSerializerTests
             IsTrackPowerOn = true,
             StatusText = "Connected",
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
@@ -26,15 +26,15 @@ internal sealed class RuntimeJsonSerializerTests
 
             ],
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                     Name = "BR 110",
                     DigitalAddress = 7,
-                    FunctionSymbols = ["headlight.png"],
-                    FunctionColors = ["#FFD700"],
-                    FunctionLabels = ["Directional headlight change"]
+                    FunctionSymbols = (string[])["headlight.png"],
+                    FunctionColors = (string[])["#FFD700"],
+                    FunctionLabels = (string[])["Directional headlight change"]
                 }
 
             ]

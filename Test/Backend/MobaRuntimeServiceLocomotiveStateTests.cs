@@ -1,12 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
-using Microsoft.Extensions.Logging;
+using Moba.Test.Helpers;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Service;
-using Moba.Common.Configuration;
 using Moba.Domain;
 
 using Moq;
@@ -15,8 +14,12 @@ using Moq;
 /// Verifies locomotive drive/function state synchronization between runtime commands and Z21 loco info.
 /// </summary>
 [TestFixture]
-internal sealed class MobaRuntimeServiceLocomotiveStateTests
+internal sealed partial class MobaRuntimeServiceLocomotiveStateTests : IDisposable
 {
+    private readonly TestRuntimes _runtimes = new();
+
+    public void Dispose() => _runtimes.Dispose();
+
     [Test]
     public async Task LocoInfoAfterDriveCommand_PreservesExistingFunctionBitsDuringGracePeriod()
     {
@@ -196,16 +199,5 @@ internal sealed class MobaRuntimeServiceLocomotiveStateTests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21)
-    {
-        var workflowServiceMock = new Mock<IWorkflowService>();
-        var loggerMock = new Mock<ILogger<MobaRuntimeService>>();
-
-        return new MobaRuntimeService(
-            z21,
-            workflowServiceMock.Object,
-            new ActionExecutionContext { Z21 = z21 },
-            new AppSettings(),
-            loggerMock.Object);
-    }
+    private MobaRuntimeService CreateRuntime(IZ21 z21) => _runtimes.Create(z21);
 }

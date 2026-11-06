@@ -7,6 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Moba.MAUI.Extensions;
 using Moba.MAUI.Service;
 
+using System.Net.Http;
+
+#if ANDROID
+using Xamarin.Android.Net;
+#endif
+
 /// <summary>
 /// Tests for <see cref="MobiLanHttpClientFactory"/> LAN handler configuration.
 /// </summary>
@@ -45,6 +51,27 @@ internal sealed class MobiLanHttpClientFactoryTests
         Assert.That(handler, Is.Not.Null);
     }
 
+    [TestCase(MobiHttpClientNames.Platform)]
+    [TestCase(MobiHttpClientNames.LanHealth)]
+    [TestCase(MobiHttpClientNames.LanDiscovery)]
+    public void RegisteredClient_ShouldNotFollowRedirects(string clientName)
+    {
+        var services = new ServiceCollection();
+        services.AddMobiHttpClients();
+        using var provider = services.BuildServiceProvider();
+        var handlerFactory = provider.GetRequiredService<IHttpMessageHandlerFactory>();
+
+        AssertRedirectsDisabled(handlerFactory.CreateHandler(clientName));
+    }
+
+    [Test]
+    public void CreateLanSignalRHandler_ShouldNotFollowRedirects()
+    {
+        using var handler = MobiLanHttpClientFactory.CreateLanSignalRHandler();
+
+        AssertRedirectsDisabled(handler);
+    }
+
     [Test]
     public void MobiHttpClientNames_ShouldExposeExpectedClientNames()
     {
@@ -54,6 +81,32 @@ internal sealed class MobiLanHttpClientFactoryTests
             Assert.That(MobiHttpClientNames.LanHealth, Is.EqualTo("MobiLanHealth"));
             Assert.That(MobiHttpClientNames.LanDiscovery, Is.EqualTo("MobiLanDiscovery"));
         });
+    }
+
+    private static void AssertRedirectsDisabled(HttpMessageHandler handler)
+    {
+        while (handler is DelegatingHandler { InnerHandler: { } inner })
+        {
+            handler = inner;
+        }
+
+        switch (handler)
+        {
+            case SocketsHttpHandler sockets:
+                Assert.That(sockets.AllowAutoRedirect, Is.False);
+                break;
+            case HttpClientHandler http:
+                Assert.That(http.AllowAutoRedirect, Is.False);
+                break;
+#if ANDROID
+            case AndroidMessageHandler android:
+                Assert.That(android.AllowAutoRedirect, Is.False);
+                break;
+#endif
+            default:
+                Assert.Fail($"Unexpected primary HTTP handler: {handler.GetType().Name}.");
+                break;
+        }
     }
 }
 #endif

@@ -201,7 +201,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1032",
-      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "path": "Backend/Service/Recording/RecordingJsonReader.cs",
       "count": 3
     },
     {
@@ -223,13 +223,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Backend/FeedbackResult.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "Backend/Manager/JourneyManager.cs",
       "count": 1
     },
     {
@@ -348,7 +341,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1064",
-      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "path": "Backend/Service/Recording/RecordingJsonReader.cs",
       "count": 1
     },
     {
@@ -1315,7 +1308,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1307",
       "path": "Common/Path/PhotoPathHelper.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Common",
@@ -2510,20 +2503,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1003",
       "path": "SharedUI/Interface/IPhotoHubClient.cs",
       "count": 2
@@ -2785,7 +2764,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2959,20 +2938,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Solution.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/StationViewModel.cs",
       "count": 1
     },
@@ -3058,7 +3023,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "SharedUI",
@@ -3287,13 +3252,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
       "count": 8
@@ -3350,13 +3308,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "IDE0019",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0028",
       "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
       "count": 1
@@ -3373,13 +3324,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0053",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
       "count": 1
     },
     {
@@ -3583,7 +3527,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 22
+      "count": 13
     },
     {
       "project": "SharedUI",
@@ -3598,13 +3542,6 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",

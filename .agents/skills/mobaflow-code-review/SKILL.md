@@ -12,8 +12,10 @@ Chief Project Manager (formerly Issue Master) checks Draft handover evidence and
 Only then does the existing Claude plan perform fresh independent Opus 5.5-or-higher review, separate fixes,
 independent re-review and SHA-bound squash merge; review is not a Ready prerequisite. Do not dispatch another
 PR review or merge concurrently. Obtain the current allocation in the single queue before substantial review
-work; at most five larger tasks may be allocated, with one writer per worktree and serialized review/fix phases
-for each comparison. Coordination/implementation sessions and Codex self-review do not satisfy the independent
+work. Deliver the prioritized issue in one leading PR; other issues require explicitly qualified independence
+in purpose, files, behavior, baselines, build graph and execution resources, without a global task-count ceiling.
+Keep one writer per worktree and serialize review/fix phases for each comparison. Coordination/implementation
+sessions and Codex self-review do not satisfy the independent
 PR review. Every review session (PR, branch or local diff) is read-only; the reviewer never edits, merges or
 approves its own review. Confirm actual model use and preserve all current quality/acceptance gates and explicit stops.
 

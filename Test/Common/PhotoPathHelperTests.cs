@@ -203,6 +203,27 @@ internal class PhotoPathHelperTests
         Assert.That(result, Is.Empty);
     }
 
+    // Solution files travel between Windows, Android and Linux, so absolute forms of every platform are rejected everywhere.
+    [TestCase(@"\\server\share\file.jpg")]
+    [TestCase(@"\secret\file.jpg")]
+    [TestCase("C:secret.jpg")]
+    [TestCase("d:/secret/file.jpg")]
+    [TestCase("/etc/secret.jpg")]
+    public void NormalizeStoredRelativePath_RejectsAbsolutePathsOfEveryPlatform(string path)
+    {
+        Assert.That(PhotoPathHelper.NormalizeStoredRelativePath(path), Is.Empty);
+    }
+
+    [Test]
+    public void ToFullPath_TreatsWindowsSeparatorsAsDirectoriesOnEveryPlatform()
+    {
+        var baseDir = Path.Combine(Path.GetTempPath(), "mobaflow-photo-test");
+
+        var result = PhotoPathHelper.ToFullPath(baseDir, @"photos\locomotives\sub\abc.png");
+
+        Assert.That(result, Is.EqualTo(Path.Combine(baseDir, "locomotives", "sub", "abc.png")));
+    }
+
     [Test]
     public void TryResolvePhotoFullPathUnderBase_RejectsTraversal()
     {

@@ -147,10 +147,10 @@ internal class PlacedTrackPlanEditorTests
         var placement = new PlacedSegment(new G62(), 0, 0, 0);
         var scene = TrackPlanRenderSceneBuilder.Build(
             TrackPlanTestGeometry.PikoA,
-            [placement],
+            (PlacedSegment[])[placement],
             new HashSet<Guid> { placement.Segment.No },
             new Dictionary<Guid, double> { [placement.Segment.No] = 0.5 },
-            [new TrackPlanValidationMarker(placement.Segment.No, 20, 10, "Open port")]);
+            (TrackPlanValidationMarker[])[new TrackPlanValidationMarker(placement.Segment.No, 20, 10, "Open port")]);
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene);
 

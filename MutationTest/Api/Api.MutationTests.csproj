@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Moba.Test</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The usings of Test/GlobalUsings.cs without Backend, which MOBApi does not reference. -->
+    <Using Include="Moba.Domain" />
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\MOBApi\MOBApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- In-process MOBApi fixtures; the process fixtures start real MOBApi processes and cannot detect mutants. -->
+    <Compile Include="..\..\Test\MOBApi\**\*.cs" Link="MOBApi\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

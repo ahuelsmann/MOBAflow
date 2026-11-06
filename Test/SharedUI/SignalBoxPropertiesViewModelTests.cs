@@ -19,13 +19,13 @@ internal sealed partial class TrackLayoutArchitectureTests
         catalog
             .Setup(instance => instance.GetMainSignalOptions(It.IsAny<string>()))
             .Returns(
-            [
+            (SignalArticleOption[])[
                 new("4046", "4046 - Ks exit signal"),
                 new("4042", "4042 - Ks entry signal")
             ]);
         catalog
             .Setup(instance => instance.GetDistantSignalOptions(It.IsAny<string>()))
-            .Returns([new("4040", "4040 - Ks distant signal")]);
+            .Returns((SignalArticleOption[])[new("4040", "4040 - Ks distant signal")]);
         _viewModel = new SignalBoxPropertiesViewModel(
             catalog.Object,
             new DefaultMultiplexerProvider());

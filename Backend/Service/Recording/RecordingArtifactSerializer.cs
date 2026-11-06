@@ -9,12 +9,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
+using static RecordingArtifactEnvelopeValidator;
+
 /// <summary>
 /// Writes deterministic recording v1 artifacts and imports them within fixed resource limits.
 /// </summary>
 public sealed partial class RecordingArtifactSerializer
 {
-    private const string TimestampFormat = "yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'";
+    internal const string TimestampFormat = "yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'";
     private readonly IReadOnlyDictionary<string, IRecordingPayloadValidator> _payloadValidators;
     private readonly RecordingArtifactImportLimits _importLimits;
 
@@ -219,7 +221,7 @@ public sealed partial class RecordingArtifactSerializer
 
     private static string FormatGuid(Guid value) => value.ToString("D", CultureInfo.InvariantCulture).ToLowerInvariant();
 
-    private static byte[] WriteCanonicalPayload(JsonElement payload)
+    internal static byte[] WriteCanonicalPayload(JsonElement payload)
     {
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))

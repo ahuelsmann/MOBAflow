@@ -45,7 +45,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var inspected = new Project { Name = "Inspected" };
         var other = new Project { Name = "Selected" };
-        await _host.LoadAsync([inspected, other]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[inspected, other]).ConfigureAwait(false);
         _host.SelectProject(other.Id);
         var selected = _host.Selected;
         var reader = _host;
@@ -67,7 +67,7 @@ internal sealed class ProjectRuntimeHostTests
         var station = Project("Station", "192.168.0.111");
         var yard = Project("Yard", "192.168.0.112");
 
-        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
         InPortCounterServiceTests.Raise(_createdZ21s[0], 1);
 
         using (Assert.EnterMultipleScope())
@@ -85,7 +85,7 @@ internal sealed class ProjectRuntimeHostTests
         var station = Project("Station", "192.168.0.111");
         var yard = Project("Yard", "192.168.0.111");
 
-        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
 
         var yardRuntime = _host.Get(yard.Id)!;
         using (Assert.EnterMultipleScope())
@@ -103,7 +103,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var station = Project("Station", string.Empty);
 
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
 
         Assert.That(_host.Get(station.Id)!.Runtime.Current.StatusText, Is.EqualTo("No Z21 assigned to project 'Station'"));
     }
@@ -112,10 +112,10 @@ internal sealed class ProjectRuntimeHostTests
     public async Task LoadingTheSameSolutionAgain_TakesOverTheOpenConnections()
     {
         var station = Project("Station", "192.168.0.111");
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
         var firstZ21 = _host.Get(station.Id)!.Connection.Z21;
 
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
@@ -130,7 +130,7 @@ internal sealed class ProjectRuntimeHostTests
     public async Task RemovingAProject_ClosesItsZ21Connection()
     {
         var station = Project("Station", "192.168.0.111");
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
 
         await _host.RemoveAsync(station.Id).ConfigureAwait(false);
 
@@ -151,7 +151,7 @@ internal sealed class ProjectRuntimeHostTests
         station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
         var yard = Project("Yard", "192.168.0.112");
         yard.Locomotives.Add(new Locomotive { Name = "V 60", DigitalAddress = 5 });
-        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
         _createdZ21s[0].Raise(z21 => z21.OnConnectedChanged += null, true);
 
         Assert.That(_host.ConnectedProjectIds, Is.EqualTo(new[] { station.Id }));
@@ -171,7 +171,7 @@ internal sealed class ProjectRuntimeHostTests
         station.Locomotives.Add(new Locomotive { Name = "Invalid", DigitalAddress = 10000 });
         station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
         station.Locomotives.Add(new Locomotive { Name = "V 60", DigitalAddress = 5 });
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
         ConfirmConnection(_createdZ21s[0]);
         _createdZ21s[0]
             .Setup(z21 => z21.SetLocoDriveAsync(3, 0, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -188,7 +188,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var station = Project("Station", "192.168.0.111");
         station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
         ConfirmConnection(_createdZ21s[0]);
         var calls = new List<string>();
         _createdZ21s[0]
@@ -207,7 +207,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var station = Project("Station", "192.168.0.111");
         station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
         ConfirmConnection(_createdZ21s[0]);
         _createdZ21s[0]
             .Setup(z21 => z21.SetLocoDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -225,7 +225,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var station = Project("Station", "192.168.0.111");
         var yard = Project("Yard", "192.168.0.112");
-        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
         var received = new List<string>();
         _applicationBus.Subscribe<TestEvent>(e => received.Add(e.Name));
 
@@ -241,7 +241,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var station = Project("Station", "192.168.0.111");
         var yard = Project("Yard", "192.168.0.112");
-        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
         var selected = new SelectedProjectRuntime(_host, _applicationBus);
 
         _host.SelectProject(yard.Id);
@@ -256,7 +256,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var station = Project("Station", "192.168.0.111");
         var yard = Project("Yard", "192.168.0.112");
-        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
         _host.SelectProject(station.Id);
         var received = new List<Guid>();
         _host.RuntimeSnapshotChanged += (_, e) => received.Add(e.Snapshot.ProjectId);
@@ -279,7 +279,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var station = Project("Station", string.Empty);
         var yard = Project("Yard", "192.168.0.112");
-        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
 
         station.Z21.IpAddress = "192.168.0.112";
         await _host.ReplaceAsync(station).ConfigureAwait(false);
@@ -297,7 +297,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var station = Project("Station", "192.168.0.111");
         var yard = Project("Yard", "192.168.0.111");
-        await _host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
 
         await _host.RemoveAsync(station.Id).ConfigureAwait(false);
 
@@ -314,7 +314,7 @@ internal sealed class ProjectRuntimeHostTests
     public async Task RenamingTheOwnerOfAZ21_NamesItInLaterConflicts()
     {
         var station = Project("Station", "192.168.0.111");
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
         station.Name = "Main station";
         await _host.UpdateAsync(station).ConfigureAwait(false);
 
@@ -330,7 +330,7 @@ internal sealed class ProjectRuntimeHostTests
         var station = Project("Station", "192.168.0.111");
 
         _host.SelectProject(station.Id);
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
 
         Assert.That(_host.Selected?.ProjectId, Is.EqualTo(station.Id));
     }
@@ -342,7 +342,7 @@ internal sealed class ProjectRuntimeHostTests
     {
         var station = Project("Station", "192.168.0.111");
         station.Locomotives.Add(new Locomotive { DigitalAddress = 3 });
-        await _host.LoadAsync([station]).ConfigureAwait(false);
+        await _host.LoadAsync((Project[])[station]).ConfigureAwait(false);
         ConfirmConnection(_createdZ21s[0]);
         using var cancellation = new CancellationTokenSource();
         var stopping = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -418,7 +418,7 @@ internal sealed class ProjectRuntimeHostTests
         };
         project.Locomotives.Add(locomotive);
         project.LocomotiveWhistleRules.Add(rule);
-        await host.LoadAsync([project]).ConfigureAwait(false);
+        await host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         locomotive.DigitalAddress = 24;
         rule.FunctionIndex = 31;
 

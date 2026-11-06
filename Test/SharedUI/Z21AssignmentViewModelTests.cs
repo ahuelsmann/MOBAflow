@@ -175,7 +175,7 @@ internal sealed class Z21AssignmentViewModelTests
     {
         var discovery = new Mock<IZ21DiscoveryService>();
         discovery.Setup(value => value.DiscoverAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync((DiscoveredZ21[])[
                 new DiscoveredZ21("192.168.0.111", 21105, 1001),
                 new DiscoveredZ21("192.168.0.112", 21105, 2002)
             ]);

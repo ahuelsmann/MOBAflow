@@ -92,7 +92,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
         var viewModel = CreateViewModel(new MobileSolutionContext());
 
         viewModel.RefreshLocomotiveList(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot
             {
                 LocomotiveId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
@@ -113,7 +113,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
         var viewModel = CreateViewModel(new MobileSolutionContext());
 
         viewModel.RefreshLocomotiveList(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot
             {
                 LocomotiveId = locomotiveId,
@@ -124,7 +124,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
 
         var originalInstance = viewModel.ProjectLocomotives[0];
         viewModel.RefreshLocomotiveList(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot
             {
                 LocomotiveId = locomotiveId,
@@ -174,8 +174,8 @@ internal sealed class TrainControlViewModelLocomotiveListTests
                     LocomotiveId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
                     Name = "BR 218",
                     DigitalAddress = 3,
-                    FunctionSymbols = ["headlight.png"],
-                    FunctionColors = ["#E81123"]
+                    FunctionSymbols = (string[])["headlight.png"],
+                    FunctionColors = (string[])["#E81123"]
                 }
             };
 
@@ -197,27 +197,27 @@ internal sealed class TrainControlViewModelLocomotiveListTests
         var viewModel = CreateRemoteViewModel();
 
         viewModel.RefreshLocomotiveList(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot
             {
                 LocomotiveId = locomotiveId,
                 Name = "BR 218",
                 DigitalAddress = 3,
-                FunctionSymbols = ["headlight.png"],
-                FunctionColors = ["#FFD700"]
+                FunctionSymbols = (string[])["headlight.png"],
+                FunctionColors = (string[])["#FFD700"]
             }
         ]);
         viewModel.SelectProjectLocomotiveCommand.Execute(viewModel.ProjectLocomotives[0]);
 
         viewModel.RefreshLocomotiveList(
-        [
+        (LocomotiveFleetSnapshot[])[
             new LocomotiveFleetSnapshot
             {
                 LocomotiveId = locomotiveId,
                 Name = "BR 218",
                 DigitalAddress = 3,
-                FunctionSymbols = ["f1__driving_sound.png"],
-                FunctionColors = ["#0078D4"]
+                FunctionSymbols = (string[])["f1__driving_sound.png"],
+                FunctionColors = (string[])["#0078D4"]
             }
         ]);
 

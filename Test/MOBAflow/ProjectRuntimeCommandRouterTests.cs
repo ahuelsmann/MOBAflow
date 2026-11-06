@@ -22,7 +22,7 @@ internal sealed class ProjectRuntimeCommandRouterTests
         var router = Router(projectRuntimes);
         var station = TestProjectRuntimeHost.Project("Station", "192.168.0.111");
         var yard = TestProjectRuntimeHost.Project("Yard", "192.168.0.112");
-        await projectRuntimes.Host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await projectRuntimes.Host.LoadAsync((global::Moba.Domain.Project[])[station, yard]).ConfigureAwait(false);
         projectRuntimes.Host.SelectProject(station.Id);
 
         await router.ForProject(yard.Id)!.SetLocomotiveDriveAsync(3, 40, forward: true).ConfigureAwait(false);
@@ -41,7 +41,7 @@ internal sealed class ProjectRuntimeCommandRouterTests
         var projectRuntimes = new TestProjectRuntimeHost();
         await using var lifetime = projectRuntimes.ConfigureAwait(false);
         var router = Router(projectRuntimes);
-        await projectRuntimes.Host.LoadAsync([TestProjectRuntimeHost.Project("Station", "192.168.0.111")]).ConfigureAwait(false);
+        await projectRuntimes.Host.LoadAsync((global::Moba.Domain.Project[])[TestProjectRuntimeHost.Project("Station", "192.168.0.111")]).ConfigureAwait(false);
 
         Assert.That(router.ForProject(Guid.NewGuid()), Is.Null);
     }
@@ -54,7 +54,7 @@ internal sealed class ProjectRuntimeCommandRouterTests
         var router = Router(projectRuntimes);
         var station = TestProjectRuntimeHost.Project("Station", "192.168.0.111");
         var yard = TestProjectRuntimeHost.Project("Yard", "192.168.0.112");
-        await projectRuntimes.Host.LoadAsync([station, yard]).ConfigureAwait(false);
+        await projectRuntimes.Host.LoadAsync((global::Moba.Domain.Project[])[station, yard]).ConfigureAwait(false);
 
         Assert.That(router.Snapshots.Select(snapshot => snapshot.ProjectId), Is.EquivalentTo(new[] { station.Id, yard.Id }));
     }

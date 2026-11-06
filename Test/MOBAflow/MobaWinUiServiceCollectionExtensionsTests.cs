@@ -20,6 +20,7 @@ using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
 using Moba.Speech.Base;
+using Moba.Test.Helpers;
 using Moba.Test.Speech;
 using Moq;
 
@@ -110,13 +111,13 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     public void AddMobaWinUiViewModelsAndWindow_WiresWorkflowDryRunServices()
     {
         var provider = CreateValidatorServiceProvider();
-        var viewModel = provider.GetRequiredService<MainWindowViewModel>();
-        viewModel.SelectedProject = new ProjectViewModel(new Project
+        var workflows = provider.GetRequiredService<WorkflowsPageViewModel>();
+        provider.GetRequiredService<ISolutionSession>().SelectedProject = new ProjectViewModel(new Project
         {
             Workflows = [new Workflow { Name = "Preview" }]
         });
 
-        Assert.That(viewModel.WorkflowLibrary.CanDryRun, Is.True);
+        Assert.That(workflows.WorkflowLibrary.CanDryRun, Is.True);
     }
 
     [Test]
@@ -258,23 +259,93 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             Assert.That(shell.StationsPage, Is.SameAs(stations));
             Assert.That(stations.WorkflowLibrary, Is.SameAs(library));
-            Assert.That(shell.WorkflowLibrary, Is.SameAs(library));
             Assert.That(stations.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
         shell.SelectedProject = new ProjectViewModel(new Project());
         stations.AddProjectStationCommand.Execute(null);
         Assert.That(stations.SelectedProjectStation,
             Is.SameAs(provider.GetRequiredService<ISolutionSession>().SelectedProject!.Stations.Single()));
-        var searchNotifications = 0;
-        shell.PropertyChanged += (_, e) =>
+    }
+
+    [Test]
+    public async Task WorkflowEditorSharesTheHostLibraryWithStationsAndEventManager()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        using var assertions = Assert.EnterMultipleScope();
+        var workflows = provider.GetRequiredService<WorkflowsPageViewModel>();
+        var library = provider.GetRequiredService<WorkflowLibraryViewModel>();
+        var session = provider.GetRequiredService<ISolutionSession>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        var editor = provider.GetRequiredService<EventManagerViewModel>();
+        using (Assert.EnterMultipleScope())
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.WorkflowSearchText)) searchNotifications++;
-        };
-        library.SearchText = "Station filter";
-        Assert.That(shell.WorkflowSearchText, Is.EqualTo("Station filter"));
-        shell.WorkflowSearchText = "Shell filter";
-        Assert.That(library.SearchText, Is.EqualTo("Shell filter"));
-        Assert.That(searchNotifications, Is.EqualTo(2));
+            Assert.That(provider.GetRequiredService<WorkflowsPageViewModel>(), Is.SameAs(workflows));
+            Assert.That(workflows.WorkflowLibrary, Is.SameAs(library));
+            Assert.That(provider.GetRequiredService<StationsPageViewModel>().WorkflowLibrary, Is.SameAs(library));
+            Assert.That(editor.WorkflowLibrary, Is.SameAs(library));
+            Assert.That(provider.GetRequiredService<ISettingsService>().GetSettings().Layout.WorkflowsPage.IsActionsExpanded,
+                Is.EqualTo(workflows.IsWorkflowActionsExpanded));
+        }
+        session.SelectedProject = new ProjectViewModel(new Project
+        {
+            Workflows = [new Workflow { Name = "Departure" }, new Workflow { Name = "Arrival" }]
+        });
+        library.SearchText = "Arr";
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(workflows.WorkflowLibrary.SelectedWorkflow, Is.SameAs(session.SelectedProject!.Workflows[0]));
+            Assert.That(workflows.WorkflowLibrary.FilteredWorkflows.Single().Name, Is.EqualTo("Arrival"));
+            Assert.That(editor.WorkflowLibrary.FilteredWorkflows.Single().Name, Is.EqualTo("Arrival"));
+        }
+        Assert.That(await shell.PrepareForShutdownAsync().ConfigureAwait(false), Is.True);
+        session.SelectedProject = new ProjectViewModel(new Project { Workflows = [new Workflow { Name = "Late" }] });
+        Assert.That(library.SelectedWorkflow, Is.Null, "Shutdown disposed the shared library.");
+    }
+
+    [Test]
+    public async Task JourneyEditorSharesHostSelectionLayoutAndStatusWithoutShellDependency()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        var gateway = new Mock<IRuntimeCommandGateway>();
+        gateway.Setup(value => value.ResetJourneyAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var io = TestFileServices.CreateMock();
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
+            .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
+        var provider = CreateValidatorServiceProvider(services =>
+        {
+            services.AddSingleton(gateway.Object);
+            services.AddSingleton(io.Object);
+            // Saves take their snapshot through the dispatcher, so the shutdown save needs one that runs its work.
+            services.AddSingleton<IUiDispatcher>(new ImmediateUiDispatcher());
+        });
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var journeys = provider.GetRequiredService<JourneysPageViewModel>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        var session = provider.GetRequiredService<ISolutionSession>();
+        session.CurrentSolutionPath = "host-journeys-test.json";
+        var editor = provider.GetRequiredService<EventManagerViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(shell.JourneysPage, Is.SameAs(journeys));
+            Assert.That(provider.GetRequiredService<JourneysPageViewModel>(), Is.SameAs(journeys));
+            Assert.That(editor.JourneysPage, Is.SameAs(journeys));
+            Assert.That(editor.ResetCountersCommand, Is.SameAs(shell.ResetCountersCommand));
+            Assert.That(editor.WorkflowLibrary, Is.SameAs(provider.GetRequiredService<WorkflowLibraryViewModel>()));
+            Assert.That(journeys.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
+        }
+        journeys.AddJourneyCommand.Execute(null);
+        var selected = journeys.SelectedJourney!;
+        Assert.That(session.SelectedJourney, Is.SameAs(selected));
+        Assert.That(editor.SelectedJourney, Is.SameAs(selected));
+        await journeys.ResetJourneyCommand.ExecuteAsync(null).ConfigureAwait(false);
+        gateway.Verify(value => value.ResetJourneyAsync(selected.Id, It.IsAny<CancellationToken>()), Times.Once);
+        var notifications = new List<string?>();
+        journeys.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+        Assert.That(await shell.PrepareForShutdownAsync().ConfigureAwait(false), Is.True);
+        session.SelectedJourney = null;
+        Assert.That(notifications, Is.Empty);
     }
 
     private static ServiceProvider CreatePlatformServiceProvider()
@@ -370,6 +441,25 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>())
             .Build();
+    }
+
+    private sealed class ImmediateUiDispatcher : IUiDispatcher
+    {
+        public void InvokeOnUi(Action action) => action();
+
+        public Task InvokeOnUiAsync(Func<Task> asyncAction) => asyncAction();
+
+        public Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc) => asyncFunc();
+
+        public void InvokeOnUiHighPriority(Action action) => action();
+
+        public void InvokeOnUiLowPriority(Action action) => action();
+
+        public Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
+        {
+            _ = priority;
+            return asyncAction();
+        }
     }
 }
 #endif

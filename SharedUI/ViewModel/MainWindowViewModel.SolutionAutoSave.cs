@@ -11,17 +11,6 @@ using System.ComponentModel;
 public partial class MainWindowViewModel
 {
     /// <summary>
-    /// Called when SelectedStation changes. Tracks the station for auto-save.
-    /// </summary>
-    partial void OnSelectedStationChanged(StationViewModel? value)
-    {
-        if (value != null)
-        {
-            _session.TrackChanges(value);
-        }
-    }
-
-    /// <summary>
     /// Shell reaction to a persisted model change reported by the solution session, before it saves.
     /// The session already refreshes the runtime's project snapshot.
     /// </summary>

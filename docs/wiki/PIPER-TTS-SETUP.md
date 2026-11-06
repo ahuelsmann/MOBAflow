@@ -20,6 +20,19 @@ or virtual environment, for example `.venv\Scripts\piper.exe`.
 3. Keep the `.onnx` model and optional `.onnx.json` config file in a folder you can reference from MOBAflow.
 4. Advanced users may also use a standalone Piper binary if it supports the same CLI options.
 
+## Engine and Voice Licenses
+
+The recommended [Piper engine](https://github.com/OHF-Voice/piper1-gpl) is licensed
+under GPL-3.0. MOBAflow calls a separately installed executable; this repository
+does not bundle that executable or voice models. If you redistribute an engine
+or model, comply with that component's own license.
+
+Voice licenses are independent of the engine license. Before downloading, using
+or redistributing a voice, read its `MODEL_CARD` and check that its terms permit
+the intended use. The [upstream voice documentation](https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/VOICES.md)
+explains that some voices have restrictive licenses. MOBAflow's MIT license does
+not change those terms.
+
 ## Configure MOBAflow
 
 1. Open **Settings → Speech Synthesis**.

@@ -52,7 +52,7 @@ internal sealed class RuntimeSnapshotCacheTests
             ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = signalId,
@@ -96,7 +96,7 @@ internal sealed class RuntimeSnapshotCacheTests
             ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = signalId,
@@ -112,7 +112,7 @@ internal sealed class RuntimeSnapshotCacheTests
             ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = signalId,
@@ -148,7 +148,7 @@ internal sealed class RuntimeSnapshotCacheTests
             ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = staleId,
@@ -165,7 +165,7 @@ internal sealed class RuntimeSnapshotCacheTests
             ProjectId = ProjectA,
             IsConnected = true,
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = currentId,
@@ -198,7 +198,7 @@ internal sealed class RuntimeSnapshotCacheTests
             ProjectId = ProjectA,
             IsConnected = true,
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = locomotiveId,
@@ -243,8 +243,8 @@ internal sealed class RuntimeSnapshotCacheTests
         {
             ProjectId = ProjectA,
             InPortCounterPersistenceError = "Previous counter error",
-            SignalBoxElements = [new SignalBoxElementRuntimeSnapshot { ElementId = signalId, SignalAspect = SignalAspect.Ks1 }],
-            LocomotiveFleet = [new LocomotiveFleetSnapshot { LocomotiveId = locomotiveId, Name = "BR 110", DigitalAddress = 7 }]
+            SignalBoxElements = (SignalBoxElementRuntimeSnapshot[])[new SignalBoxElementRuntimeSnapshot { ElementId = signalId, SignalAspect = SignalAspect.Ks1 }],
+            LocomotiveFleet = (LocomotiveFleetSnapshot[])[new LocomotiveFleetSnapshot { LocomotiveId = locomotiveId, Name = "BR 110", DigitalAddress = 7 }]
         }));
 
         cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot

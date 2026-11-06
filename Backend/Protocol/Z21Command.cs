@@ -88,7 +88,7 @@ public static class Z21Command
     /// Builds the LAN_X_GET_STATUS command to request the current central status.
     /// </summary>
     public static byte[] BuildGetStatus()
-        => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.XHeader.X_GET_STATUS, 0x05];
+        => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_GET_STATUS, 0x24, 0x05];
 
     // ==================== Locomotive Drive Commands (Section 4) ====================
 

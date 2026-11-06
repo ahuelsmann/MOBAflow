@@ -1,6 +1,5 @@
-"""Trusted documentation facts and bounded AI proposals; no repository code is executed."""
+"""Deterministic documentation facts; no model calls or repository code execution."""
 
-import hashlib
 import json
 import re
 import subprocess
@@ -16,7 +15,6 @@ PROJECT_SUFFIX = ".csproj"
 MARKER_PREFIX = "<!-- documentation-facts:"
 START = MARKER_PREFIX + "{name}:start -->"
 END = MARKER_PREFIX + "{name}:end -->"
-MAX_CONTEXT_BYTES = 1_000_000
 MAX_DOCUMENT_BYTES = 200_000
 
 
@@ -175,154 +173,6 @@ def fact_updates(root):
     if notices != text(root, PACKAGE_DOC):
         changes[PACKAGE_DOC] = notices
     return changes
-
-
-def is_documentation(name):
-    return name.endswith(".md") and (name.startswith(("docs/", "specs/", "plans/", ".github/")) or "/" not in name)
-
-
-def editable(name):
-    return name in ("README.md", "CONTRIBUTING.md") or (
-        name.startswith("docs/") and name.endswith(".md") and name != PACKAGE_DOC)
-
-
-def changed_paths(root, base, head):
-    # Include both sides of renames/deletions; a missing current file is described by the diff.
-    return git(root, "diff", "--name-only", "--no-renames", "-z", base, head).decode().rstrip("\0").split("\0")
-
-
-def merge_base(root, base, head):
-    # A PR behind its base must not present newer base commits as reversed PR changes.
-    return git(root, "merge-base", base, head).decode().strip()
-
-
-def can_autofix(root, head):
-    # A bot-generated documentation-only commit cannot cause another automatic commit.
-    latest = changed_paths(root, head + "^", head)
-    return any(name and not is_documentation(name) for name in latest)
-
-
-def source_file(name):
-    return name.endswith((".cs", ".csproj", ".props", ".targets", ".xaml", ".py", ".ps1", ".yml", ".yaml", ".ini", ".cpp", ".h", ".hpp", ".c")) or name in (
-        "global.json", MUTATION_REGISTRY, "MutationTest/stryker-config.json", "MutationTest/stryker-common-config.json",
-        "MutationTest/stryker-speech-base-config.json")
-
-
-def context(root, base, head):
-    since = merge_base(root, base, head)
-    paths = [name for name in changed_paths(root, since, head) if name]
-    existing = set(tracked(root))
-    # Include composition and ownership anchors even when only an implementation changed.
-    anchors = {
-        "MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs",
-        "MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs",
-        "SharedUI/Service/MobileSolutionContext.cs", "SharedUI/Service/SolutionSession.cs",
-        "Backend/Protocol/Z21Protocol.cs", "Backend/Interface/IMobaRuntime.cs",
-        "Backend/Service/ProjectRuntimes/ProjectRuntimeHost.cs",
-        "SharedUI/Interface/IRuntimeCommandGateway.cs", ".github/workflows/quality.yml",
-        "scripts/Get-QualityChangeScope.ps1", PACKAGE_CATALOG,
-        MUTATION_REGISTRY, "MutationTest/stryker-config.json",
-        "MutationTest/stryker-common-config.json", "MutationTest/stryker-speech-base-config.json",
-    }
-    # Include callers, interfaces and tests mentioning a changed source type/file stem.
-    stems = {PurePosixPath(name).stem.split(".")[0] for name in paths if name.endswith(".cs")}
-    sources = {}
-    for name in sorted(existing):
-        if not source_file(name):
-            continue
-        if safe_path(root, name).stat().st_size > MAX_DOCUMENT_BYTES and name not in paths and name not in anchors:
-            continue
-        value = text(root, name)
-        if name in paths or name in anchors or any(stem in value for stem in stems):
-            sources[name] = value
-    documents = {name: text(root, name) for name in sorted(existing) if editable(name)}
-    bundle = {"changed_paths": paths, "diff": git(root, "diff", "--no-ext-diff", since, head).decode("utf-8", errors="replace"),
-              "sources": sources, "documents": documents}
-    if len(json.dumps(bundle).encode()) > MAX_CONTEXT_BYTES:
-        raise ValueError("PR context exceeds the limit; manual documentation review is required")
-    return bundle
-
-
-def generated_spans(value):
-    """Yield (start, end) of each marker-delimited generated region with linear string searches."""
-    position = 0
-    while True:
-        start = value.find(MARKER_PREFIX, position)
-        if start < 0:
-            return
-        opened = value.find(":start -->", start + len(MARKER_PREFIX))
-        if opened < 0:
-            return
-        closing = value.find(MARKER_PREFIX, opened + len(":start -->"))
-        if closing < 0:
-            return
-        end = value.find(":end -->", closing + len(MARKER_PREFIX))
-        if end < 0:
-            return
-        position = end + len(":end -->")
-        yield start, position
-
-
-def validate_status(proposal):
-    if proposal["status"] not in ("consistent", "update_required", "uncertain"):
-        raise ValueError("Unknown proposal status")
-    if proposal["status"] == "uncertain":
-        raise ValueError("AI could not establish documentation consistency")
-    if (proposal["status"] == "consistent") != (not proposal["edits"]):
-        raise ValueError("Inconsistent proposal status")
-
-
-def validate_evidence(bundle, evidence_items):
-    if not evidence_items:
-        raise ValueError("Edit lacks source evidence")
-    for evidence in evidence_items:
-        source = bundle["sources"].get(evidence["path"], "")
-        if not evidence["quote"].strip() or evidence["quote"] not in source:
-            raise ValueError("Evidence does not match the supplied source")
-
-
-def apply_edit(bundle, documents, edit):
-    name, old, new = edit["path"], edit["old_text"], edit["new_text"]
-    if not editable(name) or name not in documents or not old.strip() or not new.strip():
-        raise ValueError("Proposal must update an existing allowed document")
-    document = documents[name]
-    if old == new or document.count(old) != 1:
-        raise ValueError("Edit must replace one unique passage")
-    validate_evidence(bundle, edit["evidence"])
-    # Generated facts are never controlled by AI, including cross-boundary replacements.
-    location = document.index(old)
-    if any(location < end and location + len(old) > start for start, end in generated_spans(document)):
-        raise ValueError("AI cannot edit generated facts")
-    if MARKER_PREFIX in new:
-        raise ValueError("AI cannot add generated-region markers")
-    documents[name] = document.replace(old, new, 1)
-    if len(documents[name].encode()) > MAX_DOCUMENT_BYTES:
-        raise ValueError("Updated document exceeds the size limit")
-
-
-def validate_proposal(bundle, proposal):
-    validate_status(proposal)
-    documents = dict(bundle["documents"])
-    for edit in proposal["edits"]:
-        apply_edit(bundle, documents, edit)
-    return {name: value for name, value in documents.items() if value != bundle["documents"][name]}
-
-
-def verify_links(root, changes):
-    for name, value in changes.items():
-        value = re.sub(r"(?ms)^```.*?^```\s*$", "", value)
-        value = re.sub(r"`[^`\n]+`", "", value)
-        for target in re.findall(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)", value):
-            if re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:|#", target):
-                continue
-            path = target.split("#", 1)[0].split("?", 1)[0]
-            destination = (Path(root) / name).parent / path
-            if not destination.resolve().is_relative_to(Path(root).resolve()) or not destination.exists():
-                raise ValueError("Updated document has a missing/outside link")
-
-
-def content_hash(value):
-    return hashlib.sha256(value.encode()).hexdigest()
 
 
 def main():

@@ -129,7 +129,8 @@ when the SignalR connection is available.
 - Select the project again or reopen the app after the Z21 is ready.
 - Ensure no firewall or access-point rule blocks the selected project's configured
   Z21 UDP port (`21105` by default). MOBAflow's **Z21 Finder** also probes `21106`
-  as an alternative Z21 port; this is separate from MOBApi discovery on the PC.
+  as an alternative Z21 port. MOBApi discovery on the PC also uses UDP `21106`,
+  but it uses a different protocol.
 
 ### MOBAflow shows Search or OFF
 

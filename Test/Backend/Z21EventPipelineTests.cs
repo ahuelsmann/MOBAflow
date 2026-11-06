@@ -21,19 +21,19 @@ internal sealed class Z21EventPipelineTests
             Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(inPort)), Is.True);
         }
 
-        await pipeline.StopAsync(TimeSpan.FromSeconds(2));
+        await pipeline.StopAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
 
         Assert.That(
             eventBus.PublishedEvents.Cast<FeedbackReceivedEvent>().Select(@event => @event.InPort),
             Is.EqualTo(Enumerable.Range(1, 500)));
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             var snapshot = pipeline.GetSnapshot();
             Assert.That(snapshot.QueueDepth, Is.Zero);
             Assert.That(snapshot.EnqueuedEvents, Is.EqualTo(500));
             Assert.That(snapshot.PublishedEvents, Is.EqualTo(500));
             Assert.That(snapshot.RejectedEvents, Is.Zero);
-        });
+        }
     }
 
     [Test]
@@ -56,25 +56,25 @@ internal sealed class Z21EventPipelineTests
         await using var pipeline = new Z21EventPipeline(eventBus, NullLogger.Instance, capacity: 2);
 
         Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(1)), Is.True);
-        await firstPublishEntered.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        await firstPublishEntered.Task.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(2)), Is.True);
             Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(3)), Is.True);
             Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(4)), Is.False);
-        });
+        }
 
         releaseFirstPublish.Set();
-        await pipeline.StopAsync(TimeSpan.FromSeconds(2));
+        await pipeline.StopAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(
                 eventBus.PublishedEvents.Cast<FeedbackReceivedEvent>().Select(@event => @event.InPort),
                 Is.EqualTo(new[] { 1, 2, 3 }));
             Assert.That(pipeline.GetSnapshot().RejectedEvents, Is.EqualTo(1));
-        });
+        }
     }
 
     [Test]
@@ -96,14 +96,14 @@ internal sealed class Z21EventPipelineTests
         Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(1)), Is.True);
         Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(2)), Is.True);
 
-        await pipeline.StopAsync(TimeSpan.FromSeconds(2));
+        await pipeline.StopAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(eventBus.PublishedEvents.Cast<FeedbackReceivedEvent>().Single().InPort, Is.EqualTo(2));
             Assert.That(pipeline.GetSnapshot().DispatchFailures, Is.EqualTo(1));
             Assert.That(pipeline.Completion.IsCompletedSuccessfully, Is.True);
-        });
+        }
     }
 
     [Test]
@@ -114,7 +114,7 @@ internal sealed class Z21EventPipelineTests
         await using var pipeline = new Z21EventPipeline(eventBus, NullLogger.Instance, capacity: 2);
 
         Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(1)), Is.True);
-        await pipeline.StopAsync(TimeSpan.FromSeconds(1));
+        await pipeline.StopAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
         Assert.That(pipeline.GetSnapshot().SubscriberFailures, Is.EqualTo(1));
     }
@@ -135,13 +135,112 @@ internal sealed class Z21EventPipelineTests
         await using var pipeline = new Z21EventPipeline(eventBus, NullLogger.Instance, capacity: 2);
 
         Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(1)), Is.True);
-        await publishEntered.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        await publishEntered.Task.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
-        await pipeline.StopAsync(TimeSpan.FromMilliseconds(20));
+        await pipeline.StopAsync(TimeSpan.FromMilliseconds(20)).ConfigureAwait(false);
 
         Assert.That(pipeline.GetSnapshot().ShutdownTimeouts, Is.EqualTo(1));
         releasePublish.Set();
-        await pipeline.Completion.WaitAsync(TimeSpan.FromSeconds(1));
+        await pipeline.Completion.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+    }
+
+    [Test]
+    public void Constructor_RejectsMissingEventBusAndNonPositiveCapacity()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.Throws<ArgumentNullException>(() => _ = new Z21EventPipeline(null!));
+            Assert.Throws<ArgumentOutOfRangeException>(() => _ = new Z21EventPipeline(new RecordingEventBus(), capacity: 0));
+        }
+    }
+
+    [Test]
+    public async Task TryEnqueue_RejectsNullEventAndStopAsync_RejectsNonPositiveTimeout()
+    {
+        await using var pipeline = new Z21EventPipeline(new RecordingEventBus(), capacity: 1);
+
+        Assert.Throws<ArgumentNullException>(() => pipeline.TryEnqueue<FeedbackReceivedEvent>(null!));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => pipeline.StopAsync(TimeSpan.Zero)).ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task Snapshot_KeepsThePeakQueueDepthAfterTheQueueDrains()
+    {
+        using var releaseFirstPublish = new ManualResetEventSlim();
+        var firstPublishEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var publishCount = 0;
+        var eventBus = new RecordingEventBus
+        {
+            BeforePublish = _ =>
+            {
+                if (Interlocked.Increment(ref publishCount) == 1)
+                {
+                    firstPublishEntered.TrySetResult();
+                    releaseFirstPublish.Wait(TimeSpan.FromSeconds(5));
+                }
+            }
+        };
+        await using var pipeline = new Z21EventPipeline(eventBus, NullLogger.Instance, capacity: 8);
+
+        Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(1)), Is.True);
+        await firstPublishEntered.Task.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        for (var inPort = 2; inPort <= 4; inPort++)
+        {
+            Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(inPort)), Is.True);
+        }
+
+        releaseFirstPublish.Set();
+        await pipeline.StopAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+
+        var snapshot = pipeline.GetSnapshot();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(snapshot.Capacity, Is.EqualTo(8));
+            Assert.That(snapshot.QueueDepth, Is.Zero);
+            Assert.That(snapshot.PeakQueueDepth, Is.EqualTo(3));
+        }
+    }
+
+    [Test]
+    public async Task Cancel_RejectsLaterEvents()
+    {
+        await using var pipeline = new Z21EventPipeline(new RecordingEventBus(), capacity: 2);
+
+        pipeline.Cancel();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(1)), Is.False);
+            Assert.That(pipeline.GetSnapshot().RejectedEvents, Is.EqualTo(1));
+        }
+        await pipeline.Completion.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task StopAsync_RethrowsCallerCancellationWhileTheDrainIsBlocked()
+    {
+        using var releasePublish = new ManualResetEventSlim();
+        var publishEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var eventBus = new RecordingEventBus
+        {
+            BeforePublish = _ =>
+            {
+                publishEntered.TrySetResult();
+                releasePublish.Wait(TimeSpan.FromSeconds(5));
+            }
+        };
+        await using var pipeline = new Z21EventPipeline(eventBus, NullLogger.Instance, capacity: 2);
+        Assert.That(pipeline.TryEnqueue(new FeedbackReceivedEvent(1)), Is.True);
+        await publishEntered.Task.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+
+        await Assert.CatchAsync<OperationCanceledException>(
+            () => pipeline.StopAsync(TimeSpan.FromSeconds(5), cancellation.Token)).ConfigureAwait(false);
+
+        releasePublish.Set();
+        await pipeline.Completion.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        Assert.That(pipeline.GetSnapshot().ShutdownTimeouts, Is.Zero);
     }
 
     private sealed class RecordingEventBus : IEventBus

@@ -116,9 +116,12 @@ commands target that recorded connection; without a host, admission can queue th
 `RegisterRemote` requires a client id and joins `runtime-remote`; a selected project
 also joins `runtime-remote:{projectId:N}`. Registering another project removes the
 old project membership. An empty project id permits solution updates before a
-project is selected. Registration returns any cached project snapshot, solution
-update timestamp and session state; subsequent snapshots and session state are
-sent to that project's group. `PushSnapshot` requires the registered host.
+project is selected. `RegisterRemote` sends callbacks to the calling remote:
+`SnapshotUpdated` when a project snapshot is cached, `SolutionUpdated` with the
+update timestamp when a solution with a nonempty source path is cached, and
+`SessionStateChanged` with the current session state. Subsequent snapshots and
+session state are sent to that project's group. `PushSnapshot` requires the
+registered host.
 
 ### Platform discovery addresses
 

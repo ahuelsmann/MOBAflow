@@ -29,7 +29,7 @@ internal sealed class SignalBoxRuntimeSyncTests
 
         var changed = SignalBoxRuntimeSync.ApplyToPlan(
             plan,
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = signalId,
@@ -62,7 +62,7 @@ internal sealed class SignalBoxRuntimeSyncTests
 
         var filtered = SignalBoxRuntimeSync.FilterToPlan(
             plan,
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = Guid.NewGuid(),

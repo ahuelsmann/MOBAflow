@@ -15,6 +15,15 @@ using System.Threading.Channels;
 
 internal sealed class LocomotiveWhistleAutomationServiceTests
 {
+    private static readonly string[] AllRuleErrors =
+    [
+        "A locomotive is required.",
+        "Feedback input must be positive.",
+        "Function must be between F0 and F31.",
+        "Delay must not be negative.",
+        "Active duration must be positive."
+    ];
+
     [Test]
     public async Task CounterFilteredActivation_StillReachesRawWhistleConsumer()
     {
@@ -48,6 +57,9 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
             released[5] = 0;
             (int, int, bool) on = (12, 2, true);
             (int, int, bool) off = (12, 2, false);
+            // The service starts its "off" timer on a thread-pool continuation after "on"; the clock may only
+            // move once that timer exists, and "off" arrives on another continuation after the timer fired.
+            var idleTimers = clock.PendingTimerCount;
 
             udp.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
             var firstRaw = await NextAsync(rawFeedback.Reader).ConfigureAwait(false);
@@ -56,7 +68,9 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
                 Assert.That(firstRaw, Is.EqualTo(5));
                 Assert.That(gateway.Commands, Is.EqualTo(new[] { on }));
             }
+            await WaitUntilAsync(() => clock.PendingTimerCount > idleTimers).ConfigureAwait(false);
             clock.Advance(TimeSpan.FromSeconds(1));
+            await WaitUntilAsync(() => gateway.Commands.Count == 2).ConfigureAwait(false);
             Assert.That(gateway.Commands, Is.EqualTo(new[] { on, off }));
 
             udp.RaiseReceived(released);
@@ -67,7 +81,9 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
                 Assert.That(secondRaw, Is.EqualTo(5));
                 Assert.That(gateway.Commands, Is.EqualTo(new[] { on, off, on }));
             }
+            await WaitUntilAsync(() => clock.PendingTimerCount > idleTimers).ConfigureAwait(false);
             clock.Advance(TimeSpan.FromSeconds(1));
+            await WaitUntilAsync(() => gateway.Commands.Count == 4).ConfigureAwait(false);
 
             using (Assert.EnterMultipleScope())
             {
@@ -85,6 +101,17 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
 
     private static Task<int> NextAsync(ChannelReader<int> reader) =>
         reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5));
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (!condition())
+        {
+            if (DateTime.UtcNow > deadline)
+                Assert.Fail("The whistle service did not reach the expected state within 5 seconds.");
+            await Task.Delay(10).ConfigureAwait(false);
+        }
+    }
 
     [Test]
     public async Task HandleFeedbackAsync_SendsDelayedMomentaryFunction()
@@ -193,7 +220,28 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
             ActiveDurationMilliseconds = 0
         });
 
-        Assert.That(errors, Has.Count.EqualTo(5));
+        Assert.That(errors, Is.EqualTo(AllRuleErrors));
+    }
+
+    [Test]
+    public void Validate_AcceptsTheBoundaryValues()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        using var service = new LocomotiveWhistleAutomationService(
+            eventBus, new RecordingGateway(), NullLogger<LocomotiveWhistleAutomationService>.Instance);
+        var locomotiveId = Guid.NewGuid();
+
+        var lowest = service.Validate(new LocomotiveWhistleRule
+        {
+            LocomotiveId = locomotiveId, InPort = 1, FunctionIndex = 0, DelayMilliseconds = 0, ActiveDurationMilliseconds = 1
+        });
+        var highest = service.Validate(new LocomotiveWhistleRule { LocomotiveId = locomotiveId, InPort = 1, FunctionIndex = 31 });
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(lowest, Is.Empty);
+            Assert.That(highest, Is.Empty);
+        }
     }
 
     [Test]

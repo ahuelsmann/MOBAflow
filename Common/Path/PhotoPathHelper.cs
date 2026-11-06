@@ -56,7 +56,7 @@ public static class PhotoPathHelper
             return string.Empty;
 
         var trimmed = path.Trim();
-        if (Path.IsPathRooted(trimmed))
+        if (IsRootedOnAnyPlatform(trimmed))
             return string.Empty;
 
         var subPath = trimmed.StartsWith(PhotosPrefixSlash, StringComparison.OrdinalIgnoreCase)
@@ -304,7 +304,7 @@ public static class PhotoPathHelper
 
     /// <summary>
     /// Combines the photo storage base directory with a relative path (e.g. from API "photos/locomotives/abc.jpg").
-    /// Strips leading "photos/" or "photos\" and normalizes forward slashes to the platform separator.
+    /// Strips leading "photos/" or "photos\" and normalizes forward and backward slashes to the platform separator.
     /// </summary>
     /// <param name="baseDir">Base directory for photos (e.g. from Application.PhotoStoragePath or My Documents).</param>
     /// <param name="relativePath">Relative path, optionally starting with "photos/" or "photos\".</param>
@@ -322,7 +322,18 @@ public static class PhotoPathHelper
                 ? trimmed.Substring(PhotosPrefixBackslash.Length)
                 : relativePath;
 
-        var normalized = subPath.Replace("/", Path.DirectorySeparatorChar.ToString());
+        // Stored paths may come from another platform: both separators mean a directory boundary.
+        var normalized = subPath.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
         return Path.Combine(baseDir, normalized);
     }
+
+    /// <summary>
+    /// Detects absolute paths of any platform, because solution files travel between Windows, Android and Linux:
+    /// a Windows drive path (<c>C:\...</c>, <c>C:...</c>) or a backslash-rooted or UNC path is not rooted for
+    /// <see cref="Path.IsPathRooted(string?)"/> on Linux and Android.
+    /// </summary>
+    private static bool IsRootedOnAnyPlatform(string path) =>
+        Path.IsPathRooted(path)
+        || path.StartsWith('\\')
+        || (path.Length >= 2 && char.IsAsciiLetter(path[0]) && path[1] == ':');
 }

@@ -82,7 +82,7 @@ internal sealed class StatusControllerTests
                 ProjectId = projectId,
                 IsConnected = true,
                 SignalBoxElements =
-                [
+                (SignalBoxElementRuntimeSnapshot[])[
                     new SignalBoxElementRuntimeSnapshot
                     {
                         ElementId = signalId,
@@ -91,7 +91,7 @@ internal sealed class StatusControllerTests
                     }
                 ],
                 LocomotiveFleet =
-                [
+                (LocomotiveFleetSnapshot[])[
                     new LocomotiveFleetSnapshot
                     {
                         LocomotiveId = Guid.NewGuid(),
