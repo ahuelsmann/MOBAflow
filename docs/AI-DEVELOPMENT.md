@@ -11,9 +11,11 @@ includes delivery through merge under the [standing master mandate](../.github/i
 unless explicitly limited. Art Director owns routine product decisions inside the assigned scope and its
 implementation, and hands work directly to Chief Project Manager (formerly Issue Master), the sole execution
 and final integration coordinator. Technical Director coordinates resources and responsibilities through that
-same queue. Documentation Lead and Head of DevOps deliver assigned documentation/user guidance and
-GitHub/repository/CI infrastructure work respectively, under the same standing mandate. Technical
-transitions, confirmed fixes and ordinary PR administration do not need repeated human approval. Important
+same queue. Solution Architect (Claude) owns the technical solution design within assigned scope and prepares
+fundamental architecture decisions for the user. Documentation Lead and Head of DevOps deliver assigned
+documentation/user guidance and GitHub/repository/CI infrastructure work respectively, under the same standing
+mandate. Technical transitions, confirmed fixes and ordinary PR administration do not need repeated human
+approval. Important
 product goals, priorities and material UX decisions, scope expansion, fundamental architecture changes, new
 costs/external commitments and explicitly required practical permissions or acceptance still go to the user.
 
