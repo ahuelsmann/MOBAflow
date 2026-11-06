@@ -124,10 +124,13 @@ implementations belong in the host that uses the role.
   new/load/save, with `CanPersist`), `IFilePickerService` (open and save pickers) and `IPhotoStorageService`
   (vehicle photos below the photo root). MOBAflow implements them in `SolutionFileService`, `FilePickerService`
   and `PhotoStorageService`; the first two get the main window ID from `WinUiWindowContext`, and
-  `SolutionFileService` also gets the XAML root there for its dialogs. Only MOBAflow uses the file roles.
-  `NullSolutionIoService` (`CanPersist` is false) and `NullFilePickerService` serve tests; `SolutionSession`
-  (when no `SolutionViewModelServices` is passed) and `WorkflowViewModel` (when no picker is passed) fall back to
-  `NullFilePickerService`. Consumers request only the role they use; there is no aggregate file interface.
+  `SolutionFileService` also gets the XAML root there for its dialogs. Only MOBAflow implements the file roles
+  and registers `ISolutionIoService`; MOBAsmart has no solution file access and registers
+  `NullFilePickerService` as its `IFilePickerService`. `SolutionSession`, `MobileSolutionContext` and the
+  solution, project and workflow wrappers receive the picker, the preview sound player and the logger factory
+  through the required `SolutionViewModelServices` record, which each host registers (MOBAsmart with
+  `NullFilePickerService` and `NullSoundPlayer`). `NullSolutionIoService` (`CanPersist` is false) serves tests
+  only. Consumers request only the role they use; there is no aggregate file interface.
   `PhotoAssignmentService` combines picking and storing for the locomotive and wagon pages.
 
 ### 1. **Domain Layer** (`Domain/`)
@@ -422,9 +425,11 @@ runtime services.
   collection subscriptions. A platform refresh also detaches discarded platform wrappers.
   The session still owns persistence and updates the current runtime snapshot for model edits.
 - One WorkflowLibraryViewModel is registered through host DI and shared by the station workflow
-  library and the shell's existing workflow surfaces. Search uses the same library state through
-  both access paths. Runtime services, execution context and EventBus are composed in the host;
-  workflow behavior stays in the existing editor. Remaining workflow presentation is a later slice.
+  library and the other workflow surfaces. Search uses the same library state through
+  every access path. The host supplies the dialog service, `IWorkflowValidator`, `IWorkflowDryRunService`
+  (the Backend service that owns the runtime execution context for the test run), `IWorkflowTraceStore`,
+  EventBus and logger as required constructor dependencies; the library never holds the runtime
+  `ActionExecutionContext`. Workflow behavior stays in the existing editor.
 - StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
   unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
   central layout persistence remains planned.
@@ -456,6 +461,22 @@ runtime services.
 - Deferred city loading uses the existing ICityService and UI dispatcher, and ignores queued
   completion after disposal. JourneysPage retains visual layout/drag-drop coordination and
   load/unload subscriptions; existing width keys and central-layout follow-up remain unchanged.
+
+**Workflow presentation (RF-24 slice 4):**
+
+- The host owns one WorkflowsPageViewModel for WorkflowsPage. Its required dependencies are the
+  shared WorkflowLibraryViewModel, the settings service and a logger. It adds only the page
+  presentation the library lacks: the persisted workflow-list, actions and properties panel
+  expansion under the existing `Layout.WorkflowsPage` keys.
+- Workflow selection, action editing and ordering, validation, dry run, trace and the properties
+  editor object stay in the one WorkflowLibraryViewModel, which WorkflowsPage, StationsPage and
+  EventManagerViewModel share through host DI. The Workflow shell partial, the shell's mirrored
+  workflow/action selection, its unbound WorkflowsPage ItemClicked command and its workflow layout
+  members are removed; no shell surface binds workflow state. Clearing the selected project already
+  clears the library selection, so the shell no longer resets it separately.
+- The shell still disposes the shared library during shutdown through the station editor it owns;
+  slice 6's final shell audit decides where that disposal lives. The architecture guard rejects
+  shell dependencies in WorkflowsPage, which keeps visual layout, drag-start and keyboard coordination.
 
 **Settings presentation (RF-24 slice 1):**
 

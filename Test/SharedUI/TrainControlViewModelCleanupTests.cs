@@ -86,10 +86,11 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
-            mainWindowViewModel?.SolutionSession,
+            (IProjectContext?)mainWindowViewModel?.SolutionSession ?? new MobileSolutionContext(TestViewModelServices.Default),
             NullLogger<TrainControlViewModel>.Instance,
-            null,
-            eventBus ?? new EventBus(NullLogger<EventBus>.Instance));
+            ImmediateUiDispatcher.Instance,
+            eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
+            new NullFunctionAppearancePicker());
     }
 
     private MainWindowViewModel CreateMainWindowViewModel()
@@ -114,7 +115,7 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null),
-            _rollingStockPages.GetStationsPage(locomotiveSession1, runtimeMock.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus1),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtimeMock.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtimeMock.Object), uiDispatcherMock.Object),
             locomotiveSession1,
             new Mock<ILogger<MainWindowViewModel>>().Object);

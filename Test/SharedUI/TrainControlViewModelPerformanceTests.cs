@@ -6,6 +6,7 @@
 // 3. Z21 connected: switch away from Control tab, confirm no UI jank every 5s on Counter tab.
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
@@ -38,13 +39,14 @@ internal sealed class TrainControlViewModelPerformanceTests
     [Test]
     public void ResumeUpdates_AppliesCurrentSnapshotAfterPause()
     {
+        var current = new MobaRuntimeSnapshot { IsConnected = true };
         var runtimeMock = new Mock<IMobaRuntime>();
-        runtimeMock.SetupSequence(runtime => runtime.Current)
-            .Returns(new MobaRuntimeSnapshot { IsConnected = true })
-            .Returns(new MobaRuntimeSnapshot { IsConnected = false });
+        runtimeMock.SetupGet(runtime => runtime.Current).Returns(() => current);
 
         var viewModel = CreateViewModel(runtimeMock.Object);
+        Assert.That(viewModel.IsConnected, Is.True);
 
+        current = new MobaRuntimeSnapshot { IsConnected = false };
         viewModel.PauseUpdates();
         viewModel.ResumeUpdates();
 
@@ -98,7 +100,11 @@ internal sealed class TrainControlViewModelPerformanceTests
             runtime,
             new LocalRuntimeCommandGateway(runtime),
             CreateSettingsServiceMock().Object,
-            eventBus: eventBus ?? new EventBus(NullLogger<EventBus>.Instance));
+            new MobileSolutionContext(TestViewModelServices.Default),
+            NullLogger<TrainControlViewModel>.Instance,
+            ImmediateUiDispatcher.Instance,
+            eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
+            new NullFunctionAppearancePicker());
     }
 
     private static Mock<ISettingsService> CreateSettingsServiceMock()

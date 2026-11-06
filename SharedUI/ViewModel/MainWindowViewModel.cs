@@ -23,7 +23,7 @@ using System.ComponentModel;
 
 /// <summary>
 /// Core ViewModel for main window functionality.
-/// Partial classes handle: Solution, SolutionAutoSave, Workflow and Z21.
+/// Partial classes handle: Solution, SolutionAutoSave and Z21.
 /// </summary>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
@@ -121,8 +121,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _projectDiagnosticsService = projectDiagnosticsService;
         InitializeLocomotiveUsageDiagnostics();
 
-        WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
-
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_runtimeSnapshots.Current);
 
@@ -160,9 +158,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// (from loaded settings or from the resize behavior), the UI updates via binding.
     /// </summary>
     public LayoutColumnWidthsViewModel LayoutColumnWidths => _layoutColumnWidths;
-
-    /// <summary>Gets the singleton workflow catalog and editor state shared by workflow surfaces.</summary>
-    public WorkflowLibraryViewModel WorkflowLibrary => StationsPage.WorkflowLibrary;
 
     /// <summary>Gets the host-owned settings state shared with SettingsPage and shell surfaces.</summary>
     public SettingsPageViewModel SettingsPage { get; }
@@ -217,26 +212,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _speechHealthColor = "SystemFillColorCautionBrush";
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(DeleteWorkflowCommand))]
-    private WorkflowViewModel? _selectedWorkflow;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(DeleteActionCommand))]
-    private object? _selectedAction;
-
     /// <summary>
     /// The currently selected object to display in the properties panel.
     /// </summary>
     [ObservableProperty]
     private object? _currentSelectedObject;
-
-    /// <summary>
-    /// The currently selected object for WorkflowsPage properties panel.
-    /// Displays: SelectedWorkflow, SelectedAction
-    /// </summary>
-    [ObservableProperty]
-    private object? _workflowsPageSelectedObject;
 
     [ObservableProperty]
     private bool _isConnected;
@@ -416,10 +396,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _session.BeginShutdown();
         SettingsPage.PropertyChanged -= OnSettingsPagePropertyChanged;
         SettingsPage.FeedbackPointCountChanged -= OnFeedbackPointCountChanged;
-        WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
         StationsPage.Dispose();
         JourneysPage.Dispose();
-        WorkflowLibrary.Dispose();
+        // The host-owned workflow library is shared by the workflow, station and event-manager surfaces.
+        StationsPage.WorkflowLibrary.Dispose();
         TrainsPage.Dispose();
         LocomotivesPage.Dispose();
         WagonsPage.Dispose();
@@ -453,11 +433,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         _settingsService.SaveSettingsAsync(_settings).Observe(ex => _logger.LogWarning(ex, "Persist MainWindow settings failed"));
-    }
-
-    private void ObserveBackgroundTask(Task task, string operationName)
-    {
-        task.Observe(ex => _logger.LogWarning(ex, "{OperationName} failed", operationName));
     }
 
     [RelayCommand]

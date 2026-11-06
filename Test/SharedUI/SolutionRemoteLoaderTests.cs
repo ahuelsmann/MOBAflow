@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
@@ -55,7 +56,7 @@ internal sealed class SolutionRemoteLoaderTests
         var httpClient = new HttpClient(handler);
         var runtimeMock = new Mock<IMobaRuntime>();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var mobileContext = new MobileSolutionContext();
+        var mobileContext = new MobileSolutionContext(TestViewModelServices.Default);
         var synced = false;
         eventBus.Subscribe<SolutionSyncedEvent>(_ => synced = true);
         var loader = new SolutionRemoteLoader(
@@ -63,7 +64,10 @@ internal sealed class SolutionRemoteLoaderTests
             mobileContext,
             eventBus,
             NullLogger<SolutionRemoteLoader>.Instance,
-            httpClient);
+            httpClient,
+            Mock.Of<IMobileRuntimeCoordinator>(),
+            ImmediateUiDispatcher.Instance,
+            Mock.Of<IMobileSolutionStore>());
 
         await loader.SyncIfNeededAsync("192.168.0.10", 5001);
 
@@ -88,13 +92,16 @@ internal sealed class SolutionRemoteLoaderTests
             activeProjectName: "myMOBA");
         var httpClient = new HttpClient(handler);
         var runtimeMock = new Mock<IMobaRuntime>();
-        var mobileContext = new MobileSolutionContext();
+        var mobileContext = new MobileSolutionContext(TestViewModelServices.Default);
         var loader = new SolutionRemoteLoader(
             runtimeMock.Object,
             mobileContext,
             new EventBus(NullLogger<EventBus>.Instance),
             NullLogger<SolutionRemoteLoader>.Instance,
-            httpClient);
+            httpClient,
+            Mock.Of<IMobileRuntimeCoordinator>(),
+            ImmediateUiDispatcher.Instance,
+            Mock.Of<IMobileSolutionStore>());
 
         await loader.SyncIfNeededAsync("192.168.0.10", 5001);
 
@@ -117,10 +124,13 @@ internal sealed class SolutionRemoteLoaderTests
         var runtimeMock = new Mock<IMobaRuntime>();
         var loader = new SolutionRemoteLoader(
             runtimeMock.Object,
-            new MobileSolutionContext(),
+            new MobileSolutionContext(TestViewModelServices.Default),
             new EventBus(NullLogger<EventBus>.Instance),
             NullLogger<SolutionRemoteLoader>.Instance,
-            httpClient);
+            httpClient,
+            Mock.Of<IMobileRuntimeCoordinator>(),
+            ImmediateUiDispatcher.Instance,
+            Mock.Of<IMobileSolutionStore>());
 
         await loader.SyncIfNeededAsync("192.168.0.10", 5001);
         await loader.SyncIfNeededAsync("192.168.0.10", 5001);
@@ -139,10 +149,13 @@ internal sealed class SolutionRemoteLoaderTests
         var runtimeMock = new Mock<IMobaRuntime>();
         var loader = new SolutionRemoteLoader(
             runtimeMock.Object,
-            new MobileSolutionContext(),
+            new MobileSolutionContext(TestViewModelServices.Default),
             new EventBus(NullLogger<EventBus>.Instance),
             NullLogger<SolutionRemoteLoader>.Instance,
-            httpClient);
+            httpClient,
+            Mock.Of<IMobileRuntimeCoordinator>(),
+            ImmediateUiDispatcher.Instance,
+            Mock.Of<IMobileSolutionStore>());
 
         await loader.SyncIfNeededAsync("192.168.0.10", 5001);
 
@@ -162,11 +175,13 @@ internal sealed class SolutionRemoteLoaderTests
         var store = new MobileSolutionStore(tempDirectory, NullLogger<MobileSolutionStore>.Instance);
         var loader = new SolutionRemoteLoader(
             new Mock<IMobaRuntime>().Object,
-            new MobileSolutionContext(),
+            new MobileSolutionContext(TestViewModelServices.Default),
             new EventBus(NullLogger<EventBus>.Instance),
             NullLogger<SolutionRemoteLoader>.Instance,
             httpClient,
-            mobileSolutionStore: store);
+            Mock.Of<IMobileRuntimeCoordinator>(),
+            ImmediateUiDispatcher.Instance,
+            store);
 
         try
         {
@@ -195,14 +210,16 @@ internal sealed class SolutionRemoteLoaderTests
         await store.SaveAsync(solution, meta);
 
         var runtimeMock = new Mock<IMobaRuntime>();
-        var mobileContext = new MobileSolutionContext();
+        var mobileContext = new MobileSolutionContext(TestViewModelServices.Default);
         var loader = new SolutionRemoteLoader(
             runtimeMock.Object,
             mobileContext,
             new EventBus(NullLogger<EventBus>.Instance),
             NullLogger<SolutionRemoteLoader>.Instance,
             new HttpClient(new FakeSolutionHttpHandler(DateTimeOffset.UtcNow, ValidSolutionJson, null)),
-            mobileSolutionStore: store);
+            Mock.Of<IMobileRuntimeCoordinator>(),
+            ImmediateUiDispatcher.Instance,
+            store);
 
         try
         {
@@ -236,7 +253,7 @@ internal sealed class SolutionRemoteLoaderTests
 
         var runtimeMock = new Mock<IMobaRuntime>();
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
-        var mobileContext = new MobileSolutionContext();
+        var mobileContext = new MobileSolutionContext(TestViewModelServices.Default);
         var settingsMock = new Mock<ISettingsService>();
         settingsMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
         var loader = new SolutionRemoteLoader(
@@ -245,7 +262,9 @@ internal sealed class SolutionRemoteLoaderTests
             new EventBus(NullLogger<EventBus>.Instance),
             NullLogger<SolutionRemoteLoader>.Instance,
             new HttpClient(new FakeSolutionHttpHandler(DateTimeOffset.UtcNow, ValidSolutionJson, null, "myMOBA")),
-            mobileSolutionStore: store);
+            Mock.Of<IMobileRuntimeCoordinator>(),
+            ImmediateUiDispatcher.Instance,
+            store);
 
         var trainControl = new TrainControlViewModel(
             runtimeMock.Object,
@@ -253,7 +272,9 @@ internal sealed class SolutionRemoteLoaderTests
             settingsMock.Object,
             mobileContext,
             NullLogger<TrainControlViewModel>.Instance,
-            eventBus: new EventBus(NullLogger<EventBus>.Instance),
+            ImmediateUiDispatcher.Instance,
+            new EventBus(NullLogger<EventBus>.Instance),
+            new NullFunctionAppearancePicker(),
             options: new TrainControlViewModelOptions());
 
         try
@@ -290,11 +311,13 @@ internal sealed class SolutionRemoteLoaderTests
         coordinatorMock.SetupGet(coordinator => coordinator.PreferRemoteRuntime).Returns(true);
         var loader = new SolutionRemoteLoader(
             runtimeMock.Object,
-            new MobileSolutionContext(),
+            new MobileSolutionContext(TestViewModelServices.Default),
             new EventBus(NullLogger<EventBus>.Instance),
             NullLogger<SolutionRemoteLoader>.Instance,
             httpClient,
-            coordinatorMock.Object);
+            coordinatorMock.Object,
+            ImmediateUiDispatcher.Instance,
+            Mock.Of<IMobileSolutionStore>());
 
         await loader.SyncIfNeededAsync("192.168.0.10", 5001);
 
@@ -331,13 +354,16 @@ internal sealed class SolutionRemoteLoaderTests
         var updatedAt = DateTimeOffset.UtcNow;
         var handler = new FakeSolutionHttpHandler(updatedAt, invalidSolutionJson, "C:/demo/solution.json", "myMOBA");
         var httpClient = new HttpClient(handler);
-        var mobileContext = new MobileSolutionContext();
+        var mobileContext = new MobileSolutionContext(TestViewModelServices.Default);
         var loader = new SolutionRemoteLoader(
             new Mock<IMobaRuntime>().Object,
             mobileContext,
             new EventBus(NullLogger<EventBus>.Instance),
             NullLogger<SolutionRemoteLoader>.Instance,
-            httpClient);
+            httpClient,
+            Mock.Of<IMobileRuntimeCoordinator>(),
+            ImmediateUiDispatcher.Instance,
+            Mock.Of<IMobileSolutionStore>());
 
         await loader.ForceSyncAsync("192.168.0.10", 5001);
 

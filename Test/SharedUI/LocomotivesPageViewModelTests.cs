@@ -132,7 +132,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
             Assert.That(_page.Management.Passport!.Name, Is.EqualTo("BR 218"));
             Assert.That(_page.Management.Passport.DigitalAddress, Is.EqualTo(218));
         }
-        _session.SelectedProject = new ProjectViewModel(new Project());
+        _session.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(_page.SelectedLocomotive, Is.Null);
@@ -171,7 +171,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         locomotive.Name = "Detached";
         _io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
         project.Locomotives.Clear();
-        _session.SelectedProject = new ProjectViewModel(new Project());
+        _session.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(notifications, Is.Zero);

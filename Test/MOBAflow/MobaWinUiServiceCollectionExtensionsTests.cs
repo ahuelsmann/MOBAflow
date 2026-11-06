@@ -111,13 +111,13 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     public void AddMobaWinUiViewModelsAndWindow_WiresWorkflowDryRunServices()
     {
         var provider = CreateValidatorServiceProvider();
-        var viewModel = provider.GetRequiredService<MainWindowViewModel>();
-        viewModel.SelectedProject = new ProjectViewModel(new Project
+        var workflows = provider.GetRequiredService<WorkflowsPageViewModel>();
+        provider.GetRequiredService<ISolutionSession>().SelectedProject = new ProjectViewModel(new Project
         {
             Workflows = [new Workflow { Name = "Preview" }]
-        });
+        }, TestViewModelServices.Default);
 
-        Assert.That(viewModel.WorkflowLibrary.CanDryRun, Is.True);
+        Assert.That(workflows.WorkflowLibrary.CanDryRun, Is.True);
     }
 
     [Test]
@@ -218,7 +218,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(wagons.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
             Assert.That(provider.GetRequiredService<ISettingsService>().GetSettings(), Is.SameAs(shell.SettingsPage.Settings));
         }
-        shell.SelectedProject = new ProjectViewModel(new Project());
+        shell.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         wagons.AddPassengerWagonCommand.Execute(null);
         wagons.AddGoodsWagonCommand.Execute(null);
         using (Assert.EnterMultipleScope())
@@ -241,7 +241,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(trains.WagonsPage, Is.SameAs(provider.GetRequiredService<WagonsPageViewModel>()));
             Assert.That(trains.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
-        shell.SelectedProject = new ProjectViewModel(new Project());
+        shell.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         trains.AddTrainCommand.Execute(null);
         Assert.That(trains.SelectedTrain, Is.SameAs(provider.GetRequiredService<ISolutionSession>().SelectedProject!.Trains.Single()));
     }
@@ -259,23 +259,48 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             Assert.That(shell.StationsPage, Is.SameAs(stations));
             Assert.That(stations.WorkflowLibrary, Is.SameAs(library));
-            Assert.That(shell.WorkflowLibrary, Is.SameAs(library));
             Assert.That(stations.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
-        shell.SelectedProject = new ProjectViewModel(new Project());
+        shell.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         stations.AddProjectStationCommand.Execute(null);
         Assert.That(stations.SelectedProjectStation,
             Is.SameAs(provider.GetRequiredService<ISolutionSession>().SelectedProject!.Stations.Single()));
-        var searchNotifications = 0;
-        shell.PropertyChanged += (_, e) =>
+    }
+
+    [Test]
+    public async Task WorkflowEditorSharesTheHostLibraryWithStationsAndEventManager()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        using var assertions = Assert.EnterMultipleScope();
+        var workflows = provider.GetRequiredService<WorkflowsPageViewModel>();
+        var library = provider.GetRequiredService<WorkflowLibraryViewModel>();
+        var session = provider.GetRequiredService<ISolutionSession>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        var editor = provider.GetRequiredService<EventManagerViewModel>();
+        using (Assert.EnterMultipleScope())
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.WorkflowSearchText)) searchNotifications++;
-        };
-        library.SearchText = "Station filter";
-        Assert.That(shell.WorkflowSearchText, Is.EqualTo("Station filter"));
-        shell.WorkflowSearchText = "Shell filter";
-        Assert.That(library.SearchText, Is.EqualTo("Shell filter"));
-        Assert.That(searchNotifications, Is.EqualTo(2));
+            Assert.That(provider.GetRequiredService<WorkflowsPageViewModel>(), Is.SameAs(workflows));
+            Assert.That(workflows.WorkflowLibrary, Is.SameAs(library));
+            Assert.That(provider.GetRequiredService<StationsPageViewModel>().WorkflowLibrary, Is.SameAs(library));
+            Assert.That(editor.WorkflowLibrary, Is.SameAs(library));
+            Assert.That(provider.GetRequiredService<ISettingsService>().GetSettings().Layout.WorkflowsPage.IsActionsExpanded,
+                Is.EqualTo(workflows.IsWorkflowActionsExpanded));
+        }
+        session.SelectedProject = new ProjectViewModel(new Project
+        {
+            Workflows = [new Workflow { Name = "Departure" }, new Workflow { Name = "Arrival" }]
+        }, TestViewModelServices.Default);
+        library.SearchText = "Arr";
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(workflows.WorkflowLibrary.SelectedWorkflow, Is.SameAs(session.SelectedProject!.Workflows[0]));
+            Assert.That(workflows.WorkflowLibrary.FilteredWorkflows.Single().Name, Is.EqualTo("Arrival"));
+            Assert.That(editor.WorkflowLibrary.FilteredWorkflows.Single().Name, Is.EqualTo("Arrival"));
+        }
+        Assert.That(await shell.PrepareForShutdownAsync().ConfigureAwait(false), Is.True);
+        session.SelectedProject = new ProjectViewModel(new Project { Workflows = [new Workflow { Name = "Late" }] }, TestViewModelServices.Default);
+        Assert.That(library.SelectedWorkflow, Is.Null, "Shutdown disposed the shared library.");
     }
 
     [Test]

@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Moba.MOBApi.Controllers;
+using Moba.MOBApi.Hubs;
+using Moq;
 using System.Text.Json;
 
 namespace Moba.Test.MOBApi;
@@ -11,7 +14,7 @@ internal sealed class PhotosControllerTests
     [Test]
     public void Health_ExposesReachabilityAndServiceIdentity()
     {
-        var controller = new PhotosController();
+        var controller = new PhotosController(Mock.Of<IHubContext<PhotoHub>>());
 
         var result = (OkObjectResult)controller.Health();
         var body = JsonSerializer.SerializeToElement(result.Value);
@@ -27,7 +30,7 @@ internal sealed class PhotosControllerTests
     [Test]
     public void GetFile_ReturnsBadRequest_WhenPathMissing()
     {
-        var controller = new PhotosController();
+        var controller = new PhotosController(Mock.Of<IHubContext<PhotoHub>>());
 
         var result = controller.GetFile(string.Empty);
 
@@ -37,7 +40,7 @@ internal sealed class PhotosControllerTests
     [Test]
     public void GetFile_ReturnsNotFound_WhenFileDoesNotExist()
     {
-        var controller = new PhotosController();
+        var controller = new PhotosController(Mock.Of<IHubContext<PhotoHub>>());
 
         var result = controller.GetFile("photos/locomotives/missing.jpg");
 
@@ -47,7 +50,7 @@ internal sealed class PhotosControllerTests
     [Test]
     public void GetFile_ReturnsBadRequest_WhenPathUsesTraversal()
     {
-        var controller = new PhotosController();
+        var controller = new PhotosController(Mock.Of<IHubContext<PhotoHub>>());
 
         var result = controller.GetFile("photos/../../windows/win.ini");
 
@@ -57,7 +60,7 @@ internal sealed class PhotosControllerTests
     [Test]
     public void GetFile_ReturnsBadRequest_WhenPathIsAbsolute()
     {
-        var controller = new PhotosController();
+        var controller = new PhotosController(Mock.Of<IHubContext<PhotoHub>>());
 
         var result = controller.GetFile(@"C:\Windows\win.ini");
 
@@ -77,7 +80,7 @@ internal sealed class PhotosControllerTests
         Environment.SetEnvironmentVariable("MOBAFLOW_PHOTOS_PATH", tempDir);
         try
         {
-            var controller = new PhotosController();
+            var controller = new PhotosController(Mock.Of<IHubContext<PhotoHub>>());
             var result = controller.GetFile($"photos/locomotives/{fileName}");
 
             Assert.That(result, Is.InstanceOf<PhysicalFileResult>());

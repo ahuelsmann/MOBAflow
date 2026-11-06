@@ -199,7 +199,7 @@
                 Spacing="8">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:FunctionButtonViewModel">
-                        <controls:FunctionToggleView ToggleCommand="{Binding Source={x:Reference ControlRoot}, Path=BindingContext.ToggleFunctionCommand}" />
+                        <controls:FunctionToggleView ToggleCommand="{Binding ToggleFunctionCommand, Source={RelativeSource AncestorType={x:Type tc:TrainControlViewModel}}, x:DataType=tc:TrainControlViewModel}" />
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>

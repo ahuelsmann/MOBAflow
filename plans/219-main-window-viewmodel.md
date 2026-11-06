@@ -2,8 +2,8 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Active; slices 1, 2a, 2b, 2c and 3a integrated through #248, #257, #264, #272 and #282; slice 3b (Journeys/cities) implemented with validation tracked in #219; later slices planned
-**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13. Journey/city implementation starts from main 7c1d92422c0cbf675fddc03a8979990957733d15 and is synchronized with main 91f80ab5d0639f2df76b533441b37bf02acd0b3f on 2026-10-17.
+**Status**: Active; slices 1, 2a, 2b, 2c, 3a, 3b and 4 integrated through #248, #257, #264, #272, #282, #401 and #409; slice 5 (counters, diagnostics, health and synchronization status) is planned below as two sequential PRs; slice 6 is not allocated
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13; journeys/cities at 1f8c77fd; workflows at 0e6ef5f1 on 2026-11-05. Slice 5 planning resolves against main a2b36f11 on 2026-11-05.
 
 ## Purpose and scope
 
@@ -34,7 +34,7 @@ The maintainer authorized the Settings slice on 2026-10-11. It starts from integ
 existing shell/composition, WinUI page bindings/navigation, grid-column persistence,
 MonitorPageViewModel and Android shutdown lookup remain named residuals; 3b removes the EventManagerViewModel shell dependency.
 PostStartupInitializationService already uses the session and is not a shell exception.
-SettingsPage, LocomotivesPage, PassengerWagonPage, GoodsWagonPage, TrainsPage, StationsPage and JourneysPage reject shell dependencies even while other pages remain allowed.
+SettingsPage, LocomotivesPage, PassengerWagonPage, GoodsWagonPage, TrainsPage, StationsPage, JourneysPage and WorkflowsPage reject shell dependencies even while other pages remain allowed.
 The remaining core retains selected-project projections, operating state and shutdown;
 ISolutionSession owns the solution and canonical selection, and operator commands stay on
 IRuntimeCommandGateway. Settings extraction changes neither boundary.
@@ -51,13 +51,14 @@ observations, not coverage or quality metrics. The Settings, rolling-stock and j
 | [SettingsPageViewModel](../SharedUI/ViewModel/SettingsPageViewModel.cs), extracted from the settings partial; [SettingsPage](../MOBAflow/View/SettingsPage.xaml.cs):24-36 and its layout partial | Focused SettingsPageViewModel using AppSettings, ISettingsService and existing speech-test integration | Setter equality checks, notifications, immediate persistence, reset, feature availability, Piper voices, speech success/failure |
 | [LocomotivesPageViewModel](../SharedUI/ViewModel/LocomotivesPageViewModel.cs), extracted locomotive editor; focused [WagonsPageViewModel](../SharedUI/ViewModel/WagonsPageViewModel.cs) and [TrainsPageViewModel](../SharedUI/ViewModel/TrainsPageViewModel.cs) (originally 482 and 264 lines) | Focused locomotive, passenger/goods wagon and train page state; reuse LocomotiveManagementViewModel | CRUD, filtered lists, rename selection identity, composition ordering and photo assignment to the initiating context |
 | [StationsPageViewModel](../SharedUI/ViewModel/StationsPageViewModel.cs), extracted station/platform editor; [JourneysPageViewModel](../SharedUI/ViewModel/JourneysPageViewModel.cs), extracted journey/city editor | Focused page ViewModels using the session's canonical selection | Shared journey selection, stations/platforms, city library, command availability, nested model change tracking |
-| [Workflow partial](../SharedUI/ViewModel/MainWindowViewModel.Workflow.cs), 187 lines; [WorkflowsPage](../MOBAflow/View/WorkflowsPage.xaml):32 onwards | Register and inject the existing WorkflowLibraryViewModel; add only page presentation state that it lacks | Selection, action editing/order, validation, dry-run cancellation, trace and editor state; no second workflow engine |
-| Counter, Diagnostics, HealthStatus, RestApiStatus and SyncDiagnostics partials | Focused counter/diagnostic/status projections using existing runtime query contracts and EventBus | Counter errors and reset result, filters, health/API status, sync state and project isolation |
+| [WorkflowsPageViewModel](../SharedUI/ViewModel/WorkflowsPageViewModel.cs), extracted from the workflow partial (originally 187 lines); [WorkflowsPage](../MOBAflow/View/WorkflowsPage.xaml):32 onwards | Inject the existing host-registered WorkflowLibraryViewModel; add only page presentation state that it lacks | Selection, action editing/order, validation, dry-run cancellation, trace and editor state; no second workflow engine |
+| [Counter](../SharedUI/ViewModel/MainWindowViewModel.Counter.cs), [Diagnostics](../SharedUI/ViewModel/MainWindowViewModel.Diagnostics.cs), [HealthStatus](../SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs), [RestApiStatus](../SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs) and [SyncDiagnostics](../SharedUI/ViewModel/MainWindowViewModel.SyncDiagnostics.cs) partials (216, 141, 78, 94 and 194 lines), the traffic region of the [Z21 partial](../SharedUI/ViewModel/MainWindowViewModel.Z21.cs) and [MonitorPageViewModel](../SharedUI/ViewModel/MonitorPageViewModel.cs) | InPortCounterViewModel, a reworked MonitorPageViewModel, ProjectDiagnosticsViewModel and SystemStatusViewModel using the existing runtime query contracts and EventBus; see the slice 5 plan below | Counter errors and reset result, filters, health/API status, sync state and project isolation |
 | [LayoutPanels](../SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs), 337 lines; [SettingsPageViewModel.Layout](../SharedUI/ViewModel/SettingsPageViewModel.Layout.cs), extracted from the settings layout partial; [GridColumnResizeBehavior](../MOBAflow/Behavior/GridColumnResizeBehavior.cs):474 onwards | One layout persistence service; reuse LayoutColumnWidthsViewModel | Panel expansion, section usage/order, setting keys, star-column values and intentionally fixed pixels |
 
-[MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs) shares the host-owned
-WorkflowLibraryViewModel through StationsPage and subscribes to session/runtime/status/photo events. It also owns project
-CRUD and shutdown coordination outside the named extraction partials. Journey/city state is extracted in 3b.
+[MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs) subscribes to session/runtime/status/photo
+events and disposes the host-owned WorkflowLibraryViewModel at shutdown through the station editor. It also owns project
+CRUD and shutdown coordination outside the named extraction partials. Journey/city state is extracted in 3b,
+workflow page state in slice 4, and the counter, traffic, diagnostics and status projections in slice 5.
 [MobaWinUiServiceCollectionExtensions](../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs)
 registers session/context aliases and constructs the shell. The extraction must update this actual
 composition root rather than introducing another registration path.
@@ -65,7 +66,7 @@ composition root rather than introducing another registration path.
 Additional consumers are part of RF-24 acceptance, not incidental cleanup:
 
 - [MonitorPageViewModel](../SharedUI/ViewModel/MonitorPageViewModel.cs):25,54,79 reads shell traffic
-  and connection state; move to ITrafficMonitor and IConnectionRuntime plus a focused UI projection.
+  and connection state; slice 5a moves it to ITrafficMonitor, IRuntimeSnapshotProvider and the session.
 - [EventManagerViewModel](../SharedUI/ViewModel/EventManagerViewModel.cs) now reads the session,
   shared workflow library and journey-page status directly; its shell dependency is removed in 3b.
 - [NavigationRegistration](../MOBAflow/Service/NavigationRegistration.cs) creates shell-bound pages;
@@ -152,7 +153,7 @@ Refresh the base and update this plan from evidence after each integrated slice.
      Tests cover persistence, references, CRUD/defaults, command availability, replacement,
      stale subscriptions, auto-save suppression, layout and actual-host shared identity.
      Manual station/platform UI acceptance remains open.
-   - **3b Journeys/cities (implemented; validation tracked in #219):** JourneysPageViewModel owns
+   - **3b Journeys/cities (integrated through #401; manual UI acceptance open):** JourneysPageViewModel owns
      journey/station CRUD, city loading/search, ItemClicked properties, selected-station tracking,
      reset and persisted panel expansion. The host registers one instance for JourneysPage,
      the shell reset surface, EventManager status and deferred city loading. The Journey shell
@@ -167,12 +168,33 @@ Refresh the base and update this plan from evidence after each integrated slice.
      Tests cover defaults, CRUD, selection/ItemClicked, nested persistence, suppression,
      stale wrappers/subscriptions, ordering, gateway routing, city dispatch/late completion,
      layout and actual-host shared identity. Manual theme/UI acceptance remains open.
-4. **Workflows:** the shared library DI registration is established by 3a; move remaining page state,
-   update workflow and EventManager bindings, and remove shell construction/forwarding.
-   Preserve one library instance shared by existing workflow surfaces.
-5. **Counter and status:** extract counter, diagnostics, health, API/sync and traffic projections;
-   replace Monitor and shell status consumers; PostStartup already uses the session. Move operating-state computation to a
-   focused collaborator if it combines non-shell behavior. Remove relevant event handling/partials.
+4. **Workflows (integrated through #409; manual UI acceptance open):** WorkflowsPageViewModel owns the
+   workflow page presentation that the shared library lacks: the persisted workflow-list, actions
+   and properties panel expansion under the existing layout keys. It receives the host-registered
+   WorkflowLibraryViewModel, the settings service and a logger; WorkflowsPage binds to it instead
+   of the shell. Selection, action editing/order, validation, dry run, trace and the editor object
+   remain in the one library shared with StationsPage and EventManagerViewModel, whose bindings
+   already read it directly. The Workflow shell partial, the shell's mirrored workflow/action
+   selection and commands, its unbound ItemClicked command and its workflow layout members are
+   removed; the shell keeps no workflow forwarding and takes no workflow page dependency, because
+   no shell surface binds workflow state. Clearing the selected project already clears the
+   library selection. Shutdown still disposes the shared library once through the station editor.
+   Tests cover constructor guards, library identity and selection through the page, layout
+   defaults/persistence/no-op writes, logged persistence failure, shell shutdown disposal,
+   the architecture guard for WorkflowsPage and actual-host shared identity across the workflow,
+   station and event-manager surfaces. Manual theme/UI acceptance remains open.
+5. **Counters, diagnostics, health and synchronization status (planned; two sequential PRs, see
+   [the slice 5 plan](#slice-5-implementation-plan-2026-11-05)):**
+   - **5a Counters and traffic monitor:** InPortCounterViewModel owns the feedback-point statistics, counter
+     settings, persistence error, reset command and counter snapshot projection; the reworked MonitorPageViewModel
+     owns the traffic packets, connection status and Monitor expansion without a shell dependency. OverviewPage
+     and EventManager receive the host counter instance. The Counter partial and the shell's traffic region,
+     `ITrafficMonitor` dependency and Monitor layout members are removed; Z21 telemetry stays in the Z21 partial.
+   - **5b Diagnostics and system status:** ProjectDiagnosticsViewModel owns the Messages pane state and refresh
+     triggers; SystemStatusViewModel owns speech health, post-startup, REST API and synchronization status. The
+     shell exposes both for the status bar and Messages pane, reads the operating-state inputs from
+     SystemStatusViewModel and keeps `OperatingStateEvaluator` as the collaborator. The Diagnostics, HealthStatus,
+     RestApiStatus, SyncDiagnostics and SolutionAutoSave partials and the optional diagnostics service are removed.
 6. **Layout and final shell audit:** centralize panel/section/column persistence and replace the
    visual-tree search for MainWindowViewModel. Reuse any narrow settings-layout boundary established
    in slice 1. Remove LayoutPanels.cs, move SettingsPageViewModel.Layout persistence into the shared boundary, and remove superseded page glue.
@@ -182,17 +204,174 @@ For every slice, the implementing PR owns the exact test count, build result, ma
 and CI/Sonar evidence. A file moves only with its callers, notifications, subscriptions and tests.
 Rollback is a revert to the preceding validated slice; do not retain a parallel legacy implementation.
 
-### Remaining shell responsibility classification after 3b
+### Remaining shell responsibility classification after slice 5 (planned)
 
 | Members | Owner and next boundary |
 | --- | --- |
 | Solution new/open/save, stop confirmation and shutdown | Host/shell actions delegating to ISolutionSession; preserve RF-23 runtime lifecycle and persistence ownership. |
 | Add/DeleteProject, generic ItemClicked, CurrentSelectedObject, Solution-page expansion | Solution/project UI to extract during slice 6's final shell audit; selection stays in the session. |
-| WorkflowsPage ItemClicked, selected action and page presentation | Slice 4; reuse the already registered WorkflowLibraryViewModel. EventManager's journey status is already extracted in 3b. |
-| Journey runtime projection in Z21/Counter partials | Slice 5's runtime/status projection; continue reading snapshots and updating the existing wrappers without runtime ownership. |
-| Connect/disconnect, track power, feedback simulation, raw turnout and operating-state commands | Classify and extract focused control/status collaborators in slice 5; operator mutations keep the injected gateway, lifecycle stays with the host/session. |
-| SetSignalAspect and ordered ApplySignalBoxElementChange | Signal-box editor collaborator in slice 6's final shell audit. Preserve configuration-update/command/save order and the gateway; no signal behavior changes in 3b. |
-| Remaining page layout and GridColumnResizeBehavior shell lookup | Slice 6's single persistence boundary; keep serialized keys and star-column semantics. |
+| Shared workflow library disposal at shutdown | Extracted in slice 4; the shell disposes the host-owned library once through the station editor. Slice 6's final shell audit decides whether host disposal replaces it. |
+| Counter, traffic, diagnostics, health, REST API and synchronization projections | Slice 5a: InPortCounterViewModel and MonitorPageViewModel. Slice 5b: ProjectDiagnosticsViewModel and SystemStatusViewModel. |
+| Journey runtime projection (`ApplyJourneyRuntimeSnapshots`) and Z21 status/telemetry in the Z21 partial | Stays in the shell as snapshot projection without runtime ownership; slice 5 removes only the counter and traffic parts. Slice 6's final shell audit decides whether a Z21 status ViewModel with rebinding of the status bar, Overview, SignalBox, TrackPlan and Solution surfaces is worthwhile. |
+| Connect/disconnect, track power, feedback simulation, raw turnout and operating-state commands | Classified in slice 5 as host command forwarding through the injected gateway or connection runtime; they stay in the shell. The operating state reads its REST, speech and post-startup inputs from SystemStatusViewModel; `OperatingStateEvaluator` remains the collaborator. |
+| SetSignalAspect and ordered ApplySignalBoxElementChange | Signal-box editor collaborator in slice 6's final shell audit. Preserve configuration-update/command/save order and the gateway; no signal behavior changes in 3b or 5. |
+| Remaining page layout and GridColumnResizeBehavior shell lookup | Slice 6's single persistence boundary; keep serialized keys and star-column semantics. Slice 5a moves only the two Monitor expansion flags with their page. |
+
+## Slice 5 implementation plan (2026-11-05)
+
+Resolved against main `a2b36f11` (after #409 and #412). Slice 5 extracts the counter, traffic, diagnostics,
+health and synchronization projections. It adds no runtime ownership, no new command and no persisted-format
+change. It is delivered as two sequential draft PRs on their own branches after allocation (5a first), and only
+after #414 is integrated (see the overlap check below): 5b alone changes the status bar and the shell's
+operating-state inputs, and each half stays at the size of #401. Both follow the pattern of #401 and #409: one focused ViewModel per
+responsibility in `SharedUI/ViewModel/`, required constructor dependencies, one host-owned singleton registered in
+`MobaWinUiServiceCollectionExtensions`, pages receive the instance directly, the shell exposes an instance only where
+a shell surface binds it, and superseded partials are removed with their tests moved rather than duplicated.
+MOBAsmart is unaffected: it registers no shell, and `MauiViewModel` keeps its own counter and connection projection.
+
+### 5a Counters and traffic monitor
+
+| Leaves the shell | New owner and behavior |
+| --- | --- |
+| Counter partial: `Statistics`, `CounterPersistenceError`, `CounterCommandStatus`, `GlobalTargetLapCount`, `UseTimerFilter`, `TimerIntervalSeconds` with their persisting `On…Changed` hooks, `InitializeStatisticsFromFeedbackPoints`, `ResetCountersCommand`, `ApplyInPortCounterSnapshot`, `LogCounterCommandFailure`; `MainWindowViewModel.cs`: the constructor's counter initialization, `OnFeedbackPointCountChanged` and the `FeedbackPointCountChanged` subscription and its shutdown detach; Z21 partial: the `ApplyInPortCounterSnapshot` call | New `InPortCounterViewModel` (`SharedUI/ViewModel/InPortCounterViewModel.cs`, `IDisposable`). Required: `ISolutionSession`, `IRuntimeSnapshotProvider`, `IEventBus`, `IRuntimeCommandGateway`, `SettingsPageViewModel`, `ISettingsService`, `ILogger<InPortCounterViewModel>`. The constructor reads `Counter.TargetLapCount`, `UseTimerFilter` and `TimerIntervalSeconds` before it builds the statistics (the shell's order), applies `IRuntimeSnapshotProvider.Current`, then subscribes `RuntimeSnapshotChangedEvent` (counters and persistence error), `SettingsPageViewModel.FeedbackPointCountChanged` and the session's `SelectedProject` change; both re-initializations replace the collection instead of mutating it. Statistics keep the injected gateway; the three counter settings persist through `ISettingsService.SaveSettingsAsync` with the logged-failure pattern of `WorkflowsPageViewModel`. `Dispose` detaches all three subscriptions and ignores later snapshots. |
+| Z21 partial traffic region: `TrafficPackets`, `InitializeTrafficMonitor`, `ReloadTrafficPackets`, `OnTrafficPacketLogged` (100-packet cap), `ClearTrafficMonitorCommand`, the `Z21TrafficPacketLoggedEvent` and `SelectedRuntimeChangedEvent` subscriptions, the `_trafficMonitor` field and the `ITrafficMonitor` constructor parameter; LayoutPanels partial: `IsMonitorTrafficExpanded`, `IsMonitorActivityLogExpanded` and their initialization | Existing `MonitorPageViewModel`, reworked. Required: `ITrafficMonitor`, `IRuntimeSnapshotProvider`, `IEventBus`, `ISolutionSession`, `ISettingsService`, `IUiDispatcher`, `ILogger<MonitorPageViewModel>`; the `MainWindowViewModel` parameter and property are removed. It owns `TrafficPackets` and the two subscriptions, folds the shell's clear behavior into its existing `ClearTrafficCommand`, derives `ConnectionStatus` from `RuntimeSnapshotChangedEvent` and `IRuntimeSnapshotProvider.Current` through `RuntimeSnapshotProjector.ProjectStatus` plus the session's `SelectedProject.Z21IpAddress`, and persists the two expansion flags under the existing `Layout.MonitorPage` keys. `Dispose` unsubscribes the bus, the session and the log sink and drops late packets. |
+
+Stays in the shell, relocated from the Counter partial into the Z21 partial: `_latestRuntimeSnapshot`,
+`MainCurrent`, `Temperature`, `SupplyVoltage` and `VccVoltage` (Z21 telemetry that OverviewPage binds next to
+`SerialNumber`, `FirmwareVersion` and `HardwareType`). `HandleSelectedProjectChanged` moves into the Solution partial
+and keeps the diagnostics refresh, `ApplyJourneyRuntimeSnapshots` and `UpdateSolutionLoadedStatus` until 5b.
+
+Files. Deleted: `SharedUI/ViewModel/MainWindowViewModel.Counter.cs`. Added: `SharedUI/ViewModel/InPortCounterViewModel.cs`,
+`Test/SharedUI/InPortCounterViewModelTests.cs`, `Test/SharedUI/MonitorPageViewModelTests.cs`. Changed:
+`SharedUI/ViewModel/MainWindowViewModel.cs`, `.Z21.cs`, `.LayoutPanels.cs`, `.Solution.cs` and `MonitorPageViewModel.cs`;
+`MOBAflow/View/OverviewPage.xaml` and `.xaml.cs` (second constructor parameter `InPortCounterViewModel`, exposed as
+`Counters`; the eight counter bindings move from `ViewModel.` to `Counters.`); `MOBAflow/View/MonitorPage.xaml` and
+`.xaml.cs` (`ViewModel.MainWindowViewModel.IsMonitor…` becomes `ViewModel.IsMonitor…`, `nameof` targets follow; the
+code-behind keeps its star-value persistence for slice 6); `MOBAflow/View/MainWindow.xaml.cs` and
+`MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs` (register `InPortCounterViewModel`; the `MainWindow`
+factory also receives `InPortCounterViewModel` and `MonitorPageViewModel`, which `MainWindow.PrepareForShutdownAsync`
+disposes after the shell confirmed shutdown, next to `RestApiStatusService` and `HealthCheckService`, because no shell
+surface binds them and the host never disposes its container); `MOBAflow/Service/NavigationRegistration.cs`
+(`EventManagerViewModel` receives `InPortCounterViewModel.ResetCountersCommand`);
+`Test/Architecture/SolutionSessionArchitectureTests.cs` (the `MonitorPageViewModel.cs` allowance is removed and
+`MonitorPage` joins the pages that reject shell dependencies; `OverviewPage` stays allowed because it still binds Z21
+telemetry); the ten shell construction sites in tests lose the `ITrafficMonitor` argument
+(`JourneyCounterProjectionTests`, `MainWindowDiagnosticsTests`, `MainWindowViewModelShutdownTests`,
+`MainWindowViewModelPhotoAssignmentTests`, `MainWindowViewModelSignalBoxTests`, `MainWindowViewModelStartupAutoSaveTests`,
+`JourneyMapViewModelTests`, `TimetablePageViewModelTests`, `TrainControlViewModelCleanupTests`,
+`RestApiStatusServiceTests`); `Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs`; the three
+`quality/analyzer-baseline*.json` files (the removed Counter partial's diagnostics travel with it, the new fixtures add the
+usual CA1812 entries, the Android file mirrors the SharedUI net10.0 entries); `docs/ARCHITECTURE.md`; this plan.
+
+Tests. `InPortCounterViewModelTests` takes over the counter cases of `JourneyCounterProjectionTests` (unsigned
+precision and timing, re-initialization and project selection keeping counts, cleared feedback-point count, feedback
+count change and detach on dispose, reset availability waiting for the authoritative reset snapshot) and adds
+constructor guards, settings persistence with no-op writes and a logged failure, the persistence error text and a
+snapshot after dispose. `MonitorPageViewModelTests` takes over the shutdown traffic case of
+`MainWindowViewModelShutdownTests` as a dispose case and adds reload on `SelectedRuntimeChangedEvent`, the 100-packet
+cap, connection status following snapshot and selected project, clear through `ITrafficMonitor`, and expansion
+persistence with no-op writes. `JourneyCounterProjectionTests` keeps its journey cases.
+`MobaWinUiServiceCollectionExtensionsTests` verifies that `EventManagerViewModel.ResetCountersCommand` is the host
+counter instance's command and that `OverviewPage`, `MonitorPage` and `MainWindow` resolve the same host instances.
+
+### 5b Diagnostics and system status
+
+| Leaves the shell | New owner and behavior |
+| --- | --- |
+| Diagnostics partial: `ProjectDiagnostics`, `VisibleProjectDiagnostics`, `IsDiagnosticsExpanded`, the three `ShowDiagnostic…` filters, the three counts, `DiagnosticsSummary`, `LocomotiveUsageCoverageSummary`, `RefreshProjectDiagnosticsCommand`, `ApplyDiagnosticFilter`, `IsDiagnosticVisible` and the locomotive-usage subscription with its shutdown detach; SolutionAutoSave partial (`OnSolutionModelChanged`); the optional `IProjectDiagnosticsService?` constructor parameter; the diagnostics refresh in `HandleSelectedProjectChanged` | New `ProjectDiagnosticsViewModel` (`IDisposable`). Required: `ISolutionSession`, `IProjectDiagnosticsService`, `LocomotiveTrainUsageViewModel` (the host singleton that `LocomotivesPage.Usage` already is, see `UsageReaderAndProjection_ResolveTheExistingDesktopOwnerAndSharedPageInstance`). It refreshes on construction, on the session's `SelectedProject` change, on `ISolutionSession.ModelChanged`, when the pane opens and when usage diagnostics change, expanding the pane for an edited usage result as today; `Dispose` detaches the session and usage subscriptions. The shell receives it as `Diagnostics` because `MainWindow.xaml` binds the Messages pane, and disposes it at shutdown. |
+| HealthStatus partial: `SpeechHealthStatus`, `SpeechHealthIcon`, `SpeechHealthColor`, `SpeechStatusDisplayText`, `UpdateHealthStatus`, `IsPostStartupInitializationRunning`, `PostStartupStatusText`, `UpdatePostStartupInitializationStatus`; RestApiStatus partial: `RestApiStatusText`, `RestApiIsReachable`, `RestApiConnectedClients`, `RestApiConnectedClientsEmpty`, `UpdateRestApiStatus`, `OnRestApiStatusChanged`; SyncDiagnostics partial: the seven healthy/text pairs, `SolutionLoadedIsHealthy`, `SolutionLoadedStatusText`, `UpdateSyncDiagnostics`, `UpdateSolutionLoadedStatus` and the formatting helpers; `MainWindowViewModel.cs`: `OnSettingsPagePropertyChanged` and the `PostStartupStatusEvent`, `RestApiStatusChangedEvent` and `MobaflowSyncDiagnosticsChangedEvent` subscriptions | New `SystemStatusViewModel` (`IDisposable`), the status ViewModel that `docs/ARCHITECTURE.md` already announces. Required: `IEventBus`, `ISolutionSession`, `SettingsPageViewModel`. It subscribes the three events, resets speech health to Initializing when `SelectedSpeechProviderId` changes, evaluates `HasActiveProject` from the session and recomputes the solution-loaded status on `CurrentSolutionPath` and `SelectedProject` changes. The shell receives it as `SystemStatus` because the status bar binds speech health and REST status, and disposes it at shutdown. |
+
+The RestApiStatus partial's `OnPhotoAssigned` and its `PhotoAssignedEvent` subscription are photo routing and move
+to the PhotoAssignment partial. The OperatingState partial stays in the shell: `RecomputeOperatingState` reads
+`SystemStatus.RestApiIsReachable`, `SpeechHealthStatus` and `IsPostStartupInitializationRunning`; the five partial
+hooks for the REST, speech and post-startup properties become one `SystemStatus.PropertyChanged` handler for those
+five names, detached at shutdown, and the direct recompute calls inside the moved update methods disappear.
+`OperatingStateEvaluator` remains the pure collaborator; no second evaluator is added.
+
+Files. Deleted: `SharedUI/ViewModel/MainWindowViewModel.Diagnostics.cs`, `.HealthStatus.cs`, `.RestApiStatus.cs`,
+`.SyncDiagnostics.cs`, `.SolutionAutoSave.cs` and `Test/SharedUI/MainWindowDiagnosticsTests.cs`. Added:
+`SharedUI/ViewModel/ProjectDiagnosticsViewModel.cs`, `SharedUI/ViewModel/SystemStatusViewModel.cs`,
+`Test/SharedUI/ProjectDiagnosticsViewModelTests.cs`, `Test/SharedUI/SystemStatusViewModelTests.cs`. Changed:
+`SharedUI/ViewModel/MainWindowViewModel.cs` (constructor: `ProjectDiagnosticsViewModel` and `SystemStatusViewModel`
+required, `IProjectDiagnosticsService?` removed; shutdown disposes both), `.OperatingState.cs`, `.PhotoAssignment.cs`,
+`.Solution.cs`; `MOBAflow/View/MainWindow.xaml` (Messages pane and status bar bind `ViewModel.Diagnostics.…` and
+`ViewModel.SystemStatus.…`) and `.xaml.cs` (`ViewModel.SystemStatus.UpdateHealthStatus`); `MOBAflow/View/OverviewPage.xaml`
+and `.xaml.cs` (third constructor parameter `SystemStatusViewModel`, exposed as `SystemStatus`; the REST and sync
+bindings move); `MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs` (register both; shell factory);
+`Test/Helpers/TestRollingStockPages.cs` (factories for the two status ViewModels so the ten construction sites change
+mechanically); the ten construction sites; `Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs`; the three
+analyzer baselines; `docs/ARCHITECTURE.md`; this plan. `NavigationRegistration.cs` and
+`SolutionSessionArchitectureTests.cs` are unchanged in 5b.
+
+Tests. `ProjectDiagnosticsViewModelTests` takes over the seven diagnostics cases of `MainWindowDiagnosticsTests`
+and adds constructor guards, refresh on model change and project change, and detach on dispose.
+`SystemStatusViewModelTests` takes over the two speech-health cases of `MainWindowDiagnosticsTests` and the speech
+selection case of `JourneyCounterProjectionTests`, and adds REST status and client projection from the event, every
+sync pair with fresh and stale timestamps and an unreachable REST API, the solution-loaded text for no solution,
+in-memory and file-backed solutions, the post-startup defaults and detach on dispose. The shell tests add one case: a
+`SystemStatus` change recomputes the operating state, with the presentation unchanged from the existing evaluator
+tests. `MobaWinUiServiceCollectionExtensionsTests` verifies that the shell, `MainWindow` and `OverviewPage` share the
+host `ProjectDiagnosticsViewModel` and `SystemStatusViewModel` instances.
+
+### Shell classification after slice 5
+
+The shell keeps, explicitly classified: the Z21 status and telemetry projection from `RuntimeSnapshotChangedEvent`
+(`IsConnected`, `IsTrackPowerOn`, `StatusText`, `SerialNumber`, `FirmwareVersion`, `HardwareType`, the four telemetry
+values and the private fail-safe flags), the host command forwarding through the injected gateway or connection
+runtime (`ConnectCommand`, `DisconnectCommand`, `SetTrackPowerCommand`, `SimulateFeedbackCommand`,
+`RefreshZ21StatusCommand`, `AcknowledgeOperatingStateCommand`, `SendTurnoutCommandAsync` and the signal-box commands),
+`ApplyJourneyRuntimeSnapshots` and the operating-state presentation. These are shell status and command forwarding
+bound by the status bar, OverviewPage, SignalBoxPage, TrackPlanPage, SolutionPage and MOBAsmart's shutdown lookup;
+they contain no page logic and own no runtime. Project CRUD, `CurrentSelectedObject`, `ItemClickedCommand`, the
+Solution and SignalBox expansion flags and the signal-box editor methods remain slice 6 items as classified above.
+
+### Manual UI acceptance after slice 5
+
+After explicit launch authorization, in Light, Dark and High Contrast with keyboard and Narrator on the toggles:
+Overview counters (count and lap progress, target lap count, timer filter and interval persisting across restart,
+persistence error and reset status text, Reset all counters), Overview Z21 telemetry, REST API status and connected
+clients, every synchronization row and the solution-loaded row for no solution, in-memory and file-backed solutions;
+Monitor traffic list, clear, both expanders persisting across navigation and restart, connection status following the
+project selection; the main window Messages pane (counts, three filters, refresh, coverage summary, opening the pane
+refreshes, Show usage expands it), status bar speech health including a provider switch that shows Initializing until
+the next check, post-startup text, REST status and the operating-state badge and InfoBar with acknowledge; Event
+Manager Reset all InPort counters; shutdown with a connected runtime where cancelling keeps counters and traffic
+updating. Record the result in #365 with commit, environment and omissions. No hardware, track power or train movement.
+
+### Overlap check (observed 2026-11-05, local time)
+
+- **RF-25 slice 4 (#318, Draft PR #414 on branch `claude/issue-318-shared-ui-dependencies`):** concrete overlap,
+  verified with `gh pr diff 414 --name-only`. #414 changes these slice 5 files: `MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs`,
+  `Test/Helpers/TestRollingStockPages.cs`, `Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs`,
+  `Test/MOBAflow/RestApiStatusServiceTests.cs`, `Test/SharedUI/JourneyCounterProjectionTests.cs`,
+  `MainWindowDiagnosticsTests.cs`, `MainWindowViewModelPhotoAssignmentTests.cs`, `MainWindowViewModelShutdownTests.cs`,
+  `MainWindowViewModelSignalBoxTests.cs`, `MainWindowViewModelStartupAutoSaveTests.cs`, `JourneyMapViewModelTests.cs`,
+  `TimetablePageViewModelTests.cs`, `TrainControlViewModelCleanupTests.cs`, `docs/ARCHITECTURE.md`,
+  `quality/analyzer-baseline.json` and `quality/analyzer-baseline.windows.json`. It does not change
+  `MainWindowViewModel*.cs`, the pages or the Android baseline. By the Project Manager's rule, slice 5
+  implementation (5a and 5b) waits for the integration of #414 and starts from the main that contains it; the
+  construction-site and helper changes above are then rebased onto #414's required-dependency helpers.
+- **#410 (`claude/issue-366-shared-ui-lane`):** no file overlap. It changes the quality workflow, the mutation lane
+  configuration and scripts, `SharedUI/Properties/AssemblyAttributes.cs`, `MauiAdapterDispatchTests.cs`,
+  `WagonsPageViewModelTests.cs`, documentation and the #360/#366 plans; slice 5 touches none of them. Sequencing
+  note: once #410 is integrated, the SharedUI lane compiles every file under `Test/SharedUI` and `Test/Helpers`
+  against SharedUI only, so the new fixtures must stay free of WinUI types (they are), and the new ViewModels need
+  the tests above so the lane stays above its 37 % break threshold.
+
+### Slice 5 validation
+
+Per PR, from the repository root with the SDK in `global.json`, after the existing-fixture baseline above:
+
+```powershell
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~InPortCounterViewModelTests|FullyQualifiedName~MonitorPageViewModelTests|FullyQualifiedName~JourneyCounterProjectionTests|FullyQualifiedName~MainWindowViewModelShutdownTests|FullyQualifiedName~SolutionSessionArchitectureTests"
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~ProjectDiagnosticsViewModelTests|FullyQualifiedName~SystemStatusViewModelTests|FullyQualifiedName~MainWindowViewModel|FullyQualifiedName~JourneyCounterProjectionTests"
+```
+
+The first filter belongs to 5a, the second to 5b; each must discover and execute tests. Then the MOBAflow FastDebug
+compile with the changed XAML, both full suites (the Windows suite includes `MobaWinUiServiceCollectionExtensionsTests`
+and `RestApiStatusServiceTests`), both Release analyzer gates with exact baselines, a manual Quality run with
+`validate_android` for the Android baseline, documentation links, secrets and line endings. The draft PR owns the
+remote CI and Sonar evidence; Chief Project Manager sets Ready for review.
 
 ## Slice 3b local validation (2026-10-15, refreshed 2026-10-16)
 
@@ -264,6 +443,24 @@ Android Release/AAB result. Current remote CI and Sonar evidence belongs to the 
 head of draft PR #293. Manual Light/Dark/High Contrast, accessibility and app/device acceptance
 remain open. No application, debugger, device or hardware was started.
 
+## Slice 4 local validation (2026-11-05)
+
+The source starts from main `0c031269`. After the review follow-up, the portable suite passed 3,118
+tests and the Windows suite 3,226 tests, each with zero failures and zero skips; the Windows run
+excluded MOBAsmart tests as in CI. The MOBAflow FastDebug compile check, including the WorkflowsPage
+bindings, passed with zero warnings before that follow-up, which changed no WinUI file. Both Release
+analyzer gates match exactly: 3,193 diagnostics in 1,126 groups (portable) and 2,461 in 958
+(Windows). The portable and Android baselines only drop the three diagnostics of the removed
+Workflow partial, lower the shell's MVVMTK0042 count from 16 to 13 and its CA1848 count from 6 to 5
+for the removed unused helper; each test baseline adds the usual CA1812 entry for the new fixture. The Android baseline change mirrors the
+shared SharedUI net10.0 entries. No Android build was run locally; the manual Quality run
+[42058304124](https://github.com/ahuelsmann/MOBAflow/actions/runs/42058304124) with `validate_android` on the head
+merged as #409 verified it: the Android Release AAB job passed and its analyzer baseline matched 1,480 diagnostics
+in 541 groups. The same run's firmware job failed in the ESP32-S3 build, which #412 fixed by pinning Python 3.13;
+that failure is unrelated to slice 4.
+Documentation links (623), secrets and line-ending checks pass. No application, device or hardware
+was started; manual Light/Dark/High Contrast and accessibility acceptance remain open in #365.
+
 ## Validation strategy
 
 Each implementation PR records actual validation. Slice 1 adds settings behavior, shared-instance,
@@ -279,7 +476,7 @@ uncovered behavior before extraction. Existing anchors include:
 | Rolling stock | MainWindowViewModelPhotoAssignmentTests and LocomotiveManagementViewModelTests; preserve stale-project/solution/photo-copy checks, CRUD, filtering and rename binding identity; add composition reorder/selection cases |
 | Stations/journeys | SolutionSessionTests and EventManagerEventPlanTests; add page CRUD, selected-project switch, nested model changes and command-state checks |
 | Workflows | WorkflowLibraryViewModelTests; exercise selection, validation, order, cancellation and shared instance lifetime |
-| Status/commands | MainWindowDiagnosticsTests, MainWindowViewModelSignalBoxTests, MainWindowViewModelShutdownTests, MainWindowViewModelStartupAutoSaveTests; add status/counter/monitor projection and subscription disposal coverage |
+| Status/commands | JourneyCounterProjectionTests, MainWindowDiagnosticsTests, MainWindowViewModelSignalBoxTests, MainWindowViewModelShutdownTests, MainWindowViewModelStartupAutoSaveTests; slice 5 moves the counter, traffic, diagnostics and status cases into the fixtures named in its plan and adds subscription disposal coverage |
 | Architecture | SolutionSessionArchitectureTests and RuntimeCommandPathArchitectureTests; reject page/service shell dependencies, confirm required DI and one session/runtime route |
 
 Run from the slice's repository root, using the SDK in global.json:

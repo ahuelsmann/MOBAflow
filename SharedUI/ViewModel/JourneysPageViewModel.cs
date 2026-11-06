@@ -186,7 +186,7 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         if (SelectedProject is not { } project) return;
         SelectedJourney = EntityEditorHelper.AddEntity(project.Model.Journeys, project.Journeys,
             () => new Journey { Name = "New Journey" },
-            model => new JourneyViewModel(model, project.Model, _uiDispatcher));
+            model => new JourneyViewModel(model, project.Model));
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
