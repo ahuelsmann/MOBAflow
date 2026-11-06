@@ -64,6 +64,7 @@ public sealed class CommandViewModel : WorkflowActionViewModel
             OnPropertyChanged(nameof(Address));
             UpdateBytesFromProperties();
             OnPropertyChanged(nameof(BytesHex));
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
 
@@ -92,6 +93,7 @@ public sealed class CommandViewModel : WorkflowActionViewModel
             OnPropertyChanged(nameof(Speed));
             UpdateBytesFromProperties();
             OnPropertyChanged(nameof(BytesHex));
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
 
@@ -120,6 +122,7 @@ public sealed class CommandViewModel : WorkflowActionViewModel
             OnPropertyChanged(nameof(Direction));
             UpdateBytesFromProperties();
             OnPropertyChanged(nameof(BytesHex));
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
 
@@ -156,6 +159,7 @@ public sealed class CommandViewModel : WorkflowActionViewModel
             OnPropertyChanged(nameof(Speed));
             OnPropertyChanged(nameof(Direction));
             OnPropertyChanged(nameof(BytesHex));
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
 
@@ -163,19 +167,13 @@ public sealed class CommandViewModel : WorkflowActionViewModel
     /// Decoded DCC command information from raw Z21 bytes.
     /// Returns null if bytes cannot be decoded or are empty.
     /// </summary>
-    public Z21DccCommandDecoder.DccCommand? DecodedCommand
-    {
-        get => _decodedCommand;
-    }
+    public Z21DccCommandDecoder.DccCommand? DecodedCommand => _decodedCommand;
 
     /// <summary>
     /// Hexadecimal representation of raw bytes for UI display.
     /// Example: "0A 00 80 00 E4 03 E5 80 12"
     /// </summary>
-    public string BytesHex
-    {
-        get => Z21DccCommandDecoder.FormatBytesAsHex(Bytes);
-    }
+    public string BytesHex => Z21DccCommandDecoder.FormatBytesAsHex(Bytes);
 
     /// <summary>
     /// Human-readable summary of the decoded DCC command.
@@ -189,6 +187,9 @@ public sealed class CommandViewModel : WorkflowActionViewModel
             return decoded?.IsValid == true ? Z21DccCommandDecoder.FormatDccCommand(decoded) : decoded?.ErrorMessage ?? "(No valid command)";
         }
     }
+
+    /// <inheritdoc />
+    public override string ParameterSummary => $"Addr {Address} · Speed {Speed} · {Direction}";
 
     /// <summary>
     /// Decodes the current <see cref="Bytes"/> value into a <see cref="Z21DccCommandDecoder.DccCommand"/> instance.

@@ -17,6 +17,15 @@ using System.ComponentModel;
 /// <summary>Edits a reusable workflow in the same order in which its actions execute.</summary>
 public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Workflow>
 {
+    public const double TriggerNodeCanvasX = 60;
+    public const double TriggerNodeCanvasY = 40;
+    public const double ActionNodeWidth = 240;
+    public const double FirstActionCanvasX = 60;
+    public const double FirstActionCanvasY = 180;
+    public const double ColumnSpacingX = 320;
+    public const double RowSpacingY = 180;
+    public const int MaxRowsPerColumn = 4;
+
     private readonly Workflow _model;
     private readonly HashSet<WorkflowActionViewModel> _subscribedActions = [];
     // Preserve original entries, including JSON nulls, while providing removable editor rows.
@@ -105,11 +114,33 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         if (action != null) MoveAction(action, Actions.IndexOf(action) + 1);
     }
 
+    /// <summary>Positions actions on the 2D dot-grid canvas in a deterministic multi-column flow.</summary>
+    public void AutoLayoutActions(bool forceResetCustomPositions = false)
+    {
+        for (var index = 0; index < Actions.Count; index++)
+        {
+            var action = Actions[index];
+            if (!forceResetCustomPositions && action.HasCustomPosition)
+                continue;
+
+            var column = index / MaxRowsPerColumn;
+            var row = index % MaxRowsPerColumn;
+            var x = FirstActionCanvasX + (column * ColumnSpacingX);
+            var y = FirstActionCanvasY + (row * RowSpacingY);
+            action.SetCanvasPosition(x, y, isCustomPosition: false);
+        }
+    }
+
+    /// <summary>Resets all action node cards to their clean grid positions.</summary>
+    [RelayCommand]
+    public void ResetActionLayout() => AutoLayoutActions(forceResetCustomPositions: true);
+
     /// <summary>Synchronizes display ordinals and persisted order after list changes.</summary>
     public void UpdateActionNumbers()
     {
         for (var index = 0; index < Actions.Count; index++)
             Actions[index].Number = (uint)index + 1;
+        AutoLayoutActions(forceResetCustomPositions: false);
         _model.Actions = Actions.Select(action => _originalActions.GetValueOrDefault(action, action.ToWorkflowAction())).ToList();
         foreach (var removed in _originalActions.Keys.Where(action => !Actions.Contains(action)).ToArray())
             _originalActions.Remove(removed);
@@ -137,7 +168,20 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
 
     private void OnActionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(WorkflowActionViewModel.Number))
+        if (!IsPresentationOnlyProperty(e.PropertyName))
             OnPropertyChanged(nameof(Actions));
     }
+
+    private static bool IsPresentationOnlyProperty(string? propertyName) =>
+        propertyName is nameof(WorkflowActionViewModel.Number)
+            or nameof(WorkflowActionViewModel.StepLabel)
+            or nameof(WorkflowActionViewModel.CanvasX)
+            or nameof(WorkflowActionViewModel.CanvasY)
+            or nameof(WorkflowActionViewModel.HasCustomPosition)
+            or nameof(WorkflowActionViewModel.HasValidationIssue)
+            or nameof(WorkflowActionViewModel.ValidationMessage)
+            or nameof(WorkflowActionViewModel.IsValidAction)
+            or nameof(WorkflowActionViewModel.HasDelayAfter)
+            or nameof(WorkflowActionViewModel.DelayBadgeText)
+            or nameof(WorkflowActionViewModel.ParameterSummary);
 }

@@ -31,7 +31,13 @@ public sealed class SelectSignalAspectViewModel : WorkflowActionViewModel
     public int BaseAddress
     {
         get => Payload.BaseAddress;
-        set => SetProperty(Payload.BaseAddress, value, Payload, (p, v) => p.BaseAddress = v);
+        set
+        {
+            if (SetProperty(Payload.BaseAddress, value, Payload, (p, v) => p.BaseAddress = v))
+            {
+                OnPropertyChanged(nameof(ParameterSummary));
+            }
+        }
     }
 
     /// <summary>
@@ -40,7 +46,13 @@ public sealed class SelectSignalAspectViewModel : WorkflowActionViewModel
     public SignalAspect SignalAspect
     {
         get => Payload.SignalAspect;
-        set => SetProperty(Payload.SignalAspect, value, Payload, (p, v) => p.SignalAspect = v);
+        set
+        {
+            if (SetProperty(Payload.SignalAspect, value, Payload, (p, v) => p.SignalAspect = v))
+            {
+                OnPropertyChanged(nameof(ParameterSummary));
+            }
+        }
     }
 
     /// <summary>
@@ -58,6 +70,16 @@ public sealed class SelectSignalAspectViewModel : WorkflowActionViewModel
     public string SignalArticleNumber
     {
         get => Payload.SignalArticleNumber;
-        set => SetProperty(Payload.SignalArticleNumber, value, Payload, (p, v) => p.SignalArticleNumber = v);
+        set
+        {
+            if (SetProperty(Payload.SignalArticleNumber, value, Payload, (p, v) => p.SignalArticleNumber = v))
+            {
+                OnPropertyChanged(nameof(ParameterSummary));
+            }
+        }
     }
+
+    /// <inheritdoc />
+    public override string ParameterSummary =>
+        $"Addr {BaseAddress} · {SignalAspect} ({SignalArticleNumber})";
 }
