@@ -422,9 +422,9 @@ runtime services.
   collection subscriptions. A platform refresh also detaches discarded platform wrappers.
   The session still owns persistence and updates the current runtime snapshot for model edits.
 - One WorkflowLibraryViewModel is registered through host DI and shared by the station workflow
-  library and the shell's existing workflow surfaces. Search uses the same library state through
-  both access paths. Runtime services, execution context and EventBus are composed in the host;
-  workflow behavior stays in the existing editor. Remaining workflow presentation is a later slice.
+  library and the other workflow surfaces. Search uses the same library state through
+  every access path. Runtime services, execution context and EventBus are composed in the host;
+  workflow behavior stays in the existing editor.
 - StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
   unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
   central layout persistence remains planned.
@@ -456,6 +456,22 @@ runtime services.
 - Deferred city loading uses the existing ICityService and UI dispatcher, and ignores queued
   completion after disposal. JourneysPage retains visual layout/drag-drop coordination and
   load/unload subscriptions; existing width keys and central-layout follow-up remain unchanged.
+
+**Workflow presentation (RF-24 slice 4):**
+
+- The host owns one WorkflowsPageViewModel for WorkflowsPage. Its required dependencies are the
+  shared WorkflowLibraryViewModel, the settings service and a logger. It adds only the page
+  presentation the library lacks: the persisted workflow-list, actions and properties panel
+  expansion under the existing `Layout.WorkflowsPage` keys.
+- Workflow selection, action editing and ordering, validation, dry run, trace and the properties
+  editor object stay in the one WorkflowLibraryViewModel, which WorkflowsPage, StationsPage and
+  EventManagerViewModel share through host DI. The Workflow shell partial, the shell's mirrored
+  workflow/action selection, its unbound WorkflowsPage ItemClicked command and its workflow layout
+  members are removed; no shell surface binds workflow state. Clearing the selected project already
+  clears the library selection, so the shell no longer resets it separately.
+- The shell still disposes the shared library during shutdown through the station editor it owns;
+  slice 6's final shell audit decides where that disposal lives. The architecture guard rejects
+  shell dependencies in WorkflowsPage, which keeps visual layout, drag-start and keyboard coordination.
 
 **Settings presentation (RF-24 slice 1):**
 
