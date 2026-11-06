@@ -110,13 +110,11 @@
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <FontIcon
                             FontSize="18"
-                            Foreground="{ThemeResource MobaDangerButtonForegroundBrush}"
                             Glyph="&#xE711;" />
                         <TextBlock
                             VerticalAlignment="Center"
                             FontSize="14"
                             FontWeight="Bold"
-                            Foreground="{ThemeResource MobaDangerButtonForegroundBrush}"
                             Text="EMERGENCY STOP" />
                     </StackPanel>
                 </Button>

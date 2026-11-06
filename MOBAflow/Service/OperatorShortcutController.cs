@@ -44,7 +44,9 @@ internal static class OperatorShortcutController
             args.Handled = action switch
             {
                 OperatorShortcutAction.EmergencyStop => TryExecute(emergencyStop, null),
-                OperatorShortcutAction.ToggleTrackPower => TryExecute(setTrackPower, !isTrackPowerOn()),
+                // A held key repeats PreviewKeyDown; only the physical press may toggle, repeats are swallowed.
+                OperatorShortcutAction.ToggleTrackPower =>
+                    args.KeyStatus.WasKeyDown || TryExecute(setTrackPower, !isTrackPowerOn()),
                 _ => false
             };
         };

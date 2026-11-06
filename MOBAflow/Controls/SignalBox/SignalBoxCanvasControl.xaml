@@ -219,6 +219,7 @@
             </ItemsControl>
             <!--  Not hit-testable, so pointer selection, drag and drop and panning keep working unchanged  -->
             <ItemsControl
+                x:Name="FocusTargetLayer"
                 IsHitTestVisible="False"
                 IsTabStop="False"
                 ItemTemplate="{StaticResource ElementFocusTargetTemplate}"

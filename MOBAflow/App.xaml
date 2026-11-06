@@ -31,6 +31,8 @@
                     <SolidColorBrush x:Key="MobaDangerButtonBorderBrush" Color="#FFC41019" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundPointerOverBrush" Color="#FFFF1C2C" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundPressedBrush" Color="#FFC41019" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundPointerOverBrush" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundPressedBrush" Color="#FFFFFFFF" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundDisabledBrush" Color="#FF7A0B11" />
                     <SolidColorBrush x:Key="MobaDangerButtonForegroundDisabledBrush" Color="#80FFFFFF" />
                     <SolidColorBrush x:Key="MobaPreviewBadgeBackgroundBrush" Color="#30FF8A00" />
@@ -77,6 +79,8 @@
                     <SolidColorBrush x:Key="MobaDangerButtonBorderBrush" Color="#FFC41019" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundPointerOverBrush" Color="#FFFF1C2C" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundPressedBrush" Color="#FFC41019" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundPointerOverBrush" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundPressedBrush" Color="#FFFFFFFF" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundDisabledBrush" Color="#FF7A0B11" />
                     <SolidColorBrush x:Key="MobaDangerButtonForegroundDisabledBrush" Color="#80FFFFFF" />
                     <SolidColorBrush x:Key="MobaPreviewBadgeBackgroundBrush" Color="#30FF8A00" />
@@ -124,6 +128,9 @@
                     <SolidColorBrush x:Key="MobaDangerButtonBorderBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundPointerOverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundPressedBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                    <!--  Text on the highlight background uses the paired highlight text color  -->
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundPointerOverBrush" Color="{ThemeResource SystemColorHighlightTextColor}" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundPressedBrush" Color="{ThemeResource SystemColorHighlightTextColor}" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundDisabledBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
                     <SolidColorBrush x:Key="MobaDangerButtonForegroundDisabledBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
                     <SolidColorBrush x:Key="MobaPreviewBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
