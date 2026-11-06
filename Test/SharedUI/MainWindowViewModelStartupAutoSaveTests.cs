@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
-using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
@@ -233,10 +232,7 @@ internal partial class MainWindowViewModelShutdownTests
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime, ioService),
-            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime, new ActionExecutionContext
-            {
-                Z21 = new Mock<IZ21>().Object
-            }, stationEventBus1),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtime), dispatcher.Object),
             locomotiveSession1,
             new Mock<ILogger<MainWindowViewModel>>().Object);

@@ -157,16 +157,15 @@ internal sealed class MobileSolutionSynchronizerTests
     }
 
     [Test]
-    public async Task WithoutALoader_NoSyncIsPossible()
+    public async Task SyncAfterPushAsync_ForcesASyncOnlyUntilTheCatalogIsShown()
     {
-        var synchronizer = TestSolutionSynchronizers.Create();
+        await _synchronizer.SyncAfterPushAsync(Endpoint, CancellationToken.None).ConfigureAwait(false);
+        _synchronizer.MarkInitialCatalogApplied();
+        await _synchronizer.SyncAfterPushAsync(Endpoint, CancellationToken.None).ConfigureAwait(false);
 
-        var synced = await synchronizer
-            .RequestSyncAsync(selectedProjectHasLocomotives: false, Endpoint, CancellationToken.None)
-            .ConfigureAwait(false);
-        await synchronizer.SyncAfterPushAsync(Endpoint, CancellationToken.None).ConfigureAwait(false);
-
-        Assert.That(synced, Is.False);
+        _loader.Verify(
+            loader => loader.ForceSyncAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     private Task<bool> ImportAsync(bool enabled, MobaflowEndpoint? endpoint) =>

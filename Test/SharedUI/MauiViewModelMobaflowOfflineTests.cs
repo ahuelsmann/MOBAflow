@@ -661,7 +661,11 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             runtimeMock.Object,
             coordinator,
             CreateSettingsServiceMock().Object,
-            eventBus: eventBus,
+            new MobileSolutionContext(TestViewModelServices.Default),
+            NullLogger<TrainControlViewModel>.Instance,
+            ImmediateUiDispatcher.Instance,
+            eventBus,
+            new NullFunctionAppearancePicker(),
             mobileRuntimeCoordinator: coordinator,
             options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
 
@@ -758,7 +762,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     /// <summary>The phone's view of a synchronized solution.</summary>
     private static MobileSolutionContext CreateProjectContext(Solution solution, string? activeProjectName = null)
     {
-        var context = new MobileSolutionContext();
+        var context = new MobileSolutionContext(TestViewModelServices.Default);
         context.ApplySolution(solution, activeProjectName);
         return context;
     }
@@ -803,8 +807,12 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             settingsService,
             endpointLocator,
             TestHubSessions.Create(appSettings, endpointLocator, healthService, runtimeHubRemoteClient),
-            new MobileRuntimeProjection(runtimeMock.Object, projectContext, mobileRuntimeCoordinator),
-            TestSolutionSynchronizers.Create(),
+            new MobileRuntimeProjection(
+                runtimeMock.Object,
+                projectContext ?? new MobileSolutionContext(TestViewModelServices.Default),
+                mobileRuntimeCoordinator ?? Mock.Of<IMobileRuntimeCoordinator>(),
+                Mock.Of<IMobileSolutionStore>()),
+            TestSolutionSynchronizers.Create(Mock.Of<ISolutionRemoteLoader>()),
             new MobilePhotoUploader(new Mock<IPhotoCaptureService>().Object, healthService, endpointLocator),
             new Mock<INetworkProfileChangeNotifier>().Object,
             NullLogger<MauiViewModel>.Instance,

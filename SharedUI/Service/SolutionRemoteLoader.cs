@@ -27,31 +27,43 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
 
     private readonly IMobaRuntime _mobaRuntime;
     private readonly MobileSolutionContext _mobileSolutionContext;
-    private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
-    private readonly IMobileSolutionStore? _mobileSolutionStore;
+    private readonly IMobileRuntimeCoordinator _mobileRuntimeCoordinator;
+    private readonly IMobileSolutionStore _mobileSolutionStore;
     private readonly IEventBus _eventBus;
     private readonly ILogger<SolutionRemoteLoader> _logger;
     private readonly HttpClient _httpClient;
-    private readonly IUiDispatcher? _uiDispatcher;
+    private readonly IUiDispatcher _uiDispatcher;
     private readonly SemaphoreSlim _syncLock = new(1, 1);
     private DateTimeOffset? _lastSyncedAt;
     private bool _disposed;
 
+    /// <summary>Initializes a new instance of the <see cref="SolutionRemoteLoader"/> class.</summary>
+    /// <param name="mobaRuntime">The phone's local runtime that activates the synced project.</param>
+    /// <param name="mobileSolutionContext">Receives the synced solution's view models.</param>
+    /// <param name="eventBus">Publishes <see cref="SolutionSyncedEvent"/>.</param>
+    /// <param name="logger">Logger for diagnostics.</param>
+    /// <param name="httpClient">Client for MOBApi's solution endpoints.</param>
+    /// <param name="mobileRuntimeCoordinator">Tells whether the remote MOBAflow runtime is preferred.</param>
+    /// <param name="uiDispatcher">Applies the solution to the view models on the UI thread.</param>
+    /// <param name="mobileSolutionStore">Persists the synced solution for offline use.</param>
     public SolutionRemoteLoader(
         IMobaRuntime mobaRuntime,
         MobileSolutionContext mobileSolutionContext,
         IEventBus eventBus,
         ILogger<SolutionRemoteLoader> logger,
         HttpClient httpClient,
-        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
-        IUiDispatcher? uiDispatcher = null,
-        IMobileSolutionStore? mobileSolutionStore = null)
+        IMobileRuntimeCoordinator mobileRuntimeCoordinator,
+        IUiDispatcher uiDispatcher,
+        IMobileSolutionStore mobileSolutionStore)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(mobileSolutionContext);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(httpClient);
+        ArgumentNullException.ThrowIfNull(mobileRuntimeCoordinator);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
+        ArgumentNullException.ThrowIfNull(mobileSolutionStore);
 
         _mobaRuntime = mobaRuntime;
         _mobileSolutionContext = mobileSolutionContext;
@@ -128,7 +140,7 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
             // When MOBAsmart controls MOBAflow remotely, runtime signal aspects and Z21 state
             // come from MOBAflow snapshots. Re-activating the local runtime would publish stale
             // project defaults and race with remote signal commands.
-            if (_mobileRuntimeCoordinator?.PreferRemoteRuntime != true)
+            if (!_mobileRuntimeCoordinator.PreferRemoteRuntime)
             {
                 await _mobaRuntime.ActivateProjectAsync(activeProject, cancellationToken).ConfigureAwait(false);
             }
@@ -136,13 +148,10 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
             var syncedAt = meta?.UpdatedAt ?? DateTimeOffset.UtcNow;
             _lastSyncedAt = syncedAt;
 
-            if (_mobileSolutionStore != null)
-            {
-                await _mobileSolutionStore.SaveAsync(
-                    solution,
-                    new SolutionSyncMeta(syncedAt, solution.Name, activeProject.Name),
-                    cancellationToken).ConfigureAwait(false);
-            }
+            await _mobileSolutionStore.SaveAsync(
+                solution,
+                new SolutionSyncMeta(syncedAt, solution.Name, activeProject.Name),
+                cancellationToken).ConfigureAwait(false);
 
             _eventBus.Publish(new SolutionSyncedEvent(syncedAt, solution.Name, activeProject.Name));
             _logger.LogInformation(
@@ -162,15 +171,10 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
         MobileSolutionCacheEntry? cachedEntry = null,
         CancellationToken cancellationToken = default)
     {
-        if (_mobileSolutionStore == null && cachedEntry == null)
-        {
-            return false;
-        }
-
         await _syncLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var entry = cachedEntry ?? await _mobileSolutionStore!.TryLoadAsync(cancellationToken).ConfigureAwait(false);
+            var entry = cachedEntry ?? await _mobileSolutionStore.TryLoadAsync(cancellationToken).ConfigureAwait(false);
             if (entry == null)
             {
                 return false;
@@ -182,7 +186,7 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
                 cancellationToken).ConfigureAwait(false);
             var activeProject = SelectedOr(ResolveActiveProject(entry.Solution, entry.Meta.ActiveProjectName));
 
-            if (_mobileRuntimeCoordinator?.PreferRemoteRuntime != true)
+            if (!_mobileRuntimeCoordinator.PreferRemoteRuntime)
             {
                 await _mobaRuntime.ActivateProjectAsync(activeProject, cancellationToken).ConfigureAwait(false);
             }
@@ -210,18 +214,11 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-
-        if (_uiDispatcher != null)
+        await _uiDispatcher.InvokeOnUiAsync(() =>
         {
-            await _uiDispatcher.InvokeOnUiAsync(() =>
-            {
-                _mobileSolutionContext.ApplySolution(solution, activeProjectName);
-                return Task.CompletedTask;
-            }).ConfigureAwait(false);
-            return;
-        }
-
-        _mobileSolutionContext.ApplySolution(solution, activeProjectName);
+            _mobileSolutionContext.ApplySolution(solution, activeProjectName);
+            return Task.CompletedTask;
+        }).ConfigureAwait(false);
     }
 
     private async Task<SolutionMetaResponse?> TryGetMetaAsync(string serverIp, int serverPort, CancellationToken cancellationToken)

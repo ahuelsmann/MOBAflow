@@ -2245,13 +2245,6 @@
       "project": "MOBApi",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "MOBApi/Controllers/PhotosController.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
       "path": "MOBApi/Controllers/RuntimeCommandsController.cs",
       "count": 1
     },
@@ -4108,6 +4101,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/WorkflowSequenceExecutionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/WorkflowDryRunServiceTests.cs",
       "count": 1
     },
     {

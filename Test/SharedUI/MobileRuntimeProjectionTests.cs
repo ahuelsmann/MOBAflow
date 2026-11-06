@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -35,7 +36,7 @@ internal sealed class MobileRuntimeProjectionTests
         _runtime.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
         _coordinator = new Mock<IMobileRuntimeCoordinator>();
         _store = new Mock<IMobileSolutionStore>();
-        _projectContext = new MobileSolutionContext();
+        _projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         _projectContext.ApplySolution(
             new Solution
             {

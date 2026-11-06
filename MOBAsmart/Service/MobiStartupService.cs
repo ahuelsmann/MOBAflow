@@ -13,8 +13,8 @@ public sealed class MobiStartupService
 {
     private readonly RemoteRuntimeBridge _remoteRuntimeBridge;
     private readonly TrainControlViewModel _trainControlViewModel;
-    private readonly ISolutionRemoteLoader? _solutionRemoteLoader;
-    private readonly IMobileSolutionStore? _mobileSolutionStore;
+    private readonly ISolutionRemoteLoader _solutionRemoteLoader;
+    private readonly IMobileSolutionStore _mobileSolutionStore;
     private readonly MauiViewModel _mauiViewModel;
     private readonly IUiDispatcher _uiDispatcher;
 
@@ -23,8 +23,8 @@ public sealed class MobiStartupService
         TrainControlViewModel trainControlViewModel,
         MauiViewModel mauiViewModel,
         IUiDispatcher uiDispatcher,
-        ISolutionRemoteLoader? solutionRemoteLoader = null,
-        IMobileSolutionStore? mobileSolutionStore = null)
+        ISolutionRemoteLoader solutionRemoteLoader,
+        IMobileSolutionStore mobileSolutionStore)
     {
         _remoteRuntimeBridge = remoteRuntimeBridge;
         _trainControlViewModel = trainControlViewModel;
@@ -46,11 +46,6 @@ public sealed class MobiStartupService
 
     private async Task RestoreCachedMobileDataAsync()
     {
-        if (_mobileSolutionStore == null)
-        {
-            return;
-        }
-
         var entry = await _mobileSolutionStore.TryLoadAsync().ConfigureAwait(false);
         if (entry == null)
         {
@@ -61,12 +56,7 @@ public sealed class MobiStartupService
         {
             // Restore cached runtime metadata before solution sync so event handlers see the cache.
             _mauiViewModel.RestoreCachedMobileSnapshot(entry);
-
-            if (_solutionRemoteLoader != null)
-            {
-                await _solutionRemoteLoader.TryLoadFromCacheAsync(entry).ConfigureAwait(true);
-            }
-
+            await _solutionRemoteLoader.TryLoadFromCacheAsync(entry).ConfigureAwait(true);
             _mauiViewModel.ApplyRestoredMobileCacheToUi();
             _trainControlViewModel.RefreshLocomotiveList(_mauiViewModel.GetStartupLocomotiveFleet());
         }).ConfigureAwait(false);

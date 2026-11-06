@@ -8,9 +8,7 @@ using Domain;
 
 using Interface;
 
-using Microsoft.Extensions.Logging;
-
-using Sound;
+using Service;
 
 using System.Collections.ObjectModel;
 
@@ -27,11 +25,8 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public Project Model { get; }
 
-    // Optional Services
-    private readonly IUiDispatcher? _dispatcher;
-    private readonly IFilePickerService? _filePicker;
-    private readonly ISoundPlayer? _soundPlayer;
-    private readonly ILoggerFactory? _loggerFactory;
+    // Services passed to the nested workflow ViewModels
+    private readonly SolutionViewModelServices _services;
 
     // Properties (ObservableProperty fields)
     [ObservableProperty]
@@ -174,18 +169,13 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     /// Initializes a new instance of the <see cref="ProjectViewModel"/> class for the given project.
     /// </summary>
     /// <param name="model">The project domain model.</param>
-    /// <param name="dispatcher">Optional UI dispatcher used by nested ViewModels.</param>
-    /// <param name="filePicker">Optional IO service used by nested ViewModels.</param>
-    /// <param name="soundPlayer">Optional sound player used by nested ViewModels.</param>
-    /// <param name="loggerFactory">Optional factory for nested view model loggers.</param>
-    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IFilePickerService? filePicker = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
+    /// <param name="services">Services used by the nested workflow ViewModels.</param>
+    public ProjectViewModel(Project model, SolutionViewModelServices services)
     {
         ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(services);
         Model = model;
-        _dispatcher = dispatcher;
-        _filePicker = filePicker;
-        _soundPlayer = soundPlayer;
-        _loggerFactory = loggerFactory;
+        _services = services;
         _name = model.Name;  // Initialize from Model
         Refresh();
 
@@ -219,7 +209,7 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
         // Clear and rebuild all collections
         Journeys.Clear();
         foreach (var j in Model.Journeys)
-            Journeys.Add(new JourneyViewModel(j, Model, _dispatcher));
+            Journeys.Add(new JourneyViewModel(j, Model));
 
         Stations.Clear();
         foreach (var station in Model.Stations)
@@ -310,5 +300,5 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     }
 
     private WorkflowViewModel CreateWorkflowViewModel(Workflow workflow) =>
-        new(workflow, filePicker: _filePicker, soundPlayer: _soundPlayer, loggerFactory: _loggerFactory);
+        new(workflow, _services);
 }

@@ -3,7 +3,6 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
 using Moba.Test.Helpers;
-using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
@@ -36,7 +35,7 @@ internal sealed partial class JourneyMapViewModelTests : IDisposable
             ]
         };
         var project = new Project { Journeys = [journey] };
-        var projectViewModel = new ProjectViewModel(project);
+        var projectViewModel = new ProjectViewModel(project, TestViewModelServices.Default);
         var mainViewModel = CreateMainWindowViewModel();
         mainViewModel.SelectedProject = projectViewModel;
         mainViewModel.SelectedJourney = projectViewModel.Journeys.Single();
@@ -69,10 +68,7 @@ internal sealed partial class JourneyMapViewModelTests : IDisposable
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), dispatcherMock.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null),
-            _rollingStockPages.GetStationsPage(locomotiveSession1, runtimeMock.Object, new ActionExecutionContext
-            {
-                Z21 = new Mock<IZ21>().Object
-            }, stationEventBus1),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtimeMock.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtimeMock.Object), dispatcherMock.Object),
             locomotiveSession1,
             loggerMock.Object);

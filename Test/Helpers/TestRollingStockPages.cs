@@ -77,14 +77,13 @@ internal sealed partial class TestRollingStockPages : IDisposable
         return page;
     }
     public StationsPageViewModel GetStationsPage(ISolutionSession session, IConnectionRuntime runtime,
-        ActionExecutionContext executionContext, IEventBus eventBus, IDialogService? dialogs = null)
+        IEventBus eventBus, IDialogService? dialogs = null)
     {
         var settings = new AppSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-        var library = new WorkflowLibraryViewModel(session, dialogs, new WorkflowValidator(),
-            runtimeServices: new WorkflowLibraryRuntimeServices { ExecutionContext = executionContext, EventBus = eventBus });
+        var library = TestWorkflowLibraries.Create(session, dialogs, eventBus: eventBus);
         _pages.Add(library);
         var page = new StationsPageViewModel(session, runtime, persistence.Object,
             new LayoutColumnWidthsViewModel(), library, NullLogger<StationsPageViewModel>.Instance);

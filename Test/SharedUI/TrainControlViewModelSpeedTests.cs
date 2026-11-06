@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
@@ -59,9 +60,10 @@ internal sealed class TrainControlViewModelSpeedTests
             runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
-            null,
+            new MobileSolutionContext(TestViewModelServices.Default),
             NullLogger<TrainControlViewModel>.Instance,
-            null,
-            new EventBus(NullLogger<EventBus>.Instance));
+            ImmediateUiDispatcher.Instance,
+            new EventBus(NullLogger<EventBus>.Instance),
+            new NullFunctionAppearancePicker());
     }
 }

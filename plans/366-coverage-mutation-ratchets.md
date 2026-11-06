@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/366
 **Spec Kit**: Not applicable - regression tests and CI lanes for existing contracts without product behavior
-**Status**: Active; steps 1 and 2 are delivered (#367); step 3 is in its own issue PR
+**Status**: Active; steps 1 to 4 are delivered (#367, #396, #410: SharedUI lane); step 5 (completion) is open
 
 ## Purpose and scope
 
@@ -27,14 +27,16 @@ a lane the same way locally and in [Quality CI](../.github/workflows/quality.yml
 | `backend` | **active from step 1** | `Backend` | `mutation-backend` (Linux) | 47% (raised from 43%) |
 | `api` | **active from step 3** | `MOBApi` | `mutation-api` (Linux) | 44% |
 | `api-process` | planned | `MOBApi` | - | - |
-| `shared-ui` | planned (step 4) | `SharedUI` | - | - |
+| `shared-ui` | **active from step 4** | `SharedUI` | `mutation-shared-ui` (Linux) | 37% |
 
 The Backend host [`Backend.MutationTests.csproj`](../MutationTest/Backend/Backend.MutationTests.csproj) compiles all
 fixtures under `Test/Backend/`, the workflow end-to-end fixture and the Z21 DCC decoder tests, with the shared fakes
 they need. The MOBApi host [`Api.MutationTests.csproj`](../MutationTest/Api/Api.MutationTests.csproj) compiles the
 in-process fixtures under `Test/MOBApi/`. The MOBApi process fixtures (`MobApiProcessTests`, `RuntimeHubLiveE2ETests`)
 start real MOBApi processes and cannot detect mutants of the in-process assembly; they stay in the planned
-`api-process` lane.
+`api-process` lane. The SharedUI host [`SharedUI.MutationTests.csproj`](../MutationTest/SharedUI/SharedUI.MutationTests.csproj)
+compiles every fixture under `Test/SharedUI/`, the `TrackLayoutArchitectureTests` parts that
+`SignalBoxPropertiesViewModelTests` extends, and the shared test helpers.
 
 ## Backend baseline (step 1)
 
@@ -157,7 +159,44 @@ separate pull requests.
    - **Open in the lane:** remote and host registration, disconnect handling, `Program`, the discovery service and the
      photo and solution controllers have no in-process tests yet. A later floor raise follows from new tests there.
 4. **SharedUI lane:** train control, settings, project switches and stale asynchronous responses through the existing
-   runtime interfaces.
+   runtime interfaces. Delivered: the `shared-ui` lane with its host, Stryker configuration and the `mutation-shared-ui`
+   CI job at the measured floor. Protection of train control, settings, project switches and stale asynchronous responses
+   stays open; see the largest open areas below.
+   - **Measurement:** local full run on Linux (Stryker.NET 5.0.0, four processes, .NET SDK 10.0.114, 831 passing
+     ordinary tests, main `0c03126` plus the lane host), 63 minutes: 37.29% with 3,233 killed, 38 timeouts, 2,907
+     survived, 2,594 without coverage, 2,072 ignored and 1,184 compile errors. The floor is 37%. Linux CI on head
+     `96f12443` (run 42096429242, SDK 10.0.403 through the `global.json` patch roll-forward, 839 passing ordinary tests)
+     scored 37.84% in a 51-minute job: 11,948 mutants created, 3,255 killed, 39 timeouts, 2,891 survived, 2,521 without
+     coverage, 2,059 ignored and 1,183 compile errors; 6,185 mutants were executed against tests. As in step 3, the floor
+     is the CI score rounded down, so it stays at 37%.
+   - **Host preparation:** the disabled `MauiAdapterDispatchTests.cs` (`#if false`, its type no longer exists) is
+     removed, because its commented-out fixture counted as a registered test file without tests. Three wagon page tests
+     get unique method names (`Wagon...`), because the run guard compares the ordinary-baseline test names with the test
+     names in Stryker's `testFiles` report and requires the same set.
+   - **Safe Mode:** the CI log of run 42096429242 (job 127488290417) has 18 `Safe Mode!` sites whose mutants count as
+     compile errors outside the score (1,183). Seventeen are CS0165 (a variable assigned in `try` or through an out
+     argument reads as unassigned once mutated):
+     - `ViewModel/ColumnViewModel.cs`: `ApplyToColumnDefinition`
+     - `ViewModel/JourneysPageViewModel.cs`: `AddJourney`, `DeleteJourney`, `DeleteStation` (two sites), `ResetJourney`,
+       `AddStationToSelectedJourney`
+     - `TrainControl/TrainControlViewModel.cs`: `TryRestoreSelectedLocomotiveFromProject`, `ApplySystemStateFromRuntime`
+     - `ViewModel/TimetablePageViewModel.cs`: `RefreshAsync`
+     - `Mobile/MauiViewModel.Project.cs`: `OnSelectedProjectIndexChanged`
+     - `ViewModel/SignalBoxPropertiesViewModel.cs`: `SetElementName`, `SelectMultiplexer`, `Rotate`
+     - `Service/SignalBoxRuntimeSync.cs`: `ApplyToPlan`
+     - `ViewModel/PageLayoutViewModel.cs`: `ApplyToGrid`, `UpdateFromGrid`
+
+     The eighteenth has a different cause: in `ViewModel/LocomotiveTrainUsageViewModel.cs` a mutant at the `Concat` call
+     (line 73) fails with CS0411 (the type arguments of `AsyncEnumerable.Concat` cannot be inferred), and Stryker removes
+     every mutation in the whole file. Open #366 floor work, as for Backend above: rewrite these methods so that
+     mutations stay definitely assigned (and make the `Concat` type arguments explicit), or change the Stryker version,
+     then remeasure. New tests for these methods cannot move the score until their sites are out of Safe Mode; this
+     applies to the `TrainControlViewModel` and `TimetablePageViewModel` areas named next.
+   - **Largest open areas (survived + no coverage):** `TrainControlViewModel` 605, `MauiViewModel` 374,
+     `SettingsPageViewModel` 250, `RecorderPageViewModel` 208, `TimetablePageViewModel` 185,
+     `MauiViewModel.MobaflowConnection` 162, `WorkflowLibraryViewModel` 161, `DisplayViewModel` 144,
+     `MainWindowViewModel` 118 and `MainWindowViewModel.SyncDiagnostics` 111. New tests there raise the floor later;
+     the ViewModels under active RF-24 extraction wait for that work.
 5. **Completion:** further lanes only where the tooling is technically suitable (Sound, display, rendering by measured
    risk); RF-07 records the final mutation lanes in its deliverable inventory.
 
@@ -202,7 +241,9 @@ launch, train movement or layout action is part of this plan; tests use fakes an
 
 ## Risks
 
-- **CI duration:** the Backend lane is the largest; its job timeout follows the measured duration. If it outgrows the
-  timeout, split the lane by namespace rather than excluding mutants.
+- **CI duration:** the SharedUI lane is the largest (about 12,000 mutants, 63 minutes locally and 51 minutes in CI; job
+  timeout 100 minutes),
+  followed by Backend (about 35 minutes; timeout 60 minutes); each job timeout follows the measured duration. If a lane
+  outgrows its timeout, split the lane by namespace rather than excluding mutants.
 - **Flaky timing tests:** a mutant that changes a delay can turn a wall-clock test into a timeout; such tests move to
   `TimeProvider`-based fakes instead of being excluded.
