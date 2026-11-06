@@ -13,10 +13,15 @@ repository does not yet publish ready-to-install GitHub release packages.
 
 ### MOBAflow Desktop
 
-- Windows 10/11 compatible with the Windows App SDK target used by the project.
+- Windows 11 22H2 / build 22621 or newer, matching the existing desktop build minimum.
 - The .NET SDK selected by [`global.json`](../../global.json).
 - Visual Studio with the workloads from [`.vsconfig`](../../.vsconfig), or an
   equivalent command-line setup.
+
+The Windows SDK targeting pack is `10.0.28000.87`; the desktop minimum remains
+`10.0.22621.0`. The newer targeting pack does not require the same Windows build
+on the user's PC. See [Windows SDK versions](../BUILD-PERFORMANCE.md#windows-sdk-versions)
+for the separate .NET SDK, Windows App SDK and native SDK/tool versions.
 
 ### MOBAsmart
 

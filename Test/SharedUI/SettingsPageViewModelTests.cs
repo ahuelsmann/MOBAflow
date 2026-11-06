@@ -134,7 +134,7 @@ internal sealed class SettingsPageViewModelTests
     {
         var provider = new Mock<IFeatureTogglePageProvider>();
         provider.Setup(candidate => candidate.GetToggleablePages())
-            .Returns([new FeatureTogglePageInfo("Overview", nameof(FeatureToggleSettings.IsOverviewPageAvailable), null, NavigationCategory.Monitoring, 10)]);
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", nameof(FeatureToggleSettings.IsOverviewPageAvailable), null, NavigationCategory.Monitoring, 10)]);
         var (viewModel, settings, persistence, _) = Create(provider: provider.Object);
         var toggle = viewModel.FeatureToggleItems.Single();
         toggle.IsChecked = false;
@@ -158,8 +158,8 @@ internal sealed class SettingsPageViewModelTests
         viewModel.SetSettingsPageSectionIsExpanded("Speech", true);
         viewModel.SetSettingsPageSectionIsExpanded("Speech", true);
         viewModel.MarkSettingsPageSectionUsed("Speech");
-        viewModel.SetSettingsPageSectionOrder(["Speech", "Display"]);
-        viewModel.SetSettingsPageSectionOrder(["Speech", "Display"]);
+        viewModel.SetSettingsPageSectionOrder((string[])["Speech", "Display"]);
+        viewModel.SetSettingsPageSectionOrder((string[])["Speech", "Display"]);
 
         using (Assert.EnterMultipleScope())
         {
@@ -263,7 +263,7 @@ internal sealed class SettingsPageViewModelTests
     {
         var provider = new Mock<IFeatureTogglePageProvider>();
         provider.Setup(candidate => candidate.GetToggleablePages())
-            .Returns([new FeatureTogglePageInfo("Overview", nameof(FeatureToggleSettings.IsOverviewPageAvailable), null, NavigationCategory.Monitoring, 10)]);
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", nameof(FeatureToggleSettings.IsOverviewPageAvailable), null, NavigationCategory.Monitoring, 10)]);
         var (viewModel, settings, persistence, _) = Create(provider: provider.Object);
         viewModel.DisplayPort = 12345;
         viewModel.FeatureToggleItems.Single().IsChecked = false;

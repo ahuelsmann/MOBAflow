@@ -6,6 +6,8 @@
         <OutputType>Exe</OutputType>
         <RootNamespace>Moba.MAUI</RootNamespace>
         <UseMaui>true</UseMaui>
+        <!-- Keep workload-implicit packages aligned with the central Microsoft.Maui.Controls release. -->
+        <MauiVersion>10.0.120</MauiVersion>
         <SingleProject>true</SingleProject>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>

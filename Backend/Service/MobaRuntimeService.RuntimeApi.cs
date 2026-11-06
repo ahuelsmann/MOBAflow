@@ -70,10 +70,14 @@ public sealed partial class MobaRuntimeService
     /// <inheritdoc />
     public async Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
+        // The copy is taken before waiting: the caller passes the editor project from the UI thread, where nothing
+        // changes it concurrently. A copy taken after a contended wait would read it from a background thread.
+        ArgumentNullException.ThrowIfNull(editableProject);
+        var activeProject = CloneForRuntime(editableProject);
         await _projectActivationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await ActivateProjectCoreAsync(editableProject, cancellationToken).ConfigureAwait(false);
+            await ActivateProjectCoreAsync(activeProject, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -81,14 +85,13 @@ public sealed partial class MobaRuntimeService
         }
     }
 
-    private async Task ActivateProjectCoreAsync(Project editableProject, CancellationToken cancellationToken)
+    private async Task ActivateProjectCoreAsync(Project activeProject, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        ArgumentNullException.ThrowIfNull(editableProject);
 
-        if (_activeProjectContext?.ActiveProject.Id != editableProject.Id)
+        if (_activeProjectContext?.ActiveProject.Id != activeProject.Id)
         {
-            await _inPortCounters.SelectProjectAsync(editableProject.Id, cancellationToken).ConfigureAwait(false);
+            await _inPortCounters.SelectProjectAsync(activeProject.Id, cancellationToken).ConfigureAwait(false);
             _locomotiveStates.Clear();
             _lastLocomotiveDriveCommandAt.Clear();
             _lastLocomotiveFunctionCommandAt.Clear();
@@ -98,8 +101,7 @@ public sealed partial class MobaRuntimeService
         // and execution state fully separated: edits made in the UI after activation do not leak
         // into the running session, and runtime mutations never touch the live editor model.
         // Entity Ids are preserved by the round-trip, so snapshots and journey reset still resolve
-        // against the same Ids the editor exposes.
-        var activeProject = CloneForRuntime(editableProject);
+        // against the same Ids the editor exposes. ActivateProjectAsync takes that copy.
         var journeyManager = _journeyManagerFactory.Create(activeProject, _executionContextFactory.Create(), _inPortCounters);
         journeyManager.StationChanged += OnJourneyStationChanged;
         journeyManager.FeedbackReceived += OnJourneyRuntimeChanged;
@@ -107,12 +109,9 @@ public sealed partial class MobaRuntimeService
         var nextContext = new ActiveProjectContext(activeProject, journeyManager);
         ReplaceActiveProjectContext(nextContext);
 
-        if (_interlockingRuntime != null)
-        {
-            await _interlockingRuntime.ActivateAsync(activeProject.Interlocking, cancellationToken).ConfigureAwait(false);
-            if (_z21.IsConnected)
-                await _interlockingRuntime.SynchronizeAsync(cancellationToken).ConfigureAwait(false);
-        }
+        await _interlockingRuntime.ActivateAsync(activeProject.Interlocking, cancellationToken).ConfigureAwait(false);
+        if (_z21.IsConnected)
+            await _interlockingRuntime.SynchronizeAsync(cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
             "Activated project '{ProjectName}' for runtime with {JourneyCount} journeys",
@@ -125,10 +124,13 @@ public sealed partial class MobaRuntimeService
     /// <inheritdoc />
     public async Task UpdateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
+        // As in ActivateProjectAsync, the copy is taken on the caller's thread before waiting.
+        ArgumentNullException.ThrowIfNull(editableProject);
+        var definitions = CloneForRuntime(editableProject);
         await _projectActivationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            UpdateProjectCore(editableProject, cancellationToken);
+            UpdateProjectCore(definitions, cancellationToken);
         }
         finally
         {
@@ -136,14 +138,12 @@ public sealed partial class MobaRuntimeService
         }
     }
 
-    private void UpdateProjectCore(Project editableProject, CancellationToken cancellationToken)
+    private void UpdateProjectCore(Project definitions, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        ArgumentNullException.ThrowIfNull(editableProject);
         var context = _activeProjectContext;
-        if (context?.ActiveProject.Id != editableProject.Id) return;
+        if (context?.ActiveProject.Id != definitions.Id) return;
 
-        var definitions = CloneForRuntime(editableProject);
         var running = context.ActiveProject.SignalBoxPlan;
         if (definitions.SignalBoxPlan is { } signalBox && running is not null)
         {

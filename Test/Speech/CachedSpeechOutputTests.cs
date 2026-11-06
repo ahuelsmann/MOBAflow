@@ -34,7 +34,7 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
 
     private SpeechOutput CreateOutput(SpeechOutputTests.FakeProvider provider, IWavePlayer player, AppSettings? settings = null,
         IAudioCache? cache = null, ILogger<SpeechOutput>? logger = null) =>
-        new(settings ?? new AppSettings(), [provider], player, logger ?? NullLogger<SpeechOutput>.Instance, cache ?? _cache);
+        new(settings ?? new AppSettings(), (ISpeechProvider[])[provider], player, logger ?? NullLogger<SpeechOutput>.Instance, cache ?? _cache);
 
     [Test]
     public async Task IdenticalAnnouncementUsesCacheAndStillPlaysEveryTime()
@@ -664,7 +664,7 @@ internal sealed partial class CachedSpeechOutputTests : IDisposable
         var settings = new AppSettings();
         var system = new SpeechOutputTests.FakeProvider("system-speech");
         var piper = new SpeechOutputTests.FakeProvider("piper");
-        var output = new SpeechOutput(settings, [system, piper], new SpeechOutputTests.FakePlayer(),
+        var output = new SpeechOutput(settings, (ISpeechProvider[])[system, piper], new SpeechOutputTests.FakePlayer(),
             NullLogger<SpeechOutput>.Instance, _cache);
         await using var lifetime = output.ConfigureAwait(false);
         await output.SpeakAsync("Provider cache").ConfigureAwait(false);

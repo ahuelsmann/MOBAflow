@@ -392,7 +392,7 @@ internal sealed class MauiViewModelPerformanceTests
         eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = elementId,
@@ -417,7 +417,7 @@ internal sealed class MauiViewModelPerformanceTests
         {
             SignalBoxElements = includeElements
                 ?
-                [
+                (SignalBoxElementRuntimeSnapshot[])[
                     new SignalBoxElementRuntimeSnapshot
                     {
                         ElementId = elementId,

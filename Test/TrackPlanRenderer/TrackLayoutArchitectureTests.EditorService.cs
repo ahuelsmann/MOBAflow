@@ -25,7 +25,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         {
             Assert.That(selection, Is.Not.Null);
             Assert.That(service.SelectedTrackId, Is.EqualTo(first.Segment.No));
-            Assert.That(selection!.MovingGroup, Is.EquivalentTo([first.Segment.No, second.Segment.No]));
+            Assert.That(selection!.MovingGroup, Is.EquivalentTo((Guid[])[first.Segment.No, second.Segment.No]));
         }
     }
 
@@ -151,7 +151,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         service.PlaceSegment(new PlacedSegment(new G231(), 500, 0, 0), snapEnabled: false);
         var replacement = TrackPlanEditorDocument.FromData(
             TrackPlanTestGeometry.Catalog,
-            [new PlacedSegment(new G231(), 900, 0, 0)],
+            (PlacedSegment[])[new PlacedSegment(new G231(), 900, 0, 0)],
             []);
 
         service.ApplyDocument(replacement, clearHistory: true, markClean: true);

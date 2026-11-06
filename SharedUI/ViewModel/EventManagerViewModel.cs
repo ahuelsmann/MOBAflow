@@ -8,6 +8,7 @@ using Interface;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Text.Json;
+using System.Windows.Input;
 
 /// <summary>Edits the InPort count events of the selected journey.</summary>
 public sealed partial class EventManagerViewModel : ObservableObject, IDisposable
@@ -22,11 +23,15 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     [ObservableProperty] private JourneyEventViewModel? _selectedEvent;
     [ObservableProperty] private uint _defaultInPort = 1;
 
-    public EventManagerViewModel(MainWindowViewModel main)
-        : this(main.SolutionSession, main.WorkflowLibrary)
+    public EventManagerViewModel(IProjectContext context, WorkflowLibraryViewModel workflowLibrary,
+        JourneysPageViewModel journeysPage, ICommand resetCountersCommand)
+        : this(context, workflowLibrary)
     {
-        MainWindow = main;
-        main.PropertyChanged += OnMainWindowPropertyChanged;
+        ArgumentNullException.ThrowIfNull(journeysPage);
+        ArgumentNullException.ThrowIfNull(resetCountersCommand);
+        JourneysPage = journeysPage;
+        ResetCountersCommand = resetCountersCommand;
+        journeysPage.PropertyChanged += OnJourneysPagePropertyChanged;
         NotifyState();
     }
 
@@ -41,13 +46,14 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         Refresh();
     }
 
-    public MainWindowViewModel? MainWindow { get; }
+    public JourneysPageViewModel? JourneysPage { get; }
+    public ICommand? ResetCountersCommand { get; }
     public WorkflowLibraryViewModel WorkflowLibrary { get; }
     public ObservableCollection<JourneyEventViewModel> Events { get; } = [];
     public IEnumerable<JourneyViewModel> Journeys => _context.SelectedProject?.Journeys ?? [];
     public string EventCountLabel => Events.Count == 1 ? "1 event" : $"{Events.Count} events";
     public bool IsEmptyPlan => SelectedJourney != null && Events.Count == 0;
-    public bool HasCommandStatus => !string.IsNullOrWhiteSpace(MainWindow?.JourneyCommandStatus);
+    public bool HasCommandStatus => !string.IsNullOrWhiteSpace(JourneysPage?.JourneyCommandStatus);
     public bool CanEdit => this.SelectedJourney != null;
     public bool CanUndo => CanEdit && _undo.Count > 0;
     public bool CanRedo => CanEdit && _redo.Count > 0;
@@ -261,7 +267,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
 
     private void OnContextPropertyChanging(object? sender, PropertyChangingEventArgs e)
     {
-        // Commit while the main window still observes the old journey for runtime updates and auto-save.
+        // Commit while the session still observes the old journey for runtime updates and auto-save.
         if (e.PropertyName is nameof(IProjectContext.SelectedJourney) or nameof(IProjectContext.SelectedProject))
             this.SelectedEvent?.CommitCountCommand.Execute(null);
     }
@@ -276,9 +282,9 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         }
     }
 
-    private void OnMainWindowPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnJourneysPagePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.JourneyCommandStatus)) OnPropertyChanged(nameof(HasCommandStatus));
+        if (e.PropertyName == nameof(JourneysPageViewModel.JourneyCommandStatus)) OnPropertyChanged(nameof(HasCommandStatus));
     }
 
     private void OnJourneyPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -304,7 +310,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         _disposed = true;
         if (_context is INotifyPropertyChanging changingContext) changingContext.PropertyChanging -= OnContextPropertyChanging;
         _context.PropertyChanged -= OnContextPropertyChanged;
-        if (MainWindow != null) MainWindow.PropertyChanged -= OnMainWindowPropertyChanged;
+        if (JourneysPage != null) JourneysPage.PropertyChanged -= OnJourneysPagePropertyChanged;
         WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
         if (SelectedJourney != null) SelectedJourney.PropertyChanged -= OnJourneyPropertyChanged;
         GC.SuppressFinalize(this);

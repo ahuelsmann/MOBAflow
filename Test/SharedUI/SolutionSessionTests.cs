@@ -21,6 +21,11 @@ using Moba.Test.Helpers;
 internal sealed partial class SolutionSessionTests
 {
     private static readonly string[] LoadedProjectNames = ["A", "B"];
+    private static readonly string[] OriginalProjectNames = ["Original"];
+    private static readonly string[] QueuedSaveWrites = ["v1", "v2"];
+    private static readonly string[] EditedWhilePicking = ["Edited while picking"];
+    private static readonly string[] EditedBeforeTheSaveCompleted = ["Edited before the save completed"];
+    private static readonly string[] NewSolutionProjectNames = ["New Project"];
 
     [Test]
     public void Constructor_AddsUntitledProjectToEmptySolutionAndSelectsIt()
@@ -85,7 +90,7 @@ internal sealed partial class SolutionSessionTests
     {
         var session = CreateSession(new Solution(), out var io, out _);
         session.CurrentSolutionPath = "layout.json";
-        io.Setup(value => value.SaveAsync(session.Solution, "layout.json")).ReturnsAsync((true, "layout.json", (string?)null));
+        io.Setup(value => value.SaveAsync(It.Is<Solution>(saved => saved.Projects.Count == session.Solution.Projects.Count), "layout.json")).ReturnsAsync((true, "layout.json", (string?)null));
         var saving = 0;
         session.SolutionSaving += (_, _) => saving++;
 
@@ -311,6 +316,307 @@ internal sealed partial class SolutionSessionTests
         Assert.That(eventContext, Is.SameAs(uiContext));
     }
 
+    [Test]
+    public async Task QueuedSaveOfAnEarlierSolution_NeitherWritesTheLoadedProjectsNorRestoresItsPath()
+    {
+        var session = CreateSession(new Solution { Projects = [new Project { Name = "A1" }] }, out var io, out _);
+        session.CurrentSolutionPath = "a.json";
+        var firstWrite = new TaskCompletionSource<(bool, string?, string?)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var writes = new System.Collections.Concurrent.ConcurrentQueue<(string Path, string[] Projects)>();
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
+            .Returns((Solution solution, string path) =>
+            {
+                writes.Enqueue((path, [.. solution.Projects.Select(project => project.Name)]));
+                return writes.Count == 1 ? firstWrite.Task : Task.FromResult((true, (string?)path, (string?)null));
+            });
+        var loaded = new Solution { Projects = [new Project { Name = "B1" }] };
+        io.Setup(value => value.LoadFromPathAsync("b.json")).ReturnsAsync((loaded, "b.json", (string?)null));
+
+        var writing = session.SaveSolutionInternalAsync();
+        var queued = session.SaveSolutionInternalAsync();
+        await session.LoadSolutionFromPathAsync("b.json").ConfigureAwait(false);
+        firstWrite.SetResult((true, "a.json", null));
+        await Task.WhenAll(writing, queued).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(writes.Select(write => write.Path), Has.All.EqualTo("a.json"));
+            Assert.That(writes.SelectMany(write => write.Projects), Has.All.EqualTo("A1"));
+            Assert.That(session.CurrentSolutionPath, Is.EqualTo("b.json"));
+            Assert.That(session.HasUnsavedChanges, Is.False);
+            Assert.That(session.SolutionSaveState, Is.EqualTo(SolutionSaveState.Saved));
+        }
+    }
+
+    [Test]
+    public async Task Save_TakesItsSnapshotOnTheUiThread_AndWritesThatSnapshot()
+    {
+        var uiQueue = new System.Collections.Concurrent.ConcurrentQueue<Action>();
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(uiQueue.Enqueue);
+        var session = CreateSession(new Solution { Projects = [new Project { Name = "Original" }] }, dispatcher.Object, out var io, out _);
+        session.CurrentSolutionPath = "layout.json";
+        Solution? written = null;
+        string[] writtenNames = [];
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), "layout.json"))
+            .Returns((Solution solution, string path) =>
+            {
+                written = solution;
+                writtenNames = [.. solution.Projects.Select(project => project.Name)];
+                return Task.FromResult((true, (string?)path, (string?)null));
+            });
+        var saving = 0;
+        session.SolutionSaving += (_, _) => saving++;
+
+        var save = session.SaveSolutionInternalAsync();
+        var savingBeforeUi = saving;
+        while (uiQueue.TryDequeue(out var action))
+            action();
+        session.Solution.Projects[0].Name = "Edited after the snapshot";
+        RunUiQueueUntil(uiQueue, () => save.IsCompleted);
+        await save.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(savingBeforeUi, Is.Zero, "SolutionSaving waits for the UI thread.");
+            Assert.That(saving, Is.EqualTo(1));
+            Assert.That(written, Is.Not.SameAs(session.Solution), "The write uses a snapshot, not the live solution.");
+            Assert.That(writtenNames, Is.EqualTo(OriginalProjectNames));
+        }
+    }
+
+    [Test]
+    public void LateEditOfAnEarlierProject_RefreshesThatProjectsRuntime()
+    {
+        var first = new Project { Name = "A", Workflows = [new Workflow { Name = "W" }] };
+        var second = new Project { Name = "B" };
+        var session = CreateSession(new Solution { Projects = [first, second] }, out _, out var runtime);
+        var workflowOfFirst = session.SelectedProject!.Workflows[0];
+        session.SelectedProject = session.SolutionViewModel!.Projects[1];
+        runtime.Invocations.Clear();
+
+        workflowOfFirst.Name = "Edited late";
+
+        runtime.Verify(value => value.UpdateAsync(first, It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.UpdateAsync(second, It.IsAny<CancellationToken>()), Times.Never);
+    }
+    [Test]
+    public async Task QueuedSave_WritesTheStateCurrentWhenItMayWrite_NotAnOlderSnapshot()
+    {
+        var session = CreateSession(new Solution { Projects = [new Project { Name = "v1" }] }, out var io, out _);
+        session.CurrentSolutionPath = "layout.json";
+        var firstWrite = new TaskCompletionSource<(bool, string?, string?)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var writes = new System.Collections.Concurrent.ConcurrentQueue<string[]>();
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), "layout.json"))
+            .Returns((Solution solution, string path) =>
+            {
+                writes.Enqueue([.. solution.Projects.Select(project => project.Name)]);
+                return writes.Count == 1 ? firstWrite.Task : Task.FromResult((true, (string?)path, (string?)null));
+            });
+
+        var writing = session.SaveSolutionInternalAsync();
+        var queued = session.SaveSolutionInternalAsync();
+        // Changed after the queued request but before that save may write: it must not write an older copy.
+        session.Solution.Projects[0].Name = "v2";
+        firstWrite.SetResult((true, "layout.json", null));
+        await Task.WhenAll(writing, queued).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(writes.Select(names => names.Single()), Is.EqualTo(QueuedSaveWrites));
+            Assert.That(session.HasUnsavedChanges, Is.False);
+            Assert.That(session.SolutionSaveState, Is.EqualTo(SolutionSaveState.Saved));
+        }
+    }
+
+    [Test]
+    public async Task EditDuringSaveAs_IsSavedToTheChosenFile_AndTheSolutionIsNotReportedSavedEarly()
+    {
+        var session = CreateSession(new Solution { Projects = [new Project { Name = "Before" }] }, out var io, out _);
+        var picker = new TaskCompletionSource<(bool, string?, string?)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>())).Returns(picker.Task);
+        var followUp = new TaskCompletionSource<string[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        // The follow-up write waits until the test has seen the state between Save As and the follow-up save.
+        var followUpWrite = new TaskCompletionSource<(bool, string?, string?)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), "chosen.json"))
+            .Returns((Solution solution, string path) =>
+            {
+                followUp.TrySetResult([.. solution.Projects.Select(project => project.Name)]);
+                return followUpWrite.Task;
+            });
+
+        var saveAs = session.SaveAsync(allowPathSelection: true);
+        session.SelectedProject!.Name = "Edited while picking";
+        picker.SetResult((true, "chosen.json", null));
+        var followUpNames = await followUp.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var unsavedWhileFollowUpWrites = session.HasUnsavedChanges;
+        var completedBeforeFollowUp = saveAs.IsCompleted;
+        followUpWrite.SetResult((true, "chosen.json", null));
+        var saved = await saveAs.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(saved, Is.True);
+            Assert.That(unsavedWhileFollowUpWrites, Is.True, "The Save As snapshot did not contain the later edit.");
+            Assert.That(completedBeforeFollowUp, Is.False, "Save As completes only once the later edit is written.");
+            Assert.That(followUpNames, Is.EqualTo(EditedWhilePicking));
+            Assert.That(session.CurrentSolutionPath, Is.EqualTo("chosen.json"));
+            Assert.That(session.HasUnsavedChanges, Is.False);
+            Assert.That(session.SolutionSaveState, Is.EqualTo(SolutionSaveState.Saved));
+        }
+    }
+
+    [Test]
+    public async Task EditBeforeTheSaveCompletesOnTheUiThread_IsWrittenToTheChosenFile()
+    {
+        var uiQueue = new System.Collections.Concurrent.ConcurrentQueue<Action>();
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(uiQueue.Enqueue);
+        var session = CreateSession(new Solution { Projects = [new Project { Name = "Before" }] }, dispatcher.Object, out var io, out _);
+        var picker = new TaskCompletionSource<(bool, string?, string?)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>())).Returns(picker.Task);
+        var writes = new System.Collections.Concurrent.ConcurrentQueue<string[]>();
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), "chosen.json"))
+            .Returns((Solution solution, string path) =>
+            {
+                writes.Enqueue([.. solution.Projects.Select(project => project.Name)]);
+                return Task.FromResult((true, (string?)path, (string?)null));
+            });
+
+        var saveAs = session.SaveAsync(allowPathSelection: true);
+        RunUiQueueUntil(uiQueue, () => io.Invocations.Any(call => call.Method.Name == nameof(ISolutionIoService.SaveAsAsync)));
+        picker.SetResult((true, "chosen.json", null));
+        // The Save As file is written and its completion waits for the UI thread; this edit is not in that file.
+        await WaitUntilAsync(() => !uiQueue.IsEmpty).ConfigureAwait(false);
+        session.SelectedProject!.Name = "Edited before the save completed";
+        RunUiQueueUntil(uiQueue, () => saveAs.IsCompleted);
+        await saveAs.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        RunUiQueueUntil(uiQueue, () => uiQueue.IsEmpty);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(writes.Select(names => names.Single()), Is.EqualTo(EditedBeforeTheSaveCompleted));
+            Assert.That(session.CurrentSolutionPath, Is.EqualTo("chosen.json"));
+            Assert.That(session.HasUnsavedChanges, Is.False);
+            Assert.That(session.SolutionSaveState, Is.EqualTo(SolutionSaveState.Saved));
+        }
+    }
+
+    [Test]
+    public async Task NewSolution_SavesTheEditsMadeWhileItsPickerWasOpen_BeforeReplacingTheSolution()
+    {
+        var uiQueue = new System.Collections.Concurrent.ConcurrentQueue<Action>();
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(uiQueue.Enqueue);
+        var session = CreateSession(new Solution { Projects = [new Project { Name = "Before" }] }, dispatcher.Object, out var io, out _);
+        var picker = new TaskCompletionSource<(bool, string?, string?)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>())).Returns(picker.Task);
+        var writes = new System.Collections.Concurrent.ConcurrentQueue<string[]>();
+        io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), "chosen.json"))
+            .Returns((Solution solution, string path) =>
+            {
+                writes.Enqueue([.. solution.Projects.Select(project => project.Name)]);
+                return Task.FromResult((true, (string?)path, (string?)null));
+            });
+
+        Task newSolution;
+        var original = SynchronizationContext.Current;
+        try
+        {
+            // The test thread is the UI thread: dispatcher actions and UI continuations run from one queue, in order.
+            SynchronizationContext.SetSynchronizationContext(new QueueUiContext(uiQueue));
+            session.SelectedProject!.Name = "Unsaved";
+            RunUiQueueUntil(uiQueue, () => uiQueue.IsEmpty);
+            newSolution = session.NewSolutionAsync();
+            RunUiQueueUntil(uiQueue, () => io.Invocations.Any(call => call.Method.Name == nameof(ISolutionIoService.SaveAsAsync)));
+            session.SelectedProject!.Name = "Edited while picking";
+            picker.SetResult((true, "chosen.json", null));
+            RunUiQueueUntil(uiQueue, () => newSolution.IsCompleted);
+            RunUiQueueUntil(uiQueue, () => uiQueue.IsEmpty);
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(original);
+        }
+
+        await newSolution.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(writes.Select(names => names.Single()), Is.EqualTo(EditedWhilePicking));
+            Assert.That(session.Solution.Projects.Select(project => project.Name), Is.EqualTo(NewSolutionProjectNames));
+        }
+    }
+
+    [Test]
+    public async Task SaveAs_OpensThePickerThroughTheUiDispatcher()
+    {
+        var uiQueue = new System.Collections.Concurrent.ConcurrentQueue<Action>();
+        // The test drains the UI queue itself; the thread that runs an action at that moment is the UI thread.
+        var uiThread = -1;
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(uiQueue.Enqueue);
+        var session = CreateSession(new Solution(), dispatcher.Object, out var io, out _);
+        var pickerOnUi = false;
+        io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>()))
+            .Returns(() =>
+            {
+                pickerOnUi = Environment.CurrentManagedThreadId == Volatile.Read(ref uiThread);
+                return Task.FromResult((true, (string?)"picked.json", (string?)null));
+            });
+
+        var save = session.SaveAsync(allowPathSelection: true);
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (!save.IsCompleted && DateTime.UtcNow < deadline)
+        {
+            if (uiQueue.TryDequeue(out var action))
+            {
+                Volatile.Write(ref uiThread, Environment.CurrentManagedThreadId);
+                action();
+                Volatile.Write(ref uiThread, -1);
+            }
+            else
+            {
+                await Task.Delay(5).ConfigureAwait(true);
+            }
+        }
+
+        var saved = await save.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(true);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(saved, Is.True);
+            Assert.That(pickerOnUi, Is.True);
+        }
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (!condition() && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(5).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Runs queued UI actions on the calling thread, which acts as the UI thread, until <paramref name="condition"/> holds.</summary>
+    private static void RunUiQueueUntil(System.Collections.Concurrent.ConcurrentQueue<Action> uiQueue, Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (!condition() && DateTime.UtcNow < deadline)
+        {
+            if (uiQueue.TryDequeue(out var action))
+                action();
+            else
+                SpinWait.SpinUntil(() => !uiQueue.IsEmpty || condition(), TimeSpan.FromMilliseconds(5));
+        }
+    }
+
+    /// <summary>Posts UI continuations to the same queue as the dispatcher, as a UI thread runs both in order.</summary>
+    private sealed class QueueUiContext(System.Collections.Concurrent.ConcurrentQueue<Action> uiQueue) : SynchronizationContext
+    {
+        public override void Post(SendOrPostCallback callback, object? state) => uiQueue.Enqueue(() => callback(state));
+    }
     private sealed class TestUiContext : SynchronizationContext
     {
         public override void Post(SendOrPostCallback callback, object? state)
@@ -336,16 +642,25 @@ internal sealed partial class SolutionSessionTests
         out Mock<ISolutionIoService> io,
         out Mock<IProjectRuntimeHost> runtime)
     {
-        io = TestFileServices.CreateMock();
-        runtime = new Mock<IProjectRuntimeHost>();
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
         dispatcher.Setup(value => value.InvokeOnUiAsync(It.IsAny<Func<Task<SolutionSaveResult>>>()))
             .Returns<Func<Task<SolutionSaveResult>>>(func => func());
+        return CreateSession(solution, dispatcher.Object, out io, out runtime);
+    }
+
+    private static SolutionSession CreateSession(
+        Solution solution,
+        IUiDispatcher dispatcher,
+        out Mock<ISolutionIoService> io,
+        out Mock<IProjectRuntimeHost> runtime)
+    {
+        io = TestFileServices.CreateMock();
+        runtime = new Mock<IProjectRuntimeHost>();
         return new SolutionSession(
             solution,
             io.Object,
-            dispatcher.Object,
+            dispatcher,
             runtime.Object,
             NullLogger<SolutionSession>.Instance);
     }

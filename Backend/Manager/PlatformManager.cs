@@ -9,7 +9,6 @@ using Domain;
 using Interface;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 using Service;
 
@@ -30,20 +29,22 @@ public sealed class PlatformManager : IPlatformManager
         Project project,
         Station station,
         IWorkflowService workflowService,
-        ActionExecutionContext? executionContext = null,
-        ILogger<PlatformManager>? logger = null)
+        ActionExecutionContext executionContext,
+        ILogger<PlatformManager> logger)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(station);
         ArgumentNullException.ThrowIfNull(workflowService);
+        ArgumentNullException.ThrowIfNull(executionContext);
+        ArgumentNullException.ThrowIfNull(logger);
 
         _z21 = z21;
         _project = project;
         _station = station;
         _workflowService = workflowService;
-        _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
-        _logger = logger ?? NullLogger<PlatformManager>.Instance;
+        _executionContextFactory = new ActionExecutionContextFactory(executionContext);
+        _logger = logger;
 
         foreach (var platform in station.Platforms)
         {

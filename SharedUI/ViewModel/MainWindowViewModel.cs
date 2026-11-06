@@ -23,7 +23,7 @@ using System.ComponentModel;
 
 /// <summary>
 /// Core ViewModel for main window functionality.
-/// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow and Z21.
+/// Partial classes handle: Solution, SolutionAutoSave and Z21.
 /// </summary>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
@@ -36,7 +36,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IConnectionRuntime _runtimeConnection;
     private readonly ITrafficMonitor _trafficMonitor;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
-    private readonly IUiDispatcher _uiDispatcher;
     private readonly IEventBus _eventBus;
     private readonly ILogger<MainWindowViewModel> _logger;
 
@@ -44,7 +43,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly AppSettings _settings;
 
     // Optional Services
-    private readonly ICityService? _cityLibraryService;
     private readonly ISettingsService? _settingsService;
     private readonly IDialogService? _dialogService;
 
@@ -66,11 +64,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="trafficMonitor">Z21 traffic monitor and polling diagnostics.</param>
     /// <param name="runtimeCommandGateway">Route for every operator command (local, recorded or remote).</param>
     /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
-    /// <param name="uiDispatcher">Dispatcher used to marshal callbacks onto the UI thread.</param>
     /// <param name="settingsPage">Shared settings presentation and persistence.</param>
     /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
-    /// <param name="cityLibraryService">Optional city library service for master data.</param>
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
     /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
     public MainWindowViewModel(
@@ -80,13 +76,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ITrafficMonitor trafficMonitor,
         IRuntimeCommandGateway runtimeCommandGateway,
         IEventBus eventBus,
-        IUiDispatcher uiDispatcher,
         SettingsPageViewModel settingsPage,
         TrainsPageViewModel trainsPage,
         StationsPageViewModel stationsPage,
+        JourneysPageViewModel journeysPage,
         ISolutionSession solutionSession,
         ILogger<MainWindowViewModel> logger,
-        ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
         IDialogService? dialogService = null,
         IProjectDiagnosticsService? projectDiagnosticsService = null)
@@ -97,11 +92,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(trafficMonitor);
         ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
         ArgumentNullException.ThrowIfNull(eventBus);
-        ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settingsPage);
         ArgumentNullException.ThrowIfNull(trainsPage);
         ArgumentNullException.ThrowIfNull(solutionSession);
         ArgumentNullException.ThrowIfNull(stationsPage);
+        ArgumentNullException.ThrowIfNull(journeysPage);
         ArgumentNullException.ThrowIfNull(logger);
 
         _session = solutionSession;
@@ -109,36 +104,31 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _runtimeConnection = runtimeConnection;
         _trafficMonitor = trafficMonitor;
         _runtimeCommandGateway = runtimeCommandGateway;
-        _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
         var settings = settingsPage.Settings;
         _settings = settings;
         SettingsPage = settingsPage;
         TrainsPage = trainsPage;
         StationsPage = stationsPage;
+        JourneysPage = journeysPage;
         SettingsPage.PropertyChanged += OnSettingsPagePropertyChanged;
         SettingsPage.FeedbackPointCountChanged += OnFeedbackPointCountChanged;
         _logger = logger;
         _layoutColumnWidths = layoutColumnWidths;
         _layoutColumnWidths.LoadFrom(settings.Layout);
-        _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
         _dialogService = dialogService;
         _projectDiagnosticsService = projectDiagnosticsService;
         InitializeLocomotiveUsageDiagnostics();
 
-        WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
-
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_runtimeSnapshots.Current);
 
         AttachSolutionSession();
-        _observedSelectedProject = _session.SelectedProject;
-        HandleSelectedProjectChanged(_observedSelectedProject);
+        HandleSelectedProjectChanged();
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedProject));
-        LoadCities();
 
         GlobalTargetLapCount = settings.Counter.TargetLapCount;
         UseTimerFilter = settings.Counter.UseTimerFilter;
@@ -169,9 +159,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// </summary>
     public LayoutColumnWidthsViewModel LayoutColumnWidths => _layoutColumnWidths;
 
-    /// <summary>Gets the singleton workflow catalog and editor state shared by workflow surfaces.</summary>
-    public WorkflowLibraryViewModel WorkflowLibrary => StationsPage.WorkflowLibrary;
-
     /// <summary>Gets the host-owned settings state shared with SettingsPage and shell surfaces.</summary>
     public SettingsPageViewModel SettingsPage { get; }
 
@@ -180,6 +167,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     /// <summary>Gets the host-owned station/platform editor.</summary>
     public StationsPageViewModel StationsPage { get; }
+
+    /// <summary>Gets the host-owned journey editor and city library shared with the journey page.</summary>
+    public JourneysPageViewModel JourneysPage { get; }
 
     /// <summary>Gets the host-owned train composition editor.</summary>
     public TrainsPageViewModel TrainsPage { get; }
@@ -222,53 +212,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _speechHealthColor = "SystemFillColorCautionBrush";
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(DeleteStationCommand))]
-    private StationViewModel? _selectedStation;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(DeleteWorkflowCommand))]
-    private WorkflowViewModel? _selectedWorkflow;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(DeleteActionCommand))]
-    private object? _selectedAction;
-
     /// <summary>
     /// The currently selected object to display in the properties panel.
     /// </summary>
     [ObservableProperty]
     private object? _currentSelectedObject;
-
-    /// <summary>
-    /// The currently selected object for JourneysPage properties panel.
-    /// Displays: SelectedJourney, SelectedStation
-    /// </summary>
-    [ObservableProperty]
-    private object? _journeysPageSelectedObject;
-
-    partial void OnJourneysPageSelectedObjectChanged(object? value)
-    {
-        _ = value;
-        OnPropertyChanged(nameof(JourneysPagePropertiesTitle));
-    }
-
-    public string JourneysPagePropertiesTitle
-    {
-        get
-        {
-            if (JourneysPageSelectedObject is JourneyViewModel) return "Journey Properties";
-            if (JourneysPageSelectedObject is StationViewModel) return "Station Properties";
-            return "Properties";
-        }
-    }
-
-    /// <summary>
-    /// The currently selected object for WorkflowsPage properties panel.
-    /// Displays: SelectedWorkflow, SelectedAction
-    /// </summary>
-    [ObservableProperty]
-    private object? _workflowsPageSelectedObject;
 
     [ObservableProperty]
     private bool _isConnected;
@@ -292,21 +240,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private string _simulateInPort = "1";
 
     /// <summary>
-    /// Available cities with stations (loaded from master data).
-    /// </summary>
-    [ObservableProperty]
-    private ObservableCollection<City> _availableCities = [];
-
-    /// <summary>
     /// Raised when the application should be closed (for example when the user selects an Exit command).
     /// </summary>
     public event EventHandler? ExitApplicationRequested;
-
-    /// <summary>
-    /// Currently selected city for adding stations to journeys.
-    /// </summary>
-    [ObservableProperty]
-    private City? _selectedCity;
 
     /// <summary>
     /// Raised when navigation to a page is requested (e.g., from plugins).
@@ -460,9 +396,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _session.BeginShutdown();
         SettingsPage.PropertyChanged -= OnSettingsPagePropertyChanged;
         SettingsPage.FeedbackPointCountChanged -= OnFeedbackPointCountChanged;
-        WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
         StationsPage.Dispose();
-        WorkflowLibrary.Dispose();
+        JourneysPage.Dispose();
+        // The host-owned workflow library is shared by the workflow, station and event-manager surfaces.
+        StationsPage.WorkflowLibrary.Dispose();
         TrainsPage.Dispose();
         LocomotivesPage.Dispose();
         WagonsPage.Dispose();
@@ -498,82 +435,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsService.SaveSettingsAsync(_settings).Observe(ex => _logger.LogWarning(ex, "Persist MainWindow settings failed"));
     }
 
-    private void ObserveBackgroundTask(Task task, string operationName)
-    {
-        task.Observe(ex => _logger.LogWarning(ex, "{OperationName} failed", operationName));
-    }
-
     [RelayCommand]
     private void ExitApplication()
     {
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }
-    #endregion
-
-    #region City Library
-    [ObservableProperty]
-    private ObservableCollection<City> _cityLibrary = [];
-
-    [ObservableProperty]
-    private string _citySearchText = string.Empty;
-
-    partial void OnCitySearchTextChanged(string value)
-    {
-        if (_cityLibraryService == null) return;
-
-        var filtered = _cityLibraryService.FilterCities(value);
-        CityLibrary = new ObservableCollection<City>(filtered);
-    }
-
-    [RelayCommand(CanExecute = nameof(CanAddStationFromCity))]
-    private void AddStationFromCity(City? city)
-    {
-        if (SelectedJourney == null || city == null) return;
-
-        // Get City's first station (Hauptbahnhof) - only the NAME
-        var cityStation = city.Stations.FirstOrDefault();
-        if (cityStation == null) return;
-
-        // Create NEW Station object (copy name from City Library)
-        var newStation = new Station
-        {
-            Name = cityStation.Name,
-            IsExitOnLeft = false,
-        };
-
-        // Add JourneyStation to Journey
-        SelectedJourney.Model.Stations.Add(newStation);
-
-        // Refresh Journey's Stations collection
-        SelectedJourney.RefreshStations();
-
-        // Select the new station
-        var stationVm = SelectedJourney.Stations.LastOrDefault();
-        if (stationVm != null)
-        {
-            SelectedStation = stationVm;
-        }
-    }
-
-    private bool CanAddStationFromCity() => SelectedJourney != null;
-
-    /// <summary>
-    /// Loads the city library from the city library service.
-    /// Call this during initialization.
-    /// </summary>
-    public async Task LoadCityLibraryAsync()
-    {
-        if (_cityLibraryService == null) return;
-
-        var cities = await _cityLibraryService.LoadCitiesAsync().ConfigureAwait(false);
-
-        // Ensure collection update happens on UI thread (WinUI requirement)
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            CityLibrary = new ObservableCollection<City>(cities);
-        });
-    }
-
     #endregion
 
     #region Wagon Libraries

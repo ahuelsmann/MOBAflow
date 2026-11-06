@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
-using Microsoft.Extensions.Logging;
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
@@ -340,9 +340,7 @@ internal sealed class PersistentInPortCounterTests
         z21.SetupGet(value => value.TrafficMonitor).Returns((Z21Monitor?)null);
         var settings = Settings(1);
         using var counters = new InPortCounterService(z21.Object, settings, store: store.Object);
-        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
-            new ActionExecutionContext { Z21 = z21.Object }, settings, Mock.Of<ILogger<MobaRuntimeService>>(),
-            inPortCounterService: counters);
+        using var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings });
 
         await runtime.StartAsync();
         await runtime.ConnectAsync();
@@ -405,8 +403,7 @@ internal sealed class PersistentInPortCounterTests
         var settings = Settings(1);
         var counters = new InPortCounterService(z21.Object, settings, projectStoreFactory: id => stores[id]);
         await using var countersScope = counters.ConfigureAwait(false);
-        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
-            new ActionExecutionContext { Z21 = z21.Object }, settings, Mock.Of<ILogger<MobaRuntimeService>>(), inPortCounterService: counters);
+        using var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings });
         await runtime.ActivateProjectAsync(station).ConfigureAwait(false);
         counters.Set(1, 42);
 
@@ -454,8 +451,7 @@ internal sealed class PersistentInPortCounterTests
         var counters = new InPortCounterService(z21.Object, settings,
             projectStoreFactory: id => id == station.Id ? stationStore : yardStore.Object);
         await using var countersScope = counters.ConfigureAwait(false);
-        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
-            new ActionExecutionContext { Z21 = z21.Object }, settings, Mock.Of<ILogger<MobaRuntimeService>>(), inPortCounterService: counters);
+        using var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings });
         await runtime.ActivateProjectAsync(station).ConfigureAwait(false);
         counters.Set(1, 42);
         using var cancellation = new CancellationTokenSource();

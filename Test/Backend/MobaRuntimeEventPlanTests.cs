@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
-using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Manager;
 using Moba.Backend.Service;
@@ -11,8 +11,12 @@ using Moba.Domain;
 using Moq;
 
 [TestFixture]
-internal sealed class MobaRuntimeEventPlanTests
+internal sealed partial class MobaRuntimeEventPlanTests : IDisposable
 {
+    private readonly TestRuntimes _runtimes = new();
+
+    public void Dispose() => _runtimes.Dispose();
+
     [TestCase(false, false)]
     [TestCase(true, false)]
     [TestCase(true, true)]
@@ -32,21 +36,26 @@ internal sealed class MobaRuntimeEventPlanTests
         var oldProject = new Project { Name = "Old", Journeys = [journey], Workflows = [workflow] };
         var newProject = new Project { Name = "New", Journeys = [journey], Workflows = [workflow] };
         var queuedProjects = new List<Guid>();
-        var coordinator = new Mock<IWorkflowExecutionCoordinator>();
-        coordinator.Setup(value => value.EnqueueAsync(It.IsAny<QueuedWorkflowExecution>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((QueuedWorkflowExecution execution, CancellationToken _) =>
-            {
-                queuedProjects.Add(execution.RequestFactory().Project.Id);
-                return new WorkflowExecutionResult
+        // Each manager owns and disposes its coordinator; only the counters and the recorder are shared.
+        JourneyManagerDependencies Dependencies()
+        {
+            var coordinator = new Mock<IWorkflowExecutionCoordinator>();
+            coordinator.Setup(value => value.EnqueueAsync(It.IsAny<QueuedWorkflowExecution>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((QueuedWorkflowExecution execution, CancellationToken _) =>
                 {
-                    ExecutionId = Guid.NewGuid(),
-                    WorkflowId = workflow.Id,
-                    SourceCorrelationId = execution.SourceCorrelationId,
-                    Status = WorkflowExecutionStatus.Succeeded
-                };
-            });
-        var dependencies = new JourneyManagerDependencies { InPortCounterService = counters, ExecutionCoordinator = coordinator.Object };
-        using var oldManager = new JourneyManager(z21.Object, oldProject, Mock.Of<IWorkflowService>(), dependencies: dependencies);
+                    queuedProjects.Add(execution.RequestFactory().Project.Id);
+                    return new WorkflowExecutionResult
+                    {
+                        ExecutionId = Guid.NewGuid(),
+                        WorkflowId = workflow.Id,
+                        SourceCorrelationId = execution.SourceCorrelationId,
+                        Status = WorkflowExecutionStatus.Succeeded
+                    };
+                });
+            return TestRuntimes.JourneyDependencies(counters, coordinator: coordinator.Object);
+        }
+
+        using var oldManager = TestRuntimes.JourneyManager(z21.Object, oldProject, Dependencies());
         JourneyManager? newManager = null;
         try
         {
@@ -55,13 +64,13 @@ internal sealed class MobaRuntimeEventPlanTests
                 {
                     if (args.Snapshot.Count == 1)
                     {
-                        newManager = new JourneyManager(z21.Object, newProject, Mock.Of<IWorkflowService>(), dependencies: dependencies);
+                        newManager = TestRuntimes.JourneyManager(z21.Object, newProject, Dependencies());
                         if (disposeDuringNotification)
                             oldManager.Dispose();
                     }
                 };
             else
-                newManager = new JourneyManager(z21.Object, newProject, Mock.Of<IWorkflowService>(), dependencies: dependencies);
+                newManager = TestRuntimes.JourneyManager(z21.Object, newProject, Dependencies());
 
             Feedback(z21, 1);
             List<Guid> expectedProjects = disposeDuringNotification
@@ -82,12 +91,11 @@ internal sealed class MobaRuntimeEventPlanTests
         }
     }
 
-    [TestCase(false)]
-    [TestCase(true)]
-    public async Task CountersSurviveProjectActivationAndResetOnlyExplicitly(bool useCustomFactory)
+    [Test]
+    public async Task CountersSurviveProjectActivationAndResetOnlyExplicitly()
     {
         var z21 = new Mock<IZ21>();
-        using var runtime = CreateRuntime(z21.Object, useCustomFactory);
+        using var runtime = CreateRuntime(z21.Object);
         Feedback(z21, 1);
         Feedback(z21, 1);
         var journey = new Journey { IsActive = true };
@@ -234,17 +242,15 @@ internal sealed class MobaRuntimeEventPlanTests
         }
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21, bool useCustomFactory = false, IWorkflowService? workflowService = null,
-        IInterlockingRuntime? interlocking = null, IEventBus? eventBus = null)
-    {
-        var workflows = workflowService ?? Mock.Of<IWorkflowService>();
-        return new MobaRuntimeService(z21, workflows,
-            new ActionExecutionContextFactory(new ActionExecutionContext { Z21 = z21 }),
-            new AppSettings { Counter = new CounterSettings { CountOfFeedbackPoints = 3, UseTimerFilter = false } },
-            NullLogger<MobaRuntimeService>.Instance,
-            eventBus: eventBus, interlockingRuntime: interlocking,
-            journeyManagerFactory: useCustomFactory ? new Moba.Backend.Manager.JourneyManagerFactory(z21, workflows) : null);
-    }
+    private MobaRuntimeService CreateRuntime(IZ21 z21, IWorkflowService? workflowService = null,
+        IInterlockingRuntime? interlocking = null, IEventBus? eventBus = null) =>
+        _runtimes.Create(z21, new TestRuntimeOptions
+        {
+            WorkflowService = workflowService,
+            Settings = new AppSettings { Counter = new CounterSettings { CountOfFeedbackPoints = 3, UseTimerFilter = false } },
+            EventBus = eventBus,
+            InterlockingRuntime = interlocking
+        });
 
     private static void Feedback(Mock<IZ21> z21, int inPort)
     {

@@ -10,12 +10,21 @@ using Moba.SharedUI.Mobile;
 [TestFixture]
 internal sealed class RestApiDiscoveryCandidateBuilderTests
 {
+    private static readonly string[] ExpectedFullProbeOrder =
+        ["192.168.0.34", "192.168.0.51", "192.168.0.33", "192.168.0.79"];
+
+    private static readonly IPAddress[] QuickLocalAddresses =
+        [IPAddress.Parse("192.168.0.50")];
+
+    private static readonly string[] ExpectedQuickRecentOrder =
+        ["192.168.0.51", "10.20.30.40", "172.16.0.20"];
+
     [Test]
-    public void BuildFullProbeOrder_SkipsLegacyFactoryDefault_AndPrefersRecentBeforeSubnet()
+    public void BuildFullProbeOrder_PreservesExplicitSavedAddressAfterRecentAndSubnet()
     {
         var settings = new RestApiSettings
         {
-            CurrentIpAddress = RestApiDiscoveryCandidateBuilder.LegacyFactoryDefaultIp,
+            CurrentIpAddress = " 192.168.0.79 ",
             RecentIpAddresses = ["192.168.0.34"],
         };
 
@@ -32,9 +41,54 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
         Assert.Multiple(() =>
         {
             Assert.That(order[0].ToString(), Is.EqualTo("192.168.0.34"));
-            Assert.That(order.Select(ip => ip.ToString()), Does.Not.Contain(RestApiDiscoveryCandidateBuilder.LegacyFactoryDefaultIp));
-            Assert.That(RestApiDiscoveryCandidateBuilder.ShouldProbeSavedIp(settings.CurrentIpAddress), Is.False);
+            Assert.That(order.Select(ip => ip.ToString()), Is.EqualTo(ExpectedFullProbeOrder));
+            Assert.That(RestApiDiscoveryCandidateBuilder.ShouldProbeSavedIp(settings.CurrentIpAddress), Is.True);
         });
+    }
+
+    [Test]
+    public void BuildFullProbeOrder_EmptyDefaultDoesNotInventAnEndpoint()
+    {
+        var order = RestApiDiscoveryCandidateBuilder.BuildFullProbeOrder(
+            new RestApiSettings(), [], []);
+
+        Assert.That(order, Is.Empty);
+    }
+
+    [TestCase("")]
+    [TestCase("invalid")]
+    [TestCase("203.0.113.25")]
+    [TestCase("127.0.0.1")]
+    [TestCase("::1")]
+    [TestCase("2001:db8::1")]
+    public void BuildQuickProbeOrder_DoesNotProbeNonPrivateIpv4RecentAddress(string recent)
+    {
+        var settings = new RestApiSettings { RecentIpAddresses = [recent] };
+
+        var order = RestApiDiscoveryCandidateBuilder.BuildQuickProbeOrder(
+            settings, QuickLocalAddresses);
+
+        Assert.That(order, Is.EqualTo(RestApiDiscoveryCandidateBuilder.BuildQuickWindowCandidates(
+            QuickLocalAddresses)));
+    }
+
+    [Test]
+    public void BuildQuickProbeOrder_PrefersDistinctRecentPrivateAddressesBeforeNeighbors()
+    {
+        var settings = new RestApiSettings
+        {
+            RecentIpAddresses = [" 192.168.0.51 ", "10.20.30.40", "192.168.0.51", "172.16.0.20"]
+        };
+
+        var order = RestApiDiscoveryCandidateBuilder.BuildQuickProbeOrder(
+            settings, QuickLocalAddresses);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(order.Take(3).Select(address => address.ToString()),
+                Is.EqualTo(ExpectedQuickRecentOrder));
+            Assert.That(order.Count(address => address.Equals(IPAddress.Parse("192.168.0.51"))), Is.EqualTo(1));
+        }
     }
 
     [Test]

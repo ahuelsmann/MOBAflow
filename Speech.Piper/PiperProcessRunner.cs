@@ -114,38 +114,44 @@ public sealed class PiperProcessRunner(TimeProvider? timeProvider = null) : IPip
     private async Task<PiperProcessResult> RunAsync(Process process, string? text, TimeSpan timeout, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+
+        // The timeout covers the whole run, including writing the text: a Piper process that stops reading stdin
+        // would otherwise block the write forever. Timeout and caller cancellation both kill the process tree.
+        using var timeoutSource = new CancellationTokenSource(timeout, _timeProvider);
+        using var runSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutSource.Token);
         process.Start();
-        using var cancellationRegistration = cancellationToken.Register(
+        using var killRegistration = runSource.Token.Register(
             static state => TryKill((Process)state!),
             process);
 
-        if (text is not null)
+        try
         {
-            await process.StandardInput.WriteLineAsync(text.AsMemory(), cancellationToken).ConfigureAwait(false);
+            if (text is not null)
+            {
+                await process.StandardInput.WriteLineAsync(text.AsMemory(), runSource.Token).ConfigureAwait(false);
+            }
+            process.StandardInput.Close();
+
+            var standardOutputTask = process.StandardOutput.ReadToEndAsync(runSource.Token);
+            var errorOutputTask = process.StandardError.ReadToEndAsync(runSource.Token);
+            await process.WaitForExitAsync(runSource.Token).ConfigureAwait(false);
+
+            return new PiperProcessResult(
+                process.ExitCode,
+                await standardOutputTask.ConfigureAwait(false),
+                await errorOutputTask.ConfigureAwait(false));
         }
-        process.StandardInput.Close();
-
-        var standardOutputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var errorOutputTask = process.StandardError.ReadToEndAsync(cancellationToken);
-        var exitedTask = process.WaitForExitAsync(cancellationToken);
-        var timeoutTask = Task.Delay(timeout, _timeProvider, cancellationToken);
-        var completedTask = await Task.WhenAny(exitedTask, timeoutTask).ConfigureAwait(false);
-
-        if (completedTask != exitedTask)
+        catch (Exception ex) when ((ex is OperationCanceledException or IOException) && !cancellationToken.IsCancellationRequested
+                                   && timeoutSource.IsCancellationRequested)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            TryKill(process);
+            // A killed process ends a blocked write with a broken pipe; both mean the run timed out.
             return new PiperProcessResult(-1, string.Empty, $"Piper timed out after {timeout.TotalSeconds:0} seconds.");
         }
-
-        await exitedTask.ConfigureAwait(false);
-
-        return new PiperProcessResult(
-            process.ExitCode,
-            await standardOutputTask.ConfigureAwait(false),
-            await errorOutputTask.ConfigureAwait(false));
+        catch (IOException ex) when (cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException("Piper was cancelled.", ex, cancellationToken);
+        }
     }
-
     private static void TryKill(Process process)
     {
         try

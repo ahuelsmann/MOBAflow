@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Manager;
 using Moba.Backend.Service;
@@ -156,7 +158,8 @@ public sealed class JourneyEventPlanAcceptanceTests
     }
 
     private sealed class ObservableJourneyManager(IZ21 z21, Project project, IWorkflowService workflows, InPortCounterService counters)
-        : JourneyManager(z21, project, workflows, dependencies: new JourneyManagerDependencies { InPortCounterService = counters })
+        : JourneyManager(project, new ActionExecutionContext { Z21 = z21 }, TestRuntimes.JourneyDependencies(counters, workflows),
+            NullLogger<JourneyManager>.Instance)
     {
         public Task LastProcessing { get; private set; } = Task.CompletedTask;
 

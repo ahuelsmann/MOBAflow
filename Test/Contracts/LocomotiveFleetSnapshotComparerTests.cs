@@ -17,9 +17,9 @@ internal sealed class LocomotiveFleetSnapshotComparerTests
             Name = "BR 110",
             DigitalAddress = 7,
             PhotoPath = "photos/locomotives/test.jpg",
-            FunctionSymbols = ["headlight.png"],
-            FunctionColors = ["#E81123"],
-            FunctionLabels = ["Headlight"]
+            FunctionSymbols = (string[])["headlight.png"],
+            FunctionColors = (string[])["#E81123"],
+            FunctionLabels = (string[])["Headlight"]
         };
         var right = new LocomotiveFleetSnapshot
         {
@@ -27,9 +27,9 @@ internal sealed class LocomotiveFleetSnapshotComparerTests
             Name = "BR 110",
             DigitalAddress = 7,
             PhotoPath = "photos/locomotives/test.jpg",
-            FunctionSymbols = ["headlight.png"],
-            FunctionColors = ["#E81123"],
-            FunctionLabels = ["Headlight"]
+            FunctionSymbols = (string[])["headlight.png"],
+            FunctionColors = (string[])["#E81123"],
+            FunctionLabels = (string[])["Headlight"]
         };
 
         Assert.That(LocomotiveFleetSnapshotComparer.ContentEquals(left, right), Is.True);
@@ -117,16 +117,16 @@ internal sealed class LocomotiveFleetSnapshotComparerTests
         {
             "BothNull" or "LeftNull" => null,
             "BothEmpty" => [],
-            _ => ["first", "last"]
+            _ => (string[])["first", "last"]
         };
         IReadOnlyList<string>? rightValues = scenario switch
         {
             "BothNull" or "RightNull" => null,
             "BothEmpty" => [],
-            "Shorter" => ["first"],
-            "FirstDiffers" => ["changed", "last"],
-            "LastDiffers" => ["first", "changed"],
-            _ => ["first", "last"]
+            "Shorter" => (string[])["first"],
+            "FirstDiffers" => (string[])["changed", "last"],
+            "LastDiffers" => (string[])["first", "changed"],
+            _ => (string[])["first", "last"]
         };
         var left = WithFunctionCollection(field, leftValues);
         var right = WithFunctionCollection(field, rightValues);
@@ -146,7 +146,7 @@ internal sealed class LocomotiveFleetSnapshotComparerTests
         var second = new LocomotiveFleetSnapshot { LocomotiveId = Guid.NewGuid(), Name = "B" };
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(LocomotiveFleetSnapshotComparer.OrderedContentEquals([first, second], [first with { }, second with { }]), Is.True);
+            Assert.That(LocomotiveFleetSnapshotComparer.OrderedContentEquals((LocomotiveFleetSnapshot[])[first, second], (LocomotiveFleetSnapshot[])[first with { }, second with { }]), Is.True);
             Assert.That(LocomotiveFleetSnapshotComparer.OrderedContentEquals([], []), Is.True);
         }
     }
@@ -158,9 +158,9 @@ internal sealed class LocomotiveFleetSnapshotComparerTests
         var second = new LocomotiveFleetSnapshot { LocomotiveId = Guid.NewGuid(), Name = "B" };
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(LocomotiveFleetSnapshotComparer.OrderedContentEquals([first, second], [first]), Is.False);
-            Assert.That(LocomotiveFleetSnapshotComparer.OrderedContentEquals([first], [first, second]), Is.False);
-            Assert.That(LocomotiveFleetSnapshotComparer.OrderedContentEquals([first, second], [first, second with { Name = "changed" }]), Is.False);
+            Assert.That(LocomotiveFleetSnapshotComparer.OrderedContentEquals((LocomotiveFleetSnapshot[])[first, second], (LocomotiveFleetSnapshot[])[first]), Is.False);
+            Assert.That(LocomotiveFleetSnapshotComparer.OrderedContentEquals((LocomotiveFleetSnapshot[])[first], (LocomotiveFleetSnapshot[])[first, second]), Is.False);
+            Assert.That(LocomotiveFleetSnapshotComparer.OrderedContentEquals((LocomotiveFleetSnapshot[])[first, second], (LocomotiveFleetSnapshot[])[first, second with { Name = "changed" }]), Is.False);
         }
     }
 

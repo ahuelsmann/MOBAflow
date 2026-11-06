@@ -19,8 +19,12 @@ using Moq;
 /// so edits made after activation never leak into the running session and vice versa.
 /// </summary>
 [TestFixture]
-internal sealed class MobaRuntimeServiceProjectIsolationTests
+internal sealed partial class MobaRuntimeServiceProjectIsolationTests : IDisposable
 {
+    private readonly TestRuntimes _runtimes = new();
+
+    public void Dispose() => _runtimes.Dispose();
+
     [TestCase(21105, 21105, true)]
     [TestCase(21105, 21106, true)]
     [TestCase(21106, 21105, true)]
@@ -54,9 +58,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         var selected = new Project { Z21 = { IpAddress = "192.168.0.112" } };
         if (sameProjectId) selected.Id = active.Id;
         var z21 = CreateZ21Mock();
-        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
-            new ActionExecutionContextFactory(new ActionExecutionContext { Z21 = z21.Object }), new AppSettings(), Mock.Of<ILogger<MobaRuntimeService>>(),
-            endpointSource: new ProjectZ21EndpointSource(() => selected));
+        using var runtime = _runtimes.Create(z21.Object, new TestRuntimeOptions { EndpointSource = new ProjectZ21EndpointSource(() => selected) });
         await runtime.ActivateProjectAsync(active).ConfigureAwait(false);
 
         if (automatic) await runtime.StartAsync().ConfigureAwait(false);
@@ -72,7 +74,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         var fixture = new Moba.Test.Helpers.TestProjectRuntimeHost();
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         var project = new Project { Name = "Original context" };
-        await fixture.Host.LoadAsync([project]).ConfigureAwait(false);
+        await fixture.Host.LoadAsync((Project[])[project]).ConfigureAwait(false);
         var owner = fixture.Host.Get(project.Id)!;
         var otherContext = new Project { Name = "Another active project" };
         await owner.Runtime.ActivateProjectAsync(otherContext).ConfigureAwait(false);
@@ -155,6 +157,31 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
             Assert.That(updatedDuringActivation, Is.False);
             Assert.That(runtime.Current.JourneyStates, Does.ContainKey(updated.Journeys[0].Id));
         }
+    }
+
+    [Test]
+    public async Task UpdateProjectAsync_CopiesTheProjectWhenCalled_NotAfterWaitingForActivation()
+    {
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var interlocking = new Mock<IInterlockingRuntime>();
+        using var runtime = CreateRuntime(CreateZ21Mock().Object, interlockingRuntime: interlocking.Object);
+        var project = new Project();
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
+        interlocking.Setup(value => value.ActivateAsync(It.IsAny<InterlockingDefinition>(), It.IsAny<CancellationToken>()))
+            .Returns(() => { entered.TrySetResult(); return release.Task; });
+        var activation = runtime.ActivateProjectAsync(project);
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var requested = new Journey { Name = "Requested" };
+        var editable = new Project { Id = project.Id, Journeys = [requested] };
+
+        var update = runtime.UpdateProjectAsync(editable);
+        // The editor keeps changing its model while the update waits for the activation.
+        editable.Journeys.Add(new Journey { Name = "Added later" });
+        release.TrySetResult();
+        await Task.WhenAll(activation, update).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        Assert.That(runtime.Current.JourneyStates.Keys, Is.EquivalentTo(new[] { requested.Id }));
     }
 
     [Test]
@@ -408,27 +435,19 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(
+    private MobaRuntimeService CreateRuntime(
         IZ21 z21,
         IWorkflowService? workflowService = null,
         IEventBus? eventBus = null,
-        IInterlockingRuntime? interlockingRuntime = null)
-    {
-        var loggerMock = new Mock<ILogger<MobaRuntimeService>>();
-
-        return new MobaRuntimeService(
-            z21,
-            workflowService ?? Mock.Of<IWorkflowService>(),
-            new ActionExecutionContext { Z21 = z21 },
-            new AppSettings
-            {
-                // Disable auto-connect during tests to keep behavior deterministic.
-                Counter = new CounterSettings { CountOfFeedbackPoints = 3, UseTimerFilter = false }
-            },
-            loggerMock.Object,
-            eventBus,
-            interlockingRuntime: interlockingRuntime);
-    }
+        IInterlockingRuntime? interlockingRuntime = null) =>
+        _runtimes.Create(z21, new TestRuntimeOptions
+        {
+            WorkflowService = workflowService,
+            // Disable auto-connect during tests to keep behavior deterministic.
+            Settings = new AppSettings { Counter = new CounterSettings { CountOfFeedbackPoints = 3, UseTimerFilter = false } },
+            EventBus = eventBus,
+            InterlockingRuntime = interlockingRuntime
+        });
 
     private static (Mock<IWorkflowService> Service, TaskCompletionSource Started, TaskCompletionSource Cancelled)
         CreateBlockingWorkflowService()

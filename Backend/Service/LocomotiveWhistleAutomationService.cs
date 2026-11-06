@@ -4,6 +4,7 @@ namespace Moba.Backend.Service;
 
 using Common.Events;
 using Domain;
+using Domain.Enum;
 using Interface;
 using Microsoft.Extensions.Logging;
 
@@ -45,19 +46,18 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
     public IReadOnlyList<string> Validate(LocomotiveWhistleRule rule)
     {
         ArgumentNullException.ThrowIfNull(rule);
-        var errors = new List<string>();
-        if (rule.LocomotiveId == Guid.Empty)
-            errors.Add("A locomotive is required.");
-        if (rule.InPort <= 0)
-            errors.Add("Feedback input must be positive.");
-        if (rule.FunctionIndex is < 0 or > 31)
-            errors.Add("Function must be between F0 and F31.");
-        if (rule.DelayMilliseconds < 0)
-            errors.Add("Delay must not be negative.");
-        if (rule.ActiveDurationMilliseconds <= 0)
-            errors.Add("Active duration must be positive.");
-        return errors;
+        return [.. rule.FindIssues().Select(Describe)];
     }
+
+    private static string Describe(LocomotiveWhistleRuleIssue issue) => issue switch
+    {
+        LocomotiveWhistleRuleIssue.MissingLocomotive => "A locomotive is required.",
+        LocomotiveWhistleRuleIssue.InvalidInPort => "Feedback input must be positive.",
+        LocomotiveWhistleRuleIssue.FunctionOutOfRange => "Function must be between F0 and F31.",
+        LocomotiveWhistleRuleIssue.NegativeDelay => "Delay must not be negative.",
+        LocomotiveWhistleRuleIssue.InvalidActiveDuration => "Active duration must be positive.",
+        _ => throw new ArgumentOutOfRangeException(nameof(issue), issue, "Unknown whistle rule issue.")
+    };
 
     public void Activate(Project? project)
     {

@@ -42,10 +42,10 @@ internal sealed class LocomotiveRosterTests
     public void MergeFleet_UpdatesTheListInPlaceAndKeepsExistingItems()
     {
         var items = new ObservableCollection<LocomotiveViewModel>();
-        _roster.MergeFleet(items, [Fleet(Br211Id, "BR 211"), Fleet(Br110Id, "BR 110")]);
+        _roster.MergeFleet(items, (LocomotiveFleetSnapshot[])[Fleet(Br211Id, "BR 211"), Fleet(Br110Id, "BR 110")]);
         var br110 = items[0];
 
-        var merge = _roster.MergeFleet(items, [Fleet(Br110Id, "BR 110", "new.jpg"), Fleet(Br218Id, "BR 218")]);
+        var merge = _roster.MergeFleet(items, (LocomotiveFleetSnapshot[])[Fleet(Br110Id, "BR 110", "new.jpg"), Fleet(Br218Id, "BR 218")]);
 
         using (Assert.EnterMultipleScope())
         {
@@ -60,7 +60,7 @@ internal sealed class LocomotiveRosterTests
     public void MergeFleet_IgnoresAFleetEqualToTheLastOneUntilTheListIsRebuilt()
     {
         var items = new ObservableCollection<LocomotiveViewModel>();
-        IReadOnlyList<LocomotiveFleetSnapshot> fleet = [Fleet(Br110Id, "BR 110")];
+        IReadOnlyList<LocomotiveFleetSnapshot> fleet = (LocomotiveFleetSnapshot[])[Fleet(Br110Id, "BR 110")];
         _roster.MergeFleet(items, fleet);
 
         var repeated = _roster.MergeFleet(items, fleet);
@@ -80,7 +80,7 @@ internal sealed class LocomotiveRosterTests
         ApplyProject(new Locomotive { Id = Br218Id, Name = "BR 218" });
         _runtime.SetupGet(runtime => runtime.Current).Returns(new MobaRuntimeSnapshot
         {
-            LocomotiveFleet = [Fleet(Br211Id, "BR 211"), Fleet(Br110Id, "BR 110")],
+            LocomotiveFleet = (LocomotiveFleetSnapshot[])[Fleet(Br211Id, "BR 211"), Fleet(Br110Id, "BR 110")],
         });
 
         var items = _roster.BuildItems();
@@ -106,7 +106,7 @@ internal sealed class LocomotiveRosterTests
     [Test]
     public void DeferFleet_KeepsTheLastNonEmptyFleetUntilItIsTaken()
     {
-        IReadOnlyList<LocomotiveFleetSnapshot> fleet = [Fleet(Br110Id, "BR 110")];
+        IReadOnlyList<LocomotiveFleetSnapshot> fleet = (LocomotiveFleetSnapshot[])[Fleet(Br110Id, "BR 110")];
 
         _roster.DeferFleet(fleet);
         _roster.DeferFleet([]);

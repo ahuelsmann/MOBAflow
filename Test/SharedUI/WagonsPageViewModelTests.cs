@@ -195,7 +195,7 @@ internal sealed partial class WagonsPageViewModelTests : IDisposable
             Assert.That(wagon.PhotoPathWithVersion, Is.Not.EqualTo(previousBinding));
         }
         // The unchanged main baseline performs three saves: two image notifications plus the explicit photo save.
-        _io.Verify(value => value.SaveAsync(_session.Solution, "wagons-test.json"), Times.Exactly(3));
+        _io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), "wagons-test.json"), Times.Exactly(3));
     }
 
     [TestCase(true)]

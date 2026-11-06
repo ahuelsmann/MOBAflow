@@ -40,7 +40,7 @@ internal sealed class SegmentPlacementGeometryTests
         var first = new PlacedSegment(new G231 { No = Guid.NewGuid() }, 0, 0, 0);
         var second = new PlacedSegment(new G231 { No = Guid.NewGuid() }, -40, 300, 90);
 
-        var bounds = Geometry.GetContentBounds([first, second]);
+        var bounds = Geometry.GetContentBounds((PlacedSegment[])[first, second]);
 
         using (Assert.EnterMultipleScope())
         {

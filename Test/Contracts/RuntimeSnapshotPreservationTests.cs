@@ -69,7 +69,7 @@ internal sealed class RuntimeSnapshotPreservationTests
             StatusText = "Previous telemetry",
             InPortCounterPersistenceError = "Previous counter error",
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = SignalId,
@@ -79,7 +79,7 @@ internal sealed class RuntimeSnapshotPreservationTests
                 }
             ],
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = LocomotiveId,
@@ -114,7 +114,7 @@ internal sealed class RuntimeSnapshotPreservationTests
         {
             IsConnected = true,
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = signalId,
@@ -150,7 +150,7 @@ internal sealed class RuntimeSnapshotPreservationTests
         var previous = new MobaRuntimeSnapshot
         {
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot { ElementId = previousId, Name = "Old", Kind = SignalBoxElementKind.Signal }
             ]
         };
@@ -158,7 +158,7 @@ internal sealed class RuntimeSnapshotPreservationTests
         var incoming = new MobaRuntimeSnapshot
         {
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot { ElementId = incomingId, Name = "New", Kind = SignalBoxElementKind.Signal }
             ]
         };
@@ -179,7 +179,7 @@ internal sealed class RuntimeSnapshotPreservationTests
         var previous = new MobaRuntimeSnapshot
         {
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = signalId,
@@ -193,7 +193,7 @@ internal sealed class RuntimeSnapshotPreservationTests
         var incoming = new MobaRuntimeSnapshot
         {
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = signalId,
@@ -219,7 +219,7 @@ internal sealed class RuntimeSnapshotPreservationTests
         var previous = new MobaRuntimeSnapshot
         {
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = signalId,
@@ -232,7 +232,7 @@ internal sealed class RuntimeSnapshotPreservationTests
         var incoming = new MobaRuntimeSnapshot
         {
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = signalId,
@@ -254,7 +254,7 @@ internal sealed class RuntimeSnapshotPreservationTests
         var previous = new MobaRuntimeSnapshot
         {
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = locomotiveId,
@@ -289,11 +289,11 @@ internal sealed class RuntimeSnapshotPreservationTests
         var previous = new MobaRuntimeSnapshot
         {
             SignalBoxElements =
-            [
+            (SignalBoxElementRuntimeSnapshot[])[
                 new SignalBoxElementRuntimeSnapshot { ElementId = signalId, Name = "S1", Kind = SignalBoxElementKind.Signal }
             ],
             LocomotiveFleet =
-            [
+            (LocomotiveFleetSnapshot[])[
                 new LocomotiveFleetSnapshot { LocomotiveId = locomotiveId, Name = "BR 218", DigitalAddress = 3 }
             ]
         };
@@ -342,7 +342,7 @@ internal sealed class RuntimeSnapshotPreservationTests
             LastFailSafeAt = new DateTimeOffset(2026, 10, 12, 1, 2, 3, TimeSpan.Zero),
             IsOperatorAckRequired = true,
             InPortCounterPersistenceError = hasPersistenceError ? "Current counters could not be saved." : null,
-            InPortCounters = [new InPortCounterSnapshot(3, 17, null, TimeSpan.FromSeconds(2))],
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(3, 17, null, TimeSpan.FromSeconds(2))],
             JourneyStates = new Dictionary<Guid, JourneyRuntimeSnapshot>
             {
                 [SignalId] = new JourneyRuntimeSnapshot
@@ -359,7 +359,7 @@ internal sealed class RuntimeSnapshotPreservationTests
             },
             CreatedAt = new DateTimeOffset(2026, 10, 12, 1, 2, 4, TimeSpan.Zero),
             SignalBoxElements = hasSignals
-                ? [new SignalBoxElementRuntimeSnapshot
+                ? (SignalBoxElementRuntimeSnapshot[])[new SignalBoxElementRuntimeSnapshot
                 {
                     ElementId = SignalId,
                     Name = "Current signal",
@@ -370,7 +370,7 @@ internal sealed class RuntimeSnapshotPreservationTests
                 }]
                 : [],
             LocomotiveFleet = hasFleet
-                ? [new LocomotiveFleetSnapshot
+                ? (LocomotiveFleetSnapshot[])[new LocomotiveFleetSnapshot
                 {
                     LocomotiveId = LocomotiveId,
                     Name = "Current locomotive",

@@ -16,7 +16,7 @@ using Moq;
 
 /// <summary>Checks the desktop/shared projection against authoritative runtime snapshots and command routing.</summary>
 [TestFixture]
-public sealed class JourneyCounterProjectionTests
+public sealed partial class JourneyCounterProjectionTests
 {
     [Test]
     public async Task CounterSnapshot_PreservesUnsignedPrecisionAndTimingInDisplayedStatistics()
@@ -24,7 +24,7 @@ public sealed class JourneyCounterProjectionTests
         var feedbackTime = new DateTimeOffset(2026, 9, 10, 12, 0, 0, TimeSpan.Zero);
         await using var fixture = new ProjectionFixture(initial: new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(7, ulong.MaxValue, feedbackTime, TimeSpan.FromSeconds(20))]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(7, ulong.MaxValue, feedbackTime, TimeSpan.FromSeconds(20))]
         });
 
         var statistic = fixture.ViewModel.Statistics.Single(item => item.InPort == 7);
@@ -44,7 +44,7 @@ public sealed class JourneyCounterProjectionTests
     {
         await using var fixture = new ProjectionFixture(initial: new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(1, 42, null, null), new InPortCounterSnapshot(7, 19, null, null)]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 42, null, null), new InPortCounterSnapshot(7, 19, null, null)]
         });
         fixture.ViewModel.InitializeStatisticsFromFeedbackPoints();
         fixture.ViewModel.SelectedProject = new ProjectViewModel(new Project { Name = "Another layout" });
@@ -60,7 +60,7 @@ public sealed class JourneyCounterProjectionTests
         fixture.ViewModel.Statistics.CollectionChanged += (_, _) => collectionChanges++;
         fixture.Publish(new MobaRuntimeSnapshot
         {
-            InPortCounters = [new InPortCounterSnapshot(1, 43, null, null), new InPortCounterSnapshot(7, 19, null, null)]
+            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 43, null, null), new InPortCounterSnapshot(7, 19, null, null)]
         });
         Assert.That(collectionChanges, Is.Zero);
         fixture.Settings.Counter.CountOfFeedbackPoints = 7;
@@ -122,7 +122,7 @@ public sealed class JourneyCounterProjectionTests
         var journey = CreateJourney("Active");
         journey.IsActive = true;
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
-        fixture.Publish(new MobaRuntimeSnapshot { InPortCounters = [new InPortCounterSnapshot(1, 18, null, null)] });
+        fixture.Publish(new MobaRuntimeSnapshot { InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 18, null, null)] });
 
         Assert.That(fixture.ViewModel.ResetCountersCommand.CanExecute(null), Is.True);
         await fixture.ViewModel.ResetCountersCommand.ExecuteAsync(null);
@@ -157,7 +157,8 @@ public sealed class JourneyCounterProjectionTests
         var journey = CreateJourney("Regional");
         journey.IsActive = true;
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
-        using var editor = new EventManagerViewModel(fixture.ViewModel);
+        using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
+            fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
         fixture.Runtime.Invocations.Clear();
 
         editor.Events.Single().Count = 9;
@@ -200,7 +201,8 @@ public sealed class JourneyCounterProjectionTests
         var second = CreateJourney("Second");
         var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [first, second] }] });
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
-        using var editor = new EventManagerViewModel(fixture.ViewModel);
+        using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
+            fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
         fixture.ViewModel.CurrentSolutionPath = "projection-test.json";
         editor.Events.Single().CountText = "25";
         fixture.Runtime.Invocations.Clear();
@@ -253,10 +255,10 @@ public sealed class JourneyCounterProjectionTests
                 Runtime.Object,
                 Gateway.Object,
                 stationEventBus1,
-                dispatcher.Object,
                 TestSettingsPages.Create(Settings, dispatcher.Object),
                 _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object),
                 _rollingStockPages.GetStationsPage(locomotiveSession1, Runtime.Object, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, stationEventBus1),
+                _rollingStockPages.GetJourneysPage(locomotiveSession1, Gateway.Object, dispatcher.Object),
                 locomotiveSession1,
                 NullLogger<MainWindowViewModel>.Instance);
         }

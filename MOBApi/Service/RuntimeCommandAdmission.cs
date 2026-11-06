@@ -4,6 +4,8 @@ namespace Moba.MOBApi.Service;
 
 using Contracts.Runtime;
 
+using System.Diagnostics.Metrics;
+
 /// <summary>
 /// Outcome of admitting a remote runtime command.
 /// </summary>
@@ -41,10 +43,53 @@ public interface IRuntimeCommandAdmission
 }
 
 /// <inheritdoc />
-public sealed class RuntimeCommandAdmission(IRuntimeCommandQueue commandQueue, ISolutionCache solutionCache)
+public sealed class RuntimeCommandAdmission(
+    IRuntimeCommandQueue commandQueue,
+    ISolutionCache solutionCache,
+    ILogger<RuntimeCommandAdmission> logger)
     : IRuntimeCommandAdmission
 {
-    public RuntimeCommandAdmissionResult Validate(RuntimeCommandEnvelope command)
+    /// <summary>Meter of the MOBApi counters, readable live with <c>dotnet-counters monitor --counters Moba.MOBApi</c>.</summary>
+    public const string MeterName = "Moba.MOBApi";
+
+    /// <summary>Counter of rejected remote commands, tagged with <c>reason</c> and <c>command</c>.</summary>
+    public const string RejectedCommandsName = "moba.runtime_commands.rejected";
+
+    private static readonly Meter Meter = new(MeterName);
+
+    private static readonly Counter<long> Rejected = Meter.CreateCounter<long>(
+        RejectedCommandsName,
+        unit: "{command}",
+        description: "Remote runtime commands rejected as invalid or because the bounded queue was full.");
+
+    private static readonly Action<ILogger, RuntimeCommandType, int?, Exception?> LogQueueFull =
+        LoggerMessage.Define<RuntimeCommandType, int?>(
+            LogLevel.Warning,
+            new EventId(1, nameof(LogQueueFull)),
+            "Remote runtime command {Command} for locomotive {Address} rejected: the command queue is full");
+
+    private static readonly Action<ILogger, RuntimeCommandType, string?, Exception?> LogInvalid =
+        LoggerMessage.Define<RuntimeCommandType, string?>(
+            LogLevel.Debug,
+            new EventId(2, nameof(LogInvalid)),
+            "Remote runtime command {Command} rejected as invalid: {Reason}");
+
+    public RuntimeCommandAdmissionResult Validate(RuntimeCommandEnvelope command) => Record(command, ValidateCore(command));
+
+    public RuntimeCommandAdmissionResult Enqueue(RuntimeCommandEnvelope command)
+    {
+        var validation = ValidateCore(command);
+        if (!validation.IsAccepted)
+        {
+            return Record(command, validation);
+        }
+
+        return Record(
+            command,
+            commandQueue.TryEnqueue(command) ? RuntimeCommandAdmissionResult.Accepted : RuntimeCommandAdmissionResult.QueueFull);
+    }
+
+    private RuntimeCommandAdmissionResult ValidateCore(RuntimeCommandEnvelope command)
     {
         ArgumentNullException.ThrowIfNull(command);
         if (!RuntimeCommandValidator.TryValidate(command, out var error))
@@ -58,16 +103,27 @@ public sealed class RuntimeCommandAdmission(IRuntimeCommandQueue commandQueue, I
             : new RuntimeCommandAdmissionResult(RuntimeCommandAdmissionStatus.Invalid, "Unknown project.");
     }
 
-    public RuntimeCommandAdmissionResult Enqueue(RuntimeCommandEnvelope command)
+    // Every rejection is counted; an overloaded queue is also a warning, an invalid client request only a debug entry.
+    private RuntimeCommandAdmissionResult Record(RuntimeCommandEnvelope command, RuntimeCommandAdmissionResult result)
     {
-        var validation = Validate(command);
-        if (!validation.IsAccepted)
+        if (result.IsAccepted)
         {
-            return validation;
+            return result;
         }
 
-        return commandQueue.TryEnqueue(command)
-            ? RuntimeCommandAdmissionResult.Accepted
-            : RuntimeCommandAdmissionResult.QueueFull;
+        Rejected.Add(
+            1,
+            new KeyValuePair<string, object?>("reason", result.Status == RuntimeCommandAdmissionStatus.QueueFull ? "queue_full" : "invalid"),
+            new KeyValuePair<string, object?>("command", command.Type.ToString()));
+        if (result.Status == RuntimeCommandAdmissionStatus.QueueFull)
+        {
+            LogQueueFull(logger, command.Type, command.LocomotiveAddress, null);
+        }
+        else
+        {
+            LogInvalid(logger, command.Type, result.Error, null);
+        }
+
+        return result;
     }
 }

@@ -154,7 +154,10 @@ domain issue records, or throws a domain exception for an invalid request. Not e
 [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) tracks the remaining inventory. `Journey.ResolveStopTransition`
 and `Journey.IndexOfStop` decide stop changes; `ResolveStopTransition` throws `InvalidOperationException` when the
 configured target station is not a stop of the journey. `JourneyStopTransitionService` only applies the result to
-the runtime `JourneySessionState`. `Workflow.FindStructureIssues` returns `IReadOnlyList<WorkflowStructureIssue>`
+the runtime `JourneySessionState`, and `JourneyManager` finds the current stop only through `Journey.IndexOfStop`.
+`Station.ResolvePlatform` returns the selected platform or the first one, for announcements and the train-control
+timetable strip. `LocomotiveWhistleRule.FindIssues` returns the `LocomotiveWhistleRuleIssue` values that keep a
+rule from running; `LocomotiveWhistleAutomationService` turns them into English messages. `Workflow.FindStructureIssues` returns `IReadOnlyList<WorkflowStructureIssue>`
 with issue kinds and field paths; `WorkflowValidator` turns them into coded, user-facing issues and adds the payload
 checks. `Project.FindWorkflowsWithInvalidIds` returns an `IReadOnlySet<int>` of zero-based positions in
 `Project.Workflows` whose ID is empty or repeats an earlier one; the Backend maps those positions to user-facing
@@ -318,11 +321,22 @@ runtime services.
 - `SolutionSession` is the desktop owner of the loaded solution, selected project
   and journey, dirty state and auto-save. The WinUI host registers the same instance as
   `ISolutionSession`, `IProjectContext` and `IJourneySelectionContext`.
+- Saves are written one at a time, and each takes its snapshot on the UI thread once it may write:
+  `SolutionSaving` subscribers run there, the file receives a copy of the solution, never the live
+  model, and a later write never holds an older state. The Save As picker also runs on the UI thread.
+- Each snapshot records the edits it contains. When a write finishes, the UI thread checks whether
+  an edit followed: only then does the save report Saved. A manual save (Save, Save As, the save
+  before New) returns only once its file holds the latest edit, so edits made while its picker was
+  open are written to the chosen file before New replaces the solution.
+- Each loaded or new solution is a new generation; a save of an earlier generation is not
+  started, and a finished one does not change the path or save state of the current solution.
+- A change of a tracked object refreshes the runtime of the project that was selected when the
+  object was tracked, so a late change after a project switch reaches the right runtime.
 - MOBAsmart uses `MobileSolutionContext` as its `IProjectContext`, as described in
   [the mobile session boundary](#mobasmart-session-and-projection).
 - Shared ViewModels and host services reach solution ownership through those
   contracts. The existing shell/composition, WinUI page bindings, column-width
-  behavior, MonitorPageViewModel, EventManagerViewModel and Android shutdown
+  behavior, MonitorPageViewModel and Android shutdown
   lookup remain explicitly named in
   [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs).
   RF-24 removes the page, layout and shell-state dependencies; RF-23 adds no new
@@ -395,7 +409,7 @@ runtime services.
   runtime's project snapshot; runtime ownership and operator command routing are unchanged.
 - TrainsPage retains only visual layout and drag/drop coordination. Its architecture guard rejects
   MainWindowViewModel dependencies. The superseded Train partial is removed; the shell retains
-  its runtime-refresh helper for station/journey editors until their own extraction.
+  its runtime snapshot projection until the later counter/status extraction.
 
 **Station and platform presentation (RF-24 slice 3a):**
 
@@ -408,12 +422,56 @@ runtime services.
   collection subscriptions. A platform refresh also detaches discarded platform wrappers.
   The session still owns persistence and updates the current runtime snapshot for model edits.
 - One WorkflowLibraryViewModel is registered through host DI and shared by the station workflow
-  library and the shell's existing workflow surfaces. Search uses the same library state through
-  both access paths. Runtime services, execution context and EventBus are composed in the host;
-  workflow behavior stays in the existing editor. Remaining workflow presentation is a later slice.
+  library and the other workflow surfaces. Search uses the same library state through
+  every access path. Runtime services, execution context and EventBus are composed in the host;
+  workflow behavior stays in the existing editor.
 - StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
   unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
-  central layout persistence remains planned. The shell retains the journey runtime-refresh helper.
+  central layout persistence remains planned.
+
+**Journey and city presentation (RF-24 slice 3b):**
+
+- The host owns one JourneysPageViewModel shared by JourneysPage, the shell reset command,
+  EventManager status and deferred city-library loading. Its required dependencies are the
+  session, command gateway, UI dispatcher, city/settings services,
+  shared layout widths and logger. The Journey shell partial and city members are removed.
+- The session keeps canonical project/journey selection and journey property tracking.
+  The page owns journey/station CRUD, city search/loading, ItemClicked properties, selected
+  station and open station-editor tracking, and panel expansion. Search and reordering replace
+  the list source and reset its selection; a valid open station editor retains its properties
+  and auto-save subscription even when the station is filtered out. Selecting a different station,
+  closing/replacing the editor, changing journey/project/solution, refreshing station wrappers or
+  disposal releases that tracking.
+  A clicked journey remains the properties object when
+  WinUI subsequently updates the canonical selection. Project changes publish the new items source
+  before selecting its first journey through the session; journey/project/solution changes,
+  station refresh and disposal detach obsolete
+  station wrappers and collection subscriptions. Disposal does not remove session-owned journey tracking.
+- Journey reset uses the injected IRuntimeCommandGateway. Runtime snapshot projection remains
+  in the shell until the counter/status slice; no runtime lifecycle or routing is introduced.
+  EventManagerViewModel reads IProjectContext, the existing workflow library and journey-page
+  status directly. The architecture guard rejects shell dependencies in it and JourneysPage.
+  Its reset-all counter binding receives the existing shell command from navigation composition;
+  counter behavior remains with the later counter/status slice.
+- Deferred city loading uses the existing ICityService and UI dispatcher, and ignores queued
+  completion after disposal. JourneysPage retains visual layout/drag-drop coordination and
+  load/unload subscriptions; existing width keys and central-layout follow-up remain unchanged.
+
+**Workflow presentation (RF-24 slice 4):**
+
+- The host owns one WorkflowsPageViewModel for WorkflowsPage. Its required dependencies are the
+  shared WorkflowLibraryViewModel, the settings service and a logger. It adds only the page
+  presentation the library lacks: the persisted workflow-list, actions and properties panel
+  expansion under the existing `Layout.WorkflowsPage` keys.
+- Workflow selection, action editing and ordering, validation, dry run, trace and the properties
+  editor object stay in the one WorkflowLibraryViewModel, which WorkflowsPage, StationsPage and
+  EventManagerViewModel share through host DI. The Workflow shell partial, the shell's mirrored
+  workflow/action selection, its unbound WorkflowsPage ItemClicked command and its workflow layout
+  members are removed; no shell surface binds workflow state. Clearing the selected project already
+  clears the library selection, so the shell no longer resets it separately.
+- The shell still disposes the shared library during shutdown through the station editor it owns;
+  slice 6's final shell audit decides where that disposal lives. The architecture guard rejects
+  shell dependencies in WorkflowsPage, which keeps visual layout, drag-start and keyboard coordination.
 
 **Settings presentation (RF-24 slice 1):**
 
@@ -481,6 +539,8 @@ runtime services.
   (`CloneForRuntime`, JSON round-trip via `JsonOptions.Compact`), because it reads
   journeys, stations and workflows on background threads while the editor changes
   them on the UI thread. Runtime mutations never touch the editor model.
+- `ActivateProjectAsync` and `UpdateProjectAsync` take that copy on the caller's thread before they
+  wait for the activation lock; callers pass the editor project from the UI thread.
 - The solution session refreshes the snapshot after every saved change through
   `IConnectionRuntime.UpdateProjectAsync`, without re-activation: journey progress
   (`JourneySessionState`, kept by stop id), running workflows and signal aspects are
@@ -606,6 +666,7 @@ MOBAsmart/
 MOBApi/
 ├── Controllers/        # REST API Controllers
 ├── Hubs/               # SignalR Hubs
+├── ModelBinding/       # Parameter-scoped HTTP header binding
 └── Service/            # API Services
 ```
 
@@ -637,6 +698,16 @@ through `SelectedProjectRuntime`. The UI decorator dispatches EventBus subscribe
 to the UI thread; ViewModels apply snapshots without a second dispatch.
 MOBAsmart instead reads its local runtime and combines local, remote and cached
 state through the mobile components below.
+
+The pipeline holds at most 1,024 events. Its failure paths are logged and counted on the meter
+`Moba.Backend` ([`BackendTelemetry`](../Backend/Service/BackendTelemetry.cs)):
+
+- `moba.z21.events.rejected`: events rejected while the pipeline is full or stopped, tagged `event_type`;
+- `moba.z21.events.dispatch_failed`: events whose publication failed, tagged `event_type`;
+- `moba.z21.pipeline.shutdown_timeouts`: drains that exceeded their timeout during shutdown;
+- `moba.runtime.fail_safe_triggered`: fail-safe states after an unexpected loss of the Z21 connection.
+
+Watch them live with `dotnet-counters monitor --name MOBAflow --counters Moba.Backend`.
 
 ### Command Execution Flow
 
@@ -747,7 +818,8 @@ status messages only; it does not load or initialize external plugins.
 ### Resolution Example
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
-receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `JourneysPageViewModel`,
+`ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
 `ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
 platform services. It does not receive the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;

@@ -60,7 +60,7 @@ internal sealed class MobileRuntimeProjectionTests
     public async Task GetBestAvailableLocomotiveFleet_PrefersTheLiveRemoteFleetWhileTheRemoteRuntimeIsPreferred()
     {
         _coordinator.SetupGet(coordinator => coordinator.PreferRemoteRuntime).Returns(true);
-        await _projection.CacheRemoteLocomotiveFleet([Fleet(Br110Id, "BR 110", "remote/110.jpg")], CancellationToken.None)
+        await _projection.CacheRemoteLocomotiveFleet((LocomotiveFleetSnapshot[])[Fleet(Br110Id, "BR 110", "remote/110.jpg")], CancellationToken.None)
             .ConfigureAwait(false);
 
         var fleet = _projection.GetBestAvailableLocomotiveFleet();
@@ -72,7 +72,7 @@ internal sealed class MobileRuntimeProjectionTests
     public void GetBestAvailableLocomotiveFleet_PrefersTheProjectOverARestoredCache()
     {
         _coordinator.SetupGet(coordinator => coordinator.PreferRemoteRuntime).Returns(true);
-        _projection.RestoreCachedLocomotiveFleet([Fleet(Br110Id, "BR 110", "stale/110.jpg")]);
+        _projection.RestoreCachedLocomotiveFleet((LocomotiveFleetSnapshot[])[Fleet(Br110Id, "BR 110", "stale/110.jpg")]);
 
         var fleet = _projection.GetBestAvailableLocomotiveFleet();
 
@@ -87,7 +87,7 @@ internal sealed class MobileRuntimeProjectionTests
     public void ResolveAuthoritativeLocomotiveFleet_CompletesTheProjectFleetWithRemoteData()
     {
         var fleet = _projection.ResolveAuthoritativeLocomotiveFleet(
-        [
+        (LocomotiveFleetSnapshot[])[
             Fleet(Br211Id, "BR 211", "remote/211.jpg"),
             Fleet(OtherProjectLocoId, "Other", null),
         ]);
@@ -102,7 +102,7 @@ internal sealed class MobileRuntimeProjectionTests
     [Test]
     public void ResolveAuthoritativeLocomotiveFleet_IgnoresAFleetOfAnotherProject()
     {
-        var fleet = _projection.ResolveAuthoritativeLocomotiveFleet([Fleet(OtherProjectLocoId, "Other", null)]);
+        var fleet = _projection.ResolveAuthoritativeLocomotiveFleet((LocomotiveFleetSnapshot[])[Fleet(OtherProjectLocoId, "Other", null)]);
 
         Assert.That(fleet, Is.Empty);
     }
@@ -110,9 +110,9 @@ internal sealed class MobileRuntimeProjectionTests
     [Test]
     public void ShouldCacheRemoteLocomotiveFleet_OnlyWhenItCoversTheProject()
     {
-        var partial = _projection.ShouldCacheRemoteLocomotiveFleet([Fleet(Br110Id, "BR 110", null)]);
+        var partial = _projection.ShouldCacheRemoteLocomotiveFleet((LocomotiveFleetSnapshot[])[Fleet(Br110Id, "BR 110", null)]);
         var complete = _projection.ShouldCacheRemoteLocomotiveFleet(
-            [Fleet(Br110Id, "BR 110", null), Fleet(Br211Id, "BR 211", null)]);
+            (LocomotiveFleetSnapshot[])[Fleet(Br110Id, "BR 110", null), Fleet(Br211Id, "BR 211", null)]);
 
         using (Assert.EnterMultipleScope())
         {
@@ -124,8 +124,8 @@ internal sealed class MobileRuntimeProjectionTests
     [Test]
     public async Task CacheRemoteData_PersistsForOfflineUseAndIgnoresEmptyLists()
     {
-        IReadOnlyList<LocomotiveFleetSnapshot> fleet = [Fleet(Br110Id, "BR 110", null)];
-        IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements = [new() { ElementId = Guid.NewGuid(), Name = "A1" }];
+        IReadOnlyList<LocomotiveFleetSnapshot> fleet = (LocomotiveFleetSnapshot[])[Fleet(Br110Id, "BR 110", null)];
+        IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements = (SignalBoxElementRuntimeSnapshot[])[new() { ElementId = Guid.NewGuid(), Name = "A1" }];
 
         await _projection.CacheRemoteLocomotiveFleet(fleet, CancellationToken.None).ConfigureAwait(false);
         await _projection.CacheRemoteSignalBoxElements(elements, CancellationToken.None).ConfigureAwait(false);
@@ -140,7 +140,7 @@ internal sealed class MobileRuntimeProjectionTests
     [Test]
     public void SignalBoxElements_UseTheCacheWithoutAPlanUntilItIsCleared()
     {
-        IReadOnlyList<SignalBoxElementRuntimeSnapshot> cached = [new() { ElementId = Guid.NewGuid(), Name = "A1" }];
+        IReadOnlyList<SignalBoxElementRuntimeSnapshot> cached = (SignalBoxElementRuntimeSnapshot[])[new() { ElementId = Guid.NewGuid(), Name = "A1" }];
         _projection.RestoreCachedSignalBoxElements(cached);
 
         var restored = _projection.GetBestAvailableSignalBoxElements();

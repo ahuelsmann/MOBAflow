@@ -111,7 +111,7 @@
                         </AppBarElementContainer>
                         <AppBarSeparator />
                         <AppBarButton
-                            Command="{x:Bind ViewModel.ResetJourneyCommand}"
+                            Command="{x:Bind ViewModel.JourneysPage.ResetJourneyCommand}"
                             Icon="Refresh"
                             Label="Reset" />
                     </CommandBar>

@@ -29,14 +29,14 @@ internal sealed partial class WorkflowsPage
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<WorkflowsPage>? _logger;
 
-    public MainWindowViewModel ViewModel { get; }
+    public WorkflowsPageViewModel ViewModel { get; }
 
     private double _workflowsExpandedWidth = 200;
     private double _actionsExpandedStarValue = 2;
     private double _propertiesExpandedStarValue = 1;
 
     public WorkflowsPage(
-        MainWindowViewModel viewModel,
+        WorkflowsPageViewModel viewModel,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<WorkflowsPage>? logger = null)

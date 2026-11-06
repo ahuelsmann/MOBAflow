@@ -36,9 +36,9 @@ internal sealed class RecordingFilterTests
                 RecordingReplayApplicability.ReplayApplicable)
         };
         var filter = new RecordingFilter(
-            categories: ["runtime"],
-            sources: ["z21"],
-            severities: ["warning"],
+            categories: (string[])["runtime"],
+            sources: (string[])["z21"],
+            severities: (string[])["warning"],
             entityKind: "locomotive",
             entityId: locomotiveId,
             text: "READY",
@@ -75,7 +75,7 @@ internal sealed class RecordingFilterTests
             RecordingReplayApplicability.DisplayOnly);
 
         // Act
-        var filtered = new RecordingFilter(text: "hidden-match").Apply([entry]);
+        var filtered = new RecordingFilter(text: "hidden-match").Apply((RecordingEntry[])[entry]);
 
         // Assert
         Assert.That(filtered, Is.Empty);
@@ -118,7 +118,7 @@ internal sealed class RecordingFilterTests
     public void EverySelectionMustMatchUsingOrdinalComparison(string category, string source, string severity, bool expected)
     {
         var entry = CreateEntry(1, category, source, severity, "Ready", Guid.NewGuid(), RecordingReplayApplicability.DisplayOnly);
-        var filter = new RecordingFilter(categories: ["unused", "runtime"], sources: ["unused", "z21"], severities: ["unused", "warning"]);
+        var filter = new RecordingFilter(categories: (string[])["unused", "runtime"], sources: (string[])["unused", "z21"], severities: (string[])["unused", "warning"]);
         Assert.That(filter.Matches(entry), Is.EqualTo(expected));
     }
 
@@ -181,7 +181,7 @@ internal sealed class RecordingFilterTests
         var first = CreateEntry(30, "runtime", "z21", "warning", "Ready", id, RecordingReplayApplicability.DisplayOnly);
         var excluded = CreateEntry(20, "other", "z21", "warning", "Ready", id, RecordingReplayApplicability.DisplayOnly);
         var last = CreateEntry(10, "runtime", "z21", "warning", "Ready", id, RecordingReplayApplicability.DisplayOnly);
-        var result = new RecordingFilter(categories: ["runtime"]).Apply([first, excluded, last]);
+        var result = new RecordingFilter(categories: (string[])["runtime"]).Apply((RecordingEntry[])[first, excluded, last]);
         Assert.That(result, Is.EqualTo(new[] { first, last }));
     }
 
@@ -208,7 +208,7 @@ internal sealed class RecordingFilterTests
             "runtime.state.changed",
             severity,
             null,
-            [new RecordingEntityReference("locomotive", entityId)],
+            (RecordingEntityReference[])[new RecordingEntityReference("locomotive", entityId)],
             document.RootElement,
             displayText,
             applicability);

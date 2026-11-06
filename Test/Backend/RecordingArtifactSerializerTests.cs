@@ -67,7 +67,7 @@ internal sealed class RecordingArtifactSerializerTests
     {
         // Arrange
         var validator = new RequiredStringPayloadValidator("runtime.state.changed", "state", RecordingReplayApplicability.ReplayApplicable);
-        var serializer = new RecordingArtifactSerializer([validator]);
+        var serializer = new RecordingArtifactSerializer((IRecordingPayloadValidator[])[validator]);
         var artifact = CreateArtifact("runtime.state.changed", """{"state":"ready"}""", RecordingReplayApplicability.ReplayApplicable);
         var serialized = serializer.SerializeToUtf8(artifact);
 
@@ -110,7 +110,7 @@ internal sealed class RecordingArtifactSerializerTests
     {
         // Arrange
         var validator = new RequiredStringPayloadValidator("runtime.state.changed", "state", RecordingReplayApplicability.DisplayOnly);
-        var serializer = new RecordingArtifactSerializer([validator]);
+        var serializer = new RecordingArtifactSerializer((IRecordingPayloadValidator[])[validator]);
         var serialized = serializer.SerializeToUtf8(
             CreateArtifact("runtime.state.changed", "{}", RecordingReplayApplicability.DisplayOnly));
 
@@ -341,7 +341,7 @@ internal sealed class RecordingArtifactSerializerTests
             "recorder.marker",
             "information",
             null,
-            [new RecordingEntityReference("locomotive", Guid.Parse("11111111-1111-1111-1111-111111111111"))],
+            (RecordingEntityReference[])[new RecordingEntityReference("locomotive", Guid.Parse("11111111-1111-1111-1111-111111111111"))],
             payload.RootElement,
             "Start",
             RecordingReplayApplicability.DisplayOnly);
@@ -354,7 +354,7 @@ internal sealed class RecordingArtifactSerializerTests
             "1.2.3",
             new RecordingProjectIdentity(Guid.Parse("22222222-2222-2222-2222-222222222222"), "Demo"),
             options ?? new RecordingArtifactOptions(),
-            [entry]);
+            (RecordingEntry[])[entry]);
     }
 
     private static RecordingArtifact CreateArtifact(
@@ -385,7 +385,7 @@ internal sealed class RecordingArtifactSerializerTests
             "1.2.3",
             null,
             new RecordingArtifactOptions(),
-            [entry]);
+            (RecordingEntry[])[entry]);
     }
 
     private sealed class RequiredStringPayloadValidator(

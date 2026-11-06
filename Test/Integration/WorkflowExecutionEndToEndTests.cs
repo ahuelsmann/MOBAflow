@@ -39,7 +39,7 @@ internal sealed class WorkflowExecutionEndToEndTests
     [Test]
     public async Task SimpleWorkflow_WithOneCommand_ShouldExecute()
     {
-        var workflow = CreateCommandWorkflow([new byte[] { 0x40, 0x00, 0x00, 0x00 }]);
+        var workflow = CreateCommandWorkflow((byte[][])[new byte[] { 0x40, 0x00, 0x00, 0x00 }]);
 
         var result = await ExecuteAsync(workflow);
 
@@ -53,7 +53,7 @@ internal sealed class WorkflowExecutionEndToEndTests
     [Test]
     public async Task ComplexWorkflow_WithMultipleActions_ShouldExecuteSequentially()
     {
-        var workflow = CreateCommandWorkflow([new byte[] { 0x01 }, new byte[] { 0x02 }, new byte[] { 0x03 }]);
+        var workflow = CreateCommandWorkflow((byte[][])[new byte[] { 0x01 }, new byte[] { 0x02 }, new byte[] { 0x03 }]);
 
         var result = await ExecuteAsync(workflow);
 
@@ -92,7 +92,7 @@ internal sealed class WorkflowExecutionEndToEndTests
     [Test]
     public async Task WorkflowCommandExecution_ShouldUpdateZ21Transport()
     {
-        var workflow = CreateCommandWorkflow([new byte[] { 0x21, 0x81, 0x00, 0xA0 }]);
+        var workflow = CreateCommandWorkflow((byte[][])[new byte[] { 0x21, 0x81, 0x00, 0xA0 }]);
         var initialPayloads = _fakeUdp.SentPayloads.Count;
 
         var result = await ExecuteAsync(workflow);
@@ -109,7 +109,7 @@ internal sealed class WorkflowExecutionEndToEndTests
     {
         var trace = new WorkflowTraceStore();
         _workflowService = new WorkflowService(TestWorkflowServices.Executor(), TestWorkflowServices.Dependencies(traceStore: trace));
-        var workflow = CreateCommandWorkflow([new byte[] { 1 }, new byte[] { 2 }]);
+        var workflow = CreateCommandWorkflow((byte[][])[new byte[] { 1 }, new byte[] { 2 }]);
         var project = new Project { Workflows = [workflow] };
         var sourceId = Guid.NewGuid();
         var result = await _workflowService.ExecuteAsync(new WorkflowExecutionRequest

@@ -37,19 +37,26 @@ on Windows and Linux.
 - Art Director owns routine product decisions inside the assigned scope and its delivery; important product goals,
   priorities and material UX decisions remain with the user. Chief Project Manager (formerly Issue Master) owns
   the single execution and integration queue. Technical Director coordinates technical resources and responsibilities
-  through that queue. Head of Quality, Communications Director, Documentation Lead and Head of DevOps deliver work
-  within their assigned roles. Masters hand work over directly and may exchange task-related messages with their
-  assigned team and Claude CLI in both directions. The user does not relay messages, inspect code or administer PRs.
-- Across all MOBAflow teams, Codex, Claude and Antigravity, run at most five centrally allocated larger tasks.
-  Before starting or resuming substantial work, obtain Chief Project Manager's current allocation in the single
-  queue. Five is a ceiling, not an instruction to fill unused places. Reconcile actual owners, processes and
-  remote CI; full capacity or unclear ownership blocks a new start. Keep one writer per worktree and serialize
-  review, fixes and publication for each exact comparison. Preserve existing executions and coordinate safe
-  stopping points with their owners; allocation never overrides scope, pauses or acceptance requirements.
-- Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
-  DevOps may independently consult the Head of UI/UX (Gemini Argon via Antigravity CLI) within assigned work,
-  without another human approval. Observe the same execution allocation and serialize callers using the verified
-  synchronous CLI contract in master coordination; PR reviews stay with fresh independent Claude sessions.
+  through that queue. Solution Architect (Claude) owns the technical solution design within assigned scope:
+  recommendations with trade-offs, architecture conformance of changes and the prepared decision basis for
+  fundamental architecture changes, which remain with the user. Head of Quality, Communications Director,
+  Documentation Lead and Head of DevOps deliver work within their assigned roles. Masters hand work over directly
+  and may exchange task-related messages with their assigned team and Claude CLI in both directions. The user does
+  not relay messages, inspect code or administer PRs.
+- Across all MOBAflow teams, Codex, Claude and Antigravity, deliver the prioritized issue together through
+  integration in one leading PR, including its documentation and wiki corrections. Other issues require Chief
+  Project Manager's explicit allocation after qualifying independence in purpose, files, behavior, baselines,
+  build graph and execution resources. There is no global one-task or five-task ceiling and no automatic PR per
+  master. Assign a Senior Developer as needed and a separate Project Manager only for a large or complex task;
+  follow the role naming in master coordination. Before substantial starts/resumes, reconcile actual owners,
+  processes and remote CI in the single queue. Unclear ownership or a concrete dependency/resource conflict
+  blocks the affected start. Keep one writer per worktree and serialize review, fixes and publication for each
+  exact comparison. Preserve existing executions and safe stopping points; allocation never overrides scope,
+  pauses or acceptance requirements.
+- Art Director, Chief Project Manager, Solution Architect, Head of Quality, Communications Director, Documentation
+  Lead and Head of DevOps may independently consult the Head of UI/UX (Gemini Argon via Antigravity CLI) within
+  assigned work, without another human approval. Observe the same execution allocation and serialize callers using
+  the verified synchronous CLI contract in master coordination; PR reviews stay with fresh independent Claude sessions.
 - Follow [master coordination](.github/instructions/master-coordination.instructions.md) for ownership,
   Claude review independence, merge evidence, automation and the decisions that still need the user.
 - Use its [handover evidence rules](.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)

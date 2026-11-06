@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.SignalR;
 using Moba.Contracts.Runtime;
 using Moba.MOBApi.Controllers;
 using Moba.MOBApi.Hubs;
+using Moba.MOBApi.ModelBinding;
 using Moba.MOBApi.Service;
 using Moq;
 using System.Net;
@@ -36,6 +38,52 @@ internal sealed class SolutionControllerTests
     {
         _cache = new SolutionCache();
         _snapshots = new RuntimeSnapshotCache();
+    }
+
+    [TestCase("")]
+    [TestCase(" \t ")]
+    [TestCase("first, second")]
+    public async Task HeaderBinding_PreservesTheFrameworksFirstValue(string firstValue)
+    {
+        var context = new DefaultModelBindingContext
+        {
+            ActionContext = new ActionContext { HttpContext = new DefaultHttpContext() },
+            ModelState = new ModelStateDictionary(),
+            ModelName = "X-MOBAflow-Solution-Path"
+        };
+        context.HttpContext.Request.Headers[context.ModelName] = new[] { firstValue, "later" };
+
+        await new FirstHeaderValueModelBinder().BindModelAsync(context).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.Result.IsModelSet, Is.True);
+            Assert.That(context.Result.Model, Is.EqualTo(firstValue));
+            Assert.That(context.ModelState.IsValid, Is.True);
+        }
+    }
+
+    [Test]
+    public async Task PutSolution_InvalidJsonDoesNotMutateCachesOrBroadcast()
+    {
+        var existingProject = Guid.NewGuid();
+        _cache.Set(ValidSolutionJson, "original path", "original project");
+        _cache.TryGet(out var originalEntry);
+        _snapshots.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot { ProjectId = existingProject }));
+        var remotes = new Mock<IRuntimeHubCallbacks>();
+        var controller = CreateController(_cache, IPAddress.Loopback, _snapshots, remotes);
+        SetRequestBody(controller, "not json");
+
+        var result = await controller.PutSolution(CancellationToken.None, "rejected path", "rejected project").ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            Assert.That(_cache.TryGet(out var entry), Is.True);
+            Assert.That(entry, Is.SameAs(originalEntry));
+            Assert.That(_snapshots.GetAll().Select(snapshot => snapshot.ProjectId), Is.EqualTo(new[] { existingProject }));
+        }
+        remotes.VerifyNoOtherCalls();
     }
 
     [Test]
