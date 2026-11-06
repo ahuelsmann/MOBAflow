@@ -158,7 +158,7 @@ public sealed partial class JourneyCounterProjectionTests
         journey.IsActive = true;
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
         using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
-            fixture.ViewModel.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
+            fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
         fixture.Runtime.Invocations.Clear();
 
         editor.Events.Single().Count = 9;
@@ -202,7 +202,7 @@ public sealed partial class JourneyCounterProjectionTests
         var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [first, second] }] });
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
-            fixture.ViewModel.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
+            fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
         fixture.ViewModel.CurrentSolutionPath = "projection-test.json";
         editor.Events.Single().CountText = "25";
         fixture.Runtime.Invocations.Clear();
