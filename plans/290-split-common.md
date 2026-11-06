@@ -116,11 +116,11 @@ RF-20 architecture rule for the boundary it creates.
 - **Merge churn:** moving many files conflicts with open PRs. Slices stay small, and slice 4 waits for #267/#281.
 - **Analyzer baselines:** moved diagnostics must move with their file, not be refreshed wholesale.
 - **Mutation coverage (slices 1 and 3):** the active Common lane mutates only `Common.csproj` and compiles
-  `Test/Common/**`. The 8 appearance and 2 mobile helpers and their 8 test files now live in `SharedUI`,
-  whose `shared-ui` lane is still `planned`, so these helpers are no longer mutation-tested. Their tests
-  still run in the portable and Windows suites. The Common lane baseline ran 1010 tests in #281 and 848 in
-  #295 CI at `64e199f1`; because the lane's inputs differ, the scores are not comparable. Thresholds,
-  exclusions and lanes are unchanged; activating a SharedUI lane is separate work.
+  `Test/Common/**`. The 8 appearance and 2 mobile helpers and their 8 test files now live in `SharedUI`.
+  While the `shared-ui` lane was `planned`, these helpers were not mutation-tested; since RF-09 step 4 (#410)
+  activated that lane, they are mutated through it. Their tests also run in the portable and Windows
+  suites. The Common lane baseline ran 1010 tests in #281 and 848 in #295 CI at `64e199f1`; because the
+  lane's inputs differ, the scores are not comparable. Common thresholds and exclusions are unchanged.
 
 ## Downstream sequence and completion
 

@@ -57,7 +57,7 @@ internal sealed partial class WagonsPageViewModelTests : IDisposable
     }
 
     [Test]
-    public void Layout_UsesPersistedDefaultsAndWritesOnlyRealChanges()
+    public void WagonLayout_UsesPersistedDefaultsAndWritesOnlyRealChanges()
     {
         using (Assert.EnterMultipleScope())
         {
@@ -136,7 +136,7 @@ internal sealed partial class WagonsPageViewModelTests : IDisposable
     [TestCase(true, "")]
     [TestCase(false, null)]
     [TestCase(false, "")]
-    public async Task BrowsePhoto_CancelledPickerLeavesModelAndStorageUntouched(bool passenger, string? path)
+    public async Task WagonBrowsePhoto_CancelledPickerLeavesModelAndStorageUntouched(bool passenger, string? path)
     {
         var wagon = AddWagon(passenger);
         _io.As<IFilePickerService>().Setup(value => value.BrowseForPhotoAsync()).ReturnsAsync(path);
@@ -200,7 +200,7 @@ internal sealed partial class WagonsPageViewModelTests : IDisposable
 
     [TestCase(true)]
     [TestCase(false)]
-    public void PhotoExplorer_UsesTheHostAdapterForTheResolvedPath(bool passenger)
+    public void WagonPhotoExplorer_UsesTheHostAdapterForTheResolvedPath(bool passenger)
     {
         var temporaryPhoto = Path.GetTempFileName();
         try
