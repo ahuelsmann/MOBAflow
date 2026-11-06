@@ -18,7 +18,7 @@ deliver assigned documentation/user guidance and GitHub/repository/CI infrastruc
 the same standing mandate. Technical transitions, confirmed fixes and ordinary PR administration do not need
 repeated human approval. Important product goals, priorities and material UX decisions, scope expansion,
 fundamental architecture changes, new costs/external commitments and explicitly required practical permissions
-or acceptance still go to the user.
+still go to the user.
 
 Across all MOBAflow teams, Codex, Claude and Antigravity, deliver the prioritized issue together through
 integration in one leading PR, including documentation and wiki corrections. Other issues need Chief Project
@@ -30,20 +30,21 @@ actual processes and remote CI. Unclear ownership or an unresolved dependency/re
 affected start. Keep one writer per worktree, serialize review/fix/publication for each comparison and preserve
 existing executions. Coordinate safe stopping points with owners.
 
-The supplier prepares the Draft with current checks, CI/Sonar and required actual acceptance. Chief Project
-Manager verifies handover readiness and the COO decides Ready and merge; independent review follows Ready, not the
-reverse. The existing Claude plan owns fresh independent Opus 5.5-or-higher review, a separate fixer, independent
-re-review after comparison changes and SHA-bound squash merge. Do not order a second review, create another
+The supplier prepares the Draft with current checks and CI/Sonar; checks not run stay recorded as not run. Chief
+Project Manager verifies handover readiness and the COO decides Ready and merge; independent review follows Ready,
+not the reverse. The existing Claude plan owns fresh independent Opus 5.5-or-higher review, a separate fixer,
+independent re-review after comparison changes and SHA-bound squash merge. Do not order a second review, create another
 automation or merge concurrently. Chief Project Manager independently verifies actual merge and resulting main;
 the delivery owner follows through to that outcome. Assigned work authorizes necessary team handovers, not
-unrelated features or overrides of stops. Tool permissions and existing quality/acceptance gates remain in effect.
+unrelated features or overrides of stops. Tool permissions and existing quality gates remain in effect.
 
 Since 2026-11-05 Claude also acts as Executive Assistant and as Senior Code Reviewer. The Executive Assistant is
 the COO's cloud session for portable work such as triage, status collection and documentation drafts; it has no
 allocation, Ready or merge authority of its own. The Senior Code Reviewer independently reviews PRs, branches and
 diffs with the `mobaflow-code-review` skill, reports findings ranked by severity, fixes or merges nothing unless
-asked and never reviews code written in the same session. Product goals, priorities, material UX decisions and
-the manual acceptance list (#365) stay with the user. See the role sections in
+asked and never reviews code written in the same session. Product goals, priorities and material UX decisions stay
+with the user. Since 2026-11-06 the user's personal acceptance is no Ready or merge gate; the user uses the apps
+and files feedback as ordinary issues at the user's priority. See the role sections in
 [master coordination](../.github/instructions/master-coordination.instructions.md#chief-operating-officer).
 
 Apply the [handover evidence rules](../.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
@@ -64,7 +65,7 @@ within assigned work, without another human approval. Coordinate task allocation
 contacts are serial and synchronous. This supersedes the earlier contact restriction for the two new masters.
 Use the verified contact and synchronous request/response contract in the
 [Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
-Its advice adds no approval gate and does not replace tests, UI acceptance or Claude PR reviews.
+Its advice adds no approval gate and does not replace tests or Claude PR reviews.
 
 ## Start in the correct checkout
 Use Git, PowerShell 7 (`pwsh`), Python 3.11+ and `rg` for development checks.
@@ -167,10 +168,10 @@ verification. No separate documentation API or App bot is activated.
 See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
 Create Draft PRs. Chief Project Manager verifies the current comparison, applicable CI, current-commit SonarCloud
-success with zero OPEN/CONFIRMED issues, actual acceptance, ownership and documentation impact; the COO decides
+success with zero OPEN/CONFIRMED issues, ownership and documentation impact; the COO decides
 Ready and merge. The existing Claude plan performs the subsequent independent review and merge under
-[master coordination](../.github/instructions/master-coordination.instructions.md). Main, local checks, prior PR
-commits and manual acceptance are separate evidence. Non-GitHub work, including separately authorized Sites
+[master coordination](../.github/instructions/master-coordination.instructions.md). Main, local checks and prior PR
+commits are separate evidence. Non-GitHub work, including separately authorized Sites
 review/publication and independent live verification, retains its own assigned route.
 
 ## Updating

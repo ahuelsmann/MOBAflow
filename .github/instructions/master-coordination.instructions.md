@@ -11,9 +11,9 @@ assignment includes the delivery steps below unless explicitly limited.
 
 ## Standing authority and limits
 
-- Complete assigned work through planning, implementation, relevant validation and a draft PR with current CI/Sonar
-  and required actual acceptance. Chief Project Manager verifies handover readiness; since 2026-11-05 the Chief
-  Operating Officer (Claude) decides Ready and merge within that allocation, as described
+- Complete assigned work through planning, implementation, relevant validation and a draft PR with current CI/Sonar;
+  checks not run stay recorded as not run. Chief Project Manager verifies handover readiness; since 2026-11-05 the
+  Chief Operating Officer (Claude) decides Ready and merge within that allocation, as described
   [below](#chief-operating-officer). The existing Claude plan then owns fresh independent review, separate
   fixes, independent re-review and SHA-bound squash merge; independent review is not a Ready prerequisite.
   Follow through to verified integration.
@@ -28,7 +28,9 @@ assignment includes the delivery steps below unless explicitly limited.
   available dependency is not a product assignment. Do not start adjacent features, follow-up slices or cleanup.
 - Preserve architecture, quality gates, secrets rules, tool permissions and GitHub protection. App/debugger/watch
   starts, device deployment, live railroad actions and firmware flashing still need explicit authorization.
-  Required manual acceptance cannot be invented, waived or reported as passed without evidence.
+  Since 2026-11-06 the human's personal acceptance is no gate for Ready or merge: the human uses the apps and files
+  feedback as ordinary issues. Checks not run and visual states not inspected stay recorded as not run or as a
+  limitation, never as passed; evidence cannot be invented.
 
 ## Chief Operating Officer
 
@@ -40,13 +42,14 @@ needs one, runs the checks before merge and decides Ready and merge. Only those 
 guide still says Chief Project Manager alone sets Ready or decides the merge, read it with this change. Queue
 ownership, prioritization and allocation do not move, and the COO opens no queue of its own.
 
-- Product goals, priorities, material UX decisions and the manual acceptance list in issue #365 remain with the
-  human. The COO prepares those decisions with a recommendation, alternatives and the smallest required decision.
+- Product goals, priorities and material UX decisions remain with the human, including the priority of feedback
+  from the human's own use. The COO prepares those decisions with a recommendation, alternatives and the smallest
+  required decision.
 - The COO starts no agent outside the current allocation and keeps one writer per worktree. Explicit pauses,
-  no-merge instructions, excluded slices and acceptance requirements remain binding.
+  no-merge instructions and excluded slices remain binding.
 - Before Ready the COO verifies the handover gates listed under [Ready handoff, integration and
   completion](#ready-handoff-integration-and-completion): exact head/base, current CI and current-commit Sonar
-  with zero OPEN/CONFIRMED PR issues, required actual acceptance, documentation/wiki impact and writer stop.
+  with zero OPEN/CONFIRMED PR issues, documentation/wiki impact and writer stop.
   Independent review follows Ready and is not its prerequisite.
 - Before merge the COO additionally verifies live head/base, mergeability, current required checks, the fresh
   independent review of that exact comparison, resolved threads and any active stop or no-merge restriction. The
@@ -72,7 +75,7 @@ and instruction edits and research that the COO delegates within Chief Project M
 
 | Owner | Responsibility |
 | --- | --- |
-| Human | Product goals, priorities, material user-experience choices, fundamental architecture changes, new costs/external commitments and authorized practical acceptance |
+| Human | Product goals, priorities, material user-experience choices, fundamental architecture changes, new costs/external commitments, explicit app/device/hardware authorizations and feedback from real use |
 | Chief Operating Officer (Claude, since 2026-11-05) | Overall project lead as described [below](#chief-operating-officer): deploy the agents within Chief Project Manager's allocation, one Senior Developer agent per issue, run the checks before merge and decide Ready and merge |
 | Executive Assistant (Claude cloud session) | Portable work delegated by the Chief Operating Officer as described [below](#executive-assistant); no allocation, Ready, merge or publication authority of its own |
 | Art Director | Clarify the outcome, coordinate the assigned team, complete planning/implementation, assess the result and hand it over |
@@ -89,14 +92,14 @@ and instruction edits and research that the COO delegates within Chief Project M
 
 The standing delivery mandate applies to each master within its human-assigned role and scope. Each task has
 one delivery owner and one writer per worktree. The delivery owner hands integration directly to Chief Project
-Manager with issue/scope, PR URL, worktree/branch, exact head/base, checks, acceptance requirements and restrictions.
+Manager with issue/scope, PR URL, worktree/branch, exact head/base, checks, remaining limits and restrictions.
 Include documentation/wiki impact and a confirmed writer stop in that handover. Chief Project Manager acknowledges
 ownership and verifies handover readiness; the Chief Operating Officer decides Ready and merge. The package
 remains allocated through the existing Claude plan and actual integration or an explicitly coordinated safe
 handoff. Other larger tasks need their own current allocation;
 spare capacity alone authorizes no start. Fixes go to one named writer; the user is not the messenger.
 
-Use one leading delivery PR per issue, including its documentation, wiki and acceptance corrections. Masters
+Use one leading delivery PR per issue, including its documentation and wiki corrections. Masters
 contribute to that delivery instead of opening a PR per role. Assign a Senior Developer when the implementation
 needs one; add a Project Manager only when the task's size or complexity needs separate coordination. Name these
 assignments `Senior Developer - Issue <number> <keyword>` and `Project Manager - Issue <number> <keyword>`.
@@ -117,7 +120,7 @@ or use a no-resume instruction to justify a competing writer.
   neither sending time nor sender success proves freshness, recipient takeover, stopped processes or completion.
   Claim each later state only with its actual evidence. A handover or writer stop does not free the task's slot.
 - Pass on complete evidence bound to its actual commit/comparison, scope and configuration, including applicable
-  checks, results, acceptance and remaining limits. Distinguish static, simulated, manual and device evidence.
+  checks, results and remaining limits. Distinguish static, simulated, manual and device evidence.
   Reuse still-valid evidence; refresh affected evidence when relevant changes or unresolved risks require it;
   do not rerun unchanged checks without such a reason or transfer old results to a changed comparison.
 - Provide the complete handover before the supplier session goes quiet. The supplier retains delivery
@@ -152,7 +155,7 @@ or use a no-resume instruction to justify a competing writer.
   restart or duplicate processes or cancel CI to make room. Resume only after the central reconciliation.
 - Technical Director coordinates resources and responsibilities through Chief Project Manager's queue without
   creating another queue, lock, permit or scheduling mechanism. Only the responsible owner changes existing
-  operational state. Allocated capacity does not expand scope or override explicit pauses or acceptance gates.
+  operational state. Allocated capacity does not expand scope or override explicit pauses or no-merge instructions.
 - Communicate primarily master to master. Short status, handover and blocker exchanges may continue while a
   larger task runs. Involve only the specialists needed for an allocated assignment; do not broadcast work,
   start unallocated specialists or generate acknowledgement loops.
@@ -170,8 +173,8 @@ between implementation approaches, and conformance of changes with the
   The SA prepares that decision: recommendation, alternatives and the smallest required decision.
 - Technical Director keeps coordinating resources and responsibilities through the existing queue; the SA owns the
   design content and advises delivery owners, implementers and reviewers on it. The SA creates no second queue.
-- SA advice is not a review or approval gate. It does not replace tests, required practical acceptance or the fresh
-  independent Claude PR review, and it grants no product, app, hardware, publication or merge authority.
+- SA advice is not a review or approval gate. It does not replace tests or the fresh independent Claude PR review,
+  and it grants no product, app, hardware, publication or merge authority.
 - Record design decisions that affect product behavior or several areas in Spec Kit artifacts under `specs/` or in
   the affected plan, per [Spec Kit governance](spec-kit-governance.instructions.md), not only in chat.
 - The SA may consult Head of UI/UX for a second opinion under the same contract as the other masters
@@ -294,8 +297,8 @@ The full path also works when the shell's PATH predates installation. On another
   Apply the active secrets-before-read policy to supplied context and delegated reads, including tracked,
   untracked and ignored files. A scanned worktree does not authorize reading elsewhere. Never send credentials
   in prompts or expose unrelated sensitive files; distinguish observations from assumptions.
-- Advice adds no universal review or approval gate and cannot replace tests, required practical acceptance or a
-  fresh independent Claude PR review. It grants no new product, app, hardware, publication or merge authority.
+- Advice adds no universal review or approval gate and cannot replace tests or a fresh independent Claude PR
+  review. It grants no new product, app, hardware, publication or merge authority.
   Preserve the named writer and Chief Project Manager's exclusive execution and integration queue. This shared
   CLI contact is advisory only: it does not implement, commit, push or open PRs. Implementation by the Head needs
   a separate explicit human assignment, central allocation and its own task worktree; consultation grants none.
@@ -308,7 +311,7 @@ message protocol.
 
 Chief Project Manager owns the central handover in its queue and coordinates the existing Claude plan there;
 since 2026-11-05 the [Chief Operating Officer](#chief-operating-officer) decides the Ready transition and the
-merge. The supplier hands over a Draft with exact head/base, scope, checks, current CI/Sonar, actual acceptance,
+merge. The supplier hands over a Draft with exact head/base, scope, checks and their limits, current CI/Sonar,
 documentation/wiki impact and writer stop. Verify applicable gates before Ready, including current-commit Sonar
 success with zero OPEN/CONFIRMED PR issues. Independent review follows Ready; it is not its prerequisite.
 
@@ -319,8 +322,8 @@ automatic merges. The existing Claude plan alone performs the subsequent review/
 
 Immediately before merge, verify live head/base, mergeability, current required checks, current-commit Sonar
 success and zero OPEN/CONFIRMED issues, independent Claude review, threads, real GitHub approval requirements,
-applicable repository rules, required manual acceptance and any active stop or no-merge restriction. Permitted
-skips are not executed tests; a private
+applicable repository rules and any active stop or no-merge restriction. Permitted skips are not executed tests;
+a private
 Claude review cannot manufacture a GitHub approval. Squash against the reviewed head without direct `main`
 pushes or protection bypass. A changed comparison requires refreshed checks, documentation assessment and fresh
 independent review. Chief Project Manager independently verifies actual merged status, merge commit and resulting
@@ -339,7 +342,7 @@ not confer publication authority or replace those phases.
   evidence that the prose matches the product.
 - Make required corrections within the assigned package. If scope or an unresolved dependency prevents them,
   Chief Project Manager assigns the concrete remaining work in the same queue; disclose the outstanding drift
-  rather than claiming complete documentation currency. Existing stops and acceptance gates still apply.
+  rather than claiming complete documentation currency. Existing stops still apply.
 - Reassess after behavior-changing review fixes and confirm the final account against actual integrated `main`.
   Preserve correct documentation, user-authored content and the limits of actual validation; infer no new user
   behavior from a structural refactoring. This rule creates no external wiki publication or new automation.
@@ -360,7 +363,7 @@ not confer publication authority or replace those phases.
   or a necessary human decision. Handle routine test failures, CI progress, findings and handovers internally.
   Do not ask the user to inspect code, administer a PR or relay messages.
 - Escalate product ambiguity, scope expansion, fundamental architecture changes, new costs/external commitments
-  and required app/device/hardware permission or practical acceptance. Diagnose ordinary technical problems first.
+  and required app/device/hardware permission. Diagnose ordinary technical problems first.
   Give a recommendation, alternatives and the smallest required decision; coordinate any change of active
   package with Chief Project Manager while waiting.
   Never ask to lower quality gates as a shortcut.
