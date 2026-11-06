@@ -328,16 +328,17 @@ public static class MobaWinUiServiceCollectionExtensions
             showPhotoInExplorer: fullPath => System.Diagnostics.Process.Start(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
                 $"/select,\"{fullPath}\"")));
+        services.AddSingleton(sp => new SolutionViewModelServices(
+            sp.GetRequiredService<IFilePickerService>(),
+            sp.GetRequiredService<ISoundPlayer>(),
+            sp.GetRequiredService<ILoggerFactory>()));
         services.AddSingleton(sp => new SolutionSession(
             sp.GetRequiredService<Solution>(),
             sp.GetRequiredService<ISolutionIoService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<IProjectRuntimeHost>(),
             sp.GetRequiredService<ILogger<SolutionSession>>(),
-            new SolutionViewModelServices(
-                sp.GetRequiredService<IFilePickerService>(),
-                sp.GetRequiredService<ActionExecutionContext>().SoundPlayer,
-                sp.GetRequiredService<ILoggerFactory>())));
+            sp.GetRequiredService<SolutionViewModelServices>()));
         services.AddSingleton<ISolutionSession>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<SolutionSession>());
@@ -357,16 +358,12 @@ public static class MobaWinUiServiceCollectionExtensions
             }));
         services.AddSingleton(sp => new WorkflowLibraryViewModel(
             sp.GetRequiredService<ISolutionSession>(),
-            sp.GetService<IDialogService>(),
-            new WorkflowValidator(),
-            sp.GetRequiredService<ILogger<WorkflowLibraryViewModel>>(),
-            new WorkflowLibraryRuntimeServices
-            {
-                WorkflowService = sp.GetRequiredService<IWorkflowService>(),
-                TraceStore = sp.GetRequiredService<IWorkflowTraceStore>(),
-                ExecutionContext = sp.GetRequiredService<ActionExecutionContext>(),
-                EventBus = sp.GetRequiredService<IEventBus>()
-            }));
+            sp.GetRequiredService<IDialogService>(),
+            sp.GetRequiredService<IWorkflowValidator>(),
+            sp.GetRequiredService<IWorkflowDryRunService>(),
+            sp.GetRequiredService<IWorkflowTraceStore>(),
+            sp.GetRequiredService<IEventBus>(),
+            sp.GetRequiredService<ILogger<WorkflowLibraryViewModel>>()));
         services.AddSingleton<StationsPageViewModel>();
         services.AddSingleton<WorkflowsPageViewModel>();
         services.AddSingleton<JourneysPageViewModel>();
@@ -404,10 +401,10 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<IProjectContext>(),
-            sp.GetService<ILogger<TrainControlViewModel>>(),
-            sp.GetService<IUiDispatcher>(),
+            sp.GetRequiredService<ILogger<TrainControlViewModel>>(),
+            sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<IEventBus>(),
-            functionAppearancePicker: sp.GetRequiredService<IFunctionAppearancePicker>(),
+            sp.GetRequiredService<IFunctionAppearancePicker>(),
             options: sp.GetRequiredService<TrainControlViewModelOptions>()));
 
         services.AddSingleton(sp => new MainWindow(

@@ -50,7 +50,7 @@ internal sealed partial class StationsPageViewModelTests : IDisposable
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);
-        _library = new WorkflowLibraryViewModel(_session);
+        _library = TestWorkflowLibraries.Create(_session);
         _page = CreatePage();
         _io.Invocations.Clear();
         _runtime.Invocations.Clear();
@@ -175,7 +175,7 @@ internal sealed partial class StationsPageViewModelTests : IDisposable
         var old = _page.SelectedProjectStation!;
         var platform = old.Platforms[0];
         _page.SelectedProjectStationPlatform = platform;
-        _session.SelectedProject = new ProjectViewModel(new Project());
+        _session.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         _io.Invocations.Clear();
         _runtime.Invocations.Clear();
         old.Name = "Old";

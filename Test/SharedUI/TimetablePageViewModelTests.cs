@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
@@ -312,7 +311,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
 
         try
         {
-            context.MainWindow.SelectedProject = new ProjectViewModel(nextProject);
+            context.MainWindow.SelectedProject = new ProjectViewModel(nextProject, TestViewModelServices.Default);
             context.ViewModel.FilterText = "Express";
 
             using (Assert.EnterMultipleScope())
@@ -436,7 +435,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
         var previousRefresh = context.ViewModel.RefreshAsync();
         if (switchProject)
         {
-            context.MainWindow.SelectedProject = new ProjectViewModel(nextProject);
+            context.MainWindow.SelectedProject = new ProjectViewModel(nextProject, TestViewModelServices.Default);
         }
         else
         {
@@ -724,7 +723,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
-            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, stationEventBus1),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtime.Object), dispatcher.Object),
             locomotiveSession1,
             Mock.Of<ILogger<MainWindowViewModel>>());

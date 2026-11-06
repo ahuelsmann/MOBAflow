@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+using Moba.Test.Helpers;
 using Moba.Domain;
 using Moba.SharedUI.Service;
 
@@ -10,7 +11,7 @@ internal sealed class MobileSolutionContextTests
     [Test]
     public void ApplySolution_SelectsActiveProject_ByName()
     {
-        var context = new MobileSolutionContext();
+        var context = new MobileSolutionContext(TestViewModelServices.Default);
         var solution = new Solution
         {
             Name = "Test",
@@ -37,7 +38,7 @@ internal sealed class MobileSolutionContextTests
     {
         var station = new Project { Name = "Station" };
         var yard = new Project { Name = "Yard" };
-        var context = new MobileSolutionContext();
+        var context = new MobileSolutionContext(TestViewModelServices.Default);
         context.ApplySolution(new Solution { Name = "Layout", Projects = [station, yard] }, "Station");
         context.SelectedProject = context.SolutionViewModel!.Projects.Single(project => project.Model.Id == yard.Id);
 

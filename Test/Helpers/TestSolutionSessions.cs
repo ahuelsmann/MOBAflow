@@ -28,7 +28,8 @@ internal static class TestSolutionSessions
             solutionIo ?? new NullSolutionIoService(),
             uiDispatcher,
             new SingleRuntimeProjectHost(runtimeConnection),
-            NullLogger<SolutionSession>.Instance);
+            NullLogger<SolutionSession>.Instance,
+            TestViewModelServices.Default);
 
     /// <summary>
     /// A project runtime host for ViewModel tests that routes snapshot updates to one runtime.

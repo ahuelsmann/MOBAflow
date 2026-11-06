@@ -113,6 +113,7 @@ public static class MobaBackendServiceCollectionExtensions
             SoundPlayer = sp.GetService<ISoundPlayer>()
         });
         services.TryAddSingleton<ActionExecutionContextFactory>();
+        services.TryAddSingleton<IWorkflowDryRunService, WorkflowDryRunService>();
         services.TryAddSingleton<IMobaRuntime>(sp => new MobaRuntimeService(
             new MobaRuntimeServiceDependencies
             {
