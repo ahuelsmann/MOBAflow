@@ -19,8 +19,9 @@ independent re-review and SHA-bound squash merge. Do not dispatch a second revie
 coordinates through that same queue. The Executive Assistant is the COO's cloud session for portable work without
 authority of its own. The Senior Code Reviewer reviews PRs, branches and diffs independently with the
 `mobaflow-code-review` skill, reports findings ranked by severity, fixes or merges nothing unless asked and never
-reviews code written in the same session. Product goals, priorities, material UX decisions and manual acceptance
-(#365) stay with the user. Each integration records its documentation and `docs/wiki/` impact, including
+reviews code written in the same session. Product goals, priorities and material UX decisions stay with the user;
+since 2026-11-06 the user's personal acceptance is no Ready or merge gate, and feedback from real use arrives as
+ordinary issues at the user's priority. Each integration records its documentation and `docs/wiki/` impact, including
 justified no-change results and reassessment after functional fixes.
 Use the guide's [handover evidence rules](.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
 for observed timestamps, actual takeover and delayed or blocked messages; sender success alone proves no handover.
