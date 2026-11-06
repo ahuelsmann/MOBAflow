@@ -149,18 +149,9 @@ public sealed partial class SignalBoxPropertiesControl
 
     private void UpdateMultiplexerOptions(SignalBoxPropertiesViewModel viewModel)
     {
-        MultiplexerComboBox.Items.Clear();
-        foreach (var option in viewModel.MultiplexerOptions)
-        {
-            MultiplexerComboBox.Items.Add(new ComboBoxItem
-            {
-                Content = option.DisplayName,
-                Tag = option.ArticleNumber
-            });
-        }
-
-        MultiplexerComboBox.SelectedItem = FindOption(
+        ApplyOptions(
             MultiplexerComboBox,
+            viewModel.MultiplexerOptions.Select(option => (option.ArticleNumber, option.DisplayName)),
             viewModel.SelectedMultiplexerArticleNumber);
     }
 
@@ -183,17 +174,59 @@ public sealed partial class SignalBoxPropertiesControl
         IReadOnlyList<SignalArticleOption> options,
         string? selectedArticle)
     {
-        comboBox.Items.Clear();
-        foreach (var option in options)
+        ApplyOptions(
+            comboBox,
+            options.Select(option => (option.ArticleNumber, option.DisplayName)),
+            selectedArticle);
+    }
+
+    // A selection publishes a change that refreshes this panel while the ComboBox is still inside its own
+    // SelectionChanged. WinUI rejects clearing its items there (COMException 0x8000FFFF, #402), so the items are only
+    // rebuilt when the options actually differ; otherwise only the selection is synchronized.
+    private static void ApplyOptions(
+        ComboBox comboBox,
+        IEnumerable<(string ArticleNumber, string DisplayName)> options,
+        string? selectedArticle)
+    {
+        var wanted = options.ToArray();
+        if (!HasItems(comboBox, wanted))
         {
-            comboBox.Items.Add(new ComboBoxItem
+            comboBox.Items.Clear();
+            foreach (var (articleNumber, displayName) in wanted)
             {
-                Content = option.DisplayName,
-                Tag = option.ArticleNumber
-            });
+                comboBox.Items.Add(new ComboBoxItem
+                {
+                    Content = displayName,
+                    Tag = articleNumber
+                });
+            }
         }
 
-        comboBox.SelectedItem = FindOption(comboBox, selectedArticle);
+        var selectedItem = FindOption(comboBox, selectedArticle);
+        if (!ReferenceEquals(comboBox.SelectedItem, selectedItem))
+        {
+            comboBox.SelectedItem = selectedItem;
+        }
+    }
+
+    private static bool HasItems(ComboBox comboBox, (string ArticleNumber, string DisplayName)[] options)
+    {
+        if (comboBox.Items.Count != options.Length)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < options.Length; index++)
+        {
+            if (comboBox.Items[index] is not ComboBoxItem item ||
+                !string.Equals(item.Tag?.ToString(), options[index].ArticleNumber, StringComparison.Ordinal) ||
+                !string.Equals(item.Content?.ToString(), options[index].DisplayName, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static ComboBoxItem? FindOption(ComboBox comboBox, string? articleNumber)
