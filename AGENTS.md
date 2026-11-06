@@ -29,22 +29,22 @@ on Windows and Linux.
 
 - A human-assigned implementation task includes planning, implementation, validation and a draft PR with current
   checks, CI/Sonar and required actual acceptance. Chief Project Manager verifies handover readiness; since
-  2026-11-05 the Chief Operating Officer (COO, Claude) owns the single execution and integration queue, the Ready
-  transition and the merge decision, and Chief Project Manager, Project Manager and Technical Director (Codex)
-  coordinate through that queue. The existing Claude plan then performs fresh independent review, separate fixes,
+  2026-11-05 the Chief Operating Officer (COO, Claude) decides Ready and merge within Chief Project Manager's
+  allocation. The existing Claude plan then performs fresh independent review, separate fixes,
   independent re-review and SHA-bound squash merge after all current gates pass. Review is not a Ready prerequisite.
   The delivery owner follows through to verified integration without repeated technical approvals.
   An explicit narrower assignment, pause, no-merge instruction or excluded follow-up remains binding;
   do not infer new product work.
-- Since 2026-11-05 Claude holds three further roles. The COO is the overall project lead: order of work, one Senior
-  Developer agent per issue, the checks before merge and the merge decision. The Executive Assistant is the COO's
-  cloud session for portable work and has no allocation, Ready or merge authority of its own. The Senior Code
-  Reviewer independently reviews PRs, branches and diffs with the `mobaflow-code-review` skill, reports findings
-  ranked by severity, fixes or merges nothing unless asked and never reviews code written in the same session.
-  Product goals, priorities, material UX decisions and manual acceptance (#365) stay with the user.
+- Since 2026-11-05 Claude holds three further roles. The COO is the overall project lead: within Chief Project
+  Manager's allocation it deploys the agents, one Senior Developer agent per issue, runs the checks before merge
+  and decides Ready and merge; queue and allocation stay with Chief Project Manager. The Executive Assistant is
+  the COO's cloud session for portable work and has no allocation, Ready or merge authority of its own. The
+  Senior Code Reviewer independently reviews PRs, branches and diffs with the `mobaflow-code-review` skill,
+  reports findings ranked by severity, fixes or merges nothing unless asked and never reviews code written in the
+  same session. Product goals, priorities, material UX decisions and manual acceptance (#365) stay with the user.
 - Art Director owns routine product decisions inside the assigned scope and its delivery; important product goals,
-  priorities and material UX decisions remain with the user. Chief Project Manager (formerly Issue Master) prioritizes
-  and qualifies work in the COO's queue. Technical Director coordinates technical resources and responsibilities
+  priorities and material UX decisions remain with the user. Chief Project Manager (formerly Issue Master) owns
+  the single execution and integration queue. Technical Director coordinates technical resources and responsibilities
   through that queue. Solution Architect (Claude) owns the technical solution design within assigned scope:
   recommendations with trade-offs, architecture conformance of changes and the prepared decision basis for
   fundamental architecture changes, which remain with the user. Head of Quality, Communications Director,
