@@ -77,8 +77,8 @@ change with no observable difference in behavior. Do not force tests to reject e
 
 ### Mutation testing with Stryker
 
-The active test groups are `Domain`, `Common`, `Speech.Base` and `Backend`. Their test projects include the same files as
-the regular test suite; new tests under `Test/Domain/` and `Test/Common/` are included automatically.
+The active test groups are `Domain`, `Common`, `Speech.Base`, `Backend`, `MOBApi` and `SharedUI`. Their test projects include
+the same files as the regular test suite; new tests under `Test/Domain/` and `Test/Common/` are included automatically.
 The Common group also runs the existing Backend tests `Recording*.cs` and
 `MultiplexerCommandResolverTests.cs` to verify shared Common contracts, and
 `Test/Speech/SpeechSettingsTests.cs` to verify the Common speech settings.
@@ -88,13 +88,18 @@ The Backend group mutates the `Backend` assembly with all tests under `Test/Back
 end-to-end fixture and `Test/Z21DccCommandDecoderTests.cs`; new tests under `Test/Backend/` are
 included automatically. Methods that Stryker puts into Safe Mode are excluded from the score; see
 [methods outside the Backend mutation gate](plans/366-coverage-mutation-ratchets.md#methods-outside-the-backend-mutation-gate).
-It runs on Linux, takes about 35 minutes and is the largest group.
+It runs on Linux and takes about 35 minutes.
 The portable Speech.Base group runs `AudioCacheTests.cs`, `CachedSpeechOutputTests.cs`,
 `SpeechOutputTests.cs` and `WaveAudioTests.cs` against the entire `Speech.Base` assembly.
 It runs on Linux in every code-relevant PR, using fake providers and players rather than
 real speech engines or audio devices. Stryker concurrency is limited to four test processes.
 Windows-only host integration cases stay in the ordinary Windows suite; Piper and SystemSpeech
 production code remain separate planned lanes.
+The MOBApi group mutates `MOBApi` with the in-process fixtures under `Test/MOBApi/` (about two minutes locally);
+the MOBApi process fixtures stay in the planned `api-process` group. The SharedUI group mutates `SharedUI` with
+every fixture under `Test/SharedUI/`, the track-layout architecture fixture parts that
+`SignalBoxPropertiesViewModelTests` extends, and the shared test helpers; it is the largest group (about 12,000 mutants
+and 63 minutes locally with four Stryker processes) and runs on Linux.
 Other groups are still marked as planned in [mutation-lanes.json](MutationTest/mutation-lanes.json)
 and are not currently protected by Stryker.
 
@@ -108,6 +113,7 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 ./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName backend -OutputPath artifacts/mutation/backend-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName api -OutputPath artifacts/mutation/api-local
+./scripts/Invoke-MutationLane.ps1 -LaneName shared-ui -OutputPath artifacts/mutation/shared-ui-local
 ```
 
 A mutation score is valid only with a passing ordinary test baseline. The same runner is used
@@ -119,9 +125,9 @@ Missing files, filters, stale reports and unexecuted mutations fail the job. A t
 cover a particular mutant is not forced to run against it; Stryker keeps its coverage-based selection.
 See [Build Performance](docs/BUILD-PERFORMANCE.md#active-mutation-lanes) for job selection.
 The quality pipeline runs selected groups and archives the HTML/JSON reports. The minimum scores
-are 90% for `Domain`, initially 65% for `Speech.Base`, 63% for `Common`, 47% for `Backend` and 44% for `MOBApi`. The
-Speech.Base, Common, Backend and MOBApi thresholds are baseline safeguards, not quality targets: close meaningful gaps first,
-then raise the thresholds as results improve. Surviving mutations, including scheduling-only
+are 90% for `Domain`, initially 65% for `Speech.Base`, 63% for `Common`, 47% for `Backend`, 44% for `MOBApi` and 37% for
+`SharedUI`. The Speech.Base, Common, Backend, MOBApi and SharedUI thresholds are baseline safeguards, not quality
+targets: close meaningful gaps first, then raise the thresholds as results improve. Surviving mutations, including scheduling-only
 `ConfigureAwait` changes, remain in the report and score; the lane does not hide them with exclusions.
 Extending coverage to the rest of the solution remains separate, unfinished work.
 
