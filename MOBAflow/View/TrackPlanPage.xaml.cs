@@ -1223,8 +1223,10 @@ public sealed partial class TrackPlanPage
             {
                 var outerAlpha = (byte)Math.Clamp(160 * pulseIntensity, 0, 255);
                 var innerAlpha = (byte)Math.Clamp(255 * pulseIntensity, 0, 255);
-                var outerGlow = Color.FromArgb(outerAlpha, 255, 180, 0);
-                var innerGlow = Color.FromArgb(innerAlpha, 255, 215, 0);
+                var outerGlow = ThemeResourceResolver.ResolveColorWithAlpha(
+                    this, "TrackPlanFeedbackGlowOuterBrush", Color.FromArgb(255, 255, 180, 0), outerAlpha);
+                var innerGlow = ThemeResourceResolver.ResolveColorWithAlpha(
+                    this, "TrackPlanFeedbackGlowInnerBrush", Color.FromArgb(255, 255, 215, 0), innerAlpha);
                 ds.DrawGeometry(worldGeometry, outerGlow, 14f, strokeStyle);
                 ds.DrawGeometry(worldGeometry, innerGlow, 8f, strokeStyle);
             }
@@ -1298,29 +1300,14 @@ public sealed partial class TrackPlanPage
     }
 
     /// <summary>
-    /// Returns (background, text, border) colors for track labels based on the page's current
-    /// ActualTheme. Dark mode uses near-black background + near-white text; light mode the inverse.
-    /// Both modes get a subtle border so labels pop off track strokes at any zoom level.
+    /// Returns (background, text, border) colors for track labels from the app theme: near-black on near-white in
+    /// Light, the inverse in Dark, and the Windows contrast colors in High Contrast. A subtle border lets labels pop
+    /// off track strokes at any zoom level.
     /// </summary>
-    private (Color Background, Color Text, Color Border) ResolveTrackLabelColors()
-    {
-        var theme = ActualTheme;
-        if (theme == ElementTheme.Default)
-            theme = Application.Current.RequestedTheme == ApplicationTheme.Dark ? ElementTheme.Dark : ElementTheme.Light;
-
-        if (theme == ElementTheme.Dark)
-        {
-            return (
-                Background: Color.FromArgb(235, 32, 32, 32),
-                Text: Color.FromArgb(255, 240, 240, 240),
-                Border: Color.FromArgb(160, 180, 180, 180));
-        }
-
-        return (
-            Background: Color.FromArgb(235, 250, 250, 250),
-            Text: Color.FromArgb(255, 20, 20, 20),
-            Border: Color.FromArgb(160, 40, 40, 40));
-    }
+    private (Color Background, Color Text, Color Border) ResolveTrackLabelColors() => (
+        Background: ThemeResourceResolver.ResolveColor(this, "TrackPlanLabelBackgroundBrush", Color.FromArgb(235, 250, 250, 250)),
+        Text: ThemeResourceResolver.ResolveColor(this, "TrackPlanLabelTextBrush", Color.FromArgb(255, 20, 20, 20)),
+        Border: ThemeResourceResolver.ResolveColor(this, "TrackPlanLabelBorderBrush", Color.FromArgb(160, 40, 40, 40)));
 
     /// <summary>
     /// Returns the world-space anchor position for a segment's label. Uses the centroid of the
@@ -1335,11 +1322,16 @@ public sealed partial class TrackPlanPage
             return;
 
         var analysis = TrackPlanValidationHelper.Analyze(_geometry, _plan.Segments, _plan.Connections);
-        var openPortFill = Color.FromArgb(160, 255, 185, 0);
-        var openPortStroke = Color.FromArgb(255, 255, 140, 0);
-        var overlapFill = Color.FromArgb(180, 232, 17, 35);
-        var overlapStroke = Color.FromArgb(255, 180, 0, 20);
-        var groupStroke = Color.FromArgb(220, 0, 120, 215);
+        var openPortFill = ThemeResourceResolver.ResolveColorWithAlpha(
+            this, "TrackPlanValidationOpenEndFillBrush", Color.FromArgb(255, 255, 185, 0), 160);
+        var openPortStroke = ThemeResourceResolver.ResolveColor(
+            this, "TrackPlanValidationOpenEndStrokeBrush", Color.FromArgb(255, 255, 140, 0));
+        var overlapFill = ThemeResourceResolver.ResolveColorWithAlpha(
+            this, "TrackPlanValidationOverlapFillBrush", Color.FromArgb(255, 232, 17, 35), 180);
+        var overlapStroke = ThemeResourceResolver.ResolveColor(
+            this, "TrackPlanValidationOverlapStrokeBrush", Color.FromArgb(255, 180, 0, 20));
+        var groupStroke = ThemeResourceResolver.ResolveColorWithAlpha(
+            this, "TrackPlanValidationGroupStrokeBrush", Color.FromArgb(255, 0, 120, 215), 220);
 
         if (analysis.ConnectedGroups.Count > 1)
         {
