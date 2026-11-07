@@ -7,9 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Interface;
-using Microsoft.Extensions.Logging;
 using Service;
-using Sound;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -33,13 +31,16 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     private readonly WorkflowActionViewModelFactory _actionViewModelFactory;
 
     /// <summary>Creates authoritative action wrappers in persisted list order.</summary>
-    public WorkflowViewModel(Workflow model, IFilePickerService? filePicker = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
+    /// <param name="model">The reusable workflow definition.</param>
+    /// <param name="services">File picker, preview player and logging for the action editors.</param>
+    public WorkflowViewModel(Workflow model, SolutionViewModelServices services)
     {
         ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(services);
         _model = model;
         _model.Actions ??= [];
         _actionViewModelFactory = new WorkflowActionViewModelFactory(
-            filePicker ?? new NullFilePickerService(), soundPlayer, loggerFactory?.CreateLogger<CommandViewModel>());
+            services.FilePicker, services.SoundPlayer, services.LoggerFactory);
         Actions = [];
         foreach (var action in model.Actions)
         {

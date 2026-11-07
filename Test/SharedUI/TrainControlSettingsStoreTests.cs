@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.TrainControl;
@@ -30,8 +31,8 @@ internal sealed class TrainControlSettingsStoreTests
     {
         var desktopLocomotive = Guid.NewGuid();
         var phoneLocomotive = Guid.NewGuid();
-        var desktop = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.WinUi);
-        var phone = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.Maui);
+        var desktop = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.WinUi, NullLogger.Instance);
+        var phone = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.Maui, NullLogger.Instance);
 
         desktop.RememberLocomotive(desktopLocomotive);
         phone.RememberLocomotive(phoneLocomotive);
@@ -49,7 +50,7 @@ internal sealed class TrainControlSettingsStoreTests
     [Test]
     public async Task SaveAsync_WritesRampStepsAndTheSelectionWhenGiven()
     {
-        var store = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.Maui);
+        var store = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.Maui, NullLogger.Instance);
         var locomotive = Guid.NewGuid();
         store.RememberLocomotive(locomotive);
 
@@ -69,7 +70,7 @@ internal sealed class TrainControlSettingsStoreTests
     [Test]
     public async Task SaveSeriesAsync_WritesSeriesAndVmax()
     {
-        var store = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.WinUi);
+        var store = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.WinUi, NullLogger.Instance);
 
         await store.SaveSeriesAsync("BR 103", 200).ConfigureAwait(false);
 
@@ -86,7 +87,7 @@ internal sealed class TrainControlSettingsStoreTests
         _settingsService
             .Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()))
             .ThrowsAsync(new IOException("Expected test failure"));
-        var store = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.WinUi);
+        var store = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.WinUi, NullLogger.Instance);
 
         Assert.That(
             async () =>

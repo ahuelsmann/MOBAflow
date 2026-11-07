@@ -8,6 +8,7 @@ using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
@@ -30,11 +31,20 @@ internal sealed partial class TestRollingStockPages : IDisposable
         var usage = CreateUsage(session, usageReader);
         _pages.Add(usage);
         var page = new LocomotivesPageViewModel(session, TestFileServices.Photos(files),
-            persistence.Object, new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, usage),
+            persistence.Object, new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, usage, CreateControl()),
             NullLogger<LocomotivesPageViewModel>.Instance, _ => { });
         _pages.Add(page);
         return page;
     }
+    private RuntimeLocomotiveControl CreateControl()
+    {
+        var snapshots = new Mock<IProjectRuntimeSnapshots>();
+        snapshots.SetupGet(value => value.Snapshots).Returns([]);
+        var control = new RuntimeLocomotiveControl(snapshots.Object, new Mock<IUiDispatcher>().Object);
+        _pages.Add(control);
+        return control;
+    }
+
     internal static LocomotiveTrainUsageViewModel CreateUsage(
         ISolutionSession session, ILocomotiveTrainRuntimeUsageReader? usageReader = null)
     {
@@ -77,14 +87,13 @@ internal sealed partial class TestRollingStockPages : IDisposable
         return page;
     }
     public StationsPageViewModel GetStationsPage(ISolutionSession session, IConnectionRuntime runtime,
-        ActionExecutionContext executionContext, IEventBus eventBus, IDialogService? dialogs = null)
+        IEventBus eventBus, IDialogService? dialogs = null)
     {
         var settings = new AppSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-        var library = new WorkflowLibraryViewModel(session, dialogs, new WorkflowValidator(),
-            runtimeServices: new WorkflowLibraryRuntimeServices { ExecutionContext = executionContext, EventBus = eventBus });
+        var library = TestWorkflowLibraries.Create(session, dialogs, eventBus: eventBus);
         _pages.Add(library);
         var page = new StationsPageViewModel(session, runtime, persistence.Object,
             new LayoutColumnWidthsViewModel(), library, NullLogger<StationsPageViewModel>.Instance);

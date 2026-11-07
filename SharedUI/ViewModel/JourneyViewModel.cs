@@ -26,9 +26,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     private readonly Journey _journey;
     private readonly Project _project;
 
-    // Services
-    private readonly IUiDispatcher? _dispatcher;
-
     // Runtime State
     private readonly JourneySessionState _state;
     private ObservableCollection<StationViewModel>? _stations;
@@ -40,8 +37,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     public JourneyViewModel(
         Journey journey,
         Project project,
-        JourneySessionState state,
-        IUiDispatcher? dispatcher = null)
+        JourneySessionState state)
     {
         ArgumentNullException.ThrowIfNull(journey);
         ArgumentNullException.ThrowIfNull(project);
@@ -49,7 +45,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         _journey = journey;
         _project = project;
         _state = state;
-        _dispatcher = dispatcher;
 
         // Initialize Stations collection
         RefreshStations();
@@ -59,8 +54,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// Initializes a new instance of the <see cref="JourneyViewModel"/> class for UI-only scenarios.
     /// A dummy session state is created that does not receive runtime updates.
     /// </summary>
-    public JourneyViewModel(Journey journey, Project project, IUiDispatcher? dispatcher = null)
-        : this(journey, project, new JourneySessionState { JourneyId = journey.Id }, dispatcher)
+    public JourneyViewModel(Journey journey, Project project)
+        : this(journey, project, new JourneySessionState { JourneyId = journey.Id })
     {
     }
 

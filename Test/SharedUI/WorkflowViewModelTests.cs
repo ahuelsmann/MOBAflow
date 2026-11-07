@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Moba.Domain;
 using Moba.Domain.Enum;
 using Moba.Backend.Service;
@@ -23,7 +24,7 @@ internal class WorkflowViewModelTests
             ?? throw new InvalidOperationException("Test workflow could not be loaded.");
         var original = workflow.Actions[0];
         var project = new Project { Workflows = [workflow] };
-        var editor = new ProjectViewModel(project).Workflows.Single();
+        var editor = new ProjectViewModel(project, TestViewModelServices.Default).Workflows.Single();
         var invalid = editor.Actions.Single();
 
         editor.AddActionCommand.Execute(ActionType.ChangeJourneyStop);
@@ -49,7 +50,7 @@ internal class WorkflowViewModelTests
     [Test]
     public void NewlyAddedScriptWithEmptySettings_StillHasEditableTypedPayload()
     {
-        var editor = new WorkflowViewModel(new Workflow());
+        var editor = new WorkflowViewModel(new Workflow(), TestViewModelServices.Default);
         editor.AddActionCommand.Execute(ActionType.ExecuteScript);
         Assert.That(editor.Actions.Single(), Is.TypeOf<PowerShellActionViewModel>());
     }
@@ -66,7 +67,7 @@ internal class WorkflowViewModelTests
             Name = "Test Workflow",
             Description = "Test Description",
         };
-        _viewModel = new WorkflowViewModel(_workflow);
+        _viewModel = new WorkflowViewModel(_workflow, TestViewModelServices.Default);
     }
 
     [Test]
@@ -118,7 +119,7 @@ internal class WorkflowViewModelTests
             Audio = new AudioActionPayload { FilePath = "gong.wav" }
         });
 
-        var vm = new WorkflowViewModel(workflow);
+        var vm = new WorkflowViewModel(workflow, TestViewModelServices.Default);
 
         Assert.That(vm.Actions, Has.Count.EqualTo(1));
     }
@@ -135,7 +136,7 @@ internal class WorkflowViewModelTests
             PowerShell = new PowerShellActionPayload { ScriptPath = "script.ps1" }
         });
 
-        var vm = new WorkflowViewModel(workflow);
+        var vm = new WorkflowViewModel(workflow, TestViewModelServices.Default);
 
         Assert.That(vm.Actions.Single(), Is.TypeOf<PowerShellActionViewModel>());
     }
@@ -144,7 +145,7 @@ internal class WorkflowViewModelTests
     public void AddActionCommand_WithTrainDestinationDisplay_CreatesDisplayViewModel()
     {
         var workflow = new Workflow();
-        var vm = new WorkflowViewModel(workflow);
+        var vm = new WorkflowViewModel(workflow, TestViewModelServices.Default);
 
         vm.AddActionCommand.Execute(ActionType.TrainDestinationDisplay);
 
@@ -179,7 +180,7 @@ internal class WorkflowViewModelTests
             Command = new CommandActionPayload()
         };
         var workflow = new Workflow { Actions = [action] };
-        var viewModel = new WorkflowViewModel(workflow);
+        var viewModel = new WorkflowViewModel(workflow, TestViewModelServices.Default);
         var actionsChanged = 0;
         viewModel.PropertyChanged += (_, args) =>
         {
@@ -207,7 +208,7 @@ internal class WorkflowViewModelTests
         var project = new Project { Workflows = [workflow] };
 
         // Act
-        var projectViewModel = new ProjectViewModel(project);
+        var projectViewModel = new ProjectViewModel(project, TestViewModelServices.Default);
         var firstAccess = projectViewModel.Workflows.Single();
         var secondAccess = projectViewModel.Workflows.Single();
 
@@ -223,7 +224,7 @@ internal class WorkflowViewModelTests
     public void ProjectViewModel_RefreshPreservesAuthoritativeWorkflowWrapper()
     {
         var workflow = new Workflow { Name = "Shared workflow" };
-        var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] });
+        var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] }, TestViewModelServices.Default);
         var original = projectViewModel.Workflows.Single();
 
         projectViewModel.Refresh();

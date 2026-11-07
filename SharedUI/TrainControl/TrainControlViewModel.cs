@@ -47,8 +47,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 {
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
-    private readonly ILogger<TrainControlViewModel>? _logger;
-    private readonly IUiDispatcher? _uiDispatcher;
+    private readonly ILogger<TrainControlViewModel> _logger;
+    private readonly IUiDispatcher _uiDispatcher;
     private readonly IEventBus _eventBus;
     private readonly List<Guid> _eventBusSubscriptions = [];
 
@@ -61,7 +61,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private readonly bool _hybridRuntimeSnapshots;
     private readonly TrainControlSettingsStore _settingsStore;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
-    private readonly IFunctionAppearancePicker? _functionAppearancePicker;
+    private readonly IFunctionAppearancePicker _functionAppearancePicker;
     private readonly SpeedController _speedController = new(TimeProvider.System);
     private readonly FunctionPanel _functionPanel = new(TimeProvider.System);
 
@@ -206,7 +206,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             if (MaxSpeedStep == 0)
             {
-                _logger?.LogWarning("MaxSpeedStep is 0! Returning 0 km/h. SpeedSteps={SpeedSteps}", SpeedSteps);
+                _logger.LogWarning("MaxSpeedStep is 0! Returning 0 km/h. SpeedSteps={SpeedSteps}", SpeedSteps);
                 return 0;
             }
 
@@ -214,7 +214,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
             if (result > SpeedGaugeMaxKmh + 1)
             {
-                _logger?.LogWarning(
+                _logger.LogWarning(
                     "SpeedKmh calculation resulted in unrealistic value: {Result} km/h. " +
                     "Speed={Speed}, MaxSpeedStep={MaxSpeedStep}, SpeedGaugeMaxKmh={GaugeMax}, SpeedSteps={SpeedSteps}",
                     result, Speed, MaxSpeedStep, SpeedGaugeMaxKmh, SpeedSteps);
@@ -479,7 +479,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     // === Journey & Station Information (for Timetable Display) ===
 
-    private readonly IProjectContext? _projectContext;
+    private readonly IProjectContext _projectContext;
     private JourneyViewModel? _observedJourneyViewModel;
     private ProjectViewModel? _observedProjectForLocomotives;
 
@@ -635,31 +635,35 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <param name="runtimeSnapshots">Read access to runtime snapshots.</param>
     /// <param name="runtimeCommandGateway">Route for locomotive commands (local, recorded or remote).</param>
     /// <param name="settingsService">Service used to persist train control options.</param>
-    /// <param name="projectContext">Optional project context used to access the current project and journey.</param>
-    /// <param name="logger">Optional logger for diagnostics.</param>
-    /// <param name="uiDispatcher">Optional UI dispatcher for updating UI-bound properties.</param>
+    /// <param name="projectContext">Project context used to access the current project and journey.</param>
+    /// <param name="logger">Logger for diagnostics.</param>
+    /// <param name="uiDispatcher">UI dispatcher for updating UI-bound properties.</param>
     /// <param name="eventBus">Event bus for runtime snapshot updates.</param>
+    /// <param name="functionAppearancePicker">Picker for locomotive function appearance editing; MAUI registers <see cref="NullFunctionAppearancePicker"/>.</param>
     /// <param name="useRemoteRuntimeSnapshots">When true, locomotive state is driven by MOBAflow snapshots via MOBApi.</param>
     /// <param name="options">Optional host-specific options; overrides <paramref name="useRemoteRuntimeSnapshots"/> when set.</param>
     /// <param name="mobileRuntimeCoordinator">Optional MOBAsmart coordinator for hybrid local/remote snapshot routing.</param>
-    /// <param name="functionAppearancePicker">Optional WinUI picker for locomotive function appearance editing.</param>
     public TrainControlViewModel(
         IRuntimeSnapshotProvider runtimeSnapshots,
         IRuntimeCommandGateway runtimeCommandGateway,
         ISettingsService settingsService,
-        IProjectContext? projectContext = null,
-        ILogger<TrainControlViewModel>? logger = null,
-        IUiDispatcher? uiDispatcher = null,
-        IEventBus eventBus = null!,
+        IProjectContext projectContext,
+        ILogger<TrainControlViewModel> logger,
+        IUiDispatcher uiDispatcher,
+        IEventBus eventBus,
+        IFunctionAppearancePicker functionAppearancePicker,
         bool useRemoteRuntimeSnapshots = false,
         TrainControlViewModelOptions? options = null,
-        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
-        IFunctionAppearancePicker? functionAppearancePicker = null)
+        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null)
     {
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
         ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
         ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(projectContext);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(functionAppearancePicker);
         _runtimeSnapshots = runtimeSnapshots;
         _locomotiveRoster = new LocomotiveRoster(runtimeSnapshots, projectContext);
         _functionAppearancePicker = functionAppearancePicker;
@@ -700,13 +704,10 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(_ => OnSolutionSynced()));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<LocomotiveFleetUpdatedEvent>(OnLocomotiveFleetUpdated));
 
-        if (_projectContext != null)
-        {
-            _projectContext.PropertyChanged += OnProjectContextPropertyChanged;
-            AttachObservedProjectLocomotives();
-            UpdateJourneyFromProjectContext();
-            RefreshLocomotiveList();
-        }
+        _projectContext.PropertyChanged += OnProjectContextPropertyChanged;
+        AttachObservedProjectLocomotives();
+        UpdateJourneyFromProjectContext();
+        RefreshLocomotiveList();
 
         if (_mobileRuntimeCoordinator != null)
         {
@@ -763,14 +764,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             }
         }
 
-        if (_uiDispatcher != null)
-        {
-            _uiDispatcher.InvokeOnUi(ApplyRefresh);
-        }
-        else
-        {
-            ApplyRefresh();
-        }
+        _uiDispatcher.InvokeOnUi(ApplyRefresh);
     }
 
     private void ApplyFleetMerge(LocomotiveRosterMerge merge)
@@ -846,11 +840,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         _eventBusSubscriptions.Clear();
 
-        if (_projectContext != null)
-        {
-            _projectContext.PropertyChanged -= OnProjectContextPropertyChanged;
-        }
-
+        _projectContext.PropertyChanged -= OnProjectContextPropertyChanged;
         DetachObservedProjectLocomotives();
         DetachObservedJourney();
         _speedController.Dispose();
@@ -883,7 +873,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private void AttachObservedProjectLocomotives()
     {
         DetachObservedProjectLocomotives();
-        _observedProjectForLocomotives = _projectContext?.SelectedProject;
+        _observedProjectForLocomotives = _projectContext.SelectedProject;
         if (_observedProjectForLocomotives != null)
         {
             _observedProjectForLocomotives.Locomotives.CollectionChanged += OnProjectLocomotivesCollectionChanged;
@@ -911,7 +901,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     private void UpdateJourneyFromProjectContext()
     {
-        if (_projectContext?.SelectedJourney == null)
+        if (_projectContext.SelectedJourney == null)
         {
             DetachObservedJourney();
             CurrentJourney = null;
@@ -1040,7 +1030,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     private Locomotive? GetCurrentLocomotive()
     {
-        var project = _projectContext?.SelectedProject?.Model;
+        var project = _projectContext.SelectedProject?.Model;
         if (project?.Locomotives != null)
         {
             var fromProject = project.Locomotives.FirstOrDefault(
@@ -1113,7 +1103,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
 
         NotifyAllFunctionAppearanceChanged();
-        QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
+        QueueBackgroundTask(_projectContext.SaveSolutionInternalAsync(), "Auto-save solution");
         return true;
     }
 
@@ -1240,6 +1230,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         RefreshLocomotiveCommandCanExecute();
         StatusMessage = isConnected ? "Z21 Connected" : "Z21 Disconnected";
+
+        // A locomotive selected while disconnected was not requested; request it now, as a new selection would.
+        if (isConnected && LocoAddress is >= 1 and <= 9999)
+        {
+            QueueBackgroundTask(RequestLocoInfoAsync(), "Request locomotive info");
+        }
     }
 
     private void ApplyLocomotiveState(LocomotiveRuntimeSnapshot locomotiveState)
@@ -1317,7 +1313,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Failed to request loco info for {Address}", LocoAddress);
+            _logger.LogWarning(ex, "Failed to request loco info for {Address}", LocoAddress);
             StatusMessage = $"Error: {ex.Message}";
         }
     }
@@ -1401,7 +1397,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             IsRamping = true;
             StatusMessage = "Ramping down for direction change...";
-            _logger?.LogDebug("Direction change: ramping from {Speed} to 0", Speed);
+            _logger.LogDebug("Direction change: ramping from {Speed} to 0", Speed);
 
             // Ramp down to 0 (in old direction - but IsForward already changed!)
             // We need to send commands with the OLD direction until we reach 0
@@ -1417,18 +1413,18 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
             // Ramp back up to target speed in new direction
             StatusMessage = "Ramping up in new direction...";
-            _logger?.LogDebug("Direction change: ramping from 0 to {Speed}", targetSpeed);
+            _logger.LogDebug("Direction change: ramping from 0 to {Speed}", targetSpeed);
             await RampSpeedAsync(0, targetSpeed, newDirection, token);
 
             StatusMessage = $"Loco {LocoAddress}: {Speed} {(newDirection ? "forward" : "backward")}";
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            _logger?.LogDebug("Ramp operation cancelled");
+            _logger.LogDebug(ex, "Ramp operation cancelled");
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Error during direction change ramp");
+            _logger.LogError(ex, "Error during direction change ramp");
             StatusMessage = $"Error: {ex.Message}";
         }
         finally
@@ -1502,12 +1498,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             await SendLocomotiveDriveAsync(LocoAddress, Speed, IsForward);
             StatusMessage = $"Loco {LocoAddress}: {Speed} {(IsForward ? "FWD" : "REV")}";
-            _logger?.LogDebug("Drive command sent: Loco {Address}, Speed {Speed}, Forward {Forward}",
+            _logger.LogDebug("Drive command sent: Loco {Address}, Speed {Speed}, Forward {Forward}",
                 LocoAddress, Speed, IsForward);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to send drive command");
+            _logger.LogError(ex, "Failed to send drive command");
             StatusMessage = $"Error: {ex.Message}";
         }
     }
@@ -1525,7 +1521,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [RelayCommand]
     private async Task EditFunctionAppearanceAsync(int functionIndex)
     {
-        if (_functionAppearancePicker is null || functionIndex is < 0 or > 31)
+        if (functionIndex is < 0 or > 31)
         {
             return;
         }
@@ -1556,7 +1552,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Function symbol selection failed for F{FunctionIndex}", functionIndex);
+            _logger.LogWarning(ex, "Function symbol selection failed for F{FunctionIndex}", functionIndex);
         }
     }
 
@@ -1576,11 +1572,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
             await _runtimeCommandGateway.SetLocomotiveFunctionAsync(LocoAddress, functionNumber, newState);
             StatusMessage = $"F{functionNumber}: {(newState ? "ON" : "OFF")}";
-            _logger?.LogDebug("F{Function} toggled: {State}", functionNumber, newState);
+            _logger.LogDebug("F{Function} toggled: {State}", functionNumber, newState);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to toggle F{Function}", functionNumber);
+            _logger.LogError(ex, "Failed to toggle F{Function}", functionNumber);
             StatusMessage = $"Error: {ex.Message}";
         }
     }
@@ -1613,15 +1609,15 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
             await SendAllFunctionsOffAsync(token).ConfigureAwait(false);
             StatusMessage = $"Loco {LocoAddress}: all functions OFF";
-            _logger?.LogDebug("All functions turned off for loco {Address}", LocoAddress);
+            _logger.LogDebug("All functions turned off for loco {Address}", LocoAddress);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            _logger?.LogDebug("All-functions-off cancelled for loco {Address}", LocoAddress);
+            _logger.LogDebug(ex, "All-functions-off cancelled for loco {Address}", LocoAddress);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to turn off all functions for loco {Address}", LocoAddress);
+            _logger.LogError(ex, "Failed to turn off all functions for loco {Address}", LocoAddress);
             StatusMessage = $"Error: {ex.Message}";
         }
         finally
@@ -1700,14 +1696,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             }
         }
 
-        if (_uiDispatcher != null)
-        {
-            _uiDispatcher.InvokeOnUi(ApplyReset);
-        }
-        else
-        {
-            ApplyReset();
-        }
+        _uiDispatcher.InvokeOnUi(ApplyReset);
     }
 
     private Task SendAllFunctionsOffAsync(CancellationToken cancellationToken) =>
@@ -1854,7 +1843,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         if (IsParkingBrakeEnabled)
         {
             IsParkingBrakeEnabled = false;
-            _logger?.LogDebug("Bremse gelöst");
+            _logger.LogDebug("Bremse gelöst");
         }
         else
         {
@@ -1863,7 +1852,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             _skipSpeedChangeHandler = false;
             await SendDriveCommandAsync();
             IsParkingBrakeEnabled = true;
-            _logger?.LogDebug("Bremse angelegt, Geschwindigkeit 0");
+            _logger.LogDebug("Bremse angelegt, Geschwindigkeit 0");
         }
     }
 
@@ -1893,53 +1882,26 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         if (!completed)
         {
-            if (_uiDispatcher != null)
-                _uiDispatcher.InvokeOnUi(() => { DoorReleaseBlinkOpacity = 1.0; IsDoorReleaseBlinking = false; IsDoorBlocked = false; });
-            else
-            {
-                DoorReleaseBlinkOpacity = 1.0;
-                IsDoorReleaseBlinking = false;
-                SetDoorBlocked(false);
-            }
+            _uiDispatcher.InvokeOnUi(() => { DoorReleaseBlinkOpacity = 1.0; IsDoorReleaseBlinking = false; IsDoorBlocked = false; });
             return;
         }
 
-        if (_uiDispatcher != null)
-        {
-            _uiDispatcher.InvokeOnUi(() =>
-            {
-                IsDoorReleaseLocked = IsDoorReleaseLockedNext;
-                IsDoorReleaseBlinking = false;
-                DoorReleaseBlinkOpacity = 1.0;
-                IsDoorBlocked = false;
-            });
-        }
-        else
+        _uiDispatcher.InvokeOnUi(() =>
         {
             IsDoorReleaseLocked = IsDoorReleaseLockedNext;
             IsDoorReleaseBlinking = false;
             DoorReleaseBlinkOpacity = 1.0;
-            SetDoorBlocked(false);
-        }
+            IsDoorBlocked = false;
+        });
 
-        _logger?.LogDebug("Türfreigabe {State}", IsDoorReleaseLocked ? "gesperrt" : "freigegeben");
+        _logger.LogDebug("Türfreigabe {State}", IsDoorReleaseLocked ? "gesperrt" : "freigegeben");
     }
 
-    private void SetDoorReleaseBlinkOpacity(double opacity)
-    {
-        if (_uiDispatcher != null)
-            _uiDispatcher.InvokeOnUi(() => DoorReleaseBlinkOpacity = opacity);
-        else
-            DoorReleaseBlinkOpacity = opacity;
-    }
+    private void SetDoorReleaseBlinkOpacity(double opacity) =>
+        _uiDispatcher.InvokeOnUi(() => DoorReleaseBlinkOpacity = opacity);
 
-    private void SetDoorBlocked(bool value)
-    {
-        if (_uiDispatcher != null)
-            _uiDispatcher.InvokeOnUi(() => IsDoorBlocked = value);
-        else
-            IsDoorBlocked = value;
-    }
+    private void SetDoorBlocked(bool value) =>
+        _uiDispatcher.InvokeOnUi(() => IsDoorBlocked = value);
 
     /// <summary>
     /// Emergency stop for the current locomotive.
@@ -1953,11 +1915,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             Speed = 0;
             await SendLocomotiveDriveAsync(LocoAddress, 0, IsForward);
             StatusMessage = $"[STOP] Emergency stop - Loco {LocoAddress}";
-            _logger?.LogWarning("Emergency stop executed for loco {Address}", LocoAddress);
+            _logger.LogWarning("Emergency stop executed for loco {Address}", LocoAddress);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to execute emergency stop");
+            _logger.LogError(ex, "Failed to execute emergency stop");
             StatusMessage = $"Error: {ex.Message}";
         }
     }
@@ -2015,7 +1977,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to stop locomotive");
+            _logger.LogError(ex, "Failed to stop locomotive");
             StatusMessage = $"Error: {ex.Message}";
         }
     }
@@ -2037,7 +1999,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         var targetStep = TrainControlDccSpeed.KmhToSpeedStep(clampedKmh, SpeedGaugeMaxKmh, MaxSpeedStep);
         var maxSpeed = CanIncreaseSpeed ? MaxSpeedStep : Speed;
         Speed = Math.Clamp(targetStep, 0, maxSpeed);
-        _logger?.LogDebug("Speed preset set to {PresetKmh} km/h (step {Step})", clampedKmh, Speed);
+        _logger.LogDebug("Speed preset set to {PresetKmh} km/h (step {Step})", clampedKmh, Speed);
     }
 
     /// <summary>
@@ -2071,7 +2033,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         PeakMainCurrent = 0;
         PeakTemperature = 0;
-        _logger?.LogInformation("Peak current and peak temperature reset");
+        _logger.LogInformation("Peak current and peak temperature reset");
     }
 
     // === Runtime Projection ===
@@ -2104,7 +2066,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         PeakMainCurrent = telemetry.PeakMainCurrent;
         PeakTemperature = telemetry.PeakTemperature;
 
-        _logger?.LogDebug(
+        _logger.LogDebug(
             "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +
             "ProgCurrent={ProgCurrent}mA, SupplyVoltage={SupplyVoltage}mV, Temperature={Temperature}°C",
             MainTrackCurrent, FilteredMainCurrent, PeakMainCurrent, ProgTrackCurrent, SupplyVoltage, Temperature);
@@ -2117,6 +2079,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        task.Observe(ex => _logger?.LogWarning(ex, "{OperationName} failed", operationName));
+        task.Observe(ex => _logger.LogWarning(ex, "{OperationName} failed", operationName));
     }
 }

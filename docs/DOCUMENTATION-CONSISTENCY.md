@@ -34,8 +34,8 @@ surrounding-prose preservation, malformed-input and path protections.
    needed; one writer retains ownership until an explicit handover. Do not open
    a separate documentation slice PR for the same issue.
 3. Give Chief Project Manager the current head/base, documentation/wiki impact,
-   relevant checks, actual acceptance, remaining limits and confirmed writer end.
-   Chief Project Manager alone qualifies the draft and marks it Ready.
+   relevant checks, remaining limits and confirmed writer end. Chief Project
+   Manager verifies handover readiness and the COO decides Ready.
 4. The existing Claude plan independently reviews the current comparison,
    including affected documentation and wiki claims. Reviewers remain separate
    from implementers/fixers. Source-grounded contradictions are findings; missing
@@ -43,7 +43,7 @@ surrounding-prose preservation, malformed-input and path protections.
    prerequisite and no additional review automation is introduced.
 5. After behavior-changing review fixes, reassess documentation/wiki impact and
    refresh affected evidence. A changed comparison needs fresh independent review
-   through the existing plan. Current CI/Sonar and all actual acceptance still apply.
+   through the existing plan. Current CI/Sonar still apply.
 6. After the verified merge, Chief Project Manager and the delivery owner confirm
    the affected documentation against the actual integrated `main`. Record the
    exact merged commit and result in the issue/PR handover. Any remaining drift

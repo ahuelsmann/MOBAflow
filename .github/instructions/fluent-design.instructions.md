@@ -16,4 +16,5 @@ PreviewBadgeTextStyle and NeonGlowButtonStyle; verify a key exists before refere
 - Wrap or trim long text deliberately. Keep one scrolling owner; avoid nesting a self-scrolling ListView
   inside another ScrollViewer. Check narrow layouts and long content.
 - Compile affected views. Inspect changed states in Light and Dark only with explicit app-start approval;
-  otherwise report visual acceptance as open. Do not hide XAML errors by excluding active pages.
+  otherwise record the uninspected states as a limitation in the PR, never as passed. Do not hide XAML errors by
+  excluding active pages.

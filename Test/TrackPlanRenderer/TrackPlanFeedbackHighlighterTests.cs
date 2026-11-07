@@ -18,7 +18,7 @@ internal class TrackPlanFeedbackHighlighterTests
         TimeSpan? ignore = null)
     {
         var bus = new EventBus(NullLogger<EventBus>.Instance);
-        var highlighter = new TrackPlanFeedbackHighlighter(bus, plan)
+        var highlighter = new TrackPlanFeedbackHighlighter(bus, plan, NullLogger<TrackPlanFeedbackHighlighter>.Instance)
         {
             HoldDuration = hold ?? TimeSpan.FromMilliseconds(1500),
             IgnoreWindow = ignore ?? TimeSpan.FromMilliseconds(1500)
@@ -177,7 +177,7 @@ internal class TrackPlanFeedbackHighlighterTests
         plan.AddSegment(placed);
 
         var bus = new EventBus(NullLogger<EventBus>.Instance);
-        var highlighter = new TrackPlanFeedbackHighlighter(bus, plan);
+        var highlighter = new TrackPlanFeedbackHighlighter(bus, plan, NullLogger<TrackPlanFeedbackHighlighter>.Instance);
         highlighter.Activate();
         highlighter.Dispose();
 

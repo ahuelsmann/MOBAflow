@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -34,7 +35,7 @@ internal sealed class LocomotiveRosterTests
     {
         _runtime = new Mock<IRuntimeSnapshotProvider>();
         _runtime.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
-        _projectContext = new MobileSolutionContext();
+        _projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         _roster = new LocomotiveRoster(_runtime.Object, _projectContext);
     }
 

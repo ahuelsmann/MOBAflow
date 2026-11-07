@@ -14,8 +14,17 @@ using ViewModel;
 /// </summary>
 public sealed class MobileSolutionContext : ObservableObject, IProjectContext
 {
+    private readonly SolutionViewModelServices _viewModelServices;
     private SolutionViewModel? _solutionViewModel;
     private ProjectViewModel? _selectedProject;
+
+    /// <summary>Initializes a new instance of the <see cref="MobileSolutionContext"/> class.</summary>
+    /// <param name="viewModelServices">Services passed to the synced solution's view models.</param>
+    public MobileSolutionContext(SolutionViewModelServices viewModelServices)
+    {
+        ArgumentNullException.ThrowIfNull(viewModelServices);
+        _viewModelServices = viewModelServices;
+    }
 
     /// <inheritdoc />
     public SolutionViewModel? SolutionViewModel => _solutionViewModel;
@@ -53,7 +62,7 @@ public sealed class MobileSolutionContext : ObservableObject, IProjectContext
         ArgumentNullException.ThrowIfNull(solution);
 
         var previousProjectId = _selectedProject?.Model.Id;
-        _solutionViewModel = new SolutionViewModel(solution);
+        _solutionViewModel = new SolutionViewModel(solution, _viewModelServices);
         // The phone keeps the project it controls; a new solution starts with MOBAflow's selected project.
         _selectedProject = _solutionViewModel.Projects.FirstOrDefault(project => project.Model.Id == previousProjectId)
             ?? ResolveProjectViewModel(_solutionViewModel, activeProjectName);

@@ -3,7 +3,6 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
-using Backend.Service;
 
 using Common.Extension;
 using Common.Events;
@@ -30,22 +29,6 @@ using Domain.Enum;
 /// <summary>Describes one project reference that prevents silent workflow deletion.</summary>
 public sealed record WorkflowReference(string OwnerType, Guid OwnerId, string OwnerName, string Location);
 
-/// <summary>Groups optional services used by workflow dry runs and retained lifecycle traces.</summary>
-public sealed class WorkflowLibraryRuntimeServices
-{
-    /// <summary>Gets the optional workflow execution service.</summary>
-    public IWorkflowService? WorkflowService { get; init; }
-
-    /// <summary>Gets the optional retained lifecycle trace store.</summary>
-    public IWorkflowTraceStore? TraceStore { get; init; }
-
-    /// <summary>Gets the optional base action execution context.</summary>
-    public ActionExecutionContext? ExecutionContext { get; init; }
-
-    /// <summary>Gets the optional lifecycle event bus.</summary>
-    public IEventBus? EventBus { get; init; }
-}
-
 /// <summary>
 /// Owns the shared workflow catalog, editor selection, validation, reference safety, and save coordination.
 /// </summary>
@@ -54,12 +37,11 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     private readonly IProjectContext _projectContext;
     private readonly IDialogService _dialogService;
     private readonly IWorkflowValidator _validator;
-    private readonly ILogger<WorkflowLibraryViewModel>? _logger;
-    private readonly IWorkflowService? _workflowService;
-    private readonly IWorkflowTraceStore? _traceStore;
-    private readonly ActionExecutionContext? _executionContext;
-    private readonly IEventBus? _eventBus;
-    private readonly Guid? _traceSubscriptionId;
+    private readonly ILogger<WorkflowLibraryViewModel> _logger;
+    private readonly IWorkflowDryRunService _dryRunService;
+    private readonly IWorkflowTraceStore _traceStore;
+    private readonly IEventBus _eventBus;
+    private readonly Guid _traceSubscriptionId;
     private CancellationTokenSource? _dryRunCancellation;
     private ProjectViewModel? _subscribedProject;
     private bool _suppressAutoSave;
@@ -106,27 +88,37 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     }
 
     /// <summary>Creates a shared workflow-library coordinator.</summary>
+    /// <param name="projectContext">The selected project whose workflows are edited.</param>
+    /// <param name="dialogService">Confirms deletions; hosts without dialogs register <see cref="NullDialogService"/>.</param>
+    /// <param name="validator">Validates the selected project's workflows.</param>
+    /// <param name="dryRunService">Plans the selected workflow for the test run.</param>
+    /// <param name="traceStore">Retained lifecycle entries shown for the selected workflow.</param>
+    /// <param name="eventBus">Lifecycle events that refresh the trace.</param>
+    /// <param name="logger">Logger for auto-save failures.</param>
     public WorkflowLibraryViewModel(
         IProjectContext projectContext,
-        IDialogService? dialogService = null,
-        IWorkflowValidator? validator = null,
-        ILogger<WorkflowLibraryViewModel>? logger = null,
-        WorkflowLibraryRuntimeServices? runtimeServices = null)
+        IDialogService dialogService,
+        IWorkflowValidator validator,
+        IWorkflowDryRunService dryRunService,
+        IWorkflowTraceStore traceStore,
+        IEventBus eventBus,
+        ILogger<WorkflowLibraryViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(projectContext);
-        runtimeServices ??= new WorkflowLibraryRuntimeServices();
+        ArgumentNullException.ThrowIfNull(dialogService);
+        ArgumentNullException.ThrowIfNull(validator);
+        ArgumentNullException.ThrowIfNull(dryRunService);
+        ArgumentNullException.ThrowIfNull(traceStore);
+        ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(logger);
         _projectContext = projectContext;
-        _dialogService = dialogService ?? new NullDialogService();
-        _validator = validator ?? new WorkflowValidator();
+        _dialogService = dialogService;
+        _validator = validator;
         _logger = logger;
-        _workflowService = runtimeServices.WorkflowService;
-        _traceStore = runtimeServices.TraceStore;
-        _executionContext = runtimeServices.ExecutionContext;
-        _eventBus = runtimeServices.EventBus;
-        if (_eventBus != null)
-        {
-            _traceSubscriptionId = _eventBus.Subscribe<WorkflowLifecycleEvent>(OnWorkflowLifecycleEvent);
-        }
+        _dryRunService = dryRunService;
+        _traceStore = traceStore;
+        _eventBus = eventBus;
+        _traceSubscriptionId = _eventBus.Subscribe<WorkflowLifecycleEvent>(OnWorkflowLifecycleEvent);
         _projectContext.PropertyChanged += OnProjectContextPropertyChanged;
         AttachProject(_projectContext.SelectedProject);
         RefreshTrace();
@@ -152,8 +144,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     /// <summary>Gets the last dry run's planned external effects in deterministic order.</summary>
     public ObservableCollection<WorkflowPlannedEffect> PlannedEffects { get; } = [];
 
-    /// <summary>Gets whether a dry run is available in the current host.</summary>
-    public bool CanDryRun => _workflowService != null && _executionContext != null && SelectedWorkflow != null;
+    /// <summary>Gets whether a dry run is available for the current selection.</summary>
+    public bool CanDryRun => this.SelectedWorkflow != null;
 
     /// <summary>Gets the selected action editor, or general workflow settings.</summary>
     public object? SelectedEditorObject => (object?)this.SelectedAction ?? this.SelectedWorkflow;
@@ -432,7 +424,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     {
         var project = _projectContext.SelectedProject?.Model;
         var workflow = SelectedWorkflow?.Model;
-        if (project == null || workflow == null || _workflowService == null || _executionContext == null)
+        if (project == null || workflow == null)
         {
             return;
         }
@@ -446,18 +438,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         CancelDryRunCommand.NotifyCanExecuteChanged();
         try
         {
-            var context = new ActionExecutionContextFactory(_executionContext).Create(new ActionExecutionContextState
-            {
-                CurrentProject = project
-            });
-            var result = await _workflowService.ExecuteAsync(new WorkflowExecutionRequest
-            {
-                Project = project,
-                Workflow = workflow,
-                Context = context,
-                Mode = WorkflowRunMode.DryRun,
-                SourceCorrelationId = Guid.NewGuid()
-            }, _dryRunCancellation.Token);
+            var result = await _dryRunService.DryRunAsync(project, workflow, _dryRunCancellation.Token);
 
             foreach (var effect in result.PlannedEffects)
             {
@@ -499,11 +480,6 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     private void RefreshTrace()
     {
         TraceEntries.Clear();
-        if (_traceStore == null)
-        {
-            return;
-        }
-
         var workflowId = SelectedWorkflow?.Id;
         foreach (var entry in _traceStore.GetEntries()
                      .Where(entry => !workflowId.HasValue || entry.WorkflowId == workflowId.Value)
@@ -578,10 +554,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         _disposed = true;
         _dryRunCancellation?.Cancel();
         _dryRunCancellation?.Dispose();
-        if (_eventBus != null && _traceSubscriptionId.HasValue)
-        {
-            _eventBus.Unsubscribe(_traceSubscriptionId.Value);
-        }
+        _eventBus.Unsubscribe(_traceSubscriptionId);
         _projectContext.PropertyChanged -= OnProjectContextPropertyChanged;
         AttachProject(null);
         GC.SuppressFinalize(this);
@@ -685,7 +658,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         }
         if (!_suppressAutoSave)
         {
-            SaveAsync().Observe(ex => _logger?.LogWarning(ex, "Workflow auto-save failed"));
+            SaveAsync().Observe(ex => _logger.LogWarning(ex, "Workflow auto-save failed"));
         }
     }
 

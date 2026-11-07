@@ -17,16 +17,17 @@ public sealed class CommandViewModel : WorkflowActionViewModel
 {
     #region Fields
     private Z21DccCommandDecoder.DccCommand? _decodedCommand;
-    private readonly ILogger<CommandViewModel>? _logger;
+    private readonly ILogger<CommandViewModel> _logger;
     #endregion
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandViewModel"/> class for the given workflow action.
     /// </summary>
     /// <param name="action">The underlying workflow action that defines this Z21 locomotive command.</param>
-    /// <param name="logger">Optional logger for encoding failures.</param>
-    public CommandViewModel(WorkflowAction action, ILogger<CommandViewModel>? logger = null) : base(action, ActionType.Command)
+    /// <param name="logger">Logger for encoding failures.</param>
+    public CommandViewModel(WorkflowAction action, ILogger<CommandViewModel> logger) : base(action, ActionType.Command)
     {
+        ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
         action.Command ??= new CommandActionPayload();
         _decodedCommand = DecodeBytes();
@@ -223,7 +224,7 @@ public sealed class CommandViewModel : WorkflowActionViewModel
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Error encoding Z21 command from property values");
+            _logger.LogWarning(ex, "Error encoding Z21 command from property values");
         }
     }
 

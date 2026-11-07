@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
@@ -37,7 +38,7 @@ internal sealed class TrainControlHostSelectionTests
                 }
             ]
         };
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         projectContext.ApplySolution(solution, "myMOBA");
 
         var settings = new AppSettings();
@@ -62,7 +63,10 @@ internal sealed class TrainControlHostSelectionTests
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
             projectContext,
-            eventBus: eventBus,
+            NullLogger<TrainControlViewModel>.Instance,
+            ImmediateUiDispatcher.Instance,
+            eventBus,
+            new NullFunctionAppearancePicker(),
             options: new TrainControlViewModelOptions { Host = TrainControlHost.WinUi });
         winUiViewModel.RefreshLocomotiveList();
         winUiViewModel.SelectProjectLocomotiveCommand.Execute(winUiViewModel.ProjectLocomotives[0]);
@@ -72,7 +76,10 @@ internal sealed class TrainControlHostSelectionTests
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
             projectContext,
-            eventBus: eventBus,
+            NullLogger<TrainControlViewModel>.Instance,
+            ImmediateUiDispatcher.Instance,
+            eventBus,
+            new NullFunctionAppearancePicker(),
             options: new TrainControlViewModelOptions { Host = TrainControlHost.Maui });
         mauiViewModel.RefreshLocomotiveList();
         mauiViewModel.SelectProjectLocomotiveCommand.Execute(mauiViewModel.ProjectLocomotives[1]);

@@ -8,8 +8,9 @@ Read [AGENTS.md](../../../AGENTS.md) and the relevant entries in the
 [instruction index](../../../.github/instructions/instructions-index.md).
 
 For a PR, follow [master coordination](../../../.github/instructions/master-coordination.instructions.md):
-Chief Project Manager (formerly Issue Master) checks Draft handover evidence and alone marks Ready for review.
-Only then does the existing Claude plan perform fresh independent Opus 5.5-or-higher review, separate fixes,
+Chief Project Manager (formerly Issue Master) checks Draft handover evidence; since 2026-11-05 the Chief
+Operating Officer (COO, Claude) decides Ready and merge within that allocation. Only then does the existing
+Claude plan perform fresh independent Opus 5.5-or-higher review, separate fixes,
 independent re-review and SHA-bound squash merge; review is not a Ready prerequisite. Do not dispatch another
 PR review or merge concurrently. Obtain the current allocation in the single queue before substantial review
 work. Deliver the prioritized issue in one leading PR; other issues require explicitly qualified independence
@@ -17,7 +18,7 @@ in purpose, files, behavior, baselines, build graph and execution resources, wit
 Keep one writer per worktree and serialize review/fix phases for each comparison. Coordination/implementation
 sessions and Codex self-review do not satisfy the independent
 PR review. Every review session (PR, branch or local diff) is read-only; the reviewer never edits, merges or
-approves its own review. Confirm actual model use and preserve all current quality/acceptance gates and explicit stops.
+approves its own review. Confirm actual model use and preserve all current quality gates and explicit stops.
 
 Establish the requested base and exact commit/diff. For a PR use its actual base;
 for work in progress include staged/unstaged changes when requested. Infer the base from

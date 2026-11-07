@@ -10,7 +10,6 @@ using Moba.Domain.Enum;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
-using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
@@ -130,10 +129,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null),
-            _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntimeMock.Object, new ActionExecutionContext
-            {
-                Z21 = new Mock<IZ21>().Object
-            }, stationEventBus1),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntimeMock.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(mobaRuntimeMock.Object), uiDispatcherMock.Object),
             locomotiveSession1,
             loggerMock.Object);
@@ -208,7 +204,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             }
         };
 
-        viewModel.SelectedProject = new ProjectViewModel(new Project());
+        viewModel.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(observedNames, Is.Empty);
@@ -323,7 +319,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
                 viewModel.CurrentSolutionPath = "other.json";
             }
             viewModel.Solution.Projects.Add(nextProject);
-            viewModel.SelectedProject = new ProjectViewModel(nextProject);
+            viewModel.SelectedProject = new ProjectViewModel(nextProject, TestViewModelServices.Default);
         }
         AddCommand(viewModel, kind).Execute(null);
         savedJson = string.Empty;
@@ -403,13 +399,13 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             stationEventBus2,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession2, runtime.Object, io.Object),
-            _rollingStockPages.GetStationsPage(locomotiveSession2, runtime.Object, new ActionExecutionContext { Z21 = new Mock<IZ21>().Object }, stationEventBus2),
+            _rollingStockPages.GetStationsPage(locomotiveSession2, runtime.Object, stationEventBus2),
             _rollingStockPages.GetJourneysPage(locomotiveSession2, new LocalRuntimeCommandGateway(runtime.Object), dispatcher.Object),
             locomotiveSession2,
             NullLogger<MainWindowViewModel>.Instance)
         {
             CurrentSolutionPath = "inventory.json",
-            SelectedProject = new ProjectViewModel(project)
+            SelectedProject = new ProjectViewModel(project, TestViewModelServices.Default)
         };
         return viewModel;
     }

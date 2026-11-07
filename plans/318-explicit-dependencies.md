@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/318
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: In progress; workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330) and static hooks (slice 3, #335) are integrated. Issue #318 remains open for slices 4 and 5.
+**Status**: In progress; workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330) and static hooks (slice 3, #335) are integrated. Slice 4 (SharedUI ViewModels) is in review; see [Slice 4 result](#slice-4-result). Issue #318 remains open for the slice 4 remainder and slice 5.
 
 ## Purpose and scope
 
@@ -28,12 +28,14 @@ Counted on main `71830101`; "tests" counts construction sites in `Test/`.
 | `PlatformManager` | `?? new ActionExecutionContext { Z21 = z21 }` | 0 | required `ActionExecutionContext` |
 | `Common/Discovery/LanIpv4AddressHelper.AugmentAddresses` | mutable static `Action` set by `MOBAsmart/Service/LanIpv4AddressHelperAndroidBootstrap.cs` | - | injected `ILocalIpv4AddressSource` with the network-interface implementation in `Common` and an Android decorator in MOBAsmart; `Z21DiscoveryService` and `RestApiDiscoveryService` receive it |
 | `MOBAflow/View/SegmentPlanPathBuilder.ScaleMmToPx` | mutable static set by `TrackPlanPage` to the constant 1.0 | - | scale passed by the caller (or one shared constant); no setter |
-| `SharedUI/ViewModel/WorkflowLibraryViewModel` | `?? new NullDialogService()`, `?? new WorkflowValidator()`; `WorkflowLibraryRuntimeServices.ExecutionContext` | 19 | required dialog service and `IWorkflowValidator`; the test-run path receives a narrow workflow-run service instead of the runtime context |
-| `SolutionViewModel`, `ProjectViewModel`, `WorkflowViewModel`, `JourneyViewModel`, `AudioViewModel`, `CommandViewModel` | optional dispatcher, `IIoService`, sound player, `ILoggerFactory`/logger(s) | 48+ | the creating session passes one required services record (`SolutionViewModelServices`, a new type that slice 4 of this plan creates; RF-25 does not depend on RF-29 for it); tests build ViewModels through one helper |
+| `SharedUI/ViewModel/WorkflowLibraryViewModel` | `?? new NullDialogService()`, `?? new WorkflowValidator()`; `WorkflowLibraryRuntimeServices.ExecutionContext` | 19 | required dialog service and `IWorkflowValidator`; the test-run path receives a narrow workflow-run service instead of the runtime context (slice 4: `IWorkflowDryRunService`) |
+| `SolutionViewModel`, `ProjectViewModel`, `WorkflowViewModel`, `JourneyViewModel`, `AudioViewModel`, `CommandViewModel` | optional dispatcher, `IIoService`, sound player, `ILoggerFactory`/logger(s) | 48+ | the creating session passes one required services record (`SolutionViewModelServices`; RF-24 had already introduced it with optional members, slice 4 makes every member required); tests build ViewModels through one helper |
 | `SolutionSession` | optional `ISoundPlayer` and `ILoggerFactory` parameters, forwarded to the project ViewModels | many | both required, or replaced by the services record above; hosts register it |
 | `ProductionWorkflowEffectAdapter` | optional announcement service, file system (`?? SystemFileSystem.Instance`) and logger | few | all required; DI supplies the system file system |
-| `SolutionRemoteLoader`, `MobileRuntimeProjection`, `MobiStartupService` | optional `IMobileRuntimeCoordinator`, `IUiDispatcher`, `IMobileSolutionStore`, `IProjectContext`, `ISolutionRemoteLoader` | few | required; MOBAsmart registers null objects where it has no implementation |
-| `TrainControlSettingsStore`, `LocomotiveRoster`, `FeedbackCounterEngine`, `PhotosController` | optional logger, project context, time provider, hub context | few | required; `TimeProvider.System` registered by DI |
+| `SolutionRemoteLoader`, `MobileRuntimeProjection`, `MobileSolutionSynchronizer`, `MobiStartupService` | optional `IMobileRuntimeCoordinator`, `IUiDispatcher`, `IMobileSolutionStore`, `IProjectContext`, `ISolutionRemoteLoader` | few | required; MOBAsmart registers null objects where it has no implementation |
+| `TrainControlSettingsStore`, `LocomotiveRoster`, `FeedbackCounterEngine`, `TrackPlanFeedbackHighlighter`, `PhotosController` | optional logger, project context, time provider, hub context | few | required; `TimeProvider.System` registered by DI |
+| `TrainControlViewModel` (found in slice 4) | optional `IProjectContext`, logger, `IUiDispatcher`, `IFunctionAppearancePicker`; `IEventBus eventBus = null!` | 10 | required; MOBAsmart registers `NullFunctionAppearancePicker`; the `IMobileRuntimeCoordinator` fallback (`?? runtimeCommandGateway as IMobileRuntimeCoordinator`) and the value options stay for the remainder |
+| `MauiViewModel`, `MobaflowHubSession`, `MobileAppLifecycle` (found in slice 4) | optional `IRuntimeHubRemoteClient`, `IMobileRuntimeCoordinator`, `IProjectContext`, `IBackgroundService`, `IRestApiClientRegistration` with null branches throughout the partials | 4 (+ helpers) | remainder: required with MOBAsmart's existing registrations; the shared hub client is optional in both the session and the ViewModel, so both change together |
 
 Kept as is: value options with documented defaults (`RecorderOptions`, `RecordingArtifactImportLimits`,
 `DigitalAddressLimits`, `DisplayIdentifierSequence`/`DisplayPacketSequence` seeds), data defaults such as
@@ -71,7 +73,58 @@ Kept as is: value options with documented defaults (`RecorderOptions`, `Recordin
    counter services, `PhotosController`, `SolutionRemoteLoader`, `MobileRuntimeProjection`, `MobiStartupService`.
 5. **DI validation and completion.** WinUI and MAUI container validators resolve every changed registration (including the executable Android DI test lane described under validation);
    update `docs/ARCHITECTURE.md` where it describes construction, replace the RF-25 anchor in the umbrella plan
-   with a delivery note and remove this plan.
+   with a delivery note and remove this plan. Slice 5 completes #318 only after the slice 4 remainder listed
+   under [Slice 4 result](#slice-4-result) has been migrated in its own slice; until then the issue stays open.
+
+## Slice 4 result
+
+Delivered against main after RF-24 (#401 journey and city pages, #409 workflows page), which had moved the
+page state out of `MainWindowViewModel` and introduced `SolutionViewModelServices` with optional members.
+Differences from the inventory above:
+
+- `IWorkflowDryRunService` (Backend) is the narrow run service: `WorkflowDryRunService` plans through
+  `IWorkflowService` with a context from `ActionExecutionContextFactory`. `WorkflowLibraryRuntimeServices` is
+  gone; `WorkflowLibraryViewModel` requires dialog service, validator, dry-run service, trace store, EventBus and
+  logger, and `CanDryRun` depends only on the selection. Only MOBAflow registers the library.
+- `SolutionViewModelServices(FilePicker, SoundPlayer, LoggerFactory)` is required everywhere: `SolutionSession`,
+  `MobileSolutionContext`, `SolutionViewModel`, `ProjectViewModel`, `WorkflowViewModel`,
+  `WorkflowActionViewModelFactory`, `AudioViewModel` (player required; `CanPlayAudio` checks only the file) and
+  `CommandViewModel` (logger required). MOBAsmart registers `NullFilePickerService` and the record. The
+  `IUiDispatcher` the wrapper chain carried into `JourneyViewModel` was never read and is removed.
+- `TrainControlViewModel` requires project context, logger, dispatcher, EventBus and function picker;
+  `TrainControlSettingsStore` and `LocomotiveRoster` require logger and project context. The mobile services
+  (`SolutionRemoteLoader`, `MobileRuntimeProjection`, `MobileSolutionSynchronizer`, `MobiStartupService`) and
+  `TrackPlanFeedbackHighlighter`, `FeedbackCounterEngine`, `PhotosController` lost their optional parameters and
+  null branches; MOBAsmart already registered every collaborator.
+- Tests: `Test/Helpers/TestViewModelServices`, `TestWorkflowLibraries`, `ImmediateUiDispatcher`;
+  `TestSolutionSynchronizers.Create` and `TestRollingStockPages.GetStationsPage` take the test's own fakes.
+  `WorkflowDryRunServiceTests` covers the request the editor previously built itself.
+- Remainder against the acceptance "no service-typed optional constructor parameter or `?? new` service fallback"
+  (verified on this slice's tree; slice 5 must not close #318 while any of these remain, they need their own
+  slice before the issue closes):
+  - SharedUI: `MauiViewModel` and `MobaflowHubSession` optional hub client, coordinator, project context, client
+    registration and `MobileAppLifecycle` background service (one change, see the table); the
+    `TrainControlViewModel` coordinator fallback (`?? runtimeCommandGateway as IMobileRuntimeCoordinator`);
+    `MainWindowViewModel` (`ISettingsService?`, `IDialogService?`; its `IProjectDiagnosticsService?` is removed
+    by RF-24 slice 5, PR #416); `LocomotiveManagementViewModel` (`ILocomotivePassportHtmlRenderer?`,
+    `IDecoderCvService?`, `IFilePickerService?`, `IProjectContext?`); `SettingsPageViewModel`
+    (`IFeatureTogglePageProvider?`, the concrete `AnnouncementService?`, `Func<string, Task>? speechTestAction`).
+  - MOBAflow host: `sp.GetService<IDialogService>()` for `MainWindowViewModel` and
+    `sp.GetService<IFeatureTogglePageProvider>()` for `SettingsPageViewModel` in
+    `MobaWinUiServiceCollectionExtensions`; the page code-behind constructors under `MOBAflow/View`
+    (`EventManagerPage`, `GoodsWagonPage`, `HelpPage`, `JourneysPage`, `LocomotivesPage`, `MatrixPage`,
+    `MonitorPage`, `PassengerWagonPage`, `SettingsPage` (also `INavigationService?`), `SignalBoxPage`,
+    `SolutionPage`, `StationsPage`, `TimetablePage`, `TrackPlanPage`, `TrainControlPage`, `TrainsPage`,
+    `WorkflowsPage`) with optional `ISettingsService?` and `ILogger<TPage>?`; `RestApiProcessService`
+    (`ISettingsService?`); `CancellableWavePlayer` (`TimeProvider?`).
+  - Backend: `UdpWrapper` (`ILogger?`), `InPortCounterService` (`TimeProvider?`, `ILogger?`,
+    `IInPortCounterStore?`, `Func<Guid, IInPortCounterStore>?`), `LocomotiveWhistleAutomationService`
+    (`TimeProvider?`), `Z21EventPipeline` (`ILogger?`), and the `ActionExecutionContext` registration that still
+    resolves speech and sound output with `GetService`.
+  - MOBAsmart: `RuntimeHubRemoteClient` (`ILogger?`).
+- Out of scope, noted: `FeedbackCounterEngine` has no production caller after RF-24 (tests only).
+- Documentation: `docs/ARCHITECTURE.md` (file roles, workflow library composition) corrected; `docs/wiki/`
+  unchanged because no user-visible behavior, setting or screen changed.
 
 ## Validation strategy
 

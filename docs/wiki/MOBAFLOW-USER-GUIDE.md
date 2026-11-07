@@ -108,6 +108,13 @@ explicitly unknown. Loading another solution or changing the selection clears
 the previous query. Model changes also clear it without automatically starting
 another usage query. Choose **Show usage** again to inspect the changed data.
 
+A locomotive that its project's runtime controls cannot be deleted, at any speed,
+including 0. This covers a locomotive selected in **Train Control** while the Z21
+is connected and any locomotive the runtime has commanded or seen on its Z21.
+**Delete** stays disabled, and the list shows "Stop controlling this locomotive
+before you delete it." When the runtime no longer controls the locomotive, for
+example after you disconnect from the Z21, **Delete** is available again.
+
 ### Recorder
 
 **Recorder** captures supported runtime events and operator commands in a

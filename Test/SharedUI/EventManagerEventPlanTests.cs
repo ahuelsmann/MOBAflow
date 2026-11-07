@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Moba.Test.Helpers;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
@@ -185,7 +186,7 @@ public sealed class EventManagerEventPlanTests
         }, workflow);
         fixture.Editor.DefaultInPort = 2;
         fixture.Editor.InsertEvent(fixture.Project.Workflows.Single(), 2);
-        fixture.Editor.InsertEvent(new ProjectViewModel(new Project { Workflows = [new()] }).Workflows.Single(), 3);
+        fixture.Editor.InsertEvent(new ProjectViewModel(new Project { Workflows = [new()] }, TestViewModelServices.Default).Workflows.Single(), 3);
 
         Assert.Multiple(() =>
         {
@@ -309,10 +310,10 @@ public sealed class EventManagerEventPlanTests
         public EditorFixture(Journey journey, Workflow? workflow = null)
         {
             Journey = journey;
-            Project = new ProjectViewModel(new Project { Journeys = [journey], Workflows = workflow == null ? [] : [workflow] });
+            Project = new ProjectViewModel(new Project { Journeys = [journey], Workflows = workflow == null ? [] : [workflow] }, TestViewModelServices.Default);
             JourneyViewModel = Project.Journeys.Single();
             Context = new TestProjectContext(Project, JourneyViewModel);
-            Library = new WorkflowLibraryViewModel(Context, null);
+            Library = TestWorkflowLibraries.Create(Context);
             Editor = new EventManagerViewModel(Context, Library);
             JourneyViewModel.PropertyChanged += OnJourneyChanged;
         }
