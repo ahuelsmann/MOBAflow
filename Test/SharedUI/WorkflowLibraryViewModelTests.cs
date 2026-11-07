@@ -399,8 +399,8 @@ public sealed class WorkflowLibraryViewModelTests
         {
             Workflows = [triggeredWorkflow, manualWorkflow],
             Journeys = [journey]
-        });
-        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project), new TestDialogService(true));
+        }, TestViewModelServices.Default);
+        using var library = TestWorkflowLibraries.Create(new TestProjectContext(project), new TestDialogService(true));
 
         using (Assert.EnterMultipleScope())
         {

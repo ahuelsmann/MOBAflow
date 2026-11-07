@@ -14,4 +14,10 @@
 - Theme switching changes presentation only; it does not select, reorder, persist or execute an
   action. Actual Light/Dark verification is recorded for the tested head, never inherited from f5.
 
+- From the 2026-11-07 review fixes: the canvas extent is the larger of 1600 x 1200 and the
+  outermost node plus a 60 px margin, so every auto-laid-out or dragged node stays scrollable.
+  A pressed card focuses the graph root so Alt+Up/Alt+Down/Delete reach the existing handler.
+  Each card's automation name is "Step #N: <name or type>" and follows renames and reorders.
+  The last action's delay is shown as a badge below its bottom port.
+
 No REST, SignalR, Z21 or persistence contract is changed.

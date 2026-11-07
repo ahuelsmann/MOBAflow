@@ -189,3 +189,46 @@ remain accurate because this phase restores theme presentation only. No wiki or 
 architecture edit is needed; PR #392 owns another section of the same wiki file. The startup
 qualification, MUI contract and head-specific acceptance history are corrected here. Reassess
 against actual integrated main and any behavior-changing review fix before claiming currency.
+
+## 2026-11-07 Claude takeover: review-thread fixes on `claude/issue-378-graphical-workflow-editor`
+
+Personal acceptance was abolished on 2026-11-06 (PR #417). The acceptance-candidate and MUI
+package recipe above is historical; it is no longer a delivery gate. The manual evidence table
+stays NOT RUN for the Claude head and is recorded in the PR as a limitation, not as a pass.
+
+Changes on top of the four cherry-picked Codex commits (see tasks.md Phase 7):
+
+- Tests follow #414 (required ViewModel dependencies); no shared ViewModel signature changed.
+- F1 / Codex P2 canvas extent: `WorkflowViewModel.GetCanvasExtent()`; the control resizes the
+  host and its three layers and re-renders the dot grid only when the size changes.
+- F2 keyboard focus: `GraphRoot.Focus(FocusState.Pointer)` after a card press.
+- F3 automation name: refreshed on `Name`, `Number` and `StepLabel` with the title fallback.
+- Codex P2 final delay: badge below the last card's bottom port.
+- F4: data-model.md lists the `WorkflowsPageLayoutSettings` changes.
+
+Checks run on this Windows machine on 2026-11-07 from the task worktree:
+
+```text
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore -p:BuildMOBApiDependency=false -p:CopyMOBApiToOutput=false
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~WorkflowViewModelTests|FullyQualifiedName~WorkflowLibraryViewModelTests|FullyQualifiedName~AppSettingsDefaultsTests"
+dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false --filter "...|FullyQualifiedName~XamlIconMarkupTests"
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
+scripts/Test-LineEndings.ps1 -Path <changed files>; scripts/Test-SpecKitGovernance.ps1 -Mode PullRequest
+sonar analyze secrets <changed files>
+```
+
+- FastDebug WinUI compile: 0 errors, 0 warnings; no MSB4242 workload fallback was needed.
+- Portable focused selection: 107 passed, 0 failed, 0 skipped (106 before + the extent regression).
+- Windows focused selection incl. XAML icons: 109 passed, 0 failed, 0 skipped.
+- Full portable suite (`-p:TargetFrameworks=net10.0 -f net10.0`): 3155 passed, 0 failed, 0 skipped.
+- Line endings: 29 text files checked, 0 normalized. Spec Kit governance: passed. Secrets: no issues.
+- Not run: the app, the API host, a debugger or a watcher; Light/Dark inspection; the complete
+  analyzer rebuilds (the PR pipeline's analyzer baseline gates and SonarCloud cover them).
+
+Documentation assessment for the integration: `docs/wiki/MOBAFLOW-USER-GUIDE.md` already describes
+List/Graph, the trigger node, delay badges and Auto layout (changed by #388); the final-delay badge
+and the growing canvas need no extra user wording. `docs/PROJECT-REFERENCE.md` now states that the
+Graph view is a projection of the action list and distinguishes it from the removed graph model;
+`docs/ARCHITECTURE.md` records the persisted List/Graph toggle and the control's role next to the
+RF-24 slice 4 workflow presentation. No other wiki page mentions the Workflows page editor.

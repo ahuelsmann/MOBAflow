@@ -68,3 +68,28 @@ The remaining committed-head delivery depends on publication and is tracked expl
 the actual UI acceptance remains Root's separately authorized manual gate.
 
 - [ ] T018 Complete the exact-head candidate and source/target MUI hash qualification under artifacts/issue378-acceptance/ and include current CI/Sonar and explicit source/process-END receipts in Chief PM's handoff per FR-008, FR-009 and SC-002 (partial; follow-through of T016/T017).
+
+T016 to T018 were not completed on the Codex branch. Personal acceptance was abolished on
+2026-11-06 (PR #417), so the exact-head acceptance candidate and the MUI package are no longer a
+delivery gate; Light/Dark states that nobody inspected are recorded as a limitation in the PR.
+
+## Phase 7: US4 - Claude takeover and review-thread fixes (2026-11-07)
+
+The feature freeze was lifted on 2026-11-07. The Senior Developer continues #388 on
+`claude/issue-378-graphical-workflow-editor` (cherry-picked 935db4e9, d6aa332c, f5eba239,
+84412d1a from the Codex branch, original authorship kept) and supersedes Draft #388 with a new
+Draft PR against `main`. The Codex branch and worktree stay untouched.
+
+Independent test: the extent regression in Test/SharedUI/WorkflowViewModelTests.cs, the existing
+workflow/library/defaults regressions, the FastDebug WinUI compile and the new PR's CI/Sonar.
+
+- [x] T019 [US4] Resolve the #414 drift: `WorkflowViewModel`, `ProjectViewModel` and `WorkflowLibraryViewModel` now require their dependencies; the three new tests use `TestViewModelServices.Default` and `TestWorkflowLibraries.Create`. No shared ViewModel change was needed (FR-005).
+- [x] T020 [US4] F1/Codex P2 (canvas extent): add `WorkflowViewModel.GetCanvasExtent()` with `TriggerNodeHeight`, `ActionNodeHeight`, `MinCanvasWidth/Height` and `CanvasMargin`; `WorkflowGraphCanvasControl.UpdateCanvasExtent()` sizes the host and its three layers in `RebuildGraph` and on `CanvasX`/`CanvasY` changes and re-renders the dot grid when the size changes. The drag clamp reads the same host size. Regression test with 24 actions and a dragged node (FR-001).
+- [x] T021 [US4] F2 (keyboard focus): name the root Grid `GraphRoot` and focus it with `FocusState.Pointer` after a card press instead of the non-tab-stop UserControl (FR-002).
+- [x] T022 [US4] F3 (automation name): `GetActionAutomationName` uses the title fallback and is reapplied on `Name`, `Number` and `StepLabel` changes (FR-002).
+- [x] T023 [US4] Codex P2 (final delay): `RenderConnections` draws the shared delay badge below the last card's bottom port when `HasDelayAfter`; badge creation moved to `AddDelayBadge` (FR-002).
+- [x] T024 [US4] F4 (docs): data-model.md lists the `WorkflowsPageLayoutSettings` changes of the whole feature instead of claiming unchanged defaults.
+- [x] T025 [US4] Validate on Windows: portable and Windows focused tests, FastDebug WinUI compile, line endings, changed-file secrets scan; record results in quickstart.md (SC-001).
+- [ ] T026 [US4] Publish the Draft PR superseding #388 with the finding table, checks, documentation/wiki assessment and unchecked Light/Dark limitation; Chief Project Manager decides Ready, the existing Claude plan reviews and merges (SC-002).
+
+Execution is serial: T019 -> T020 -> T021 -> T022 -> T023 -> T024 -> T025 -> T026.

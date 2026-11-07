@@ -2,10 +2,10 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/378
 **Spec Kit**: Required
-**Branch**: codex/issue-378-graphical-workflow-editor
+**Branch**: codex/issue-378-graphical-workflow-editor (until 2026-10-24); claude/issue-378-graphical-workflow-editor (from 2026-11-07)
 **Date**: 2026-10-24
 **Spec**: [spec.md](spec.md)
-**Status**: f5 quality correction delivered; Light-theme follow-up planned before new code
+**Status**: f5 quality correction and theme correction delivered; review-thread fixes delivered on the Claude branch (tasks.md Phase 7)
 
 ## Summary and provenance
 
@@ -126,3 +126,18 @@ the actual element context and existing English labels; Light/Dark manual eviden
 III: existing behavior regressions plus WinUI/analyzer checks, with the UI limit explicit.
 IV: same issue/spec/tasks and unchanged data/API/layout. VI: unchanged gates, scans before reads
 and publication, current-head CI/Sonar before Root's readiness assessment. No exception required.
+
+## 2026-11-07 follow-up: review-thread fixes on the Claude branch
+
+The six open #388 review threads (F1 to F4 by the Claude review, two Codex P2 findings) are fixed
+with the smallest change; see tasks.md Phase 7 and quickstart.md. Design decisions:
+
+- The canvas extent is shared logic in `WorkflowViewModel` (positions are already there, as are
+  the node constants), so it is unit-tested without WinUI. The control applies it to the host and
+  layer sizes; the existing drag clamp reads the host size, so dragging a node to the edge grows
+  the canvas instead of stopping it. The 1600 x 1200 minimum keeps the previous appearance for
+  small workflows.
+- The final delay reuses the connector badge below the last card; no terminal connector is drawn
+  because there is no next node and Option A has no end node.
+- Personal acceptance no longer exists (PR #417). Light/Dark states nobody inspected are recorded
+  in the PR as a limitation; they are not claimed as passed and do not block.

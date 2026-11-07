@@ -31,9 +31,10 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
     private const double GridSnapSize = 20.0;
     private const double DotGridSpacing = 24.0;
     private const double CardWidth = WorkflowViewModel.ActionNodeWidth;
-    private const double TriggerCardHeight = 84.0;
-    private const double ActionCardHeight = 132.0;
+    private const double TriggerCardHeight = WorkflowViewModel.TriggerNodeHeight;
+    private const double ActionCardHeight = WorkflowViewModel.ActionNodeHeight;
     private const double PortSize = 10.0;
+    private const double TerminalDelayBadgeOffsetY = 24.0;
 
     private readonly Dictionary<WorkflowActionViewModel, ActionNodeVisuals> _actionVisuals = [];
     private readonly Dictionary<WorkflowActionViewModel, Point> _dragRawPositions = [];
@@ -189,6 +190,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         if (e.PropertyName is nameof(WorkflowActionViewModel.CanvasX)
             or nameof(WorkflowActionViewModel.CanvasY))
         {
+            UpdateCanvasExtent();
             Canvas.SetLeft(visuals.RootCard, action.CanvasX);
             Canvas.SetTop(visuals.RootCard, action.CanvasY);
             RenderConnections();
@@ -197,7 +199,8 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
 
         if (e.PropertyName == nameof(WorkflowActionViewModel.Name))
         {
-            visuals.TitleText.Text = string.IsNullOrWhiteSpace(action.Name) ? action.TypeDisplayName : action.Name;
+            visuals.TitleText.Text = GetActionTitle(action);
+            AutomationProperties.SetName(visuals.RootCard, GetActionAutomationName(action));
         }
         else if (e.PropertyName == nameof(WorkflowActionViewModel.ParameterSummary))
         {
@@ -207,6 +210,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
                  or nameof(WorkflowActionViewModel.StepLabel))
         {
             visuals.StepText.Text = action.StepLabel;
+            AutomationProperties.SetName(visuals.RootCard, GetActionAutomationName(action));
             RenderConnections();
         }
         else if (e.PropertyName is nameof(WorkflowActionViewModel.DelayAfterMs)
@@ -263,6 +267,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         _triggerStatusDot = null;
 
         UpdateEmptyState();
+        UpdateCanvasExtent();
 
         if (_subscribedWorkflow == null)
         {
@@ -289,6 +294,35 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         UpdateSelectionVisuals();
         RenderConnections();
     }
+
+    /// <summary>
+    /// Sizes the host and its layers from the laid-out nodes so every card stays inside the scrollable extent.
+    /// The drag clamp reads the same host size, so a node dragged to the edge extends the canvas.
+    /// </summary>
+    private void UpdateCanvasExtent()
+    {
+        var (width, height) = _subscribedWorkflow?.GetCanvasExtent()
+            ?? (WorkflowViewModel.MinCanvasWidth, WorkflowViewModel.MinCanvasHeight);
+        if (CanvasHost.Width.Equals(width) && CanvasHost.Height.Equals(height))
+        {
+            return;
+        }
+
+        FrameworkElement[] layers = [CanvasHost, DotGridCanvas, ConnectionsCanvas, NodesCanvas];
+        foreach (var layer in layers)
+        {
+            layer.Width = width;
+            layer.Height = height;
+        }
+
+        RenderDotGrid();
+    }
+
+    private static string GetActionTitle(WorkflowActionViewModel action) =>
+        string.IsNullOrWhiteSpace(action.Name) ? action.TypeDisplayName : action.Name;
+
+    private static string GetActionAutomationName(WorkflowActionViewModel action) =>
+        $"{action.StepLabel}: {GetActionTitle(action)}";
 
     private Border CreateTriggerNodeCard()
     {
@@ -416,7 +450,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
 
         var titleText = new TextBlock
         {
-            Text = string.IsNullOrWhiteSpace(action.Name) ? action.TypeDisplayName : action.Name,
+            Text = GetActionTitle(action),
             Style = GetGraphStyle(TitleTextStyleKey),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
@@ -550,7 +584,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             ManipulationMode = ManipulationModes.TranslateX | ManipulationModes.TranslateY,
             Child = outerGrid
         };
-        AutomationProperties.SetName(rootWrapper, $"{action.StepLabel}: {action.Name}");
+        AutomationProperties.SetName(rootWrapper, GetActionAutomationName(action));
         rootWrapper.PointerPressed += OnActionCardPointerPressed;
         rootWrapper.ManipulationStarted += OnActionCardManipulationStarted;
         rootWrapper.ManipulationDelta += OnActionCardManipulationDelta;
@@ -648,6 +682,17 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             var badgeText = source.HasDelayAfter ? source.DelayBadgeText : null;
             AddBezierConnection(startPoint, endPoint, badgeText);
         }
+
+        // 3. The runtime also waits after the last action; show that delay below its bottom port.
+        var lastAction = actions[^1];
+        if (lastAction.HasDelayAfter)
+        {
+            AddDelayBadge(
+                new Point(
+                    lastAction.CanvasX + (CardWidth / 2.0),
+                    lastAction.CanvasY + ActionCardHeight + TerminalDelayBadgeOffsetY),
+                lastAction.DelayBadgeText);
+        }
     }
 
     private void AddBezierConnection(Point start, Point end, string? delayBadgeText)
@@ -700,24 +745,28 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
 
         if (!string.IsNullOrWhiteSpace(delayBadgeText))
         {
-            var midPoint = EvaluateCubicBezierMidpoint(start, control1, control2, end);
-            var badge = new Border
-            {
-                Padding = new Thickness(7, 2, 7, 2),
-                CornerRadius = new CornerRadius(10),
-                Style = GetGraphStyle(CardStyleKey),
-                BorderThickness = new Thickness(1),
-                Child = new TextBlock
-                {
-                    Text = $"⏱ {delayBadgeText}",
-                    Style = GetGraphStyle(CaptionTextStyleKey)
-                }
-            };
-            badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            Canvas.SetLeft(badge, midPoint.X - (badge.DesiredSize.Width / 2.0));
-            Canvas.SetTop(badge, midPoint.Y - (badge.DesiredSize.Height / 2.0));
-            ConnectionsCanvas.Children.Add(badge);
+            AddDelayBadge(EvaluateCubicBezierMidpoint(start, control1, control2, end), delayBadgeText);
         }
+    }
+
+    private void AddDelayBadge(Point center, string delayBadgeText)
+    {
+        var badge = new Border
+        {
+            Padding = new Thickness(7, 2, 7, 2),
+            CornerRadius = new CornerRadius(10),
+            Style = GetGraphStyle(CardStyleKey),
+            BorderThickness = new Thickness(1),
+            Child = new TextBlock
+            {
+                Text = $"⏱ {delayBadgeText}",
+                Style = GetGraphStyle(CaptionTextStyleKey)
+            }
+        };
+        badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        Canvas.SetLeft(badge, center.X - (badge.DesiredSize.Width / 2.0));
+        Canvas.SetTop(badge, center.Y - (badge.DesiredSize.Height / 2.0));
+        ConnectionsCanvas.Children.Add(badge);
     }
 
     private static Point EvaluateCubicBezierMidpoint(Point p0, Point p1, Point p2, Point p3) =>
@@ -760,7 +809,8 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         if (sender is FrameworkElement { Tag: WorkflowActionViewModel action } && _subscribedLibrary != null)
         {
             _subscribedLibrary.SelectedAction = action;
-            Focus(FocusState.Programmatic);
+            // The UserControl itself is not a tab stop; GraphRoot owns IsTabStop and OnRootKeyDown.
+            _ = GraphRoot.Focus(FocusState.Pointer);
         }
     }
 

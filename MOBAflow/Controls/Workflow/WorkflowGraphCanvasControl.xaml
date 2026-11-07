@@ -61,6 +61,7 @@
     </UserControl.Resources>
 
     <Grid
+        x:Name="GraphRoot"
         Background="{ThemeResource LayerFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
@@ -76,6 +77,7 @@
             MaxZoomFactor="2.0"
             ZoomMode="Enabled">
 
+            <!-- Initial size equals the minimum extent; code-behind grows it from the laid-out nodes. -->
             <Grid
                 x:Name="CanvasHost"
                 Width="1600"

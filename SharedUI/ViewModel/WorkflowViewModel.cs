@@ -17,12 +17,18 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
 {
     public const double TriggerNodeCanvasX = 60;
     public const double TriggerNodeCanvasY = 40;
+    public const double TriggerNodeHeight = 84;
     public const double ActionNodeWidth = 240;
+    public const double ActionNodeHeight = 132;
     public const double FirstActionCanvasX = 60;
     public const double FirstActionCanvasY = 180;
     public const double ColumnSpacingX = 320;
     public const double RowSpacingY = 180;
     public const int MaxRowsPerColumn = 4;
+    public const double MinCanvasWidth = 1600;
+    public const double MinCanvasHeight = 1200;
+    /// <summary>Free space kept right of and below the outermost node so its ports and delay badge stay reachable.</summary>
+    public const double CanvasMargin = 60;
 
     private readonly Workflow _model;
     private readonly HashSet<WorkflowActionViewModel> _subscribedActions = [];
@@ -135,6 +141,23 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     /// <summary>Resets all action node cards to their clean grid positions.</summary>
     [RelayCommand]
     public void ResetActionLayout() => AutoLayoutActions(forceResetCustomPositions: true);
+
+    /// <summary>
+    /// Computes the canvas size that contains the trigger node and every action card plus <see cref="CanvasMargin"/>,
+    /// never smaller than <see cref="MinCanvasWidth"/> x <see cref="MinCanvasHeight"/>.
+    /// </summary>
+    public (double Width, double Height) GetCanvasExtent()
+    {
+        var right = TriggerNodeCanvasX + ActionNodeWidth;
+        var bottom = TriggerNodeCanvasY + TriggerNodeHeight;
+        foreach (var action in Actions)
+        {
+            right = Math.Max(right, action.CanvasX + ActionNodeWidth);
+            bottom = Math.Max(bottom, action.CanvasY + ActionNodeHeight);
+        }
+
+        return (Math.Max(MinCanvasWidth, right + CanvasMargin), Math.Max(MinCanvasHeight, bottom + CanvasMargin));
+    }
 
     /// <summary>Synchronizes display ordinals and persisted order after list changes.</summary>
     public void UpdateActionNumbers()

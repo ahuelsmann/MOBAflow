@@ -236,7 +236,7 @@ internal class WorkflowViewModelTests
     public void AutoLayoutActions_PositionsNodesInGridAndPreservesCustomPositionsUntilReset()
     {
         var workflow = new Workflow();
-        var vm = new WorkflowViewModel(workflow);
+        var vm = new WorkflowViewModel(workflow, TestViewModelServices.Default);
         for (var i = 0; i < 5; i++)
         {
             vm.AddActionCommand.Execute(ActionType.Audio);
@@ -275,6 +275,36 @@ internal class WorkflowViewModelTests
             Assert.That(vm.Actions[0].CanvasX, Is.EqualTo(WorkflowViewModel.FirstActionCanvasX));
             Assert.That(vm.Actions[0].CanvasY, Is.EqualTo(WorkflowViewModel.FirstActionCanvasY));
         }
+    }
+
+    [Test]
+    public void GetCanvasExtent_GrowsWithAutoLayoutColumnsBeyondMinimumAndWithDraggedNodes()
+    {
+        var vm = new WorkflowViewModel(new Workflow(), TestViewModelServices.Default);
+        Assert.That(vm.GetCanvasExtent(), Is.EqualTo((WorkflowViewModel.MinCanvasWidth, WorkflowViewModel.MinCanvasHeight)));
+
+        // 24 actions fill six columns; column index 5 starts at 60 + 5 * 320 = 1660, past the 1600 minimum.
+        for (var i = 0; i < 24; i++)
+        {
+            vm.AddActionCommand.Execute(ActionType.Command);
+        }
+
+        var lastColumnX = WorkflowViewModel.FirstActionCanvasX + (5 * WorkflowViewModel.ColumnSpacingX);
+        var lastRowY = WorkflowViewModel.FirstActionCanvasY + ((WorkflowViewModel.MaxRowsPerColumn - 1) * WorkflowViewModel.RowSpacingY);
+        var (width, height) = vm.GetCanvasExtent();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(vm.Actions[20].CanvasX, Is.EqualTo(lastColumnX));
+            Assert.That(width, Is.EqualTo(lastColumnX + WorkflowViewModel.ActionNodeWidth + WorkflowViewModel.CanvasMargin));
+            Assert.That(width, Is.GreaterThan(WorkflowViewModel.MinCanvasWidth));
+            Assert.That(height, Is.EqualTo(WorkflowViewModel.MinCanvasHeight));
+            Assert.That(lastRowY + WorkflowViewModel.ActionNodeHeight + WorkflowViewModel.CanvasMargin, Is.LessThanOrEqualTo(height));
+        }
+
+        vm.Actions[0].SetCanvasPosition(2400, 1500, isCustomPosition: true);
+        Assert.That(vm.GetCanvasExtent(), Is.EqualTo((
+            2400 + WorkflowViewModel.ActionNodeWidth + WorkflowViewModel.CanvasMargin,
+            1500 + WorkflowViewModel.ActionNodeHeight + WorkflowViewModel.CanvasMargin)));
     }
 
     [TestCase("", "TestVoice")]
@@ -327,7 +357,7 @@ internal class WorkflowViewModelTests
     [Test]
     public void ActionNodePresentationProperties_ProvideBadgesAndRaisePropertyChanged()
     {
-        var vm = new WorkflowViewModel(new Workflow());
+        var vm = new WorkflowViewModel(new Workflow(), TestViewModelServices.Default);
         vm.AddActionCommand.Execute(ActionType.Announcement);
         vm.AddActionCommand.Execute(ActionType.Audio);
         vm.AddActionCommand.Execute(ActionType.Command);
