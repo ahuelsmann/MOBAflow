@@ -10,6 +10,7 @@ using Moba.Contracts.Runtime;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.TrainControl;
+using Moba.Test.Helpers;
 
 using Moq;
 
@@ -47,9 +48,10 @@ internal sealed class TrainControlViewModelConnectionTests
             runtime,
             new LocalRuntimeCommandGateway(runtime),
             settingsService.Object,
-            null,
+            new MobileSolutionContext(TestViewModelServices.Default),
             NullLogger<TrainControlViewModel>.Instance,
-            null,
-            eventBus);
+            ImmediateUiDispatcher.Instance,
+            eventBus,
+            new NullFunctionAppearancePicker());
     }
 }

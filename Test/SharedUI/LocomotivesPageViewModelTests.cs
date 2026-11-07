@@ -291,6 +291,45 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     }
 
     [Test]
+    public void ProjectSwitch_ReevaluatesTheDeleteState_AndBlocksAgainAfterReturning()
+    {
+        var originalProject = _session.SelectedProject!;
+        var controlled = AddLocomotiveWithAddress(3);
+        PublishRuntime(isConnected: true, (3, 0));
+        var blockedBeforeSwitch = _page.IsDeleteLocomotiveBlocked;
+        var blockedNotifications = 0;
+        _page.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(LocomotivesPageViewModel.IsDeleteLocomotiveBlocked))
+                blockedNotifications++;
+        };
+
+        _session.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
+        var notifiedOnSwitch = blockedNotifications;
+        var blockedAfterSwitch = _page.IsDeleteLocomotiveBlocked;
+        var reasonAfterSwitch = _page.DeleteLocomotiveBlockedReason;
+        AddLocomotiveWithAddress(3);
+        var sameAddressInOtherProjectCanBeDeleted = _page.DeleteLocomotiveCommand.CanExecute(null);
+
+        _session.SelectedProject = originalProject;
+        _page.SelectedLocomotive = controlled;
+        _page.DeleteLocomotiveCommand.Execute(null);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(blockedBeforeSwitch, Is.True);
+            Assert.That(notifiedOnSwitch, Is.GreaterThan(0));
+            Assert.That(blockedAfterSwitch, Is.False);
+            Assert.That(reasonAfterSwitch, Is.Null);
+            Assert.That(sameAddressInOtherProjectCanBeDeleted, Is.True);
+            Assert.That(_page.DeleteLocomotiveCommand.CanExecute(null), Is.False);
+            Assert.That(_page.IsDeleteLocomotiveBlocked, Is.True);
+            Assert.That(_page.DeleteLocomotiveBlockedReason, Is.EqualTo("Stop controlling this locomotive before you delete it."));
+            Assert.That(originalProject.Model.Locomotives, Does.Contain(controlled.Model));
+        }
+    }
+
+    [Test]
     public void ReleasedLocomotive_CanBeDeletedAgain_AndNotifiesTheCommand()
     {
         var locomotive = AddLocomotiveWithAddress(3);
