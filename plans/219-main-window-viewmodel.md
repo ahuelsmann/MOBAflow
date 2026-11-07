@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Active; slices 1, 2a, 2b, 2c, 3a, 3b and 4 integrated through #248, #257, #264, #272, #282, #401 and #409; slice 5a (counters and traffic monitor) is implemented on branch `claude/issue-219-rf24-slice5a` as a draft PR awaiting review; slice 5b (diagnostics, health and synchronization status) is planned below; slice 6 is not allocated
+**Status**: Active; slices 1, 2a, 2b, 2c, 3a, 3b and 4 integrated through #248, #257, #264, #272, #282, #401 and #409; slice 5a (counters and traffic monitor) is implemented in draft PR #419 (branch `claude/issue-219-rf24-slice5a`) awaiting review; slice 5b (diagnostics, health and synchronization status) is planned below; slice 6 is not allocated
 **Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13; journeys/cities at 1f8c77fd; workflows at 0e6ef5f1 on 2026-11-05. Slice 5 planning resolves against main a2b36f11 on 2026-11-05; slice 5a starts from main df8c8375 on 2026-11-07.
 
 ## Purpose and scope
@@ -185,7 +185,7 @@ Refresh the base and update this plan from evidence after each integrated slice.
    station and event-manager surfaces. Manual theme/UI acceptance remains open.
 5. **Counters, diagnostics, health and synchronization status (two sequential PRs, see
    [the slice 5 plan](#slice-5-implementation-plan-2026-11-05); 5a implemented as a draft PR, 5b planned):**
-   - **5a Counters and traffic monitor (draft PR on `claude/issue-219-rf24-slice5a`; see
+   - **5a Counters and traffic monitor (draft PR #419; see
      [the slice 5a validation](#slice-5a-local-validation-2026-11-07)):** InPortCounterViewModel owns the feedback-point statistics, counter
      settings, persistence error, reset command and counter snapshot projection; the reworked MonitorPageViewModel
      owns the traffic packets, connection status and Monitor expansion without a shell dependency. OverviewPage
@@ -389,8 +389,12 @@ covered by the FastDebug compile. The moved shell construction sites lost their 
 Local checks on Windows: the FastDebug compile of MOBAflow passed with zero warnings; the slice filter
 (`InPortCounterViewModelTests`, `MonitorPageViewModelTests`, `JourneyCounterProjectionTests`,
 `MainWindowViewModelShutdownTests`, `SolutionSessionArchitectureTests`) executed 73 tests; the portable suite
-passed 3,153 tests with zero failures and zero skips. The Windows suite, the Release analyzer gates and the
-remaining checks are recorded in the draft PR. MOBAsmart is unaffected (no Android build was run locally; CI owns
+passed 3,153 tests and the Windows suite 3,262 tests, each with zero failures and zero skips. Both Release
+analyzer gates match exactly: 3,171 diagnostics in 1,125 groups (portable) and 2,453 in 963 (Windows); the
+portable and Android baselines drop the removed Counter partial's four entries and the Z21 partial's MVVMTK0042
+entry, the test baselines lower the moved fixtures' counts and add one CA1812 entry per new fixture.
+Documentation links (649), secrets and line-ending checks pass; draft PR #419 owns the remote CI and Sonar
+evidence. MOBAsmart is unaffected (no Android build was run locally; CI owns
 it). No application, device or hardware was started; manual Light/Dark/High Contrast and accessibility
 acceptance remain open in #365.
 
