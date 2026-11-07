@@ -176,6 +176,8 @@ edit the same sequential action list as either a compact table or an interactive
 assigned journey events above Step #1, dashed Bézier connectors link steps in
 execution order (with +ms badges when **Delay after** is set), and node cards
 can be dragged freely on the dot grid or aligned with **Auto layout**.
+Dragged node positions are view-only and are not saved with the solution, so they
+are lost when the solution is reopened or MOBAflow restarts.
 Workflow settings contain its name and description. Deleting a referenced workflow
 is blocked until its event assignments are removed or reassigned.
 

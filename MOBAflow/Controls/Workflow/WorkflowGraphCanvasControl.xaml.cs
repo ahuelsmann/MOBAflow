@@ -39,6 +39,10 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
     private readonly Dictionary<WorkflowActionViewModel, ActionNodeVisuals> _actionVisuals = [];
     private readonly Dictionary<WorkflowActionViewModel, Point> _dragRawPositions = [];
 
+    // A touchpad raises pointer events instead of manipulation events, so its drag follows the captured pointer.
+    private WorkflowActionViewModel? _touchpadDragAction;
+    private Point _touchpadDragLastPoint;
+
     private WorkflowLibraryViewModel? _subscribedLibrary;
     private WorkflowViewModel? _subscribedWorkflow;
     private Border? _triggerCard;
@@ -260,6 +264,7 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
 
         _actionVisuals.Clear();
         _dragRawPositions.Clear();
+        _touchpadDragAction = null;
         NodesCanvas.Children.Clear();
         ConnectionsCanvas.Children.Clear();
         _triggerCard = null;
@@ -586,6 +591,9 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         };
         AutomationProperties.SetName(rootWrapper, GetActionAutomationName(action));
         rootWrapper.PointerPressed += OnActionCardPointerPressed;
+        rootWrapper.PointerMoved += OnActionCardPointerMoved;
+        rootWrapper.PointerReleased += OnActionCardPointerReleased;
+        rootWrapper.PointerCaptureLost += OnActionCardPointerCaptureLost;
         rootWrapper.ManipulationStarted += OnActionCardManipulationStarted;
         rootWrapper.ManipulationDelta += OnActionCardManipulationDelta;
         rootWrapper.ManipulationCompleted += OnActionCardManipulationCompleted;
@@ -811,6 +819,49 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             _subscribedLibrary.SelectedAction = action;
             // The UserControl itself is not a tab stop; GraphRoot owns IsTabStop and OnRootKeyDown.
             _ = GraphRoot.Focus(FocusState.Pointer);
+
+            if (e.Pointer.PointerDeviceType == PointerDeviceType.Touchpad
+                && sender is UIElement element
+                && element.CapturePointer(e.Pointer))
+            {
+                _touchpadDragAction = action;
+                _touchpadDragLastPoint = e.GetCurrentPoint(CanvasHost).Position;
+                _dragRawPositions[action] = new Point(action.CanvasX, action.CanvasY);
+            }
+        }
+    }
+
+    private void OnActionCardPointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (e.Pointer.PointerDeviceType != PointerDeviceType.Touchpad
+            || sender is not FrameworkElement { Tag: WorkflowActionViewModel action }
+            || !ReferenceEquals(action, _touchpadDragAction))
+        {
+            return;
+        }
+
+        // CanvasHost coordinates are unzoomed canvas units, so the pointer delta needs no zoom correction.
+        var point = e.GetCurrentPoint(CanvasHost).Position;
+        MoveDraggedAction(action, point.X - _touchpadDragLastPoint.X, point.Y - _touchpadDragLastPoint.Y);
+        _touchpadDragLastPoint = point;
+        e.Handled = true;
+    }
+
+    private void OnActionCardPointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is UIElement element && _touchpadDragAction != null)
+        {
+            // Releasing the capture raises PointerCaptureLost, which ends the drag.
+            element.ReleasePointerCapture(e.Pointer);
+        }
+    }
+
+    private void OnActionCardPointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: WorkflowActionViewModel action } && ReferenceEquals(action, _touchpadDragAction))
+        {
+            _dragRawPositions.Remove(action);
+            _touchpadDragAction = null;
         }
     }
 
@@ -834,19 +885,25 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
         }
 
         var zoom = CanvasScrollViewer.ZoomFactor <= 0 ? 1.0f : CanvasScrollViewer.ZoomFactor;
+        MoveDraggedAction(action, e.Delta.Translation.X / zoom, e.Delta.Translation.Y / zoom);
+        e.Handled = true;
+    }
+
+    /// <summary>Moves a dragged node by a canvas-unit delta, kept inside the canvas and snapped to the grid.</summary>
+    private void MoveDraggedAction(WorkflowActionViewModel action, double deltaX, double deltaY)
+    {
         if (!_dragRawPositions.TryGetValue(action, out var raw))
         {
             raw = new Point(action.CanvasX, action.CanvasY);
         }
 
-        var nextRawX = Math.Clamp(raw.X + (e.Delta.Translation.X / zoom), 20.0, CanvasHost.Width - CardWidth - 20.0);
-        var nextRawY = Math.Clamp(raw.Y + (e.Delta.Translation.Y / zoom), 20.0, CanvasHost.Height - ActionCardHeight - 20.0);
+        var nextRawX = Math.Clamp(raw.X + deltaX, 20.0, CanvasHost.Width - CardWidth - 20.0);
+        var nextRawY = Math.Clamp(raw.Y + deltaY, 20.0, CanvasHost.Height - ActionCardHeight - 20.0);
         _dragRawPositions[action] = new Point(nextRawX, nextRawY);
 
         var snappedX = Math.Round(nextRawX / GridSnapSize) * GridSnapSize;
         var snappedY = Math.Round(nextRawY / GridSnapSize) * GridSnapSize;
         action.SetCanvasPosition(snappedX, snappedY, isCustomPosition: true);
-        e.Handled = true;
     }
 
     private void OnActionCardManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
