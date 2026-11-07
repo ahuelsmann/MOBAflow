@@ -322,7 +322,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// Runs once shutdown is confirmed and before the runtimes stop, so host-owned runtime observers
     /// do not process the disconnect's packets and snapshots; it does not run when shutdown is cancelled.
     /// </param>
-    public async Task<bool> PrepareForShutdownAsync(Action? releaseRuntimeObservers = null)
+    public async Task<bool> PrepareForShutdownAsync(System.Action? releaseRuntimeObservers = null)
     {
         if (_isShuttingDown)
         {
