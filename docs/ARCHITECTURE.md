@@ -311,9 +311,11 @@ runtime services.
 
 **ViewModel wiring:**
 
-- `MainWindowViewModel`, `TrainControlViewModel`, `MonitorPageViewModel`, `InPortCounterViewModel`
-  and `MauiViewModel` take only the runtime roles they read (`IRuntimeSnapshotProvider`,
-  `IConnectionRuntime`, `ITrafficMonitor`) and a required `IRuntimeCommandGateway` from DI. MOBAsmart
+- `MainWindowViewModel`, `TrainControlViewModel` and `MauiViewModel` take only the runtime roles they
+  read (`IRuntimeSnapshotProvider`, `IConnectionRuntime`, `ITrafficMonitor`) and a required
+  `IRuntimeCommandGateway` from DI. `InPortCounterViewModel` reads `IRuntimeSnapshotProvider` and sends its
+  reset through the gateway; `MonitorPageViewModel` reads `ITrafficMonitor` and `IRuntimeSnapshotProvider`
+  and takes no gateway. MOBAsmart
   registers one `MobaRuntimeService` behind every role; MOBAflow registers the
   selected project's runtime (see below)
 - Journey-related UI still receives state from snapshots rather than owning
@@ -492,12 +494,16 @@ runtime services.
   (reloaded on `SelectedRuntimeChangedEvent`, capped at 100), the connection status derived from the runtime
   snapshot and the selected project's Z21 address, the clear command and the two persisted Monitor expansion
   flags under the existing `Layout.MonitorPage` keys. The architecture guard rejects shell dependencies in
-  MonitorPage, whose code-behind keeps the star-value persistence for slice 6.
+  MonitorPage, whose code-behind keeps the star-value persistence for slice 6. As a host singleton resolved
+  with the main window, it is created at start-up instead of on the first Monitor visit, so it follows
+  `InMemorySink.LogAdded` and writes its "Monitor started" entry from then on; the page shows the same
+  capped log.
 - The Counter shell partial, the shell's traffic region, its `ITrafficMonitor` dependency and the Monitor
   layout members are removed. The shell keeps the Z21 status and telemetry projection (`MainCurrent`,
   `Temperature`, `SupplyVoltage`, `VccVoltage` next to serial, firmware and hardware type) and the journey
   runtime projection. No shell surface binds the counter or monitor state, so `MainWindow` disposes both
-  host instances after the shell confirmed shutdown. MOBAsmart keeps its own counter projection in `MauiViewModel`.
+  host instances once the shell confirmed shutdown and before the runtimes stop, through the callback of
+  `MainWindowViewModel.PrepareForShutdownAsync`; a cancelled shutdown keeps them subscribed. MOBAsmart keeps its own counter projection in `MauiViewModel`.
 
 **Settings presentation (RF-24 slice 1):**
 

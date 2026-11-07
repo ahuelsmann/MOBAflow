@@ -318,7 +318,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>
     /// Stops runtime-driven UI updates and disconnects from the Z21 before the host window completes shutdown.
     /// </summary>
-    public async Task<bool> PrepareForShutdownAsync()
+    /// <param name="releaseRuntimeObservers">
+    /// Runs once shutdown is confirmed and before the runtimes stop, so host-owned runtime observers
+    /// do not process the disconnect's packets and snapshots; it does not run when shutdown is cancelled.
+    /// </param>
+    public async Task<bool> PrepareForShutdownAsync(Action? releaseRuntimeObservers = null)
     {
         if (_isShuttingDown)
         {
@@ -346,6 +350,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             return true;
         }
+
+        releaseRuntimeObservers?.Invoke();
 
         using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(ShutdownDisconnectTimeoutSeconds));
 

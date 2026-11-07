@@ -337,7 +337,7 @@ public sealed partial class MainWindow
 
         try
         {
-            if (!await ViewModel.PrepareForShutdownAsync())
+            if (!await ViewModel.PrepareForShutdownAsync(ReleaseRuntimeObservers))
             {
                 return false;
             }
@@ -350,9 +350,8 @@ public sealed partial class MainWindow
         _isClosing = true;
         UnsubscribeWindowEvents();
 
-        // The shell confirmed shutdown; the counter and traffic monitor stop following the runtime.
-        _counters.Dispose();
-        _monitor.Dispose();
+        // Normally already released before the runtimes stopped; Dispose is idempotent and covers a failed shell workflow.
+        ReleaseRuntimeObservers();
 
         _restApiStatusService.Stop();
 
@@ -390,6 +389,13 @@ public sealed partial class MainWindow
 
         DetachWindowBindings();
         return true;
+    }
+
+    /// <summary>The shell confirmed shutdown; the counter and traffic monitor stop following the runtime.</summary>
+    private void ReleaseRuntimeObservers()
+    {
+        _counters.Dispose();
+        _monitor.Dispose();
     }
 
     private void UnsubscribeWindowEvents()

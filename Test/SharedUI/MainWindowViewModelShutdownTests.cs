@@ -94,14 +94,35 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
             .ReturnsAsync(false);
         var viewModel = CreateViewModel(CreateMobaRuntimeMock(), host: host, dialog: dialog, solution: solution);
 
-        var closed = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+        var released = false;
+
+        var closed = await viewModel.PrepareForShutdownAsync(() => released = true).ConfigureAwait(false);
 
         Assert.That(closed, Is.False);
+        Assert.That(released, Is.False, "A cancelled shutdown keeps the runtime observers subscribed.");
         dialog.Verify(value => value.ShowConfirmationAsync(
             "Stop all trains?",
             It.Is<string>(message => message.Contains("'Station'", StringComparison.Ordinal)),
             "Stop trains", "Cancel", true), Times.Once);
         host.Verify(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task PrepareForShutdownAsync_ReleasesRuntimeObserversOnceBeforeStoppingRuntimes()
+    {
+        var host = new Mock<IProjectRuntimeHost>();
+        host.SetupGet(value => value.ConnectedProjectIds).Returns([]);
+        var viewModel = CreateViewModel(CreateMobaRuntimeMock(), host: host);
+        var steps = new List<string>();
+        host.Setup(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()))
+            .Callback(() => steps.Add("stop runtimes"))
+            .Returns(Task.CompletedTask);
+
+        await viewModel.PrepareForShutdownAsync(() => steps.Add("release observers")).ConfigureAwait(false);
+        await viewModel.PrepareForShutdownAsync(() => steps.Add("release observers")).ConfigureAwait(false);
+
+        // The disconnect's last packets and snapshots must not reach the counter and traffic monitor.
+        Assert.That(steps, Is.EqualTo((string[])["release observers", "stop runtimes"]));
     }
 
     [TestCase(true)]
