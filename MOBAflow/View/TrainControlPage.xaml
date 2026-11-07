@@ -101,20 +101,20 @@
                     Grid.Column="2"
                     Padding="16,8"
                     AccessKey="S"
-                    AutomationProperties.HelpText="Immediately stops the locomotive"
+                    AutomationProperties.AcceleratorKey="Pause"
+                    AutomationProperties.HelpText="Immediately stops the locomotive. Shortcut: Pause, or Space when no button or input has focus"
                     AutomationProperties.Name="Emergency Stop"
                     Command="{x:Bind ViewModel.EmergencyStopCommand}"
-                    Style="{StaticResource DangerButtonStyle}">
+                    Style="{StaticResource DangerButtonStyle}"
+                    ToolTipService.ToolTip="Emergency stop (Pause, or Space when no button or input has focus)">
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <FontIcon
                             FontSize="18"
-                            Foreground="{ThemeResource MobaDangerButtonForegroundBrush}"
                             Glyph="&#xE711;" />
                         <TextBlock
                             VerticalAlignment="Center"
                             FontSize="14"
                             FontWeight="Bold"
-                            Foreground="{ThemeResource MobaDangerButtonForegroundBrush}"
                             Text="EMERGENCY STOP" />
                     </StackPanel>
                 </Button>
@@ -519,6 +519,7 @@
                                 <Button
                                     Padding="4"
                                     VerticalAlignment="Center"
+                                    AutomationProperties.Name="Reset peak current and peak temperature"
                                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                     BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                                     BorderThickness="1"
@@ -625,6 +626,7 @@
                         <Button
                             Grid.Row="0"
                             Grid.Column="0"
+                            AutomationProperties.Name="Toggle brake"
                             Background="{x:Bind ViewModel.BrakeButtonColorHex, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
                             Command="{x:Bind ViewModel.ToggleBrakeCommand}"
                             ContentTemplate="{x:Bind BrakeIconTemplate, Mode=OneWay}"
@@ -634,6 +636,7 @@
                         <Button
                             Grid.Row="0"
                             Grid.Column="1"
+                            AutomationProperties.Name="Toggle door release"
                             Background="{x:Bind ViewModel.DoorReleaseButtonColorHex, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
                             Command="{x:Bind ViewModel.ToggleDoorReleaseCommand}"
                             ContentTemplate="{x:Bind DoorReleaseIconTemplate, Mode=OneWay}"

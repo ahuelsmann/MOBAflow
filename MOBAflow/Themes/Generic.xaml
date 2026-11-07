@@ -43,7 +43,7 @@
                                 Width="3"
                                 Margin="0,8,0,8"
                                 HorizontalAlignment="Left"
-                                Background="#FFE666"
+                                Background="{ThemeResource MobaPanelAccentHelperBrush}"
                                 CornerRadius="2"
                                 Opacity="0.16" />
 
@@ -85,6 +85,7 @@
                                             Content="{TemplateBinding HeaderActions}" />
 
                                         <Button
+                                            AutomationProperties.Name="Unpin panel"
                                             x:Name="CollapseButton"
                                             Grid.Column="3"
                                             Padding="4"
@@ -167,7 +168,7 @@
                                 Width="3"
                                 Margin="0,8,0,8"
                                 HorizontalAlignment="Left"
-                                Background="#0078D4"
+                                Background="{ThemeResource MobaPanelAccentCollectionBrush}"
                                 CornerRadius="2"
                                 Opacity="0.16" />
 
@@ -209,6 +210,7 @@
                                             Content="{TemplateBinding HeaderActions}" />
 
                                         <Button
+                                            AutomationProperties.Name="Collapse list"
                                             x:Name="CollapseButton"
                                             Grid.Column="3"
                                             Padding="4"
@@ -292,7 +294,7 @@
                                 Width="3"
                                 Margin="0,8,0,8"
                                 HorizontalAlignment="Left"
-                                Background="#FF8C00"
+                                Background="{ThemeResource MobaPanelAccentPropertiesBrush}"
                                 CornerRadius="2"
                                 Opacity="0.16" />
 
@@ -334,6 +336,7 @@
                                             Content="{TemplateBinding HeaderActions}" />
 
                                         <Button
+                                            AutomationProperties.Name="Collapse panel"
                                             x:Name="CollapseButton"
                                             Grid.Column="3"
                                             Padding="4"
