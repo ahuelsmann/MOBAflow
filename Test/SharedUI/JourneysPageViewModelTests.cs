@@ -504,7 +504,7 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
     public void EventEditorSharesSelectionAndReceivesStatusChangesUntilDisposed()
     {
         using var assertions = Assert.EnterMultipleScope();
-        using var library = new WorkflowLibraryViewModel(_session);
+        using var library = TestWorkflowLibraries.Create(_session);
         using var editor = new EventManagerViewModel(_session, library, _page,
             new CommunityToolkit.Mvvm.Input.RelayCommand(() => { }));
         var notifications = new List<string?>();

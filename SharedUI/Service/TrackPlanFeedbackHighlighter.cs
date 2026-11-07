@@ -25,7 +25,7 @@ public sealed class TrackPlanFeedbackHighlighter : IDisposable
 {
     private readonly IEventBus _eventBus;
     private readonly ITrackFeedbackLookup _feedbackLookup;
-    private readonly ILogger<TrackPlanFeedbackHighlighter>? _logger;
+    private readonly ILogger<TrackPlanFeedbackHighlighter> _logger;
 
     private readonly object _gate = new();
     private readonly Dictionary<Guid, long> _pulseStartTicks = [];
@@ -50,11 +50,11 @@ public sealed class TrackPlanFeedbackHighlighter : IDisposable
     public TrackPlanFeedbackHighlighter(
         IEventBus eventBus,
         ITrackFeedbackLookup feedbackLookup,
-        ILogger<TrackPlanFeedbackHighlighter>? logger = null)
+        ILogger<TrackPlanFeedbackHighlighter> logger)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _feedbackLookup = feedbackLookup ?? throw new ArgumentNullException(nameof(feedbackLookup));
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>Subscribes the highlighter to the event bus. Call once during application startup.</summary>
@@ -148,7 +148,7 @@ public sealed class TrackPlanFeedbackHighlighter : IDisposable
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Feedback highlight processing failed for InPort={InPort}", e.InPort);
+            _logger.LogWarning(ex, "Feedback highlight processing failed for InPort={InPort}", e.InPort);
         }
     }
 
@@ -216,7 +216,7 @@ public sealed class TrackPlanFeedbackHighlighter : IDisposable
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "HighlightsChanged handler threw");
+            _logger.LogWarning(ex, "HighlightsChanged handler threw");
         }
     }
 

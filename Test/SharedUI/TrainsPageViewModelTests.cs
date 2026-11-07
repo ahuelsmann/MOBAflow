@@ -31,7 +31,7 @@ internal sealed partial class TrainsPageViewModelTests : IDisposable
         _session.SetupProperty(value => value.SelectedProject, new ProjectViewModel(new Project
         {
             Trains = [new Train { Name = "Regional" }, new Train { Name = "Freight" }]
-        }));
+        }, TestViewModelServices.Default));
         _session.Setup(value => value.SaveSolutionInternalAsync()).Returns(Task.CompletedTask);
         _runtime = new Mock<IConnectionRuntime>();
         _runtime.Setup(value => value.UpdateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
@@ -133,7 +133,7 @@ internal sealed partial class TrainsPageViewModelTests : IDisposable
         using var assertions = Assert.EnterMultipleScope();
         var old = _page.SelectedTrain!;
         _page.SelectedVehicle = new VehicleItemViewModel(new Vehicle(), "Old");
-        var project = new ProjectViewModel(new Project { Trains = [new Train { Name = "Other" }] });
+        var project = new ProjectViewModel(new Project { Trains = [new Train { Name = "Other" }] }, TestViewModelServices.Default);
         SelectProject(project);
         _session.Invocations.Clear();
         _runtime.Invocations.Clear();

@@ -15,9 +15,13 @@ public class PhotosController : ControllerBase
 {
     private static readonly HashSet<string> AllowedExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"];
     private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
-    private readonly IHubContext<PhotoHub>? _hubContext;
-    public PhotosController(IHubContext<PhotoHub>? hubContext = null)
+    private readonly IHubContext<PhotoHub> _hubContext;
+
+    /// <summary>Initializes a new instance of the <see cref="PhotosController"/> class.</summary>
+    /// <param name="hubContext">Notifies connected clients about uploaded photos.</param>
+    public PhotosController(IHubContext<PhotoHub> hubContext)
     {
+        ArgumentNullException.ThrowIfNull(hubContext);
         _hubContext = hubContext;
     }
 
@@ -106,21 +110,17 @@ public class PhotosController : ControllerBase
 
         await using (var stream = System.IO.File.Create(fullPath))
             await file.CopyToAsync(stream, cancellationToken);
-        if (_hubContext != null)
+        try
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync(
-                    "PhotoUploaded",
-                    relativePath,
-                    DateTime.UtcNow,
-                    cancellationToken);
-            }
-
-            catch
-            {
-                // Ignore if no clients connected
-            }
+            await _hubContext.Clients.All.SendAsync(
+                "PhotoUploaded",
+                relativePath,
+                DateTime.UtcNow,
+                cancellationToken);
+        }
+        catch
+        {
+            // Ignore if no clients connected
         }
 
         return Ok(new { success = true, photoPath = relativePath });

@@ -37,7 +37,7 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);
-        _library = new WorkflowLibraryViewModel(_session);
+        _library = TestWorkflowLibraries.Create(_session);
     }
 
     [TearDown]

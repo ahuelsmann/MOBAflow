@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
@@ -34,7 +35,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
             ]
         };
 
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         projectContext.ApplySolution(solution, "myMOBA");
 
         var viewModel = CreateViewModel(projectContext);
@@ -60,7 +61,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
                 }
             };
 
-        var viewModel = CreateViewModel(new MobileSolutionContext());
+        var viewModel = CreateViewModel(new MobileSolutionContext(TestViewModelServices.Default));
         viewModel.RefreshLocomotiveList(fleet);
 
         Assert.That(viewModel.HasProjectLocomotives, Is.True);
@@ -76,7 +77,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
             Projects = [new Project { Name = "empty", Locomotives = [] }]
         };
 
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         projectContext.ApplySolution(solution, "empty");
 
         var viewModel = CreateViewModel(projectContext);
@@ -89,7 +90,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
     [Test]
     public void RefreshLocomotiveList_KeepsList_WhenEmptyFleetOverrideArrives()
     {
-        var viewModel = CreateViewModel(new MobileSolutionContext());
+        var viewModel = CreateViewModel(new MobileSolutionContext(TestViewModelServices.Default));
 
         viewModel.RefreshLocomotiveList(
         (LocomotiveFleetSnapshot[])[
@@ -110,7 +111,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
     public void RefreshLocomotiveList_UpdatesInPlace_WhenFleetMetadataChanges()
     {
         var locomotiveId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-        var viewModel = CreateViewModel(new MobileSolutionContext());
+        var viewModel = CreateViewModel(new MobileSolutionContext(TestViewModelServices.Default));
 
         viewModel.RefreshLocomotiveList(
         (LocomotiveFleetSnapshot[])[
@@ -241,7 +242,9 @@ internal sealed class TrainControlViewModelLocomotiveListTests
             settingsMock.Object,
             projectContext,
             NullLogger<TrainControlViewModel>.Instance,
-            eventBus: new EventBus(NullLogger<EventBus>.Instance),
+            ImmediateUiDispatcher.Instance,
+            new EventBus(NullLogger<EventBus>.Instance),
+            new NullFunctionAppearancePicker(),
             options: new TrainControlViewModelOptions());
     }
 
@@ -256,9 +259,11 @@ internal sealed class TrainControlViewModelLocomotiveListTests
             runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsMock.Object,
-            projectContext: null,
+            new MobileSolutionContext(TestViewModelServices.Default),
             NullLogger<TrainControlViewModel>.Instance,
-            eventBus: new EventBus(NullLogger<EventBus>.Instance),
+            ImmediateUiDispatcher.Instance,
+            new EventBus(NullLogger<EventBus>.Instance),
+            new NullFunctionAppearancePicker(),
             options: new TrainControlViewModelOptions
             {
                 UseRemoteRuntimeSnapshots = true

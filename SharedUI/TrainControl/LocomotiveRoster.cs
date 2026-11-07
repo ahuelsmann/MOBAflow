@@ -35,7 +35,7 @@ public sealed record LocomotiveRosterSelection(LocomotiveViewModel Locomotive, b
 public sealed class LocomotiveRoster
 {
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
-    private readonly IProjectContext? _projectContext;
+    private readonly IProjectContext _projectContext;
     private IReadOnlyList<LocomotiveFleetSnapshot>? _pendingFleet;
     private IReadOnlyList<LocomotiveFleetSnapshot>? _lastAppliedFleet;
 
@@ -43,10 +43,11 @@ public sealed class LocomotiveRoster
     /// Initializes a new instance of the <see cref="LocomotiveRoster"/> class.
     /// </summary>
     /// <param name="runtimeSnapshots">The runtime whose fleet is used when no live fleet arrives.</param>
-    /// <param name="projectContext">Optional: the selected project and its locomotives.</param>
-    public LocomotiveRoster(IRuntimeSnapshotProvider runtimeSnapshots, IProjectContext? projectContext = null)
+    /// <param name="projectContext">The selected project and its locomotives.</param>
+    public LocomotiveRoster(IRuntimeSnapshotProvider runtimeSnapshots, IProjectContext projectContext)
     {
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
+        ArgumentNullException.ThrowIfNull(projectContext);
         _runtimeSnapshots = runtimeSnapshots;
         _projectContext = projectContext;
     }
@@ -130,7 +131,7 @@ public sealed class LocomotiveRoster
         var runtimeFleet = _runtimeSnapshots.Current.LocomotiveFleet;
         IReadOnlyList<LocomotiveViewModel> items = runtimeFleet.Count > 0
             ? OrderByName(runtimeFleet).Select(CreateFromFleetSnapshot).ToList()
-            : _projectContext?.SelectedProject?.Locomotives ?? (IReadOnlyList<LocomotiveViewModel>)[];
+            : _projectContext.SelectedProject?.Locomotives ?? (IReadOnlyList<LocomotiveViewModel>)[];
         return items.Count == 0 ? [] : new ObservableCollection<LocomotiveViewModel>(items);
     }
 

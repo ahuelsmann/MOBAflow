@@ -83,7 +83,7 @@ internal sealed class MauiViewModelControlTabTests
 
             ]
         };
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         projectContext.ApplySolution(solution, "myMOBA");
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
@@ -97,7 +97,7 @@ internal sealed class MauiViewModelControlTabTests
     [Test]
     public void SolutionSyncedEvent_RefreshesFleet_WhenProjectContextUpdates()
     {
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
         var viewModel = CreateViewModel(projectContext, eventBus: eventBus);
@@ -176,7 +176,7 @@ internal sealed class MauiViewModelControlTabTests
     {
         var br110Id = Guid.Parse("bb15c10a-5b78-451f-8f2f-2d4e3efa74af");
         var br211Id = Guid.Parse("f8a91b2c-3d4e-5f60-a211-279170442317");
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         projectContext.ApplySolution(new Solution
         {
             Projects =
@@ -280,7 +280,7 @@ internal sealed class MauiViewModelControlTabTests
     [Test]
     public void SolutionSyncedEvent_RefreshesFleet_WhenPreferRemoteRuntime()
     {
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var coordinator = new MobileRuntimeCoordinator(
             new Mock<IMobaRuntime>().Object,
@@ -315,7 +315,7 @@ internal sealed class MauiViewModelControlTabTests
     {
         var br110Id = Guid.Parse("bb15c10a-5b78-451f-8f2f-2d4e3efa74af");
         var br211Id = Guid.Parse("f8a91b2c-3d4e-5f60-a211-279170442317");
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         projectContext.ApplySolution(new Solution
         {
             Projects =
@@ -378,7 +378,7 @@ internal sealed class MauiViewModelControlTabTests
     {
         var br110Id = Guid.Parse("bb15c10a-5b78-451f-8f2f-2d4e3efa74af");
         var br211Id = Guid.Parse("f8a91b2c-3d4e-5f60-a211-279170442317");
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         projectContext.ApplySolution(new Solution
         {
             Projects =
@@ -452,7 +452,7 @@ internal sealed class MauiViewModelControlTabTests
     [Test]
     public void SetControlTabActive_UsesProjectFleet_WhenRemoteSessionAndFleetCacheEmpty()
     {
-        var projectContext = new MobileSolutionContext();
+        var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         projectContext.ApplySolution(new Solution
         {
             Projects =
@@ -503,9 +503,11 @@ internal sealed class MauiViewModelControlTabTests
             runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsMock.Object,
-            projectContext ?? new MobileSolutionContext(),
+            projectContext ?? new MobileSolutionContext(TestViewModelServices.Default),
             NullLogger<TrainControlViewModel>.Instance,
-            eventBus: eventBus,
+            ImmediateUiDispatcher.Instance,
+            eventBus,
+            new NullFunctionAppearancePicker(),
             options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
     }
 
@@ -543,8 +545,12 @@ internal sealed class MauiViewModelControlTabTests
             settingsService,
             endpointLocator,
             TestHubSessions.Create(settings, endpointLocator, photoUploadService, runtimeHubRemoteClient),
-            new MobileRuntimeProjection(mobaRuntime ?? runtimeMock!.Object, projectContext, mobileRuntimeCoordinator),
-            TestSolutionSynchronizers.Create(),
+            new MobileRuntimeProjection(
+                mobaRuntime ?? runtimeMock!.Object,
+                projectContext ?? new MobileSolutionContext(TestViewModelServices.Default),
+                mobileRuntimeCoordinator ?? Mock.Of<IMobileRuntimeCoordinator>(),
+                Mock.Of<IMobileSolutionStore>()),
+            TestSolutionSynchronizers.Create(Mock.Of<ISolutionRemoteLoader>()),
             new MobilePhotoUploader(new Mock<IPhotoCaptureService>().Object, photoUploadService, endpointLocator),
             new Mock<INetworkProfileChangeNotifier>().Object,
             NullLogger<MauiViewModel>.Instance,

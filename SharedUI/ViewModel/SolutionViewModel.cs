@@ -7,9 +7,7 @@ using Domain;
 
 using Interface;
 
-using Microsoft.Extensions.Logging;
-
-using Sound;
+using Service;
 
 using System.Collections.ObjectModel;
 
@@ -27,11 +25,8 @@ public sealed partial class SolutionViewModel : ObservableObject, IViewModelWrap
     /// </summary>
     public Solution Model { get; }
 
-    // Optional Services
-    private readonly IUiDispatcher? _dispatcher;
-    private readonly IFilePickerService? _filePicker;
-    private readonly ISoundPlayer? _soundPlayer;
-    private readonly ILoggerFactory? _loggerFactory;
+    // Services passed to the nested project and workflow ViewModels
+    private readonly SolutionViewModelServices _services;
 
     // Properties
     [ObservableProperty]
@@ -49,18 +44,13 @@ public sealed partial class SolutionViewModel : ObservableObject, IViewModelWrap
     /// Initializes a new instance of the <see cref="SolutionViewModel"/> class.
     /// </summary>
     /// <param name="model">The solution domain model.</param>
-    /// <param name="dispatcher">Optional UI dispatcher used by nested project ViewModels.</param>
-    /// <param name="filePicker">Optional IO service used by nested ViewModels.</param>
-    /// <param name="soundPlayer">Optional sound player used by nested ViewModels.</param>
-    /// <param name="loggerFactory">Optional factory for nested view model loggers.</param>
-    public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null, IFilePickerService? filePicker = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
+    /// <param name="services">Services used by the nested project and workflow ViewModels.</param>
+    public SolutionViewModel(Solution model, SolutionViewModelServices services)
     {
         ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(services);
         Model = model;
-        _dispatcher = dispatcher;
-        _filePicker = filePicker;
-        _soundPlayer = soundPlayer;
-        _loggerFactory = loggerFactory;
+        _services = services;
         Refresh();
     }
 
@@ -76,7 +66,7 @@ public sealed partial class SolutionViewModel : ObservableObject, IViewModelWrap
         Projects.Clear();
         foreach (var project in Model.Projects)
         {
-            Projects.Add(new ProjectViewModel(project, _dispatcher, _filePicker, _soundPlayer, _loggerFactory));
+            Projects.Add(new ProjectViewModel(project, _services));
         }
     }
 }

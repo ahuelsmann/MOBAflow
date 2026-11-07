@@ -6,7 +6,6 @@ using Common.Configuration;
 using Interface;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>
 /// The persisted train-control preferences: ramp, speed steps, locomotive series and Vmax, and the last
@@ -23,13 +22,14 @@ public sealed partial class TrainControlSettingsStore
     /// </summary>
     /// <param name="settingsService">Reads and saves the application settings.</param>
     /// <param name="host">The host whose locomotive selection is read and written.</param>
-    /// <param name="logger">Optional logger for diagnostics.</param>
-    public TrainControlSettingsStore(ISettingsService settingsService, TrainControlHost host, ILogger? logger = null)
+    /// <param name="logger">Logger for diagnostics.</param>
+    public TrainControlSettingsStore(ISettingsService settingsService, TrainControlHost host, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(logger);
         _settingsService = settingsService;
         _host = host;
-        _logger = logger ?? NullLogger.Instance;
+        _logger = logger;
     }
 
     /// <summary>Gets the shared train-control preferences.</summary>

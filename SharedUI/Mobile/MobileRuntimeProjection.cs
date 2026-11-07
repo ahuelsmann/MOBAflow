@@ -20,9 +20,9 @@ using Service;
 public sealed class MobileRuntimeProjection
 {
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
-    private readonly IProjectContext? _projectContext;
-    private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
-    private readonly IMobileSolutionStore? _mobileSolutionStore;
+    private readonly IProjectContext _projectContext;
+    private readonly IMobileRuntimeCoordinator _mobileRuntimeCoordinator;
+    private readonly IMobileSolutionStore _mobileSolutionStore;
     private IReadOnlyList<LocomotiveFleetSnapshot>? _cachedRemoteLocomotiveFleet;
     private IReadOnlyList<SignalBoxElementRuntimeSnapshot>? _cachedRemoteSignalBoxElements;
     private bool _remoteLocomotiveFleetIsLive;
@@ -31,29 +31,32 @@ public sealed class MobileRuntimeProjection
     /// Initializes a new instance of the <see cref="MobileRuntimeProjection"/> class.
     /// </summary>
     /// <param name="runtimeSnapshots">The phone's local runtime snapshots.</param>
-    /// <param name="projectContext">Optional: the synced solution and the selected project.</param>
-    /// <param name="mobileRuntimeCoordinator">Optional: tells whether the remote MOBAflow runtime is preferred.</param>
-    /// <param name="mobileSolutionStore">Optional: persists remote data for offline use.</param>
+    /// <param name="projectContext">The synced solution and the selected project.</param>
+    /// <param name="mobileRuntimeCoordinator">Tells whether the remote MOBAflow runtime is preferred.</param>
+    /// <param name="mobileSolutionStore">Persists remote data for offline use.</param>
     public MobileRuntimeProjection(
         IRuntimeSnapshotProvider runtimeSnapshots,
-        IProjectContext? projectContext = null,
-        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
-        IMobileSolutionStore? mobileSolutionStore = null)
+        IProjectContext projectContext,
+        IMobileRuntimeCoordinator mobileRuntimeCoordinator,
+        IMobileSolutionStore mobileSolutionStore)
     {
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
+        ArgumentNullException.ThrowIfNull(projectContext);
+        ArgumentNullException.ThrowIfNull(mobileRuntimeCoordinator);
+        ArgumentNullException.ThrowIfNull(mobileSolutionStore);
         _runtimeSnapshots = runtimeSnapshots;
         _projectContext = projectContext;
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator;
         _mobileSolutionStore = mobileSolutionStore;
     }
 
-    private bool PreferRemoteRuntime => _mobileRuntimeCoordinator?.PreferRemoteRuntime == true;
+    private bool PreferRemoteRuntime => _mobileRuntimeCoordinator.PreferRemoteRuntime;
 
     /// <summary>Gets whether any source has locomotives for the Control tab.</summary>
     public bool HasAnyLocomotiveFleetAvailable =>
         _cachedRemoteLocomotiveFleet is { Count: > 0 }
         || _runtimeSnapshots.Current.LocomotiveFleet.Count > 0
-        || (_projectContext?.SelectedProject?.Locomotives.Count ?? 0) > 0;
+        || (_projectContext.SelectedProject?.Locomotives.Count ?? 0) > 0;
 
     /// <summary>Gets whether remote or local signal-box elements exist.</summary>
     public bool HasAnySignalBoxElementsAvailable =>
@@ -110,7 +113,7 @@ public sealed class MobileRuntimeProjection
 
         _cachedRemoteLocomotiveFleet = fleet;
         _remoteLocomotiveFleetIsLive = true;
-        return _mobileSolutionStore?.SaveLocomotiveFleetAsync(fleet, cancellationToken) ?? Task.CompletedTask;
+        return _mobileSolutionStore.SaveLocomotiveFleetAsync(fleet, cancellationToken);
     }
 
     /// <summary>
@@ -127,7 +130,7 @@ public sealed class MobileRuntimeProjection
         }
 
         _cachedRemoteSignalBoxElements = elements;
-        return _mobileSolutionStore?.SaveSignalBoxElementsAsync(elements, cancellationToken) ?? Task.CompletedTask;
+        return _mobileSolutionStore.SaveSignalBoxElementsAsync(elements, cancellationToken);
     }
 
     /// <summary>Forgets the remote locomotive fleet.</summary>
@@ -244,7 +247,7 @@ public sealed class MobileRuntimeProjection
     /// <summary>Limits remote signal-box elements to the selected project's plan.</summary>
     public IReadOnlyList<SignalBoxElementRuntimeSnapshot> FilterSignalBoxElementsToPlan(
         IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements) =>
-        SignalBoxRuntimeSync.FilterToPlan(_projectContext?.SelectedProject?.Model.SignalBoxPlan, elements);
+        SignalBoxRuntimeSync.FilterToPlan(_projectContext.SelectedProject?.Model.SignalBoxPlan, elements);
 
     /// <summary>
     /// Whether remote signal-box elements cover every element of the selected project's plan.
@@ -268,17 +271,17 @@ public sealed class MobileRuntimeProjection
     }
 
     private IReadOnlyList<SignalBoxElementRuntimeSnapshot> BuildSignalBoxSnapshotsFromProjectContext() =>
-        SignalBoxRuntimeSync.BuildSnapshotsFromPlan(_projectContext?.SelectedProject?.Model.SignalBoxPlan);
+        SignalBoxRuntimeSync.BuildSnapshotsFromPlan(_projectContext.SelectedProject?.Model.SignalBoxPlan);
 
     private IReadOnlyList<LocomotiveFleetSnapshot> FilterFleetToCurrentProject(IReadOnlyList<LocomotiveFleetSnapshot> fleet)
     {
-        var project = _projectContext?.SelectedProject?.Model;
+        var project = _projectContext.SelectedProject?.Model;
         return project == null ? fleet : FilterFleetToProject(project, fleet);
     }
 
     private List<LocomotiveFleetSnapshot> BuildFleetSnapshotsFromProjectContext()
     {
-        var project = _projectContext?.SelectedProject;
+        var project = _projectContext.SelectedProject;
         if (project == null)
         {
             return [];

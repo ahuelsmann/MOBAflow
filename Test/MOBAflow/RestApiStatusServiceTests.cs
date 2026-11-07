@@ -4,7 +4,6 @@ namespace Moba.Test.MOBAflow;
 
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
@@ -202,10 +201,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             stationEventBus1,
             TestSettingsPages.Create(appSettings, uiDispatcher.Object),
             _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntime.Object, null),
-            _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntime.Object, new ActionExecutionContext
-            {
-                Z21 = new Mock<IZ21>().Object
-            }, stationEventBus1),
+            _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntime.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(mobaRuntime.Object), uiDispatcher.Object),
             locomotiveSession1,
             NullLogger<MainWindowViewModel>.Instance);
