@@ -2435,7 +2435,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1707",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 5
+      "count": 2
     },
     {
       "project": "Test",
@@ -3015,6 +3015,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/InPortCounterViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 2
     },
@@ -3107,6 +3114,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Common/RemotePhotoUriBuilderTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/MonitorPageViewModelTests.cs",
       "count": 1
     },
     {
@@ -5116,7 +5130,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 8
+      "count": 3
     },
     {
       "project": "Test",
@@ -5130,7 +5144,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/MainWindowViewModelShutdownTests.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "Test",
@@ -6502,7 +6516,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 4
+      "count": 1
     },
     {
       "project": "Test",
@@ -6705,7 +6719,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit4002",
       "path": "Test/SharedUI/MainWindowViewModelShutdownTests.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Test",

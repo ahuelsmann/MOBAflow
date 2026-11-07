@@ -4,7 +4,6 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Test.Helpers;
-using Moba.Backend.Events;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Common.Configuration;
@@ -65,24 +64,6 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
                 }));
 
         Assert.That(viewModel.IsConnected, Is.True);
-    }
-
-    [Test]
-    public async Task PrepareForShutdownAsync_UnsubscribesFromTrafficPackets()
-    {
-        var mobaRuntimeMock = CreateMobaRuntimeMock();
-        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var viewModel = CreateViewModel(mobaRuntimeMock, eventBus);
-
-        eventBus.Publish(new Z21TrafficPacketLoggedEvent(new Z21TrafficPacket()));
-        Assert.That(viewModel.TrafficPackets, Has.Count.EqualTo(1));
-
-        await viewModel.PrepareForShutdownAsync();
-
-        Assert.That(eventBus.GetSubscriberCount<Z21TrafficPacketLoggedEvent>(), Is.EqualTo(0));
-
-        eventBus.Publish(new Z21TrafficPacketLoggedEvent(new Z21TrafficPacket()));
-        Assert.That(viewModel.TrafficPackets, Has.Count.EqualTo(1));
     }
 
     [Test]
@@ -198,7 +179,6 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
         var stationEventBus1 = eventBus ?? new Mock<IEventBus>().Object;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
-            mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),

@@ -43,11 +43,11 @@ internal sealed partial class MonitorPage
         Unloaded += OnPageUnloaded;
     }
 
-    private void MainWindowViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.IsMonitorTrafficExpanded))
+        if (e.PropertyName == nameof(MonitorPageViewModel.IsMonitorTrafficExpanded))
         {
-            if (!ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded)
+            if (!ViewModel.IsMonitorTrafficExpanded)
             {
                 if (ColTraffic.Width.IsStar)
                 {
@@ -60,9 +60,9 @@ internal sealed partial class MonitorPage
                 ColTraffic.Width = new GridLength(_trafficExpandedStarValue, GridUnitType.Star);
             }
         }
-        else if (e.PropertyName == nameof(MainWindowViewModel.IsMonitorActivityLogExpanded))
+        else if (e.PropertyName == nameof(MonitorPageViewModel.IsMonitorActivityLogExpanded))
         {
-            if (!ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded)
+            if (!ViewModel.IsMonitorActivityLogExpanded)
             {
                 if (ColLog.Width.IsStar)
                 {
@@ -79,8 +79,8 @@ internal sealed partial class MonitorPage
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        ViewModel.MainWindowViewModel.PropertyChanged -= MainWindowViewModel_PropertyChanged;
-        ViewModel.MainWindowViewModel.PropertyChanged += MainWindowViewModel_PropertyChanged;
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         RestoreLayout();
 
         ViewModel.TrafficPackets.CollectionChanged += OnTrafficPacketsChanged;
@@ -98,7 +98,7 @@ internal sealed partial class MonitorPage
     {
         try
         {
-            ViewModel.MainWindowViewModel.PropertyChanged -= MainWindowViewModel_PropertyChanged;
+            ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
             if (_settingsService != null)
             {
@@ -142,13 +142,13 @@ internal sealed partial class MonitorPage
             ColLog.Width = GridLength.Auto;
         }
 
-        if (ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded != layout.IsTrafficExpanded)
+        if (ViewModel.IsMonitorTrafficExpanded != layout.IsTrafficExpanded)
         {
-            ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded = layout.IsTrafficExpanded;
+            ViewModel.IsMonitorTrafficExpanded = layout.IsTrafficExpanded;
         }
-        if (ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded != layout.IsActivityLogExpanded)
+        if (ViewModel.IsMonitorActivityLogExpanded != layout.IsActivityLogExpanded)
         {
-            ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded = layout.IsActivityLogExpanded;
+            ViewModel.IsMonitorActivityLogExpanded = layout.IsActivityLogExpanded;
         }
     }
 
@@ -156,14 +156,14 @@ internal sealed partial class MonitorPage
     {
         var layout = _settings.Layout.MonitorPage;
 
-        layout.IsTrafficExpanded = ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded;
-        layout.IsActivityLogExpanded = ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded;
+        layout.IsTrafficExpanded = ViewModel.IsMonitorTrafficExpanded;
+        layout.IsActivityLogExpanded = ViewModel.IsMonitorActivityLogExpanded;
 
         if (ColTraffic.Width.IsStar)
         {
             layout.TrafficColumnStarValue = ColTraffic.Width.Value;
         }
-        else if (!ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded)
+        else if (!ViewModel.IsMonitorTrafficExpanded)
         {
             layout.TrafficColumnStarValue = _trafficExpandedStarValue;
         }
@@ -172,7 +172,7 @@ internal sealed partial class MonitorPage
         {
             layout.ActivityLogColumnStarValue = ColLog.Width.Value;
         }
-        else if (!ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded)
+        else if (!ViewModel.IsMonitorActivityLogExpanded)
         {
             layout.ActivityLogColumnStarValue = _activityLogExpandedStarValue;
         }

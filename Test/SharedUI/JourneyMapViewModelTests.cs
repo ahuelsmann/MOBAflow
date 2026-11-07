@@ -63,7 +63,6 @@ internal sealed partial class JourneyMapViewModelTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
             runtimeMock.Object,
-            runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), dispatcherMock.Object),

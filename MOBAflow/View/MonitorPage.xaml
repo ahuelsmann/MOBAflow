@@ -52,7 +52,7 @@
                 Margin="0"
                 Glyph="&#xE8F1;"
                 Header="Z21 Traffic"
-                IsExpanded="{x:Bind ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded, Mode=TwoWay}">
+                IsExpanded="{x:Bind ViewModel.IsMonitorTrafficExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.HeaderActions>
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <ToggleButton
@@ -207,7 +207,7 @@
                 Margin="0"
                 Glyph="&#xE81C;"
                 Header="Application Log"
-                IsExpanded="{x:Bind ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded, Mode=TwoWay}">
+                IsExpanded="{x:Bind ViewModel.IsMonitorActivityLogExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.HeaderActions>
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <ToggleButton

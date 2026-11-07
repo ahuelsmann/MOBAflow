@@ -368,12 +368,12 @@
                         Header="Target Lap Count"
                         Minimum="1"
                         SpinButtonPlacementMode="Inline"
-                        Value="{x:Bind ViewModel.GlobalTargetLapCount, Mode=TwoWay}" />
+                        Value="{x:Bind Counters.GlobalTargetLapCount, Mode=TwoWay}" />
 
                     <!--  Timer Filter Settings  -->
                     <StackPanel Spacing="12">
                         <StackPanel Spacing="4">
-                            <CheckBox Content="Use Timer Filter" IsChecked="{x:Bind ViewModel.UseTimerFilter, Mode=TwoWay}" />
+                            <CheckBox Content="Use Timer Filter" IsChecked="{x:Bind Counters.UseTimerFilter, Mode=TwoWay}" />
                             <TextBlock
                                 Margin="32,0,0,0"
                                 Style="{StaticResource CaptionTextBlockStyle}"
@@ -385,12 +385,12 @@
                             Width="200"
                             HorizontalAlignment="Left"
                             Header="Timer Interval (seconds)"
-                            IsEnabled="{x:Bind ViewModel.UseTimerFilter, Mode=OneWay}"
+                            IsEnabled="{x:Bind Counters.UseTimerFilter, Mode=OneWay}"
                             LargeChange="1"
                             Minimum="1"
                             SmallChange="1"
                             SpinButtonPlacementMode="Inline"
-                            Value="{x:Bind ViewModel.TimerIntervalSeconds, Mode=TwoWay}">
+                            Value="{x:Bind Counters.TimerIntervalSeconds, Mode=TwoWay}">
                             <NumberBox.Description>
                                 <TextBlock Text="Example: 10s for 16-axle trains" TextWrapping="Wrap" />
                             </NumberBox.Description>
@@ -406,7 +406,7 @@
                     <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Track Statistics" />
                 </StackPanel>
 
-                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Statistics, Mode=OneWay}">
+                <ItemsRepeater ItemsSource="{x:Bind Counters.Statistics, Mode=OneWay}">
                     <ItemsRepeater.ItemTemplate>
                         <DataTemplate x:DataType="vm:InPortStatistic">
                             <Border
@@ -513,14 +513,14 @@
                 </ItemsRepeater>
 
                 <!--  Reset Button  -->
-                <TextBlock Text="{x:Bind ViewModel.CounterPersistenceError, Mode=OneWay}"
+                <TextBlock Text="{x:Bind Counters.CounterPersistenceError, Mode=OneWay}"
                            TextWrapping="Wrap" />
-                <TextBlock Text="{x:Bind ViewModel.CounterCommandStatus, Mode=OneWay}"
+                <TextBlock Text="{x:Bind Counters.CounterCommandStatus, Mode=OneWay}"
                            TextWrapping="Wrap" />
                 <Button
                     MinWidth="200"
                     HorizontalAlignment="Center"
-                    Command="{x:Bind ViewModel.ResetCountersCommand}"
+                    Command="{x:Bind Counters.ResetCountersCommand}"
                     Content="Reset All Counters" />
             </StackPanel>
         </StackPanel>

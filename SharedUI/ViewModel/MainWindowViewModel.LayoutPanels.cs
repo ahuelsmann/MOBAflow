@@ -9,28 +9,6 @@ public partial class MainWindowViewModel
     private bool _isProjectListExpanded = true;
     private bool _isSignalBoxToolboxExpanded = true;
     private bool _isSignalBoxPropertiesExpanded = true;
-    private bool _isMonitorTrafficExpanded = true;
-    private bool _isMonitorActivityLogExpanded = true;
-
-    public bool IsMonitorTrafficExpanded
-    {
-        get => _isMonitorTrafficExpanded;
-        set
-        {
-            if (SetProperty(ref _isMonitorTrafficExpanded, value))
-                PersistLayoutState(layout => layout.MonitorPage.IsTrafficExpanded = value);
-        }
-    }
-
-    public bool IsMonitorActivityLogExpanded
-    {
-        get => _isMonitorActivityLogExpanded;
-        set
-        {
-            if (SetProperty(ref _isMonitorActivityLogExpanded, value))
-                PersistLayoutState(layout => layout.MonitorPage.IsActivityLogExpanded = value);
-        }
-    }
 
     public bool IsProjectListExpanded
     {
@@ -82,8 +60,6 @@ public partial class MainWindowViewModel
         _isProjectPropertiesExpanded = _settings.Layout.SolutionPage.IsPropertiesExpanded;
         _isSignalBoxToolboxExpanded = _settings.Layout.SignalBoxPage.IsToolboxExpanded;
         _isSignalBoxPropertiesExpanded = _settings.Layout.SignalBoxPage.IsPropertiesExpanded;
-        _isMonitorTrafficExpanded = _settings.Layout.MonitorPage.IsTrafficExpanded;
-        _isMonitorActivityLogExpanded = _settings.Layout.MonitorPage.IsActivityLogExpanded;
     }
 
     private void PersistLayoutState(Action<LayoutSettings> apply)

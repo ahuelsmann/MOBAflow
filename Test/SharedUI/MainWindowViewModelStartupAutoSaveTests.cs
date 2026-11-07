@@ -227,7 +227,6 @@ internal partial class MainWindowViewModelShutdownTests
             new LayoutColumnWidthsViewModel(),
             runtime,
             runtime,
-            runtime,
             new LocalRuntimeCommandGateway(runtime),
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
