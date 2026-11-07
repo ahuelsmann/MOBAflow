@@ -3750,6 +3750,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Architecture/AccessibleNameArchitectureTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Architecture/RuntimeCommandPathArchitectureTests.cs",
       "count": 1
     },
@@ -3765,6 +3772,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Architecture/SolutionSessionArchitectureTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Architecture/ThemeDictionaryArchitectureTests.cs",
       "count": 1
     },
     {
@@ -5031,6 +5045,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/OperatorShortcutsTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/RecorderPageViewModelTests.cs",
       "count": 1
     },
@@ -5088,6 +5109,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/SettingsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SignalBoxElementDescriptionsTests.cs",
       "count": 1
     },
     {

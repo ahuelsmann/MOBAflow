@@ -39,6 +39,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button
                         Padding="4"
+                        AutomationProperties.Name="Add a new locomotive"
                         Command="{x:Bind ViewModel.AddLocomotiveCommand}"
                         ToolTipService.ToolTip="Add a new locomotive">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
@@ -52,6 +53,7 @@
                     </Button>
                     <Button
                         Padding="4"
+                        AutomationProperties.Name="Delete the selected locomotive"
                         Command="{x:Bind ViewModel.DeleteLocomotiveCommand}"
                         ToolTipService.ToolTip="Delete the selected locomotive">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />

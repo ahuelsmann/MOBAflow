@@ -60,12 +60,14 @@
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <Button
                             Padding="4"
+                            AutomationProperties.Name="Add a new train"
                             Command="{x:Bind ViewModel.AddTrainCommand}"
                             ToolTipService.ToolTip="Add a new train">
                             <FontIcon FontSize="14" Glyph="&#xE710;" />
                         </Button>
                         <Button
                             Padding="4"
+                            AutomationProperties.Name="Delete the selected train"
                             Command="{x:Bind ViewModel.DeleteTrainCommand}"
                             ToolTipService.ToolTip="Delete the selected train">
                             <FontIcon FontSize="14" Glyph="&#xE74D;" />
@@ -413,6 +415,7 @@
                                                 Margin="-2,-2,0,0"
                                                 Padding="0"
                                                 HorizontalAlignment="Left"
+                                                AutomationProperties.Name="Toggle direction"
                                                 Background="Transparent"
                                                 BorderThickness="0"
                                                 Command="{x:Bind ToggleDirectionCommand}"
@@ -427,6 +430,7 @@
                                                 Margin="0,-2,-2,0"
                                                 Padding="0"
                                                 HorizontalAlignment="Right"
+                                                AutomationProperties.Name="Remove vehicle from consist"
                                                 Background="Transparent"
                                                 BorderThickness="0"
                                                 Command="{x:Bind RemoveCommand}"

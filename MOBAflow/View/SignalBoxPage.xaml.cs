@@ -85,9 +85,16 @@ sealed partial class SignalBoxPage
             return;
         }
 
+        // Refreshing recreates each signal's focus target; keep keyboard focus on the element that had it.
+        var focused = CanvasControl.GetFocusedElementTarget();
         foreach (var signal in _planViewModel.Elements.OfType<SbSignal>().ToList())
         {
             _planViewModel.RefreshElementVisual(signal);
+        }
+
+        if (focused is { } target)
+        {
+            CanvasControl.RestoreElementFocus(target.Element, target.State);
         }
     }
 

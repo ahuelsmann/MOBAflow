@@ -57,12 +57,14 @@
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <ToggleButton
                             Padding="4"
+                            AutomationProperties.Name="Pause auto-scroll (allows manual scrolling)"
                             IsChecked="{x:Bind ViewModel.IsTrafficScrollPaused, Mode=TwoWay}"
                             ToolTipService.ToolTip="Pause auto-scroll (allows manual scrolling)">
                             <FontIcon FontSize="14" Glyph="{x:Bind ViewModel.IsTrafficScrollPaused, Mode=OneWay, Converter={StaticResource BoolToScrollIconConverter}}" />
                         </ToggleButton>
                         <Button
                             Padding="4"
+                            AutomationProperties.Name="Clear all traffic packets"
                             Command="{x:Bind ViewModel.ClearTrafficCommand}"
                             ToolTipService.ToolTip="Clear all traffic packets">
                             <FontIcon FontSize="14" Glyph="&#xE74D;" />
@@ -212,12 +214,14 @@
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <ToggleButton
                             Padding="4"
+                            AutomationProperties.Name="Pause auto-scroll (allows manual scrolling)"
                             IsChecked="{x:Bind ViewModel.IsActivityLogScrollPaused, Mode=TwoWay}"
                             ToolTipService.ToolTip="Pause auto-scroll (allows manual scrolling)">
                             <FontIcon FontSize="14" Glyph="{x:Bind ViewModel.IsActivityLogScrollPaused, Mode=OneWay, Converter={StaticResource BoolToScrollIconConverter}}" />
                         </ToggleButton>
                         <Button
                             Padding="4"
+                            AutomationProperties.Name="Clear activity logs"
                             Command="{x:Bind ViewModel.ClearActivityLogsCommand}"
                             ToolTipService.ToolTip="Clear activity logs">
                             <FontIcon FontSize="14" Glyph="&#xE74D;" />

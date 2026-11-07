@@ -5,8 +5,11 @@ using Common.Extension;
 using Domain;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using SharedUI.Service;
 using SharedUI.ViewModel;
 using System;
 using Windows.ApplicationModel.DataTransfer;
@@ -24,6 +27,18 @@ public class GridCoordinateConverter : IValueConverter
         }
         return 0.0;
     }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>Converts a signal-box element into the name a screen reader speaks.</summary>
+internal sealed partial class SignalBoxElementDescriptionConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language) =>
+        value is SbElement element ? SignalBoxElementDescriptions.Describe(element) : string.Empty;
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
@@ -238,6 +253,56 @@ public sealed partial class SignalBoxCanvasControl
         }
 
         PlanViewModel.ClearSelection();
+    }
+
+    // The focus layer lets keyboard and screen-reader users select an element: Enter or Space acts like a click.
+    private void OnElementFocusTargetClick(object sender, RoutedEventArgs e)
+    {
+        if (PlanViewModel != null && sender is FrameworkElement { DataContext: SbElement element })
+        {
+            PlanViewModel.SelectedElement = element;
+        }
+    }
+
+    /// <summary>
+    /// Returns the element whose focus target has keyboard focus, so a visual refresh can restore it.
+    /// </summary>
+    internal (SbElement Element, FocusState State)? GetFocusedElementTarget() =>
+        XamlRoot != null && FocusManager.GetFocusedElement(XamlRoot) is Button { DataContext: SbElement element } button
+            && FocusTargetLayer.ContainerFromItem(element) != null
+            ? (element, button.FocusState)
+            : null;
+
+    /// <summary>
+    /// Focuses the element's focus target again after its item was recreated by a visual refresh.
+    /// </summary>
+    internal void RestoreElementFocus(SbElement element, FocusState state)
+    {
+        FocusTargetLayer.UpdateLayout();
+        if (FocusTargetLayer.ContainerFromItem(element) is DependencyObject container
+            && FindDescendant<Button>(container) is { } button)
+        {
+            button.Focus(state);
+        }
+    }
+
+    private static T? FindDescendant<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T match)
+            {
+                return match;
+            }
+
+            if (FindDescendant<T>(child) is { } nested)
+            {
+                return nested;
+            }
+        }
+
+        return null;
     }
 
     private void OnCanvasPointerMoved(object sender, PointerRoutedEventArgs e)
