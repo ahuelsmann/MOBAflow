@@ -4,10 +4,12 @@
     x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    MinimumHeightRequest="40">
+    MinimumHeightRequest="48"
+    MinimumWidthRequest="48">
     <Border
         x:Name="ToggleBorder"
         Padding="8,6"
+        MinimumHeightRequest="48"
         StrokeShape="RoundRectangle 12"
         StrokeThickness="1">
         <Border.GestureRecognizers>
@@ -34,8 +36,7 @@
                 Grid.Column="2"
                 FontSize="11"
                 IsVisible="False"
-                LineBreakMode="TailTruncation"
-                MaxLines="1"
+                LineBreakMode="WordWrap"
                 VerticalOptions="Center" />
         </Grid>
     </Border>
