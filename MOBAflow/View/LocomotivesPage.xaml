@@ -62,18 +62,27 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <AutoSuggestBox
+                    <InfoBar
                         Grid.Row="0"
+                        Margin="0,0,0,8"
+                        IsClosable="False"
+                        IsOpen="{x:Bind ViewModel.IsDeleteLocomotiveBlocked, Mode=OneWay}"
+                        Message="{x:Bind ViewModel.DeleteLocomotiveBlockedReason, Mode=OneWay}"
+                        Severity="Informational" />
+
+                    <AutoSuggestBox
+                        Grid.Row="1"
                         Margin="0,0,0,8"
                         PlaceholderText="Search locomotives..."
                         QueryIcon="Find"
                         Text="{x:Bind ViewModel.LocomotiveSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                     <ListView
-                        Grid.Row="1"
+                        Grid.Row="2"
                         IsItemClickEnabled="True"
                         ItemsSource="{x:Bind ViewModel.FilteredLocomotiveLibrary, Mode=OneWay}"
                         SelectedItem="{x:Bind ViewModel.SelectedLocomotive, Mode=TwoWay}"
