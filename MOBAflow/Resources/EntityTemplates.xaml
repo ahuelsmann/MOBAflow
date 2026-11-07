@@ -168,6 +168,7 @@
                             TextTrimming="CharacterEllipsis" />
                         <Button
                             Grid.Column="1"
+                            AutomationProperties.Name="Remove workflow assignment"
                             MinWidth="32"
                             Padding="4"
                             Command="{Binding RemoveWorkflowCommand}"
@@ -468,6 +469,7 @@
                             Text="{Binding FilePath, Mode=TwoWay}" />
                         <Button
                             Grid.Column="1"
+                            AutomationProperties.Name="Preview audio file"
                             Command="{Binding PlayAudioCommand}"
                             ToolTipService.ToolTip="Preview audio file">
                             <StackPanel Orientation="Horizontal" Spacing="6">
@@ -816,6 +818,7 @@
 
                     <Button
                         Padding="0"
+                        AutomationProperties.Name="Open photo"
                         Background="Transparent"
                         BorderThickness="0"
                         Command="{Binding OpenPhotoCommand}"
@@ -980,6 +983,7 @@
 
                     <Button
                         Padding="0"
+                        AutomationProperties.Name="Open photo"
                         Background="Transparent"
                         BorderThickness="0"
                         Command="{Binding OpenPhotoCommand}"
