@@ -266,20 +266,24 @@ public sealed partial class SignalBoxCanvasControl
 
     /// <summary>
     /// Returns the element whose focus target has keyboard focus, so a visual refresh can restore it.
+    /// The control's <see cref="UIElement.XamlRoot"/> and <c>FocusTargetLayer</c> are passed explicitly
+    /// so this stays a pure static helper.
     /// </summary>
-    internal (SbElement Element, FocusState State)? GetFocusedElementTarget() =>
-        XamlRoot != null && FocusManager.GetFocusedElement(XamlRoot) is Button { DataContext: SbElement element } button
-            && FocusTargetLayer.ContainerFromItem(element) != null
+    internal static (SbElement Element, FocusState State)? GetFocusedElementTarget(
+        XamlRoot? xamlRoot,
+        ItemsControl focusTargetLayer) =>
+        xamlRoot != null && FocusManager.GetFocusedElement(xamlRoot) is Button { DataContext: SbElement element } button
+            && focusTargetLayer.ContainerFromItem(element) != null
             ? (element, button.FocusState)
             : null;
 
     /// <summary>
     /// Focuses the element's focus target again after its item was recreated by a visual refresh.
     /// </summary>
-    internal void RestoreElementFocus(SbElement element, FocusState state)
+    internal static void RestoreElementFocus(ItemsControl focusTargetLayer, SbElement element, FocusState state)
     {
-        FocusTargetLayer.UpdateLayout();
-        if (FocusTargetLayer.ContainerFromItem(element) is DependencyObject container
+        focusTargetLayer.UpdateLayout();
+        if (focusTargetLayer.ContainerFromItem(element) is DependencyObject container
             && FindDescendant<Button>(container) is { } button)
         {
             button.Focus(state);
