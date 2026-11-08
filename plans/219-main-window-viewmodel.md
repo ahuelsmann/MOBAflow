@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Active; slices 1, 2a, 2b, 2c, 3a, 3b, 4 and 5a integrated through #248, #257, #264, #272, #282, #401, #409 and #419; slice 5b (diagnostics, health and synchronization status) is implemented in a draft PR on branch `claude/issue-219-rf24-slice5b` awaiting review; slice 6 is not allocated
+**Status**: Active; slices 1, 2a, 2b, 2c, 3a, 3b, 4 and 5a integrated through #248, #257, #264, #272, #282, #401, #409 and #419; slice 5b (diagnostics, health and synchronization status) is implemented in draft PR #425 (branch `claude/issue-219-rf24-slice5b`) awaiting review; slice 6 is not allocated
 **Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13; journeys/cities at 1f8c77fd; workflows at 0e6ef5f1 on 2026-11-05. Slice 5 planning resolves against main a2b36f11 on 2026-11-05; slice 5a starts from main df8c8375 on 2026-11-07 and is integrated at 3f9590e0; slice 5b starts from main 7b1c3f96 on 2026-11-08.
 
 ## Purpose and scope
@@ -191,7 +191,7 @@ Refresh the base and update this plan from evidence after each integrated slice.
      owns the traffic packets, connection status and Monitor expansion without a shell dependency. OverviewPage
      and EventManager receive the host counter instance. The Counter partial and the shell's traffic region,
      `ITrafficMonitor` dependency and Monitor layout members are removed; Z21 telemetry stays in the Z21 partial.
-   - **5b Diagnostics and system status (draft PR on `claude/issue-219-rf24-slice5b`; see
+   - **5b Diagnostics and system status (draft PR #425; see
      [the slice 5b validation](#slice-5b-local-validation-2026-11-08)):** ProjectDiagnosticsViewModel owns the Messages pane state and refresh
      triggers; SystemStatusViewModel owns speech health, post-startup, REST API and synchronization status. The
      shell exposes both for the status bar and Messages pane, reads the operating-state inputs from
