@@ -98,8 +98,11 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
 
         var closed = await viewModel.PrepareForShutdownAsync(() => released = true).ConfigureAwait(false);
 
-        Assert.That(closed, Is.False);
-        Assert.That(released, Is.False, "A cancelled shutdown keeps the runtime observers subscribed.");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(closed, Is.False);
+            Assert.That(released, Is.False, "A cancelled shutdown keeps the runtime observers subscribed.");
+        }
         dialog.Verify(value => value.ShowConfirmationAsync(
             "Stop all trains?",
             It.Is<string>(message => message.Contains("'Station'", StringComparison.Ordinal)),
