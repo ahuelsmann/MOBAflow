@@ -59,10 +59,15 @@ lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) run but do not block a me
   keeps the Release AAB lane manual via `workflow_dispatch` / `validate_android`. It does not become a mandatory PR
   lane. This settles slice 2 without a workflow change. Correction on main `7b1c3f96`: [Release
   Studio](../.github/workflows/release-studio.yml) publishes only `MOBAflow` and `MOBApi`; no workflow builds the
-  AAB for a release. The only CI evidence for the AAB is the manual `android-release` job (4.7 to 7.2 minutes on
-  `windows-latest` in the five dispatch runs of 2026-11-07/08, of which about 4.7 minutes is `dotnet publish`),
-  whose artifact is kept for 30 days. Running it in PR runs is an open maintainer decision; the options and
-  measurements are recorded on [#360](https://github.com/ahuelsmann/MOBAflow/issues/360).
+  AAB for a release. The only CI evidence for the AAB is the manual `android-release` job, whose artifact is kept
+  for 30 days. Sample read on 2026-11-08 (19:30 UTC): the 15 Quality `workflow_dispatch` runs created between
+  2026-11-07T01:08Z and 2026-11-08T19:25Z contain 13 completed `Android Release AAB` jobs on `windows-latest`
+  (two runs were still in progress). Twelve passed in 4.7 to 7.2 minutes (median about 6.2), of which 2.7 to 4.7
+  minutes (160 to 282 s) is the `Publish Android Release AAB` step; one job failed in that step after 35 s (run
+  42421785184). Whether the job should also run in PR runs (every code PR, Android-input PRs only, `main` pushes
+  only, or manual only as today) is still under discussion with the maintainer, who indicated on 2026-11-08 that
+  it should not run on every PR by default; the options and measurements are recorded on
+  [#360](https://github.com/ahuelsmann/MOBAflow/issues/360).
 
 ## Independently reviewable delivery slices
 
