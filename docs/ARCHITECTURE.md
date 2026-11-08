@@ -160,7 +160,12 @@ configured target station is not a stop of the journey. `JourneyStopTransitionSe
 the runtime `JourneySessionState`, and `JourneyManager` finds the current stop only through `Journey.IndexOfStop`.
 `Station.ResolvePlatform` returns the selected platform or the first one, for announcements and the train-control
 timetable strip. `LocomotiveWhistleRule.FindIssues` returns the `LocomotiveWhistleRuleIssue` values that keep a
-rule from running; `LocomotiveWhistleAutomationService` turns them into English messages. `Workflow.FindStructureIssues` returns `IReadOnlyList<WorkflowStructureIssue>`
+rule from running; `LocomotiveWhistleAutomationService` turns them into English messages. `Locomotive` defines the
+F0-F31 function range once (`MaxFunctionIndex`, `IsFunctionIndex`) and owns the stored function symbol and colour
+edits (`SetFunctionSymbol`, `SetFunctionAppearance`, `ClearFunctionAppearance`): the list grows to the index, a
+cleared slot stores `ClearedFunctionAppearance` (`"none"`) and a colour is stored only in the `#RRGGBB` form
+(`IsStoredFunctionColor`). The default assets and colours and the rendering of stored values stay in
+`SharedUI/Appearance`; the Z21 packet bound and the wire-contract bound remain separate protocol facts. `Workflow.FindStructureIssues` returns `IReadOnlyList<WorkflowStructureIssue>`
 with issue kinds and field paths; `WorkflowValidator` turns them into coded, user-facing issues and adds the payload
 checks. `Project.FindWorkflowsWithInvalidIds` returns an `IReadOnlySet<int>` of zero-based positions in
 `Project.Workflows` whose ID is empty or repeats an earlier one; the Backend maps those positions to user-facing

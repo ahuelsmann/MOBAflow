@@ -1056,7 +1056,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     private string GetFunctionGlyph(int functionIndex)
     {
-        if (functionIndex < 0 || functionIndex > 31)
+        if (!Locomotive.IsFunctionIndex(functionIndex))
         {
             return string.Empty;
         }
@@ -1066,7 +1066,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private string GetFunctionColor(int functionIndex)
     {
-        if (functionIndex < 0 || functionIndex > 31)
+        if (!Locomotive.IsFunctionIndex(functionIndex))
         {
             return TrainControlSignalColors.Gray;
         }
@@ -1082,13 +1082,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <param name="glyph">PNG asset filename relative to Assets/FunctionSymbols/ (e.g. "headlight.png").</param>
     /// <returns>True, wenn gespeichert; False, wenn keine passende Lok im Projekt.</returns>
     public bool SetFunctionSymbol(int functionIndex, string glyph) =>
-        EditCurrentLocomotiveAppearance(locomotive => FunctionPanel.SetSymbol(locomotive, functionIndex, glyph));
+        EditCurrentLocomotiveAppearance(locomotive => locomotive.SetFunctionSymbol(functionIndex, glyph));
 
     public bool SetFunctionAppearance(int functionIndex, string? glyph, string? colorHex) =>
-        EditCurrentLocomotiveAppearance(locomotive => FunctionPanel.SetAppearance(locomotive, functionIndex, glyph, colorHex));
+        EditCurrentLocomotiveAppearance(locomotive => locomotive.SetFunctionAppearance(functionIndex, glyph, colorHex));
 
     public bool ClearFunctionAppearance(int functionIndex) =>
-        EditCurrentLocomotiveAppearance(locomotive => FunctionPanel.ClearAppearance(locomotive, functionIndex));
+        EditCurrentLocomotiveAppearance(locomotive => locomotive.ClearFunctionAppearance(functionIndex));
 
     /// <summary>
     /// Applies an appearance edit to the current locomotive (LocoAddress), refreshes the buttons and saves the
@@ -1138,7 +1138,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private string GetFunctionDescription(int functionIndex)
     {
-        if (functionIndex < 0 || functionIndex > 31)
+        if (!Locomotive.IsFunctionIndex(functionIndex))
         {
             return string.Empty;
         }
@@ -1521,7 +1521,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [RelayCommand]
     private async Task EditFunctionAppearanceAsync(int functionIndex)
     {
-        if (functionIndex is < 0 or > 31)
+        if (!Locomotive.IsFunctionIndex(functionIndex))
         {
             return;
         }
@@ -1717,7 +1717,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private void ApplyFunctionBits(uint functions)
     {
-        for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
+        for (int functionIndex = 0; functionIndex <= Locomotive.MaxFunctionIndex; functionIndex++)
         {
             SetFunctionState(functionIndex, (functions & (1u << functionIndex)) != 0);
         }
@@ -1758,7 +1758,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private uint GetFunctionBitmask()
     {
         uint mask = 0;
-        for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
+        for (int functionIndex = 0; functionIndex <= Locomotive.MaxFunctionIndex; functionIndex++)
         {
             if (GetFunctionState(functionIndex))
             {
