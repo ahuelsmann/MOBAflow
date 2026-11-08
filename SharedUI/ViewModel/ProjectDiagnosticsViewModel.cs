@@ -107,19 +107,14 @@ public sealed partial class ProjectDiagnosticsViewModel : ObservableObject, IDis
             RefreshProjectDiagnostics();
     }
 
-    partial void OnShowDiagnosticErrorsChanged(bool value)
-    {
-        _ = value;
-        ApplyDiagnosticFilter();
-    }
+    partial void OnShowDiagnosticErrorsChanged(bool value) => OnSeverityFilterChanged(value);
 
-    partial void OnShowDiagnosticWarningsChanged(bool value)
-    {
-        _ = value;
-        ApplyDiagnosticFilter();
-    }
+    partial void OnShowDiagnosticWarningsChanged(bool value) => OnSeverityFilterChanged(value);
 
-    partial void OnShowDiagnosticInformationChanged(bool value)
+    partial void OnShowDiagnosticInformationChanged(bool value) => OnSeverityFilterChanged(value);
+
+    /// <summary>The three severity filters share one projection of the findings; the new value is read from the properties.</summary>
+    private void OnSeverityFilterChanged(bool value)
     {
         _ = value;
         ApplyDiagnosticFilter();

@@ -205,55 +205,99 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
     private void OnMobaflowSyncDiagnosticsChanged(MobaflowSyncDiagnosticsChangedEvent e) =>
         UpdateSyncDiagnostics(e.Diagnostics with { HasActiveProject = _session.SelectedProject != null });
 
+    /// <summary>Projects one diagnostics record onto the six synchronization rows, then the solution-loaded row.</summary>
     private void UpdateSyncDiagnostics(MobaflowSyncDiagnostics diagnostics)
     {
+        UpdateRuntimeHubHostStatus(diagnostics);
+        UpdateHubBroadcastStatus(diagnostics);
+        UpdateRemoteSnapshotStatus(diagnostics);
+        UpdateRuntimeSnapshotStatus(diagnostics);
+        UpdateRestCacheStatus(diagnostics);
+        UpdateSolutionSyncStatus(diagnostics);
+        UpdateSolutionLoadedStatus();
+    }
+
+    private void UpdateRuntimeHubHostStatus(MobaflowSyncDiagnostics diagnostics)
+    {
         RuntimeHubHostIsHealthy = diagnostics.HostClientConnected && diagnostics.ServerHasHost;
-        RuntimeHubHostStatusText = !diagnostics.RestApiReachable
-            ? "REST API unreachable"
-            : RuntimeHubHostIsHealthy
-                ? "Connected"
-                : diagnostics.HostClientConnected
-                    ? "Host not registered on server"
-                    : "Host client disconnected";
+        RuntimeHubHostStatusText = DescribeRuntimeHubHost(diagnostics, RuntimeHubHostIsHealthy);
+    }
 
-        HubBroadcastIsHealthy = diagnostics.LastHubPushSucceeded
-            && IsRecent(diagnostics.LastHubPushAt, SyncFreshnessWindow);
-        HubBroadcastStatusText = !diagnostics.LastHubPushAt.HasValue
-            ? "No snapshot push yet"
-            : diagnostics.LastHubPushSucceeded
-                ? FormatLastPush(diagnostics.LastHubPushAt)
-                : "Last push failed";
+    private static string DescribeRuntimeHubHost(MobaflowSyncDiagnostics diagnostics, bool isHealthy)
+    {
+        if (!diagnostics.RestApiReachable)
+            return "REST API unreachable";
+        if (isHealthy)
+            return "Connected";
+        return diagnostics.HostClientConnected ? "Host not registered on server" : "Host client disconnected";
+    }
 
+    private void UpdateHubBroadcastStatus(MobaflowSyncDiagnostics diagnostics)
+    {
+        HubBroadcastIsHealthy = diagnostics.LastHubPushSucceeded && IsRecent(diagnostics.LastHubPushAt, SyncFreshnessWindow);
+        HubBroadcastStatusText = DescribeHubBroadcast(diagnostics);
+    }
+
+    private static string DescribeHubBroadcast(MobaflowSyncDiagnostics diagnostics)
+    {
+        if (!diagnostics.LastHubPushAt.HasValue)
+            return "No snapshot push yet";
+        return diagnostics.LastHubPushSucceeded ? FormatLastPush(diagnostics.LastHubPushAt) : "Last push failed";
+    }
+
+    private void UpdateRemoteSnapshotStatus(MobaflowSyncDiagnostics diagnostics)
+    {
         RemoteSnapshotIsHealthy = diagnostics.RemoteClientCount > 0 && diagnostics.SessionOperational;
-        RemoteSnapshotStatusText = diagnostics.RemoteClientCount == 0
-            ? "No remote clients"
-            : diagnostics.SessionOperational
-                ? $"{diagnostics.RemoteClientCount} remote client(s), session active"
-                : $"{diagnostics.RemoteClientCount} remote client(s), session inactive";
+        RemoteSnapshotStatusText = DescribeRemoteSnapshot(diagnostics);
+    }
 
+    private static string DescribeRemoteSnapshot(MobaflowSyncDiagnostics diagnostics)
+    {
+        if (diagnostics.RemoteClientCount == 0)
+            return "No remote clients";
+        var session = diagnostics.SessionOperational ? "session active" : "session inactive";
+        return $"{diagnostics.RemoteClientCount} remote client(s), {session}";
+    }
+
+    private void UpdateRuntimeSnapshotStatus(MobaflowSyncDiagnostics diagnostics)
+    {
         RuntimeSnapshotIsHealthy = IsRecent(diagnostics.LocalSnapshotCreatedAt, SyncFreshnessWindow)
             || (diagnostics.Z21Connected && diagnostics.HasActiveProject);
         RuntimeSnapshotStatusText = RuntimeSnapshotIsHealthy
             ? $"Updated {FormatAge(diagnostics.LocalSnapshotCreatedAt)}, {diagnostics.LocalSignalBoxElementCount} signals, {diagnostics.LocalLocomotiveFleetCount} locos"
             : "No recent snapshot";
+    }
 
+    private void UpdateRestCacheStatus(MobaflowSyncDiagnostics diagnostics)
+    {
         RestCacheIsHealthy = diagnostics.RestCacheAvailable
             && diagnostics.RestCacheUpdatedAt.HasValue
             && IsRestCacheFresh(diagnostics);
-        RestCacheStatusText = !diagnostics.RestCacheAvailable
-            ? "No snapshot cached"
-            : diagnostics.RestCacheUpdatedAt.HasValue
-                ? $"Updated {FormatAge(diagnostics.RestCacheUpdatedAt)}, {diagnostics.RestCacheSignalBoxElementCount} signals, {diagnostics.RestCacheLocomotiveFleetCount} locos"
-                : "Cache has no timestamp";
+        RestCacheStatusText = DescribeRestCache(diagnostics);
+    }
 
+    private static string DescribeRestCache(MobaflowSyncDiagnostics diagnostics)
+    {
+        if (!diagnostics.RestCacheAvailable)
+            return "No snapshot cached";
+        if (!diagnostics.RestCacheUpdatedAt.HasValue)
+            return "Cache has no timestamp";
+        return $"Updated {FormatAge(diagnostics.RestCacheUpdatedAt)}, {diagnostics.RestCacheSignalBoxElementCount} signals, {diagnostics.RestCacheLocomotiveFleetCount} locos";
+    }
+
+    private void UpdateSolutionSyncStatus(MobaflowSyncDiagnostics diagnostics)
+    {
         SolutionSyncIsHealthy = diagnostics.SolutionAvailable && diagnostics.SolutionUpdatedAt.HasValue;
-        SolutionSyncStatusText = !diagnostics.SolutionAvailable
-            ? "No solution cached"
-            : diagnostics.SolutionUpdatedAt.HasValue
-                ? $"Updated {FormatAge(diagnostics.SolutionUpdatedAt)}, project {diagnostics.SolutionActiveProjectName ?? "—"}"
-                : "Solution cache has no timestamp";
+        SolutionSyncStatusText = DescribeSolutionSync(diagnostics);
+    }
 
-        UpdateSolutionLoadedStatus();
+    private static string DescribeSolutionSync(MobaflowSyncDiagnostics diagnostics)
+    {
+        if (!diagnostics.SolutionAvailable)
+            return "No solution cached";
+        if (!diagnostics.SolutionUpdatedAt.HasValue)
+            return "Solution cache has no timestamp";
+        return $"Updated {FormatAge(diagnostics.SolutionUpdatedAt)}, project {diagnostics.SolutionActiveProjectName ?? "—"}";
     }
 
     private void UpdateSolutionLoadedStatus()
