@@ -62,19 +62,23 @@ lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) run but do not block a me
   AAB for a release. The only CI evidence for the AAB is the manual `android-release` job, whose artifact is kept
   for 30 days. Sample read on 2026-11-08 (19:30 UTC): the 15 Quality `workflow_dispatch` runs created between
   2026-11-07T01:08Z and 2026-11-08T19:25Z contain 13 completed `Android Release AAB` jobs on `windows-latest`
-  (two runs were still in progress). Twelve passed in 4.7 to 7.2 minutes (median about 6.2), of which 2.7 to 4.7
-  minutes (160 to 282 s) is the `Publish Android Release AAB` step; one job failed in that step after 35 s (run
-  42421785184). Whether the job should also run in PR runs (every code PR, Android-input PRs only, `main` pushes
-  only, or manual only as today) is still under discussion with the maintainer, who indicated on 2026-11-08 that
-  it should not run on every PR by default; the options and measurements are recorded on
-  [#360](https://github.com/ahuelsmann/MOBAflow/issues/360).
+  (three runs were unfinished at read time; two of their Android jobs had not ended yet). Twelve passed in 4.7 to
+  7.2 minutes (median about 6.2), of which 2.7 to 4.7 minutes (160 to 282 s) is the `Publish Android Release AAB`
+  step; one job failed in that step after 35 s (run 42421785184). **Maintainer decision of 2026-11-08** on PR runs
+  (verbatim: "automatisch nur bei MOBAsmart-Änderungen. wenn das geht wäre es doch perfekt"): in PR runs the job
+  runs automatically only when the PR changes `MOBAsmart/**` or `quality/analyzer-baseline.android.json`; the
+  manual `validate_android` dispatch stays, and otherwise the required check stays skipped as today. The
+  implementation (scope-script output, workflow condition, tests, docs) is a separate RF-07 change; the options
+  and measurements are recorded on [#360](https://github.com/ahuelsmann/MOBAflow/issues/360).
 
 ## Independently reviewable delivery slices
 
 1. **Inventory and Linux lane** (with this plan). The check name `Portable tests on Linux` is in the `main` ruleset,
    so the lane is a required check; this slice is complete.
-2. **Android Release lane policy:** settled by the recorded maintainer decision to retain manual validation. Whether
-   the lane also runs in PR runs is a separate open decision (see the Android design decision above).
+2. **Android Release lane policy:** settled by the recorded maintainer decision to retain manual validation. On
+   2026-11-08 the maintainer additionally decided that PR runs execute the job automatically only for changes under
+   `MOBAsmart/**` or to `quality/analyzer-baseline.android.json` (see the Android design decision above); that
+   workflow and scope-script change is a separate RF-07 delivery.
 3. **Mutation and formatting lanes** after RF-09 and RF-10, documentation and completion.
 
 ## Validation strategy
