@@ -34,6 +34,7 @@ public sealed class TrainDestinationDisplayViewModel : WorkflowActionViewModel
                 return;
 
             OnPropertyChanged(nameof(SelectedDeviceName));
+            OnPropertyChanged(nameof(ParameterSummary));
         }
     }
 
@@ -52,6 +53,9 @@ public sealed class TrainDestinationDisplayViewModel : WorkflowActionViewModel
         get => Payload.ClearBeforeRender;
         set => SetProperty(Payload.ClearBeforeRender, value, Payload, (p, v) => p.ClearBeforeRender = v);
     }
+
+    /// <inheritdoc />
+    public override string ParameterSummary => SelectedDeviceName;
 }
 
 /// <summary>

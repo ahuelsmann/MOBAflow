@@ -235,9 +235,12 @@ Events stay editable while a journey is active; each change is re-applied to the
 runtime. WorkflowsPage owns workflow authoring,
 validation, dry-run and trace; both pages share the library and autosave state.
 The workflow editor provides typed action settings, reordering, and duplication.
+Its **Graph** view (`WorkflowGraphCanvasControl`, WinUI only) is a projection of the same
+ordered action list: node positions, selection and validation markers are ViewModel
+presentation state and are not persisted ([issue #378](https://github.com/ahuelsmann/MOBAflow/issues/378)).
 Deleting a workflow is blocked while any journey event references it.
 
-The graph executor and graph authoring controls have been removed. Earlier graph
+The earlier graph *model* executor and its authoring controls have been removed. Earlier graph
 metadata/IDs remain readable, but actions are empty and execution is rejected until
 the operator recreates the workflow. There is no automatic flattening or parallel
 legacy executor. The existing lifecycle field `StepId` now holds the action ID.

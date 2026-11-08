@@ -469,7 +469,10 @@ runtime services.
 - The host owns one WorkflowsPageViewModel for WorkflowsPage. Its required dependencies are the
   shared WorkflowLibraryViewModel, the settings service and a logger. It adds only the page
   presentation the library lacks: the persisted workflow-list, actions and properties panel
-  expansion under the existing `Layout.WorkflowsPage` keys.
+  expansion under the existing `Layout.WorkflowsPage` keys. The List/Graph toggle
+  (`IsGraphViewActive`) and the actions column proportion are persisted under the same keys;
+  `WorkflowGraphCanvasControl` is a WinUI projection of the ordered action list that subscribes to
+  the shared library and forwards every edit through its commands (issue #378).
 - Workflow selection, action editing and ordering, validation, dry run, trace and the properties
   editor object stay in the one WorkflowLibraryViewModel, which WorkflowsPage, StationsPage and
   EventManagerViewModel share through host DI. The Workflow shell partial, the shell's mirrored
