@@ -884,7 +884,8 @@ internal sealed partial class WorkflowGraphCanvasControl : UserControl
             return;
         }
 
-        var zoom = CanvasScrollViewer.ZoomFactor <= 0 ? 1.0f : CanvasScrollViewer.ZoomFactor;
+        var scrollViewer = (ScrollViewer)FindName(nameof(CanvasScrollViewer));
+        var zoom = scrollViewer.ZoomFactor <= 0 ? 1.0f : scrollViewer.ZoomFactor;
         MoveDraggedAction(action, e.Delta.Translation.X / zoom, e.Delta.Translation.Y / zoom);
         e.Handled = true;
     }
