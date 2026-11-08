@@ -2,8 +2,8 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Active; slices 1, 2a, 2b, 2c, 3a, 3b and 4 integrated through #248, #257, #264, #272, #282, #401 and #409; slice 5a (counters and traffic monitor) is implemented in draft PR #419 (branch `claude/issue-219-rf24-slice5a`) awaiting review; slice 5b (diagnostics, health and synchronization status) is planned below; slice 6 is not allocated
-**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13; journeys/cities at 1f8c77fd; workflows at 0e6ef5f1 on 2026-11-05. Slice 5 planning resolves against main a2b36f11 on 2026-11-05; slice 5a starts from main df8c8375 on 2026-11-07.
+**Status**: Active; slices 1, 2a, 2b, 2c, 3a, 3b, 4 and 5a integrated through #248, #257, #264, #272, #282, #401, #409 and #419; slice 5b (diagnostics, health and synchronization status) is implemented in a draft PR on branch `claude/issue-219-rf24-slice5b` awaiting review; slice 6 is not allocated
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13; journeys/cities at 1f8c77fd; workflows at 0e6ef5f1 on 2026-11-05. Slice 5 planning resolves against main a2b36f11 on 2026-11-05; slice 5a starts from main df8c8375 on 2026-11-07 and is integrated at 3f9590e0; slice 5b starts from main 7b1c3f96 on 2026-11-08.
 
 ## Purpose and scope
 
@@ -52,7 +52,7 @@ observations, not coverage or quality metrics. The Settings, rolling-stock and j
 | [LocomotivesPageViewModel](../SharedUI/ViewModel/LocomotivesPageViewModel.cs), extracted locomotive editor; focused [WagonsPageViewModel](../SharedUI/ViewModel/WagonsPageViewModel.cs) and [TrainsPageViewModel](../SharedUI/ViewModel/TrainsPageViewModel.cs) (originally 482 and 264 lines) | Focused locomotive, passenger/goods wagon and train page state; reuse LocomotiveManagementViewModel | CRUD, filtered lists, rename selection identity, composition ordering and photo assignment to the initiating context |
 | [StationsPageViewModel](../SharedUI/ViewModel/StationsPageViewModel.cs), extracted station/platform editor; [JourneysPageViewModel](../SharedUI/ViewModel/JourneysPageViewModel.cs), extracted journey/city editor | Focused page ViewModels using the session's canonical selection | Shared journey selection, stations/platforms, city library, command availability, nested model change tracking |
 | [WorkflowsPageViewModel](../SharedUI/ViewModel/WorkflowsPageViewModel.cs), extracted from the workflow partial (originally 187 lines); [WorkflowsPage](../MOBAflow/View/WorkflowsPage.xaml):32 onwards | Inject the existing host-registered WorkflowLibraryViewModel; add only page presentation state that it lacks | Selection, action editing/order, validation, dry-run cancellation, trace and editor state; no second workflow engine |
-| The Counter partial (removed in 5a; now [InPortCounterViewModel](../SharedUI/ViewModel/InPortCounterViewModel.cs)), [Diagnostics](../SharedUI/ViewModel/MainWindowViewModel.Diagnostics.cs), [HealthStatus](../SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs), [RestApiStatus](../SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs) and [SyncDiagnostics](../SharedUI/ViewModel/MainWindowViewModel.SyncDiagnostics.cs) partials (216, 141, 78, 94 and 194 lines), the traffic region of the [Z21 partial](../SharedUI/ViewModel/MainWindowViewModel.Z21.cs) and [MonitorPageViewModel](../SharedUI/ViewModel/MonitorPageViewModel.cs) | InPortCounterViewModel, a reworked MonitorPageViewModel, ProjectDiagnosticsViewModel and SystemStatusViewModel using the existing runtime query contracts and EventBus; see the slice 5 plan below | Counter errors and reset result, filters, health/API status, sync state and project isolation |
+| The Counter partial (removed in 5a; now [InPortCounterViewModel](../SharedUI/ViewModel/InPortCounterViewModel.cs)), the Diagnostics, HealthStatus, RestApiStatus and SyncDiagnostics partials (216, 141, 78, 94 and 194 lines; removed in 5b, now [ProjectDiagnosticsViewModel](../SharedUI/ViewModel/ProjectDiagnosticsViewModel.cs) and [SystemStatusViewModel](../SharedUI/ViewModel/SystemStatusViewModel.cs)), the traffic region of the [Z21 partial](../SharedUI/ViewModel/MainWindowViewModel.Z21.cs) and [MonitorPageViewModel](../SharedUI/ViewModel/MonitorPageViewModel.cs) | InPortCounterViewModel, a reworked MonitorPageViewModel, ProjectDiagnosticsViewModel and SystemStatusViewModel using the existing runtime query contracts and EventBus; see the slice 5 plan below | Counter errors and reset result, filters, health/API status, sync state and project isolation |
 | [LayoutPanels](../SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs), 337 lines; [SettingsPageViewModel.Layout](../SharedUI/ViewModel/SettingsPageViewModel.Layout.cs), extracted from the settings layout partial; [GridColumnResizeBehavior](../MOBAflow/Behavior/GridColumnResizeBehavior.cs):474 onwards | One layout persistence service; reuse LayoutColumnWidthsViewModel | Panel expansion, section usage/order, setting keys, star-column values and intentionally fixed pixels |
 
 [MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs) subscribes to session/runtime/status/photo
@@ -184,14 +184,15 @@ Refresh the base and update this plan from evidence after each integrated slice.
    the architecture guard for WorkflowsPage and actual-host shared identity across the workflow,
    station and event-manager surfaces. Manual theme/UI acceptance remains open.
 5. **Counters, diagnostics, health and synchronization status (two sequential PRs, see
-   [the slice 5 plan](#slice-5-implementation-plan-2026-11-05); 5a implemented as a draft PR, 5b planned):**
-   - **5a Counters and traffic monitor (draft PR #419; see
+   [the slice 5 plan](#slice-5-implementation-plan-2026-11-05); 5a integrated, 5b implemented as a draft PR):**
+   - **5a Counters and traffic monitor (#419; see
      [the slice 5a validation](#slice-5a-local-validation-2026-11-07)):** InPortCounterViewModel owns the feedback-point statistics, counter
      settings, persistence error, reset command and counter snapshot projection; the reworked MonitorPageViewModel
      owns the traffic packets, connection status and Monitor expansion without a shell dependency. OverviewPage
      and EventManager receive the host counter instance. The Counter partial and the shell's traffic region,
      `ITrafficMonitor` dependency and Monitor layout members are removed; Z21 telemetry stays in the Z21 partial.
-   - **5b Diagnostics and system status:** ProjectDiagnosticsViewModel owns the Messages pane state and refresh
+   - **5b Diagnostics and system status (draft PR on `claude/issue-219-rf24-slice5b`; see
+     [the slice 5b validation](#slice-5b-local-validation-2026-11-08)):** ProjectDiagnosticsViewModel owns the Messages pane state and refresh
      triggers; SystemStatusViewModel owns speech health, post-startup, REST API and synchronization status. The
      shell exposes both for the status bar and Messages pane, reads the operating-state inputs from
      SystemStatusViewModel and keeps `OperatingStateEvaluator` as the collaborator. The Diagnostics, HealthStatus,
@@ -337,7 +338,8 @@ project selection; the main window Messages pane (counts, three filters, refresh
 refreshes, Show usage expands it), status bar speech health including a provider switch that shows Initializing until
 the next check, post-startup text, REST status and the operating-state badge and InfoBar with acknowledge; Event
 Manager Reset all InPort counters; shutdown with a connected runtime where cancelling keeps counters and traffic
-updating. Record the result in #365 with commit, environment and omissions. No hardware, track power or train movement.
+updating. Personal acceptance was abolished on 2026-11-06: each implementing PR records the states it did not
+inspect as a limitation; the maintainer uses the app and gives feedback. No hardware, track power or train movement.
 
 ### Overlap check (observed 2026-11-05, local time)
 
@@ -395,8 +397,37 @@ portable and Android baselines drop the removed Counter partial's four entries a
 entry, the test baselines lower the moved fixtures' counts and add one CA1812 entry per new fixture.
 Documentation links (649), secrets and line-ending checks pass; draft PR #419 owns the remote CI and Sonar
 evidence. MOBAsmart is unaffected (no Android build was run locally; CI owns
-it). No application, device or hardware was started; manual Light/Dark/High Contrast and accessibility
-acceptance remain open in #365.
+it). No application, device or hardware was started; the Light/Dark/High Contrast and accessibility states were
+not inspected (recorded as a limitation in #419).
+
+## Slice 5b local validation (2026-11-08)
+
+The source starts from main `7b1c3f96` (after #419 and #418). The implementation follows the 5b table above with
+these recorded deviations: `SystemStatusViewModel.UpdateHealthStatus` rejects a null message with
+`ArgumentNullException` (the shell's CA1062 entry is removed instead of carried over); the photo-assignment
+logging moved into the PhotoAssignment partial as `LoggerMessage` methods with the same text and levels, so the
+RestApiStatus partial's CA1848/CA1873 entries disappear; the shell's one `SystemStatus.PropertyChanged` handler
+replaces the five partial hooks and the direct recompute calls, so an update that changes no status value no
+longer recomputes the operating state (the evaluator is pure, so the presentation is the same). The shell
+disposes both host instances in `TryBeginShutdown`, after the shutdown is confirmed. In tests, the ten shell
+construction sites receive the two status ViewModels through `TestRollingStockPages.GetProjectDiagnostics` and
+`GetSystemStatus`; the default diagnostics stub reports no findings, mirroring the former optional service.
+WinUI pages cannot be instantiated in the headless test host, so `MobaWinUiServiceCollectionExtensionsTests`
+verifies the host singletons, their identity on the shell and that status and diagnostics follow the shared
+session and usage query; `MainWindow` and `OverviewPage` are covered by the FastDebug compile.
+
+Local checks on Windows: the FastDebug compile of MOBAflow passed with zero warnings; the 5b filter
+(`ProjectDiagnosticsViewModelTests`, `SystemStatusViewModelTests`, `MainWindowViewModel*`,
+`JourneyCounterProjectionTests`) executed 111 tests; the portable suite passed 3,226 tests and the Windows suite
+3,336 tests, each with zero failures and zero skips. Both Release analyzer gates match exactly: 3,138 diagnostics
+in 1,122 groups (portable) and 2,456 in 967 (Windows); the portable and Android baselines drop the removed
+Diagnostics (MVVMTK0042), HealthStatus (CA1062, MVVMTK0042), RestApiStatus (CA1848, CA1873, MVVMTK0042) and
+SyncDiagnostics (MVVMTK0042) entries and lower the shell's MVVMTK0042 count by the three moved speech fields;
+the test baselines drop the removed `MainWindowDiagnosticsTests` entries and add one CA1812 entry per new
+fixture. The Android baseline mirrors the SharedUI entries by hand; no local Android build was run. The draft PR
+owns the remote CI and Sonar evidence. No application, device or hardware was started; the Light/Dark/High
+Contrast, keyboard and Narrator states of the Messages pane, status bar and Overview status rows were not
+inspected and are recorded as a limitation in the PR.
 
 ## Slice 3b local validation (2026-10-15, refreshed 2026-10-16)
 

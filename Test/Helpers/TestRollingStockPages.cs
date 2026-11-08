@@ -112,6 +112,32 @@ internal sealed partial class TestRollingStockPages : IDisposable
         return page;
     }
 
+    /// <summary>
+    /// Creates the Messages pane state over the usage query of <paramref name="trainsPage"/>'s locomotive page,
+    /// the instance the host shares. Without <paramref name="diagnostics"/> the service reports no findings.
+    /// </summary>
+    public ProjectDiagnosticsViewModel GetProjectDiagnostics(
+        ISolutionSession session, TrainsPageViewModel trainsPage, IProjectDiagnosticsService? diagnostics = null)
+    {
+        if (diagnostics is null)
+        {
+            var service = new Mock<IProjectDiagnosticsService>();
+            service.Setup(value => value.Analyze(It.IsAny<Moba.Domain.Project?>())).Returns([]);
+            diagnostics = service.Object;
+        }
+
+        var page = new ProjectDiagnosticsViewModel(session, diagnostics, trainsPage.LocomotivesPage.Usage);
+        _pages.Add(page);
+        return page;
+    }
+
+    public SystemStatusViewModel GetSystemStatus(IEventBus eventBus, ISolutionSession session, SettingsPageViewModel settingsPage)
+    {
+        var status = new SystemStatusViewModel(eventBus, session, settingsPage);
+        _pages.Add(status);
+        return status;
+    }
+
     public void Dispose()
     {
         foreach (var page in _pages)

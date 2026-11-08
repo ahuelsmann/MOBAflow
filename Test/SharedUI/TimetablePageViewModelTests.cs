@@ -714,16 +714,20 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object);
         var stationEventBus1 = eventBus;
+        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
+        var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null);
         var mainWindow = new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            new LocalRuntimeCommandGateway(runtime.Object),
+            new LocalRuntimeCommandGateway(runtime.Object),
             stationEventBus1,
-            TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
+            settingsPage1,
+            trainsPage1,
             _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtime.Object), dispatcher.Object),
+            _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
+            _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
             Mock.Of<ILogger<MainWindowViewModel>>());
         var evaluation = new StubEvaluationService(evaluationResult ?? new TimetableEvaluationResult([]));

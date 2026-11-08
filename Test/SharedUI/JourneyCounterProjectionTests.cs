@@ -21,22 +21,45 @@ using System.Windows.Input;
 public sealed partial class JourneyCounterProjectionTests
 {
     [Test]
-    public async Task SettingsSpeechSelectionRefreshesShellStatusAndDetachesOnShutdown()
+    public async Task SystemStatusChangesRecomputeTheOperatingStateUntilShutdown()
     {
         var fixture = new ProjectionFixture();
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
-        fixture.ViewModel.UpdateHealthStatus("Ready");
-        var updates = 0;
-        fixture.ViewModel.PropertyChanged += (_, e) =>
+        fixture.Settings.Application.AutoStartWebApp = true;
+        fixture.Publish(new MobaRuntimeSnapshot
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.SpeechStatusDisplayText)) updates++;
-        };
-        fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "piper";
-        Assert.That(fixture.ViewModel.SpeechStatusDisplayText, Is.EqualTo("Speech: Initializing..."));
+            IsConnected = true,
+            IsTrackPowerOn = true,
+            IsZ21Connecting = false,
+            HasSeenSuccessfulConnection = true,
+            StatusText = "Connected"
+        });
+        fixture.ViewModel.SystemStatus.UpdateRestApiStatus("Running on port 5001", isReachable: true, clients: null);
+        Assert.That(fixture.ViewModel.OperatingState, Is.EqualTo(OperatingStateKind.Normal));
+
+        fixture.ViewModel.SystemStatus.UpdateHealthStatus("Failed");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(fixture.ViewModel.OperatingState, Is.EqualTo(OperatingStateKind.Degraded));
+            Assert.That(fixture.ViewModel.OperatingStateDetailText, Is.EqualTo("Speech provider unavailable"));
+        }
+
+        fixture.ViewModel.SystemStatus.UpdateHealthStatus("Ready");
+        fixture.ViewModel.SystemStatus.UpdateRestApiStatus("Not reachable", isReachable: false, clients: null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(fixture.ViewModel.OperatingState, Is.EqualTo(OperatingStateKind.Degraded));
+            Assert.That(fixture.ViewModel.OperatingStateDetailText, Is.EqualTo("REST API not reachable"));
+            Assert.That(fixture.ViewModel.ShowOperatingStateInfoBar, Is.True);
+        }
+
+        fixture.ViewModel.SystemStatus.UpdateRestApiStatus("Running on port 5001", isReachable: true, clients: null);
+        Assert.That(fixture.ViewModel.OperatingState, Is.EqualTo(OperatingStateKind.Normal));
 
         await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);
-        fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "system-speech";
-        Assert.That(updates, Is.EqualTo(1));
+        fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "piper";
+        Assert.That(fixture.ViewModel.SystemStatus.SpeechStatusDisplayText, Is.EqualTo("Speech: Ready"),
+            "Shutdown disposed the status ViewModel, so the provider switch no longer resets the speech health.");
     }
 
     [Test]
@@ -148,16 +171,20 @@ public sealed partial class JourneyCounterProjectionTests
             io.Setup(service => service.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((true, "projection-test.json", null));
             var locomotiveSession1 = TestSolutionSessions.Create(solution ?? new Solution { Projects = [new Project()] }, dispatcher.Object, Runtime.Object, io.Object);
             var stationEventBus1 = _eventBus;
+            var settingsPage1 = TestSettingsPages.Create(Settings, dispatcher.Object);
+            var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object);
             ViewModel = new MainWindowViewModel(
                 new LayoutColumnWidthsViewModel(),
                 Runtime.Object,
                 Runtime.Object,
                 Gateway.Object,
                 stationEventBus1,
-                TestSettingsPages.Create(Settings, dispatcher.Object),
-                _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object),
+                settingsPage1,
+                trainsPage1,
                 _rollingStockPages.GetStationsPage(locomotiveSession1, Runtime.Object, stationEventBus1),
                 _rollingStockPages.GetJourneysPage(locomotiveSession1, Gateway.Object, dispatcher.Object),
+                _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
+                _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
                 locomotiveSession1,
                 NullLogger<MainWindowViewModel>.Instance);
         }
