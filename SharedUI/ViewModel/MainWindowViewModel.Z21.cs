@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Backend.Events;
-using Backend.Model;
 using Common.Events;
 using Common.Extension;
 using Contracts.Runtime;
@@ -10,57 +8,38 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Service;
-using System.Collections.ObjectModel;
 
 /// <summary>
-/// MainWindowViewModel - runtime-backed Z21 connection and control.
+/// MainWindowViewModel - runtime-backed Z21 connection, status and telemetry projection.
 /// </summary>
 public partial class MainWindowViewModel
 {
-    #region Z21 Traffic Monitor
+    #region Z21 Telemetry
+    private MobaRuntimeSnapshot _latestRuntimeSnapshot = MobaRuntimeSnapshot.Empty;
+
+    /// <summary>
+    /// Main current in mA (from Z21 SystemState).
+    /// </summary>
     [ObservableProperty]
-    private ObservableCollection<Z21TrafficPacket> _trafficPackets = [];
+    public partial int MainCurrent { get; private set; }
 
-    private void InitializeTrafficMonitor()
-    {
-        _eventBusSubscriptions.Add(_eventBus.Subscribe<Z21TrafficPacketLoggedEvent>(OnTrafficPacketLogged));
-        _eventBusSubscriptions.Add(_eventBus.Subscribe<SelectedRuntimeChangedEvent>(_ => ReloadTrafficPackets()));
-        ReloadTrafficPackets();
-    }
+    /// <summary>
+    /// Temperature in Celsius (from Z21 SystemState).
+    /// </summary>
+    [ObservableProperty]
+    public partial int Temperature { get; private set; }
 
-    /// <summary>Shows the traffic the runtime of the selected project has recorded.</summary>
-    private void ReloadTrafficPackets()
-    {
-        TrafficPackets.Clear();
-        foreach (var packet in _trafficMonitor.GetTrafficPackets())
-        {
-            TrafficPackets.Add(packet);
-        }
-    }
+    /// <summary>
+    /// Supply voltage in mV (from Z21 SystemState).
+    /// </summary>
+    [ObservableProperty]
+    public partial int SupplyVoltage { get; private set; }
 
-    private void OnTrafficPacketLogged(Z21TrafficPacketLoggedEvent e)
-    {
-        var packet = e.Packet;
-
-        if (_isShuttingDown)
-        {
-            return;
-        }
-
-        TrafficPackets.Insert(0, packet);
-
-        while (TrafficPackets.Count > 100)
-        {
-            TrafficPackets.RemoveAt(TrafficPackets.Count - 1);
-        }
-    }
-
-    [RelayCommand]
-    private void ClearTrafficMonitor()
-    {
-        TrafficPackets.Clear();
-        _trafficMonitor.ClearTrafficMonitor();
-    }
+    /// <summary>
+    /// VCC voltage in mV (from Z21 SystemState).
+    /// </summary>
+    [ObservableProperty]
+    public partial int VccVoltage { get; private set; }
     #endregion
 
     #region Z21 Connection Commands
@@ -158,7 +137,6 @@ public partial class MainWindowViewModel
             IsOperatorAckRequired = status.IsOperatorAckRequired;
 
             ApplyJourneyRuntimeSnapshots(snapshot.JourneyStates);
-            ApplyInPortCounterSnapshot(snapshot);
 
             if (SignalBoxRuntimeSync.ApplyToPlan(SelectedProject?.Model.SignalBoxPlan, snapshot.SignalBoxElements))
             {

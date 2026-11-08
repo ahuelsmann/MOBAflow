@@ -14,7 +14,9 @@ using SharedUI.Interface;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
+using InPortCounterViewModel = SharedUI.ViewModel.InPortCounterViewModel;
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
+using MonitorPageViewModel = SharedUI.ViewModel.MonitorPageViewModel;
 
 public sealed partial class MainWindow
 {
@@ -24,6 +26,9 @@ public sealed partial class MainWindow
     internal event EventHandler? ShutdownRequested;
 
     private readonly NavigationService _navigationService;
+    // No shell surface binds these page states; the window disposes them because the host never disposes its container.
+    private readonly InPortCounterViewModel _counters;
+    private readonly MonitorPageViewModel _monitor;
     private HealthCheckService? _healthCheckService;
     private readonly RestApiStatusService _restApiStatusService;
     private readonly RestApiProcessService _restApiProcessService;
@@ -67,6 +72,8 @@ public sealed partial class MainWindow
 
     internal MainWindow(
         MainWindowViewModel viewModel,
+        InPortCounterViewModel counters,
+        MonitorPageViewModel monitor,
         NavigationService navigationService,
         IUiDispatcher uiDispatcher,
         WinUiWindowContext windowContext,
@@ -83,6 +90,8 @@ public sealed partial class MainWindow
         {
             var timer = Stopwatch.StartNew();
             ViewModel = viewModel;
+            _counters = counters;
+            _monitor = monitor;
             _navigationService = navigationService;
             _uiDispatcher = uiDispatcher;
             _restApiStatusService = restApiStatusService;
@@ -328,7 +337,7 @@ public sealed partial class MainWindow
 
         try
         {
-            if (!await ViewModel.PrepareForShutdownAsync())
+            if (!await ViewModel.PrepareForShutdownAsync(ReleaseRuntimeObservers))
             {
                 return false;
             }
@@ -340,6 +349,9 @@ public sealed partial class MainWindow
 
         _isClosing = true;
         UnsubscribeWindowEvents();
+
+        // Normally already released before the runtimes stopped; Dispose is idempotent and covers a failed shell workflow.
+        ReleaseRuntimeObservers();
 
         _restApiStatusService.Stop();
 
@@ -377,6 +389,13 @@ public sealed partial class MainWindow
 
         DetachWindowBindings();
         return true;
+    }
+
+    /// <summary>The shell confirmed shutdown; the counter and traffic monitor stop following the runtime.</summary>
+    private void ReleaseRuntimeObservers()
+    {
+        _counters.Dispose();
+        _monitor.Dispose();
     }
 
     private void UnsubscribeWindowEvents()

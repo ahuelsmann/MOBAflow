@@ -193,7 +193,7 @@ internal static class NavigationRegistration
             sp.GetRequiredService<IProjectContext>(),
             sp.GetRequiredService<WorkflowLibraryViewModel>(),
             sp.GetRequiredService<JourneysPageViewModel>(),
-            sp.GetRequiredService<MainWindowViewModel>().ResetCountersCommand));
+            sp.GetRequiredService<InPortCounterViewModel>().ResetCountersCommand));
         services.AddSingleton(sp => new EventManagerPage(
             sp.GetRequiredService<EventManagerViewModel>(),
             sp.GetRequiredService<AppSettings>(),

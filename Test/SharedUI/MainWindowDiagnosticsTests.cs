@@ -277,7 +277,6 @@ internal sealed partial class MainWindowDiagnosticsTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            runtime.Object,
             new LocalRuntimeCommandGateway(runtime.Object),
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),

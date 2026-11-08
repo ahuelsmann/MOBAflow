@@ -196,7 +196,6 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
             mobaRuntime.Object,
-            mobaRuntime.Object,
             new LocalRuntimeCommandGateway(mobaRuntime.Object),
             stationEventBus1,
             TestSettingsPages.Create(appSettings, uiDispatcher.Object),

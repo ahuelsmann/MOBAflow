@@ -34,7 +34,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ISolutionSession _session;
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
     private readonly IConnectionRuntime _runtimeConnection;
-    private readonly ITrafficMonitor _trafficMonitor;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IEventBus _eventBus;
     private readonly ILogger<MainWindowViewModel> _logger;
@@ -61,7 +60,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="layoutColumnWidths">Observable column widths loaded from settings and bound by layout panels.</param>
     /// <param name="runtimeSnapshots">Read access to runtime snapshots.</param>
     /// <param name="runtimeConnection">Runtime lifecycle and Z21 connection.</param>
-    /// <param name="trafficMonitor">Z21 traffic monitor and polling diagnostics.</param>
     /// <param name="runtimeCommandGateway">Route for every operator command (local, recorded or remote).</param>
     /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
     /// <param name="settingsPage">Shared settings presentation and persistence.</param>
@@ -73,7 +71,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         LayoutColumnWidthsViewModel layoutColumnWidths,
         IRuntimeSnapshotProvider runtimeSnapshots,
         IConnectionRuntime runtimeConnection,
-        ITrafficMonitor trafficMonitor,
         IRuntimeCommandGateway runtimeCommandGateway,
         IEventBus eventBus,
         SettingsPageViewModel settingsPage,
@@ -89,7 +86,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
         ArgumentNullException.ThrowIfNull(runtimeConnection);
-        ArgumentNullException.ThrowIfNull(trafficMonitor);
         ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(settingsPage);
@@ -102,7 +98,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _session = solutionSession;
         _runtimeSnapshots = runtimeSnapshots;
         _runtimeConnection = runtimeConnection;
-        _trafficMonitor = trafficMonitor;
         _runtimeCommandGateway = runtimeCommandGateway;
         _eventBus = eventBus;
         var settings = settingsPage.Settings;
@@ -112,7 +107,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         StationsPage = stationsPage;
         JourneysPage = journeysPage;
         SettingsPage.PropertyChanged += OnSettingsPagePropertyChanged;
-        SettingsPage.FeedbackPointCountChanged += OnFeedbackPointCountChanged;
         _logger = logger;
         _layoutColumnWidths = layoutColumnWidths;
         _layoutColumnWidths.LoadFrom(settings.Layout);
@@ -130,10 +124,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ConnectCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedProject));
 
-        GlobalTargetLapCount = settings.Counter.TargetLapCount;
-        UseTimerFilter = settings.Counter.UseTimerFilter;
-        TimerIntervalSeconds = settings.Counter.TimerIntervalSeconds;
-
         InitializeLayoutPanelStates();
 
         _eventBusSubscriptions.Add(eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText)));
@@ -141,9 +131,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _eventBusSubscriptions.Add(eventBus.Subscribe<MobaflowSyncDiagnosticsChangedEvent>(OnMobaflowSyncDiagnosticsChanged));
         _eventBusSubscriptions.Add(eventBus.Subscribe<PhotoAssignedEvent>(OnPhotoAssigned));
 
-        InitializeTrafficMonitor();
-
-        InitializeStatisticsFromFeedbackPoints();
         ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
         NotifyRuntimeCommandStatesChanged();
 
@@ -331,7 +318,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>
     /// Stops runtime-driven UI updates and disconnects from the Z21 before the host window completes shutdown.
     /// </summary>
-    public async Task<bool> PrepareForShutdownAsync()
+    /// <param name="releaseRuntimeObservers">
+    /// Runs once shutdown is confirmed and before the runtimes stop, so host-owned runtime observers
+    /// do not process the disconnect's packets and snapshots; it does not run when shutdown is cancelled.
+    /// </param>
+    public async Task<bool> PrepareForShutdownAsync(System.Action? releaseRuntimeObservers = null)
     {
         if (_isShuttingDown)
         {
@@ -359,6 +350,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             return true;
         }
+
+        releaseRuntimeObservers?.Invoke();
 
         using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(ShutdownDisconnectTimeoutSeconds));
 
@@ -395,7 +388,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         LocomotivesPage.Usage.PropertyChanged -= OnLocomotiveUsageChanged;
         _session.BeginShutdown();
         SettingsPage.PropertyChanged -= OnSettingsPagePropertyChanged;
-        SettingsPage.FeedbackPointCountChanged -= OnFeedbackPointCountChanged;
         StationsPage.Dispose();
         JourneysPage.Dispose();
         // The host-owned workflow library is shared by the workflow, station and event-manager surfaces.
@@ -410,11 +402,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _eventBusSubscriptions.Clear();
 
         return true;
-    }
-
-    private void OnFeedbackPointCountChanged(object? sender, EventArgs e)
-    {
-        InitializeStatisticsFromFeedbackPoints();
     }
 
     private void OnSettingsPagePropertyChanged(object? sender, PropertyChangedEventArgs e)

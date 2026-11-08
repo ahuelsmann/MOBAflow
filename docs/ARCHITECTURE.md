@@ -311,9 +311,11 @@ runtime services.
 
 **ViewModel wiring:**
 
-- `MainWindowViewModel`, `TrainControlViewModel`, and `MauiViewModel` take the
-  runtime roles they read (`IRuntimeSnapshotProvider`, `IConnectionRuntime`,
-  `ITrafficMonitor`) and a required `IRuntimeCommandGateway` from DI. MOBAsmart
+- `MainWindowViewModel`, `TrainControlViewModel` and `MauiViewModel` take only the runtime roles they
+  read (`IRuntimeSnapshotProvider`, `IConnectionRuntime`, `ITrafficMonitor`) and a required
+  `IRuntimeCommandGateway` from DI. `InPortCounterViewModel` reads `IRuntimeSnapshotProvider` and sends its
+  reset through the gateway; `MonitorPageViewModel` reads `ITrafficMonitor` and `IRuntimeSnapshotProvider`
+  and takes no gateway. MOBAsmart
   registers one `MobaRuntimeService` behind every role; MOBAflow registers the
   selected project's runtime (see below)
 - Journey-related UI still receives state from snapshots rather than owning
@@ -339,7 +341,7 @@ runtime services.
   [the mobile session boundary](#mobasmart-session-and-projection).
 - Shared ViewModels and host services reach solution ownership through those
   contracts. The existing shell/composition, WinUI page bindings, column-width
-  behavior, MonitorPageViewModel and Android shutdown
+  behavior and Android shutdown
   lookup remain explicitly named in
   [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs).
   RF-24 removes the page, layout and shell-state dependencies; RF-23 adds no new
@@ -412,7 +414,7 @@ runtime services.
   runtime's project snapshot; runtime ownership and operator command routing are unchanged.
 - TrainsPage retains only visual layout and drag/drop coordination. Its architecture guard rejects
   MainWindowViewModel dependencies. The superseded Train partial is removed; the shell retains
-  its runtime snapshot projection until the later counter/status extraction.
+  its Z21 status and journey snapshot projection (the counter projection moved in slice 5a).
 
 **Station and platform presentation (RF-24 slice 3a):**
 
@@ -452,12 +454,12 @@ runtime services.
   before selecting its first journey through the session; journey/project/solution changes,
   station refresh and disposal detach obsolete
   station wrappers and collection subscriptions. Disposal does not remove session-owned journey tracking.
-- Journey reset uses the injected IRuntimeCommandGateway. Runtime snapshot projection remains
-  in the shell until the counter/status slice; no runtime lifecycle or routing is introduced.
+- Journey reset uses the injected IRuntimeCommandGateway. The journey runtime snapshot projection
+  remains in the shell; no runtime lifecycle or routing is introduced.
   EventManagerViewModel reads IProjectContext, the existing workflow library and journey-page
   status directly. The architecture guard rejects shell dependencies in it and JourneysPage.
-  Its reset-all counter binding receives the existing shell command from navigation composition;
-  counter behavior remains with the later counter/status slice.
+  Its reset-all counter binding receives the host `InPortCounterViewModel` command from navigation
+  composition (slice 5a).
 - Deferred city loading uses the existing ICityService and UI dispatcher, and ignores queued
   completion after disposal. JourneysPage retains visual layout/drag-drop coordination and
   load/unload subscriptions; existing width keys and central-layout follow-up remain unchanged.
@@ -481,6 +483,31 @@ runtime services.
   slice 6's final shell audit decides where that disposal lives. The architecture guard rejects
   shell dependencies in WorkflowsPage, which keeps visual layout, drag-start and keyboard coordination.
 
+**Counters and traffic monitor (RF-24 slice 5a):**
+
+- The host owns one `InPortCounterViewModel` shared by OverviewPage (`Counters`) and the Event Manager's
+  reset-all command. Its required dependencies are the session, `IRuntimeSnapshotProvider`, the decorated
+  EventBus, `IRuntimeCommandGateway`, the shared `SettingsPageViewModel`, `ISettingsService` and a logger.
+  It owns the feedback-point statistics, the target-lap/timer-filter settings with their persistence, the
+  counter persistence error, the reset-all command and the projection of the runtime's authoritative
+  counters. It rebuilds the statistics on the session's project change and on the settings page's
+  feedback-count change, replacing the collection instead of mutating it, and ignores snapshots after disposal.
+- `MonitorPageViewModel` no longer depends on the shell. It receives `ITrafficMonitor`, `IRuntimeSnapshotProvider`,
+  the EventBus, the session, `ISettingsService`, the UI dispatcher and a logger; it owns the traffic packets
+  (reloaded on `SelectedRuntimeChangedEvent`, capped at 100), the connection status derived from the runtime
+  snapshot and the selected project's Z21 address, the clear command and the two persisted Monitor expansion
+  flags under the existing `Layout.MonitorPage` keys. The architecture guard rejects shell dependencies in
+  MonitorPage, whose code-behind keeps the star-value persistence for slice 6. As a host singleton resolved
+  with the main window, it is created at start-up instead of on the first Monitor visit, so it follows
+  `InMemorySink.LogAdded` and writes its "Monitor started" entry from then on; the page shows the same
+  capped log.
+- The Counter shell partial, the shell's traffic region, its `ITrafficMonitor` dependency and the Monitor
+  layout members are removed. The shell keeps the Z21 status and telemetry projection (`MainCurrent`,
+  `Temperature`, `SupplyVoltage`, `VccVoltage` next to serial, firmware and hardware type) and the journey
+  runtime projection. No shell surface binds the counter or monitor state, so `MainWindow` disposes both
+  host instances once the shell confirmed shutdown and before the runtimes stop, through the callback of
+  `MainWindowViewModel.PrepareForShutdownAsync`; a cancelled shutdown keeps them subscribed. MOBAsmart keeps its own counter projection in `MauiViewModel`.
+
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
@@ -488,9 +515,9 @@ runtime services.
   and logging; speech testing uses the existing host action. It never depends on MainWindowViewModel.
 - The ViewModel owns settings persistence, feature items, Piper choices, reset commands and section
   state. SettingsPage keeps file pickers and visual ordering/reset feedback.
-- The shell retains counter/status projections until later slices. It reacts only to actual valid
-  feedback-count changes and speech selection, and detaches subscriptions at shutdown. The
-  architecture guard rejects shell dependencies in the extracted SettingsPage.
+- The shell retains the status projections until slice 5b; `InPortCounterViewModel` reacts to actual valid
+  feedback-count changes since slice 5a. The shell reacts to speech selection and detaches its
+  subscriptions at shutdown. The architecture guard rejects shell dependencies in the extracted SettingsPage.
 
 **One runtime per project (MOBAflow):**
 
@@ -827,9 +854,9 @@ status messages only; it does not load or initialize external plugins.
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
 receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `JourneysPageViewModel`,
-`ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime`,
-`ITrafficMonitor` and `IRuntimeCommandGateway`, together with its other shell and
-platform services. It does not receive the mutable `Solution` or a complete
+`ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime` and `IRuntimeCommandGateway`,
+together with its other shell and platform services; `ITrafficMonitor` goes to
+`MonitorPageViewModel`. Neither receives the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;
 MOBAsmart composes one local runtime and its local/remote command coordinator.
 

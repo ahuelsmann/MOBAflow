@@ -718,7 +718,6 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            runtime.Object,
             new LocalRuntimeCommandGateway(runtime.Object),
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),

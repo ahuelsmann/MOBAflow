@@ -4,7 +4,6 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Backend.Model;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
@@ -12,90 +11,15 @@ using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moq;
+using System.Windows.Input;
 
-/// <summary>Checks the desktop/shared projection against authoritative runtime snapshots and command routing.</summary>
+/// <summary>
+/// Checks the shell's journey projection against authoritative runtime snapshots and command routing.
+/// The counter projection is covered by <see cref="InPortCounterViewModelTests"/>.
+/// </summary>
 [TestFixture]
 public sealed partial class JourneyCounterProjectionTests
 {
-    [Test]
-    public async Task CounterSnapshot_PreservesUnsignedPrecisionAndTimingInDisplayedStatistics()
-    {
-        var feedbackTime = new DateTimeOffset(2026, 9, 10, 12, 0, 0, TimeSpan.Zero);
-        await using var fixture = new ProjectionFixture(initial: new MobaRuntimeSnapshot
-        {
-            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(7, ulong.MaxValue, feedbackTime, TimeSpan.FromSeconds(20))]
-        });
-
-        var statistic = fixture.ViewModel.Statistics.Single(item => item.InPort == 7);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(statistic.Count, Is.EqualTo(ulong.MaxValue));
-            Assert.That(statistic.LapCountFormatted, Does.StartWith("18446744073709551615/"));
-            Assert.That(statistic.LastFeedbackTime, Is.EqualTo(feedbackTime.UtcDateTime));
-            Assert.That(statistic.LastLapTime, Is.EqualTo(TimeSpan.FromSeconds(20)));
-            Assert.That(statistic.HasReceivedFirstLap, Is.True);
-        });
-    }
-
-    [Test]
-    public async Task StatisticsReinitializationAndProjectSelection_KeepApplicationCounterValues()
-    {
-        await using var fixture = new ProjectionFixture(initial: new MobaRuntimeSnapshot
-        {
-            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 42, null, null), new InPortCounterSnapshot(7, 19, null, null)]
-        });
-        fixture.ViewModel.InitializeStatisticsFromFeedbackPoints();
-        fixture.ViewModel.SelectedProject = new ProjectViewModel(new Project { Name = "Another layout" }, TestViewModelServices.Default);
-        fixture.Settings.Counter.CountOfFeedbackPoints = 1;
-        fixture.ViewModel.InitializeStatisticsFromFeedbackPoints();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 1).Count, Is.EqualTo(42));
-            Assert.That(fixture.ViewModel.Statistics.Any(item => item.InPort == 7), Is.False);
-        });
-        var collectionChanges = 0;
-        fixture.ViewModel.Statistics.CollectionChanged += (_, _) => collectionChanges++;
-        fixture.Publish(new MobaRuntimeSnapshot
-        {
-            InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 43, null, null), new InPortCounterSnapshot(7, 19, null, null)]
-        });
-        Assert.That(collectionChanges, Is.Zero);
-        fixture.Settings.Counter.CountOfFeedbackPoints = 7;
-        fixture.ViewModel.InitializeStatisticsFromFeedbackPoints();
-        Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 7).Count, Is.EqualTo(19));
-        fixture.Gateway.Verify(gateway => gateway.ResetInPortCountersAsync(It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Test]
-    public async Task ClearedFeedbackPointCountKeepsConfiguredInputs()
-    {
-        await using var fixture = new ProjectionFixture();
-
-        // A cleared NumberBox reports NaN; converting it would remove every saved counter.
-        fixture.ViewModel.SettingsPage.CountOfFeedbackPoints = double.NaN;
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(fixture.Settings.Counter.CountOfFeedbackPoints, Is.EqualTo(7));
-            Assert.That(fixture.ViewModel.SettingsPage.CountOfFeedbackPoints, Is.EqualTo(7));
-        }
-    }
-
-    [Test]
-    public async Task SettingsFeedbackCountUpdatesStatisticsAndDetachesOnShutdown()
-    {
-        var fixture = new ProjectionFixture();
-        await using var fixtureLifetime = fixture.ConfigureAwait(false);
-        fixture.ViewModel.SettingsPage.CountOfFeedbackPoints = 3;
-        Assert.That(fixture.ViewModel.Statistics, Has.Count.EqualTo(3));
-
-        await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);
-        fixture.ViewModel.SettingsPage.CountOfFeedbackPoints = 1;
-        Assert.That(fixture.ViewModel.Statistics, Has.Count.EqualTo(3));
-    }
-
     [Test]
     public async Task SettingsSpeechSelectionRefreshesShellStatusAndDetachesOnShutdown()
     {
@@ -113,27 +37,6 @@ public sealed partial class JourneyCounterProjectionTests
         await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);
         fixture.ViewModel.SettingsPage.SelectedSpeechProviderId = "system-speech";
         Assert.That(updates, Is.EqualTo(1));
-    }
-
-    [Test]
-    public async Task ResetCounters_IsAlwaysAvailableAndWaitsForAuthoritativeResetSnapshot()
-    {
-        var journey = CreateJourney("Active");
-        journey.IsActive = true;
-        await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
-        fixture.Publish(new MobaRuntimeSnapshot { InPortCounters = (InPortCounterSnapshot[])[new InPortCounterSnapshot(1, 18, null, null)] });
-
-        Assert.That(fixture.ViewModel.ResetCountersCommand.CanExecute(null), Is.True);
-        await fixture.ViewModel.ResetCountersCommand.ExecuteAsync(null);
-        Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 1).Count, Is.EqualTo(18));
-        fixture.Publish(MobaRuntimeSnapshot.Empty);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 1).Count, Is.Zero);
-            Assert.That(fixture.ViewModel.CounterCommandStatus, Is.EqualTo("InPort counters reset."));
-        });
-        fixture.Gateway.Verify(gateway => gateway.ResetInPortCountersAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -157,7 +60,7 @@ public sealed partial class JourneyCounterProjectionTests
         journey.IsActive = true;
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
         using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
-            fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
+            fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, Mock.Of<ICommand>());
         fixture.Runtime.Invocations.Clear();
 
         editor.Events.Single().Count = 9;
@@ -201,7 +104,7 @@ public sealed partial class JourneyCounterProjectionTests
         var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [first, second] }] });
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
         using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
-            fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, fixture.ViewModel.ResetCountersCommand);
+            fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, Mock.Of<ICommand>());
         fixture.ViewModel.CurrentSolutionPath = "projection-test.json";
         editor.Events.Single().CountText = "25";
         fixture.Runtime.Invocations.Clear();
@@ -233,7 +136,6 @@ public sealed partial class JourneyCounterProjectionTests
         {
             _snapshot = initial ?? MobaRuntimeSnapshot.Empty;
             Runtime.SetupGet(runtime => runtime.Current).Returns(() => _snapshot);
-            Runtime.Setup(runtime => runtime.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
             Runtime.Setup(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
             Runtime.Setup(runtime => runtime.DisconnectAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -244,12 +146,10 @@ public sealed partial class JourneyCounterProjectionTests
             io.Setup(service => service.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
                 .ReturnsAsync((true, "projection-test.json", null));
             io.Setup(service => service.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((true, "projection-test.json", null));
-            Settings.Counter.CountOfFeedbackPoints = 7;
             var locomotiveSession1 = TestSolutionSessions.Create(solution ?? new Solution { Projects = [new Project()] }, dispatcher.Object, Runtime.Object, io.Object);
             var stationEventBus1 = _eventBus;
             ViewModel = new MainWindowViewModel(
                 new LayoutColumnWidthsViewModel(),
-                Runtime.Object,
                 Runtime.Object,
                 Runtime.Object,
                 Gateway.Object,

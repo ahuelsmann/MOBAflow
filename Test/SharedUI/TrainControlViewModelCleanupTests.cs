@@ -110,7 +110,6 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
             runtimeMock.Object,
-            runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),

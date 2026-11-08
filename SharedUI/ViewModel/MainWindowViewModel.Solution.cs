@@ -113,6 +113,17 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Called when SelectedProject changes: refreshes the diagnostics, the journey runtime projection and the
+    /// solution-loaded status for the new project. Counter statistics follow the selection in InPortCounterViewModel.
+    /// </summary>
+    private void HandleSelectedProjectChanged()
+    {
+        RefreshProjectDiagnostics();
+        ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
+        UpdateSolutionLoadedStatus();
+    }
+
     private void OnSolutionReplacing(object? sender, EventArgs e) => ClearAllSelections();
 
     private void OnSessionSolutionLoaded(object? sender, EventArgs e)

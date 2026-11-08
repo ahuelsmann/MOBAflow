@@ -124,7 +124,6 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
-            mobaRuntimeMock.Object,
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
@@ -392,7 +391,6 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         var stationEventBus2 = new Mock<IEventBus>().Object;
         var viewModel = new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
-            runtime.Object,
             runtime.Object,
             runtime.Object,
             new LocalRuntimeCommandGateway(runtime.Object),
