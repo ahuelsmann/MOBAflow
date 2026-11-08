@@ -114,7 +114,6 @@ internal sealed partial class MainWindowViewModelSignalBoxTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            runtime.Object,
             gateway.Object,
             stationEventBus1,
             TestSettingsPages.Create(new AppSettings(), dispatcher.Object),

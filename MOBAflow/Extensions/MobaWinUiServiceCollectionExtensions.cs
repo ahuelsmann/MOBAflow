@@ -370,11 +370,14 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<WorkflowsPageViewModel>();
         services.AddSingleton<JourneysPageViewModel>();
         services.AddSingleton<TrainsPageViewModel>();
+        // OverviewPage and the Event Manager share the counter state; MonitorPage owns the traffic monitor.
+        // No shell surface binds either, so MainWindow disposes both at shutdown.
+        services.AddSingleton<InPortCounterViewModel>();
+        services.AddSingleton<MonitorPageViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
             sp.GetRequiredService<IConnectionRuntime>(),
-            sp.GetRequiredService<ITrafficMonitor>(),
             sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<SettingsPageViewModel>(),
@@ -391,7 +394,6 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddTransient<InterlockingControlViewModel>();
         services.AddTransient<TrackPlanPageViewModels>();
         services.AddSingleton<JourneyMapViewModel>();
-        services.AddSingleton<MonitorPageViewModel>();
         services.AddSingleton<RecorderPageViewModel>();
 
         services.AddSingleton(new TrainControlViewModelOptions
@@ -411,6 +413,8 @@ public static class MobaWinUiServiceCollectionExtensions
 
         services.AddSingleton(sp => new MainWindow(
             sp.GetRequiredService<MainWindowViewModel>(),
+            sp.GetRequiredService<InPortCounterViewModel>(),
+            sp.GetRequiredService<MonitorPageViewModel>(),
             sp.GetRequiredService<NavigationService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<WinUiWindowContext>(),

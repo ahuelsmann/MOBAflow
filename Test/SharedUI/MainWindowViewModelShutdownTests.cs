@@ -4,7 +4,6 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Test.Helpers;
-using Moba.Backend.Events;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Common.Configuration;
@@ -68,24 +67,6 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
     }
 
     [Test]
-    public async Task PrepareForShutdownAsync_UnsubscribesFromTrafficPackets()
-    {
-        var mobaRuntimeMock = CreateMobaRuntimeMock();
-        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var viewModel = CreateViewModel(mobaRuntimeMock, eventBus);
-
-        eventBus.Publish(new Z21TrafficPacketLoggedEvent(new Z21TrafficPacket()));
-        Assert.That(viewModel.TrafficPackets, Has.Count.EqualTo(1));
-
-        await viewModel.PrepareForShutdownAsync();
-
-        Assert.That(eventBus.GetSubscriberCount<Z21TrafficPacketLoggedEvent>(), Is.EqualTo(0));
-
-        eventBus.Publish(new Z21TrafficPacketLoggedEvent(new Z21TrafficPacket()));
-        Assert.That(viewModel.TrafficPackets, Has.Count.EqualTo(1));
-    }
-
-    [Test]
     public async Task PrepareForShutdownAsync_StopsAllProjectRuntimesOnlyOnce()
     {
         var host = new Mock<IProjectRuntimeHost>();
@@ -113,14 +94,38 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
             .ReturnsAsync(false);
         var viewModel = CreateViewModel(CreateMobaRuntimeMock(), host: host, dialog: dialog, solution: solution);
 
-        var closed = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+        var released = false;
 
-        Assert.That(closed, Is.False);
+        var closed = await viewModel.PrepareForShutdownAsync(() => released = true).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(closed, Is.False);
+            Assert.That(released, Is.False, "A cancelled shutdown keeps the runtime observers subscribed.");
+        }
         dialog.Verify(value => value.ShowConfirmationAsync(
             "Stop all trains?",
             It.Is<string>(message => message.Contains("'Station'", StringComparison.Ordinal)),
             "Stop trains", "Cancel", true), Times.Once);
         host.Verify(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task PrepareForShutdownAsync_ReleasesRuntimeObserversOnceBeforeStoppingRuntimes()
+    {
+        var host = new Mock<IProjectRuntimeHost>();
+        host.SetupGet(value => value.ConnectedProjectIds).Returns([]);
+        var viewModel = CreateViewModel(CreateMobaRuntimeMock(), host: host);
+        var steps = new List<string>();
+        host.Setup(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()))
+            .Callback(() => steps.Add("stop runtimes"))
+            .Returns(Task.CompletedTask);
+
+        await viewModel.PrepareForShutdownAsync(() => steps.Add("release observers")).ConfigureAwait(false);
+        await viewModel.PrepareForShutdownAsync(() => steps.Add("release observers")).ConfigureAwait(false);
+
+        // The disconnect's last packets and snapshots must not reach the counter and traffic monitor.
+        Assert.That(steps, Is.EqualTo((string[])["release observers", "stop runtimes"]));
     }
 
     [TestCase(true)]
@@ -198,7 +203,6 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
         var stationEventBus1 = eventBus ?? new Mock<IEventBus>().Object;
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
-            mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),

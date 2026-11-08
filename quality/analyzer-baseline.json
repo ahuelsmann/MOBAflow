@@ -2504,13 +2504,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
       "count": 2
     },
@@ -2868,13 +2861,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
       "count": 5
     },
@@ -3148,13 +3134,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
       "count": 2
     },
@@ -3372,13 +3351,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 8
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
       "count": 13
     },
@@ -3416,13 +3388,6 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.SyncDiagnostics.cs",
       "count": 14
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3730,7 +3695,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1707",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 5
+      "count": 2
     },
     {
       "project": "Test",
@@ -4324,6 +4289,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/InPortCounterViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/KsSignalAspectNamesTests.cs",
       "count": 2
     },
@@ -4416,6 +4388,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Common/RemotePhotoUriBuilderTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/MonitorPageViewModelTests.cs",
       "count": 1
     },
     {
@@ -6285,7 +6264,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 8
+      "count": 3
     },
     {
       "project": "Test",
@@ -6299,7 +6278,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/MainWindowViewModelShutdownTests.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "Test",
@@ -7559,7 +7538,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 4
+      "count": 1
     },
     {
       "project": "Test",
@@ -7762,7 +7741,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit4002",
       "path": "Test/SharedUI/MainWindowViewModelShutdownTests.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Test",

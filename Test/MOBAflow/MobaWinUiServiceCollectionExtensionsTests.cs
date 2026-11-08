@@ -331,7 +331,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(shell.JourneysPage, Is.SameAs(journeys));
             Assert.That(provider.GetRequiredService<JourneysPageViewModel>(), Is.SameAs(journeys));
             Assert.That(editor.JourneysPage, Is.SameAs(journeys));
-            Assert.That(editor.ResetCountersCommand, Is.SameAs(shell.ResetCountersCommand));
+            Assert.That(editor.ResetCountersCommand, Is.SameAs(provider.GetRequiredService<InPortCounterViewModel>().ResetCountersCommand));
             Assert.That(editor.WorkflowLibrary, Is.SameAs(provider.GetRequiredService<WorkflowLibraryViewModel>()));
             Assert.That(journeys.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
@@ -346,6 +346,33 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         Assert.That(await shell.PrepareForShutdownAsync().ConfigureAwait(false), Is.True);
         session.SelectedJourney = null;
         Assert.That(notifications, Is.Empty);
+    }
+
+    [Test]
+    public async Task CounterAndMonitorStateAreHostSingletonsWithoutAShellDependency()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var counters = provider.GetRequiredService<InPortCounterViewModel>();
+        var monitor = provider.GetRequiredService<MonitorPageViewModel>();
+        var settings = provider.GetRequiredService<SettingsPageViewModel>();
+        var session = provider.GetRequiredService<ISolutionSession>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<InPortCounterViewModel>(), Is.SameAs(counters));
+            Assert.That(provider.GetRequiredService<MonitorPageViewModel>(), Is.SameAs(monitor));
+            Assert.That(provider.GetRequiredService<EventManagerViewModel>().ResetCountersCommand, Is.SameAs(counters.ResetCountersCommand));
+            Assert.That(counters.GlobalTargetLapCount, Is.EqualTo(settings.Settings.Counter.TargetLapCount));
+            Assert.That(monitor.IsMonitorTrafficExpanded, Is.EqualTo(settings.Settings.Layout.MonitorPage.IsTrafficExpanded));
+        }
+
+        // The counters follow the shared settings state and the shared session without the shell.
+        settings.CountOfFeedbackPoints = 2;
+        Assert.That(counters.Statistics, Has.Count.EqualTo(2));
+        session.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
+        Assert.That(monitor.ConnectionStatus, Is.EqualTo("❌ Not connected"));
+        monitor.Dispose();
+        counters.Dispose();
     }
 
     private static ServiceProvider CreatePlatformServiceProvider()
