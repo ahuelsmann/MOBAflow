@@ -2,7 +2,9 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/360
 **Spec Kit**: Not applicable - CI coverage plus bounded fixes for portability defects exposed by the Linux lane
-**Status**: Active; slice 1 ships with this plan
+**Status**: Active; slices 1 and 2 are delivered (#361 plus the ruleset change of 2026-10-19; recorded Android
+decision); slice 3 (mutation and formatting lanes, completion) waits for RF-09 and RF-10. Reconciled against main
+`7b1c3f96` on 2026-11-08.
 
 ## Purpose and scope
 
@@ -14,7 +16,8 @@ equivalent mandatory CI lane, and its artifacts and test results are kept as wor
 
 ## Deliverable inventory
 
-Recorded on main `f4756172`. The CI lanes are jobs of [Quality CI](../.github/workflows/quality.yml) unless noted.
+Recorded on main `f4756172`, re-read on main `7b1c3f96` (2026-11-08). The CI lanes are jobs of
+[Quality CI](../.github/workflows/quality.yml) unless noted.
 
 | Deliverable | Local command (from [AGENTS.md](../AGENTS.md)) | CI lane | Runs on PRs / required check |
 | --- | --- | --- | --- |
@@ -22,13 +25,13 @@ Recorded on main `f4756172`. The CI lanes are jobs of [Quality CI](../.github/wo
 | Windows desktop (`MOBAflow`) and the Windows test suite, coverage ratchet, analyzer gates, NuGet audit | `dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false` | `desktop` | yes, when code changes |
 | MOBApi host and its process integration tests | `dotnet build MOBApi/MOBApi.csproj` | `display-protocol` (MOBApi process integration) and the `desktop` test graph | yes, when code changes |
 | Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (pinned PlatformIO) | firmware build when firmware paths change |
-| Android app (`MOBAsmart`) Release AAB | release workflow steps; `scripts/Test-AndroidAppBundle.ps1` | `android-release` | **no**: only on manual `workflow_dispatch` with `validate_android` ([recorded maintainer decision](https://github.com/ahuelsmann/MOBAflow/issues/360#issuecomment-6256088821)) |
+| Android app (`MOBAsmart`) Release AAB | the clean Release AAB steps in [Build Performance](../docs/BUILD-PERFORMANCE.md); `scripts/Test-AndroidAppBundle.ps1` | `android-release` (AAB artifact kept 30 days) | **no**: only on manual `workflow_dispatch` with `validate_android` ([recorded maintainer decision](https://github.com/ahuelsmann/MOBAflow/issues/360#issuecomment-6256088821)); the check name is required and passes as skipped on PR and `main` runs |
 | Mutation lanes (`domain`, `common`, `speech-base`, `backend`, `api`, `shared-ui` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-speech-base`, `mutation-backend`, `mutation-api`, `mutation-shared-ui` | all run by change scope; only Domain mutation testing is a required check; further lanes belong to [RF-09](366-coverage-mutation-ratchets.md) |
 | Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule | yes |
 | Release package | [Release Studio](../.github/workflows/release-studio.yml) | manual release workflow | release only |
 
 Required (merge-blocking) checks are those of the `main` branch ruleset 24007434 (last changed 2026-10-19, read
-again on 2026-11-06): Repository instruction consistency; Windows desktop build, tests, and coverage; Display protocol
+again on 2026-11-08): Repository instruction consistency; Windows desktop build, tests, and coverage; Display protocol
 host, parser, and firmware; Android Release AAB; Domain mutation testing; SonarCloud Code Analysis; Portable tests on
 Linux. The ruleset also requires the branch to be up to date with `main` (strict status checks). The other mutation
 lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) run but do not block a merge.
@@ -54,13 +57,19 @@ lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) run but do not block a me
   remain in the portable lane; they do not load native Skia.
 - **Android:** the [maintainer decision](https://github.com/ahuelsmann/MOBAflow/issues/360#issuecomment-6256088821)
   keeps the Release AAB lane manual via `workflow_dispatch` / `validate_android`. It does not become a mandatory PR
-  lane; the existing release workflow still builds AABs for releases. This settles slice 2 without a workflow change.
+  lane. This settles slice 2 without a workflow change. Correction on main `7b1c3f96`: [Release
+  Studio](../.github/workflows/release-studio.yml) publishes only `MOBAflow` and `MOBApi`; no workflow builds the
+  AAB for a release. The only CI evidence for the AAB is the manual `android-release` job (4.7 to 7.2 minutes on
+  `windows-latest` in the five dispatch runs of 2026-11-07/08, of which about 4.7 minutes is `dotnet publish`),
+  whose artifact is kept for 30 days. Running it in PR runs is an open maintainer decision; the options and
+  measurements are recorded on [#360](https://github.com/ahuelsmann/MOBAflow/issues/360).
 
 ## Independently reviewable delivery slices
 
 1. **Inventory and Linux lane** (with this plan). The check name `Portable tests on Linux` is in the `main` ruleset,
    so the lane is a required check; this slice is complete.
-2. **Android Release lane policy:** settled by the recorded maintainer decision to retain manual validation.
+2. **Android Release lane policy:** settled by the recorded maintainer decision to retain manual validation. Whether
+   the lane also runs in PR runs is a separate open decision (see the Android design decision above).
 3. **Mutation and formatting lanes** after RF-09 and RF-10, documentation and completion.
 
 ## Validation strategy
