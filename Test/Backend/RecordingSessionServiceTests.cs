@@ -211,10 +211,34 @@ internal sealed class RecordingSessionServiceTests
     {
         await using var service = new RecordingSessionService(new MutableTimeProvider(StartTime));
         service.Start(new RecordingSessionStartRequest("Single stop", "1.0"));
+        using var consumerBlocked = new ManualResetEventSlim();
+        using var releaseConsumer = new ManualResetEventSlim();
+        var notificationCount = 0;
+        service.StatusChanged += _ =>
+        {
+            // The first notification after Start comes from the consumer once it committed the captured entry.
+            // Holding it there keeps the session in Stopping until both StopAsync calls have been made; otherwise
+            // the thread pool can complete the first stop in between and the second call returns a new task.
+            if (Interlocked.Increment(ref notificationCount) != 1) return;
+            consumerBlocked.Set();
+            releaseConsumer.Wait(TimeSpan.FromSeconds(10));
+        };
         service.TryRecord(CreateProjection(1));
 
-        var firstStop = service.StopAsync();
-        var secondStop = service.StopAsync();
+        Task<RecordingStopResult> firstStop;
+        Task<RecordingStopResult> secondStop;
+        try
+        {
+            Assert.That(consumerBlocked.Wait(TimeSpan.FromSeconds(10)), Is.True);
+            firstStop = service.StopAsync();
+            secondStop = service.StopAsync();
+        }
+        finally
+        {
+            // Release the consumer even when the hold fails so the drain and the disposal cannot stall.
+            releaseConsumer.Set();
+        }
+
         var firstResult = await firstStop;
         var secondResult = await secondStop;
         var completedResult = await service.StopAsync();

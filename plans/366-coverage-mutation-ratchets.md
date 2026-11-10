@@ -2,7 +2,11 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/366
 **Spec Kit**: Not applicable - regression tests and CI lanes for existing contracts without product behavior
-**Status**: Active; steps 1 to 4 are delivered (#367, #396, #410: SharedUI lane); step 5 (completion) is open
+**Status**: Active; steps 1 to 4 are delivered (#367, #396, #410: SharedUI lane); step 5 (completion) is open.
+Reconciled against main `7b1c3f96` on 2026-11-08: the six active lanes and their floors in the table below match
+`mutation-lanes.json`, the Stryker configurations and the Quality jobs. Open scope: the Safe-Mode method lists for
+Backend and SharedUI (rewrite or Stryker change, then remeasure), new tests in the largest open SharedUI and MOBApi
+areas, and a measured-risk decision on further lanes (`sound`, `display`, `track-plan-renderer`, `contracts`).
 
 ## Purpose and scope
 
