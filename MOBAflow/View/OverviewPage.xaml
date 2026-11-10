@@ -47,11 +47,11 @@
                             Width="12"
                             Height="12"
                             VerticalAlignment="Center"
-                            Fill="{x:Bind ViewModel.RestApiIsReachable, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
+                            Fill="{x:Bind SystemStatus.RestApiIsReachable, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                         <TextBlock
                             VerticalAlignment="Center"
                             Style="{StaticResource BodyTextBlockStyle}"
-                            Text="{x:Bind ViewModel.RestApiStatusText, Mode=OneWay}" />
+                            Text="{x:Bind SystemStatus.RestApiStatusText, Mode=OneWay}" />
                     </StackPanel>
                     <StackPanel Spacing="8">
                         <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="MOBAsmart sync" />
@@ -60,10 +60,10 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.SolutionLoadedIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
+                                Fill="{x:Bind SystemStatus.SolutionLoadedIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Solution loaded: " />
-                                <Run Text="{x:Bind ViewModel.SolutionLoadedStatusText, Mode=OneWay}" />
+                                <Run Text="{x:Bind SystemStatus.SolutionLoadedStatusText, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -71,10 +71,10 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.RuntimeHubHostIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
+                                Fill="{x:Bind SystemStatus.RuntimeHubHostIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="RuntimeHub host: " />
-                                <Run Text="{x:Bind ViewModel.RuntimeHubHostStatusText, Mode=OneWay}" />
+                                <Run Text="{x:Bind SystemStatus.RuntimeHubHostStatusText, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -82,10 +82,10 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.SolutionSyncIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
+                                Fill="{x:Bind SystemStatus.SolutionSyncIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Solution sync: " />
-                                <Run Text="{x:Bind ViewModel.SolutionSyncStatusText, Mode=OneWay}" />
+                                <Run Text="{x:Bind SystemStatus.SolutionSyncStatusText, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -93,10 +93,10 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.RuntimeSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
+                                Fill="{x:Bind SystemStatus.RuntimeSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Runtime snapshot: " />
-                                <Run Text="{x:Bind ViewModel.RuntimeSnapshotStatusText, Mode=OneWay}" />
+                                <Run Text="{x:Bind SystemStatus.RuntimeSnapshotStatusText, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -104,10 +104,10 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.RestCacheIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
+                                Fill="{x:Bind SystemStatus.RestCacheIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="REST cache: " />
-                                <Run Text="{x:Bind ViewModel.RestCacheStatusText, Mode=OneWay}" />
+                                <Run Text="{x:Bind SystemStatus.RestCacheStatusText, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -115,10 +115,10 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.HubBroadcastIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
+                                Fill="{x:Bind SystemStatus.HubBroadcastIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Hub broadcast: " />
-                                <Run Text="{x:Bind ViewModel.HubBroadcastStatusText, Mode=OneWay}" />
+                                <Run Text="{x:Bind SystemStatus.HubBroadcastStatusText, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -126,16 +126,16 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.RemoteSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
+                                Fill="{x:Bind SystemStatus.RemoteSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Remote snapshot: " />
-                                <Run Text="{x:Bind ViewModel.RemoteSnapshotStatusText, Mode=OneWay}" />
+                                <Run Text="{x:Bind SystemStatus.RemoteSnapshotStatusText, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Spacing="8">
                         <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="Connected clients" />
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.RestApiConnectedClients, Mode=OneWay}">
+                        <ItemsRepeater ItemsSource="{x:Bind SystemStatus.RestApiConnectedClients, Mode=OneWay}">
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="common:RestApiClientInfo">
                                     <Border
@@ -156,7 +156,7 @@
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Text="No clients connected"
-                            Visibility="{x:Bind ViewModel.RestApiConnectedClientsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            Visibility="{x:Bind SystemStatus.RestApiConnectedClientsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </StackPanel>
                 </StackPanel>
             </Expander>

@@ -2637,13 +2637,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
       "count": 1
     },
@@ -2875,13 +2868,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
       "count": 1
     },
@@ -2975,13 +2961,6 @@
       "ruleId": "CA1873",
       "path": "SharedUI/TrainControl/TrainControlViewModel.cs",
       "count": 9
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs",
-      "count": 4
     },
     {
       "project": "SharedUI",
@@ -3352,21 +3331,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 13
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Diagnostics.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
-      "count": 2
+      "count": 10
     },
     {
       "project": "SharedUI",
@@ -3374,20 +3339,6 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.OperatingState.cs",
       "count": 12
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs",
-      "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.SyncDiagnostics.cs",
-      "count": 14
     },
     {
       "project": "SharedUI",
@@ -4401,6 +4352,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/ProjectDiagnosticsViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/RestApiDiscoveryCandidateBuilderTests.cs",
       "count": 1
     },
@@ -4877,13 +4835,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/MainWindowDiagnosticsTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
       "path": "Test/SharedUI/MainWindowViewModelPhotoAssignmentTests.cs",
       "count": 1
     },
@@ -5137,6 +5088,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/SpeedControllerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SystemStatusViewModelTests.cs",
       "count": 1
     },
     {
@@ -7546,13 +7504,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/LocomotiveManagementViewModelTests.cs",
       "count": 7
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/SharedUI/MainWindowDiagnosticsTests.cs",
-      "count": 2
     },
     {
       "project": "Test",

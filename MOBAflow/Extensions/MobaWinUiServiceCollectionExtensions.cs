@@ -8,7 +8,6 @@ using Backend.Network;
 using Backend.Service;
 using Backend.Service.ProjectRuntimes;
 using Backend.Service.TrackPlan;
-using Backend.Service.Validation;
 using Common.Configuration;
 using Common.Events;
 using Common.Multiplex;
@@ -374,6 +373,9 @@ public static class MobaWinUiServiceCollectionExtensions
         // No shell surface binds either, so MainWindow disposes both at shutdown.
         services.AddSingleton<InPortCounterViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
+        // The main window binds the Messages pane and the status bar to these two; the shell exposes and disposes them.
+        services.AddSingleton<ProjectDiagnosticsViewModel>();
+        services.AddSingleton<SystemStatusViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
@@ -384,11 +386,12 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<TrainsPageViewModel>(),
             sp.GetRequiredService<StationsPageViewModel>(),
             sp.GetRequiredService<JourneysPageViewModel>(),
+            sp.GetRequiredService<ProjectDiagnosticsViewModel>(),
+            sp.GetRequiredService<SystemStatusViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
             sp.GetRequiredService<ISettingsService>(),
-            dialogService: sp.GetService<IDialogService>(),
-            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>()));
+            dialogService: sp.GetService<IDialogService>()));
 
         services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
         services.AddTransient<InterlockingControlViewModel>();

@@ -84,7 +84,6 @@ public partial class MainWindowViewModel
         _session.PropertyChanged += OnSolutionSessionPropertyChanged;
         _session.SolutionReplacing += OnSolutionReplacing;
         _session.SolutionLoaded += OnSessionSolutionLoaded;
-        _session.ModelChanged += OnSolutionModelChanged;
     }
 
     private void OnSolutionSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -100,7 +99,6 @@ public partial class MainWindowViewModel
                 break;
             case nameof(ISolutionSession.CurrentSolutionPath):
                 OnPropertyChanged(nameof(CurrentSolutionPath));
-                UpdateSolutionLoadedStatus();
                 break;
             case nameof(ISolutionSession.HasUnsavedChanges):
             case nameof(ISolutionSession.HasSolution):
@@ -114,15 +112,11 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Called when SelectedProject changes: refreshes the diagnostics, the journey runtime projection and the
-    /// solution-loaded status for the new project. Counter statistics follow the selection in InPortCounterViewModel.
+    /// Called when SelectedProject changes: refreshes the journey runtime projection for the new project.
+    /// Counter statistics, diagnostics and the solution-loaded status follow the selection in
+    /// InPortCounterViewModel, ProjectDiagnosticsViewModel and SystemStatusViewModel.
     /// </summary>
-    private void HandleSelectedProjectChanged()
-    {
-        RefreshProjectDiagnostics();
-        ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
-        UpdateSolutionLoadedStatus();
-    }
+    private void HandleSelectedProjectChanged() => ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
 
     private void OnSolutionReplacing(object? sender, EventArgs e) => ClearAllSelections();
 
