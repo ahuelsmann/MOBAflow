@@ -154,9 +154,17 @@ resolved NuGet audit described below. A successful job is not a claim of complet
 The public, authoritative pull-request check is `.github/workflows/quality.yml`.
 It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
-and retains the reports and packages. The Android Release AAB job is skipped on
-regular PR and main runs while MOBAsmart is not distributed. Its required check
-name remains in place. To validate SDK/workload changes on a clean Windows runner,
+and retains the reports and packages. The Android Release AAB job runs on a
+pull request only when it changes `MOBAsmart/` or
+`quality/analyzer-baseline.android.json` (maintainer decision of 2026-11-08,
+[#360](https://github.com/ahuelsmann/MOBAflow/issues/360)). On all other PR runs
+and on main runs it is skipped; its required check name remains in place, and a
+skipped job is not an AAB build. Changes in the projects MOBAsmart compiles
+(`SharedUI`, `Common`, `Sound`, `Backend`, `MOBAdisplay`, `TrackPlan.Renderer`,
+`TrackPlan.Editor`, `TrackLibrary.Base`, `Speech.Base`, `Domain`, `Contracts`),
+in repository-wide build inputs (`Directory.*.props`, `global.json`) and in the
+job definition itself do not start it automatically. To validate those or
+SDK/workload changes on a clean Windows runner,
 dispatch Quality with `validate_android=true` against the task branch:
 
 ```powershell
@@ -200,8 +208,10 @@ Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main` and manual runs classify all scopes as enabled. Other PR changes enable
 desktop, display, Common, Speech.Base, Backend, MOBApi and SharedUI mutation jobs; Domain mutation and ESP32 firmware
-steps also depend on their input paths. Android runs only with the manual
-`validate_android` input. A skipped check is not evidence that tests ran.
+steps also depend on their input paths. Android runs on PRs that change
+`MOBAsmart/` or `quality/analyzer-baseline.android.json` and with the manual
+`validate_android` input; pushes to `main` do not run it. A skipped check is not
+evidence that tests ran.
 
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
@@ -245,10 +255,11 @@ the matching file in `quality/` and run
 `scripts/Test-LineEndings.ps1 -Path <file> -Fix`. New or increased diagnostics
 never produce a refreshed file; fix them instead.
 
-While the Android Release AAB job is disabled, CI does not check
-`quality/analyzer-baseline.android.json`. When a change touches code that
-MOBAsmart compiles, refresh and check it locally with the MAUI Android workload
-installed:
+CI checks `quality/analyzer-baseline.android.json` only when the Android
+Release AAB job runs: on PRs that change `MOBAsmart/` or that baseline, and on a
+manual `validate_android` dispatch. When a change touches other code that
+MOBAsmart compiles, dispatch that job or refresh and check the baseline locally
+with the MAUI Android workload installed:
 
 ```powershell
 Remove-Item -Recurse -Force artifacts/analyzers -ErrorAction SilentlyContinue

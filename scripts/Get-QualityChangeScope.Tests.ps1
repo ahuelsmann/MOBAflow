@@ -59,6 +59,30 @@ Assert-Scope @('Contracts/Runtime/MobaRuntimeSnapshot.cs', 'TrackPlan.Editor/Edi
 Assert-Scope @('quality/analyzer-baseline.json') $true $false $false 'analyzer baseline change'
 Assert-Scope @('Test/SharedUI/SolutionSessionTests.cs') $true $false $false 'tests outside the Domain lane'
 
+# Android Release AAB job: only MOBAsmart and the Android analyzer baseline select it (issue #360).
+function Assert-Android([string[]] $Paths, [bool] $Android, [string] $Scenario) {
+    $actual = Get-Scope $Paths
+    if ($actual.Android -ne $Android) {
+        throw "Expected android=$Android for '$Scenario', but got android=$($actual.Android)."
+    }
+
+    $script:checks++
+}
+
+Assert-Android @('MOBAsmart/View/ControlPage.xaml') $true 'MOBAsmart source'
+Assert-Android @('MOBAsmart\MOBAsmart.csproj') $true 'MOBAsmart project with Windows path separators'
+Assert-Android @('quality/analyzer-baseline.android.json') $true 'Android analyzer baseline'
+Assert-Android @('docs/ARCHITECTURE.md', 'Backend/Z21.cs', 'MOBAsmart/MauiProgram.cs') $true 'MOBAsmart among other changes'
+Assert-Android @('SharedUI/ViewModel/MainWindowViewModel.cs') $false 'SharedUI only'
+Assert-Android @('MOBAflow/View/SolutionPage.xaml', 'Test/MOBAflow/SomeTests.cs') $false 'desktop only'
+Assert-Android @('docs/BUILD-PERFORMANCE.md', 'plans/360-ci-platform-matrix.md') $false 'documentation only'
+Assert-Android @('quality/analyzer-baseline.json') $false 'desktop analyzer baseline'
+Assert-Android @('Test/MOBAsmart/SomeTests.cs') $false 'MOBAsmart tests outside the project folder'
+Assert-Android @('Directory.Packages.props', 'global.json') $false 'repository-wide build inputs'
+Assert-Android @('.github/workflows/quality.yml', 'scripts/Get-QualityChangeScope.ps1') $false 'workflow and scope rules'
+Assert-Android @() $false 'empty change set'
+Assert-Scope @('MOBAsmart/View/ControlPage.xaml') $true $false $false 'MOBAsmart keeps the other scopes unchanged'
+
 # Firmware inputs.
 Assert-Scope @('MOBAdisplay/esp32/src/main.cpp') $true $true $false 'firmware source'
 Assert-Scope @('MOBAdisplay/esp32/platformio.ini') $true $true $false 'firmware build configuration'
@@ -95,7 +119,7 @@ try {
     $env:GITHUB_OUTPUT = $outputFile
     & $scriptPath -Path @('MOBAdisplay/esp32/src/main.cpp') 6> $null | Out-Null
     $written = (Get-Content -Raw -LiteralPath $outputFile).Trim() -replace "`r`n", "`n"
-    if ($written -ne "code=true`nfirmware=true`nmutation=false") {
+    if ($written -ne "code=true`nfirmware=true`nmutation=false`nandroid=false") {
         throw "Unexpected GITHUB_OUTPUT content '$written'."
     }
     $checks++

@@ -157,8 +157,9 @@ successful runs before assuming a hang. Avoid exposing secrets while reading/dow
 Quality always runs repository consistency checks. Documentation-only PRs skip
 product build/test and mutation jobs. Code-relevant PRs run desktop, display and
 the Common, Speech.Base, Backend, MOBApi and SharedUI mutation checks; Domain mutation
-and firmware steps also depend on input paths. Android Release AAB runs only on manual
-dispatch with `validate_android=true`.
+and firmware steps also depend on input paths. Android Release AAB runs on PRs that change
+`MOBAsmart/` or `quality/analyzer-baseline.android.json` and on manual dispatch with
+`validate_android=true`; shared-project changes do not start it.
 Main pushes and manual runs enable the remaining scopes. See
 [Build Performance](BUILD-PERFORMANCE.md#ci-note) and
 [`Get-QualityChangeScope.ps1`](../scripts/Get-QualityChangeScope.ps1) for the exact selection.
