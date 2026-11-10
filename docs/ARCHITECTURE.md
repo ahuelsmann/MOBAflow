@@ -572,16 +572,21 @@ runtime services.
   on solution load and new, project add and remove, and recreates a runtime when
   its project's Z21 changes. Selecting a project only selects its runtime; it never
   activates or restarts one.
-- Safe switch: before the host discards a connected runtime (solution switch, project
-  removal, a changed Z21 assignment, app close), the runtime sets every known
-  locomotive (commanded, seen on its Z21 or listed in its project) to speed 0. The
-  shell asks first ("Stop all trains?") before a new or opened solution, a project
-  deletion or closing MOBAflow when an affected runtime is connected; cancelling keeps
+- Safe switch: before the host discards a connected runtime while MOBAflow keeps
+  running (solution switch, project removal, a changed Z21 assignment), the runtime
+  sets every known locomotive (commanded, seen on its Z21 or listed in its project) to
+  speed 0. The shell asks first ("Stop all trains?") before a new or opened solution
+  or a project deletion when an affected runtime is connected; cancelling keeps
   everything running.
+- App close keeps trains running: `MainWindowViewModel.PrepareForShutdownAsync` shows
+  no stop-trains dialog and calls `IProjectRuntimeHost.ReleaseAsync`, which disposes
+  the runtimes and closes their Z21 connections (LAN_LOGOFF) without a stop command.
+  Disposing `ProjectRuntimeHost` sends no stop either, and the unhandled-exception
+  handler only logs, so a crash leaves the trains running as well. Control through
+  MOBAflow, its REST/SignalR host and MOBAsmart ends with the process.
 - Manual disconnect also stops known locomotives before logging off. Stop commands use
   DCC addresses 1–9999 and continue after individual send failures. Failed manual stops
-  keep the connection available for retry; host shutdown passes its cancellation token
-  through the stop loop and disposes a runtime when its stop is cancelled.
+  keep the connection available for retry; a cancelled stop still disposes its runtime.
 - Remote control per project: every runtime snapshot names its project
   (`MobaRuntimeSnapshot.ProjectId`). MOBAflow pushes the snapshots of all project
   runtimes; MOBApi caches one snapshot per project. A MOBAsmart remote registers for

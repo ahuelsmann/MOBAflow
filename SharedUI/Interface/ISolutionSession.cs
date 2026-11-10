@@ -75,9 +75,10 @@ public interface ISolutionSession : IProjectContext
     IReadOnlyList<string> GetConnectedProjectNames(IReadOnlyCollection<Guid>? projectIds = null);
 
     /// <summary>
-    /// Sets every known locomotive to speed 0 and discards all project runtimes, for example before the app closes.
+    /// Discards all project runtimes and closes their Z21 connections before the app closes. No stop command is
+    /// sent: running trains keep running on the Z21.
     /// </summary>
-    Task StopRuntimesAsync(CancellationToken cancellationToken = default);
+    Task ReleaseRuntimesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Removes <paramref name="project"/> from the solution and selects the first remaining project.</summary>
     void RemoveProject(ProjectViewModel project);
