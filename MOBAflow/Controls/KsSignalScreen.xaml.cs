@@ -25,6 +25,11 @@ internal sealed partial class KsSignalScreen
     private SolidColorBrush OffColor => _offColor ??= CreateOffBrush();
     private SolidColorBrush? _offColor;
 
+    // In a Windows contrast theme a lit lamp also gets a ring, so "lit" never depends on the lamp color alone.
+    private const double LitLampStrokeThickness = 2;
+    private SolidColorBrush LitStroke => _litStroke ??= CreateLitStrokeBrush();
+    private SolidColorBrush? _litStroke;
+
     private DispatcherTimer? _blinkTimer;
     private bool _blinkState;
     private bool _isApplyingVisualState;
@@ -113,12 +118,19 @@ internal sealed partial class KsSignalScreen
     private void OnActualThemeChanged(FrameworkElement sender, object args)
     {
         _offColor = null;
+        _litStroke = null;
         UpdateAspect();
     }
 
     private SolidColorBrush CreateOffBrush()
     {
         var color = ThemeResourceResolver.ResolveColor(this, "SignalLampOffBrush", Color.FromArgb(60, 64, 64, 64));
+        return new SolidColorBrush(color);
+    }
+
+    private SolidColorBrush CreateLitStrokeBrush()
+    {
+        var color = ThemeResourceResolver.ResolveColor(this, "SignalLampLitStrokeBrush", Colors.Transparent);
         return new SolidColorBrush(color);
     }
 
@@ -215,6 +227,10 @@ internal sealed partial class KsSignalScreen
             KsSignalLampColor.White => WhiteOn,
             _ => OffColor
         };
+
+        var isLit = color != KsSignalLampColor.Off;
+        led.Stroke = isLit ? LitStroke : null;
+        led.StrokeThickness = isLit && ThemeResourceResolver.IsHighContrast() ? LitLampStrokeThickness : 0;
     }
 
     private void StartBlinkingIfNeeded(KsSignalScreenVisualState state)

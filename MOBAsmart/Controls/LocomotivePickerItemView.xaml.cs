@@ -5,17 +5,23 @@ using SharedUI.ViewModel;
 
 using System.Windows.Input;
 
+/// <summary>
+/// Tappable locomotive card. The whole card carries one TalkBack description with name, address and selection
+/// state, so the screen reader does not read photo, name and address as three unrelated items.
+/// </summary>
 public partial class LocomotivePickerItemView
 {
     public static readonly BindableProperty LocomotiveProperty = BindableProperty.Create(
         nameof(Locomotive),
         typeof(LocomotiveViewModel),
-        typeof(LocomotivePickerItemView));
+        typeof(LocomotivePickerItemView),
+        propertyChanged: OnDescriptionSourceChanged);
 
     public static readonly BindableProperty IsSelectedProperty = BindableProperty.Create(
         nameof(IsSelected),
         typeof(bool),
-        typeof(LocomotivePickerItemView));
+        typeof(LocomotivePickerItemView),
+        propertyChanged: OnDescriptionSourceChanged);
 
     public static readonly BindableProperty PhotoSourceProperty = BindableProperty.Create(
         nameof(PhotoSource),
@@ -54,5 +60,21 @@ public partial class LocomotivePickerItemView
     {
         get => (ICommand?)GetValue(SelectCommandProperty);
         set => SetValue(SelectCommandProperty, value);
+    }
+
+    private static void OnDescriptionSourceChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        if (bindable is LocomotivePickerItemView item)
+        {
+            item.UpdateSemanticDescription();
+        }
+    }
+
+    private void UpdateSemanticDescription()
+    {
+        var name = string.IsNullOrWhiteSpace(Locomotive?.Name) ? "Locomotive" : $"Locomotive {Locomotive.Name}";
+        var address = Locomotive?.DigitalAddress is { } digitalAddress ? $", digital address {digitalAddress}" : string.Empty;
+        var state = IsSelected ? ", selected" : string.Empty;
+        SemanticProperties.SetDescription(this, $"{name}{address}{state}");
     }
 }

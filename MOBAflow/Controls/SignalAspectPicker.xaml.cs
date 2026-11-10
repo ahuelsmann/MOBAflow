@@ -7,12 +7,14 @@ using Common.Multiplex;
 using Domain;
 
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Controls.Primitives;
 
-using Moba.WinUI.View;
-
+/// <summary>
+/// Grid of signal aspects. Each tile is a <see cref="ToggleButton"/>, so Tab reaches it, Enter or Space selects it
+/// and a screen reader announces the aspect description and whether it is the selected one.
+/// </summary>
 internal sealed partial class SignalAspectPicker
 {
     public static readonly DependencyProperty SelectedAspectProperty = DependencyProperty.Register(
@@ -79,17 +81,6 @@ internal sealed partial class SignalAspectPicker
     {
         InitializeComponent();
         Loaded += OnLoaded;
-        Unloaded += OnUnloaded;
-    }
-
-    private void OnUnloaded(object sender, RoutedEventArgs e)
-    {
-        ActualThemeChanged -= OnActualThemeChanged;
-    }
-
-    private void OnActualThemeChanged(FrameworkElement sender, object args)
-    {
-        UpdateSelectionVisuals();
     }
 
     private static void OnPickerPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -102,16 +93,18 @@ internal sealed partial class SignalAspectPicker
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        ActualThemeChanged += OnActualThemeChanged;
         UpdatePicker();
     }
 
-    private void OnAspectClicked(object sender, PointerRoutedEventArgs e)
+    private void OnAspectClicked(object sender, RoutedEventArgs e)
     {
-        if (sender is Border { Tag: string aspectName } && Enum.TryParse<SignalAspect>(aspectName, out var aspect))
+        if (sender is ToggleButton { Tag: string aspectName } && Enum.TryParse<SignalAspect>(aspectName, out var aspect))
         {
             SelectedAspect = aspect;
         }
+
+        // A ToggleButton toggles itself on click; the selection decides which tile is checked.
+        UpdateSelectionVisuals();
     }
 
     private void UpdatePicker()
@@ -128,17 +121,9 @@ internal sealed partial class SignalAspectPicker
 
     private void UpdateSelectionVisuals()
     {
-        var accentBrush = ThemeResourceResolver.ResolveBrush(this, "AccentFillColorDefaultBrush", Microsoft.UI.Colors.Blue);
-        var normalBrush = ThemeResourceResolver.ResolveBrush(this, "SubtleFillColorSecondaryBrush", Microsoft.UI.Colors.Gray);
-
         foreach (var (button, aspect) in EnumerateAspectButtons())
         {
-            if (button == null)
-            {
-                continue;
-            }
-
-            button.Background = SelectedAspect == aspect ? accentBrush : normalBrush;
+            button.IsChecked = SelectedAspect == aspect;
         }
     }
 
@@ -193,15 +178,13 @@ internal sealed partial class SignalAspectPicker
         AspectZs1Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs1, is4046);
         AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs7, is4046);
 
-        ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Stop");
-        ToolTipService.SetToolTip(AspectKs1Button, "Ks 1 - Proceed");
-        ToolTipService.SetToolTip(AspectKs2Button, is4046 ? "Ks 2 with white marker light at the top left" : "Ks 2 - Expect stop");
-        ToolTipService.SetToolTip(AspectKs1BlinkButton, is4046 ? "Ks 2 with white marker light at the top left and top speed indicator" : "Ks 1 flashing - Proceed with speed pre-indicator");
-        ToolTipService.SetToolTip(AspectKennlichtButton, is4046 ? "Only white marker light at the top left" : "Marker light - Signal disabled for operations");
-        ToolTipService.SetToolTip(AspectDunkelButton, is4046 ? "Green flashing with white marker light at the top left and top/bottom speed indicators" : "Dark mode - Signal inactive");
-        ToolTipService.SetToolTip(AspectRa12Button, is4046 ? "Hp0 with white marker light at the bottom for shunting movements" : "Sh 1/Ra 12 - Shunting allowed");
-        ToolTipService.SetToolTip(AspectZs1Button, is4046 ? "Ks 1 with top speed indicator" : "Zs 1 - Substitute signal (white flashing)");
-        ToolTipService.SetToolTip(AspectZs7Button, "Zs 7 - Caution signal (3x yellow)");
+        // The tooltip text is also the accessible name: the tile's own text is only the short aspect label.
+        foreach (var (button, aspect) in EnumerateAspectButtons())
+        {
+            var description = KsSignalAspectNames.GetAspectDescription(aspect, is4046);
+            ToolTipService.SetToolTip(button, description);
+            AutomationProperties.SetName(button, description);
+        }
     }
 
     private void SetAllAspectButtonsVisibility(Visibility visibility)
@@ -212,7 +195,7 @@ internal sealed partial class SignalAspectPicker
         }
     }
 
-    private IEnumerable<(Border Button, SignalAspect Aspect)> EnumerateAspectButtons()
+    private IEnumerable<(ToggleButton Button, SignalAspect Aspect)> EnumerateAspectButtons()
     {
         yield return (AspectHp0Button, SignalAspect.Hp0);
         yield return (AspectKs1Button, SignalAspect.Ks1);

@@ -6,7 +6,8 @@ using System.Xml.Linq;
 
 /// <summary>
 /// Narrator reads a button by its accessible name; a tooltip is not one. Every desktop button needs visible text,
-/// a <c>Label</c> or an explicit <c>AutomationProperties.Name</c>.
+/// a <c>Label</c> or an explicit <c>AutomationProperties.Name</c>. A <c>ToggleSwitch</c> needs a <c>Header</c>, on/off
+/// text or an explicit name; a text block placed next to it is not its name.
 /// </summary>
 [TestFixture]
 internal sealed class AccessibleNameArchitectureTests
@@ -40,6 +41,12 @@ internal sealed class AccessibleNameArchitectureTests
     [TestCase("""<Button><StackPanel><FontIcon Glyph="&#xE710;" /><TextBlock Text="Add" /></StackPanel></Button>""", false)]
     [TestCase("""<DropDownButton><DropDownButton.Content><TextBlock Text="Export" /></DropDownButton.Content></DropDownButton>""", false)]
     [TestCase("""<Button><Button.Flyout><Flyout><TextBlock Text="Details" /></Flyout></Button.Flyout><FontIcon Glyph="&#xE710;" /></Button>""", true)]
+    [TestCase("""<ToggleSwitch />""", true)]
+    [TestCase("""<ToggleSwitch xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" OnContent="{x:Null}" OffContent="{x:Null}" />""", true)]
+    [TestCase("""<ToggleSwitch ToolTipService.ToolTip="Track power" />""", true)]
+    [TestCase("""<ToggleSwitch Header="Track power" />""", false)]
+    [TestCase("""<ToggleSwitch OnContent="Forward" OffContent="Backward" />""", false)]
+    [TestCase("""<ToggleSwitch AutomationProperties.Name="Track power" />""", false)]
     public void FindUnnamedButtons_ReportsOnlyButtonsWithoutAName(string button, bool reported)
     {
         var xaml = $"""
@@ -55,7 +62,8 @@ internal sealed class AccessibleNameArchitectureTests
     {
         var document = XDocument.Parse(xaml, LoadOptions.SetLineInfo);
         return document.Descendants()
-            .Where(element => ButtonElements.Contains(element.Name.LocalName) && !HasAccessibleName(element))
+            .Where(element => (ButtonElements.Contains(element.Name.LocalName) && !HasAccessibleName(element))
+                || (element.Name.LocalName == "ToggleSwitch" && !ToggleSwitchHasAccessibleName(element)))
             .Select(element => ((IXmlLineInfo)element).LineNumber)
             .ToList();
     }
@@ -76,6 +84,14 @@ internal sealed class AccessibleNameArchitectureTests
             .DescendantsAndSelf()
             .Any(element => element.Name.LocalName == "TextBlock");
     }
+
+    private static bool ToggleSwitchHasAccessibleName(XElement toggleSwitch) =>
+        toggleSwitch.Attributes().Any(attribute =>
+            attribute.Name.LocalName is "AutomationProperties.Name" or "AutomationProperties.LabeledBy"
+            || (attribute.Name.LocalName is "Header" or "OnContent" or "OffContent"
+                && !string.IsNullOrWhiteSpace(attribute.Value)
+                && attribute.Value != "{x:Null}"))
+        || toggleSwitch.Elements().Any(child => child.Name.LocalName is "ToggleSwitch.Header" or "ToggleSwitch.OnContent");
 
     private static bool IsBuildOutput(string relativePath)
     {

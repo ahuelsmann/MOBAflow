@@ -243,7 +243,13 @@ polarity are available for supported signal configurations.
 Without a mouse, press **Tab** to move from element to element on the plan; the
 focused element shows a frame, and Narrator reads its kind, name and state, for
 example "Signal A1, Ks1". **Enter** or **Space** selects it, and the properties
-panel then offers its controls.
+panel then offers its controls. The signal aspect tiles in that panel (and in
+the workflow editor's signal action) are buttons: **Tab** reaches them, **Enter**
+or **Space** sets the aspect, and Narrator reads the aspect description, for
+example "Ks 1 - Proceed", together with whether it is the current aspect.
+
+While Windows runs a contrast theme, every lit signal lamp also shows a ring in
+the theme's text color, so a lit lamp is recognisable without its color.
 
 ### Matrix Images and ESP32 Display
 

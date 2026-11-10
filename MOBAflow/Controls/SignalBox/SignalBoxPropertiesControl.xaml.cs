@@ -6,11 +6,11 @@ using SharedUI.Appearance;
 using Domain;
 
 using Moba.WinUI.Controls;
-using Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Controls.Primitives;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
@@ -270,24 +270,14 @@ public sealed partial class SignalBoxPropertiesControl
             return;
         }
 
-        var accentBrush = ThemeResourceResolver.ResolveBrush(
-            this,
-            "AccentFillColorDefaultBrush",
-            Microsoft.UI.Colors.Blue);
-        var normalBrush = ThemeResourceResolver.ResolveBrush(
-            this,
-            "SubtleFillColorSecondaryBrush",
-            Microsoft.UI.Colors.Gray);
-
+        // The checked tile is the current aspect; the system style draws it in accent or High Contrast highlight.
         foreach (var (button, aspect) in EnumerateAspectButtons())
         {
-            button.Background = signal.SignalAspect == aspect
-                ? accentBrush
-                : normalBrush;
+            button.IsChecked = signal.SignalAspect == aspect;
         }
     }
 
-    private IEnumerable<(Border Button, SignalAspect Aspect)> EnumerateAspectButtons()
+    private IEnumerable<(ToggleButton Button, SignalAspect Aspect)> EnumerateAspectButtons()
     {
         yield return (AspectHp0Button, SignalAspect.Hp0);
         yield return (AspectKs1Button, SignalAspect.Ks1);
@@ -344,8 +334,13 @@ public sealed partial class SignalBoxPropertiesControl
         foreach (var (label, aspect) in EnumerateAspectLabels())
             label.Text = KsSignalAspectNames.GetAspectLabel(aspect, isSpeedIndicatorSignal);
 
+        // The tooltip text is also the accessible name: the tile's own text is only the short aspect label.
         foreach (var (button, aspect) in EnumerateAspectButtons())
-            ToolTipService.SetToolTip(button, KsSignalAspectNames.GetAspectDescription(aspect, isSpeedIndicatorSignal));
+        {
+            var description = KsSignalAspectNames.GetAspectDescription(aspect, isSpeedIndicatorSignal);
+            ToolTipService.SetToolTip(button, description);
+            AutomationProperties.SetName(button, description);
+        }
     }
 
     private IEnumerable<(TextBlock Label, SignalAspect Aspect)> EnumerateAspectLabels()
@@ -420,14 +415,17 @@ public sealed partial class SignalBoxPropertiesControl
         }
     }
 
-    private void OnAspectClicked(object sender, PointerRoutedEventArgs args)
+    private void OnAspectClicked(object sender, RoutedEventArgs args)
     {
         _ = args;
-        if (sender is Border { Tag: string aspectName } &&
+        if (sender is ToggleButton { Tag: string aspectName } &&
             Enum.TryParse<SignalAspect>(aspectName, out var aspect))
         {
             EditorViewModel?.SetSignalAspectCommand.Execute(aspect);
         }
+
+        // A ToggleButton toggles itself on click; the signal's aspect decides which tile is checked.
+        UpdateAspectButtons();
     }
 
     private void OnSwitchPositionClicked(object sender, RoutedEventArgs args)

@@ -24,6 +24,8 @@
                     <SolidColorBrush x:Key="FunctionButtonOffBorderBrush" Color="#FFD0D0D0" />
                     <SolidColorBrush x:Key="SignalHousingBackgroundBrush" Color="#FFE8E8E8" />
                     <SolidColorBrush x:Key="SignalLampOffBrush" Color="#663C4040" />
+                    <!--  Ring around a lit signal lamp: invisible here, a WindowText ring in High Contrast  -->
+                    <SolidColorBrush x:Key="SignalLampLitStrokeBrush" Color="#00000000" />
                     <SolidColorBrush x:Key="SignalBoxTrackBrush" Color="#FFC8C8C8" />
                     <SolidColorBrush x:Key="SignalPreviewBackgroundBrush" Color="#FFE8E8E8" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundBrush" Color="#FFE81123" />
@@ -72,6 +74,8 @@
                     <SolidColorBrush x:Key="FunctionButtonOffBorderBrush" Color="#FF404040" />
                     <SolidColorBrush x:Key="SignalHousingBackgroundBrush" Color="#FF1E1E1E" />
                     <SolidColorBrush x:Key="SignalLampOffBrush" Color="#663C4040" />
+                    <!--  Ring around a lit signal lamp: invisible here, a WindowText ring in High Contrast  -->
+                    <SolidColorBrush x:Key="SignalLampLitStrokeBrush" Color="#00000000" />
                     <SolidColorBrush x:Key="SignalBoxTrackBrush" Color="#FF505050" />
                     <SolidColorBrush x:Key="SignalPreviewBackgroundBrush" Color="#FF1E1E1E" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundBrush" Color="#FFE81123" />
@@ -121,6 +125,7 @@
                     <SolidColorBrush x:Key="FunctionButtonOffBorderBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
                     <SolidColorBrush x:Key="SignalHousingBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="SignalLampOffBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+                    <SolidColorBrush x:Key="SignalLampLitStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="SignalBoxTrackBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="SignalPreviewBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="MobaDangerButtonBackgroundBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />

@@ -47,6 +47,7 @@
                             Grid.Column="0"
                             FontAttributes="Bold"
                             FontSize="16"
+                            SemanticProperties.HeadingLevel="Level2"
                             Text="{Binding Name}"
                             TextColor="{DynamicResource TextPrimary}" />
                         <Border
@@ -77,6 +78,7 @@
                             <Label
                                 FontAttributes="Bold"
                                 FontSize="11"
+                                SemanticProperties.HeadingLevel="Level3"
                                 Text="SELECT SIGNAL ASPECT"
                                 TextColor="{DynamicResource TextSecondary}" />
                             <controls:SignalAspectPicker
