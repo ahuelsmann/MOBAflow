@@ -120,16 +120,20 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object);
         var stationEventBus1 = eventBusMock.Object;
+        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object);
+        var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
-            new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
+            new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             stationEventBus1,
-            TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null),
+            settingsPage1,
+            trainsPage1,
             _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntimeMock.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(mobaRuntimeMock.Object), uiDispatcherMock.Object),
+            _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
+            _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
             loggerMock.Object);
     }
@@ -389,16 +393,20 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
         var locomotiveSession2 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object, io.Object);
         var stationEventBus2 = new Mock<IEventBus>().Object;
+        var settingsPage2 = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
+        var trainsPage2 = _rollingStockPages.GetTrainsPage(locomotiveSession2, runtime.Object, io.Object);
         var viewModel = new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            new LocalRuntimeCommandGateway(runtime.Object),
+            new LocalRuntimeCommandGateway(runtime.Object),
             stationEventBus2,
-            TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _rollingStockPages.GetTrainsPage(locomotiveSession2, runtime.Object, io.Object),
+            settingsPage2,
+            trainsPage2,
             _rollingStockPages.GetStationsPage(locomotiveSession2, runtime.Object, stationEventBus2),
             _rollingStockPages.GetJourneysPage(locomotiveSession2, new LocalRuntimeCommandGateway(runtime.Object), dispatcher.Object),
+            _rollingStockPages.GetProjectDiagnostics(locomotiveSession2, trainsPage2),
+            _rollingStockPages.GetSystemStatus(stationEventBus2, locomotiveSession2, settingsPage2),
             locomotiveSession2,
             NullLogger<MainWindowViewModel>.Instance)
         {

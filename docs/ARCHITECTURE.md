@@ -514,6 +514,31 @@ runtime services.
   host instances once the shell confirmed shutdown and before the runtimes stop, through the callback of
   `MainWindowViewModel.PrepareForShutdownAsync`; a cancelled shutdown keeps them subscribed. MOBAsmart keeps its own counter projection in `MauiViewModel`.
 
+**Diagnostics and system status (RF-24 slice 5b):**
+
+- The host owns one `ProjectDiagnosticsViewModel`, exposed by the shell as `Diagnostics` because `MainWindow.xaml`
+  binds the Messages pane. Its required dependencies are the session, `IProjectDiagnosticsService` and the host
+  `LocomotiveTrainUsageViewModel` that `LocomotivesPage.Usage` already is. It owns the analyzed findings, the
+  Z21-assignment and locomotive-usage findings, the three severity filters with their counts and summary, the
+  coverage summary and the refresh command. It refreshes on construction, on the session's project change, on
+  `ISolutionSession.ModelChanged`, when the pane opens and when the usage diagnostics change, expanding the pane
+  for an edited usage result; disposal detaches the session and usage subscriptions and keeps the last findings.
+- The host owns one `SystemStatusViewModel`, exposed by the shell as `SystemStatus` because the status bar binds
+  speech health and REST status; `OverviewPage` receives it directly for the REST API, connected clients,
+  synchronization rows and the solution-loaded row. Its required dependencies are the decorated EventBus, the
+  session and the shared `SettingsPageViewModel`. It subscribes `PostStartupStatusEvent`, `RestApiStatusChangedEvent`
+  and `MobaflowSyncDiagnosticsChangedEvent`, resets the speech health to Initializing when `SelectedSpeechProviderId`
+  changes, evaluates `HasActiveProject` from the session and recomputes the solution-loaded status on the session's
+  `CurrentSolutionPath` and `SelectedProject` changes. `MainWindow` forwards the health-check results to
+  `SystemStatus.UpdateHealthStatus`.
+- The shell keeps the operating state: `RecomputeOperatingState` reads `SystemStatus.RestApiIsReachable`,
+  `SpeechHealthStatus` and `IsPostStartupInitializationRunning`, one `SystemStatus.PropertyChanged` handler for
+  the five REST, speech and post-startup names replaces the former partial hooks, and `OperatingStateEvaluator`
+  remains the pure collaborator. The Diagnostics, HealthStatus, RestApiStatus, SyncDiagnostics and SolutionAutoSave
+  shell partials and the shell's optional `IProjectDiagnosticsService` are removed; `PhotoAssignedEvent` routing
+  lives in the PhotoAssignment partial. The shell disposes both host instances at shutdown after it confirmed
+  shutdown; a cancelled shutdown keeps them subscribed.
+
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
@@ -521,9 +546,9 @@ runtime services.
   and logging; speech testing uses the existing host action. It never depends on MainWindowViewModel.
 - The ViewModel owns settings persistence, feature items, Piper choices, reset commands and section
   state. SettingsPage keeps file pickers and visual ordering/reset feedback.
-- The shell retains the status projections until slice 5b; `InPortCounterViewModel` reacts to actual valid
-  feedback-count changes since slice 5a. The shell reacts to speech selection and detaches its
-  subscriptions at shutdown. The architecture guard rejects shell dependencies in the extracted SettingsPage.
+- `InPortCounterViewModel` reacts to actual valid feedback-count changes since slice 5a, and
+  `SystemStatusViewModel` resets the speech health on a provider selection since slice 5b; the shell disposes
+  both at shutdown. The architecture guard rejects shell dependencies in the extracted SettingsPage.
 
 **One runtime per project (MOBAflow):**
 
@@ -644,13 +669,11 @@ See [issue #132](https://github.com/ahuelsmann/MOBAflow/issues/132) and the
 
 **Planned refactoring (`MainWindowViewModel` decomposition):**
 
-- `MainWindowViewModel` is still a large aggregate (~18 partial files, ~17 ctor
-  dependencies). The next maintainability step is extracting cohesive child
-  ViewModels (e.g. a `SystemStatusViewModel` for speech-health / REST-API /
-  post-startup status).
-- This requires updating compile-time `x:Bind` bindings in WinUI and MAUI XAML, so
-  it must be done and verified with the platform UI build (not part of the
-  cross-platform subset).
+- `MainWindowViewModel` is reduced to navigation, shell status and command forwarding: the page,
+  counter, traffic, diagnostics and system-status ViewModels above are extracted (slices 1 to 5b of
+  RF-24). The remaining step is slice 6: one layout persistence boundary and the final shell audit.
+- Every extraction updates compile-time `x:Bind` bindings in WinUI XAML, so it is verified with the
+  platform UI build (not part of the cross-platform subset).
 
 ---
 
@@ -860,9 +883,9 @@ status messages only; it does not load or initialize external plugins.
 
 The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
 receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `JourneysPageViewModel`,
-`ISolutionSession`, `IRuntimeSnapshotProvider`, `IConnectionRuntime` and `IRuntimeCommandGateway`,
-together with its other shell and platform services; `ITrafficMonitor` goes to
-`MonitorPageViewModel`. Neither receives the mutable `Solution` or a complete
+`ProjectDiagnosticsViewModel`, `SystemStatusViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`,
+`IConnectionRuntime` and `IRuntimeCommandGateway`, together with its other shell and platform services;
+`ITrafficMonitor` goes to `MonitorPageViewModel`. Neither receives the mutable `Solution` or a complete
 `IMobaRuntime`. The runtime roles resolve to selected-project adapters on Windows;
 MOBAsmart composes one local runtime and its local/remote command coordinator.
 

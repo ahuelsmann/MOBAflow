@@ -3141,6 +3141,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/ProjectDiagnosticsViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/RestApiDiscoveryCandidateBuilderTests.cs",
       "count": 1
     },
@@ -3687,13 +3694,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/MainWindowDiagnosticsTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
       "path": "Test/SharedUI/MainWindowViewModelPhotoAssignmentTests.cs",
       "count": 1
     },
@@ -3947,6 +3947,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/SpeedControllerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SystemStatusViewModelTests.cs",
       "count": 1
     },
     {
@@ -6559,13 +6566,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/LocomotiveManagementViewModelTests.cs",
       "count": 7
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/SharedUI/MainWindowDiagnosticsTests.cs",
-      "count": 2
     },
     {
       "project": "Test",

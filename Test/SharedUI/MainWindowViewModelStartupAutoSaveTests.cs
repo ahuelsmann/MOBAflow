@@ -223,16 +223,20 @@ internal partial class MainWindowViewModelShutdownTests
 
         var locomotiveSession1 = TestSolutionSessions.Create(solution ?? new Solution(), dispatcher.Object, runtime, ioService);
         var stationEventBus1 = eventBus;
+        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
+        var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime, ioService);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime,
             runtime,
-            new LocalRuntimeCommandGateway(runtime),
+            new LocalRuntimeCommandGateway(runtime),
             stationEventBus1,
-            TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime, ioService),
+            settingsPage1,
+            trainsPage1,
             _rollingStockPages.GetStationsPage(locomotiveSession1, runtime, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtime), dispatcher.Object),
+            _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
+            _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
             new Mock<ILogger<MainWindowViewModel>>().Object);
     }

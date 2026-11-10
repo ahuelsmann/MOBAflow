@@ -2,8 +2,10 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/357
 **Spec Kit**: Not applicable - build-quality change without behavior change
-**Status**: Active; slice 1 ships with this plan, including the typed `ControlPage` command binding that MAUI
-10.0.120 (#381) turned into an Android Release build error.
+**Status**: Active; slice 1 (#358) shipped this plan, compilation with `Source`, the three self-bound controls and
+the typed `ControlPage` command binding that MAUI 10.0.120 (#381) turned into an Android Release build error.
+Slice 2 declares `x:DataType` on `FunctionToggleView`; project-owned XAML now builds with 0 `XC0022`, `XC0025`
+and `XC0045`. Slice 3 (the CI gate) is open.
 
 ## Purpose and scope
 
@@ -24,8 +26,8 @@ bindings with Source is not enabled"). Each warning appears twice in the build l
 | `Controls/SignalAspectPicker.xaml` | 27 | all `Source={x:Reference Root}` (the control itself) | 1 |
 | `Controls/LocomotivePickerItemView.xaml` | 13 | all `Source={x:Reference Root}` | 1 |
 | `Controls/CounterStepperButton.xaml` | 2 | all `Source={x:Reference Root}` | 1 |
-| `Controls/FunctionToggleView.xaml` | 2 | all `Source={x:Reference Root}` | 2 (touched by #308) |
-| `View/ControlPage.xaml` | 1 | `Source={x:Reference ControlRoot}, Path=BindingContext.ToggleFunctionCommand` inside a `FunctionButtonViewModel` template | 2 (touched by #308) |
+| `Controls/FunctionToggleView.xaml` | 2 | all `Source={x:Reference Root}` | 2 (after #308) |
+| `View/ControlPage.xaml` | 1 | `Source={x:Reference ControlRoot}, Path=BindingContext.ToggleFunctionCommand` inside a `FunctionButtonViewModel` template | 1 (typed source; see design decisions) |
 
 Six files already declare `x:DataType`; `XC0103` comes from CommunityToolkit.Maui and stays suppressed.
 
@@ -51,18 +53,23 @@ Six files already declare `x:DataType`; `XC0103` comes from CommunityToolkit.Mau
 1. **Enable compilation, the three self-bound controls and the typed `ControlPage` command binding** (with this
    plan): 90 `XC0025` → 2 `XC0022` warnings in `FunctionToggleView` (each printed twice in the log), 0 errors.
    Measured on main `cbe08089` with MAUI 10.0.120 in FastDebug and Release.
-2. **`FunctionToggleView`** after #308.
+2. **`FunctionToggleView`** after #308: the control declares `x:DataType="controls:FunctionToggleView"`, the same
+   self-binding pattern as `CounterStepperButton`. Its two `Source={x:Reference Root}` bindings (`ToggleCommand`,
+   `FunctionIndex`) are now compiled; the runtime `BindingContext` (a `FunctionButtonViewModel` from the
+   `ControlPage` template) is untouched because the control reads it in code-behind, not through bindings.
+   `ControlPage` needed no further change; its typed `ToggleFunctionCommand` binding from slice 1 and #308 stays.
+   Result: 2 `XC0022` → 0 XamlC warnings, 0 errors, in FastDebug and Android Release.
 3. **Warnings as errors, documentation and completion.**
 
 ## Validation strategy
 
 Every slice: Android Release rebuild with the warning count, Android analyzer gate, portable and Windows tests
-(SharedUI is unchanged). Maintainer device check of locomotive selection, signal aspects, function toggles and the
-control page, including startup and interaction responsiveness, recorded on #357. No device deployment by the agent.
+(SharedUI is unchanged). No device deployment by the agent. Personal acceptance was abolished on 2026-11-06; the
+rendered function toggles are an uninspected visual state until the user reports from the app, not a passed check.
 
 ## Risks
 
 - **Runtime differences:** compiled bindings fail at build time where reflection bindings silently failed; a
   compiled binding that resolves differently would be caught by the compiler (`XC0045`) rather than at runtime.
-- **Open PRs:** #308 touches `FunctionToggleView` and `ControlPage`; #294 (localization) touches other MAUI files
-  only.
+- **Open PRs:** #308 (merged) touched `FunctionToggleView` and `ControlPage` before slice 2; #294 (localization)
+  touches other MAUI files only.

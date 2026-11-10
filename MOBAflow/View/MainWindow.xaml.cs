@@ -272,7 +272,7 @@ public sealed partial class MainWindow
 
         _uiDispatcher.InvokeOnUi(() =>
         {
-            ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
+            ViewModel.SystemStatus.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
         });
     }
 
@@ -468,7 +468,7 @@ public sealed partial class MainWindow
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
-            ViewModel.UpdateHealthStatus(e.StatusMessage);
+            ViewModel.SystemStatus.UpdateHealthStatus(e.StatusMessage);
         });
     }
 

@@ -110,16 +110,20 @@ internal sealed partial class MainWindowViewModelSignalBoxTests : IDisposable
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object);
         var stationEventBus1 = new Mock<IEventBus>().Object;
+        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
+        var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            gateway.Object,
+            gateway.Object,
             stationEventBus1,
-            TestSettingsPages.Create(new AppSettings(), dispatcher.Object),
-            _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null),
+            settingsPage1,
+            trainsPage1,
             _rollingStockPages.GetStationsPage(locomotiveSession1, runtime.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, gateway.Object, dispatcher.Object),
+            _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
+            _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
             NullLogger<MainWindowViewModel>.Instance)
         {

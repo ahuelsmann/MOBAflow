@@ -3,6 +3,8 @@ namespace Moba.SharedUI.ViewModel;
 
 using Common.Events;
 
+using Microsoft.Extensions.Logging;
+
 /// <summary>Routes uploaded photos to the editor of the active inventory page.</summary>
 public partial class MainWindowViewModel
 {
@@ -22,4 +24,35 @@ public partial class MainWindowViewModel
             _ => PhotoAssignmentTarget.None,
         };
     }
+
+    /// <summary>
+    /// Event handler for <see cref="PhotoAssignedEvent"/>, delivered on the UI thread by the decorated event bus.
+    /// Performs the photo assignment and logs the actual target.
+    /// </summary>
+    private void OnPhotoAssigned(PhotoAssignedEvent e)
+    {
+        var target = AssignUploadedPhotoToSelectedEntity(e.PhotoPath);
+
+        switch (target)
+        {
+            case PhotoAssignmentTarget.Locomotive:
+                LogPhotoAssigned(_logger, "locomotive", e.PhotoPath);
+                break;
+            case PhotoAssignmentTarget.PassengerWagon:
+                LogPhotoAssigned(_logger, "passenger wagon", e.PhotoPath);
+                break;
+            case PhotoAssignmentTarget.GoodsWagon:
+                LogPhotoAssigned(_logger, "goods wagon", e.PhotoPath);
+                break;
+            default:
+                LogPhotoWithoutTarget(_logger, e.PhotoPath);
+                break;
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Assigned uploaded photo to selected {Target}: {PhotoPath}")]
+    private static partial void LogPhotoAssigned(ILogger logger, string target, string photoPath);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Photo uploaded but no locomotive/wagon is selected. Path: {PhotoPath}")]
+    private static partial void LogPhotoWithoutTarget(ILogger logger, string photoPath);
 }

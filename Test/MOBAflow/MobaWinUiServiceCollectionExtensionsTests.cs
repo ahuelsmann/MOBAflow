@@ -375,6 +375,40 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         counters.Dispose();
     }
 
+    [Test]
+    public async Task DiagnosticsAndSystemStatusAreHostSingletonsSharedWithTheShell()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var diagnostics = provider.GetRequiredService<ProjectDiagnosticsViewModel>();
+        var status = provider.GetRequiredService<SystemStatusViewModel>();
+        var shell = provider.GetRequiredService<MainWindowViewModel>();
+        var session = provider.GetRequiredService<ISolutionSession>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<ProjectDiagnosticsViewModel>(), Is.SameAs(diagnostics));
+            Assert.That(provider.GetRequiredService<SystemStatusViewModel>(), Is.SameAs(status));
+            Assert.That(shell.Diagnostics, Is.SameAs(diagnostics));
+            Assert.That(shell.SystemStatus, Is.SameAs(status));
+            Assert.That(status.SolutionLoadedStatusText, Is.EqualTo("In-memory only, no solution file loaded"));
+        }
+
+        // The status follows the shared session and the diagnostics the shared usage query without the shell.
+        session.CurrentSolutionPath = "host-status-test.json";
+        session.SelectedProject = new ProjectViewModel(new Project
+        {
+            Name = "Conflicting",
+            Locomotives = [new Locomotive { Name = "One", DigitalAddress = 9 }, new Locomotive { Name = "Two", DigitalAddress = 9 }]
+        }, TestViewModelServices.Default);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(status.SolutionLoadedStatusText, Is.EqualTo("Loaded from host-status-test.json, project Conflicting"));
+            Assert.That(diagnostics.DiagnosticWarningCount, Is.EqualTo(1), "The duplicate address of the selected project is reported.");
+            Assert.That(diagnostics.LocomotiveUsageCoverageSummary,
+                Is.EqualTo(provider.GetRequiredService<LocomotiveTrainUsageViewModel>().CoverageSummary));
+        }
+    }
+
     private static ServiceProvider CreatePlatformServiceProvider()
     {
         var services = new ServiceCollection();
