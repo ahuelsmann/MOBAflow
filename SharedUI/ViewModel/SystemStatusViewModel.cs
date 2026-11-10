@@ -55,7 +55,7 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
 
     /// <summary>Icon glyph for the speech health status.</summary>
     [ObservableProperty]
-    public partial string SpeechHealthIcon { get; private set; } = ""; // Sync
+    public partial string SpeechHealthIcon { get; private set; } = "\uE946"; // Sync
 
     /// <summary>Color for the speech health status icon.</summary>
     [ObservableProperty]
@@ -73,22 +73,22 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
 
         if (statusMessage.Contains("Ready", StringComparison.OrdinalIgnoreCase))
         {
-            SpeechHealthIcon = ""; // Checkmark circle
+            SpeechHealthIcon = "\uE930"; // Checkmark circle
             SpeechHealthColor = "Green";
         }
         else if (statusMessage.Contains("Not Configured", StringComparison.OrdinalIgnoreCase) || statusMessage.Contains("Unavailable", StringComparison.OrdinalIgnoreCase))
         {
-            SpeechHealthIcon = ""; // Warning
+            SpeechHealthIcon = "\uE7BA"; // Warning
             SpeechHealthColor = "SystemFillColorCautionBrush";
         }
         else if (statusMessage.Contains("Failed", StringComparison.OrdinalIgnoreCase))
         {
-            SpeechHealthIcon = ""; // Error
+            SpeechHealthIcon = "\uE711"; // Error
             SpeechHealthColor = "Red";
         }
         else // Initializing
         {
-            SpeechHealthIcon = ""; // Sync
+            SpeechHealthIcon = "\uE946"; // Sync
             SpeechHealthColor = "SystemFillColorCautionBrush";
         }
 

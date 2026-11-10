@@ -63,7 +63,7 @@ public sealed class TrackPlanSolutionBinder
 
         // Trigger the existing solution auto-save pipeline so additions/removals persist
         // before shutdown (EditableTrackPlan is not a ViewModel, so it does not feed
-        // the PropertyChanged-based auto-save hook in MainWindowViewModel.SolutionAutoSave).
+        // the PropertyChanged-based auto-save observer owned by the solution session).
         var changeVersion = _editorService.ChangeVersion;
         SaveAndMarkCleanAsync(changeVersion)
             .Observe(_ => { /* logging handled inside SaveSolutionInternalAsync */ });

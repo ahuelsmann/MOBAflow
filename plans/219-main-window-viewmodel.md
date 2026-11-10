@@ -532,14 +532,14 @@ uncovered behavior before extraction. Existing anchors include:
 | Rolling stock | MainWindowViewModelPhotoAssignmentTests and LocomotiveManagementViewModelTests; preserve stale-project/solution/photo-copy checks, CRUD, filtering and rename binding identity; add composition reorder/selection cases |
 | Stations/journeys | SolutionSessionTests and EventManagerEventPlanTests; add page CRUD, selected-project switch, nested model changes and command-state checks |
 | Workflows | WorkflowLibraryViewModelTests; exercise selection, validation, order, cancellation and shared instance lifetime |
-| Status/commands | JourneyCounterProjectionTests, MainWindowDiagnosticsTests, MainWindowViewModelSignalBoxTests, MainWindowViewModelShutdownTests, MainWindowViewModelStartupAutoSaveTests; slice 5 moves the counter, traffic, diagnostics and status cases into the fixtures named in its plan and adds subscription disposal coverage |
+| Status/commands | JourneyCounterProjectionTests, ProjectDiagnosticsViewModelTests, SystemStatusViewModelTests, MainWindowViewModelSignalBoxTests, MainWindowViewModelShutdownTests, MainWindowViewModelStartupAutoSaveTests; slice 5 moves the counter, traffic, diagnostics and status cases into the fixtures named in its plan and adds subscription disposal coverage |
 | Architecture | SolutionSessionArchitectureTests and RuntimeCommandPathArchitectureTests; reject page/service shell dependencies, confirm required DI and one session/runtime route |
 
 Run from the slice's repository root, using the SDK in global.json:
 
 ```powershell
 dotnet build SharedUI/SharedUI.csproj
-dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~MainWindowViewModel|FullyQualifiedName~MainWindowDiagnosticsTests|FullyQualifiedName~WorkflowLibraryViewModelTests|FullyQualifiedName~LocomotiveManagementViewModelTests|FullyQualifiedName~SolutionSessionTests|FullyQualifiedName~LayoutColumnWidthsViewModelTests|FullyQualifiedName~EventManagerEventPlanTests"
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~MainWindowViewModel|FullyQualifiedName~ProjectDiagnosticsViewModelTests|FullyQualifiedName~SystemStatusViewModelTests|FullyQualifiedName~WorkflowLibraryViewModelTests|FullyQualifiedName~LocomotiveManagementViewModelTests|FullyQualifiedName~SolutionSessionTests|FullyQualifiedName~LayoutColumnWidthsViewModelTests|FullyQualifiedName~EventManagerEventPlanTests"
 dotnet restore MOBAflow/MOBAflow.csproj
 dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore -p:BuildMOBApiDependency=false -p:CopyMOBApiToOutput=false
 dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0

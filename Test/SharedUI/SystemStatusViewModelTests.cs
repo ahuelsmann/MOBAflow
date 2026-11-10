@@ -74,7 +74,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         {
             Assert.That(viewModel.SpeechHealthStatus, Is.EqualTo("Initializing..."));
             Assert.That(viewModel.SpeechStatusDisplayText, Is.EqualTo("Initializing..."));
-            Assert.That(viewModel.SpeechHealthIcon, Is.EqualTo(""));
+            Assert.That(viewModel.SpeechHealthIcon, Is.EqualTo("\uE946"));
             Assert.That(viewModel.SpeechHealthColor, Is.EqualTo("SystemFillColorCautionBrush"));
             Assert.That(viewModel.IsPostStartupInitializationRunning, Is.False);
             Assert.That(viewModel.PostStartupStatusText, Is.Empty);
@@ -93,11 +93,11 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         }
     }
 
-    [TestCase("Ready", "", "Green", "Speech: Ready")]
-    [TestCase("✅ Ready", "", "Green", "Speech: Ready")]
-    [TestCase("Not Configured", "", "SystemFillColorCautionBrush", "Speech: Not Configured")]
-    [TestCase("❌ Failed: no voice", "", "Red", "Speech: Failed: no voice")]
-    [TestCase("⏳ Initializing...", "", "SystemFillColorCautionBrush", "Speech: Initializing...")]
+    [TestCase("Ready", "\uE930", "Green", "Speech: Ready")]
+    [TestCase("✅ Ready", "\uE930", "Green", "Speech: Ready")]
+    [TestCase("Not Configured", "\uE7BA", "SystemFillColorCautionBrush", "Speech: Not Configured")]
+    [TestCase("❌ Failed: no voice", "\uE711", "Red", "Speech: Failed: no voice")]
+    [TestCase("⏳ Initializing...", "\uE946", "SystemFillColorCautionBrush", "Speech: Initializing...")]
     public void HealthStatusMapsToIconColorAndDisplayText(string status, string icon, string color, string displayText)
     {
         var viewModel = CreateViewModel();
@@ -126,7 +126,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         using (Assert.EnterMultipleScope())
         {
             Assert.That(viewModel.SpeechHealthStatus, Does.Contain("Initializing"));
-            Assert.That(viewModel.SpeechHealthIcon, Is.EqualTo(""));
+            Assert.That(viewModel.SpeechHealthIcon, Is.EqualTo("\uE946"));
             Assert.That(viewModel.SpeechHealthColor, Is.EqualTo("SystemFillColorCautionBrush"));
         }
     }
@@ -138,7 +138,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         viewModel.UpdateHealthStatus("Unavailable");
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(viewModel.SpeechHealthIcon, Is.EqualTo(""));
+            Assert.That(viewModel.SpeechHealthIcon, Is.EqualTo("\uE7BA"));
             Assert.That(viewModel.SpeechHealthStatus, Is.EqualTo("Speech: Unavailable"));
         }
     }
