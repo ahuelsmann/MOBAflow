@@ -27,7 +27,7 @@ public static class LocomotiveFunctionAppearanceResolver
 
     public static string GetGlyph(Locomotive? locomotive, int functionIndex)
     {
-        if (functionIndex < 0 || functionIndex > 31)
+        if (!Locomotive.IsFunctionIndex(functionIndex))
         {
             return string.Empty;
         }
@@ -35,7 +35,7 @@ public static class LocomotiveFunctionAppearanceResolver
         if (locomotive?.FunctionSymbols != null && functionIndex < locomotive.FunctionSymbols.Count)
         {
             var stored = locomotive.FunctionSymbols[functionIndex];
-            if (stored == "none")
+            if (stored == Locomotive.ClearedFunctionAppearance)
             {
                 return string.Empty;
             }
@@ -51,7 +51,7 @@ public static class LocomotiveFunctionAppearanceResolver
 
     public static string GetColor(Locomotive? locomotive, int functionIndex)
     {
-        if (functionIndex < 0 || functionIndex > 31)
+        if (!Locomotive.IsFunctionIndex(functionIndex))
         {
             return SignalGrayHex;
         }
@@ -59,12 +59,12 @@ public static class LocomotiveFunctionAppearanceResolver
         if (locomotive?.FunctionColors != null && functionIndex < locomotive.FunctionColors.Count)
         {
             var stored = locomotive.FunctionColors[functionIndex];
-            if (stored == "none")
+            if (stored == Locomotive.ClearedFunctionAppearance)
             {
                 return SignalGrayHex;
             }
 
-            if (IsValidHexColor(stored))
+            if (Locomotive.IsStoredFunctionColor(stored))
             {
                 return stored;
             }
@@ -75,7 +75,7 @@ public static class LocomotiveFunctionAppearanceResolver
 
     public static string GetDescription(Locomotive? locomotive, int functionIndex)
     {
-        if (functionIndex < 0 || functionIndex > 31)
+        if (!Locomotive.IsFunctionIndex(functionIndex))
         {
             return string.Empty;
         }
@@ -91,6 +91,4 @@ public static class LocomotiveFunctionAppearanceResolver
     public static bool IsValidAssetReference(string? value) =>
         !string.IsNullOrWhiteSpace(value)
         && value.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
-
-    public static bool IsValidHexColor(string? value) => HexColor.IsStoredForm(value);
 }

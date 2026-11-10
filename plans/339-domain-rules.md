@@ -3,7 +3,9 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/339
 **Spec Kit**: Not applicable - structural refactoring without behavior change
 **Status**: Active. Slices #341 and #346 are delivered. The `Backend`/`SharedUI` audit is done and its move and
-stay proposals are recorded on #339. Moves 1-3 are in the single issue PR #384; the `Locomotive` move remains. This plan was restored after the post-merge review of #351, which had removed it too early.
+stay proposals are recorded on #339. Moves 1-3 are in PR #384 and move 4 (the `Locomotive` move) is in PR #424;
+no inventoried move remains. The plan stays until the Domain documentation is confirmed on integrated `main` and
+the umbrella plan is adjusted. This plan was restored after the post-merge review of #351, which had removed it too early.
 
 ## Purpose and scope
 
@@ -24,7 +26,8 @@ This plan only tracks the work. It does not authorize code changes; each move ne
 | #346 | `Workflow.FindStructureIssues` (`IReadOnlyList<WorkflowStructureIssue>`) and `Project.FindWorkflowsWithInvalidIds` (`IReadOnlySet<int>` of positions); `WorkflowValidator` produces the user-facing issues | Covers workflow and workflow-ID structure only |
 | #384 move 1 | `JourneyManager` finds the current stop through `Journey.IndexOfStop` in all four places (current station, edited journey, checkpoint restore, transition event) | Characterized by `JourneyEventPlanTests` for reordered and removed stops and the checkpoint cases |
 | #384 move 2 | `Station.ResolvePlatform` (selected platform, otherwise the first); `AnnouncementService` and `JourneyStationProjection` use it | `StationTests` covers selected, unknown and missing platforms |
-| #384 move 3 | `LocomotiveWhistleRule.FindIssues` returns `LocomotiveWhistleRuleIssue` values; `LocomotiveWhistleAutomationService.Validate` keeps the English messages in the same order | The F0-F31 range is still a literal; the `Locomotive` move defines it once |
+| #384 move 3 | `LocomotiveWhistleRule.FindIssues` returns `LocomotiveWhistleRuleIssue` values; `LocomotiveWhistleAutomationService.Validate` keeps the English messages in the same order | The F0-F31 range was still a literal until move 4 |
+| #424 move 4 | `Locomotive.MaxFunctionIndex`/`IsFunctionIndex` define the F0-F31 range once; `Locomotive.SetFunctionSymbol`, `SetFunctionAppearance` and `ClearFunctionAppearance` own the stored symbol and colour edits with the `ClearedFunctionAppearance` marker and the `#RRGGBB` form (`IsStoredFunctionColor`). `FunctionPanel`, `LocomotiveFunctionAppearanceResolver`, `TrainControlViewModel`, `MobileRuntimeCoordinator` (all-off loop), `LocomotiveWhistleRule` and the WinUI symbol picker reuse them | `LocomotiveTests` covers set, clear and out-of-range indexes on short or missing lists and the colour form. Default assets, colours and rendering stay in `SharedUI/Appearance`; the Z21 packet bound (`Z21.Drive.cs`) and the wire-contract bound (`RuntimeCommandValidator`) stay separate protocol facts |
 
 ## Known stays
 
@@ -40,20 +43,8 @@ findings. They stay in `Backend/Service`:
 
 Audited on main `f37541d9`: all of `Backend` and `SharedUI`. The search covered static helpers whose first
 parameter is a domain object, ID lookups on domain collections, `Validate` methods and their callers, and repeated
-range checks. The inventory below is bounded; the decisions are recorded on #339. Moves 1-3 are delivered above.
-
-### Remaining move
-
-The `Locomotive` move waits for the qualification against #308 (TrainControl function behavior).
-
-| Candidate | Current behavior | Proposed move | Needed in the slice |
-| --- | --- | --- | --- |
-| `SharedUI/TrainControl/FunctionPanel.cs` `SetSymbol`, `SetAppearance` and `ClearAppearance` (lines 138-186), with the `"none"` marker read by `SharedUI/Appearance/LocomotiveFunctionAppearanceResolver.cs` | Edit the stored function symbol and color lists of one `Locomotive`: index range F0-F31, growing the list and marking a cleared slot | Move the storage rule (range, list growth, cleared marker) to `Locomotive`. The default assets and colors are presentation and stay in SharedUI | Tests of set, clear and out-of-range indexes on a locomotive with short or missing lists |
-
-The F0-F31 range is checked separately in `Backend/Z21.Drive.cs` (line 61), `LocomotiveWhistleRule.FindIssues`,
-`LocomotiveFunctionAppearanceResolver` and `TrainControlViewModel` (lines 1069, 1079, 1151 and 1528). The
-`Locomotive` slice should define the range once in the Domain and reuse it in those places. The Z21 protocol check
-can keep its own bound if the slice finds that the protocol limit and the domain limit are different facts.
+range checks. The inventory below is bounded; the decisions are recorded on #339. Moves 1-4 are delivered above;
+no inventoried move remains.
 
 ### Proposed stays
 
@@ -69,6 +60,8 @@ can keep its own bound if the slice finds that the protocol limit and the domain
 RF-27 is complete when:
 
 1. the `Backend`/`SharedUI` audit is done, the remaining inventory is bounded and each candidate has a justified
-   move or stay decision recorded on #339;
-2. approved moves are delivered with their characterization tests and current CI and Sonar gates;
-3. the Domain layer documentation matches the result, and this plan is then removed.
+   move or stay decision recorded on #339 (done);
+2. approved moves are delivered with their characterization tests and current CI and Sonar gates (moves 1-4 are
+   delivered; the gates of #424 complete this point);
+3. the Domain layer documentation matches the result on integrated `main`, the umbrella plan's RF-27 section
+   records the completion, and this plan is then removed.

@@ -127,7 +127,7 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
             return;
         }
 
-        for (var functionIndex = 0; functionIndex <= 31; functionIndex++)
+        for (var functionIndex = 0; functionIndex <= Locomotive.MaxFunctionIndex; functionIndex++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             await SetLocomotiveFunctionAsync(address, functionIndex, false, cancellationToken).ConfigureAwait(false);
