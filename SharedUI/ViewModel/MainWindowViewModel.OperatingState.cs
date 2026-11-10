@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 
 using Service;
 
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 /// <summary>
@@ -166,37 +167,21 @@ public partial class MainWindowViewModel
         RecomputeOperatingState();
     }
 
-    partial void OnRestApiStatusTextChanged(string value)
+    /// <summary>
+    /// The REST, speech and post-startup inputs of the operating state live in <see cref="SystemStatus"/>;
+    /// their changes recompute the state like the shell's own Z21 status properties do.
+    /// </summary>
+    private void OnSystemStatusPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        _ = value;
-        if (SuppressOperatingStateRecompute) return;
-        RecomputeOperatingState();
-    }
+        if (e.PropertyName is not (nameof(SystemStatusViewModel.RestApiStatusText)
+            or nameof(SystemStatusViewModel.RestApiIsReachable)
+            or nameof(SystemStatusViewModel.SpeechHealthStatus)
+            or nameof(SystemStatusViewModel.IsPostStartupInitializationRunning)
+            or nameof(SystemStatusViewModel.PostStartupStatusText)))
+        {
+            return;
+        }
 
-    partial void OnRestApiIsReachableChanged(bool value)
-    {
-        _ = value;
-        if (SuppressOperatingStateRecompute) return;
-        RecomputeOperatingState();
-    }
-
-    partial void OnSpeechHealthStatusChanged(string value)
-    {
-        _ = value;
-        if (SuppressOperatingStateRecompute) return;
-        RecomputeOperatingState();
-    }
-
-    partial void OnIsPostStartupInitializationRunningChanged(bool value)
-    {
-        _ = value;
-        if (SuppressOperatingStateRecompute) return;
-        RecomputeOperatingState();
-    }
-
-    partial void OnPostStartupStatusTextChanged(string value)
-    {
-        _ = value;
         if (SuppressOperatingStateRecompute) return;
         RecomputeOperatingState();
     }
@@ -250,7 +235,7 @@ public partial class MainWindowViewModel
             IsManualDisconnectRequested = _isManualDisconnectRequested,
             IsZ21Connecting = _isZ21Connecting,
             HasSeenSuccessfulZ21Connection = _hasSeenSuccessfulZ21Connection,
-            IsPostStartupInitializationRunning = IsPostStartupInitializationRunning,
+            IsPostStartupInitializationRunning = SystemStatus.IsPostStartupInitializationRunning,
             IsOperatorAckRequired = IsOperatorAckRequired,
             IsEmergencyStopActive = _isEmergencyStopActive,
             IsShortCircuitActive = _isShortCircuitActive,
@@ -258,8 +243,8 @@ public partial class MainWindowViewModel
             LastFailSafeReason = _lastFailSafeReason,
             LastFailSafeAt = _lastFailSafeAt,
             AutoStartWebApp = _settings.Application.AutoStartWebApp,
-            RestApiIsReachable = RestApiIsReachable,
-            SpeechHealthStatus = SpeechHealthStatus
+            RestApiIsReachable = SystemStatus.RestApiIsReachable,
+            SpeechHealthStatus = SystemStatus.SpeechHealthStatus
         });
 
         OperatingState = presentation.State;

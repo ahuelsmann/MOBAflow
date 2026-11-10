@@ -201,16 +201,20 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
                     host.Object,
                     NullLogger<SolutionSession>.Instance, TestViewModelServices.Default);
         var stationEventBus1 = eventBus ?? new Mock<IEventBus>().Object;
+        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object);
+        var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
-            new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
+            new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             stationEventBus1,
-            TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object),
-            _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null),
+            settingsPage1,
+            trainsPage1,
             _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntimeMock.Object, stationEventBus1, dialog?.Object),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(mobaRuntimeMock.Object), uiDispatcherMock.Object),
+            _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
+            _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
             loggerMock.Object,
             dialogService: dialog?.Object);

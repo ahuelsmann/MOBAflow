@@ -192,16 +192,20 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcher.Object, mobaRuntime.Object);
         var stationEventBus1 = eventBus;
+        var settingsPage1 = TestSettingsPages.Create(appSettings, uiDispatcher.Object);
+        var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntime.Object, null);
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
             mobaRuntime.Object,
-            new LocalRuntimeCommandGateway(mobaRuntime.Object),
+            new LocalRuntimeCommandGateway(mobaRuntime.Object),
             stationEventBus1,
-            TestSettingsPages.Create(appSettings, uiDispatcher.Object),
-            _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntime.Object, null),
+            settingsPage1,
+            trainsPage1,
             _rollingStockPages.GetStationsPage(locomotiveSession1, mobaRuntime.Object, stationEventBus1),
             _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(mobaRuntime.Object), uiDispatcher.Object),
+            _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
+            _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
             NullLogger<MainWindowViewModel>.Instance);
     }

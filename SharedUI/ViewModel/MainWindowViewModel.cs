@@ -2,7 +2,6 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
-using Backend.Service.Validation;
 
 using Common.Configuration;
 using Common.Events;
@@ -19,11 +18,10 @@ using Interface;
 using Microsoft.Extensions.Logging;
 
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 
 /// <summary>
 /// Core ViewModel for main window functionality.
-/// Partial classes handle: Solution, SolutionAutoSave and Z21.
+/// Partial classes handle: Solution, Z21, OperatingState, Signals, RawTurnout, PhotoAssignment and LayoutPanels.
 /// </summary>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
@@ -63,6 +61,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="runtimeCommandGateway">Route for every operator command (local, recorded or remote).</param>
     /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
     /// <param name="settingsPage">Shared settings presentation and persistence.</param>
+    /// <param name="diagnostics">Host-owned Messages pane state bound by the main window.</param>
+    /// <param name="systemStatus">Host-owned speech, post-startup, REST API and synchronization status bound by the status bar.</param>
     /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
@@ -77,11 +77,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         TrainsPageViewModel trainsPage,
         StationsPageViewModel stationsPage,
         JourneysPageViewModel journeysPage,
+        ProjectDiagnosticsViewModel diagnostics,
+        SystemStatusViewModel systemStatus,
         ISolutionSession solutionSession,
         ILogger<MainWindowViewModel> logger,
         ISettingsService? settingsService = null,
-        IDialogService? dialogService = null,
-        IProjectDiagnosticsService? projectDiagnosticsService = null)
+        IDialogService? dialogService = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
@@ -93,6 +94,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(solutionSession);
         ArgumentNullException.ThrowIfNull(stationsPage);
         ArgumentNullException.ThrowIfNull(journeysPage);
+        ArgumentNullException.ThrowIfNull(diagnostics);
+        ArgumentNullException.ThrowIfNull(systemStatus);
         ArgumentNullException.ThrowIfNull(logger);
 
         _session = solutionSession;
@@ -106,14 +109,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         TrainsPage = trainsPage;
         StationsPage = stationsPage;
         JourneysPage = journeysPage;
-        SettingsPage.PropertyChanged += OnSettingsPagePropertyChanged;
+        Diagnostics = diagnostics;
+        SystemStatus = systemStatus;
         _logger = logger;
         _layoutColumnWidths = layoutColumnWidths;
         _layoutColumnWidths.LoadFrom(settings.Layout);
         _settingsService = settingsService;
         _dialogService = dialogService;
-        _projectDiagnosticsService = projectDiagnosticsService;
-        InitializeLocomotiveUsageDiagnostics();
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_runtimeSnapshots.Current);
@@ -126,15 +128,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         InitializeLayoutPanelStates();
 
-        _eventBusSubscriptions.Add(eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText)));
-        _eventBusSubscriptions.Add(eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged));
-        _eventBusSubscriptions.Add(eventBus.Subscribe<MobaflowSyncDiagnosticsChangedEvent>(OnMobaflowSyncDiagnosticsChanged));
+        // The REST, speech and post-startup inputs of the operating state live in the status ViewModel.
+        SystemStatus.PropertyChanged += OnSystemStatusPropertyChanged;
         _eventBusSubscriptions.Add(eventBus.Subscribe<PhotoAssignedEvent>(OnPhotoAssigned));
 
         ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
         NotifyRuntimeCommandStatesChanged();
-
-        UpdateSolutionLoadedStatus();
     }
     #endregion
 
@@ -164,6 +163,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>Gets the host-owned wagon editor shared by inventory and train pages.</summary>
     public WagonsPageViewModel WagonsPage => TrainsPage.WagonsPage;
 
+    /// <summary>Gets the host-owned project diagnostics bound by the main window's Messages pane.</summary>
+    public ProjectDiagnosticsViewModel Diagnostics { get; }
+
+    /// <summary>Gets the host-owned system status bound by the status bar and read by the operating state.</summary>
+    public SystemStatusViewModel SystemStatus { get; }
+
     /// <summary>
     /// Application settings model shared with the shell. Exposed for UI behaviors that walk the visual tree
     /// (e.g. column width persistence) without using a service locator.
@@ -179,25 +184,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// Non-generic logger for UI shell subsystems (e.g. layout behaviors) that are not constructed via DI.
     /// </summary>
     public ILogger UiShellLogger => _logger;
-
-    /// <summary>
-    /// Health status message for Speech Service (Azure).
-    /// Updated by HealthCheckService via event.
-    /// </summary>
-    [ObservableProperty]
-    private string _speechHealthStatus = "Initializing...";
-
-    /// <summary>
-    /// Icon glyph for Speech Service health status.
-    /// </summary>
-    [ObservableProperty]
-    private string _speechHealthIcon = "\uE946"; // Sync
-
-    /// <summary>
-    /// Color for Speech Service health status icon.
-    /// </summary>
-    [ObservableProperty]
-    private string _speechHealthColor = "SystemFillColorCautionBrush";
 
     /// <summary>
     /// The currently selected object to display in the properties panel.
@@ -385,9 +371,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         _isShuttingDown = true;
-        LocomotivesPage.Usage.PropertyChanged -= OnLocomotiveUsageChanged;
         _session.BeginShutdown();
-        SettingsPage.PropertyChanged -= OnSettingsPagePropertyChanged;
+        SystemStatus.PropertyChanged -= OnSystemStatusPropertyChanged;
+        Diagnostics.Dispose();
+        SystemStatus.Dispose();
         StationsPage.Dispose();
         JourneysPage.Dispose();
         // The host-owned workflow library is shared by the workflow, station and event-manager surfaces.
@@ -402,14 +389,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _eventBusSubscriptions.Clear();
 
         return true;
-    }
-
-    private void OnSettingsPagePropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(SettingsPageViewModel.SelectedSpeechProviderId))
-        {
-            UpdateHealthStatus("Initializing...");
-        }
     }
 
     private void PersistSettingsSafely()
