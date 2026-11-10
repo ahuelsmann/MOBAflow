@@ -164,7 +164,8 @@ rule from running; `LocomotiveWhistleAutomationService` turns them into English 
 F0-F31 function range once (`MaxFunctionIndex`, `IsFunctionIndex`) and owns the stored function symbol and colour
 edits (`SetFunctionSymbol`, `SetFunctionAppearance`, `ClearFunctionAppearance`): the list grows to the index, a
 cleared slot stores `ClearedFunctionAppearance` (`"none"`) and a colour is stored only in the `#RRGGBB` form
-(`IsStoredFunctionColor`). The default assets and colours and the rendering of stored values stay in
+(`IsStoredFunctionColor`). `FunctionPanel`, the appearance resolver, `TrainControlViewModel` and the mobile
+coordinator's all-off loop use that range. The default assets and colours and the rendering of stored values stay in
 `SharedUI/Appearance`; the Z21 packet bound and the wire-contract bound remain separate protocol facts. `Workflow.FindStructureIssues` returns `IReadOnlyList<WorkflowStructureIssue>`
 with issue kinds and field paths; `WorkflowValidator` turns them into coded, user-facing issues and adds the payload
 checks. `Project.FindWorkflowsWithInvalidIds` returns an `IReadOnlySet<int>` of zero-based positions in
@@ -784,7 +785,7 @@ Control page and the MOBAsmart Engines/Control tabs. It coordinates platform-neu
 | --- | --- |
 | [`LocomotiveRoster`](../SharedUI/TrainControl/LocomotiveRoster.cs) | Locomotive list source (live fleet, runtime fleet, project), in-place fleet merge, paused updates and selection restore. |
 | [`SpeedController`](../SharedUI/TrainControl/SpeedController.cs) | 75 ms drive debounce, speed ramp and the grace period in which a local drive command wins over snapshots. |
-| [`FunctionPanel`](../SharedUI/TrainControl/FunctionPanel.cs) | Function bits per address, local function grace period, snapshot merge, all-functions-off and appearance edits. |
+| [`FunctionPanel`](../SharedUI/TrainControl/FunctionPanel.cs) | Function bits per address, local function grace period, snapshot merge and all-functions-off. |
 | [`BrakeAndDoorState`](../SharedUI/TrainControl/BrakeAndDoorState.cs) | Parking brake and door release rules and the timed door transition. |
 | [`JourneyStationProjection`](../SharedUI/TrainControl/JourneyStationProjection.cs) | Previous, current and next stop of the selected journey. |
 | [`TelemetryProjection`](../SharedUI/TrainControl/TelemetryProjection.cs) | Command station readings and peaks. |
