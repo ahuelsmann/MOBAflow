@@ -182,7 +182,7 @@ dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "Fu
 
 The `portable-linux` job (check `Portable tests on Linux`) runs the portable
 suite on `ubuntu-latest` for every code-changing PR, every push to `main` and
-manual runs. It is not yet a required check. The filter excludes the `Hardware`
+manual runs. It is a required check of the `main` ruleset since 2026-10-19. The filter excludes the `Hardware`
 category, the Windows file-lock test
 `MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource`
 and the Skia fixtures `ClockRendererTests`, `Rgb565ConverterTests` and
