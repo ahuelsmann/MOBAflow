@@ -98,8 +98,9 @@ on Windows and Linux.
 - Balanced secrets scanning: local sessions scan likely secret-bearing files before reading them (pre-read) and
   changed files before commits/PRs (pre-commit). If a scan finds a secret, stop handling that file and report it
   without exposing its value. Cloud sessions without a local scanner, such as the Executive Assistant, need no local
-  scan: pre-read, they do not open likely secret-bearing files; pre-commit, GitHub Secret Scanning and Push Protection
-  check every push, and each PR records the missing local scan. If a local session's scanner is unavailable,
+  scan: pre-read, they do not open likely secret-bearing files; pre-commit, GitHub Push Protection checks each push
+  for provider token patterns only, so generic passwords, connection strings and private keys are not detected, and
+  each PR records the missing local scan. If a local session's scanner is unavailable,
   continue ordinary development, avoid sensitive files and record the limitation before publication.
 - After patches, generators or scripts change text files, run `scripts/Test-LineEndings.ps1 -Path <changed-paths>`.
   Use `-Fix` to normalize those files according to `.gitattributes`, then check again. Preserve LF exceptions,

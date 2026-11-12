@@ -62,11 +62,14 @@ Identifiers are ASCII-only and follow the repository naming conventions.
 
 ### VI. Quality Gates Protect the Main Branch
 
-Changed files likely to contain secrets MUST pass `sonar analyze secrets` before
-they are read, and all changed files MUST pass a secrets scan before commit and
-PR publication. Ordinary source, tests, Markdown, schemas, and checked-in
-templates do not require individual pre-read scans unless context indicates
-secret material. Sonar code analysis MUST run only through GitHub CI; local
+In local sessions, changed files likely to contain secrets MUST pass
+`sonar analyze secrets` before they are read, and all changed files MUST pass a
+secrets scan before commit and PR publication. Ordinary source, tests, Markdown,
+schemas, and checked-in templates do not require individual pre-read scans unless
+context indicates secret material. Cloud sessions without a local scanner MUST NOT
+open likely secret-bearing files, rely on GitHub Push Protection (provider
+patterns only) for each push, and MUST record the missing local scan in the PR,
+as specified in `AGENTS.md` and the Sonar policy. Sonar code analysis MUST run only through GitHub CI; local
 Sonar/Vortex code analysis and analysis hooks MUST NOT be run or installed.
 Every PR MUST be created as a draft and remain a draft until the SonarCloud check
 for its current commit is green with zero `OPEN` or `CONFIRMED` issues.
@@ -106,7 +109,8 @@ implement, validate, and document. Spec Kit maps to it as follows:
    approved task list when issue-level execution tracking is needed.
 8. Select builds, tests and manual checks from the change matrix in `AGENTS.md`.
    Include Light/Dark checks for UI changes, applicable structural checks,
-   changed-file secrets scanning, and SonarCloud code analysis through GitHub CI only.
+   changed-file secrets scanning (local sessions; cloud sessions record the missing
+   scan), and SonarCloud code analysis through GitHub CI only.
 9. Every PR is created as a draft and remains draft until SonarCloud is green
    for its current commit with zero `OPEN` or `CONFIRMED` issues.
 10. Documentation and changelog updates are included whenever behavior or the
@@ -128,4 +132,4 @@ semantic versioning: MAJOR for incompatible governance changes, MINOR for new or
 materially expanded principles, and PATCH for clarifications. Every plan and
 review MUST verify compliance; unresolved violations block implementation.
 
-**Version**: 4.0.1 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-10-20
+**Version**: 4.1.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-11-12
