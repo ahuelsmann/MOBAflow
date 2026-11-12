@@ -33,15 +33,4 @@ internal sealed class HexColorTests
     {
         Assert.That(HexColor.TryParseRgb(value, out _, out _, out _), Is.False);
     }
-
-    [TestCase("#12AB34", true)]
-    [TestCase("#12ab34", true)]
-    [TestCase("12AB34", false)]
-    [TestCase("#FF12AB34", false)]
-    [TestCase("##12AB3", false)]
-    [TestCase("#12AB3Z", false)]
-    public void IsStoredForm_AcceptsOnlyHashAndSixDigits(string value, bool expected)
-    {
-        Assert.That(HexColor.IsStoredForm(value), Is.EqualTo(expected));
-    }
 }

@@ -35,10 +35,6 @@ public static class HexColor
                && TryParseByte(hex.Slice(offset + 4, 2), out blue);
     }
 
-    /// <summary>Whether <paramref name="value"/> has the stored form <c>#RRGGBB</c>.</summary>
-    public static bool IsStoredForm(string? value) =>
-        value is { Length: 7 } && value[0] == '#' && TryParseRgb(value, out _, out _, out _);
-
     private static bool TryParseByte(ReadOnlySpan<char> digits, out byte value) =>
         byte.TryParse(digits, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out value);
 }
