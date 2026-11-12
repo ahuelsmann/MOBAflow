@@ -262,8 +262,10 @@ current aspect. Voice control finds a tile by the label shown on it. The tiles
 grow with a larger Windows text size.
 
 While Windows runs a contrast theme, every lit signal lamp also shows a ring in
-the theme's text color, so a lit lamp is recognisable without its color. The
-ring also appears when the contrast theme is switched on while MOBAflow is open.
+the theme's text color, so a lit lamp is recognisable without its color. A
+flashing lamp shows the ring only while it is lit, so flashing and steady light
+stay distinguishable. The ring also appears when the contrast theme is switched
+on while MOBAflow is open.
 
 ### Matrix Images and ESP32 Display
 

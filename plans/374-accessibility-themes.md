@@ -83,7 +83,8 @@ MOBAsmart: 16 of 23 XAML files already use `SemanticProperties`; the remaining f
 4. **Theme resources and High Contrast:** the `HighContrast` theme dictionary, themed panel strips and Track Plan
    drawing (#375). Second delivery: while a Windows contrast theme is active, `KsSignalScreen` draws a ring in
    `SignalLampLitStrokeBrush` (`SystemColorWindowTextColor`) around every lit lamp, so a lit lamp differs from an off
-   one by shape and not only by color. `ThemeSettings.Changed` refreshes the ring and the off-lamp color when the
+   one by shape and not only by color; a flashing lamp has the ring only in its lit phase, so flashing stays
+   distinguishable from steady light. `ThemeSettings.Changed` refreshes the ring and the off-lamp color when the
    contrast theme is switched on or off while the app runs; `ActualThemeChanged` only reports Light and Dark, and
    `AccessibilitySettings.HighContrastChanged` is not raised in WinUI 3 desktop apps. The lamp position then names the
    aspect as on the real Ks signal, and the pickers and the signal-box focus layer carry the aspect as text. The checked
@@ -94,14 +95,14 @@ MOBAsmart: 16 of 23 XAML files already use `SemanticProperties`; the remaining f
    has fixed colors but no caller; removing it is a separate cleanup.
 5. **MOBAsmart:** TalkBack reads each bottom tab with its selection state (`AppBottomTabBar`), each locomotive card as
    one item with name, digital address and selection, bound so it follows in-place fleet updates
-   (`LocomotivePickerItemView`), each signal aspect tile with its label, description and selection while its preview
-   lamps and short label are excluded (`SignalAspectPicker`), and `KsSignalScreen` as "Signal aspect ..." with its speed
-   indicators. Headings on Engines and SignalBox let TalkBack jump between sections. `FunctionToggleView`,
-   `SpeedGaugeView` and the Counter and Control pages already had descriptions. Font scaling: MAUI labels follow the
-   Android font size by default; fixed heights that would clip scaled text (reset button and count badge in
-   `StatisticsPanel`) became minimum sizes. The speed digits inside the signal graphic keep their size because the
-   description speaks the value. Not covered: the speed gauge draws its numbers on a `GraphicsView`, so they do not
-   scale; its description carries the value.
+   (`LocomotivePickerItemView`), each signal aspect tile with its label, description, the speed indicator values its
+   preview shows and selection while its preview lamps and short label are excluded (`SignalAspectPicker`), and
+   `KsSignalScreen` as "Signal aspect ..." with its speed indicators. Headings on Engines and SignalBox let TalkBack
+   jump between sections. `FunctionToggleView`, `SpeedGaugeView` and the Counter and Control pages already had
+   descriptions. Font scaling: MAUI labels follow the Android font size by default; fixed heights that would clip scaled
+   text (reset button and count badge in `StatisticsPanel`) became minimum sizes. The speed digits inside the signal
+   graphic keep their size because the description speaks the value. Not covered: the speed gauge draws its numbers on a
+   `GraphicsView`, so they do not scale; its description carries the value.
 6. **Acceptance and completion:** one approved app check after the PR builds, recorded on #374; then documentation and
    plan removal.
 

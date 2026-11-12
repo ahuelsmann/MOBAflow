@@ -59,6 +59,25 @@ public sealed class KsSignalScreenVisualState
     public KsSignalBlinkLamp BlinkLamp { get; init; } = KsSignalBlinkLamp.None;
 
     /// <summary>
+    /// The speed indicator values this state shows, in words for a screen reader; empty when it shows none.
+    /// </summary>
+    public string DescribeSpeedIndicators()
+    {
+        var parts = new List<string>(2);
+        if (ShowTopSpeed)
+        {
+            parts.Add($"top speed indicator {TopSpeedText}");
+        }
+
+        if (ShowBottomSpeed)
+        {
+            parts.Add($"bottom speed indicator {BottomSpeedText}");
+        }
+
+        return string.Join(", ", parts);
+    }
+
+    /// <summary>
     /// Resolves lamp colors and speed indicators for the given signal article and aspect.
     /// </summary>
     public static KsSignalScreenVisualState Create(

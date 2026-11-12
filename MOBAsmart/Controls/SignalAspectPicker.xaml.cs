@@ -188,7 +188,6 @@ public partial class SignalAspectPicker
         }
 
         var selected = SelectedAspect ?? SignalAspect.Hp0;
-        var is4046 = KsSignalAspectNames.Is4046Signal(SignalArticleNumber);
         var accentColor = ResolveColor("Primary");
         var normalColor = ResolveColor("SurfaceVariant");
         var accentBorder = ResolveColor("Primary");
@@ -204,8 +203,9 @@ public partial class SignalAspectPicker
 
             var isSelected = selected == aspect;
 
-            // TalkBack reads the tappable tile; its preview lamps and short label are excluded in XAML.
-            var name = KsSignalAspectNames.GetAspectAccessibleName(aspect, is4046);
+            // TalkBack reads the tappable tile; its preview lamps and short label are excluded in XAML, so the tile
+            // also names the speed indicator values the preview shows.
+            var name = KsSignalAspectNames.GetAspectTileName(aspect, SignalArticleNumber, TopSpeedValue, BottomSpeedValue);
             SemanticProperties.SetDescription(button, isSelected ? $"{name}, selected" : name);
             button.BackgroundColor = isSelected ? accentColor : normalColor;
             button.Stroke = isSelected ? accentBorder : ResolveColor("BorderColor");

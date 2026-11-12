@@ -149,6 +149,13 @@ internal sealed partial class KsSignalScreen
     {
         _ = sender;
         _ = args;
+
+        // A notification can still arrive after Unloaded stopped observing; the next Loaded refreshes anyway.
+        if (_themeSettings is null)
+        {
+            return;
+        }
+
         _ = DispatcherQueue.TryEnqueue(RefreshThemeBrushes);
     }
 
@@ -261,7 +268,7 @@ internal sealed partial class KsSignalScreen
 
     private void ApplyLamp(Ellipse led, KsSignalLampColor color)
     {
-        led.Fill = color switch
+        var fill = color switch
         {
             KsSignalLampColor.Red => RedOn,
             KsSignalLampColor.Green => GreenOn,
@@ -270,7 +277,13 @@ internal sealed partial class KsSignalScreen
             _ => OffColor
         };
 
-        var isLit = color != KsSignalLampColor.Off;
+        ShowLamp(led, fill, isLit: color != KsSignalLampColor.Off);
+    }
+
+    // The contrast ring belongs to the lit phase only, so a flashing lamp loses it in its dark phase.
+    private void ShowLamp(Ellipse led, SolidColorBrush fill, bool isLit)
+    {
+        led.Fill = fill;
         led.Stroke = isLit ? LitStroke : null;
         led.StrokeThickness = isLit && ThemeResourceResolver.IsHighContrast() ? LitLampStrokeThickness : 0;
     }
@@ -294,9 +307,10 @@ internal sealed partial class KsSignalScreen
             return;
         }
 
+        // A static preview shows the flashing lamp steadily lit, ring included.
         if (IsStaticPreview)
         {
-            led.Fill = onColor;
+            ShowLamp(led, onColor, isLit: true);
             return;
         }
 
@@ -315,7 +329,7 @@ internal sealed partial class KsSignalScreen
         }
 
         _blinkState = !_blinkState;
-        _blinkingLed.Fill = _blinkState ? _blinkingOnColor : OffColor;
+        ShowLamp(_blinkingLed, _blinkState ? _blinkingOnColor : OffColor, isLit: _blinkState);
     }
 
     private void StopBlinking()

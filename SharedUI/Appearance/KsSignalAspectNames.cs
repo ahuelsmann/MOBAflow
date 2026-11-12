@@ -58,6 +58,23 @@ public static class KsSignalAspectNames
     }
 
     /// <summary>
+    /// Accessible name of an aspect tile whose signal preview is hidden from the screen reader: the name from
+    /// <see cref="GetAspectAccessibleName"/> plus the speed indicator values the preview shows for that aspect.
+    /// </summary>
+    public static string GetAspectTileName(
+        SignalAspect aspect,
+        string? signalArticleNumber,
+        string? topSpeedValue,
+        string? bottomSpeedValue)
+    {
+        var name = GetAspectAccessibleName(aspect, Is4046Signal(signalArticleNumber));
+        var indicators = KsSignalScreenVisualState
+            .Create(signalArticleNumber, ToAspectName(aspect), topSpeedValue, bottomSpeedValue)
+            .DescribeSpeedIndicators();
+        return indicators.Length == 0 ? name : $"{name}, {indicators}";
+    }
+
+    /// <summary>
     /// Describes what <paramref name="aspect"/> shows, for tooltips. The 4046 signal with speed indicators
     /// reuses several aspect slots for its own light combinations.
     /// </summary>

@@ -240,18 +240,10 @@ public partial class KsSignalScreen
         var description = Enum.TryParse<SignalAspect>(Aspect, out var aspect)
             ? KsSignalAspectNames.GetAspectDescription(aspect, KsSignalAspectNames.Is4046Signal(SignalArticleNumber))
             : Aspect;
-        var parts = new List<string> { $"Signal aspect {description}" };
-        if (state.ShowTopSpeed)
-        {
-            parts.Add($"top speed indicator {state.TopSpeedText}");
-        }
-
-        if (state.ShowBottomSpeed)
-        {
-            parts.Add($"bottom speed indicator {state.BottomSpeedText}");
-        }
-
-        SemanticProperties.SetDescription(this, string.Join(", ", parts));
+        var indicators = state.DescribeSpeedIndicators();
+        SemanticProperties.SetDescription(
+            this,
+            indicators.Length == 0 ? $"Signal aspect {description}" : $"Signal aspect {description}, {indicators}");
     }
 
     private void ApplySpeedIndicators(KsSignalScreenVisualState state)
