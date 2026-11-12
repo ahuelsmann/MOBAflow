@@ -1,22 +1,15 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.TrainControl;
 
-using Appearance;
-
 using Domain;
 
 /// <summary>
 /// State behind the F0-F31 function buttons: the last known function bits per locomotive address, the grace
-/// period in which a locally switched function wins over runtime snapshots, the all-functions-off operation
-/// with its reset version, and edits of a locomotive's function symbols and colours. The caller owns the bound
-/// buttons and applies the returned bits.
+/// period in which a locally switched function wins over runtime snapshots, and the all-functions-off operation
+/// with its reset version. The caller owns the bound buttons and applies the returned bits.
 /// </summary>
 public sealed class FunctionPanel : IDisposable
 {
-    /// <summary>The highest function index (F31).</summary>
-    public const int MaxFunctionIndex = 31;
-
-    private const string ClearedAppearance = "none";
     private static readonly TimeSpan LocalFunctionGracePeriod = TimeSpan.FromSeconds(3);
 
     private readonly TimeProvider _timeProvider;
@@ -49,7 +42,7 @@ public sealed class FunctionPanel : IDisposable
     /// <summary>Records a function switched from this device.</summary>
     public void MarkLocalFunction(int address, int functionIndex)
     {
-        if (address < 1 || functionIndex is < 0 or > MaxFunctionIndex)
+        if (address < 1 || !Locomotive.IsFunctionIndex(functionIndex))
         {
             return;
         }
@@ -68,7 +61,7 @@ public sealed class FunctionPanel : IDisposable
     /// </summary>
     public bool ShouldPreserveLocalFunction(int address, int functionIndex)
     {
-        if (functionIndex is < 0 or > MaxFunctionIndex
+        if (!Locomotive.IsFunctionIndex(functionIndex)
             || !_lastLocalFunctionAt.TryGetValue(address, out var perFunction)
             || !perFunction.TryGetValue(functionIndex, out var commandedAt))
         {
@@ -91,7 +84,7 @@ public sealed class FunctionPanel : IDisposable
     public uint MergeSnapshotBits(int address, uint shownBits, uint snapshotBits)
     {
         var merged = 0u;
-        for (var functionIndex = 0; functionIndex <= MaxFunctionIndex; functionIndex++)
+        for (var functionIndex = 0; functionIndex <= Locomotive.MaxFunctionIndex; functionIndex++)
         {
             var source = ShouldPreserveLocalFunction(address, functionIndex) ? shownBits : snapshotBits;
             merged |= source & (1u << functionIndex);
@@ -133,67 +126,4 @@ public sealed class FunctionPanel : IDisposable
 
     /// <inheritdoc />
     public void Dispose() => CancelAllFunctionsOff();
-
-    /// <summary>Sets the PNG symbol of a function; false for an invalid index or an empty symbol.</summary>
-    public static bool SetSymbol(Locomotive locomotive, int functionIndex, string glyph)
-    {
-        ArgumentNullException.ThrowIfNull(locomotive);
-        if (functionIndex is < 0 or > MaxFunctionIndex || string.IsNullOrEmpty(glyph))
-        {
-            return false;
-        }
-
-        locomotive.FunctionSymbols = SetAt(locomotive.FunctionSymbols, functionIndex, glyph);
-        return true;
-    }
-
-    /// <summary>
-    /// Sets the symbol (when given) and the colour (when a valid hex colour) of a function; false for an invalid index.
-    /// </summary>
-    public static bool SetAppearance(Locomotive locomotive, int functionIndex, string? glyph, string? colorHex)
-    {
-        ArgumentNullException.ThrowIfNull(locomotive);
-        if (functionIndex is < 0 or > MaxFunctionIndex)
-        {
-            return false;
-        }
-
-        if (!string.IsNullOrEmpty(glyph))
-        {
-            locomotive.FunctionSymbols = SetAt(locomotive.FunctionSymbols, functionIndex, glyph);
-        }
-
-        if (LocomotiveFunctionAppearanceResolver.IsValidHexColor(colorHex))
-        {
-            locomotive.FunctionColors = SetAt(locomotive.FunctionColors, functionIndex, colorHex!);
-        }
-
-        return true;
-    }
-
-    /// <summary>Marks a function as having no symbol and no colour; false for an invalid index.</summary>
-    public static bool ClearAppearance(Locomotive locomotive, int functionIndex)
-    {
-        ArgumentNullException.ThrowIfNull(locomotive);
-        if (functionIndex is < 0 or > MaxFunctionIndex)
-        {
-            return false;
-        }
-
-        locomotive.FunctionSymbols = SetAt(locomotive.FunctionSymbols, functionIndex, ClearedAppearance);
-        locomotive.FunctionColors = SetAt(locomotive.FunctionColors, functionIndex, ClearedAppearance);
-        return true;
-    }
-
-    private static List<string> SetAt(List<string>? values, int index, string value)
-    {
-        values ??= [];
-        while (values.Count <= index)
-        {
-            values.Add(string.Empty);
-        }
-
-        values[index] = value;
-        return values;
-    }
 }

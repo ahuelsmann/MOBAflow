@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls;
 
+using Moba.Domain;
 using Moba.SharedUI.Appearance;
 
 using Microsoft.UI;
@@ -210,7 +211,7 @@ internal sealed partial class FunctionSymbolPickerWindow : Window
     private static bool TryParseHexColor(string? value, out Color color)
     {
         color = default;
-        if (!HexColor.IsStoredForm(value) || !HexColor.TryParseRgb(value, out var r, out var g, out var b))
+        if (!Locomotive.IsStoredFunctionColor(value) || !HexColor.TryParseRgb(value, out var r, out var g, out var b))
             return false;
 
         color = Color.FromArgb(255, r, g, b);

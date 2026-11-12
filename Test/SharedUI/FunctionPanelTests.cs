@@ -1,22 +1,16 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Moba.Domain;
 using Moba.SharedUI.TrainControl;
 using Moba.Test.Helpers;
 
 /// <summary>
-/// Function bits per address, local-command grace period, all-functions-off runs and appearance edits.
+/// Function bits per address, local-command grace period and all-functions-off runs.
 /// </summary>
 [TestFixture]
 internal sealed class FunctionPanelTests
 {
     private static readonly DateTimeOffset Start = new(2026, 10, 13, 12, 0, 0, TimeSpan.Zero);
-    private static readonly string[] SymbolAtIndexTwo = ["", "", "horn.png"];
-    private static readonly string[] ClearedAtIndexOne = ["", "none"];
-    private static readonly bool[] OnlyFirstAccepted = [true, false, false];
-    private static readonly string[] LightSymbol = ["light.png"];
-    private static readonly string[] GreenColour = ["#06D6A0"];
 
     private ManualTimeProvider _clock = null!;
 
@@ -106,53 +100,6 @@ internal sealed class FunctionPanelTests
         {
             Assert.That(panel.IsResetCurrent(version), Is.False);
             Assert.That(token.IsCancellationRequested, Is.True);
-        }
-    }
-
-    [Test]
-    public void SetSymbol_GrowsTheListAndRejectsInvalidInput()
-    {
-        var locomotive = new Locomotive();
-
-        var set = FunctionPanel.SetSymbol(locomotive, 2, "horn.png");
-        var emptyGlyph = FunctionPanel.SetSymbol(locomotive, 1, string.Empty);
-        var badIndex = FunctionPanel.SetSymbol(locomotive, 32, "horn.png");
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(new[] { set, emptyGlyph, badIndex }, Is.EqualTo(OnlyFirstAccepted));
-            Assert.That(locomotive.FunctionSymbols, Is.EqualTo(SymbolAtIndexTwo));
-        }
-    }
-
-    [Test]
-    public void SetAppearance_IgnoresAnInvalidColour()
-    {
-        var locomotive = new Locomotive();
-
-        FunctionPanel.SetAppearance(locomotive, 0, "light.png", "#06D6A0");
-        FunctionPanel.SetAppearance(locomotive, 0, glyph: null, "green");
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(locomotive.FunctionSymbols, Is.EqualTo(LightSymbol));
-            Assert.That(locomotive.FunctionColors, Is.EqualTo(GreenColour));
-        }
-    }
-
-    [Test]
-    public void ClearAppearance_MarksSymbolAndColourAsNone()
-    {
-        var locomotive = new Locomotive();
-
-        var cleared = FunctionPanel.ClearAppearance(locomotive, 1);
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(cleared, Is.True);
-            Assert.That(locomotive.FunctionSymbols, Is.EqualTo(ClearedAtIndexOne));
-            Assert.That(locomotive.FunctionColors, Is.EqualTo(ClearedAtIndexOne));
-            Assert.That(FunctionPanel.ClearAppearance(locomotive, -1), Is.False);
         }
     }
 }

@@ -4457,6 +4457,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Domain/LocomotiveTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Domain/LocomotiveWhistleRuleSerializationTests.cs",
       "count": 1
     },
