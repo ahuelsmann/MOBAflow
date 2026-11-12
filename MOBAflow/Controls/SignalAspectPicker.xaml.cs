@@ -121,7 +121,7 @@ internal sealed partial class SignalAspectPicker
 
     private void UpdateSelectionVisuals()
     {
-        foreach (var (button, aspect) in EnumerateAspectButtons())
+        foreach (var (button, aspect) in EnumerateAspectButtons(this))
         {
             button.IsChecked = SelectedAspect == aspect;
         }
@@ -138,7 +138,7 @@ internal sealed partial class SignalAspectPicker
         try
         {
             var supportedAspects = MultiplexerHelper.GetSupportedAspects(MultiplexerArticleNumber, SignalArticleNumber);
-            foreach (var (button, aspect) in EnumerateAspectButtons())
+            foreach (var (button, aspect) in EnumerateAspectButtons(this))
             {
                 button.Visibility = supportedAspects.Contains(aspect) ? Visibility.Visible : Visibility.Collapsed;
             }
@@ -159,7 +159,7 @@ internal sealed partial class SignalAspectPicker
         var is4046 = string.Equals(SignalArticleNumber, "4046", StringComparison.Ordinal);
         var signalArticleNumber = is4046 ? "4046" : string.Empty;
 
-        foreach (var (screen, aspect) in EnumerateAspectSignals())
+        foreach (var (screen, aspect) in EnumerateAspectSignals(this))
         {
             screen.ApplyVisualState(
                 signalArticleNumber,
@@ -179,7 +179,7 @@ internal sealed partial class SignalAspectPicker
         AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs7, is4046);
 
         // The tooltip text is also the accessible name: the tile's own text is only the short aspect label.
-        foreach (var (button, aspect) in EnumerateAspectButtons())
+        foreach (var (button, aspect) in EnumerateAspectButtons(this))
         {
             var description = KsSignalAspectNames.GetAspectDescription(aspect, is4046);
             ToolTipService.SetToolTip(button, description);
@@ -189,35 +189,35 @@ internal sealed partial class SignalAspectPicker
 
     private void SetAllAspectButtonsVisibility(Visibility visibility)
     {
-        foreach (var (button, _) in EnumerateAspectButtons())
+        foreach (var (button, _) in EnumerateAspectButtons(this))
         {
             button.Visibility = visibility;
         }
     }
 
-    private IEnumerable<(ToggleButton Button, SignalAspect Aspect)> EnumerateAspectButtons()
+    private static IEnumerable<(ToggleButton Button, SignalAspect Aspect)> EnumerateAspectButtons(SignalAspectPicker picker)
     {
-        yield return (AspectHp0Button, SignalAspect.Hp0);
-        yield return (AspectKs1Button, SignalAspect.Ks1);
-        yield return (AspectKs2Button, SignalAspect.Ks2);
-        yield return (AspectKs1BlinkButton, SignalAspect.Ks1Blink);
-        yield return (AspectKennlichtButton, SignalAspect.Kennlicht);
-        yield return (AspectDunkelButton, SignalAspect.Dunkel);
-        yield return (AspectRa12Button, SignalAspect.Ra12);
-        yield return (AspectZs1Button, SignalAspect.Zs1);
-        yield return (AspectZs7Button, SignalAspect.Zs7);
+        yield return (picker.AspectHp0Button, SignalAspect.Hp0);
+        yield return (picker.AspectKs1Button, SignalAspect.Ks1);
+        yield return (picker.AspectKs2Button, SignalAspect.Ks2);
+        yield return (picker.AspectKs1BlinkButton, SignalAspect.Ks1Blink);
+        yield return (picker.AspectKennlichtButton, SignalAspect.Kennlicht);
+        yield return (picker.AspectDunkelButton, SignalAspect.Dunkel);
+        yield return (picker.AspectRa12Button, SignalAspect.Ra12);
+        yield return (picker.AspectZs1Button, SignalAspect.Zs1);
+        yield return (picker.AspectZs7Button, SignalAspect.Zs7);
     }
 
-    private IEnumerable<(KsSignalScreen Screen, SignalAspect Aspect)> EnumerateAspectSignals()
+    private static IEnumerable<(KsSignalScreen Screen, SignalAspect Aspect)> EnumerateAspectSignals(SignalAspectPicker picker)
     {
-        yield return (AspectHp0Signal, SignalAspect.Hp0);
-        yield return (AspectKs1Signal, SignalAspect.Ks1);
-        yield return (AspectKs2Signal, SignalAspect.Ks2);
-        yield return (AspectKs1BlinkSignal, SignalAspect.Ks1Blink);
-        yield return (AspectKennlichtSignal, SignalAspect.Kennlicht);
-        yield return (AspectDunkelSignal, SignalAspect.Dunkel);
-        yield return (AspectRa12Signal, SignalAspect.Ra12);
-        yield return (AspectZs1Signal, SignalAspect.Zs1);
-        yield return (AspectZs7Signal, SignalAspect.Zs7);
+        yield return (picker.AspectHp0Signal, SignalAspect.Hp0);
+        yield return (picker.AspectKs1Signal, SignalAspect.Ks1);
+        yield return (picker.AspectKs2Signal, SignalAspect.Ks2);
+        yield return (picker.AspectKs1BlinkSignal, SignalAspect.Ks1Blink);
+        yield return (picker.AspectKennlichtSignal, SignalAspect.Kennlicht);
+        yield return (picker.AspectDunkelSignal, SignalAspect.Dunkel);
+        yield return (picker.AspectRa12Signal, SignalAspect.Ra12);
+        yield return (picker.AspectZs1Signal, SignalAspect.Zs1);
+        yield return (picker.AspectZs7Signal, SignalAspect.Zs7);
     }
 }

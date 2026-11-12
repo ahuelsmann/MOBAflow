@@ -15,13 +15,13 @@ public partial class LocomotivePickerItemView
         nameof(Locomotive),
         typeof(LocomotiveViewModel),
         typeof(LocomotivePickerItemView),
-        propertyChanged: OnDescriptionSourceChanged);
+        propertyChanged: (bindable, _, _) => OnDescriptionSourceChanged(bindable));
 
     public static readonly BindableProperty IsSelectedProperty = BindableProperty.Create(
         nameof(IsSelected),
         typeof(bool),
         typeof(LocomotivePickerItemView),
-        propertyChanged: OnDescriptionSourceChanged);
+        propertyChanged: (bindable, _, _) => OnDescriptionSourceChanged(bindable));
 
     public static readonly BindableProperty PhotoSourceProperty = BindableProperty.Create(
         nameof(PhotoSource),
@@ -62,7 +62,7 @@ public partial class LocomotivePickerItemView
         set => SetValue(SelectCommandProperty, value);
     }
 
-    private static void OnDescriptionSourceChanged(BindableObject bindable, object oldValue, object newValue)
+    private static void OnDescriptionSourceChanged(BindableObject bindable)
     {
         if (bindable is LocomotivePickerItemView item)
         {
