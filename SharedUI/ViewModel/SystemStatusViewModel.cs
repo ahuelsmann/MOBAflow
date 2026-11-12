@@ -309,8 +309,9 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
         RuntimeHubHostIsHealthy = isHealthy;
         RuntimeHubHostIsPending = isPending;
         RuntimeHubHostWaitingTime = FormatWaitingTime(waiting);
+        var connectingText = diagnostics.HostClientConnected ? "Registering with the REST API..." : "Connecting...";
         RuntimeHubHostStatusText = isPending
-            ? DescribePending(setup, diagnostics.HostClientConnected ? "Registering with the REST API..." : "Connecting...")
+            ? DescribePending(setup, connectingText)
             : DescribeRuntimeHubHost(diagnostics, isHealthy);
     }
 
@@ -332,8 +333,9 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
         HubBroadcastIsPending = !HubBroadcastIsHealthy
             && setup != SyncSetup.Done
             && (!hostIsHealthy || !diagnostics.LastHubPushAt.HasValue);
+        var waitingText = hostIsHealthy ? "Waiting for the first snapshot push..." : "Waiting for the RuntimeHub host...";
         HubBroadcastStatusText = HubBroadcastIsPending
-            ? DescribePending(setup, hostIsHealthy ? "Waiting for the first snapshot push..." : "Waiting for the RuntimeHub host...")
+            ? DescribePending(setup, waitingText)
             : DescribeHubBroadcast(diagnostics);
     }
 
