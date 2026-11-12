@@ -103,6 +103,21 @@ available to accessibility services.
 Controls are available when the app can execute through a local Z21 connection
 or an active MOBAflow runtime session.
 
+### TalkBack and font size
+
+With Android's TalkBack screen reader, the four tabs, the locomotive cards on
+Engines, the signal aspect tiles on SignalBox and the function keys on Control
+are read as one item each, including their selection state, for example
+"Locomotive BR 110, digital address 7, selected" or "Ks1: Ks 1 - Proceed, selected".
+A locomotive card's text follows a rename or address change made on the desktop.
+For a 4046 signal, an aspect tile also names the speed indicator values it shows,
+for example "..., top speed indicator 8".
+The speed gauge announces the current speed and DCC step.
+
+Text follows the font size chosen in Android's display settings. The digits
+drawn on a signal's speed indicator keep their size because they are part of the
+signal graphic; TalkBack reads the value from the tile's description.
+
 ## Background operation
 
 MOBAsmart uses an Android foreground service while a Z21 or MOBAflow session

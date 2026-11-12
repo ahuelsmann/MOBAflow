@@ -42,6 +42,7 @@
             <ActivityIndicator
                 HeightRequest="24"
                 IsRunning="True"
+                SemanticProperties.Description="MOBAsmart is starting"
                 WidthRequest="24"
                 Color="{DynamicResource SplashTextPrimary}" />
             <Label

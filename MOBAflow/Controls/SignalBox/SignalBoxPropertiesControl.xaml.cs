@@ -6,11 +6,11 @@ using SharedUI.Appearance;
 using Domain;
 
 using Moba.WinUI.Controls;
-using Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Controls.Primitives;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
@@ -270,34 +270,25 @@ public sealed partial class SignalBoxPropertiesControl
             return;
         }
 
-        var accentBrush = ThemeResourceResolver.ResolveBrush(
-            this,
-            "AccentFillColorDefaultBrush",
-            Microsoft.UI.Colors.Blue);
-        var normalBrush = ThemeResourceResolver.ResolveBrush(
-            this,
-            "SubtleFillColorSecondaryBrush",
-            Microsoft.UI.Colors.Gray);
-
-        foreach (var (button, aspect) in EnumerateAspectButtons())
+        // The checked tile is the current aspect; the system style draws it in accent or High Contrast highlight.
+        foreach (var (button, aspect) in EnumerateAspectButtons(this))
         {
-            button.Background = signal.SignalAspect == aspect
-                ? accentBrush
-                : normalBrush;
+            button.IsChecked = signal.SignalAspect == aspect;
         }
     }
 
-    private IEnumerable<(Border Button, SignalAspect Aspect)> EnumerateAspectButtons()
+    private static IEnumerable<(ToggleButton Button, SignalAspect Aspect)> EnumerateAspectButtons(
+        SignalBoxPropertiesControl control)
     {
-        yield return (AspectHp0Button, SignalAspect.Hp0);
-        yield return (AspectKs1Button, SignalAspect.Ks1);
-        yield return (AspectKs2Button, SignalAspect.Ks2);
-        yield return (AspectKs1BlinkButton, SignalAspect.Ks1Blink);
-        yield return (AspectKennlichtButton, SignalAspect.Kennlicht);
-        yield return (AspectDunkelButton, SignalAspect.Dunkel);
-        yield return (AspectRa12Button, SignalAspect.Ra12);
-        yield return (AspectZs1Button, SignalAspect.Zs1);
-        yield return (AspectZs7Button, SignalAspect.Zs7);
+        yield return (control.AspectHp0Button, SignalAspect.Hp0);
+        yield return (control.AspectKs1Button, SignalAspect.Ks1);
+        yield return (control.AspectKs2Button, SignalAspect.Ks2);
+        yield return (control.AspectKs1BlinkButton, SignalAspect.Ks1Blink);
+        yield return (control.AspectKennlichtButton, SignalAspect.Kennlicht);
+        yield return (control.AspectDunkelButton, SignalAspect.Dunkel);
+        yield return (control.AspectRa12Button, SignalAspect.Ra12);
+        yield return (control.AspectZs1Button, SignalAspect.Zs1);
+        yield return (control.AspectZs7Button, SignalAspect.Zs7);
     }
 
     private void UpdateAspectPresentation(SbSignal? signal)
@@ -316,7 +307,7 @@ public sealed partial class SignalBoxPropertiesControl
         var topSpeedIndicator = selectedSignal?.TopSpeedIndicator ?? string.Empty;
         var bottomSpeedIndicator = selectedSignal?.BottomSpeedIndicator ?? string.Empty;
 
-        foreach (var (screen, aspect) in EnumerateAspectSignals())
+        foreach (var (screen, aspect) in EnumerateAspectSignals(this))
         {
             screen.ApplyVisualState(
                 signalArticleNumber,
@@ -326,39 +317,47 @@ public sealed partial class SignalBoxPropertiesControl
         }
     }
 
-    private IEnumerable<(KsSignalScreen Screen, SignalAspect Aspect)> EnumerateAspectSignals()
+    private static IEnumerable<(KsSignalScreen Screen, SignalAspect Aspect)> EnumerateAspectSignals(
+        SignalBoxPropertiesControl control)
     {
-        yield return (AspectHp0Signal, SignalAspect.Hp0);
-        yield return (AspectKs1Signal, SignalAspect.Ks1);
-        yield return (AspectKs2Signal, SignalAspect.Ks2);
-        yield return (AspectKs1BlinkSignal, SignalAspect.Ks1Blink);
-        yield return (AspectKennlichtSignal, SignalAspect.Kennlicht);
-        yield return (AspectDunkelSignal, SignalAspect.Dunkel);
-        yield return (AspectRa12Signal, SignalAspect.Ra12);
-        yield return (AspectZs1Signal, SignalAspect.Zs1);
-        yield return (AspectZs7Signal, SignalAspect.Zs7);
+        yield return (control.AspectHp0Signal, SignalAspect.Hp0);
+        yield return (control.AspectKs1Signal, SignalAspect.Ks1);
+        yield return (control.AspectKs2Signal, SignalAspect.Ks2);
+        yield return (control.AspectKs1BlinkSignal, SignalAspect.Ks1Blink);
+        yield return (control.AspectKennlichtSignal, SignalAspect.Kennlicht);
+        yield return (control.AspectDunkelSignal, SignalAspect.Dunkel);
+        yield return (control.AspectRa12Signal, SignalAspect.Ra12);
+        yield return (control.AspectZs1Signal, SignalAspect.Zs1);
+        yield return (control.AspectZs7Signal, SignalAspect.Zs7);
     }
 
     private void ApplyAspectTexts(bool isSpeedIndicatorSignal)
     {
-        foreach (var (label, aspect) in EnumerateAspectLabels())
+        foreach (var (label, aspect) in EnumerateAspectLabels(this))
             label.Text = KsSignalAspectNames.GetAspectLabel(aspect, isSpeedIndicatorSignal);
 
-        foreach (var (button, aspect) in EnumerateAspectButtons())
+        // The tile shows only the short label; the tooltip explains it and the accessible name carries both.
+        foreach (var (button, aspect) in EnumerateAspectButtons(this))
+        {
             ToolTipService.SetToolTip(button, KsSignalAspectNames.GetAspectDescription(aspect, isSpeedIndicatorSignal));
+            AutomationProperties.SetName(
+                button,
+                KsSignalAspectNames.GetAspectAccessibleName(aspect, isSpeedIndicatorSignal));
+        }
     }
 
-    private IEnumerable<(TextBlock Label, SignalAspect Aspect)> EnumerateAspectLabels()
+    private static IEnumerable<(TextBlock Label, SignalAspect Aspect)> EnumerateAspectLabels(
+        SignalBoxPropertiesControl control)
     {
-        yield return (AspectHp0Label, SignalAspect.Hp0);
-        yield return (AspectKs1Label, SignalAspect.Ks1);
-        yield return (AspectKs2Label, SignalAspect.Ks2);
-        yield return (AspectKs1BlinkLabel, SignalAspect.Ks1Blink);
-        yield return (AspectKennlichtLabel, SignalAspect.Kennlicht);
-        yield return (AspectDunkelLabel, SignalAspect.Dunkel);
-        yield return (AspectRa12Label, SignalAspect.Ra12);
-        yield return (AspectZs1Label, SignalAspect.Zs1);
-        yield return (AspectZs7Label, SignalAspect.Zs7);
+        yield return (control.AspectHp0Label, SignalAspect.Hp0);
+        yield return (control.AspectKs1Label, SignalAspect.Ks1);
+        yield return (control.AspectKs2Label, SignalAspect.Ks2);
+        yield return (control.AspectKs1BlinkLabel, SignalAspect.Ks1Blink);
+        yield return (control.AspectKennlichtLabel, SignalAspect.Kennlicht);
+        yield return (control.AspectDunkelLabel, SignalAspect.Dunkel);
+        yield return (control.AspectRa12Label, SignalAspect.Ra12);
+        yield return (control.AspectZs1Label, SignalAspect.Zs1);
+        yield return (control.AspectZs7Label, SignalAspect.Zs7);
     }
 
     private void UpdateSwitchButtons()
@@ -420,14 +419,17 @@ public sealed partial class SignalBoxPropertiesControl
         }
     }
 
-    private void OnAspectClicked(object sender, PointerRoutedEventArgs args)
+    private void OnAspectClicked(object sender, RoutedEventArgs args)
     {
         _ = args;
-        if (sender is Border { Tag: string aspectName } &&
+        if (sender is ToggleButton { Tag: string aspectName } &&
             Enum.TryParse<SignalAspect>(aspectName, out var aspect))
         {
             EditorViewModel?.SetSignalAspectCommand.Execute(aspect);
         }
+
+        // The clicked tile has checked itself; the signal's aspect decides which tile stays checked.
+        UpdateAspectButtons();
     }
 
     private void OnSwitchPositionClicked(object sender, RoutedEventArgs args)

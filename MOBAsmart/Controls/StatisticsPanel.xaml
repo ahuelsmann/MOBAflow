@@ -34,7 +34,7 @@
                     Clicked="ResetCountersButton_Clicked"
                     CornerRadius="6"
                     FontSize="12"
-                    HeightRequest="34"
+                    MinimumHeightRequest="34"
                     SemanticProperties.Description="Reset all lap counters"
                     Text="↻ Reset"
                     TextColor="{DynamicResource TextPrimary}"
@@ -66,11 +66,11 @@
                                     x:Name="CountBadge"
                                     Grid.Column="0"
                                     BackgroundColor="{Binding HasReceivedFirstLap, Converter={toolkit:BoolToObjectConverter TrueObject={DynamicResource RailwayAccent}, FalseObject={DynamicResource RailwayPrimary}}}"
-                                    HeightRequest="32"
+                                    MinimumHeightRequest="32"
+                                    MinimumWidthRequest="32"
                                     StrokeShape="RoundRectangle 8"
                                     StrokeThickness="0"
-                                    VerticalOptions="Center"
-                                    WidthRequest="32">
+                                    VerticalOptions="Center">
                                     <Border.Triggers>
                                         <MultiTrigger TargetType="Border">
                                             <MultiTrigger.Conditions>

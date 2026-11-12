@@ -43,6 +43,48 @@ internal sealed class KsSignalAspectNamesTests
                 Has.All.Not.Empty);
         }
     }
+
+    [Test]
+    public void GetAspectAccessibleName_Should_StartWithVisibleLabel_AndKeepDescription(
+        [Values] SignalAspect aspect,
+        [Values] bool is4046)
+    {
+        // Voice control users say the text shown on the tile, so the accessible name must contain it (label in name).
+        var name = KsSignalAspectNames.GetAspectAccessibleName(aspect, is4046);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(name, Does.StartWith(KsSignalAspectNames.GetAspectLabel(aspect, is4046)));
+            Assert.That(name, Does.EndWith(KsSignalAspectNames.GetAspectDescription(aspect, is4046)));
+        }
+    }
+
+    [Test]
+    public void GetAspectTileName_Should_NameTheShownSpeedIndicatorValues()
+    {
+        // TalkBack cannot reach the hidden preview, so the tile carries the digits the preview shows.
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(KsSignalAspectNames.GetAspectTileName(SignalAspect.Zs1, "4046", "8", "3"),
+                Is.EqualTo("Ks1+G: Ks 1 with top speed indicator, top speed indicator 8"));
+            Assert.That(KsSignalAspectNames.GetAspectTileName(SignalAspect.Dunkel, "4046", "6", "4"),
+                Does.EndWith(", top speed indicator 6, bottom speed indicator 4"));
+            Assert.That(KsSignalAspectNames.GetAspectTileName(SignalAspect.Ks1Blink, "4046", null, null),
+                Does.EndWith(", top speed indicator --"));
+        }
+    }
+
+    [Test]
+    public void GetAspectTileName_Should_OmitSpeedIndicators_WhenThePreviewShowsNone()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(KsSignalAspectNames.GetAspectTileName(SignalAspect.Hp0, "4046", "8", "3"),
+                Is.EqualTo(KsSignalAspectNames.GetAspectAccessibleName(SignalAspect.Hp0, is4046: true)));
+            Assert.That(KsSignalAspectNames.GetAspectTileName(SignalAspect.Zs1, "4032", "8", "3"),
+                Is.EqualTo(KsSignalAspectNames.GetAspectAccessibleName(SignalAspect.Zs1, is4046: false)));
+        }
+    }
 }
 
 [TestFixture]
