@@ -175,7 +175,7 @@ internal sealed class SettingsPageViewModelTests
     }
 
     [Test]
-    public async Task SpeechTestPassesUserTextToExistingHostIntegration()
+    public async Task SpeechTestSpeaksUserTextThroughSpeechOutput()
     {
         string? spokenText = null;
         var speech = new Mock<ISpeechOutput>();
@@ -207,6 +207,24 @@ internal sealed class SettingsPageViewModelTests
         {
             Assert.That(viewModel.ErrorMessage, Is.EqualTo("speech unavailable"));
             Assert.That(viewModel.ShowErrorMessage, Is.True);
+        }
+        dispatcher.Verify(candidate => candidate.InvokeOnUi(It.IsAny<Action>()), Times.Exactly(2));
+    }
+
+    [Test]
+    public async Task SpeechTestExceptionReportsErrorThroughUiDispatcher()
+    {
+        var speech = new Mock<ISpeechOutput>();
+        speech.Setup(output => output.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("audio device lost"));
+        var (viewModel, _, _, dispatcher) = Create(speech: speech.Object);
+        await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.ErrorMessage, Is.EqualTo("audio device lost"));
+            Assert.That(viewModel.ShowErrorMessage, Is.True);
+            Assert.That(viewModel.ShowSuccessMessage, Is.False);
         }
         dispatcher.Verify(candidate => candidate.InvokeOnUi(It.IsAny<Action>()), Times.Exactly(2));
     }

@@ -144,9 +144,12 @@ Service lifetimes and user-visible behavior are unchanged.
 - `TrainControlViewModel` requires an `IRuntimeRoutingState` instead of the optional coordinator and the
   `?? runtimeCommandGateway as IMobileRuntimeCoordinator` fallback. The new interface holds the read-only part of
   `IMobileRuntimeCoordinator` (`PreferRemoteRuntime`, `CanExecuteCommands`, `IsLocalZ21Connected`), which extends it.
-  MOBAsmart registers its coordinator behind it, MOBAflow registers `NullRuntimeRoutingState`. The null object
-  never prefers the remote runtime and adds no command route, as the old null path did; only the hybrid mode reads
-  `IsLocalZ21Connected`, and only MOBAsmart, always with its coordinator, uses that mode.
+  MOBAsmart registers its coordinator behind it, MOBAflow registers `NullRuntimeRoutingState`, which answers `false`
+  to every member: without a coordinator, callers use their own connection state. For `PreferRemoteRuntime` and
+  `CanExecuteCommands` this equals the old null path (`?.PreferRemoteRuntime == true`, `?.CanExecuteCommands ?? false`).
+  One difference remains: in hybrid mode the old code fell back to the ViewModel's own `IsConnected` for
+  `IsLocalZ21Connected` (`?? IsConnected`), the null object returns `false`. Neither host configures hybrid mode
+  without a coordinator: MOBAflow's options are not hybrid, and MOBAsmart always passes its coordinator.
 - `MainWindowViewModel` requires `ISettingsService` and `IDialogService`; MOBAflow resolves the dialog service with
   `GetRequiredService`, and project deletion and the stop-trains confirmation no longer handle a missing dialog.
 - `LocomotiveManagementViewModel` requires passport renderer, CV service, file picker and project context, which
@@ -158,7 +161,9 @@ Service lifetimes and user-visible behavior are unchanged.
 - Tests: `TestHubSessions.Create` requires hub client and registration; the MAUI ViewModel factories pass one hub
   client, coordinator and project context to both the ViewModel and its collaborators;
   `TestRollingStockPages.CreateManagement` and `TestSettingsPages.NoFeatureToggles` are new; shell tests pass
-  `NullDialogService` and a settings mock; train-control tests pass `NullRuntimeRoutingState` or their coordinator.
+  `NullDialogService` and a settings mock; train-control tests pass `NullRuntimeRoutingState` outside hybrid mode
+  and a `MobileRuntimeCoordinator` in hybrid mode, as the hosts do. The speech test covers success, failure result
+  and exception.
   The WinUI container test resolves routing state, shell, train control, locomotive management and the settings
   page with its toggles; the MAUI container test checks that the routing state is the coordinator.
 - Remaining for slice 4c, verified on this branch (items marked new were not in the slice 4 list):
@@ -174,11 +179,21 @@ Service lifetimes and user-visible behavior are unchanged.
   - MOBAsmart: `RuntimeHubRemoteClient` (`ILogger?`).
   - Speech and display (new): `PiperSpeechProvider` (`?? new PiperProcessRunner()`), `PiperProcessRunner` and
     `DisplayProtocolClient` (`TimeProvider?`).
+  - Optional container lookups with a fallback branch (new):
+    - `SharedUI/Extensions/EventBusUiExtensions.cs`: `GetService<IRecordingSessionService>()` and
+      `GetService<RecordingEventMapperRegistry>()` silently decide whether `IEventBus` gets the recording decorator.
+    - `MOBAflow/Service/WinUiAppStartupService.cs`: `GetService<ISettingsService>()` with a "skipping auto-load"
+      branch, although MOBAflow always registers the service.
+    - `MOBAsmart/App.xaml.cs`: `GetService<MauiViewModel>()` with null branches in `OnResume` and
+      `CleanupOnWindowDestroyingAsync`, although the ViewModel is always registered.
+    - `MOBAsmart/Platforms/Android/MainActivity.cs`: `OnDestroy` asks for `MainWindowViewModel`, which MOBAsmart never
+      registers, so the block never runs; MOBAsmart's actual disconnect on close is `App.xaml.cs`
+      `CleanupOnWindowDestroyingAsync` (`Window.Destroying`). Remove the dead block or route it through
+      `MauiViewModel`.
   - To classify as value or service (new): optional delegates with a production default
     (`BrakeAndDoorState` random source, `CancellableWavePlayer` session factory, `SystemSpeechProvider` default
-    voice, `ForwardingEventBus` delivery) and the optional `RecordingArtifactSerializer` payload validators.
-- Out of scope, noted: `MOBAsmart/Platforms/Android/MainActivity` looks up `MainWindowViewModel`, which MOBAsmart
-  never registers, so its disconnect-on-destroy never runs.
+    voice, `ForwardingEventBus` delivery, the `ProjectZ21EndpointSource` solution lookup in
+    `Backend/Service/Z21EndpointSources.cs`) and the optional `RecordingArtifactSerializer` payload validators.
 - Documentation: `docs/ARCHITECTURE.md` (settings presentation, train control routing) corrected; `docs/wiki/`
   unchanged because no user-visible behavior, setting or screen changed.
 

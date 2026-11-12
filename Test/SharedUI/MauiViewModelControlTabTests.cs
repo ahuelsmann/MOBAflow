@@ -286,7 +286,7 @@ internal sealed class MauiViewModelControlTabTests
             new Mock<IMobaRuntime>().Object,
             new Mock<IRuntimeHubRemoteClient>().Object);
         coordinator.SetMobaflowSessionActive(true);
-        var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
+        var trainControl = CreateTrainControlViewModel(eventBus, projectContext, coordinator);
         var viewModel = CreateViewModel(
             projectContext,
             eventBus: eventBus,
@@ -350,7 +350,7 @@ internal sealed class MauiViewModelControlTabTests
             new Mock<IRuntimeHubRemoteClient>().Object);
         coordinator.SetMobaflowSessionActive(true);
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
+        var trainControl = CreateTrainControlViewModel(eventBus, projectContext, coordinator);
         var viewModel = CreateViewModel(projectContext, eventBus: eventBus, mobileRuntimeCoordinator: coordinator);
         viewModel.RestoreCachedLocomotiveFleet(
         (LocomotiveFleetSnapshot[])[
@@ -413,7 +413,7 @@ internal sealed class MauiViewModelControlTabTests
             new Mock<IRuntimeHubRemoteClient>().Object);
         coordinator.SetMobaflowSessionActive(true);
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
+        var trainControl = CreateTrainControlViewModel(eventBus, projectContext, coordinator);
         var viewModel = CreateViewModel(
             projectContext,
             eventBus: eventBus,
@@ -479,7 +479,7 @@ internal sealed class MauiViewModelControlTabTests
             new Mock<IRuntimeHubRemoteClient>().Object);
         coordinator.SetMobaflowSessionActive(true);
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
+        var trainControl = CreateTrainControlViewModel(eventBus, projectContext, coordinator);
         var viewModel = CreateViewModel(projectContext, eventBus: eventBus, mobileRuntimeCoordinator: coordinator);
         viewModel.SetControlTabActive(true);
         Assert.Multiple(() =>
@@ -491,9 +491,14 @@ internal sealed class MauiViewModelControlTabTests
         });
     }
 
+    /// <summary>
+    /// Creates the hybrid MOBAsmart train control. Like MOBAsmart, it shares the coordinator of the mobile
+    /// ViewModel when the test has one; otherwise it gets a coordinator without a session or Z21 connection.
+    /// </summary>
     private static TrainControlViewModel CreateTrainControlViewModel(
         EventBus eventBus,
-        IProjectContext? projectContext = null)
+        IProjectContext? projectContext = null,
+        IMobileRuntimeCoordinator? coordinator = null)
     {
         var runtimeMock = new Mock<IMobaRuntime>();
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
@@ -508,7 +513,7 @@ internal sealed class MauiViewModelControlTabTests
             ImmediateUiDispatcher.Instance,
             eventBus,
             new NullFunctionAppearancePicker(),
-            new NullRuntimeRoutingState(),
+            coordinator ?? new MobileRuntimeCoordinator(runtimeMock.Object, Mock.Of<IRuntimeHubRemoteClient>()),
             options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
     }
 

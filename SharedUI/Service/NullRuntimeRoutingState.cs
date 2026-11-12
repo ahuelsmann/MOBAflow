@@ -5,8 +5,9 @@ namespace Moba.SharedUI.Service;
 using Interface;
 
 /// <summary>
-/// Routing state of a host without remote runtime routing (MOBAflow desktop): it never prefers a remote runtime
-/// and adds no command route beyond the host's own runtime connection.
+/// Routing state of a host without a hybrid routing coordinator (MOBAflow desktop). It answers
+/// <see langword="false"/> to every member, also while the host is connected: there is no coordinator, so callers
+/// use their own runtime connection state.
 /// </summary>
 public sealed class NullRuntimeRoutingState : IRuntimeRoutingState
 {
