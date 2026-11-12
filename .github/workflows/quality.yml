@@ -21,9 +21,12 @@ concurrency:
 
 jobs:
   # Documentation-only pull requests skip the build, test and firmware jobs. Pull requests that touch neither
-  # the ESP32 firmware nor the Domain mutation graph skip those parts; scripts/Get-QualityChangeScope.ps1
+  # the ESP32 firmware nor the Domain mutation graph skip those parts, and only pull requests that change
+  # MOBAsmart or its analyzer baseline run the Android Release AAB job; scripts/Get-QualityChangeScope.ps1
   # owns the path rules. GitHub reports a job skipped by its condition as successful, so the required checks
-  # stay satisfied. Any detection failure, unknown path or non-PR event keeps the full workflow.
+  # stay satisfied. Job conditions read every output with != 'false', so a detection failure (empty outputs)
+  # runs every scoped job, Android included. An unknown path or a non-PR event runs every job except Android,
+  # which outside pull requests runs only through the manual validate_android dispatch.
   changes:
     name: Detect code changes
     runs-on: ubuntu-latest
@@ -629,12 +632,13 @@ jobs:
     needs: changes
     # Pull requests run this job only when they change MOBAsmart/ or quality/analyzer-baseline.android.json
     # (maintainer decision of 2026-11-08, issue #360); scripts/Get-QualityChangeScope.ps1 owns the path rule.
+    # Like the other scoped jobs it fails open: a failed change detection leaves the output empty and runs it.
     # Other pull requests and main runs stay skipped; a skipped job satisfies the required check without
     # building an AAB. Manual validation exercises the pinned toolchain without publishing a release.
     if: >-
       ${{ !cancelled() && (
         (github.event_name == 'workflow_dispatch' && inputs.validate_android) ||
-        (github.event_name == 'pull_request' && needs.changes.outputs.android == 'true')) }}
+        (github.event_name == 'pull_request' && needs.changes.outputs.android != 'false')) }}
     runs-on: windows-latest
     timeout-minutes: 60
 

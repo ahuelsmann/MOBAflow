@@ -113,6 +113,22 @@ foreach ($include in $mutationSources) {
     Assert-Scope @($samplePath) $true $false $true "mutation project input '$include'"
 }
 
+# A failed change detection leaves every output empty. Each job condition must then run its job rather than
+# report a skipped (passing) required check, so quality.yml compares the outputs only with != 'false'.
+$workflowText = Get-Content -Raw -LiteralPath (Join-Path $repositoryRoot '.github/workflows/quality.yml')
+$scopeReads = @([regex]::Matches($workflowText, "needs\.changes\.outputs\.(\w+)(\s*[!=]=\s*'[^']*')?"))
+$failClosedReads = @($scopeReads | Where-Object { $_.Groups[2].Value -notmatch "^\s*!=\s*'false'$" })
+if ($failClosedReads.Count -gt 0) {
+    throw "quality.yml must read change-scope outputs with != 'false'; found: $(($failClosedReads | ForEach-Object Value) -join ', ')."
+}
+$readOutputs = @($scopeReads | ForEach-Object { $_.Groups[1].Value })
+foreach ($output in 'code', 'firmware', 'mutation', 'android') {
+    if ($readOutputs -notcontains $output) {
+        throw "Expected quality.yml to read the '$output' change-scope output."
+    }
+}
+$checks++
+
 $outputFile = [IO.Path]::GetTempFileName()
 $savedOutput = $env:GITHUB_OUTPUT
 try {

@@ -210,8 +210,9 @@ GitHub reports those skipped jobs as successful required checks. Pushes to
 desktop, display, Common, Speech.Base, Backend, MOBApi and SharedUI mutation jobs; Domain mutation and ESP32 firmware
 steps also depend on their input paths. Android runs on PRs that change
 `MOBAsmart/` or `quality/analyzer-baseline.android.json` and with the manual
-`validate_android` input; pushes to `main` do not run it. A skipped check is not
-evidence that tests ran.
+`validate_android` input; pushes to `main` do not run it. If change detection
+itself fails on a PR, every scoped job, Android included, runs rather than being
+skipped. A skipped check is not evidence that tests ran.
 
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
@@ -223,7 +224,8 @@ such as a workflow, a script or a new top-level folder, enables both firmware
 and Domain mutation testing. The jobs keep their required check names;
 skipped steps and a skipped job count as successful.
 `scripts/Get-QualityChangeScope.Tests.ps1` checks these rules, including every
-source and copied fixture input of the mutation project.
+source and copied fixture input of the mutation project and that `quality.yml`
+compares every scope output only with `!= 'false'`.
 
 The repository consistency job also checks source-derived package and mutation
 documentation facts and runs their offline boundary tests. Documentation and

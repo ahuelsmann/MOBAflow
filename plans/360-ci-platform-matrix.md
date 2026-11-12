@@ -82,9 +82,10 @@ lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) run but do not block a me
 
   Implemented with the Android trigger change for #360: `scripts/Get-QualityChangeScope.ps1` has an `android`
   output for the two trigger paths (an unknown path or an empty change set does not select it, unlike the other
-  scopes), `quality.yml` runs the job for `pull_request` events with that output or for the manual dispatch, and
-  `Get-QualityChangeScope.Tests.ps1` covers both triggers and the SharedUI-only, desktop-only and
-  documentation-only counter-cases. Pushes to `main` stay skipped. A skipped job satisfies the required check but
+  scopes), `quality.yml` runs the job for `pull_request` events unless that output is `false` or for the manual
+  dispatch, so a failed change detection runs it like the other scoped jobs, and
+  `Get-QualityChangeScope.Tests.ps1` covers both triggers, the SharedUI-only, desktop-only and
+  documentation-only counter-cases and the fail-open job conditions. Pushes to `main` stay skipped. A skipped job satisfies the required check but
   is not evidence of an AAB build. The options and measurements are recorded on
   [#360](https://github.com/ahuelsmann/MOBAflow/issues/360).
 
