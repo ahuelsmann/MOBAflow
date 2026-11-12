@@ -43,10 +43,12 @@ reports the conflict: the first project in solution order connects, and later
 projects using that address stay disconnected. A project without an address also
 stays disconnected while the other projects run normally.
 
-Before opening or creating another solution or deleting a connected project,
+Before opening or creating another solution while a runtime is connected,
 **Stop all trains?** asks for confirmation. Confirming sets all
 known locomotives of the affected runtimes to speed 0 before those runtimes are
-discarded; cancelling keeps the solution and runtimes unchanged. Changing a
+discarded; cancelling keeps the solution and runtimes unchanged. Deleting a project
+always asks **Delete Project**; for a connected project the question also says that
+its locomotives are set to speed 0 first, and cancelling keeps the project. Changing a
 connected project's Z21 assignment stops its known locomotives before replacing
 its runtime on the new endpoint. Reloading a solution reuses existing open
 connections after the stop sequence.
