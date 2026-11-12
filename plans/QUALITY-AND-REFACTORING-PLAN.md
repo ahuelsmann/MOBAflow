@@ -370,11 +370,15 @@ removed fields.
 
 ### RF-27: Move domain rules into the domain model
 
-Child issue [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) owns this package and its status; the
-remaining inventory is tracked in [the RF-27 child plan](339-domain-rules.md). Delivered slices (#341, #346) moved
-the journey stop rules and the workflow/project structure rules onto the domain objects; this does not complete
-RF-27. Cross-entity validators with user-facing findings stay in `Backend/Service` (see
-[the Domain layer](../docs/ARCHITECTURE.md#1-domain-layer-domain)).
+Complete. Child issue [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) owned this package and was closed
+after its moves were delivered (slice 1 #341, slice 2 #346, `Backend`/`SharedUI` audit and moves 1-3 #384,
+move 4 #424); its child plan, added in #341 and restored in #364, was removed at closure. Outcome: `Journey`,
+`Station`, `Workflow`, `Project`, `LocomotiveWhistleRule` and `Locomotive` own the rules that need only their own
+data, and their Backend and SharedUI callers delegate to them (see
+[the Domain layer](../docs/ARCHITECTURE.md#1-domain-layer-domain)). The audit kept these in place: cross-entity
+validators with user-facing findings in `Backend/Service`, `DecoderCvService.Validate` (checks an input list
+against the protocol before it becomes part of a snapshot), `WorkflowEffectPlanner.Plan` (builds Backend effect
+requests) and the ViewModel ID lookups for navigation and selection.
 
 ### RF-28: Consolidate the track-plan model
 
