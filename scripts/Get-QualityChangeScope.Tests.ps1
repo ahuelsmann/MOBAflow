@@ -129,6 +129,73 @@ foreach ($output in 'code', 'firmware', 'mutation', 'android') {
 }
 $checks++
 
+# Without a status-check function GitHub adds an implicit success() to a job condition, so a failed change
+# detection would skip the job whatever the output comparison says. Every job that needs `changes` and reads
+# its outputs must therefore keep !cancelled() or always() in its job-level condition.
+function Get-JobValue([string[]] $JobLines, [string] $Key) {
+    # Returns the job-level value of $Key, including folded continuation lines, or $null.
+    $value = $null
+    foreach ($line in $JobLines) {
+        if ($null -eq $value) {
+            if ($line -match "^    $Key\s*:(.*)$") {
+                $value = $Matches[1]
+            }
+        }
+        elseif ($line -match '^\s{6,}\S' -or $line -match '^\s*$') {
+            $value += "`n$line"
+        }
+        else {
+            break
+        }
+    }
+
+    return $value
+}
+
+$workflowLines = $workflowText -split "\r?\n"
+$jobsStart = [array]::IndexOf($workflowLines, 'jobs:')
+if ($jobsStart -lt 0) {
+    throw 'Expected a top-level jobs: section in quality.yml.'
+}
+$jobs = [ordered] @{}
+$currentJob = $null
+foreach ($line in $workflowLines[($jobsStart + 1)..($workflowLines.Count - 1)]) {
+    if ($line -match '^\S') {
+        break
+    }
+    if ($line -match '^  ([\w-]+):\s*$') {
+        $currentJob = $Matches[1]
+        $jobs[$currentJob] = [Collections.Generic.List[string]]::new()
+    }
+    elseif ($null -ne $currentJob) {
+        $jobs[$currentJob].Add($line)
+    }
+}
+
+$guardedJobs = @()
+foreach ($job in $jobs.Keys) {
+    $jobLines = [string[]] $jobs[$job]
+    $needs = Get-JobValue $jobLines 'needs'
+    if ($null -eq $needs -or @([regex]::Matches($needs, '[\w-]+') | ForEach-Object Value) -notcontains 'changes') {
+        continue
+    }
+    if (-not ($jobLines -join "`n").Contains('needs.changes.outputs.')) {
+        continue
+    }
+    $condition = Get-JobValue $jobLines 'if'
+    if ($null -eq $condition -or $condition -notmatch '!\s*cancelled\(\)|\balways\(\)') {
+        throw ("quality.yml job '$job' reads the change scope, but its condition lacks !cancelled() or always(); " +
+            'a failed change detection would skip it.')
+    }
+    $guardedJobs += $job
+    $checks++
+}
+foreach ($job in 'desktop', 'android-release') {
+    if ($guardedJobs -notcontains $job) {
+        throw "Expected quality.yml job '$job' to read the change scope with a fail-open condition."
+    }
+}
+
 $outputFile = [IO.Path]::GetTempFileName()
 $savedOutput = $env:GITHUB_OUTPUT
 try {

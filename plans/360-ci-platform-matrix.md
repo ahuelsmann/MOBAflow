@@ -85,7 +85,8 @@ lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) run but do not block a me
   scopes), `quality.yml` runs the job for `pull_request` events unless that output is `false` or for the manual
   dispatch, so a failed change detection runs it like the other scoped jobs, and
   `Get-QualityChangeScope.Tests.ps1` covers both triggers, the SharedUI-only, desktop-only and
-  documentation-only counter-cases and the fail-open job conditions. Pushes to `main` stay skipped. A skipped job satisfies the required check but
+  documentation-only counter-cases, and checks that every job reading the change scope compares its outputs only
+  with `!= 'false'` and keeps `!cancelled()` or `always()` in its condition. Pushes to `main` stay skipped. A skipped job satisfies the required check but
   is not evidence of an AAB build. The options and measurements are recorded on
   [#360](https://github.com/ahuelsmann/MOBAflow/issues/360).
 

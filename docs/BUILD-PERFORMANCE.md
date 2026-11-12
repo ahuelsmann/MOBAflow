@@ -224,8 +224,9 @@ such as a workflow, a script or a new top-level folder, enables both firmware
 and Domain mutation testing. The jobs keep their required check names;
 skipped steps and a skipped job count as successful.
 `scripts/Get-QualityChangeScope.Tests.ps1` checks these rules, including every
-source and copied fixture input of the mutation project and that `quality.yml`
-compares every scope output only with `!= 'false'`.
+source and copied fixture input of the mutation project and that every
+`quality.yml` job reading the scope compares it only with `!= 'false'` and keeps
+`!cancelled()` or `always()` in its condition.
 
 The repository consistency job also checks source-derived package and mutation
 documentation facts and runs their offline boundary tests. Documentation and
