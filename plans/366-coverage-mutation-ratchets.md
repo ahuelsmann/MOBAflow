@@ -253,12 +253,16 @@ launch, train movement or layout action is part of this plan; tests use fakes an
   followed by Backend (about 35 minutes; timeout 60 minutes); each job timeout follows the measured duration. If a lane
   outgrows its timeout, split the lane by namespace rather than excluding mutants.
 - **Main evidence cancelled by later merges:** Quality runs use `concurrency: quality-${{ github.ref }}` with
-  `cancel-in-progress: true`. On `main`, each merge cancels the previous run, so the Backend and SharedUI lanes
-  (35 to 60 minutes) finish there only when no merge follows within that time. On 2026-11-12 four consecutive `main`
-  runs (43281875704, 43286861678, 43291112851, 43295757485) cancelled both lanes after 24 to 31 minutes ("Canceling
-  since a higher priority waiting request ... exists"); the last `main` run with both lanes complete is 42916281964
-  (`1b037bee`, 2026-11-10: Backend 37 min, SharedUI 47 min). The PR runs still gate each change; only the
-  post-merge confirmation on `main` is missing. Closing this needs a workflow change outside RF-09 documentation, for
-  example no cancellation on `main` or a scheduled full mutation run.
+  `cancel-in-progress: true`. On `main`, each merge cancels the previous run, so the Backend lane (about 35 to 40
+  minutes) and the SharedUI lane (about 47 to 51 minutes) finish there only when no merge follows within that time.
+  On 2026-11-12 four consecutive `main` runs (43281875704, 43286861678, 43291112851, 43295757485) cancelled both
+  lanes after 24 to 31 minutes ("Canceling since a higher priority waiting request ... exists"), so the commits
+  `a573df48`, `0bd746d5`, `9c451c8a` and `ff4f0ec0` have no post-merge mutation result of their own. Observed on
+  2026-11-12 at 21:18 UTC: the latest complete `main` run is 43301142712 on `0a7947a3`, with all six mutation lanes
+  green (Backend 40 min, SharedUI 47 min); the one before it is 42916281964 (`1b037bee`, 2026-11-10: Backend 37 min,
+  SharedUI 47 min). The PR runs still gate each change, and a later complete `main` run covers the cancelled commits
+  cumulatively. The structural gap stays: any merge within about 50 minutes cancels the post-merge confirmation.
+  Closing it needs a workflow change outside RF-09 documentation, for example no cancellation on `main` or a
+  scheduled full mutation run.
 - **Flaky timing tests:** a mutant that changes a delay can turn a wall-clock test into a timeout; such tests move to
   `TimeProvider`-based fakes instead of being excluded.
