@@ -69,6 +69,16 @@ $otherDotNetPatterns = @(
     '^Moba\.sln\.DotSettings$'
 )
 
+# The Android Release AAB job runs on a pull request only for these paths (maintainer decision of 2026-11-08,
+# issue #360): the MOBAsmart project and the analyzer baseline that only this job checks. Shared projects that
+# MOBAsmart compiles, repository-wide build inputs and the workflow itself do not select it; the manual
+# validate_android dispatch covers them. Unlike the other scopes, an unknown path or an empty change set does
+# not select the Android job.
+$androidInputPatterns = @(
+    '^MOBAsmart/',
+    '^quality/analyzer-baseline\.android\.json$'
+)
+
 function Test-MatchesAny([string] $RelativePath, [string[]] $Patterns) {
     foreach ($pattern in $Patterns) {
         if ($RelativePath -cmatch $pattern) {
@@ -83,23 +93,24 @@ function Test-MatchesAny([string] $RelativePath, [string[]] $Patterns) {
 # before the broader .NET areas that contain them.
 function Get-PathScope([string] $RelativePath) {
     $normalizedPath = $RelativePath.Trim().Replace('\', '/')
+    $android = Test-MatchesAny $normalizedPath $androidInputPatterns
     if (Test-MatchesAny $normalizedPath $documentationOnlyPatterns) {
-        return [pscustomobject] @{ Code = $false; Firmware = $false; Mutation = $false }
+        return [pscustomobject] @{ Code = $false; Firmware = $false; Mutation = $false; Android = $android }
     }
 
     if (Test-MatchesAny $normalizedPath $firmwareInputPatterns) {
-        return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $false }
+        return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $false; Android = $android }
     }
 
     if (Test-MatchesAny $normalizedPath $mutationInputPatterns) {
-        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $true }
+        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $true; Android = $android }
     }
 
     if (Test-MatchesAny $normalizedPath $otherDotNetPatterns) {
-        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $false }
+        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $false; Android = $android }
     }
 
-    return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $true }
+    return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $true; Android = $android }
 }
 
 function Get-ChangedPaths([string] $Base, [string] $Head) {
@@ -128,10 +139,11 @@ $scope = [pscustomobject] @{
     Code = $empty -or @($pathScopes | Where-Object Code).Count -gt 0
     Firmware = $empty -or @($pathScopes | Where-Object Firmware).Count -gt 0
     Mutation = $empty -or @($pathScopes | Where-Object Mutation).Count -gt 0
+    Android = @($pathScopes | Where-Object Android).Count -gt 0
 }
 
 if ($scope.Code) {
-    Write-Host "Code-relevant changes found; firmware=$($scope.Firmware), mutation=$($scope.Mutation)."
+    Write-Host "Code-relevant changes found; firmware=$($scope.Firmware), mutation=$($scope.Mutation), android=$($scope.Android)."
     @($changedPaths | Where-Object { (Get-PathScope $_).Code }) | Select-Object -First 20 | ForEach-Object { Write-Host "  $_" }
 }
 else {
@@ -143,6 +155,7 @@ if (-not [string]::IsNullOrEmpty($env:GITHUB_OUTPUT)) {
         "code=$($scope.Code.ToString().ToLowerInvariant())"
         "firmware=$($scope.Firmware.ToString().ToLowerInvariant())"
         "mutation=$($scope.Mutation.ToString().ToLowerInvariant())"
+        "android=$($scope.Android.ToString().ToLowerInvariant())"
     )
 }
 

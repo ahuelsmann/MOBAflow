@@ -2,6 +2,8 @@
 paths:
   .github/workflows/quality.yml:
     ignore:
-      # The Android Release AAB job is disabled on purpose with `if: ${{ false }}` while MOBAsmart is not
-      # distributed; the job stays so its required check name remains (see docs/BUILD-PERFORMANCE.md).
+      # The Android Release AAB job runs on pull requests that change MOBAsmart/** or
+      # quality/analyzer-baseline.android.json, fails open when change detection fails, and otherwise runs only
+      # through the manual validate_android dispatch (see docs/BUILD-PERFORMANCE.md). Its condition is not
+      # constant, so no workflow currently needs this entry; removing it is a separate cleanup.
       - 'constant expression "false" in condition'
