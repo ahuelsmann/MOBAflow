@@ -104,10 +104,12 @@ The following points **MUST** be checked by the user before use:
 #### MOBAflow error → Restart the application
 
 ```text
-1. Close MOBAflow (Alt+F4)
-2. Check Z21 power button (LED green?)
-3. Restart MOBAflow
-4. Problem persists? → See Support section below
+1. Stop the trains: switch off track power (Ctrl+P or F10 in MOBAflow)
+   or use the Z21 handheld controller (trains keep running after MOBAflow closes)
+2. Close MOBAflow (Alt+F4)
+3. Check Z21 power button (LED green?)
+4. Restart MOBAflow
+5. Problem persists? → See Support section below
 ```
 
 #### Z21 not responding → Hardware inspection
