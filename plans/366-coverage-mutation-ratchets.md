@@ -3,8 +3,9 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/366
 **Spec Kit**: Not applicable - regression tests and CI lanes for existing contracts without product behavior
 **Status**: Active; steps 1 to 4 are delivered (#367, #396, #410: SharedUI lane); step 5 (completion) is open.
-Reconciled against main `7b1c3f96` on 2026-11-08: the six active lanes and their floors in the table below match
-`mutation-lanes.json`, the Stryker configurations and the Quality jobs. Open scope: the Safe-Mode method lists for
+Reconciled against main `7b1c3f96` on 2026-11-08 and again against main `0a7947a3` on 2026-11-12: the six active
+lanes and their floors in the table below match `mutation-lanes.json`, the Stryker configurations and the Quality jobs;
+every Safe-Mode method listed below still exists under the same name. Open scope: the Safe-Mode method lists for
 Backend and SharedUI (rewrite or Stryker change, then remeasure), new tests in the largest open SharedUI and MOBApi
 areas, and a measured-risk decision on further lanes (`sound`, `display`, `track-plan-renderer`, `contracts`).
 
@@ -199,7 +200,9 @@ separate pull requests.
    - **Largest open areas (survived + no coverage):** `TrainControlViewModel` 605, `MauiViewModel` 374,
      `SettingsPageViewModel` 250, `RecorderPageViewModel` 208, `TimetablePageViewModel` 185,
      `MauiViewModel.MobaflowConnection` 162, `WorkflowLibraryViewModel` 161, `DisplayViewModel` 144,
-     `MainWindowViewModel` 118 and `MainWindowViewModel.SyncDiagnostics` 111. New tests there raise the floor later;
+     `MainWindowViewModel` 118 and `MainWindowViewModel.SyncDiagnostics` 111. #425 (RF-24 slice 5b) moved the
+     diagnostics part into `SystemStatusViewModel` and `ProjectDiagnosticsViewModel`, so the next full run reports it
+     there. New tests there raise the floor later;
      the ViewModels under active RF-24 extraction wait for that work.
 5. **Completion:** further lanes only where the tooling is technically suitable (Sound, display, rendering by measured
    risk); RF-07 records the final mutation lanes in its deliverable inventory.
@@ -249,5 +252,13 @@ launch, train movement or layout action is part of this plan; tests use fakes an
   timeout 100 minutes),
   followed by Backend (about 35 minutes; timeout 60 minutes); each job timeout follows the measured duration. If a lane
   outgrows its timeout, split the lane by namespace rather than excluding mutants.
+- **Main evidence cancelled by later merges:** Quality runs use `concurrency: quality-${{ github.ref }}` with
+  `cancel-in-progress: true`. On `main`, each merge cancels the previous run, so the Backend and SharedUI lanes
+  (35 to 60 minutes) finish there only when no merge follows within that time. On 2026-11-12 four consecutive `main`
+  runs (43281875704, 43286861678, 43291112851, 43295757485) cancelled both lanes after 24 to 31 minutes ("Canceling
+  since a higher priority waiting request ... exists"); the last `main` run with both lanes complete is 42916281964
+  (`1b037bee`, 2026-11-10: Backend 37 min, SharedUI 47 min). The PR runs still gate each change; only the
+  post-merge confirmation on `main` is missing. Closing this needs a workflow change outside RF-09 documentation, for
+  example no cancellation on `main` or a scheduled full mutation run.
 - **Flaky timing tests:** a mutant that changes a delay can turn a wall-clock test into a timeout; such tests move to
   `TimeProvider`-based fakes instead of being excluded.
