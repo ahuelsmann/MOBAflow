@@ -41,6 +41,8 @@ internal static class TestSolutionSessions
         public Task LoadAsync(IReadOnlyList<Project> projects, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
 
+        public Task ReleaseAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
         public Task AddAsync(Project project, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
         public Task RemoveAsync(Guid projectId, CancellationToken cancellationToken = default) => Task.CompletedTask;

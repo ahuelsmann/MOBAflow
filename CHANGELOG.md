@@ -30,8 +30,11 @@ the version tags follow [Semantic Versioning](https://semver.org/).
   run concurrently with isolated feedback, counters and remote commands.
 - Per-project Z21 assignment with the solution page's Z21 Finder and duplicate
   endpoint diagnostics; MOBAsmart selects a project and uses its address and port.
-- A confirmation before switching solutions, deleting a connected project or
-  closing MOBAflow; affected runtimes stop known locomotives before disposal.
+- A confirmation before switching solutions or deleting a connected project;
+  affected runtimes stop known locomotives before disposal.
+- Closing MOBAflow shows no stop-trains prompt and keeps the trains running, also
+  when MOBAflow ends unexpectedly; a normal close closes its Z21 connections
+  without a stop command (#426).
 
 - Event Manager for visually editing ordered journey feedback sequences.
 - Feedback-sequence progress persistence and MOBApi endpoints for mobile/runtime

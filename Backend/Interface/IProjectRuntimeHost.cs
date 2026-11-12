@@ -22,6 +22,12 @@ public interface IProjectRuntimeHost
     /// <summary>Creates and starts the runtime of a project added to the solution.</summary>
     Task AddAsync(Project project, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Discards all runtimes and closes their Z21 connections when the application closes. No stop command is
+    /// sent: locomotives keep their last speed on the Z21.
+    /// </summary>
+    Task ReleaseAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Discards the runtime of a project removed from the solution.</summary>
     Task RemoveAsync(Guid projectId, CancellationToken cancellationToken = default);
 

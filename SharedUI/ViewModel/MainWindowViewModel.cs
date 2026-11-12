@@ -303,9 +303,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     #region Lifecycle
     /// <summary>
     /// Stops runtime-driven UI updates and disconnects from the Z21 before the host window completes shutdown.
+    /// Closing never asks about running trains and never stops them: they keep running on the Z21.
     /// </summary>
     /// <param name="releaseRuntimeObservers">
-    /// Runs once shutdown is confirmed and before the runtimes stop, so host-owned runtime observers
+    /// Runs once shutdown is confirmed and before the runtimes are released, so host-owned runtime observers
     /// do not process the disconnect's packets and snapshots; it does not run when shutdown is cancelled.
     /// </param>
     public async Task<bool> PrepareForShutdownAsync(System.Action? releaseRuntimeObservers = null)
@@ -313,12 +314,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (_isShuttingDown)
         {
             return true;
-        }
-
-        // The dialog and a following save prompt need the UI context.
-        if (!await ConfirmStopTrainsAsync("Closing MOBAflow").ConfigureAwait(true))
-        {
-            return false;
         }
 
         if (HasUnsavedChanges)
@@ -343,8 +338,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         try
         {
-            // Every runtime sets its locomotives to speed 0 and closes its Z21 connection.
-            await _session.StopRuntimesAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+            // Every runtime closes its Z21 connection without a stop command; the trains keep running.
+            await _session.ReleaseRuntimesAsync(cancellationTokenSource.Token).ConfigureAwait(false);
         }
         catch (TaskCanceledException ex)
         {
