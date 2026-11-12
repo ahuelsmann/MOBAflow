@@ -48,7 +48,7 @@ Before opening or creating another solution while a runtime is connected,
 known locomotives of the affected runtimes to speed 0 before those runtimes are
 discarded; cancelling keeps the solution and runtimes unchanged. Deleting a project
 always asks **Delete Project**; for a connected project the question also says that
-its locomotives are set to speed 0 first, and cancelling keeps the project. Changing a
+its locomotives are set to speed 0 first; **No** keeps the project. Changing a
 connected project's Z21 assignment stops its known locomotives before replacing
 its runtime on the new endpoint. Reloading a solution reuses existing open
 connections after the stop sequence.

@@ -91,8 +91,9 @@ Opening or creating another solution asks **Stop all trains?** when a runtime is
 connected. Confirmation sends speed 0 to the known locomotives of the affected
 runtimes before discarding them; cancellation keeps them running. Deleting a
 project always asks **Delete Project**; for a connected project the question also
-says that its locomotives are set to speed 0 first. Changing a connected project's Z21 assignment also stops its known
-locomotives before reconnecting. Closing MOBAflow does not ask and does not stop
+says that its locomotives are set to speed 0 first. Changing a connected
+project's Z21 assignment also stops its known locomotives before reconnecting.
+Closing MOBAflow does not ask and does not stop
 the trains: they keep running on the Z21, while control through MOBAflow and
 MOBAsmart ends. See the
 [desktop guide](MOBAFLOW-USER-GUIDE.md#projects-z21-assignment-and-safe-switching).
