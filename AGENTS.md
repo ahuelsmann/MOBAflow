@@ -92,11 +92,15 @@ on Windows and Linux.
   Remove legacy paths that already exist only in a dedicated change, not as incidental cleanup.
 - SonarQube before PR review: run code analysis only through the GitHub PR pipeline, create PRs as drafts, and
   require a green SonarCloud check on the current PR commit with zero OPEN/CONFIRMED PR issues before marking ready.
-  Do not run local Sonar/Vortex code analysis or install analysis hooks. Local secrets scans remain required. Follow
+  Do not run local Sonar/Vortex code analysis or install analysis hooks. Local sessions keep local secrets scans;
+  cloud sessions follow the cloud rule below. Follow
   [the Sonar policy](.github/instructions/sonarqube-pre-pr.instructions.md); preserve existing analyzer baseline gates.
-- Balanced secrets scanning: scan likely secret-bearing files before reading and changed files before commits/PRs.
-  If the scanner is unavailable, continue ordinary development, avoid sensitive files and record the limitation
-  before publication. If a scan finds a secret, stop handling that file and report it without exposing its value.
+- Balanced secrets scanning: local sessions scan likely secret-bearing files before reading them (pre-read) and
+  changed files before commits/PRs (pre-commit). If a scan finds a secret, stop handling that file and report it
+  without exposing its value. Cloud sessions without a local scanner, such as the Executive Assistant, need no local
+  scan: pre-read, they do not open likely secret-bearing files; pre-commit, GitHub Secret Scanning and Push Protection
+  check every push, and each PR records the missing local scan. If a local session's scanner is unavailable,
+  continue ordinary development, avoid sensitive files and record the limitation before publication.
 - After patches, generators or scripts change text files, run `scripts/Test-LineEndings.ps1 -Path <changed-paths>`.
   Use `-Fix` to normalize those files according to `.gitattributes`, then check again. Preserve LF exceptions,
   encoding and final-newline presence. Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
