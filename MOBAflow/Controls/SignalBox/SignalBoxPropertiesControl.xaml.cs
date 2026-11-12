@@ -336,12 +336,13 @@ public sealed partial class SignalBoxPropertiesControl
         foreach (var (label, aspect) in EnumerateAspectLabels(this))
             label.Text = KsSignalAspectNames.GetAspectLabel(aspect, isSpeedIndicatorSignal);
 
-        // The tooltip text is also the accessible name: the tile's own text is only the short aspect label.
+        // The tile shows only the short label; the tooltip explains it and the accessible name carries both.
         foreach (var (button, aspect) in EnumerateAspectButtons(this))
         {
-            var description = KsSignalAspectNames.GetAspectDescription(aspect, isSpeedIndicatorSignal);
-            ToolTipService.SetToolTip(button, description);
-            AutomationProperties.SetName(button, description);
+            ToolTipService.SetToolTip(button, KsSignalAspectNames.GetAspectDescription(aspect, isSpeedIndicatorSignal));
+            AutomationProperties.SetName(
+                button,
+                KsSignalAspectNames.GetAspectAccessibleName(aspect, isSpeedIndicatorSignal));
         }
     }
 
@@ -427,7 +428,7 @@ public sealed partial class SignalBoxPropertiesControl
             EditorViewModel?.SetSignalAspectCommand.Execute(aspect);
         }
 
-        // A ToggleButton toggles itself on click; the signal's aspect decides which tile is checked.
+        // The clicked tile has checked itself; the signal's aspect decides which tile stays checked.
         UpdateAspectButtons();
     }
 

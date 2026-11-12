@@ -43,6 +43,21 @@ internal sealed class KsSignalAspectNamesTests
                 Has.All.Not.Empty);
         }
     }
+
+    [Test]
+    public void GetAspectAccessibleName_Should_StartWithVisibleLabel_AndKeepDescription(
+        [Values] SignalAspect aspect,
+        [Values] bool is4046)
+    {
+        // Voice control users say the text shown on the tile, so the accessible name must contain it (label in name).
+        var name = KsSignalAspectNames.GetAspectAccessibleName(aspect, is4046);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(name, Does.StartWith(KsSignalAspectNames.GetAspectLabel(aspect, is4046)));
+            Assert.That(name, Does.EndWith(KsSignalAspectNames.GetAspectDescription(aspect, is4046)));
+        }
+    }
 }
 
 [TestFixture]

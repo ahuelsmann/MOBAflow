@@ -108,7 +108,8 @@ or an active MOBAflow runtime session.
 With Android's TalkBack screen reader, the four tabs, the locomotive cards on
 Engines, the signal aspect tiles on SignalBox and the function keys on Control
 are read as one item each, including their selection state, for example
-"Locomotive BR 110, digital address 7, selected" or "Ks 1 - Proceed, selected".
+"Locomotive BR 110, digital address 7, selected" or "Ks1: Ks 1 - Proceed, selected".
+A locomotive card's text follows a rename or address change made on the desktop.
 The speed gauge announces the current speed and DCC step.
 
 Text follows the font size chosen in Android's display settings. The digits

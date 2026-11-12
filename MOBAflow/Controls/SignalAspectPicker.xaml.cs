@@ -12,8 +12,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
 /// <summary>
-/// Grid of signal aspects. Each tile is a <see cref="ToggleButton"/>, so Tab reaches it, Enter or Space selects it
-/// and a screen reader announces the aspect description and whether it is the selected one.
+/// Grid of signal aspects. Each tile is a <see cref="SelectionToggleButton"/>, so Tab reaches it, Enter or Space
+/// selects it and a screen reader announces the aspect label, its description and whether it is the selected one.
 /// </summary>
 internal sealed partial class SignalAspectPicker
 {
@@ -103,7 +103,7 @@ internal sealed partial class SignalAspectPicker
             SelectedAspect = aspect;
         }
 
-        // A ToggleButton toggles itself on click; the selection decides which tile is checked.
+        // The clicked tile has checked itself; the selection decides which tile stays checked.
         UpdateSelectionVisuals();
     }
 
@@ -178,12 +178,11 @@ internal sealed partial class SignalAspectPicker
         AspectZs1Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs1, is4046);
         AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs7, is4046);
 
-        // The tooltip text is also the accessible name: the tile's own text is only the short aspect label.
+        // The tile shows only the short label; the tooltip explains it and the accessible name carries both.
         foreach (var (button, aspect) in EnumerateAspectButtons(this))
         {
-            var description = KsSignalAspectNames.GetAspectDescription(aspect, is4046);
-            ToolTipService.SetToolTip(button, description);
-            AutomationProperties.SetName(button, description);
+            ToolTipService.SetToolTip(button, KsSignalAspectNames.GetAspectDescription(aspect, is4046));
+            AutomationProperties.SetName(button, KsSignalAspectNames.GetAspectAccessibleName(aspect, is4046));
         }
     }
 

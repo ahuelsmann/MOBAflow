@@ -49,6 +49,15 @@ public static class KsSignalAspectNames
     }
 
     /// <summary>
+    /// Accessible name of an aspect tile: the visible label first, so voice control finds the tile by the text on it,
+    /// followed by the description a screen reader user needs.
+    /// </summary>
+    public static string GetAspectAccessibleName(SignalAspect aspect, bool is4046)
+    {
+        return $"{GetAspectLabel(aspect, is4046)}: {GetAspectDescription(aspect, is4046)}";
+    }
+
+    /// <summary>
     /// Describes what <paramref name="aspect"/> shows, for tooltips. The 4046 signal with speed indicators
     /// reuses several aspect slots for its own light combinations.
     /// </summary>

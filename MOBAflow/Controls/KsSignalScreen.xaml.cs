@@ -4,6 +4,7 @@ namespace Moba.WinUI.Controls;
 using SharedUI.Appearance;
 
 using Microsoft.UI;
+using Microsoft.UI.System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
@@ -29,6 +30,9 @@ internal sealed partial class KsSignalScreen
     private const double LitLampStrokeThickness = 2;
     private SolidColorBrush LitStroke => _litStroke ??= CreateLitStrokeBrush();
     private SolidColorBrush? _litStroke;
+
+    // ActualThemeChanged reports only Light/Dark, so switching a contrast theme on or off is observed here.
+    private ThemeSettings? _themeSettings;
 
     private DispatcherTimer? _blinkTimer;
     private bool _blinkState;
@@ -106,20 +110,58 @@ internal sealed partial class KsSignalScreen
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         ActualThemeChanged += OnActualThemeChanged;
-        UpdateAspect();
+        ObserveContrastTheme();
+
+        // The theme may have changed while this screen was unloaded.
+        RefreshThemeBrushes();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         ActualThemeChanged -= OnActualThemeChanged;
+        if (_themeSettings != null)
+        {
+            _themeSettings.Changed -= OnThemeSettingsChanged;
+            _themeSettings = null;
+        }
+
         StopBlinking();
+    }
+
+    private void ObserveContrastTheme()
+    {
+        if (_themeSettings != null || XamlRoot?.ContentIslandEnvironment is not { } environment
+            || environment.AppWindowId.Value == 0)
+        {
+            return;
+        }
+
+        _themeSettings = ThemeSettings.CreateForWindowId(environment.AppWindowId);
+        _themeSettings.Changed += OnThemeSettingsChanged;
     }
 
     private void OnActualThemeChanged(FrameworkElement sender, object args)
     {
+        RefreshThemeBrushes();
+    }
+
+    private void OnThemeSettingsChanged(ThemeSettings sender, object args)
+    {
+        _ = sender;
+        _ = args;
+        _ = DispatcherQueue.TryEnqueue(RefreshThemeBrushes);
+    }
+
+    private void RefreshThemeBrushes()
+    {
         _offColor = null;
         _litStroke = null;
-        UpdateAspect();
+
+        // A refresh queued just before unloading must not restart the blink timer of an unloaded screen.
+        if (IsLoaded)
+        {
+            UpdateAspect();
+        }
     }
 
     private SolidColorBrush CreateOffBrush()

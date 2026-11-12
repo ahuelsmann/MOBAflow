@@ -71,32 +71,37 @@ MOBAsmart: 16 of 23 XAML files already use `SemanticProperties`; the remaining f
 2. **Accessible names and guard:** the 43 buttons, plus a test that fails on a new unnamed icon-only button.
 3. **Keyboard and Narrator for the critical workflows:** the emergency-stop and track-power shortcuts and the signal-box
    focus layer (#375). Second delivery: the signal aspect tiles in `SignalBoxPropertiesControl` and `SignalAspectPicker`
-   were `Border` elements reacting to `PointerPressed`, so the signal-box workflow ended at the mouse once an element was
-   selected. They are `ToggleButton`s now: Tab reaches them, Enter or Space sets the aspect, the accessible name is the
-   aspect description ("Ks 1 - Proceed") and the checked state tells Narrator which aspect is current. The track-power
-   switch in `MainWindow` has the name "Track Power", the accelerator hint Ctrl+P and a help text and tooltip naming
-   Ctrl+P and F10. `AccessibleNameArchitectureTests` also rejects a `ToggleSwitch` without `Header`, on/off text or an
-   automation name. Focus order on the critical pages follows the visual tree and stays unchanged; the controls use the
-   system focus visuals.
+   were `Border` elements reacting to `PointerPressed`, so the signal-box workflow ended at the mouse once an element
+   was selected. They are `SelectionToggleButton`s now, a `ToggleButton` that only checks itself like a radio button, so
+   confirming the current tile never reports "off": Tab reaches them, Enter or Space sets the aspect, the accessible
+   name is the visible label followed by the aspect description ("Ks1: Ks 1 - Proceed", label in name for voice control)
+   and the checked state tells Narrator which aspect is current. The tiles have minimum instead of fixed heights, so
+   they grow with the Windows text size. The track-power switch in `MainWindow` has the name "Track Power", the
+   accelerator hint Ctrl+P and a help text and tooltip naming Ctrl+P and F10. `AccessibleNameArchitectureTests` also
+   rejects a `ToggleSwitch` without `Header`, on/off text or an automation name. Focus order on the critical pages
+   follows the visual tree and stays unchanged; the controls use the system focus visuals.
 4. **Theme resources and High Contrast:** the `HighContrast` theme dictionary, themed panel strips and Track Plan
    drawing (#375). Second delivery: while a Windows contrast theme is active, `KsSignalScreen` draws a ring in
-   `SignalLampLitStrokeBrush` (`SystemColorWindowTextColor`) around every lit lamp, so a lit lamp differs from an off one
-   by shape and not only by color; the lamp position then names the aspect as on the real Ks signal, and the pickers and
-   the signal-box focus layer carry the aspect as text. The checked aspect tile uses the system toggle highlight, which
-   the contrast theme defines. The toolbox detector marker uses the accent brush like the canvas detector. Fixed on
-   purpose after review: signal lamp colors (`KsSignalScreen`, `SignalGraphics.xaml`, `SignalBoxColors.xaml`), gauge
-   danger ranges and the Track Plan section palette (`Tag` values are data). The other C# color literals are fallbacks
-   of `ThemeResourceResolver` lookups. `OccupiedToStrokeConverter` has fixed colors but no caller; removing it is a
-   separate cleanup.
+   `SignalLampLitStrokeBrush` (`SystemColorWindowTextColor`) around every lit lamp, so a lit lamp differs from an off
+   one by shape and not only by color. `ThemeSettings.Changed` refreshes the ring and the off-lamp color when the
+   contrast theme is switched on or off while the app runs; `ActualThemeChanged` only reports Light and Dark, and
+   `AccessibilitySettings.HighContrastChanged` is not raised in WinUI 3 desktop apps. The lamp position then names the
+   aspect as on the real Ks signal, and the pickers and the signal-box focus layer carry the aspect as text. The checked
+   aspect tile uses the system toggle highlight, which the contrast theme defines. The toolbox detector marker uses the
+   accent brush like the canvas detector. Fixed on purpose after review: signal lamp colors (`KsSignalScreen`,
+   `SignalGraphics.xaml`, `SignalBoxColors.xaml`), gauge danger ranges and the Track Plan section palette (`Tag` values
+   are data). The other C# color literals are fallbacks of `ThemeResourceResolver` lookups. `OccupiedToStrokeConverter`
+   has fixed colors but no caller; removing it is a separate cleanup.
 5. **MOBAsmart:** TalkBack reads each bottom tab with its selection state (`AppBottomTabBar`), each locomotive card as
-   one item with name, digital address and selection (`LocomotivePickerItemView`), each signal aspect tile with its
-   description and selection while its preview lamps and short label are excluded (`SignalAspectPicker`), and
-   `KsSignalScreen` as "Signal aspect ..." with its speed indicators. Headings on Engines and SignalBox let TalkBack jump
-   between sections. `FunctionToggleView`, `SpeedGaugeView` and the Counter and Control pages already had descriptions.
-   Font scaling: MAUI labels follow the Android font size by default; fixed heights that would clip scaled text (reset
-   button and count badge in `StatisticsPanel`) became minimum sizes. The speed digits inside the signal graphic keep
-   their size because the description speaks the value. Not covered: the speed gauge draws its numbers on a
-   `GraphicsView`, so they do not scale; its description carries the value.
+   one item with name, digital address and selection, bound so it follows in-place fleet updates
+   (`LocomotivePickerItemView`), each signal aspect tile with its label, description and selection while its preview
+   lamps and short label are excluded (`SignalAspectPicker`), and `KsSignalScreen` as "Signal aspect ..." with its speed
+   indicators. Headings on Engines and SignalBox let TalkBack jump between sections. `FunctionToggleView`,
+   `SpeedGaugeView` and the Counter and Control pages already had descriptions. Font scaling: MAUI labels follow the
+   Android font size by default; fixed heights that would clip scaled text (reset button and count badge in
+   `StatisticsPanel`) became minimum sizes. The speed digits inside the signal graphic keep their size because the
+   description speaks the value. Not covered: the speed gauge draws its numbers on a `GraphicsView`, so they do not
+   scale; its description carries the value.
 6. **Acceptance and completion:** one approved app check after the PR builds, recorded on #374; then documentation and
    plan removal.
 
@@ -106,12 +111,14 @@ The app is launched only with explicit approval; one check covers all items. Per
 abolished on 2026-11-06, so states that this check does not inspect are recorded as limitations.
 
 - **Narrator:** Signal Box: Tab through the elements, Enter selects, Tab into the properties panel reads each aspect tile
-  with its description and on/off state; Enter sets the aspect. Train Control: emergency stop with its shortcut hint.
+  with its label, description and checked state; Enter sets the aspect and announces no "off" on the current tile.
+  Train Control: emergency stop with its shortcut hint.
   Track Power switch: focus, the announced name and the Ctrl+P / F10 hint only; the switch is never toggled in this check.
 - **Keyboard only:** the signal-box path above without a mouse. The shortcuts were verified on the Z21 on 2026-10-22.
-- **200% text size:** Train Control, the Signal Box properties panel and Settings without clipped labels.
-- **Light, Dark, High Contrast:** aspect tiles and the checked tile, the lit-lamp ring in High Contrast, the toolbox
-  detector marker and the Track Plan drawing.
+- **200% text size:** Train Control, the Signal Box properties panel and Settings without clipped labels, including the
+  aspect tile labels; the default size of the aspect tiles stays as before.
+- **Light, Dark, High Contrast:** aspect tiles and the checked tile, the lit-lamp ring in High Contrast (also after
+  switching the contrast theme on while the app runs), the toolbox detector marker and the Track Plan drawing.
 - **MOBAsmart (device or emulator, same approval):** TalkBack on the four tabs, a locomotive card, an aspect tile and
   the speed gauge; the largest Android font size on Counter, Engines and Control.
 

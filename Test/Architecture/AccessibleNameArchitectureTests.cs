@@ -15,7 +15,9 @@ internal sealed class AccessibleNameArchitectureTests
     private static readonly HashSet<string> ButtonElements =
     [
         "Button", "AppBarButton", "AppBarToggleButton", "DropDownButton", "HyperlinkButton", "RepeatButton",
-        "SplitButton", "ToggleButton", "ToggleSplitButton"
+        "SplitButton", "ToggleButton", "ToggleSplitButton",
+        // The app's own button types.
+        "SelectionToggleButton"
     ];
 
     [Test]

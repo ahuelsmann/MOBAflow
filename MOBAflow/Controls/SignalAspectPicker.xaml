@@ -18,11 +18,11 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ToggleButton
+        <controls:SelectionToggleButton
             x:Name="AspectHp0Button"
             Grid.Row="0"
             Grid.Column="0"
-            Height="112"
+            MinHeight="112"
             MinWidth="0"
             Padding="8"
             HorizontalAlignment="Stretch"
@@ -46,13 +46,13 @@
                     HorizontalAlignment="Center"
                     Text="Hp0" />
             </StackPanel>
-        </ToggleButton>
+        </controls:SelectionToggleButton>
 
-        <ToggleButton
+        <controls:SelectionToggleButton
             x:Name="AspectKs1Button"
             Grid.Row="0"
             Grid.Column="1"
-            Height="112"
+            MinHeight="112"
             MinWidth="0"
             Padding="8"
             HorizontalAlignment="Stretch"
@@ -76,13 +76,13 @@
                     HorizontalAlignment="Center"
                     Text="Ks1" />
             </StackPanel>
-        </ToggleButton>
+        </controls:SelectionToggleButton>
 
-        <ToggleButton
+        <controls:SelectionToggleButton
             x:Name="AspectKs2Button"
             Grid.Row="0"
             Grid.Column="2"
-            Height="112"
+            MinHeight="112"
             MinWidth="0"
             Padding="8"
             HorizontalAlignment="Stretch"
@@ -106,13 +106,13 @@
                     HorizontalAlignment="Center"
                     Text="Ks2" />
             </StackPanel>
-        </ToggleButton>
+        </controls:SelectionToggleButton>
 
-        <ToggleButton
+        <controls:SelectionToggleButton
             x:Name="AspectKs1BlinkButton"
             Grid.Row="1"
             Grid.Column="0"
-            Height="112"
+            MinHeight="112"
             MinWidth="0"
             Padding="8"
             HorizontalAlignment="Stretch"
@@ -136,13 +136,13 @@
                     HorizontalAlignment="Center"
                     Text="Ks1 Bl" />
             </StackPanel>
-        </ToggleButton>
+        </controls:SelectionToggleButton>
 
-        <ToggleButton
+        <controls:SelectionToggleButton
             x:Name="AspectKennlichtButton"
             Grid.Row="1"
             Grid.Column="1"
-            Height="112"
+            MinHeight="112"
             MinWidth="0"
             Padding="8"
             HorizontalAlignment="Stretch"
@@ -166,13 +166,13 @@
                     HorizontalAlignment="Center"
                     Text="Marker" />
             </StackPanel>
-        </ToggleButton>
+        </controls:SelectionToggleButton>
 
-        <ToggleButton
+        <controls:SelectionToggleButton
             x:Name="AspectDunkelButton"
             Grid.Row="1"
             Grid.Column="2"
-            Height="112"
+            MinHeight="112"
             MinWidth="0"
             Padding="8"
             HorizontalAlignment="Stretch"
@@ -196,13 +196,13 @@
                     HorizontalAlignment="Center"
                     Text="Dark" />
             </StackPanel>
-        </ToggleButton>
+        </controls:SelectionToggleButton>
 
-        <ToggleButton
+        <controls:SelectionToggleButton
             x:Name="AspectRa12Button"
             Grid.Row="2"
             Grid.Column="0"
-            Height="112"
+            MinHeight="112"
             MinWidth="0"
             Padding="8"
             HorizontalAlignment="Stretch"
@@ -226,13 +226,13 @@
                     HorizontalAlignment="Center"
                     Text="Ra12" />
             </StackPanel>
-        </ToggleButton>
+        </controls:SelectionToggleButton>
 
-        <ToggleButton
+        <controls:SelectionToggleButton
             x:Name="AspectZs1Button"
             Grid.Row="2"
             Grid.Column="1"
-            Height="112"
+            MinHeight="112"
             MinWidth="0"
             Padding="8"
             HorizontalAlignment="Stretch"
@@ -256,13 +256,13 @@
                     HorizontalAlignment="Center"
                     Text="Zs1" />
             </StackPanel>
-        </ToggleButton>
+        </controls:SelectionToggleButton>
 
-        <ToggleButton
+        <controls:SelectionToggleButton
             x:Name="AspectZs7Button"
             Grid.Row="2"
             Grid.Column="2"
-            Height="112"
+            MinHeight="112"
             MinWidth="0"
             Padding="8"
             HorizontalAlignment="Stretch"
@@ -286,6 +286,6 @@
                     HorizontalAlignment="Center"
                     Text="Zs7" />
             </StackPanel>
-        </ToggleButton>
+        </controls:SelectionToggleButton>
     </Grid>
 </UserControl>
