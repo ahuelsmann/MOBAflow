@@ -10,6 +10,10 @@
 
 **Spec Kit**: Required
 
+**Superseded in part**: Since #426 ([specs/019-exit-keeps-trains-running](../019-exit-keeps-trains-running/spec.md)),
+closing MOBAflow shows no warning and sends no speed 0. The warning and stop below still apply to opening or creating
+another solution, removing a project and changing a project's Z21.
+
 **Input**: User description: "Every project of a solution gets its own runtime, and every runtime needs its own Z21
 connection; that belongs in the user wiki. Switching the solution or project warns first and then sets everything to
 speed 0. No runtime copy of the project: a signal is one object with master data and its runtime aspect. Keep it

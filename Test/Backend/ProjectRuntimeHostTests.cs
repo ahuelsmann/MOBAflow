@@ -164,6 +164,43 @@ internal sealed class ProjectRuntimeHostTests
         _createdZ21s[0].Verify(z21 => z21.DisconnectAsync(), Times.Once);
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task ClosingTheApplication_ReleasesTheConnectionsWithoutAnyStopCommand(bool disposeOnly)
+    {
+        var station = Project("Station", "192.168.0.111");
+        station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
+        var yard = Project("Yard", "192.168.0.112");
+        yard.Locomotives.Add(new Locomotive { Name = "V 60", DigitalAddress = 5 });
+        await _host.LoadAsync((Project[])[station, yard]).ConfigureAwait(false);
+        ConfirmConnection(_createdZ21s[0]);
+        ConfirmConnection(_createdZ21s[1]);
+        await _host.Get(station.Id)!.Runtime.SetLocomotiveDriveAsync(3, 40, true).ConfigureAwait(false);
+        await _host.Get(yard.Id)!.Runtime.SetLocomotiveDriveAsync(5, 20, false).ConfigureAwait(false);
+        _createdZ21s[0].Invocations.Clear();
+        _createdZ21s[1].Invocations.Clear();
+
+        if (disposeOnly)
+        {
+            // The path without a shutdown workflow, for example after a failed or skipped one.
+            await _fixture.DisposeAsync().ConfigureAwait(false);
+        }
+        else
+        {
+            await _host.ReleaseAsync().ConfigureAwait(false);
+        }
+
+        Assert.That(_host.Runtimes, Is.Empty);
+        foreach (var z21 in _createdZ21s)
+        {
+            z21.Verify(value => value.SetLocoDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+            z21.Verify(value => value.SetEmergencyStopAsync(It.IsAny<CancellationToken>()), Times.Never);
+            z21.Verify(value => value.SetTrackPowerOffAsync(It.IsAny<CancellationToken>()), Times.Never);
+            z21.Verify(value => value.DisconnectAsync(), Times.Once);
+            z21.Verify(value => value.Dispose(), Times.Once);
+        }
+    }
+
     [Test]
     public async Task StoppingTrains_SkipsInvalidAddressesAndContinuesAfterAFailure()
     {
@@ -203,7 +240,7 @@ internal sealed class ProjectRuntimeHostTests
     }
 
     [Test]
-    public async Task CancelledShutdown_StillDiscardsTheRuntime()
+    public async Task CancelledStop_StillDiscardsTheRuntime()
     {
         var station = Project("Station", "192.168.0.111");
         station.Locomotives.Add(new Locomotive { Name = "BR 110", DigitalAddress = 3 });
