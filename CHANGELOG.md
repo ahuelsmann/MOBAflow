@@ -32,9 +32,9 @@ the version tags follow [Semantic Versioning](https://semver.org/).
   endpoint diagnostics; MOBAsmart selects a project and uses its address and port.
 - A confirmation before switching solutions or deleting a connected project;
   affected runtimes stop known locomotives before disposal.
-- Closing MOBAflow shows no stop-trains prompt and keeps the trains running: it
-  closes its Z21 connections without a stop command, also when MOBAflow ends
-  unexpectedly (#426).
+- Closing MOBAflow shows no stop-trains prompt and keeps the trains running, also
+  when MOBAflow ends unexpectedly; a normal close closes its Z21 connections
+  without a stop command (#426).
 
 - Event Manager for visually editing ordered journey feedback sequences.
 - Feedback-sequence progress persistence and MOBApi endpoints for mobile/runtime

@@ -104,8 +104,9 @@ The following points **MUST** be checked by the user before use:
 #### MOBAflow error → Restart the application
 
 ```text
-1. Stop the trains: switch off track power (Ctrl+P or F10 in MOBAflow)
-   or use the Z21 handheld controller (trains keep running after MOBAflow closes)
+1. Stop the trains on every Z21 in use (they keep running after MOBAflow closes):
+   select each connected project and switch off its track power (Ctrl+P or F10),
+   or use each Z21's handheld controller
 2. Close MOBAflow (Alt+F4)
 3. Check Z21 power button (LED green?)
 4. Restart MOBAflow
