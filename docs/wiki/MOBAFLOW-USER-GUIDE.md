@@ -74,6 +74,18 @@ outside the solution JSON.
 **Overview** shows the selected project's operating state, including Z21 telemetry,
 track-power state, feedback counters, lap progress and connected clients.
 
+Its **REST API and Clients** area shows whether the REST API runs and whether
+MOBAsmart sync is ready. After MOBAflow starts, some rows need a few seconds.
+While a row is still waiting, it shows a spinning ring instead of a dot and says
+what it waits for, for example **Waiting for the REST API to start...** or
+**Connecting...**. The REST API and **RuntimeHub host** rows also show how long
+they have waited. When the REST API answers, MOBAflow connects the sync and checks
+again within seconds, so the rows usually reach **Connected** shortly after
+**Running on port 5001**. If the REST API still does not answer after 30 seconds,
+the row says **REST API is slow to start, still checking...**. If the RuntimeHub
+host cannot connect, its row says **Host client disconnected, retrying**.
+MOBAflow keeps retrying in both cases.
+
 **Monitor** shows continuous traffic and activity. The expandable **Messages**
 area at the bottom of the main window contains structural project diagnostics,
 such as invalid references or conflicting data.
@@ -366,7 +378,9 @@ unavailable, for example without a Z21 connection or a selected locomotive.
 
 ### MOBAsmart cannot find MOBAflow
 
-- Verify that the REST API status in the desktop status bar is healthy.
+- Verify that the REST API status in the desktop status bar is healthy. On
+  **Overview**, wait until the MOBAsmart sync rows stop showing a spinning ring;
+  a row that still waits says what it waits for.
 - Keep the phone and PC on the same LAN and avoid guest-network isolation.
 - Allow TCP port `5001` and the discovery traffic through the PC firewall.
 - Tap the MOBAflow status in MOBAsmart to retry discovery.
