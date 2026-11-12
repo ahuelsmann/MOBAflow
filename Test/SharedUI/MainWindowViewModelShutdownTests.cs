@@ -67,7 +67,7 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
     }
 
     [Test]
-    public async Task PrepareForShutdownAsync_StopsAllProjectRuntimesOnlyOnce()
+    public async Task PrepareForShutdownAsync_ReleasesAllProjectRuntimesOnlyOnce()
     {
         var host = new Mock<IProjectRuntimeHost>();
         host.SetupGet(value => value.ConnectedProjectIds).Returns([]);
@@ -76,23 +76,18 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
         await viewModel.PrepareForShutdownAsync();
         await viewModel.PrepareForShutdownAsync();
 
-        // An empty project list stops the trains of every runtime and discards them.
-        host.Verify(value => value.LoadAsync(
-            It.Is<IReadOnlyList<Project>>(projects => projects.Count == 0),
-            It.IsAny<CancellationToken>()), Times.Once);
+        host.Verify(value => value.ReleaseAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
-    public async Task PrepareForShutdownAsync_WithConnectedRuntimeAndCancel_KeepsEverythingRunning()
+    public async Task PrepareForShutdownAsync_WithConnectedRuntime_ClosesWithoutAskingAndWithoutStoppingTheTrains()
     {
         var solution = new Solution { Projects = [new Project { Name = "Station" }] };
         var host = new Mock<IProjectRuntimeHost>();
         host.SetupGet(value => value.ConnectedProjectIds).Returns((Guid[])[solution.Projects[0].Id]);
         var dialog = new Mock<IDialogService>();
-        dialog.Setup(value => value.ShowConfirmationAsync(
-                "Stop all trains?", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
-            .ReturnsAsync(false);
         var viewModel = CreateViewModel(CreateMobaRuntimeMock(), host: host, dialog: dialog, solution: solution);
+        host.Invocations.Clear();
 
         var released = false;
 
@@ -100,32 +95,34 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(closed, Is.False);
-            Assert.That(released, Is.False, "A cancelled shutdown keeps the runtime observers subscribed.");
+            Assert.That(closed, Is.True);
+            Assert.That(released, Is.True);
         }
         dialog.Verify(value => value.ShowConfirmationAsync(
-            "Stop all trains?",
-            It.Is<string>(message => message.Contains("'Station'", StringComparison.Ordinal)),
-            "Stop trains", "Cancel", true), Times.Once);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
+        host.Verify(value => value.ReleaseAsync(It.IsAny<CancellationToken>()), Times.Once);
+        // Every other way to discard a runtime sets its locomotives to speed 0 first.
         host.Verify(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()), Times.Never);
+        host.Verify(value => value.RemoveAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        host.Verify(value => value.ReplaceAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
-    public async Task PrepareForShutdownAsync_ReleasesRuntimeObserversOnceBeforeStoppingRuntimes()
+    public async Task PrepareForShutdownAsync_ReleasesRuntimeObserversOnceBeforeReleasingRuntimes()
     {
         var host = new Mock<IProjectRuntimeHost>();
         host.SetupGet(value => value.ConnectedProjectIds).Returns([]);
         var viewModel = CreateViewModel(CreateMobaRuntimeMock(), host: host);
         var steps = new List<string>();
-        host.Setup(value => value.LoadAsync(It.IsAny<IReadOnlyList<Project>>(), It.IsAny<CancellationToken>()))
-            .Callback(() => steps.Add("stop runtimes"))
+        host.Setup(value => value.ReleaseAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => steps.Add("release runtimes"))
             .Returns(Task.CompletedTask);
 
         await viewModel.PrepareForShutdownAsync(() => steps.Add("release observers")).ConfigureAwait(false);
         await viewModel.PrepareForShutdownAsync(() => steps.Add("release observers")).ConfigureAwait(false);
 
         // The disconnect's last packets and snapshots must not reach the counter and traffic monitor.
-        Assert.That(steps, Is.EqualTo((string[])["release observers", "stop runtimes"]));
+        Assert.That(steps, Is.EqualTo((string[])["release observers", "release runtimes"]));
     }
 
     [TestCase(true)]

@@ -295,8 +295,8 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     }
 
     /// <inheritdoc />
-    public Task StopRuntimesAsync(CancellationToken cancellationToken = default) =>
-        _projectRuntimes.LoadAsync([], cancellationToken);
+    public Task ReleaseRuntimesAsync(CancellationToken cancellationToken = default) =>
+        _projectRuntimes.ReleaseAsync(cancellationToken);
 
     /// <inheritdoc />
     public ProjectViewModel AddProject(Project project)
