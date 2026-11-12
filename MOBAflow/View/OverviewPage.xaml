@@ -104,10 +104,8 @@
                             <TextBlock
                                 VerticalAlignment="Center"
                                 AutomationProperties.LiveSetting="Polite"
-                                Style="{StaticResource BodyTextBlockStyle}">
-                                <Run Text="RuntimeHub host: " />
-                                <Run Text="{x:Bind SystemStatus.RuntimeHubHostStatusText, Mode=OneWay}" />
-                            </TextBlock>
+                                Style="{StaticResource BodyTextBlockStyle}"
+                                Text="{x:Bind SystemStatus.RuntimeHubHostRowText, Mode=OneWay}" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"

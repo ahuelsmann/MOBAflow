@@ -102,6 +102,56 @@ internal sealed partial class RestApiStatusServiceTests
         }
     }
 
+    [Test]
+    public async Task Start_ShouldStillRecheckPromptly_WhenTheHostConnectTakesLongerThanTheWholeStartPhase()
+    {
+        // Arrange: the connect hangs for 45 s, longer than all re-check delays together (38 s).
+        var clock = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var probe = new SyncStartProbe(clock);
+        var hostConnected = false;
+        var connect = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var statusHandler = new SyncStatusHttpMessageHandler(probe, () => hostConnected);
+        var dependencies = CreateDependencies(statusHandler, timeProvider: clock);
+        await using var dependenciesLifetime = dependencies.ConfigureAwait(false);
+        dependencies.RuntimeHubHostClient.SetupGet(client => client.IsConnected).Returns(() => hostConnected);
+        dependencies.RuntimeHubHostClient
+            .Setup(client => client.ConnectAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Returns(() =>
+            {
+                probe.RecordConnectAttempt();
+                return connect.Task;
+            });
+        dependencies.EventBus.Subscribe<MobaflowSyncDiagnosticsChangedEvent>(e => probe.RecordDiagnostics(e.Diagnostics));
+
+        // Act: every refresh during the connect publishes once and leaves the connect to the first refresh.
+        dependencies.StatusService.Start();
+        for (var second = 1; second <= 45; second++)
+        {
+            await probe.WaitUntilAsync(() => probe.DiagnosticsCount == probe.RequestTimes.Length).ConfigureAwait(false);
+            clock.Advance(TimeSpan.FromSeconds(1));
+        }
+
+        await probe.WaitUntilAsync(() => probe.DiagnosticsCount == probe.RequestTimes.Length).ConfigureAwait(false);
+        var whileConnecting = probe.LastDiagnostics;
+        var requestsDuringConnect = probe.RequestTimes.Length;
+        hostConnected = true;
+        connect.SetResult();
+        var afterConnect = await probe.WaitForDiagnosticsAsync(diagnostics => diagnostics.HostClientConnected).ConfigureAwait(false);
+        clock.Advance(TimeSpan.FromSeconds(1));
+        var confirmed = await probe.WaitForDiagnosticsAsync(diagnostics => diagnostics.ServerHasHost).ConfigureAwait(false);
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(probe.ConnectAttemptTimes, Has.Length.EqualTo(1), "Overlapping refreshes do not connect again.");
+            Assert.That(requestsDuringConnect, Is.GreaterThan(7), "More checks ran during the connect than there are re-check delays.");
+            Assert.That(whileConnecting.SyncStarting, Is.True, "The rows keep waiting while the connect runs.");
+            Assert.That(afterConnect.SyncStarting, Is.True, "The finished connect starts the prompt re-checks.");
+            Assert.That(probe.RequestTimes[^1], Is.EqualTo(TimeSpan.FromSeconds(46)), "The server is asked again 1 s after the connect.");
+            Assert.That(confirmed.SyncStarting, Is.False);
+        }
+    }
+
     /// <summary>Records status requests, connect attempts and published diagnostics against the fake clock.</summary>
     private sealed class SyncStartProbe(ManualTimeProvider clock)
     {
@@ -130,6 +180,28 @@ internal sealed partial class RestApiStatusServiceTests
                 lock (_gate)
                 {
                     return _connectAttemptTimes.ToArray();
+                }
+            }
+        }
+
+        public int DiagnosticsCount
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return _diagnostics.Count;
+                }
+            }
+        }
+
+        public MobaflowSyncDiagnostics LastDiagnostics
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return _diagnostics[^1].Diagnostics;
                 }
             }
         }

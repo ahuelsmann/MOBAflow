@@ -207,7 +207,11 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
     public partial bool RuntimeHubHostIsHealthy { get; private set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RuntimeHubHostRowText))]
     public partial string RuntimeHubHostStatusText { get; private set; } = WaitingForRestApiText;
+
+    /// <summary>The whole RuntimeHub host row as one text, so a screen reader announces its changes with the label.</summary>
+    public string RuntimeHubHostRowText => $"RuntimeHub host: {RuntimeHubHostStatusText}";
 
     /// <summary>True while the RuntimeHub host waits for the REST API or connects to it.</summary>
     [ObservableProperty]

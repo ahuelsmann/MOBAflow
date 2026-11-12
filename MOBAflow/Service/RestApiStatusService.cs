@@ -249,54 +249,63 @@ public sealed class RestApiStatusService : IAsyncDisposable
 
                 // Publish event - UiThreadEventBusDecorator marshals to UI thread
                 _eventBus.Publish(new RestApiStatusChangedEvent(statusText, isReachable: true, clients));
-                if (!_runtimeHubConnected && IsInSyncStartPhase())
-                {
-                    // Shows "Connecting..." while the RuntimeHub host connects below.
-                    PublishSyncDiagnostics(data, restApiReachable: true, syncStarting: true);
-                }
 
                 // Overlapping refreshes (timer, reachability event, window activation) must not connect twice.
-                if (Interlocked.CompareExchange(ref _hubConnectInProgress, 1, 0) == 0)
+                if (Interlocked.CompareExchange(ref _hubConnectInProgress, 1, 0) != 0)
                 {
-                    try
-                    {
-                        if (!_photoHubClient.IsConnected)
-                        {
-                            try
-                            {
-                                await _photoHubClient.ConnectAsync("127.0.0.1", port);
-                                _photoHubConnected = true;
-                                _logger.LogInformation("PhotoHub connected for photo upload notifications");
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogDebug(ex, "PhotoHub connect failed (will retry on next refresh)");
-                            }
-                        }
+                    // Another refresh is still connecting: keep the rows waiting without using up a re-check
+                    // delay. That refresh schedules the next check when its connect attempt ends.
+                    PublishSyncDiagnostics(data, restApiReachable: true, syncStarting: !IsSyncSettled(data));
+                    return;
+                }
 
-                        if (!_runtimeHubConnected)
+                var hostConnectedNow = false;
+                try
+                {
+                    if (!_runtimeHubConnected && IsInSyncStartPhase())
+                    {
+                        // Shows "Connecting..." while the RuntimeHub host connects below.
+                        PublishSyncDiagnostics(data, restApiReachable: true, syncStarting: true);
+                    }
+
+                    if (!_photoHubClient.IsConnected)
+                    {
+                        try
                         {
-                            try
-                            {
-                                await _runtimeHubService.ConnectHostAsync(port, _disposeCts.Token);
-                                _runtimeHubConnected = true;
-                                _logger.LogInformation("RuntimeHub host connected for MOBAsmart sync");
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogDebug(ex, "RuntimeHub host connect failed (will retry on next refresh)");
-                            }
+                            await _photoHubClient.ConnectAsync("127.0.0.1", port);
+                            _photoHubConnected = true;
+                            _logger.LogInformation("PhotoHub connected for photo upload notifications");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "PhotoHub connect failed (will retry on next refresh)");
                         }
                     }
-                    finally
+
+                    if (!_runtimeHubConnected)
                     {
-                        Volatile.Write(ref _hubConnectInProgress, 0);
+                        try
+                        {
+                            await _runtimeHubService.ConnectHostAsync(port, _disposeCts.Token);
+                            _runtimeHubConnected = true;
+                            hostConnectedNow = true;
+                            _logger.LogInformation("RuntimeHub host connected for MOBAsmart sync");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "RuntimeHub host connect failed (will retry on next refresh)");
+                        }
                     }
+                }
+                finally
+                {
+                    Volatile.Write(ref _hubConnectInProgress, 0);
                 }
 
                 // The status above was read before this refresh connected the host and before pending pushes
                 // landed: while the synchronization is set up, re-check within seconds instead of after 30 s.
-                var syncStarting = ScheduleNextReachablePoll(data);
+                // A host that just connected always gets the prompt re-checks, however long the connect took.
+                var syncStarting = ScheduleNextReachablePoll(data, restartStartPhase: hostConnectedNow);
                 PublishSyncDiagnostics(data, restApiReachable: true, syncStarting);
             }
             else
@@ -346,10 +355,15 @@ public sealed class RestApiStatusService : IAsyncDisposable
     /// Chooses the next poll after a reachable status: 30 s once the synchronization is set up, otherwise the next
     /// re-check delay. Returns whether the synchronization is still being set up.
     /// </summary>
-    private bool ScheduleNextReachablePoll(StatusResponse? data)
+    private bool ScheduleNextReachablePoll(StatusResponse? data, bool restartStartPhase)
     {
         lock (_pollLock)
         {
+            if (restartStartPhase)
+            {
+                _syncStartPolls = 0;
+            }
+
             if (IsSyncSettled(data))
             {
                 _syncStartPolls = 0;

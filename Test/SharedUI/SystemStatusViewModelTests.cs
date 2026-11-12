@@ -171,6 +171,8 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
     {
         var clock = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
         var viewModel = CreateViewModel(clock);
+        var notified = new List<string?>();
+        viewModel.PropertyChanged += (_, e) => notified.Add(e.PropertyName);
 
         _eventBus.Publish(new RestApiStatusChangedEvent("Waiting for the REST API to start...", false) { IsStarting = true });
         _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics { RestApiReachable = false, HostConnectPending = true }));
@@ -196,6 +198,8 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         {
             Assert.That(viewModel.RuntimeHubHostIsPending, Is.True);
             Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("Connecting..."));
+            Assert.That(viewModel.RuntimeHubHostRowText, Is.EqualTo("RuntimeHub host: Connecting..."));
+            Assert.That(notified, Does.Contain(nameof(SystemStatusViewModel.RuntimeHubHostRowText)));
             Assert.That(viewModel.SolutionSyncIsPending, Is.True);
             Assert.That(viewModel.SolutionSyncStatusText, Is.EqualTo("Waiting for the solution..."));
             Assert.That(viewModel.RestCacheIsPending, Is.True);
