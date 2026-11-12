@@ -23,7 +23,7 @@ internal sealed partial class TestRollingStockPages : IDisposable
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(service => service.Detect(It.IsAny<Moba.Domain.Project>()))
             .Returns(new DigitalAddressConflictReport([], []));
-        var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: session);
+        var management = CreateManagement(detector.Object, session);
         var settings = new AppSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
@@ -36,6 +36,18 @@ internal sealed partial class TestRollingStockPages : IDisposable
         _pages.Add(page);
         return page;
     }
+    /// <summary>
+    /// Creates the locomotive management state with the production passport renderer and CV service, a file
+    /// picker that selects nothing and the given project context.
+    /// </summary>
+    internal static LocomotiveManagementViewModel CreateManagement(
+        IDigitalAddressConflictDetector detector,
+        IProjectContext projectContext,
+        IDecoderCvService? decoderCvService = null,
+        IFilePickerService? filePicker = null) =>
+        new(detector, new LocomotiveLibraryService(), new LocomotivePassportHtmlRenderer(),
+            decoderCvService ?? new DecoderCvService(), filePicker ?? new NullFilePickerService(), projectContext);
+
     private RuntimeLocomotiveControl CreateControl()
     {
         var snapshots = new Mock<IProjectRuntimeSnapshots>();

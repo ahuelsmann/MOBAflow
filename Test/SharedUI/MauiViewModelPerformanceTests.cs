@@ -461,6 +461,9 @@ internal sealed class MauiViewModelPerformanceTests
 
         var settingsService = CreateSettingsServiceMock(appSettings).Object;
         var endpointLocator = TestEndpointLocators.Create(appSettings, settingsService);
+        var hubClient = runtimeHubRemoteClient ?? Mock.Of<IRuntimeHubRemoteClient>();
+        var coordinator = mobileRuntimeCoordinator ?? Mock.Of<IMobileRuntimeCoordinator>();
+        var context = new MobileSolutionContext(TestViewModelServices.Default);
         var viewModel = new MauiViewModel(
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
@@ -470,19 +473,17 @@ internal sealed class MauiViewModelPerformanceTests
             appSettings,
             settingsService,
             endpointLocator,
-            TestHubSessions.Create(appSettings, endpointLocator, photoUploadMock.Object, runtimeHubRemoteClient),
-            new MobileRuntimeProjection(
-                mobaRuntimeMock.Object,
-                new MobileSolutionContext(TestViewModelServices.Default),
-                mobileRuntimeCoordinator ?? Mock.Of<IMobileRuntimeCoordinator>(),
-                Mock.Of<IMobileSolutionStore>()),
+            TestHubSessions.Create(appSettings, endpointLocator, photoUploadMock.Object, hubClient, new NullRestApiClientRegistration()),
+            new MobileRuntimeProjection(mobaRuntimeMock.Object, context, coordinator, Mock.Of<IMobileSolutionStore>()),
             TestSolutionSynchronizers.Create(Mock.Of<ISolutionRemoteLoader>()),
             new MobilePhotoUploader(new Mock<IPhotoCaptureService>().Object, photoUploadMock.Object, endpointLocator),
             new Mock<INetworkProfileChangeNotifier>().Object,
             NullLogger<MauiViewModel>.Instance,
             eventBus,
-            runtimeHubRemoteClient: runtimeHubRemoteClient,
-            mobileRuntimeCoordinator: mobileRuntimeCoordinator);
+            hubClient,
+            coordinator,
+            context,
+            Mock.Of<IBackgroundService>());
 
         _createdViewModels.Add(viewModel);
         viewModel.NotifySignalBoxPageLoaded();

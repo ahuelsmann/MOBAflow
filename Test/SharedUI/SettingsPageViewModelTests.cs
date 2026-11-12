@@ -6,6 +6,8 @@ using Moba.Common.Configuration;
 using Moba.Common.Navigation;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
+using Moba.Speech.Base;
+using Moba.Test.Helpers;
 using Moq;
 using System.Diagnostics.CodeAnalysis;
 
@@ -176,11 +178,11 @@ internal sealed class SettingsPageViewModelTests
     public async Task SpeechTestPassesUserTextToExistingHostIntegration()
     {
         string? spokenText = null;
-        var (viewModel, _, _, _) = Create(speech: message =>
-        {
-            spokenText = message;
-            return Task.CompletedTask;
-        });
+        var speech = new Mock<ISpeechOutput>();
+        speech.Setup(output => output.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((message, _) => spokenText = message)
+            .ReturnsAsync(SpeechResult.Success([]));
+        var (viewModel, _, _, _) = Create(speech: speech.Object);
         viewModel.SpeechTestMessage = "Gleis zwei";
         await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
 
@@ -195,7 +197,10 @@ internal sealed class SettingsPageViewModelTests
     [Test]
     public async Task SpeechTestFailureReportsErrorThroughUiDispatcher()
     {
-        var (viewModel, _, _, dispatcher) = Create(speech: _ => Task.FromException(new InvalidOperationException("speech unavailable")));
+        var speech = new Mock<ISpeechOutput>();
+        speech.Setup(output => output.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SpeechResult.Failure(SpeechFailureKind.Unavailable, "speech unavailable"));
+        var (viewModel, _, _, dispatcher) = Create(speech: speech.Object);
         await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
@@ -324,7 +329,7 @@ internal sealed class SettingsPageViewModelTests
     }
 
     private static (SettingsPageViewModel ViewModel, AppSettings Settings, Mock<ISettingsService> Persistence, Mock<IUiDispatcher> Dispatcher)
-        Create(Func<string, Task>? speech = null, IFeatureTogglePageProvider? provider = null)
+        Create(ISpeechOutput? speech = null, IFeatureTogglePageProvider? provider = null)
     {
         var settings = new AppSettings();
         var persistence = new Mock<ISettingsService>();
@@ -332,6 +337,7 @@ internal sealed class SettingsPageViewModelTests
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
         return (new SettingsPageViewModel(settings, persistence.Object, dispatcher.Object,
-            NullLogger<SettingsPageViewModel>.Instance, provider, speech), settings, persistence, dispatcher);
+            NullLogger<SettingsPageViewModel>.Instance, provider ?? TestSettingsPages.NoFeatureToggles(),
+            speech ?? new NullSpeechOutput()), settings, persistence, dispatcher);
     }
 }

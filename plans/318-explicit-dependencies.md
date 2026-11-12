@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/318
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: In progress; workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330) and static hooks (slice 3, #335) are integrated. Slice 4 (SharedUI ViewModels) is in review; see [Slice 4 result](#slice-4-result). Issue #318 remains open for the slice 4 remainder and slice 5.
+**Status**: In progress; workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330), static hooks (slice 3, #335) and SharedUI ViewModels (slice 4, #414) are integrated. Slice 4b (the SharedUI ViewModel part of the slice 4 remainder) is in review on branch `claude/issue-318-rf25-slice4-remainder`; see [Slice 4b result](#slice-4b-result). Issue #318 remains open for slice 4c (hosts, pages, Backend, speech and display) and slice 5.
 
 ## Purpose and scope
 
@@ -71,10 +71,16 @@ Kept as is: value options with documented defaults (`RecorderOptions`, `Recordin
 4. **SharedUI ViewModels.** Starts after RF-24 slice 3b (#293), which changes `MainWindowViewModel` and the shared
    test helpers. `WorkflowLibraryViewModel`, the model-wrapper ViewModels, `SolutionSession`, train-control and
    counter services, `PhotosController`, `SolutionRemoteLoader`, `MobileRuntimeProjection`, `MobiStartupService`.
+   The remainder of slice 4 is split into two slices:
+   - **4b. SharedUI ViewModels.** `MauiViewModel` with `MobaflowHubSession` and `MobileAppLifecycle`, the
+     `TrainControlViewModel` coordinator fallback, `MainWindowViewModel`, `LocomotiveManagementViewModel`,
+     `SettingsPageViewModel` and their host registrations; see [Slice 4b result](#slice-4b-result).
+   - **4c. Hosts, pages, Backend, speech and display.** The items listed as remaining under
+     [Slice 4b result](#slice-4b-result).
 5. **DI validation and completion.** WinUI and MAUI container validators resolve every changed registration (including the executable Android DI test lane described under validation);
    update `docs/ARCHITECTURE.md` where it describes construction, replace the RF-25 anchor in the umbrella plan
-   with a delivery note and remove this plan. Slice 5 completes #318 only after the slice 4 remainder listed
-   under [Slice 4 result](#slice-4-result) has been migrated in its own slice; until then the issue stays open.
+   with a delivery note and remove this plan. Slice 5 completes #318 only after slices 4b and 4c have migrated the
+   slice 4 remainder listed under [Slice 4 result](#slice-4-result); until then the issue stays open.
 
 ## Slice 4 result
 
@@ -101,7 +107,8 @@ Differences from the inventory above:
   `WorkflowDryRunServiceTests` covers the request the editor previously built itself.
 - Remainder against the acceptance "no service-typed optional constructor parameter or `?? new` service fallback"
   (verified on this slice's tree; slice 5 must not close #318 while any of these remain, they need their own
-  slice before the issue closes):
+  slice before the issue closes; slice 4b delivered the SharedUI items and the two `MobaWinUiServiceCollectionExtensions`
+  resolutions, slice 4c owns the rest):
   - SharedUI: `MauiViewModel` and `MobaflowHubSession` optional hub client, coordinator, project context, client
     registration and `MobileAppLifecycle` background service (one change, see the table); the
     `TrainControlViewModel` coordinator fallback (`?? runtimeCommandGateway as IMobileRuntimeCoordinator`);
@@ -124,6 +131,55 @@ Differences from the inventory above:
   - MOBAsmart: `RuntimeHubRemoteClient` (`ILogger?`).
 - Out of scope, noted: `FeedbackCounterEngine` has no production caller after RF-24 (tests only).
 - Documentation: `docs/ARCHITECTURE.md` (file roles, workflow library composition) corrected; `docs/wiki/`
+  unchanged because no user-visible behavior, setting or screen changed.
+
+## Slice 4b result
+
+Delivered against main `9c451c8a` after #424, #425 and #433; RF-16 (#432) touches none of these files.
+Service lifetimes and user-visible behavior are unchanged.
+
+- `MauiViewModel`, `MobaflowHubSession` and `MobileAppLifecycle` require the runtime hub client, the mobile
+  coordinator, the project context, the client registration and the background service; their null branches are
+  gone. MOBAsmart already registered every collaborator.
+- `TrainControlViewModel` requires an `IRuntimeRoutingState` instead of the optional coordinator and the
+  `?? runtimeCommandGateway as IMobileRuntimeCoordinator` fallback. The new interface holds the read-only part of
+  `IMobileRuntimeCoordinator` (`PreferRemoteRuntime`, `CanExecuteCommands`, `IsLocalZ21Connected`), which extends it.
+  MOBAsmart registers its coordinator behind it, MOBAflow registers `NullRuntimeRoutingState`. The null object
+  never prefers the remote runtime and adds no command route, as the old null path did; only the hybrid mode reads
+  `IsLocalZ21Connected`, and only MOBAsmart, always with its coordinator, uses that mode.
+- `MainWindowViewModel` requires `ISettingsService` and `IDialogService`; MOBAflow resolves the dialog service with
+  `GetRequiredService`, and project deletion and the stop-trains confirmation no longer handle a missing dialog.
+- `LocomotiveManagementViewModel` requires passport renderer, CV service, file picker and project context, which
+  MOBAflow's container already supplied.
+- `SettingsPageViewModel` requires `IFeatureTogglePageProvider` and `ISpeechOutput`. The speech test speaks through
+  the output and shows its failure reason, as the host's former `Func<string, Task>` did; the never-used
+  `AnnouncementService` path is removed, so the ViewModel no longer references a Backend service type. MOBAflow
+  resolves the page provider with `GetRequiredService`.
+- Tests: `TestHubSessions.Create` requires hub client and registration; the MAUI ViewModel factories pass one hub
+  client, coordinator and project context to both the ViewModel and its collaborators;
+  `TestRollingStockPages.CreateManagement` and `TestSettingsPages.NoFeatureToggles` are new; shell tests pass
+  `NullDialogService` and a settings mock; train-control tests pass `NullRuntimeRoutingState` or their coordinator.
+  The WinUI container test resolves routing state, shell, train control, locomotive management and the settings
+  page with its toggles; the MAUI container test checks that the routing state is the coordinator.
+- Remaining for slice 4c, verified on this branch (items marked new were not in the slice 4 list):
+  - MOBAflow host: the page code-behind constructors under `MOBAflow/View` listed under
+    [Slice 4 result](#slice-4-result) and their `GetService` resolutions in `NavigationRegistration`;
+    `RestApiProcessService` (`ISettingsService?`); `RuntimeHubHostClient` (`ILogger?`, new);
+    `CancellableWavePlayer` (`TimeProvider?`) and the `AudioCache` registration's
+    `GetService<TimeProvider>() ?? TimeProvider.System` (new). The page constructors also carry the layout
+    persistence that RF-24 slice 6 centralizes; align the page part with that slice before starting it.
+  - Backend: `UdpWrapper`, `InPortCounterService`, `LocomotiveWhistleAutomationService`, `Z21EventPipeline`,
+    `Z21` (`ILogger<Z21>?`, `Z21Monitor?`, new) and the `ActionExecutionContext` registration that resolves speech
+    and sound output with `GetService`.
+  - MOBAsmart: `RuntimeHubRemoteClient` (`ILogger?`).
+  - Speech and display (new): `PiperSpeechProvider` (`?? new PiperProcessRunner()`), `PiperProcessRunner` and
+    `DisplayProtocolClient` (`TimeProvider?`).
+  - To classify as value or service (new): optional delegates with a production default
+    (`BrakeAndDoorState` random source, `CancellableWavePlayer` session factory, `SystemSpeechProvider` default
+    voice, `ForwardingEventBus` delivery) and the optional `RecordingArtifactSerializer` payload validators.
+- Out of scope, noted: `MOBAsmart/Platforms/Android/MainActivity` looks up `MainWindowViewModel`, which MOBAsmart
+  never registers, so its disconnect-on-destroy never runs.
+- Documentation: `docs/ARCHITECTURE.md` (settings presentation, train control routing) corrected; `docs/wiki/`
   unchanged because no user-visible behavior, setting or screen changed.
 
 ## Validation strategy

@@ -34,7 +34,7 @@ public sealed partial class MobileAppLifecycle : IDisposable
     /// <summary>Coalesces rapid platform connectivity notifications before re-running REST discovery.</summary>
     private static readonly TimeSpan NetworkChangeDebounce = TimeSpan.FromMilliseconds(750);
 
-    private readonly IBackgroundService? _backgroundService;
+    private readonly IBackgroundService _backgroundService;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger _logger;
     private readonly Lock _gate = new();
@@ -45,11 +45,12 @@ public sealed partial class MobileAppLifecycle : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="MobileAppLifecycle"/> class.
     /// </summary>
-    /// <param name="backgroundService">Optional: the Android foreground service.</param>
+    /// <param name="backgroundService">The Android foreground service.</param>
     /// <param name="timeProvider">Clock for the network-change debounce.</param>
     /// <param name="logger">Logger for diagnostics.</param>
-    public MobileAppLifecycle(IBackgroundService? backgroundService, TimeProvider timeProvider, ILogger logger)
+    public MobileAppLifecycle(IBackgroundService backgroundService, TimeProvider timeProvider, ILogger logger)
     {
+        ArgumentNullException.ThrowIfNull(backgroundService);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(logger);
         _backgroundService = backgroundService;
@@ -82,7 +83,7 @@ public sealed partial class MobileAppLifecycle : IDisposable
     public async Task SyncBackgroundServiceAsync(Func<MobileKeepAliveState> currentState, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(currentState);
-        if (_backgroundService == null || _isStopping)
+        if (_isStopping)
         {
             return;
         }
@@ -99,7 +100,7 @@ public sealed partial class MobileAppLifecycle : IDisposable
         {
             await previousSync.WaitAsync(cancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
             cancellationToken.ThrowIfCancellationRequested();
-            await ApplyBackgroundServiceStateAsync(_backgroundService, currentState()).ConfigureAwait(false);
+            await ApplyBackgroundServiceStateAsync(currentState()).ConfigureAwait(false);
         }
         finally
         {
@@ -110,7 +111,7 @@ public sealed partial class MobileAppLifecycle : IDisposable
     /// <summary>Stops the foreground service if it runs; a failing stop is logged and ignored.</summary>
     public async Task StopBackgroundServiceAsync()
     {
-        if (_backgroundService == null || !_backgroundService.IsRunning)
+        if (!_backgroundService.IsRunning)
         {
             return;
         }
@@ -148,7 +149,7 @@ public sealed partial class MobileAppLifecycle : IDisposable
     /// <inheritdoc />
     public void Dispose() => CancelPendingNetworkChange(replaceWithNew: false);
 
-    private async Task ApplyBackgroundServiceStateAsync(IBackgroundService backgroundService, MobileKeepAliveState state)
+    private async Task ApplyBackgroundServiceStateAsync(MobileKeepAliveState state)
     {
         try
         {
@@ -158,9 +159,9 @@ public sealed partial class MobileAppLifecycle : IDisposable
                 state.IsRestApiReachable,
                 state.IsRuntimeHubConnected))
             {
-                if (backgroundService.IsRunning)
+                if (_backgroundService.IsRunning)
                 {
-                    await backgroundService.StopAsync().ConfigureAwait(false);
+                    await _backgroundService.StopAsync().ConfigureAwait(false);
                 }
 
                 return;
@@ -169,7 +170,7 @@ public sealed partial class MobileAppLifecycle : IDisposable
             var message = MobileBackgroundKeepAlivePolicy.GetNotificationMessage(
                 state.IsZ21Connected,
                 state.IsMobaflowSessionActive);
-            await backgroundService.StartAsync(NotificationTitle, message).ConfigureAwait(false);
+            await _backgroundService.StartAsync(NotificationTitle, message).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {

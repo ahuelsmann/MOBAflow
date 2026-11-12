@@ -67,6 +67,7 @@ internal sealed class TrainControlHostSelectionTests
             ImmediateUiDispatcher.Instance,
             eventBus,
             new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState(),
             options: new TrainControlViewModelOptions { Host = TrainControlHost.WinUi });
         winUiViewModel.RefreshLocomotiveList();
         winUiViewModel.SelectProjectLocomotiveCommand.Execute(winUiViewModel.ProjectLocomotives[0]);
@@ -80,6 +81,7 @@ internal sealed class TrainControlHostSelectionTests
             ImmediateUiDispatcher.Instance,
             eventBus,
             new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState(),
             options: new TrainControlViewModelOptions { Host = TrainControlHost.Maui });
         mauiViewModel.RefreshLocomotiveList();
         mauiViewModel.SelectProjectLocomotiveCommand.Execute(mauiViewModel.ProjectLocomotives[1]);

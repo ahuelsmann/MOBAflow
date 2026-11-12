@@ -126,7 +126,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
-            new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
+            new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -135,7 +135,9 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            loggerMock.Object);
+            loggerMock.Object,
+            Mock.Of<ISettingsService>(),
+            new NullDialogService());
     }
 
     private static readonly string[] RenamedVehicleNames = ["Renamed vehicle"];
@@ -399,7 +401,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            new LocalRuntimeCommandGateway(runtime.Object),
+            new LocalRuntimeCommandGateway(runtime.Object),
             stationEventBus2,
             settingsPage2,
             trainsPage2,
@@ -408,7 +410,9 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession2, trainsPage2),
             _rollingStockPages.GetSystemStatus(stationEventBus2, locomotiveSession2, settingsPage2),
             locomotiveSession2,
-            NullLogger<MainWindowViewModel>.Instance)
+            NullLogger<MainWindowViewModel>.Instance,
+            Mock.Of<ISettingsService>(),
+            new NullDialogService())
         {
             CurrentSolutionPath = "inventory.json",
             SelectedProject = new ProjectViewModel(project, TestViewModelServices.Default)

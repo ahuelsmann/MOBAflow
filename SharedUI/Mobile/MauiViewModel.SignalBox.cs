@@ -169,7 +169,7 @@ public sealed partial class MauiViewModel
         }
 
         // MOBAflow runtime snapshots are authoritative while a remote session is active.
-        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true
+        if (_mobileRuntimeCoordinator.PreferRemoteRuntime
             && snapshot.SignalAspect.HasValue)
         {
             _pendingSignalAspects.Remove(snapshot.ElementId);

@@ -39,9 +39,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     // Configuration
     private readonly AppSettings _settings;
 
-    // Optional Services
-    private readonly ISettingsService? _settingsService;
-    private readonly IDialogService? _dialogService;
+    private readonly ISettingsService _settingsService;
+    private readonly IDialogService _dialogService;
 
     // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
     private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
@@ -65,8 +64,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="systemStatus">Host-owned speech, post-startup, REST API and synchronization status bound by the status bar.</param>
     /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
-    /// <param name="settingsService">Optional settings service used to persist changes.</param>
-    /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
+    /// <param name="settingsService">Settings service used to persist changes.</param>
+    /// <param name="dialogService">Dialog service for the delete-project and stop-trains confirmations.</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
         IRuntimeSnapshotProvider runtimeSnapshots,
@@ -81,8 +80,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SystemStatusViewModel systemStatus,
         ISolutionSession solutionSession,
         ILogger<MainWindowViewModel> logger,
-        ISettingsService? settingsService = null,
-        IDialogService? dialogService = null)
+        ISettingsService settingsService,
+        IDialogService dialogService)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
@@ -97,6 +96,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(diagnostics);
         ArgumentNullException.ThrowIfNull(systemStatus);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(dialogService);
 
         _session = solutionSession;
         _runtimeSnapshots = runtimeSnapshots;
@@ -176,9 +177,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public AppSettings ApplicationSettings => _settings;
 
     /// <summary>
-    /// Optional settings persistence service (platform-provided). Used by shell-level UI behaviors.
+    /// Settings persistence service (platform-provided). Used by shell-level UI behaviors.
     /// </summary>
-    public ISettingsService? SettingsPersistence => _settingsService;
+    public ISettingsService SettingsPersistence => _settingsService;
 
     /// <summary>
     /// Non-generic logger for UI shell subsystems (e.g. layout behaviors) that are not constructed via DI.
@@ -250,7 +251,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private async Task DeleteProjectAsync()
     {
         if (SelectedProject == null) return;
-        if (_dialogService == null) return;
 
         // Show confirmation dialog; a connected runtime stops its trains when the project goes away.
         var stopsTrains = _session.GetConnectedProjectNames([SelectedProject.Model.Id]).Count > 0;
@@ -297,7 +297,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         DeleteProjectCommand.NotifyCanExecuteChanged();
     }
 
-    private bool CanDeleteProject() => SelectedProject != null && _dialogService != null;
+    private bool CanDeleteProject() => SelectedProject != null;
     #endregion
 
     #region Lifecycle
@@ -388,11 +388,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void PersistSettingsSafely()
     {
-        if (_settingsService == null)
-        {
-            return;
-        }
-
         _settingsService.SaveSettingsAsync(_settings).Observe(ex => _logger.LogWarning(ex, "Persist MainWindow settings failed"));
     }
 

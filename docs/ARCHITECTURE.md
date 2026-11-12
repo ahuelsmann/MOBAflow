@@ -543,8 +543,9 @@ runtime services.
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
-  speech selectors. Its required dependencies are AppSettings, ISettingsService, the UI dispatcher
-  and logging; speech testing uses the existing host action. It never depends on MainWindowViewModel.
+  speech selectors. Its required dependencies are AppSettings, ISettingsService, the UI dispatcher,
+  logging, the host's `IFeatureTogglePageProvider` and `ISpeechOutput`; the speech test speaks through that
+  output and shows its failure reason. It never depends on MainWindowViewModel.
 - The ViewModel owns settings persistence, feature items, Piper choices, reset commands and section
   state. SettingsPage keeps file pickers and visual ordering/reset feedback.
 - `InPortCounterViewModel` reacts to actual valid feedback-count changes since slice 5a, and
@@ -821,7 +822,9 @@ Control page and the MOBAsmart Engines/Control tabs. It coordinates platform-neu
 | [`TrainControlSettingsStore`](../SharedUI/TrainControl/TrainControlSettingsStore.cs) | Ramp, speed steps, series/Vmax and the per-host (WinUI/MAUI) selected locomotive. |
 
 The ViewModel keeps the bound properties, commands and the UI-thread continuations of ramps and the
-door transition; host differences stay explicit through `TrainControlViewModelOptions`.
+door transition; host differences stay explicit through `TrainControlViewModelOptions` and the required
+[`IRuntimeRoutingState`](../SharedUI/Interface/IRuntimeRoutingState.cs): MOBAsmart registers its
+`MobileRuntimeCoordinator` for the hybrid local/remote routing, MOBAflow registers `NullRuntimeRoutingState`.
 
 ### MOBAsmart session and projection
 
