@@ -59,6 +59,30 @@ Assert-Scope @('Contracts/Runtime/MobaRuntimeSnapshot.cs', 'TrackPlan.Editor/Edi
 Assert-Scope @('quality/analyzer-baseline.json') $true $false $false 'analyzer baseline change'
 Assert-Scope @('Test/SharedUI/SolutionSessionTests.cs') $true $false $false 'tests outside the Domain lane'
 
+# Android Release AAB job: only MOBAsmart and the Android analyzer baseline select it (issue #360).
+function Assert-Android([string[]] $Paths, [bool] $Android, [string] $Scenario) {
+    $actual = Get-Scope $Paths
+    if ($actual.Android -ne $Android) {
+        throw "Expected android=$Android for '$Scenario', but got android=$($actual.Android)."
+    }
+
+    $script:checks++
+}
+
+Assert-Android @('MOBAsmart/View/ControlPage.xaml') $true 'MOBAsmart source'
+Assert-Android @('MOBAsmart\MOBAsmart.csproj') $true 'MOBAsmart project with Windows path separators'
+Assert-Android @('quality/analyzer-baseline.android.json') $true 'Android analyzer baseline'
+Assert-Android @('docs/ARCHITECTURE.md', 'Backend/Z21.cs', 'MOBAsmart/MauiProgram.cs') $true 'MOBAsmart among other changes'
+Assert-Android @('SharedUI/ViewModel/MainWindowViewModel.cs') $false 'SharedUI only'
+Assert-Android @('MOBAflow/View/SolutionPage.xaml', 'Test/MOBAflow/SomeTests.cs') $false 'desktop only'
+Assert-Android @('docs/BUILD-PERFORMANCE.md', 'plans/360-ci-platform-matrix.md') $false 'documentation only'
+Assert-Android @('quality/analyzer-baseline.json') $false 'desktop analyzer baseline'
+Assert-Android @('Test/MOBAsmart/SomeTests.cs') $false 'MOBAsmart tests outside the project folder'
+Assert-Android @('Directory.Packages.props', 'global.json') $false 'repository-wide build inputs'
+Assert-Android @('.github/workflows/quality.yml', 'scripts/Get-QualityChangeScope.ps1') $false 'workflow and scope rules'
+Assert-Android @() $false 'empty change set'
+Assert-Scope @('MOBAsmart/View/ControlPage.xaml') $true $false $false 'MOBAsmart keeps the other scopes unchanged'
+
 # Firmware inputs.
 Assert-Scope @('MOBAdisplay/esp32/src/main.cpp') $true $true $false 'firmware source'
 Assert-Scope @('MOBAdisplay/esp32/platformio.ini') $true $true $false 'firmware build configuration'
@@ -89,13 +113,96 @@ foreach ($include in $mutationSources) {
     Assert-Scope @($samplePath) $true $false $true "mutation project input '$include'"
 }
 
+# A failed change detection leaves every output empty. Each job condition must then run its job rather than
+# report a skipped (passing) required check, so quality.yml compares the outputs only with != 'false'.
+$workflowText = Get-Content -Raw -LiteralPath (Join-Path $repositoryRoot '.github/workflows/quality.yml')
+$scopeReads = @([regex]::Matches($workflowText, "needs\.changes\.outputs\.(\w+)(\s*[!=]=\s*'[^']*')?"))
+$failClosedReads = @($scopeReads | Where-Object { $_.Groups[2].Value -notmatch "^\s*!=\s*'false'$" })
+if ($failClosedReads.Count -gt 0) {
+    throw "quality.yml must read change-scope outputs with != 'false'; found: $(($failClosedReads | ForEach-Object Value) -join ', ')."
+}
+$readOutputs = @($scopeReads | ForEach-Object { $_.Groups[1].Value })
+foreach ($output in 'code', 'firmware', 'mutation', 'android') {
+    if ($readOutputs -notcontains $output) {
+        throw "Expected quality.yml to read the '$output' change-scope output."
+    }
+}
+$checks++
+
+# Without a status-check function GitHub adds an implicit success() to a job condition, so a failed change
+# detection would skip the job whatever the output comparison says. Every job that needs `changes` and reads
+# its outputs must therefore keep !cancelled() or always() in its job-level condition.
+function Get-JobValue([string[]] $JobLines, [string] $Key) {
+    # Returns the job-level value of $Key, including folded continuation lines, or $null.
+    $value = $null
+    foreach ($line in $JobLines) {
+        if ($null -eq $value) {
+            if ($line -match "^    $Key\s*:(.*)$") {
+                $value = $Matches[1]
+            }
+        }
+        elseif ($line -match '^\s{6,}\S' -or $line -match '^\s*$') {
+            $value += "`n$line"
+        }
+        else {
+            break
+        }
+    }
+
+    return $value
+}
+
+$workflowLines = $workflowText -split "\r?\n"
+$jobsStart = [array]::IndexOf($workflowLines, 'jobs:')
+if ($jobsStart -lt 0) {
+    throw 'Expected a top-level jobs: section in quality.yml.'
+}
+$jobs = [ordered] @{}
+$currentJob = $null
+foreach ($line in $workflowLines[($jobsStart + 1)..($workflowLines.Count - 1)]) {
+    if ($line -match '^\S') {
+        break
+    }
+    if ($line -match '^  ([\w-]+):\s*$') {
+        $currentJob = $Matches[1]
+        $jobs[$currentJob] = [Collections.Generic.List[string]]::new()
+    }
+    elseif ($null -ne $currentJob) {
+        $jobs[$currentJob].Add($line)
+    }
+}
+
+$guardedJobs = @()
+foreach ($job in $jobs.Keys) {
+    $jobLines = [string[]] $jobs[$job]
+    $needs = Get-JobValue $jobLines 'needs'
+    if ($null -eq $needs -or @([regex]::Matches($needs, '[\w-]+') | ForEach-Object Value) -notcontains 'changes') {
+        continue
+    }
+    if (-not ($jobLines -join "`n").Contains('needs.changes.outputs.')) {
+        continue
+    }
+    $condition = Get-JobValue $jobLines 'if'
+    if ($null -eq $condition -or $condition -notmatch '!\s*cancelled\(\)|\balways\(\)') {
+        throw ("quality.yml job '$job' reads the change scope, but its condition lacks !cancelled() or always(); " +
+            'a failed change detection would skip it.')
+    }
+    $guardedJobs += $job
+    $checks++
+}
+foreach ($job in 'desktop', 'android-release') {
+    if ($guardedJobs -notcontains $job) {
+        throw "Expected quality.yml job '$job' to read the change scope with a fail-open condition."
+    }
+}
+
 $outputFile = [IO.Path]::GetTempFileName()
 $savedOutput = $env:GITHUB_OUTPUT
 try {
     $env:GITHUB_OUTPUT = $outputFile
     & $scriptPath -Path @('MOBAdisplay/esp32/src/main.cpp') 6> $null | Out-Null
     $written = (Get-Content -Raw -LiteralPath $outputFile).Trim() -replace "`r`n", "`n"
-    if ($written -ne "code=true`nfirmware=true`nmutation=false") {
+    if ($written -ne "code=true`nfirmware=true`nmutation=false`nandroid=false") {
         throw "Unexpected GITHUB_OUTPUT content '$written'."
     }
     $checks++

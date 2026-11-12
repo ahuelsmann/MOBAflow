@@ -43,13 +43,24 @@ reports the conflict: the first project in solution order connects, and later
 projects using that address stay disconnected. A project without an address also
 stays disconnected while the other projects run normally.
 
-Before opening or creating another solution, deleting a connected project or
-closing MOBAflow, **Stop all trains?** asks for confirmation. Confirming sets all
+Before opening or creating another solution or deleting a connected project,
+**Stop all trains?** asks for confirmation. Confirming sets all
 known locomotives of the affected runtimes to speed 0 before those runtimes are
 discarded; cancelling keeps the solution and runtimes unchanged. Changing a
 connected project's Z21 assignment stops its known locomotives before replacing
 its runtime on the new endpoint. Reloading a solution reuses existing open
 connections after the stop sequence.
+
+**Closing MOBAflow does not stop the trains.** MOBAflow asks only whether to save
+unsaved changes, then closes its Z21 connections without sending a stop command.
+Trains that are running keep running at their last speed on the Z21, and the
+same applies if MOBAflow ends unexpectedly. From that moment MOBAflow no longer
+controls anything: journeys, workflows, signals and announcements stop, and
+MOBAsmart can no longer control anything through MOBAflow until MOBAflow runs
+again. If the trains should not keep running, set their speed to 0 in **Train
+Control** before you close MOBAflow. Afterwards the Z21 and its handheld
+controllers remain the way to control or stop them. When MOBAflow starts again
+it does not restore any movement.
 
 Saved master-data changes refresh the runtime's definitions without restarting
 journeys or cancelling running workflows. Journey progress and current signal

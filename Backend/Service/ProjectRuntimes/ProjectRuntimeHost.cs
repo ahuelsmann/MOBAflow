@@ -203,7 +203,7 @@ public sealed class ProjectRuntimeHost(
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await DisposeAllAsync(cancellationToken).ConfigureAwait(false);
+            await DisposeAllAsync(stopLocomotives: true, cancellationToken).ConfigureAwait(false);
             lock (_runtimes)
             {
                 _order.Clear();
@@ -217,6 +217,26 @@ public sealed class ProjectRuntimeHost(
 
             await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
             SelectCore(_requestedSelection);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task ReleaseAsync(CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await DisposeAllAsync(stopLocomotives: false, cancellationToken).ConfigureAwait(false);
+            lock (_runtimes)
+            {
+                _order.Clear();
+            }
+
+            await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -260,7 +280,7 @@ public sealed class ProjectRuntimeHost(
                 _order.Remove(projectId);
             }
 
-            await RemoveCoreAsync(projectId, cancellationToken).ConfigureAwait(false);
+            await RemoveCoreAsync(projectId, stopLocomotives: true, cancellationToken).ConfigureAwait(false);
             await ReconcileZ21OwnersAsync([removedKey], cancellationToken).ConfigureAwait(false);
             await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
         }
@@ -286,7 +306,7 @@ public sealed class ProjectRuntimeHost(
                 }
             }
 
-            await RemoveCoreAsync(project.Id, cancellationToken).ConfigureAwait(false);
+            await RemoveCoreAsync(project.Id, stopLocomotives: true, cancellationToken).ConfigureAwait(false);
             await AddCoreAsync(project, cancellationToken).ConfigureAwait(false);
             await ReconcileZ21OwnersAsync([previousKey, Get(project.Id)?.Z21Key], cancellationToken).ConfigureAwait(false);
             await _factory.DisconnectUnusedAsync().ConfigureAwait(false);
@@ -317,7 +337,8 @@ public sealed class ProjectRuntimeHost(
     public async ValueTask DisposeAsync()
     {
         Volatile.Write(ref _disposed, 1);
-        await DisposeAllAsync().ConfigureAwait(false);
+        // The host is disposed when the application ends; trains keep running then.
+        await DisposeAllAsync(stopLocomotives: false).ConfigureAwait(false);
         _gate.Dispose();
     }
 
@@ -372,7 +393,7 @@ public sealed class ProjectRuntimeHost(
 
             foreach (var runtime in sharing)
             {
-                await RemoveCoreAsync(runtime.ProjectId, cancellationToken).ConfigureAwait(false);
+                await RemoveCoreAsync(runtime.ProjectId, stopLocomotives: true, cancellationToken).ConfigureAwait(false);
             }
 
             foreach (var runtime in sharing)
@@ -382,7 +403,7 @@ public sealed class ProjectRuntimeHost(
         }
     }
 
-    private async Task RemoveCoreAsync(Guid projectId, CancellationToken cancellationToken = default)
+    private async Task RemoveCoreAsync(Guid projectId, bool stopLocomotives, CancellationToken cancellationToken)
     {
         var runtime = Detach(projectId);
         if (runtime is null)
@@ -390,8 +411,15 @@ public sealed class ProjectRuntimeHost(
             return;
         }
 
-        // No runtime is discarded while its trains could still be moving. A cancelled stop (for example the
-        // shutdown timeout) still discards the runtime and then ends the operation.
+        if (!stopLocomotives)
+        {
+            // Closing the application: the runtime goes away and its trains keep their last speed.
+            await runtime.DisposeAsync().ConfigureAwait(false);
+            return;
+        }
+
+        // While the application runs, no runtime is discarded while its trains could still be moving. A cancelled
+        // stop still discards the runtime and then ends the operation.
         try
         {
             await runtime.StopLocomotivesAsync(cancellationToken).ConfigureAwait(false);
@@ -406,7 +434,7 @@ public sealed class ProjectRuntimeHost(
         }
     }
 
-    private async Task DisposeAllAsync(CancellationToken cancellationToken = default)
+    private async Task DisposeAllAsync(bool stopLocomotives, CancellationToken cancellationToken = default)
     {
         List<Guid> projectIds;
         lock (_runtimes)
@@ -416,7 +444,7 @@ public sealed class ProjectRuntimeHost(
 
         foreach (var projectId in projectIds)
         {
-            await RemoveCoreAsync(projectId, cancellationToken).ConfigureAwait(false);
+            await RemoveCoreAsync(projectId, stopLocomotives, cancellationToken).ConfigureAwait(false);
         }
     }
 
