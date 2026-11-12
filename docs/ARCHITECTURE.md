@@ -531,6 +531,14 @@ runtime services.
   changes, evaluates `HasActiveProject` from the session and recomputes the solution-loaded status on the session's
   `CurrentSolutionPath` and `SelectedProject` changes. `MainWindow` forwards the health-check results to
   `SystemStatus.UpdateHealthStatus`.
+- Startup progress (issue 428): the REST API row and the RuntimeHub host, solution sync, REST cache and hub
+  broadcast rows have an `...IsPending` state that the Overview shows as a progress ring with words for what the
+  row waits for. A row waits while the REST API starts (`RestApiStatusChangedEvent.IsStarting`, at most 30 s of
+  progress before it reports a slow start) and while `RestApiStatusService` still sets up the synchronization
+  (`MobaflowSyncDiagnostics.SyncStarting`). The optional `TimeProvider` supplies the waiting time of the REST API
+  and RuntimeHub host rows. `RestApiStatusService` publishes the synchronization after its host connect attempt
+  and re-checks after 1, 2, 5, 10, 10 and 10 s until the server lists the host and every successful solution and
+  snapshot push, then every 30 s; a failed host connect is retried at the same pace.
 - The shell keeps the operating state: `RecomputeOperatingState` reads `SystemStatus.RestApiIsReachable`,
   `SpeechHealthStatus` and `IsPostStartupInitializationRunning`, one `SystemStatus.PropertyChanged` handler for
   the five REST, speech and post-startup names replaces the former partial hooks, and `OperatingStateEvaluator`
