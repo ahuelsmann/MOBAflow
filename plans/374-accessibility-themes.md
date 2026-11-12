@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/374
 **Spec Kit**: Not applicable - accessibility semantics, theme resources and keyboard access to existing commands without new product behavior; a step that would introduce a new interaction model gets its own Spec Kit feature first
-**Status**: Active; steps 1 and 2 and the step 3 shortcuts are delivered in the single issue PR
+**Status**: Active; steps 1 to 5 are implemented; step 6 is the single approved app check
 
 ## Purpose and scope
 
@@ -70,23 +70,65 @@ MOBAsmart: 16 of 23 XAML files already use `SemanticProperties`; the remaining f
 1. **Inventory** (with this plan).
 2. **Accessible names and guard:** the 43 buttons, plus a test that fails on a new unnamed icon-only button.
 3. **Keyboard and Narrator for the critical workflows:** the emergency-stop and track-power shortcuts and the signal-box
-   focus layer (delivered; the track-power switch in `MainWindow` gets its shortcut hint after #293), then focus order and
-   visible focus on the remaining critical pages.
-4. **Theme resources and High Contrast:** delivered in part: a `HighContrast` theme dictionary that maps every app brush
-   to Windows contrast colors (guarded by `ThemeDictionaryArchitectureTests`), panel accent strips and Track Plan labels,
-   feedback glow and validation colors as theme brushes, and `ThemeResourceResolver` following the Windows contrast
-   theme for Win2D drawing. Open: a non-color cue for signal aspects and the remaining fixed colors after a High Contrast
-   check.
-5. **MOBAsmart:** TalkBack descriptions for the remaining views and font scaling.
-6. **Acceptance and completion:** Accessibility Insights FastPass on every critical surface; Narrator, keyboard only and
-   200% text size; Light, Dark and High Contrast. Evidence is recorded on #374; then documentation and plan removal.
+   focus layer (#375). Second delivery: the signal aspect tiles in `SignalBoxPropertiesControl` and `SignalAspectPicker`
+   were `Border` elements reacting to `PointerPressed`, so the signal-box workflow ended at the mouse once an element
+   was selected. They are `SelectionToggleButton`s now, a `ToggleButton` that only checks itself like a radio button, so
+   confirming the current tile never reports "off": Tab reaches them, Enter or Space sets the aspect, the accessible
+   name is the visible label followed by the aspect description ("Ks1: Ks 1 - Proceed", label in name for voice control)
+   and the checked state tells Narrator which aspect is current. The tiles have minimum instead of fixed heights, so
+   they grow with the Windows text size. The track-power switch in `MainWindow` has the name "Track Power", the
+   accelerator hint Ctrl+P and a help text and tooltip naming Ctrl+P and F10. `AccessibleNameArchitectureTests` also
+   rejects a `ToggleSwitch` without `Header`, on/off text or an automation name. Focus order on the critical pages
+   follows the visual tree and stays unchanged; the controls use the system focus visuals.
+4. **Theme resources and High Contrast:** the `HighContrast` theme dictionary, themed panel strips and Track Plan
+   drawing (#375). Second delivery: while a Windows contrast theme is active, `KsSignalScreen` draws a ring in
+   `SignalLampLitStrokeBrush` (`SystemColorWindowTextColor`) around every lit lamp, so a lit lamp differs from an off
+   one by shape and not only by color; a flashing lamp has the ring only in its lit phase, so flashing stays
+   distinguishable from steady light. `ThemeSettings.Changed` refreshes the ring and the off-lamp color when the
+   contrast theme is switched on or off while the app runs; `ActualThemeChanged` only reports Light and Dark, and
+   `AccessibilitySettings.HighContrastChanged` is not raised in WinUI 3 desktop apps. The lamp position then names the
+   aspect as on the real Ks signal, and the pickers and the signal-box focus layer carry the aspect as text. The checked
+   aspect tile uses the system toggle highlight, which the contrast theme defines. The toolbox detector marker uses the
+   accent brush like the canvas detector. Fixed on purpose after review: signal lamp colors (`KsSignalScreen`,
+   `SignalGraphics.xaml`, `SignalBoxColors.xaml`), gauge danger ranges and the Track Plan section palette (`Tag` values
+   are data). The other C# color literals are fallbacks of `ThemeResourceResolver` lookups. `OccupiedToStrokeConverter`
+   has fixed colors but no caller; removing it is a separate cleanup.
+5. **MOBAsmart:** TalkBack reads each bottom tab with its selection state (`AppBottomTabBar`), each locomotive card as
+   one item with name, digital address and selection, bound so it follows in-place fleet updates
+   (`LocomotivePickerItemView`), each signal aspect tile with its label, description, the speed indicator values its
+   preview shows and selection while its preview lamps and short label are excluded (`SignalAspectPicker`), and
+   `KsSignalScreen` as "Signal aspect ..." with its speed indicators. Headings on Engines and SignalBox let TalkBack
+   jump between sections. `FunctionToggleView`, `SpeedGaugeView` and the Counter and Control pages already had
+   descriptions. Font scaling: MAUI labels follow the Android font size by default; fixed heights that would clip scaled
+   text (reset button and count badge in `StatisticsPanel`) became minimum sizes. The speed digits inside the signal
+   graphic keep their size because the description speaks the value. Not covered: the speed gauge draws its numbers on a
+   `GraphicsView`, so they do not scale; its description carries the value.
+6. **Acceptance and completion:** one approved app check after the PR builds, recorded on #374; then documentation and
+   plan removal.
+
+### What the step 6 app check verifies
+
+The app is launched only with explicit approval; one check covers all items. Personal acceptance by the maintainer was
+abolished on 2026-11-06, so states that this check does not inspect are recorded as limitations.
+
+- **Narrator:** Signal Box: Tab through the elements, Enter selects, Tab into the properties panel reads each aspect tile
+  with its label, description and checked state; Enter sets the aspect and announces no "off" on the current tile.
+  Train Control: emergency stop with its shortcut hint.
+  Track Power switch: focus, the announced name and the Ctrl+P / F10 hint only; the switch is never toggled in this check.
+- **Keyboard only:** the signal-box path above without a mouse. The shortcuts were verified on the Z21 on 2026-10-22.
+- **200% text size:** Train Control, the Signal Box properties panel and Settings without clipped labels, including the
+  aspect tile labels; the default size of the aspect tiles stays as before.
+- **Light, Dark, High Contrast:** aspect tiles and the checked tile, the lit-lamp ring in High Contrast (also after
+  switching the contrast theme on while the app runs), the toolbox detector marker and the Track Plan drawing.
+- **MOBAsmart (device or emulator, same approval):** TalkBack on the four tabs, a locomotive card, an aspect tile and
+  the speed gauge; the largest Android font size on Counter, Engines and Control.
 
 ## Validation strategy
 
 - Steps 2-5: compile MOBAflow (and MOBAsmart for step 5), run the Windows suite and the analyzer gates; the step 2 guard
   must fail on a deliberately unnamed button in its own self-test.
-- Step 6 is manual and needs the maintainer: the app is launched only with explicit approval, so Narrator, High Contrast
-  and Accessibility Insights checks are the user's acceptance, not an automated claim.
+- Step 6 needs one explicitly approved app launch; Narrator, High Contrast, text scaling and TalkBack results come from
+  that check and are not claimed by the automated steps.
 
 ## Dependencies and coordination
 

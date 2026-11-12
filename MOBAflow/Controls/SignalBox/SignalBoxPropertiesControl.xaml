@@ -121,17 +121,19 @@
 
                             <!--  Row 0: Hp0, Ks1, Ks2  -->
                             <!--  Hp0 - Halt (Rot)  -->
-                            <Border
+                            <controls:SelectionToggleButton
                                 x:Name="AspectHp0Button"
                                 Grid.Row="0"
                                 Grid.Column="0"
-                                Height="80"
+                                MinHeight="80"
+                                MinWidth="0"
                                 Padding="4"
+                                HorizontalAlignment="Stretch"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
+                                Click="OnAspectClicked"
                                 CornerRadius="6"
-                                PointerPressed="OnAspectClicked"
                                 Tag="Hp0"
                                 ToolTipService.ToolTip="Hp 0 - Halt">
                                 <StackPanel
@@ -149,20 +151,22 @@
                                         FontSize="9"
                                         Text="Hp0" />
                                 </StackPanel>
-                            </Border>
+                            </controls:SelectionToggleButton>
 
                             <!--  Ks1 - proceed (green)  -->
-                            <Border
+                            <controls:SelectionToggleButton
                                 x:Name="AspectKs1Button"
                                 Grid.Row="0"
                                 Grid.Column="1"
-                                Height="80"
+                                MinHeight="80"
+                                MinWidth="0"
                                 Padding="4"
+                                HorizontalAlignment="Stretch"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
+                                Click="OnAspectClicked"
                                 CornerRadius="6"
-                                PointerPressed="OnAspectClicked"
                                 Tag="Ks1"
                                 ToolTipService.ToolTip="Ks 1 - Fahrt">
                                 <StackPanel
@@ -180,20 +184,22 @@
                                         FontSize="9"
                                         Text="Ks1" />
                                 </StackPanel>
-                            </Border>
+                            </controls:SelectionToggleButton>
 
                             <!--  Ks2 - Halt erwarten (Gelb)  -->
-                            <Border
+                            <controls:SelectionToggleButton
                                 x:Name="AspectKs2Button"
                                 Grid.Row="0"
                                 Grid.Column="2"
-                                Height="80"
+                                MinHeight="80"
+                                MinWidth="0"
                                 Padding="4"
+                                HorizontalAlignment="Stretch"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
+                                Click="OnAspectClicked"
                                 CornerRadius="6"
-                                PointerPressed="OnAspectClicked"
                                 Tag="Ks2"
                                 ToolTipService.ToolTip="Ks 2 - Expect stop">
                                 <StackPanel
@@ -211,21 +217,23 @@
                                         FontSize="9"
                                         Text="Ks2" />
                                 </StackPanel>
-                            </Border>
+                            </controls:SelectionToggleButton>
 
                             <!--  Row 1: Ks1Blink, Kennlicht, Dunkel  -->
                             <!--  Ks1 Blink - Fahrt mit Zs3v  -->
-                            <Border
+                            <controls:SelectionToggleButton
                                 x:Name="AspectKs1BlinkButton"
                                 Grid.Row="1"
                                 Grid.Column="0"
-                                Height="80"
+                                MinHeight="80"
+                                MinWidth="0"
                                 Padding="4"
+                                HorizontalAlignment="Stretch"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
+                                Click="OnAspectClicked"
                                 CornerRadius="6"
-                                PointerPressed="OnAspectClicked"
                                 Tag="Ks1Blink"
                                 ToolTipService.ToolTip="Ks 1 flashing - Proceed with speed pre-indicator">
                                 <StackPanel
@@ -243,20 +251,22 @@
                                         FontSize="9"
                                         Text="Ks1 blink" />
                                 </StackPanel>
-                            </Border>
+                            </controls:SelectionToggleButton>
 
                             <!--  Kennlicht - Signal abgeschaltet  -->
-                            <Border
+                            <controls:SelectionToggleButton
                                 x:Name="AspectKennlichtButton"
                                 Grid.Row="1"
                                 Grid.Column="1"
-                                Height="80"
+                                MinHeight="80"
+                                MinWidth="0"
                                 Padding="4"
+                                HorizontalAlignment="Stretch"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
+                                Click="OnAspectClicked"
                                 CornerRadius="6"
-                                PointerPressed="OnAspectClicked"
                                 Tag="Kennlicht"
                                 ToolTipService.ToolTip="Marker light - Signal disabled for operations">
                                 <StackPanel
@@ -274,20 +284,22 @@
                                         FontSize="9"
                                         Text="Marker" />
                                 </StackPanel>
-                            </Border>
+                            </controls:SelectionToggleButton>
 
                             <!--  Dunkel - Signal aus  -->
-                            <Border
+                            <controls:SelectionToggleButton
                                 x:Name="AspectDunkelButton"
                                 Grid.Row="1"
                                 Grid.Column="2"
-                                Height="80"
+                                MinHeight="80"
+                                MinWidth="0"
                                 Padding="4"
+                                HorizontalAlignment="Stretch"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
+                                Click="OnAspectClicked"
                                 CornerRadius="6"
-                                PointerPressed="OnAspectClicked"
                                 Tag="Dunkel"
                                 ToolTipService.ToolTip="Dark mode - Signal inactive">
                                 <StackPanel
@@ -305,21 +317,23 @@
                                         FontSize="9"
                                         Text="Dark" />
                                 </StackPanel>
-                            </Border>
+                            </controls:SelectionToggleButton>
 
                             <!--  Row 2: Sh1/Ra12, Zs1, Zs7  -->
                             <!--  Sh1/Ra12 - Rangierfahrt erlaubt  -->
-                            <Border
+                            <controls:SelectionToggleButton
                                 x:Name="AspectRa12Button"
                                 Grid.Row="2"
                                 Grid.Column="0"
-                                Height="80"
+                                MinHeight="80"
+                                MinWidth="0"
                                 Padding="4"
+                                HorizontalAlignment="Stretch"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
+                                Click="OnAspectClicked"
                                 CornerRadius="6"
-                                PointerPressed="OnAspectClicked"
                                 Tag="Ra12"
                                 ToolTipService.ToolTip="Sh 1/Ra 12 - Shunting allowed">
                                 <StackPanel
@@ -337,20 +351,22 @@
                                         FontSize="9"
                                         Text="Ra12" />
                                 </StackPanel>
-                            </Border>
+                            </controls:SelectionToggleButton>
 
                             <!--  Zs1 - Ersatzsignal  -->
-                            <Border
+                            <controls:SelectionToggleButton
                                 x:Name="AspectZs1Button"
                                 Grid.Row="2"
                                 Grid.Column="1"
-                                Height="80"
+                                MinHeight="80"
+                                MinWidth="0"
                                 Padding="4"
+                                HorizontalAlignment="Stretch"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
+                                Click="OnAspectClicked"
                                 CornerRadius="6"
-                                PointerPressed="OnAspectClicked"
                                 Tag="Zs1"
                                 ToolTipService.ToolTip="Zs 1 - Substitute signal (white flashing)">
                                 <StackPanel
@@ -368,20 +384,22 @@
                                         FontSize="9"
                                         Text="Zs1" />
                                 </StackPanel>
-                            </Border>
+                            </controls:SelectionToggleButton>
 
                             <!--  Zs7 - Vorsichtsignal  -->
-                            <Border
+                            <controls:SelectionToggleButton
                                 x:Name="AspectZs7Button"
                                 Grid.Row="2"
                                 Grid.Column="2"
-                                Height="80"
+                                MinHeight="80"
+                                MinWidth="0"
                                 Padding="4"
+                                HorizontalAlignment="Stretch"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
+                                Click="OnAspectClicked"
                                 CornerRadius="6"
-                                PointerPressed="OnAspectClicked"
                                 Tag="Zs7"
                                 ToolTipService.ToolTip="Zs 7 - Caution signal (3x yellow)">
                                 <StackPanel
@@ -399,7 +417,7 @@
                                         FontSize="9"
                                         Text="Zs7" />
                                 </StackPanel>
-                            </Border>
+                            </controls:SelectionToggleButton>
                         </Grid>
                     </StackPanel>
                 </StackPanel>

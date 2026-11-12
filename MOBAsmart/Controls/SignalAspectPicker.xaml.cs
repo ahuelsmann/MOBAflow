@@ -202,6 +202,11 @@ public partial class SignalAspectPicker
             }
 
             var isSelected = selected == aspect;
+
+            // TalkBack reads the tappable tile; its preview lamps and short label are excluded in XAML, so the tile
+            // also names the speed indicator values the preview shows.
+            var name = KsSignalAspectNames.GetAspectTileName(aspect, SignalArticleNumber, TopSpeedValue, BottomSpeedValue);
+            SemanticProperties.SetDescription(button, isSelected ? $"{name}, selected" : name);
             button.BackgroundColor = isSelected ? accentColor : normalColor;
             button.Stroke = isSelected ? accentBorder : ResolveColor("BorderColor");
             button.StrokeThickness = isSelected ? 2 : 1;

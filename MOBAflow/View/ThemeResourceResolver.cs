@@ -74,7 +74,10 @@ internal static class ThemeResourceResolver
         return Color.FromArgb(alpha, color.R, color.G, color.B);
     }
 
-    private static bool IsHighContrast() => HighContrastSettings.Value.HighContrast;
+    /// <summary>
+    /// True while Windows runs a contrast theme. Drawing code that encodes state only by color adds a shape cue then.
+    /// </summary>
+    public static bool IsHighContrast() => HighContrastSettings.Value.HighContrast;
 
     private static ElementTheme GetEffectiveTheme(FrameworkElement? element)
     {

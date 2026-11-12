@@ -65,6 +65,7 @@
                 <Label
                     x:Name="TopSpeedIndicator"
                     FontAttributes="Bold"
+                    FontAutoScalingEnabled="False"
                     FontSize="20"
                     HorizontalOptions="Center"
                     HorizontalTextAlignment="Center"
@@ -178,6 +179,7 @@
                 <Label
                     x:Name="BottomSpeedIndicator"
                     FontAttributes="Bold"
+                    FontAutoScalingEnabled="False"
                     FontSize="20"
                     HorizontalOptions="Center"
                     HorizontalTextAlignment="Center"

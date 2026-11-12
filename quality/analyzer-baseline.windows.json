@@ -1832,13 +1832,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0005",
-      "path": "MOBAflow/Controls/SignalAspectPicker.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0005",
       "path": "MOBAflow/Controls/SignalBox/SignalBoxToolboxControl.xaml.cs",
       "count": 1
     },
