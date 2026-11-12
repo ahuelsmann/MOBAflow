@@ -17,7 +17,8 @@ permissions:
 
 concurrency:
   group: quality-${{ github.ref }}
-  cancel-in-progress: true
+  # Let long-running mutation checks finish on main even when another PR merges.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   # Documentation-only pull requests skip the build, test and firmware jobs. Pull requests that touch neither
