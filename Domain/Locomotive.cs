@@ -10,6 +10,15 @@ using System.Text.Json.Serialization;
 /// </summary>
 public class Locomotive
 {
+    /// <summary>The highest decoder function index (F31); a locomotive has the functions F0 through F31.</summary>
+    public const int MaxFunctionIndex = 31;
+
+    /// <summary>
+    /// Stored symbol or colour entry that marks a function whose appearance was cleared on purpose, as opposed to an
+    /// empty entry that falls back to the default.
+    /// </summary>
+    public const string ClearedFunctionAppearance = "none";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Locomotive"/> class with a new identifier and default name.
     /// </summary>
@@ -119,4 +128,93 @@ public class Locomotive
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public LocomotiveDecoderProfile? Decoder { get; set; }
+
+    /// <summary>Whether <paramref name="functionIndex"/> names one of the functions F0 through F31.</summary>
+    public static bool IsFunctionIndex(int functionIndex) => functionIndex is >= 0 and <= MaxFunctionIndex;
+
+    /// <summary>Whether <paramref name="value"/> has the stored colour form <c>#RRGGBB</c>.</summary>
+    public static bool IsStoredFunctionColor(string? value)
+    {
+        if (value is null || value.Length != 7 || value[0] != '#')
+        {
+            return false;
+        }
+
+        for (var position = 1; position < value.Length; position++)
+        {
+            if (!char.IsAsciiHexDigit(value[position]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Stores the symbol of a function; false for an index outside F0-F31 or an empty symbol.
+    /// <see cref="FunctionSymbols"/> grows with empty entries up to the index.
+    /// </summary>
+    public bool SetFunctionSymbol(int functionIndex, string symbol)
+    {
+        if (!IsFunctionIndex(functionIndex) || string.IsNullOrEmpty(symbol))
+        {
+            return false;
+        }
+
+        FunctionSymbols = SetAt(FunctionSymbols, functionIndex, symbol);
+        return true;
+    }
+
+    /// <summary>
+    /// Stores the symbol (when given) and the colour (when in the stored form <c>#RRGGBB</c>) of a function;
+    /// false for an index outside F0-F31. An invalid colour leaves the stored colours unchanged.
+    /// </summary>
+    public bool SetFunctionAppearance(int functionIndex, string? symbol, string? colorHex)
+    {
+        if (!IsFunctionIndex(functionIndex))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(symbol))
+        {
+            FunctionSymbols = SetAt(FunctionSymbols, functionIndex, symbol);
+        }
+
+        if (IsStoredFunctionColor(colorHex))
+        {
+            FunctionColors = SetAt(FunctionColors, functionIndex, colorHex!);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Marks a function as having no symbol and no colour with <see cref="ClearedFunctionAppearance"/>;
+    /// false for an index outside F0-F31.
+    /// </summary>
+    public bool ClearFunctionAppearance(int functionIndex)
+    {
+        if (!IsFunctionIndex(functionIndex))
+        {
+            return false;
+        }
+
+        FunctionSymbols = SetAt(FunctionSymbols, functionIndex, ClearedFunctionAppearance);
+        FunctionColors = SetAt(FunctionColors, functionIndex, ClearedFunctionAppearance);
+        return true;
+    }
+
+    private static List<string> SetAt(List<string>? values, int index, string value)
+    {
+        values ??= [];
+        while (values.Count <= index)
+        {
+            values.Add(string.Empty);
+        }
+
+        values[index] = value;
+        return values;
+    }
 }

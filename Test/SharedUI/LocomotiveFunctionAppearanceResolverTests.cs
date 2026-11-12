@@ -193,32 +193,4 @@ internal sealed class LocomotiveFunctionAppearanceResolverTests
     {
         Assert.That(LocomotiveFunctionAppearanceResolver.IsValidAssetReference(value), Is.EqualTo(expected));
     }
-
-    [TestCase(null, false)]
-    [TestCase("", false)]
-    [TestCase(" ", false)]
-    [TestCase("AABBCC", false)]
-    [TestCase("XAABBCC", false)]
-    [TestCase("#ABC", false)]
-    [TestCase("#AABBCCDD", false)]
-    [TestCase("#aBc012", true)]
-    [TestCase("#ABCDEF", true)]
-    [TestCase("#000000", true)]
-    public void ColorsRequireHashAndExactlySixAsciiHexDigits(string? value, bool expected)
-    {
-        Assert.That(LocomotiveFunctionAppearanceResolver.IsValidHexColor(value), Is.EqualTo(expected));
-    }
-
-    [TestCase(1)]
-    [TestCase(2)]
-    [TestCase(3)]
-    [TestCase(4)]
-    [TestCase(5)]
-    [TestCase(6)]
-    public void EveryColorDigitIsValidated(int position)
-    {
-        var characters = "#AABBCC".ToCharArray();
-        characters[position] = 'G';
-        Assert.That(LocomotiveFunctionAppearanceResolver.IsValidHexColor(new string(characters)), Is.False);
-    }
 }

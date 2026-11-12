@@ -38,7 +38,7 @@ public sealed class LocomotiveWhistleRule
             issues.Add(LocomotiveWhistleRuleIssue.MissingLocomotive);
         if (InPort <= 0)
             issues.Add(LocomotiveWhistleRuleIssue.InvalidInPort);
-        if (FunctionIndex is < 0 or > 31)
+        if (!Locomotive.IsFunctionIndex(FunctionIndex))
             issues.Add(LocomotiveWhistleRuleIssue.FunctionOutOfRange);
         if (DelayMilliseconds < 0)
             issues.Add(LocomotiveWhistleRuleIssue.NegativeDelay);
