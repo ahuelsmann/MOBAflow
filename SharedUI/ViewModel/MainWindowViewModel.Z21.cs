@@ -137,11 +137,6 @@ public partial class MainWindowViewModel
             IsOperatorAckRequired = status.IsOperatorAckRequired;
 
             ApplyJourneyRuntimeSnapshots(snapshot.JourneyStates);
-
-            if (SignalBoxRuntimeSync.ApplyToPlan(SelectedProject?.Model.SignalBoxPlan, snapshot.SignalBoxElements))
-            {
-                SignalBoxRuntimeStateChanged?.Invoke(this, EventArgs.Empty);
-            }
         }
         finally
         {

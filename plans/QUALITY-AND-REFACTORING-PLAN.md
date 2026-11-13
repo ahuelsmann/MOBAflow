@@ -386,7 +386,7 @@ Child issue [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) owned this
 when the slices were delivered (#300, #305, #307). `TrackPlanDocument` is the one persisted model, the
 catalogue-neutral `TrackPlan.Editor` project reaches Piko A only through `ITrackCatalog`, and the WinUI page
 adapts input and drawing (see [the track-plan dependency rule](../docs/ARCHITECTURE.md#track-plan-dependency-rule)).
-The page layout restore/save moves with RF-24 slice 6, which centralizes layout persistence.
+Since RF-24 slice 6 the page and `TrackPlanViewModel` persist the layout through `LayoutPersistenceService`; restoring the column widths stays in the page.
 
 ### RF-29: Platform adapters for sound and files
 

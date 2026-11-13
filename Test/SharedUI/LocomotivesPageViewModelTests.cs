@@ -58,8 +58,8 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         _currentSnapshots.Clear();
         _runtimeSnapshots.SetupGet(value => value.Snapshots).Returns(() => _currentSnapshots.Values.ToArray());
         _control = new RuntimeLocomotiveControl(_runtimeSnapshots.Object, dispatcher.Object);
-        _page = new LocomotivesPageViewModel(_session, TestFileServices.Photos(_io.Object), _persistence.Object,
-            new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, _usage, _control),
+        _page = new LocomotivesPageViewModel(_session, TestFileServices.Photos(_io.Object), TestLayouts.Create(_persistence.Object),
+            new LocomotivePageAnalysis(management, _usage, _control),
             NullLogger<LocomotivesPageViewModel>.Instance, _explorer.Object);
     }
 

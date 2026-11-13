@@ -18,15 +18,14 @@ internal sealed class SolutionSessionArchitectureTests
 
     /// <summary>
     /// Code that may still use <c>MainWindowViewModel</c>. Folders end with '/'. Each entry names its reason;
-    /// RF-24 (page ViewModels) removes the page and shell-state entries.
+    /// after RF-24 only the window that hosts the shell and the Overview page's Z21 status remain.
     /// </summary>
     private static readonly Dictionary<string, string> AllowedDependents = new(StringComparer.Ordinal)
     {
         ["SharedUI/ViewModel/MainWindowViewModel"] = "the shell itself (all partial files)",
-        ["MOBAflow/View/"] = "WinUI pages bind their XAML to the shell until RF-24",
-        ["MOBAflow/Behavior/GridColumnResizeBehavior.cs"] = "persists page column widths on the shell until RF-24",
+        ["MOBAflow/View/MainWindow.xaml.cs"] = "the main window hosts the shell, its status bar and its shutdown",
+        ["MOBAflow/View/OverviewPage.xaml.cs"] = "binds the shell's Z21 status and telemetry projection",
         ["MOBAflow/Extensions/"] = "composition root registers the shell",
-        ["MOBAflow/Service/NavigationRegistration.cs"] = "creates the pages that bind to the shell",
         ["MOBAsmart/Platforms/Android/MainActivity.cs"] = "shutdown cleanup lookup (MOBAsmart does not register the shell)",
     };
 
@@ -43,16 +42,7 @@ internal sealed class SolutionSessionArchitectureTests
         var violations = new List<string>();
         foreach (var (relative, syntaxRoot) in Sources(SourceFolders))
         {
-            if (!relative.StartsWith("MOBAflow/View/SettingsPage", StringComparison.Ordinal)
-                && !relative.StartsWith("MOBAflow/View/LocomotivesPage", StringComparison.Ordinal)
-                && !relative.StartsWith("MOBAflow/View/PassengerWagonPage", StringComparison.Ordinal)
-                && !relative.StartsWith("MOBAflow/View/GoodsWagonPage", StringComparison.Ordinal)
-                && !relative.StartsWith("MOBAflow/View/TrainsPage", StringComparison.Ordinal)
-                && !relative.StartsWith("MOBAflow/View/StationsPage", StringComparison.Ordinal)
-                && !relative.StartsWith("MOBAflow/View/JourneysPage", StringComparison.Ordinal)
-                && !relative.StartsWith("MOBAflow/View/WorkflowsPage", StringComparison.Ordinal)
-                && !relative.StartsWith("MOBAflow/View/MonitorPage", StringComparison.Ordinal)
-                && AllowedDependents.Keys.Any(allowed => relative.StartsWith(allowed, StringComparison.Ordinal)))
+            if (AllowedDependents.Keys.Any(allowed => relative.StartsWith(allowed, StringComparison.Ordinal)))
             {
                 continue;
             }

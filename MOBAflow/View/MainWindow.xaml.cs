@@ -17,6 +17,8 @@ using System.Reflection;
 using InPortCounterViewModel = SharedUI.ViewModel.InPortCounterViewModel;
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 using MonitorPageViewModel = SharedUI.ViewModel.MonitorPageViewModel;
+using SignalBoxPageViewModel = SharedUI.ViewModel.SignalBoxPageViewModel;
+using SolutionPageViewModel = SharedUI.ViewModel.SolutionPageViewModel;
 
 public sealed partial class MainWindow
 {
@@ -29,6 +31,8 @@ public sealed partial class MainWindow
     // No shell surface binds these page states; the window disposes them because the host never disposes its container.
     private readonly InPortCounterViewModel _counters;
     private readonly MonitorPageViewModel _monitor;
+    private readonly SolutionPageViewModel _solutionPage;
+    private readonly SignalBoxPageViewModel _signalBoxPage;
     private HealthCheckService? _healthCheckService;
     private readonly RestApiStatusService _restApiStatusService;
     private readonly RestApiProcessService _restApiProcessService;
@@ -74,6 +78,8 @@ public sealed partial class MainWindow
         MainWindowViewModel viewModel,
         InPortCounterViewModel counters,
         MonitorPageViewModel monitor,
+        SolutionPageViewModel solutionPage,
+        SignalBoxPageViewModel signalBoxPage,
         NavigationService navigationService,
         IUiDispatcher uiDispatcher,
         WinUiWindowContext windowContext,
@@ -92,6 +98,8 @@ public sealed partial class MainWindow
             ViewModel = viewModel;
             _counters = counters;
             _monitor = monitor;
+            _solutionPage = solutionPage;
+            _signalBoxPage = signalBoxPage;
             _navigationService = navigationService;
             _uiDispatcher = uiDispatcher;
             _restApiStatusService = restApiStatusService;
@@ -216,8 +224,6 @@ public sealed partial class MainWindow
 
     private void SubscribeWindowEvents()
     {
-        ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
-        ViewModel.NavigationRequested += OnNavigationRequested;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         ViewModel.SettingsPage.PropertyChanged += SettingsPage_PropertyChanged;
         _navigationService.Navigated += OnNavigationServiceNavigated;
@@ -391,17 +397,20 @@ public sealed partial class MainWindow
         return true;
     }
 
-    /// <summary>The shell confirmed shutdown; the counter and traffic monitor stop following the runtime.</summary>
+    /// <summary>
+    /// The shell confirmed shutdown; the counter, traffic monitor, Solution page and signal-box projection stop
+    /// following the session and the runtime.
+    /// </summary>
     private void ReleaseRuntimeObservers()
     {
         _counters.Dispose();
         _monitor.Dispose();
+        _solutionPage.Dispose();
+        _signalBoxPage.Dispose();
     }
 
     private void UnsubscribeWindowEvents()
     {
-        ViewModel.ExitApplicationRequested -= OnExitApplicationRequested;
-        ViewModel.NavigationRequested -= OnNavigationRequested;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.SettingsPage.PropertyChanged -= SettingsPage_PropertyChanged;
         _navigationService.Navigated -= OnNavigationServiceNavigated;
@@ -428,39 +437,6 @@ public sealed partial class MainWindow
         if (RootGrid is not null)
         {
             RootGrid.DataContext = null;
-        }
-    }
-
-    private void OnExitApplicationRequested(object? sender, EventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        RequestShutdown();
-    }
-
-    private void OnNavigationRequested(object? sender, string tag)
-    {
-        _ = sender; // Suppress unused parameter warning
-        HandleNavigationRequestedAsync(tag).Observe(ex => _logger.LogWarning(ex, "Navigation request failed"));
-    }
-
-    private async Task HandleNavigationRequestedAsync(string tag)
-    {
-        try
-        {
-            await _navigationService.NavigateToPageAsync(tag);
-
-            // Update NavigationView selection to match the navigated page
-            var navItem = MainNavigation.MenuItems.OfType<NavigationViewItem>()
-                .FirstOrDefault(item => string.Equals(item.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
-            if (navItem != null)
-            {
-                MainNavigation.SelectedItem = navItem;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Navigation request failed for {Tag}", tag);
         }
     }
 

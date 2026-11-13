@@ -321,7 +321,7 @@
                                 <TextBlock
                                     AutomationProperties.LiveSetting="Polite"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind MainViewModel.SolutionSaveStatusText, Mode=OneWay}"
+                                    Text="{x:Bind Session.SolutionSaveStatusText, Mode=OneWay}"
                                     TextWrapping="WrapWholeWords" />
                             <!--  Selection Info  -->
                             <StackPanel Spacing="8">

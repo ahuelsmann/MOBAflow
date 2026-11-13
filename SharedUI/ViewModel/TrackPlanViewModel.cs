@@ -1,14 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Configuration;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Interface;
-
-using Microsoft.Extensions.Logging;
 
 using Service;
 
@@ -19,10 +15,8 @@ using TrackPlan.Editor;
 /// </summary>
 public sealed partial class TrackPlanViewModel : ObservableObject
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly IDialogService _dialogService;
-    private readonly ILogger<TrackPlanViewModel> _logger;
     private readonly TrackPlanEditorService _editorService;
     private bool _isToolboxExpanded;
     private bool _isPropertiesExpanded;
@@ -30,28 +24,20 @@ public sealed partial class TrackPlanViewModel : ObservableObject
     /// <summary>
     /// Initializes a new instance of the <see cref="TrackPlanViewModel"/> class.
     /// </summary>
-    /// <param name="settings">Application settings (layout persistence).</param>
-    /// <param name="settingsService">Settings service for persisting layout changes.</param>
-    /// <param name="logger">Logger for persistence failures.</param>
+    /// <param name="layout">Persists the toolbox and properties panel expansion.</param>
     public TrackPlanViewModel(
         TrackPlanEditorService editorService,
         IDialogService dialogService,
-        AppSettings settings,
-        ISettingsService settingsService,
-        ILogger<TrackPlanViewModel> logger)
+        LayoutPersistenceService layout)
     {
         ArgumentNullException.ThrowIfNull(editorService);
         ArgumentNullException.ThrowIfNull(dialogService);
-        ArgumentNullException.ThrowIfNull(settings);
-        ArgumentNullException.ThrowIfNull(settingsService);
-        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(layout);
         _editorService = editorService;
         _dialogService = dialogService;
-        _settings = settings;
-        _settingsService = settingsService;
-        _logger = logger;
-        _isToolboxExpanded = _settings.Layout.TrackPlanPage.IsToolboxExpanded;
-        _isPropertiesExpanded = _settings.Layout.TrackPlanPage.IsPropertiesExpanded;
+        _layout = layout;
+        _isToolboxExpanded = layout.Layout.TrackPlanPage.IsToolboxExpanded;
+        _isPropertiesExpanded = layout.Layout.TrackPlanPage.IsPropertiesExpanded;
         _editorService.StateChanged += OnEditorStateChanged;
     }
 
@@ -245,8 +231,7 @@ public sealed partial class TrackPlanViewModel : ObservableObject
             if (!SetProperty(ref _isToolboxExpanded, value))
                 return;
 
-            _settings.Layout.TrackPlanPage.IsToolboxExpanded = value;
-            PersistSettingsSafely();
+            _layout.Persist(layout => layout.TrackPlanPage.IsToolboxExpanded = value);
         }
     }
 
@@ -258,24 +243,8 @@ public sealed partial class TrackPlanViewModel : ObservableObject
             if (!SetProperty(ref _isPropertiesExpanded, value))
                 return;
 
-            _settings.Layout.TrackPlanPage.IsPropertiesExpanded = value;
-            PersistSettingsSafely();
+            _layout.Persist(layout => layout.TrackPlanPage.IsPropertiesExpanded = value);
         }
-    }
-
-    private void PersistSettingsSafely()
-    {
-        _settingsService.SaveSettingsAsync(_settings).ContinueWith(
-            t =>
-            {
-                if (t.Exception != null)
-                {
-                    _logger.LogWarning(t.Exception.GetBaseException(), "Track plan layout settings save failed");
-                }
-            },
-            CancellationToken.None,
-            TaskContinuationOptions.OnlyOnFaulted,
-            TaskScheduler.Default);
     }
 
     private void OnEditorStateChanged(object? sender, EventArgs e)

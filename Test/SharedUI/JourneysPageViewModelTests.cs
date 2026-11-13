@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Common.Configuration;
 using Moba.Contracts.Runtime;
@@ -60,8 +59,7 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
     }
 
     private JourneysPageViewModel CreatePage() => new(_session, _gateway.Object,
-        _dispatcher.Object, _cities.Object, _persistence.Object, new LayoutColumnWidthsViewModel(),
-        NullLogger<JourneysPageViewModel>.Instance);
+        _dispatcher.Object, _cities.Object, TestLayouts.Create(_persistence.Object));
 
     [TearDown]
     public void Dispose()

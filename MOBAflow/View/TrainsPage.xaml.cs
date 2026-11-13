@@ -12,6 +12,7 @@ using Microsoft.UI.Xaml.Input;
 using Moba.SharedUI.ViewModel;
 
 using SharedUI.Interface;
+using SharedUI.Service;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
@@ -21,8 +22,7 @@ internal sealed partial class TrainsPage
 {
     public TrainsPageViewModel ViewModel { get; }
 
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<TrainsPage>? _logger;
 
     private GridLength _trainsExpandedWidth = new(0.9, GridUnitType.Star);
@@ -33,13 +33,11 @@ internal sealed partial class TrainsPage
 
     public TrainsPage(
         TrainsPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<TrainsPage>? logger = null)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
 
@@ -67,10 +65,7 @@ internal sealed partial class TrainsPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -121,7 +116,7 @@ internal sealed partial class TrainsPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.TrainsPage;
+        var layout = _layout.Layout.TrainsPage;
 
         _trainsExpandedWidth = ToStarGridLength(layout.TrainListColumnStarValue, _trainsExpandedWidth);
         _locomotiveLibraryExpandedWidth = ToStarGridLength(layout.LocomotiveLibraryColumnStarValue, _locomotiveLibraryExpandedWidth);
@@ -138,7 +133,7 @@ internal sealed partial class TrainsPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.TrainsPage;
+        var layout = _layout.Layout.TrainsPage;
 
         layout.IsTrainListExpanded = ViewModel.IsTrainsListExpanded;
         layout.IsLocomotiveLibraryExpanded = ViewModel.IsTrainsLocomotiveLibraryExpanded;

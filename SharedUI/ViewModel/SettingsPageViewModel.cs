@@ -7,6 +7,7 @@ using Common.Extension;
 using Common.Navigation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Interface;
+using Service;
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
@@ -24,6 +25,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
 {
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly ILogger<SettingsPageViewModel> _logger;
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
@@ -34,6 +36,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     public SettingsPageViewModel(
         AppSettings settings,
         ISettingsService settingsService,
+        LayoutPersistenceService layout,
         IUiDispatcher uiDispatcher,
         ILogger<SettingsPageViewModel> logger,
         IFeatureTogglePageProvider? featureTogglePageProvider = null,
@@ -42,10 +45,12 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(logger);
         _settings = settings;
         _settingsService = settingsService;
+        _layout = layout;
         _uiDispatcher = uiDispatcher;
         _logger = logger;
         _featureTogglePageProvider = featureTogglePageProvider;

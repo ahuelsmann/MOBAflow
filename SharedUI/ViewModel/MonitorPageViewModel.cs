@@ -5,7 +5,6 @@ using Backend.Events;
 using Backend.Interface;
 using Backend.Model;
 
-using Common.Configuration;
 using Common.Events;
 using Common.Extension;
 using Common.Serilog;
@@ -33,8 +32,7 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
     private readonly ITrafficMonitor _trafficMonitor;
     private readonly IEventBus _eventBus;
     private readonly ISolutionSession _session;
-    private readonly ISettingsService _settingsService;
-    private readonly AppSettings _settings;
+    private readonly LayoutPersistenceService _layout;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly ILogger<MonitorPageViewModel> _logger;
     private readonly List<Guid> _eventBusSubscriptions = [];
@@ -91,7 +89,7 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isMonitorTrafficExpanded, value))
-                PersistLayoutState(layout => layout.MonitorPage.IsTrafficExpanded = value);
+                _layout.Persist(layout => layout.MonitorPage.IsTrafficExpanded = value);
         }
     }
 
@@ -102,7 +100,7 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isMonitorActivityLogExpanded, value))
-                PersistLayoutState(layout => layout.MonitorPage.IsActivityLogExpanded = value);
+                _layout.Persist(layout => layout.MonitorPage.IsActivityLogExpanded = value);
         }
     }
 
@@ -113,7 +111,7 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
     /// <param name="runtimeSnapshots">Read access to the selected runtime's current snapshot.</param>
     /// <param name="eventBus">Delivers traffic packets, runtime selection and snapshot changes on the UI thread.</param>
     /// <param name="session">Owns the project selection whose Z21 the status names.</param>
-    /// <param name="settingsService">Persists the Monitor layout.</param>
+    /// <param name="layout">Persists the Monitor panel expansion.</param>
     /// <param name="uiDispatcher">Dispatcher used to update UI-bound collections on the UI thread.</param>
     /// <param name="logger">Logger used to write diagnostic log entries.</param>
     public MonitorPageViewModel(
@@ -121,7 +119,7 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         IRuntimeSnapshotProvider runtimeSnapshots,
         IEventBus eventBus,
         ISolutionSession session,
-        ISettingsService settingsService,
+        LayoutPersistenceService layout,
         IUiDispatcher uiDispatcher,
         ILogger<MonitorPageViewModel> logger)
     {
@@ -129,18 +127,17 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(logger);
         _trafficMonitor = trafficMonitor;
         _eventBus = eventBus;
         _session = session;
-        _settingsService = settingsService;
-        _settings = settingsService.GetSettings();
+        _layout = layout;
         _uiDispatcher = uiDispatcher;
         _logger = logger;
-        _isMonitorTrafficExpanded = _settings.Layout.MonitorPage.IsTrafficExpanded;
-        _isMonitorActivityLogExpanded = _settings.Layout.MonitorPage.IsActivityLogExpanded;
+        _isMonitorTrafficExpanded = layout.Layout.MonitorPage.IsTrafficExpanded;
+        _isMonitorActivityLogExpanded = layout.Layout.MonitorPage.IsActivityLogExpanded;
 
         // Subscribe to TrafficPackets changes to update count
         TrafficPackets.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TrafficCount));
@@ -278,13 +275,6 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         return $"[{entry.TimestampFormatted}] {entry.SeverityIcon} [{entry.Source}] {entry.Message}";
     }
 
-    private void PersistLayoutState(Action<LayoutSettings> apply)
-    {
-        apply(_settings.Layout);
-        _settingsService.SaveSettingsAsync(_settings)
-            .Observe(ex => LogOperationFailed(_logger, "Persist Monitor layout", ex));
-    }
-
     [RelayCommand]
     private void ClearActivityLogs()
     {
@@ -321,7 +311,4 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         _batchUpdateCts?.Cancel();
         _batchUpdateCts?.Dispose();
     }
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "{OperationName} failed")]
-    private static partial void LogOperationFailed(ILogger logger, string operationName, Exception exception);
 }

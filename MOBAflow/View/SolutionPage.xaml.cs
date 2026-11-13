@@ -13,21 +13,21 @@ using Windows.ApplicationModel.DataTransfer;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+using SharedUI.Service;
 
 /// <summary>
 /// Solution page displaying projects list, the Z21 finder and the properties panel.
-/// DeleteProject logic moved to MainWindowViewModel with IDialogService.
+/// Project creation, deletion and the panel expansion live in <see cref="SolutionPageViewModel"/>.
 /// </summary>
 internal sealed partial class SolutionPage
 {
     private const string Z21DragKey = "Z21";
 
-    public MainWindowViewModel ViewModel { get; }
+    public SolutionPageViewModel ViewModel { get; }
 
     public Z21AssignmentViewModel Z21Assignment { get; }
 
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<SolutionPage>? _logger;
 
     private GridLength _projectsExpandedWidth = new(1, GridUnitType.Star);
@@ -35,16 +35,14 @@ internal sealed partial class SolutionPage
     private GridLength _propertiesExpandedWidth = new(2.2, GridUnitType.Star);
 
     public SolutionPage(
-        MainWindowViewModel viewModel,
+        SolutionPageViewModel viewModel,
         Z21AssignmentViewModel z21Assignment,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<SolutionPage>? logger = null)
     {
         ViewModel = viewModel;
         Z21Assignment = z21Assignment;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
 
@@ -75,10 +73,7 @@ internal sealed partial class SolutionPage
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             Z21Assignment.PropertyChanged -= Z21Assignment_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -170,7 +165,7 @@ internal sealed partial class SolutionPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.SolutionPage;
+        var layout = _layout.Layout.SolutionPage;
 
         _projectsExpandedWidth = ToStarGridLength(layout.ProjectListColumnStarValue, _projectsExpandedWidth);
         _z21FinderExpandedWidth = ToStarGridLength(layout.Z21FinderColumnStarValue, _z21FinderExpandedWidth);
@@ -196,7 +191,7 @@ internal sealed partial class SolutionPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.SolutionPage;
+        var layout = _layout.Layout.SolutionPage;
 
         layout.IsProjectListExpanded = ViewModel.IsProjectListExpanded;
         layout.IsPropertiesExpanded = ViewModel.IsProjectPropertiesExpanded;

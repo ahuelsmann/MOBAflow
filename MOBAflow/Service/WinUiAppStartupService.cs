@@ -18,7 +18,6 @@ using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
 
 using Serilog;
 
@@ -71,10 +70,6 @@ internal sealed class WinUiAppStartupService
 
         var appSettings = services.GetRequiredService<Common.Configuration.AppSettings>();
         PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application.PhotoStoragePath);
-
-        var layoutColumnWidths = services.GetRequiredService<LayoutColumnWidthsViewModel>();
-        _app.Resources["LayoutColumnWidths"] = layoutColumnWidths;
-        LogStartupCheckpoint("Layout resources prepared");
 
         var mainWindow = services.GetRequiredService<MainWindow>();
         LogStartupCheckpoint("MainWindow resolved");
@@ -204,7 +199,7 @@ internal sealed class WinUiAppStartupService
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             await postStartupService.InitializeAsync(cts.Token).ConfigureAwait(false);
 
-            await AutoLoadLastSolutionAsync(services, mainWindow.ViewModel.SolutionSession, logger).ConfigureAwait(false);
+            await AutoLoadLastSolutionAsync(services, services.GetRequiredService<ISolutionSession>(), logger).ConfigureAwait(false);
 
             logger.LogInformation(
                 "[Startup] Post-startup pipeline completed in {ElapsedMs}ms",

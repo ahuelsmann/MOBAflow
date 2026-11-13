@@ -2,13 +2,13 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
-using Common.Configuration;
 using Common.Extension;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Interface;
 using Microsoft.Extensions.Logging;
+using Service;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
@@ -17,8 +17,7 @@ public sealed partial class StationsPageViewModel : ObservableObject, IDisposabl
 {
     private readonly ISolutionSession _session;
     private readonly IConnectionRuntime _runtimeConnection;
-    private readonly ISettingsService _settingsService;
-    private readonly AppSettings _settings;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<StationsPageViewModel> _logger;
     private ProjectViewModel? _observedProject;
     private bool _disposed;
@@ -28,33 +27,29 @@ public sealed partial class StationsPageViewModel : ObservableObject, IDisposabl
     private bool _isWorkflowLibraryVisible;
 
     public StationsPageViewModel(ISolutionSession session, IConnectionRuntime runtimeConnection,
-        ISettingsService settingsService, LayoutColumnWidthsViewModel layoutColumnWidths,
+        LayoutPersistenceService layout,
         WorkflowLibraryViewModel workflowLibrary, ILogger<StationsPageViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(runtimeConnection);
-        ArgumentNullException.ThrowIfNull(settingsService);
-        ArgumentNullException.ThrowIfNull(layoutColumnWidths);
+        ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(workflowLibrary);
         ArgumentNullException.ThrowIfNull(logger);
         _session = session;
         _runtimeConnection = runtimeConnection;
-        _settingsService = settingsService;
-        _settings = settingsService.GetSettings();
+        _layout = layout;
         _logger = logger;
-        LayoutColumnWidths = layoutColumnWidths;
         WorkflowLibrary = workflowLibrary;
-        _isStationsListExpanded = _settings.Layout.StationsPage.IsStationsListExpanded;
-        _isPlatformsListExpanded = _settings.Layout.StationsPage.IsPlatformsListExpanded;
-        _isStationsPropertiesExpanded = _settings.Layout.StationsPage.IsPropertiesExpanded;
-        _isWorkflowLibraryVisible = _settings.Layout.StationsPage.IsWorkflowLibraryExpanded;
+        _isStationsListExpanded = layout.Layout.StationsPage.IsStationsListExpanded;
+        _isPlatformsListExpanded = layout.Layout.StationsPage.IsPlatformsListExpanded;
+        _isStationsPropertiesExpanded = layout.Layout.StationsPage.IsPropertiesExpanded;
+        _isWorkflowLibraryVisible = layout.Layout.StationsPage.IsWorkflowLibraryExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
         _session.SolutionReplacing += OnSolutionReplacing;
         ObserveProject(SelectedProject);
     }
 
     public ProjectViewModel? SelectedProject => _session.SelectedProject;
-    public LayoutColumnWidthsViewModel LayoutColumnWidths { get; }
     public WorkflowLibraryViewModel WorkflowLibrary { get; }
 
     [ObservableProperty]
@@ -148,13 +143,6 @@ public sealed partial class StationsPageViewModel : ObservableObject, IDisposabl
                 .Observe(ex => LogOperationFailed(_logger, "Update project runtime", ex));
     }
 
-    private void PersistLayoutState(Action<LayoutSettings> apply)
-    {
-        apply(_settings.Layout);
-        _settingsService.SaveSettingsAsync(_settings)
-            .Observe(ex => LogOperationFailed(_logger, "Persist station layout", ex));
-    }
-
     public void Dispose()
     {
         if (_disposed) return;
@@ -175,7 +163,7 @@ public sealed partial class StationsPageViewModel : ObservableObject, IDisposabl
         set
         {
             if (SetProperty(ref _isStationsListExpanded, value))
-                PersistLayoutState(layout => layout.StationsPage.IsStationsListExpanded = value);
+                _layout.Persist(layout => layout.StationsPage.IsStationsListExpanded = value);
         }
     }
 
@@ -185,7 +173,7 @@ public sealed partial class StationsPageViewModel : ObservableObject, IDisposabl
         set
         {
             if (SetProperty(ref _isPlatformsListExpanded, value))
-                PersistLayoutState(layout => layout.StationsPage.IsPlatformsListExpanded = value);
+                _layout.Persist(layout => layout.StationsPage.IsPlatformsListExpanded = value);
         }
     }
 
@@ -195,7 +183,7 @@ public sealed partial class StationsPageViewModel : ObservableObject, IDisposabl
         set
         {
             if (SetProperty(ref _isStationsPropertiesExpanded, value))
-                PersistLayoutState(layout => layout.StationsPage.IsPropertiesExpanded = value);
+                _layout.Persist(layout => layout.StationsPage.IsPropertiesExpanded = value);
         }
     }
 
@@ -205,7 +193,7 @@ public sealed partial class StationsPageViewModel : ObservableObject, IDisposabl
         set
         {
             if (SetProperty(ref _isWorkflowLibraryVisible, value))
-                PersistLayoutState(layout => layout.StationsPage.IsWorkflowLibraryExpanded = value);
+                _layout.Persist(layout => layout.StationsPage.IsWorkflowLibraryExpanded = value);
         }
     }
 

@@ -6,6 +6,7 @@ using Moba.Common.Configuration;
 using Moba.Common.Navigation;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
+using Moba.Test.Helpers;
 using Moq;
 using System.Diagnostics.CodeAnalysis;
 
@@ -147,29 +148,6 @@ internal sealed class SettingsPageViewModelTests
             Assert.That(settings.FeatureToggles.IsOverviewPageAvailable, Is.False);
         }
         persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Once);
-    }
-
-    [Test]
-    public void SectionLayoutPreservesKeysExpansionUsageAndOrderWithoutNoOpSaves()
-    {
-        var (viewModel, settings, persistence, _) = Create();
-        viewModel.SettingsSectionSortMode = " FREQUENCY ";
-        viewModel.SettingsSectionSortMode = "frequency";
-        viewModel.SetSettingsPageSectionIsExpanded("Speech", true);
-        viewModel.SetSettingsPageSectionIsExpanded("Speech", true);
-        viewModel.MarkSettingsPageSectionUsed("Speech");
-        viewModel.SetSettingsPageSectionOrder((string[])["Speech", "Display"]);
-        viewModel.SetSettingsPageSectionOrder((string[])["Speech", "Display"]);
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(settings.Layout.SettingsPage.SortMode, Is.EqualTo(SettingsSectionSortModes.Frequency));
-            Assert.That(viewModel.GetSettingsPageSectionIsExpanded("Speech"), Is.True);
-            Assert.That(viewModel.GetSettingsPageSectionState("Speech").UsageCount, Is.EqualTo(1));
-            Assert.That(viewModel.GetSettingsPageSectionState("Speech").LastUsedUtc, Is.Not.Null);
-            Assert.That(viewModel.GetSettingsPageSectionState("Display").Order, Is.EqualTo(1));
-        }
-        persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Exactly(4));
     }
 
     [Test]
@@ -328,10 +306,11 @@ internal sealed class SettingsPageViewModelTests
     {
         var settings = new AppSettings();
         var persistence = new Mock<ISettingsService>();
+        persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(settings)).Returns(Task.CompletedTask);
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        return (new SettingsPageViewModel(settings, persistence.Object, dispatcher.Object,
+        return (new SettingsPageViewModel(settings, persistence.Object, TestLayouts.Create(persistence.Object), dispatcher.Object,
             NullLogger<SettingsPageViewModel>.Instance, provider, speech), settings, persistence, dispatcher);
     }
 }

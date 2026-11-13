@@ -334,13 +334,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1062",
-      "path": "MOBAflow/Behavior/GridColumnResizeBehavior.cs",
-      "count": 4
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1062",
       "path": "MOBAflow/Controls/Matrix/ViewModel5x5.cs",
       "count": 1
     },
@@ -468,20 +461,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
       "path": "MOBAflow/App.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Behavior/GridColumnResizeBehavior.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Behavior/ResizeCursorGrid.cs",
       "count": 1
     },
     {
@@ -994,13 +973,6 @@
       "ruleId": "CA1848",
       "path": "MOBAflow/App.xaml.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1848",
-      "path": "MOBAflow/Behavior/GridColumnResizeBehavior.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -1701,13 +1673,6 @@
       "ruleId": "CA5392",
       "path": "MOBAflow/Controls/FunctionSymbolPickerWindow.xaml.cs",
       "count": 3
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1028",
-      "path": "MOBAflow/Behavior/ResizeCursorGrid.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -3666,6 +3631,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/LayoutPersistenceServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/JourneyStationProjectionTests.cs",
       "count": 1
     },
@@ -3701,7 +3673,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/MainWindowViewModelSignalBoxTests.cs",
+      "path": "Test/SharedUI/SignalBoxPageViewModelTests.cs",
       "count": 1
     },
     {
@@ -3898,6 +3870,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/SettingsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SolutionPageViewModelTests.cs",
       "count": 1
     },
     {

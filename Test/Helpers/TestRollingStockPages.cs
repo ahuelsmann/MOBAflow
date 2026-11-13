@@ -31,7 +31,7 @@ internal sealed partial class TestRollingStockPages : IDisposable
         var usage = CreateUsage(session, usageReader);
         _pages.Add(usage);
         var page = new LocomotivesPageViewModel(session, TestFileServices.Photos(files),
-            persistence.Object, new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, usage, CreateControl()),
+            TestLayouts.Create(persistence.Object), new LocomotivePageAnalysis(management, usage, CreateControl()),
             NullLogger<LocomotivesPageViewModel>.Instance, _ => { });
         _pages.Add(page);
         return page;
@@ -67,7 +67,7 @@ internal sealed partial class TestRollingStockPages : IDisposable
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
         var page = new WagonsPageViewModel(session, TestFileServices.Photos(files),
-            persistence.Object, new LayoutColumnWidthsViewModel(),
+            TestLayouts.Create(persistence.Object),
             NullLogger<WagonsPageViewModel>.Instance, _ => { });
         _pages.Add(page);
         return page;
@@ -80,7 +80,7 @@ internal sealed partial class TestRollingStockPages : IDisposable
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-        var page = new TrainsPageViewModel(session, runtime, persistence.Object, new LayoutColumnWidthsViewModel(),
+        var page = new TrainsPageViewModel(session, runtime, TestLayouts.Create(persistence.Object),
             GetLocomotivesPage(session, files, usageReader), GetWagonsPage(session, files),
             NullLogger<TrainsPageViewModel>.Instance);
         _pages.Add(page);
@@ -95,8 +95,8 @@ internal sealed partial class TestRollingStockPages : IDisposable
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
         var library = TestWorkflowLibraries.Create(session, dialogs, eventBus: eventBus);
         _pages.Add(library);
-        var page = new StationsPageViewModel(session, runtime, persistence.Object,
-            new LayoutColumnWidthsViewModel(), library, NullLogger<StationsPageViewModel>.Instance);
+        var page = new StationsPageViewModel(session, runtime, TestLayouts.Create(persistence.Object),
+            library, NullLogger<StationsPageViewModel>.Instance);
         _pages.Add(page);
         return page;
     }
@@ -107,7 +107,7 @@ internal sealed partial class TestRollingStockPages : IDisposable
         persistence.Setup(service => service.GetSettings()).Returns(new AppSettings());
         persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
         var page = new JourneysPageViewModel(session, gateway, dispatcher, Mock.Of<ICityService>(),
-            persistence.Object, new LayoutColumnWidthsViewModel(), NullLogger<JourneysPageViewModel>.Instance);
+            TestLayouts.Create(persistence.Object));
         _pages.Add(page);
         return page;
     }

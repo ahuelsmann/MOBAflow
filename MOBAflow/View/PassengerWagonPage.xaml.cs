@@ -7,11 +7,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Moba.SharedUI.ViewModel;
 using SharedUI.Interface;
+using SharedUI.Service;
 
 internal sealed partial class PassengerWagonPage
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<PassengerWagonPage>? _logger;
 
     public WagonsPageViewModel ViewModel { get; }
@@ -21,13 +21,11 @@ internal sealed partial class PassengerWagonPage
 
     public PassengerWagonPage(
         WagonsPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<PassengerWagonPage>? logger = null)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
 
@@ -55,10 +53,7 @@ internal sealed partial class PassengerWagonPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -106,7 +101,7 @@ internal sealed partial class PassengerWagonPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.PassengerWagonPage;
+        var layout = _layout.Layout.PassengerWagonPage;
 
         if (layout.ListColumnWidth > 0)
         {
@@ -147,7 +142,7 @@ internal sealed partial class PassengerWagonPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.PassengerWagonPage;
+        var layout = _layout.Layout.PassengerWagonPage;
 
         layout.IsListExpanded = ViewModel.IsPassengerWagonListExpanded;
         layout.IsPropertiesExpanded = ViewModel.IsPassengerWagonPropertiesExpanded;

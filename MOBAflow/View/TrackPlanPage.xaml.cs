@@ -46,12 +46,12 @@ public sealed partial class TrackPlanPage
     private double _panStartVerticalOffset;
     private Pointer? _panningPointer;
 
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
 
     public TrackPlanViewModel ViewModel { get; }
     public InterlockingControlViewModel InterlockingViewModel { get; }
-    public MainWindowViewModel MainViewModel { get; }
+    /// <summary>Gets the session whose persistence status the page shows.</summary>
+    public ISolutionSession Session { get; }
     private readonly EditableTrackPlan _plan;
     private readonly SegmentPlacementGeometry _geometry;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
@@ -81,23 +81,21 @@ public sealed partial class TrackPlanPage
 
     internal TrackPlanPage(
         TrackPlanPageViewModels viewModels,
-        MainWindowViewModel mainViewModel,
+        ISolutionSession session,
         TrackPlanPageEditor editor,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<TrackPlanPage>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(viewModels);
         ViewModel = viewModels.TrackPlan;
         InterlockingViewModel = viewModels.Interlocking;
-        MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
+        Session = session ?? throw new ArgumentNullException(nameof(session));
         ArgumentNullException.ThrowIfNull(editor);
         _plan = editor.Plan;
         _geometry = editor.Geometry;
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
         InitializeEditorFeatures();
@@ -210,10 +208,7 @@ public sealed partial class TrackPlanPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -223,7 +218,7 @@ public sealed partial class TrackPlanPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.TrackPlanPage;
+        var layout = _layout.Layout.TrackPlanPage;
 
         if (layout.ToolboxColumnWidth > 0)
         {
@@ -268,7 +263,7 @@ public sealed partial class TrackPlanPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.TrackPlanPage;
+        var layout = _layout.Layout.TrackPlanPage;
 
         layout.IsToolboxExpanded = ViewModel.IsToolboxExpanded;
         layout.IsPropertiesExpanded = ViewModel.IsPropertiesExpanded;

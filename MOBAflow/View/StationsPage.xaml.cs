@@ -8,12 +8,12 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+using SharedUI.Service;
 using Windows.ApplicationModel.DataTransfer;
 
 internal sealed partial class StationsPage
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<StationsPage>? _logger;
 
     public StationsPageViewModel ViewModel { get; }
@@ -25,13 +25,11 @@ internal sealed partial class StationsPage
 
     public StationsPage(
         StationsPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<StationsPage>? logger = null)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
         Loaded += OnPageLoaded;
@@ -122,10 +120,7 @@ internal sealed partial class StationsPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -135,7 +130,7 @@ internal sealed partial class StationsPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.StationsPage;
+        var layout = _layout.Layout.StationsPage;
 
         // Restore Column Widths First
         if (layout.StationsColumnWidth > 0)
@@ -215,7 +210,7 @@ internal sealed partial class StationsPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.StationsPage;
+        var layout = _layout.Layout.StationsPage;
 
         // Save CollapsibleColumn states
         layout.IsStationsListExpanded = ViewModel.IsStationsListExpanded;

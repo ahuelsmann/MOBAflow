@@ -14,6 +14,7 @@ using Moba.SharedUI.ViewModel;
 using Moba.SharedUI.ViewModel.Action;
 
 using SharedUI.Interface;
+using SharedUI.Service;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
@@ -25,8 +26,7 @@ using Windows.UI.Core;
 /// </summary>
 internal sealed partial class WorkflowsPage
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<WorkflowsPage>? _logger;
 
     public WorkflowsPageViewModel ViewModel { get; }
@@ -37,13 +37,11 @@ internal sealed partial class WorkflowsPage
 
     public WorkflowsPage(
         WorkflowsPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<WorkflowsPage>? logger = null)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
 
@@ -71,10 +69,7 @@ internal sealed partial class WorkflowsPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -133,7 +128,7 @@ internal sealed partial class WorkflowsPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.WorkflowsPage;
+        var layout = _layout.Layout.WorkflowsPage;
 
         if (layout.WorkflowListColumnWidth > 0)
         {
@@ -180,7 +175,7 @@ internal sealed partial class WorkflowsPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.WorkflowsPage;
+        var layout = _layout.Layout.WorkflowsPage;
 
         layout.IsWorkflowListExpanded = ViewModel.IsWorkflowListExpanded;
         layout.IsActionsExpanded = ViewModel.IsWorkflowActionsExpanded;

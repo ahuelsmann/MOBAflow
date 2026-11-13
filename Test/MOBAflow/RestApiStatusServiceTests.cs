@@ -148,10 +148,10 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             NullLogger<RestApiRuntimeHubService>.Instance,
             mobApiClient);
 
-        var mainWindowViewModel = CreateMainWindowViewModel(appSettings, mobaRuntime, eventBus);
+        _ = CreateMainWindowViewModel(appSettings, mobaRuntime, eventBus, out var solutionSession);
         var solutionSyncService = new RestApiSolutionSyncService(
             appSettings,
-            mainWindowViewModel.SolutionSession,
+            solutionSession,
             restApiProcessService,
             NullLogger<RestApiSolutionSyncService>.Instance,
             mobApiClient);
@@ -183,7 +183,8 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
     private MainWindowViewModel CreateMainWindowViewModel(
         AppSettings appSettings,
         Mock<IMobaRuntime> mobaRuntime,
-        IEventBus eventBus)
+        IEventBus eventBus,
+        out ISolutionSession session)
     {
         var uiDispatcher = new Mock<IUiDispatcher>();
         uiDispatcher
@@ -191,14 +192,15 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             .Callback<Action>(action => action());
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcher.Object, mobaRuntime.Object);
+        session = locomotiveSession1;
         var stationEventBus1 = eventBus;
         var settingsPage1 = TestSettingsPages.Create(appSettings, uiDispatcher.Object);
         var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntime.Object, null);
         return new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
             mobaRuntime.Object,
-            new LocalRuntimeCommandGateway(mobaRuntime.Object),
+            new LocalRuntimeCommandGateway(mobaRuntime.Object),
+
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -207,7 +209,8 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            NullLogger<MainWindowViewModel>.Instance);
+            NullLogger<MainWindowViewModel>.Instance,
+            new NullDialogService());
     }
 
     private sealed partial class ImmediateHttpMessageHandler : HttpMessageHandler

@@ -5,23 +5,17 @@ using Backend.Interface;
 
 using Common.Configuration;
 using Common.Events;
-using Common.Extension;
 
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-
-using Domain;
-using Domain.Enum;
 
 using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using System.Collections.ObjectModel;
-
 /// <summary>
-/// Core ViewModel for main window functionality.
-/// Partial classes handle: Solution, Z21, OperatingState, Signals, RawTurnout, PhotoAssignment and LayoutPanels.
+/// The main window shell: solution new/open/save and shutdown through the session, the Z21 status and telemetry
+/// projection, host command forwarding, the operating state and uploaded-photo routing.
+/// Partial classes handle: Solution, Z21, OperatingState and PhotoAssignment. Page state lives in the page ViewModels.
 /// </summary>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
@@ -39,12 +33,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     // Configuration
     private readonly AppSettings _settings;
 
-    // Optional Services
-    private readonly ISettingsService? _settingsService;
-    private readonly IDialogService? _dialogService;
-
-    // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
-    private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
+    private readonly IDialogService _dialogService;
     private readonly List<Guid> _eventBusSubscriptions = [];
 
     private bool _isShuttingDown;
@@ -55,20 +44,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class with all required backend services and configuration.
     /// </summary>
-    /// <param name="layoutColumnWidths">Observable column widths loaded from settings and bound by layout panels.</param>
     /// <param name="runtimeSnapshots">Read access to runtime snapshots.</param>
     /// <param name="runtimeConnection">Runtime lifecycle and Z21 connection.</param>
     /// <param name="runtimeCommandGateway">Route for every operator command (local, recorded or remote).</param>
     /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
     /// <param name="settingsPage">Shared settings presentation and persistence.</param>
+    /// <param name="trainsPage">Host-owned train editor with the locomotive and wagon editors that receive uploaded photos.</param>
+    /// <param name="stationsPage">Host-owned station editor, disposed with the shared workflow library at shutdown.</param>
+    /// <param name="journeysPage">Host-owned journey editor whose reset command the main window binds.</param>
     /// <param name="diagnostics">Host-owned Messages pane state bound by the main window.</param>
     /// <param name="systemStatus">Host-owned speech, post-startup, REST API and synchronization status bound by the status bar.</param>
     /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
-    /// <param name="settingsService">Optional settings service used to persist changes.</param>
-    /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
+    /// <param name="dialogService">Asks before new or opened solutions stop connected runtimes.</param>
     public MainWindowViewModel(
-        LayoutColumnWidthsViewModel layoutColumnWidths,
         IRuntimeSnapshotProvider runtimeSnapshots,
         IConnectionRuntime runtimeConnection,
         IRuntimeCommandGateway runtimeCommandGateway,
@@ -81,10 +70,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SystemStatusViewModel systemStatus,
         ISolutionSession solutionSession,
         ILogger<MainWindowViewModel> logger,
-        ISettingsService? settingsService = null,
-        IDialogService? dialogService = null)
+        IDialogService dialogService)
     {
-        ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
         ArgumentNullException.ThrowIfNull(runtimeConnection);
         ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
@@ -97,14 +84,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(diagnostics);
         ArgumentNullException.ThrowIfNull(systemStatus);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(dialogService);
 
         _session = solutionSession;
         _runtimeSnapshots = runtimeSnapshots;
         _runtimeConnection = runtimeConnection;
         _runtimeCommandGateway = runtimeCommandGateway;
         _eventBus = eventBus;
-        var settings = settingsPage.Settings;
-        _settings = settings;
+        _settings = settingsPage.Settings;
         SettingsPage = settingsPage;
         TrainsPage = trainsPage;
         StationsPage = stationsPage;
@@ -112,9 +99,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         Diagnostics = diagnostics;
         SystemStatus = systemStatus;
         _logger = logger;
-        _layoutColumnWidths = layoutColumnWidths;
-        _layoutColumnWidths.LoadFrom(settings.Layout);
-        _settingsService = settingsService;
         _dialogService = dialogService;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
@@ -126,8 +110,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ConnectCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedProject));
 
-        InitializeLayoutPanelStates();
-
         // The REST, speech and post-startup inputs of the operating state live in the status ViewModel.
         SystemStatus.PropertyChanged += OnSystemStatusPropertyChanged;
         _eventBusSubscriptions.Add(eventBus.Subscribe<PhotoAssignedEvent>(OnPhotoAssigned));
@@ -138,12 +120,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     #endregion
 
     #region Properties
-
-    /// <summary>
-    /// Observable column widths per page. Bound from grid ColumnDefinitions; when values are set
-    /// (from loaded settings or from the resize behavior), the UI updates via binding.
-    /// </summary>
-    public LayoutColumnWidthsViewModel LayoutColumnWidths => _layoutColumnWidths;
 
     /// <summary>Gets the host-owned settings state shared with SettingsPage and shell surfaces.</summary>
     public SettingsPageViewModel SettingsPage { get; }
@@ -169,28 +145,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>Gets the host-owned system status bound by the status bar and read by the operating state.</summary>
     public SystemStatusViewModel SystemStatus { get; }
 
-    /// <summary>
-    /// Application settings model shared with the shell. Exposed for UI behaviors that walk the visual tree
-    /// (e.g. column width persistence) without using a service locator.
-    /// </summary>
-    public AppSettings ApplicationSettings => _settings;
-
-    /// <summary>
-    /// Optional settings persistence service (platform-provided). Used by shell-level UI behaviors.
-    /// </summary>
-    public ISettingsService? SettingsPersistence => _settingsService;
-
-    /// <summary>
-    /// Non-generic logger for UI shell subsystems (e.g. layout behaviors) that are not constructed via DI.
-    /// </summary>
-    public ILogger UiShellLogger => _logger;
-
-    /// <summary>
-    /// The currently selected object to display in the properties panel.
-    /// </summary>
-    [ObservableProperty]
-    private object? _currentSelectedObject;
-
     [ObservableProperty]
     private bool _isConnected;
 
@@ -212,92 +166,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _simulateInPort = "1";
 
-    /// <summary>
-    /// Raised when the application should be closed (for example when the user selects an Exit command).
-    /// </summary>
-    public event EventHandler? ExitApplicationRequested;
-
-    /// <summary>
-    /// Raised when navigation to a page is requested (e.g., from plugins).
-    /// The string parameter is the navigation tag (e.g., "traincontrol", "journeys").
-    /// </summary>
-    public event EventHandler<string>? NavigationRequested;
-
-    /// <summary>
-    /// Requests navigation to the specified page tag.
-    /// Used by plugins to trigger navigation without direct access to NavigationService.
-    /// </summary>
-    public void RequestNavigation(string tag)
-    {
-        NavigationRequested?.Invoke(this, tag);
-    }
-    #endregion
-
-    #region Project Management
-    /// <summary>
-    /// Creates a new empty project in the current solution and selects it.
-    /// </summary>
-    [RelayCommand]
-    private void AddProject()
-    {
-        _session.AddProject(new Project { Name = "New Project" });
-
-        SaveSolutionCommand.NotifyCanExecuteChanged();
-        DeleteProjectCommand.NotifyCanExecuteChanged();
-    }
-
-    [RelayCommand(CanExecute = nameof(CanDeleteProject))]
-    private async Task DeleteProjectAsync()
-    {
-        if (SelectedProject == null) return;
-        if (_dialogService == null) return;
-
-        // Show confirmation dialog; a connected runtime stops its trains when the project goes away.
-        var stopsTrains = _session.GetConnectedProjectNames([SelectedProject.Model.Id]).Count > 0;
-        var confirmed = await _dialogService.ShowConfirmationAsync(
-            title: "Delete Project",
-            message: stopsTrains
-                ? "Do you really want to delete the project? Its runtime is connected to a Z21; "
-                    + "all its locomotives are set to speed 0 first."
-                : "Do you really want to delete the project?",
-            confirmButtonText: "Yes",
-            cancelButtonText: "No",
-            isCancelDefault: true);
-
-        if (!confirmed) return;
-
-        // Create backup of current solution file (before deletion)
-        var solutionPath = CurrentSolutionPath;
-        if (!string.IsNullOrEmpty(solutionPath) && File.Exists(solutionPath))
-        {
-            try
-            {
-                var dir = Path.GetDirectoryName(solutionPath);
-                var fileName = Path.GetFileNameWithoutExtension(solutionPath);
-                var ext = Path.GetExtension(solutionPath);
-                var backupPath = Path.Combine(dir ?? string.Empty, $"{fileName}.backup{ext}");
-                File.Copy(solutionPath, backupPath, overwrite: true);
-            }
-            catch
-            {
-                // Backup failed – still perform deletion (user has confirmed)
-                _logger.LogDebug("Failed to create backup before project deletion");
-            }
-        }
-
-        var deletedProject = SelectedProject;
-
-        // Clear all detail selections first; this prevents showing stale data from the deleted project.
-        ClearAllSelections();
-
-        // Removes the project and selects the first remaining one.
-        _session.RemoveProject(deletedProject);
-
-        SaveSolutionCommand.NotifyCanExecuteChanged();
-        DeleteProjectCommand.NotifyCanExecuteChanged();
-    }
-
-    private bool CanDeleteProject() => SelectedProject != null && _dialogService != null;
     #endregion
 
     #region Lifecycle
@@ -386,37 +254,5 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return true;
     }
 
-    private void PersistSettingsSafely()
-    {
-        if (_settingsService == null)
-        {
-            return;
-        }
-
-        _settingsService.SaveSettingsAsync(_settings).Observe(ex => _logger.LogWarning(ex, "Persist MainWindow settings failed"));
-    }
-
-    [RelayCommand]
-    private void ExitApplication()
-    {
-        ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
-    }
-    #endregion
-
-    #region Wagon Libraries
-    [ObservableProperty]
-    private ObservableCollection<GoodsWagon> _goodsWagonLibrary =
-    [
-        new GoodsWagon { Name = "Goods Wagon 1", Cargo = CargoType.Container },
-        new GoodsWagon { Name = "Goods Wagon 2", Cargo = CargoType.Coal },
-        new GoodsWagon { Name = "Goods Wagon 3", Cargo = CargoType.Wood }
-    ];
-
-    [ObservableProperty]
-    private ObservableCollection<PassengerWagon> _passengerWagonLibrary =
-    [
-        new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = PassengerClass.First },
-        new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = PassengerClass.Second }
-    ];
     #endregion
 }

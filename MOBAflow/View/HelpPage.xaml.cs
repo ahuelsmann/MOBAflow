@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml.Navigation;
 using Moba.WinUI.Service;
 using Moba.WinUI.ViewModel;
 using SharedUI.Interface;
+using SharedUI.Service;
 
 internal sealed partial class HelpPage : INavigationParameterReceiver
 {
@@ -18,8 +19,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
 
     /// <summary>Gets the selection state of the page; the page owns it because it has no dependencies.</summary>
     public HelpPageViewModel ViewModel { get; } = new();
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<HelpPage>? _logger;
     private long _navigationExpandedToken;
     private long _documentationExpandedToken;
@@ -29,12 +29,10 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
     private double _documentationExpandedStarValue = 1;
 
     public HelpPage(
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<HelpPage>? logger = null)
     {
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
         Loaded += OnPageLoaded;
@@ -74,10 +72,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
         try
         {
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -100,7 +95,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.HelpPage;
+        var layout = _layout.Layout.HelpPage;
 
         if (layout.NavigationColumnWidth > 0)
         {
@@ -163,7 +158,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.HelpPage;
+        var layout = _layout.Layout.HelpPage;
 
         layout.IsNavigationExpanded = NavigationPanel.IsExpanded;
         layout.IsDocumentationExpanded = DocumentationPanel.IsExpanded;

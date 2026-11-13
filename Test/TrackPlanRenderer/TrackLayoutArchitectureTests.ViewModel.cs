@@ -10,8 +10,6 @@ using global::Moba.TrackLibrary.PikoA;
 using global::Moba.TrackPlan.Editor;
 using global::Moba.Test.Helpers;
 
-using Microsoft.Extensions.Logging;
-
 using Moq;
 
 internal sealed partial class TrackLayoutArchitectureTests
@@ -102,9 +100,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         var viewModel = new TrackPlanViewModel(
             editorService,
             dialogService ?? Mock.Of<IDialogService>(),
-            new AppSettings(),
-            Mock.Of<ISettingsService>(),
-            Mock.Of<ILogger<TrackPlanViewModel>>());
+            TestLayouts.Create(new AppSettings()));
         return new ViewModelTestContext(viewModel, plan, editorService);
     }
 

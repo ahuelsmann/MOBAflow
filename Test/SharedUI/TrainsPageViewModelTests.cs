@@ -44,8 +44,8 @@ internal sealed partial class TrainsPageViewModelTests : IDisposable
         _page = CreatePage();
     }
 
-    private TrainsPageViewModel CreatePage() => new(_session.Object, _runtime.Object, _persistence.Object,
-        new LayoutColumnWidthsViewModel(), _stock.GetLocomotivesPage(_session.Object),
+    private TrainsPageViewModel CreatePage() => new(_session.Object, _runtime.Object, TestLayouts.Create(_persistence.Object),
+        _stock.GetLocomotivesPage(_session.Object),
         _stock.GetWagonsPage(_session.Object), NullLogger<TrainsPageViewModel>.Instance);
 
     [TearDown]

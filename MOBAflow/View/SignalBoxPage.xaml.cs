@@ -14,6 +14,7 @@ using Microsoft.UI.Xaml.Input;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+using SharedUI.Service;
 
 using System;
 using System.Collections.Specialized;
@@ -28,8 +29,7 @@ sealed partial class SignalBoxPage
             new EventId(1, nameof(LogSignalBoxChangeFailure)),
             "Apply signal-box property change failed");
 
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<SignalBoxPage>? _logger;
     private readonly SignalBoxPropertiesViewModel _propertiesViewModel;
 
@@ -37,17 +37,16 @@ sealed partial class SignalBoxPage
     private double _canvasExpandedStarValue = 3;
     private double _propertiesExpandedStarValue = 1;
 
-    public MainWindowViewModel ViewModel { get; }
+    public SignalBoxPageViewModel ViewModel { get; }
     public InterlockingControlViewModel InterlockingViewModel { get; }
 
     private SignalBoxPlanViewModel? _planViewModel;
 
     public SignalBoxPage(
-        MainWindowViewModel viewModel,
+        SignalBoxPageViewModel viewModel,
         InterlockingControlViewModel interlockingViewModel,
         SignalBoxPropertiesViewModel propertiesViewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<SignalBoxPage>? logger = null,
         ILogger<SignalBoxCanvasControl>? signalBoxCanvasLogger = null)
     {
@@ -58,8 +57,7 @@ sealed partial class SignalBoxPage
         ViewModel = viewModel;
         InterlockingViewModel = interlockingViewModel;
         _propertiesViewModel = propertiesViewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
 
         InitializeComponent();
@@ -111,7 +109,7 @@ sealed partial class SignalBoxPage
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.IsSignalBoxToolboxExpanded))
+        if (e.PropertyName == nameof(SignalBoxPageViewModel.IsSignalBoxToolboxExpanded))
         {
             if (!ViewModel.IsSignalBoxToolboxExpanded)
             {
@@ -126,7 +124,7 @@ sealed partial class SignalBoxPage
                 ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
             }
         }
-        else if (e.PropertyName == nameof(MainWindowViewModel.IsSignalBoxPropertiesExpanded))
+        else if (e.PropertyName == nameof(SignalBoxPageViewModel.IsSignalBoxPropertiesExpanded))
         {
             if (!ViewModel.IsSignalBoxPropertiesExpanded)
             {
@@ -146,7 +144,7 @@ sealed partial class SignalBoxPage
                 ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
             }
         }
-        else if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
+        else if (e.PropertyName == nameof(SignalBoxPageViewModel.SelectedProject))
         {
             DetachPlanViewModel();
             _planViewModel = null;
@@ -194,10 +192,7 @@ sealed partial class SignalBoxPage
         {
             ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -207,7 +202,7 @@ sealed partial class SignalBoxPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.SignalBoxPage;
+        var layout = _layout.Layout.SignalBoxPage;
 
         if (layout.ToolboxColumnWidth > 0)
         {
@@ -253,7 +248,7 @@ sealed partial class SignalBoxPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.SignalBoxPage;
+        var layout = _layout.Layout.SignalBoxPage;
 
         layout.IsToolboxExpanded = ViewModel.IsSignalBoxToolboxExpanded;
         layout.IsPropertiesExpanded = ViewModel.IsSignalBoxPropertiesExpanded;

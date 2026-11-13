@@ -251,7 +251,8 @@ public interface IWorkflowService
 **Content:**
 
 - `SolutionSession` (solution ownership, selection, dirty state and auto-save)
-- MainWindowViewModel (navigation and shell state, with page extraction reserved for RF-24)
+- MainWindowViewModel (shell: solution new/open/save, Z21 status, host commands, operating state and photo routing)
+- `LayoutPersistenceService` (the single boundary that writes the saved layout)
 - Page-specific ViewModels (JourneyViewModel, WorkflowViewModel, etc.)
 - ViewModels read runtime state through narrow runtime roles and send commands through
   `IRuntimeCommandGateway` (see [Runtime command path](#runtime-command-path))
@@ -347,12 +348,10 @@ runtime services.
 - MOBAsmart uses `MobileSolutionContext` as its `IProjectContext`, as described in
   [the mobile session boundary](#mobasmart-session-and-projection).
 - Shared ViewModels and host services reach solution ownership through those
-  contracts. The existing shell/composition, WinUI page bindings, column-width
-  behavior and Android shutdown
-  lookup remain explicitly named in
+  contracts. Only the shell, the main window that hosts it, OverviewPage (Z21 status
+  and telemetry), the composition root and the Android shutdown lookup remain explicitly named in
   [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs).
-  RF-24 removes the page, layout and shell-state dependencies; RF-23 adds no new
-  exception and does not claim that decomposition is already complete.
+  RF-24 removed the page, layout and shell-state dependencies.
 - The [RF-23 acceptance record](../specs/008-project-runtimes/acceptance.md)
   maps the feature criteria to tests and distinguishes automated evidence from
   app/device and live-hardware checks.
@@ -371,7 +370,7 @@ runtime services.
 - The page coordinates visual column widths and matching load/unload subscriptions. Editor disposal
   releases session, collection and model handlers without changing bound state during shutdown.
   The architecture guard rejects shell dependencies in LocomotivesPage. Train-composition
-  is extracted in slice 2c below; central layout-persistence extraction remains planned.
+  is extracted in slice 2c below; layout persistence is centralized in slice 6 below.
 
 **Read-only locomotive/train usage (#306):**
 
@@ -408,7 +407,7 @@ runtime services.
   entity/solution checks, refresh image bindings for repeated paths and ignore results after disposal.
 - The editor detaches session, project-collection and selected-model subscriptions at shutdown.
   The architecture guard rejects shell dependencies in both wagon inventory pages.
-  Train composition is extracted in slice 2c below; central layout persistence remains planned.
+  Train composition is extracted in slice 2c below; layout persistence is centralized in slice 6 below.
 
 **Train composition (RF-24 slice 2c):**
 
@@ -440,8 +439,7 @@ runtime services.
   EventBus and logger as required constructor dependencies; the library never holds the runtime
   `ActionExecutionContext`. Workflow behavior stays in the existing editor.
 - StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
-  unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
-  central layout persistence remains planned.
+  unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved.
 
 **Journey and city presentation (RF-24 slice 3b):**
 
@@ -469,7 +467,7 @@ runtime services.
   composition (slice 5a).
 - Deferred city loading uses the existing ICityService and UI dispatcher, and ignores queued
   completion after disposal. JourneysPage retains visual layout/drag-drop coordination and
-  load/unload subscriptions; existing width keys and central-layout follow-up remain unchanged.
+  load/unload subscriptions; existing width keys remain unchanged.
 
 **Workflow presentation (RF-24 slice 4):**
 
@@ -486,8 +484,8 @@ runtime services.
   workflow/action selection, its unbound WorkflowsPage ItemClicked command and its workflow layout
   members are removed; no shell surface binds workflow state. Clearing the selected project already
   clears the library selection, so the shell no longer resets it separately.
-- The shell still disposes the shared library during shutdown through the station editor it owns;
-  slice 6's final shell audit decides where that disposal lives. The architecture guard rejects
+- The shell disposes the shared library during shutdown through the station editor it owns;
+  slice 6's final shell audit kept that single disposal there. The architecture guard rejects
   shell dependencies in WorkflowsPage, which keeps visual layout, drag-start and keyboard coordination.
 
 **Counters and traffic monitor (RF-24 slice 5a):**
@@ -504,7 +502,7 @@ runtime services.
   (reloaded on `SelectedRuntimeChangedEvent`, capped at 100), the connection status derived from the runtime
   snapshot and the selected project's Z21 address, the clear command and the two persisted Monitor expansion
   flags under the existing `Layout.MonitorPage` keys. The architecture guard rejects shell dependencies in
-  MonitorPage, whose code-behind keeps the star-value persistence for slice 6. As a host singleton resolved
+  MonitorPage, whose code-behind keeps restoring and remembering the star values. As a host singleton resolved
   with the main window, it is created at start-up instead of on the first Monitor visit, so it follows
   `InMemorySink.LogAdded` and writes its "Monitor started" entry from then on; the page shows the same
   capped log.
@@ -540,13 +538,35 @@ runtime services.
   lives in the PhotoAssignment partial. The shell disposes both host instances at shutdown after it confirmed
   shutdown; a cancelled shutdown keeps them subscribed.
 
+**Layout persistence and final shell audit (RF-24 slice 6):**
+
+- `LayoutPersistenceService` (`SharedUI/Service/`) is the only writer of the saved layout. It reads the shared
+  `AppSettings` through `ISettingsService`, loads `LayoutColumnWidthsViewModel` once, applies a change under its
+  existing key and persists it with one logged-failure path, offers an awaited save, resets the layouts while
+  keeping the tab visibility and owns the Settings page section state (sort mode, expansion, usage, order).
+- The locomotive, wagon, train, station, journey, workflow, monitor and track-plan page ViewModels persist their
+  panel expansion through it. The page code-behinds keep the visual part: they restore the column widths on load
+  (`*ColumnStarValue` stars, intentionally fixed pixels) and save them through the service on unload.
+  `SettingsPageViewModel` keeps the layout reset command and its result text. Keys, defaults and the persisted
+  format are unchanged.
+- `SolutionPageViewModel` owns project creation and deletion (confirmation, backup) and the Solution page
+  expansion; `SignalBoxPageViewModel` owns the Signal Box page expansion, the ordered editor changes (runtime
+  project refresh, signal aspect through the gateway, save) and the projection of runtime signal-box state onto
+  the selected plan. `MainWindow` receives both so they exist from start-up and disposes them, with the counter
+  and monitor state, once the shell confirmed shutdown. `TrackPlanPage` binds `ISolutionSession` for its save status.
+- The unused `GridColumnResizeBehavior` and its visual-tree search for the shell are removed; pages resize with
+  the toolkit `GridSplitter`.
+- The shell keeps solution new/open/save with the stop-trains confirmation, shutdown, the Z21 status and
+  telemetry projection, the journey runtime projection, host command forwarding, the operating state and
+  uploaded-photo routing. It no longer takes `ISettingsService` or the column widths.
+
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
   speech selectors. Its required dependencies are AppSettings, ISettingsService, the UI dispatcher
   and logging; speech testing uses the existing host action. It never depends on MainWindowViewModel.
-- The ViewModel owns settings persistence, feature items, Piper choices, reset commands and section
-  state. SettingsPage keeps file pickers and visual ordering/reset feedback.
+- The ViewModel owns settings persistence, feature items, Piper choices and reset commands; the section
+  state moved to `LayoutPersistenceService` in slice 6. SettingsPage keeps file pickers and visual ordering/reset feedback.
 - `InPortCounterViewModel` reacts to actual valid feedback-count changes since slice 5a, and
   `SystemStatusViewModel` resets the speech health on a provider selection since slice 5b; the shell disposes
   both at shutdown. The architecture guard rejects shell dependencies in the extracted SettingsPage.
@@ -677,7 +697,7 @@ See [issue #132](https://github.com/ahuelsmann/MOBAflow/issues/132) and the
 
 - `MainWindowViewModel` is reduced to navigation, shell status and command forwarding: the page,
   counter, traffic, diagnostics and system-status ViewModels above are extracted (slices 1 to 5b of
-  RF-24). The remaining step is slice 6: one layout persistence boundary and the final shell audit.
+  RF-24), and slice 6 added the one layout persistence boundary and the final shell audit.
 - Every extraction updates compile-time `x:Bind` bindings in WinUI XAML, so it is verified with the
   platform UI build (not part of the cross-platform subset).
 
