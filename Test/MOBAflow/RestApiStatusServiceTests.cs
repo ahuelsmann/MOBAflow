@@ -198,7 +198,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
             mobaRuntime.Object,
-            new LocalRuntimeCommandGateway(mobaRuntime.Object),
+            new LocalRuntimeCommandGateway(mobaRuntime.Object),
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -207,7 +207,9 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            NullLogger<MainWindowViewModel>.Instance);
+            NullLogger<MainWindowViewModel>.Instance,
+            Mock.Of<ISettingsService>(),
+            new NullDialogService());
     }
 
     private sealed partial class ImmediateHttpMessageHandler : HttpMessageHandler

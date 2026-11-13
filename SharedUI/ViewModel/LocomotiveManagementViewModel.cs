@@ -24,27 +24,27 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
 {
     private readonly IDigitalAddressConflictDetector _conflictDetector;
     private readonly ILocomotiveLibraryService _libraryService;
-    private readonly ILocomotivePassportHtmlRenderer? _passportRenderer;
-    private readonly IDecoderCvService? _decoderCvService;
-    private readonly IFilePickerService? _filePicker;
-    private readonly IProjectContext? _projectContext;
+    private readonly ILocomotivePassportHtmlRenderer _passportRenderer;
+    private readonly IDecoderCvService _decoderCvService;
+    private readonly IFilePickerService _filePicker;
+    private readonly IProjectContext _projectContext;
     private Project? _project;
     private Locomotive? _locomotive;
 
     public LocomotiveManagementViewModel(
         IDigitalAddressConflictDetector conflictDetector,
         ILocomotiveLibraryService libraryService,
-        ILocomotivePassportHtmlRenderer? passportRenderer = null,
-        IDecoderCvService? decoderCvService = null,
-        IFilePickerService? filePicker = null,
-        IProjectContext? projectContext = null)
+        ILocomotivePassportHtmlRenderer passportRenderer,
+        IDecoderCvService decoderCvService,
+        IFilePickerService filePicker,
+        IProjectContext projectContext)
     {
         _conflictDetector = conflictDetector ?? throw new ArgumentNullException(nameof(conflictDetector));
         _libraryService = libraryService ?? throw new ArgumentNullException(nameof(libraryService));
-        _passportRenderer = passportRenderer;
-        _decoderCvService = decoderCvService;
-        _filePicker = filePicker;
-        _projectContext = projectContext;
+        _passportRenderer = passportRenderer ?? throw new ArgumentNullException(nameof(passportRenderer));
+        _decoderCvService = decoderCvService ?? throw new ArgumentNullException(nameof(decoderCvService));
+        _filePicker = filePicker ?? throw new ArgumentNullException(nameof(filePicker));
+        _projectContext = projectContext ?? throw new ArgumentNullException(nameof(projectContext));
     }
 
     public ObservableCollection<AddressFindingViewModel> AddressFindings { get; } = [];
@@ -149,7 +149,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     [RelayCommand]
     private async Task ExportPassportAsync()
     {
-        if (Passport is null || _passportRenderer is null || _filePicker is null)
+        if (Passport is null)
             return;
         try
         {
@@ -169,7 +169,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     private async Task ExportLatestCvSnapshotAsync()
     {
         var snapshot = DecoderSnapshots.FirstOrDefault();
-        if (snapshot is null || _decoderCvService is null || _filePicker is null)
+        if (snapshot is null)
             return;
         try
         {
@@ -188,7 +188,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     [RelayCommand]
     private async Task ImportCvSnapshotAsync()
     {
-        if (_locomotive is null || _decoderCvService is null || _filePicker is null)
+        if (_locomotive is null)
             return;
         try
         {
@@ -217,7 +217,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     }
 
     private Task SaveChangesAsync()
-        => _projectContext?.SaveSolutionInternalAsync() ?? Task.CompletedTask;
+        => _projectContext.SaveSolutionInternalAsync();
 
     private static string SafeFileName(string value)
     {

@@ -720,7 +720,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            new LocalRuntimeCommandGateway(runtime.Object),
+            new LocalRuntimeCommandGateway(runtime.Object),
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -729,7 +729,9 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            Mock.Of<ILogger<MainWindowViewModel>>());
+            Mock.Of<ILogger<MainWindowViewModel>>(),
+            Mock.Of<ISettingsService>(),
+            new NullDialogService());
         var evaluation = new StubEvaluationService(evaluationResult ?? new TimetableEvaluationResult([]));
         var timing = new StubTimingService(delay ?? TimeSpan.Zero);
         var runtimeProjection = projection ?? new RecordingProjectionService();

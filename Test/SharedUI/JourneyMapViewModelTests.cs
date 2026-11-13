@@ -65,7 +65,7 @@ internal sealed partial class JourneyMapViewModelTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
             runtimeMock.Object,
-            new LocalRuntimeCommandGateway(runtimeMock.Object),
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -74,6 +74,8 @@ internal sealed partial class JourneyMapViewModelTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            loggerMock.Object);
+            loggerMock.Object,
+            Mock.Of<ISettingsService>(),
+            new NullDialogService());
     }
 }

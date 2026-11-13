@@ -157,7 +157,8 @@ internal sealed class TrainControlViewModelPerformanceTests
             NullLogger<TrainControlViewModel>.Instance,
             ImmediateUiDispatcher.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
-            new NullFunctionAppearancePicker());
+            new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState());
     }
 
     private static Mock<ISettingsService> CreateSettingsServiceMock()

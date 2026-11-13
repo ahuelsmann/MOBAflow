@@ -245,6 +245,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
             ImmediateUiDispatcher.Instance,
             new EventBus(NullLogger<EventBus>.Instance),
             new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState(),
             options: new TrainControlViewModelOptions());
     }
 
@@ -264,6 +265,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
             ImmediateUiDispatcher.Instance,
             new EventBus(NullLogger<EventBus>.Instance),
             new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState(),
             options: new TrainControlViewModelOptions
             {
                 UseRemoteRuntimeSnapshots = true

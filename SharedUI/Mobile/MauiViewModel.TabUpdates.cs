@@ -179,8 +179,7 @@ public sealed partial class MauiViewModel
         if (!IsMobaflowConnectionEnabled
             || !IsRestApiReachable
             || string.IsNullOrWhiteSpace(RestApiIpAddress)
-            || RestApiPort <= 0
-            || _runtimeHubRemoteClient == null)
+            || RestApiPort <= 0)
         {
             return;
         }
@@ -192,7 +191,7 @@ public sealed partial class MauiViewModel
     {
         try
         {
-            await _runtimeHubRemoteClient!
+            await _runtimeHubRemoteClient
                 .RequestLatestSnapshotAsync(_applicationLifetimeCts.Token)
                 .ConfigureAwait(false);
         }
@@ -208,7 +207,7 @@ public sealed partial class MauiViewModel
         {
             ApplyBestAvailableSignalBoxElements();
 
-            if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+            if (_mobileRuntimeCoordinator.PreferRemoteRuntime)
             {
                 RequestSignalBoxSnapshotRefresh();
             }

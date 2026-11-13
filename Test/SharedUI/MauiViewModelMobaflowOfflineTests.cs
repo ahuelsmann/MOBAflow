@@ -666,7 +666,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             ImmediateUiDispatcher.Instance,
             eventBus,
             new NullFunctionAppearancePicker(),
-            mobileRuntimeCoordinator: coordinator,
+            coordinator,
             options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
 
         eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
@@ -797,6 +797,9 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         var settingsService = CreateSettingsServiceMock().Object;
         var endpointLocator = TestEndpointLocators.Create(appSettings, settingsService, restDiscoveryService);
         var healthService = photoUploadService ?? new Mock<IPhotoUploadService>().Object;
+        var hubClient = runtimeHubRemoteClient ?? Mock.Of<IRuntimeHubRemoteClient>();
+        var coordinator = mobileRuntimeCoordinator ?? Mock.Of<IMobileRuntimeCoordinator>();
+        var context = projectContext ?? new MobileSolutionContext(TestViewModelServices.Default);
         var viewModel = new MauiViewModel(
             runtimeMock.Object,
             runtimeMock.Object,
@@ -806,20 +809,17 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             appSettings,
             settingsService,
             endpointLocator,
-            TestHubSessions.Create(appSettings, endpointLocator, healthService, runtimeHubRemoteClient),
-            new MobileRuntimeProjection(
-                runtimeMock.Object,
-                projectContext ?? new MobileSolutionContext(TestViewModelServices.Default),
-                mobileRuntimeCoordinator ?? Mock.Of<IMobileRuntimeCoordinator>(),
-                Mock.Of<IMobileSolutionStore>()),
+            TestHubSessions.Create(appSettings, endpointLocator, healthService, hubClient, new NullRestApiClientRegistration()),
+            new MobileRuntimeProjection(runtimeMock.Object, context, coordinator, Mock.Of<IMobileSolutionStore>()),
             TestSolutionSynchronizers.Create(Mock.Of<ISolutionRemoteLoader>()),
             new MobilePhotoUploader(new Mock<IPhotoCaptureService>().Object, healthService, endpointLocator),
             new Mock<INetworkProfileChangeNotifier>().Object,
             NullLogger<MauiViewModel>.Instance,
             eventBus,
-            runtimeHubRemoteClient: runtimeHubRemoteClient,
-            mobileRuntimeCoordinator: mobileRuntimeCoordinator,
-            projectContext: projectContext);
+            hubClient,
+            coordinator,
+            context,
+            Mock.Of<IBackgroundService>());
 
         _createdViewModels.Add(viewModel);
         viewModel.NotifySignalBoxPageLoaded();

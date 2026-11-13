@@ -90,7 +90,8 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             NullLogger<TrainControlViewModel>.Instance,
             ImmediateUiDispatcher.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
-            new NullFunctionAppearancePicker());
+            new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState());
     }
 
     private MainWindowViewModel CreateMainWindowViewModel()
@@ -112,7 +113,7 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
             runtimeMock.Object,
-            new LocalRuntimeCommandGateway(runtimeMock.Object),
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -121,7 +122,9 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            new Mock<ILogger<MainWindowViewModel>>().Object);
+            new Mock<ILogger<MainWindowViewModel>>().Object,
+            Mock.Of<ISettingsService>(),
+            new NullDialogService());
     }
 
     private static JourneyViewModel CreateJourneyViewModel(string name, int currentPos, int stationCount)
