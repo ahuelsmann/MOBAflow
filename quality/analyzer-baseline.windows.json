@@ -244,7 +244,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1031",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "MOBAflow",
@@ -1161,7 +1161,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 13
+      "count": 11
     },
     {
       "project": "MOBAflow",
@@ -1553,7 +1553,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 5
+      "count": 4
     },
     {
       "project": "MOBAflow",

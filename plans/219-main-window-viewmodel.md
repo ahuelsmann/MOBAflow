@@ -269,28 +269,24 @@ shell), `OverviewPage.xaml.cs` (Z21 status and telemetry), the composition root 
 `MOBAflow/View/` folder, `NavigationRegistration` and `GridColumnResizeBehavior` entries are removed; `TrackPlanPage`
 binds `ISolutionSession` for its save status and `SolutionPage` and `SignalBoxPage` bind their page ViewModels.
 
-### Slice 6 local validation (2026-11-12)
+### Slice 6 local validation (2026-11-13)
 
-Local checks on Windows without the composition root: `MobaWinUiServiceCollectionExtensions.cs`,
-`NavigationRegistration.cs` and the container tests are not changed yet, because the Project Manager staggers
-registration changes behind RF-25 pull request #435. Until that follow-up commit, MOBAflow does not compile, the
-Windows suite and the Windows analyzer gate cannot run, and `SolutionSessionArchitectureTests` reports
-`NavigationRegistration.cs` as the one remaining shell dependent. The pending registration change is: register
-`LayoutPersistenceService`, `SolutionPageViewModel` and `SignalBoxPageViewModel`; pass the layout service to the
-locomotive, wagon, settings and track-plan ViewModel factories and to the page factories; drop the column widths
-and settings service from the shell factory and require its dialog service; pass both new page ViewModels to
-`MainWindow`; give `TrackPlanPage` the session and `SignalBoxPage` its page ViewModel.
+The branch contains main `9b82732c` (after #435 and #438). The composition root followed in a separate commit once
+RF-25 pull request #435 was merged: `LayoutPersistenceService`, `SolutionPageViewModel` and `SignalBoxPageViewModel`
+are registered, the page and ViewModel factories receive the layout boundary, the shell factory no longer passes the
+column widths or the settings service, and `MainWindow` receives both new page ViewModels.
 
-Checked so far: SharedUI and the portable test project compile with zero warnings; the portable suite ran 3,292
-tests with 3,291 passed and the one expected architecture failure named above; the slice filter
-(`LayoutPersistenceServiceTests`, `SolutionPageViewModelTests`, `SignalBoxPageViewModelTests` and the page and
-shell fixtures) executed 285 tests. The portable Release analyzer gate matches exactly: 3,127 diagnostics in 1,117
-groups; the portable and Android baselines only drop or lower shell, Settings layout and track-plan entries, and the
-test baselines add one CA1812 entry per new fixture (`LayoutPersistenceServiceTests`, `SolutionPageViewModelTests`)
-and rename the moved signal-box fixture's entry. The Windows baseline so far only drops the removed behavior files'
-entries; the Android baseline mirrors the SharedUI entries by hand. No application, device or hardware was started;
-Light, Dark, High Contrast, keyboard and Narrator states of the Solution, Signal Box, Settings and Track Plan pages
-were not inspected.
+Local checks on Windows: the MOBAflow FastDebug compile passed with zero warnings; the Windows suite passed 3,413
+tests and the portable suite 3,297 tests, each with zero failures and zero skips. Both Release analyzer gates match
+exactly: 3,127 diagnostics in 1,117 groups (portable) and 2,446 in 964 (Windows). The portable and Android baselines
+only drop or lower shell, Settings layout and track-plan entries; the Windows baseline drops the removed behavior
+files' entries and lowers three `MainWindow.xaml.cs` counts; the test baselines add one CA1812 entry per new fixture
+(`LayoutPersistenceServiceTests`, `SolutionPageViewModelTests`) and rename the moved signal-box fixture's entry. The
+Android baseline mirrors the SharedUI entries by hand; the MOBAsmart FastDebug Android build passed with zero
+warnings, and CI owns the Android Release analyzer gate. Documentation links, instruction consistency, the AI
+repository setup check, secrets and line-ending checks pass. No application, device or hardware was started; Light,
+Dark, High Contrast, keyboard and Narrator states of the Solution, Signal Box, Settings and Track Plan pages were not
+inspected.
 
 ### RF-24 completion steps
 

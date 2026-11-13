@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
@@ -10,7 +9,6 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
 using Moba.WinUI.Service;
 using Moba.WinUI.ViewModel;
-using SharedUI.Interface;
 using SharedUI.Service;
 
 internal sealed partial class HelpPage : INavigationParameterReceiver

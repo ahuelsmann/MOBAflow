@@ -2,7 +2,6 @@
 
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 using Converter;
 using Microsoft.Extensions.Logging;

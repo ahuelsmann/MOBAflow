@@ -94,7 +94,7 @@ internal sealed class WinUiAppStartupService
 
         mainWindow.ScheduleDeferredUiStartup();
 
-        RunPostStartupPipelineAsync(services, mainWindow, logger)
+        RunPostStartupPipelineAsync(services, logger)
             .SafeFireAndForget(ex => logger.LogError(ex, "Post-startup initialization failed unexpectedly"));
 
         logger.LogInformation(
@@ -177,7 +177,6 @@ internal sealed class WinUiAppStartupService
 
     private static async Task RunPostStartupPipelineAsync(
         IServiceProvider services,
-        MainWindow mainWindow,
         ILogger<App> logger)
     {
         try

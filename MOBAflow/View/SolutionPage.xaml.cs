@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
@@ -11,7 +10,6 @@ using Microsoft.UI.Xaml.Input;
 
 using Windows.ApplicationModel.DataTransfer;
 
-using SharedUI.Interface;
 using SharedUI.ViewModel;
 using SharedUI.Service;
 

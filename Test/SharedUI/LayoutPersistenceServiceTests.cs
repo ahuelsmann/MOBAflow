@@ -186,8 +186,8 @@ internal sealed class LayoutPersistenceServiceTests
         layout.SetSettingsSectionExpanded("Speech", true);
         layout.SetSettingsSectionExpanded("Speech", true);
         layout.MarkSettingsSectionUsed("Speech");
-        layout.SetSettingsSectionOrder(["Speech", "Display"]);
-        layout.SetSettingsSectionOrder(["Speech", "Display"]);
+        layout.SetSettingsSectionOrder((string[])["Speech", "Display"]);
+        layout.SetSettingsSectionOrder((string[])["Speech", "Display"]);
 
         using (Assert.EnterMultipleScope())
         {
@@ -218,7 +218,7 @@ internal sealed class LayoutPersistenceServiceTests
         var layout = Create();
         layout.SetSettingsSectionExpanded(" ", true);
         layout.MarkSettingsSectionUsed(string.Empty);
-        layout.SetSettingsSectionOrder([" "]);
+        layout.SetSettingsSectionOrder((string[])[" "]);
 
         using (Assert.EnterMultipleScope())
         {

@@ -16,7 +16,7 @@ using Moq;
 /// Solution page state: project creation and deletion through the session and the persisted panel expansion.
 /// </summary>
 [TestFixture]
-internal sealed class SolutionPageViewModelTests : IDisposable
+internal sealed partial class SolutionPageViewModelTests : IDisposable
 {
     private static readonly string[] ProjectsAfterAdd = ["Main", "Yard", "New Project"];
     private static readonly string[] ProjectsAfterDelete = ["Main"];
@@ -200,7 +200,7 @@ internal sealed class SolutionPageViewModelTests : IDisposable
         var project = new ProjectViewModel(new Project { Name = "Main" }, TestViewModelServices.Default);
         var session = new Mock<ISolutionSession>();
         session.SetupGet(value => value.SelectedProject).Returns(project);
-        session.Setup(value => value.GetConnectedProjectNames(It.IsAny<IReadOnlyCollection<Guid>?>())).Returns(["Main"]);
+        session.Setup(value => value.GetConnectedProjectNames(It.IsAny<IReadOnlyCollection<Guid>?>())).Returns((string[])["Main"]);
         _dialogs.Setup(value => value.ShowConfirmationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string>(), It.IsAny<bool>())).ReturnsAsync(false);
         using var page = new SolutionPageViewModel(session.Object, _dialogs.Object, TestLayouts.Create(_persistence.Object),

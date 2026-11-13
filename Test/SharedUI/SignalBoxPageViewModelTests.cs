@@ -18,7 +18,7 @@ using Moq;
 /// signal-box projection onto the edited plan and the persisted panel expansion.
 /// </summary>
 [TestFixture]
-internal sealed class SignalBoxPageViewModelTests : IDisposable
+internal sealed partial class SignalBoxPageViewModelTests : IDisposable
 {
     private static readonly string[] UpdateThenAspect = ["update", "aspect"];
 
@@ -233,6 +233,6 @@ internal sealed class SignalBoxPageViewModelTests : IDisposable
 
     private MobaRuntimeSnapshot SnapshotWithAspect(SignalAspect aspect) => new()
     {
-        SignalBoxElements = [new SignalBoxElementRuntimeSnapshot { ElementId = _signal.Id, SignalAspect = aspect }]
+        SignalBoxElements = (SignalBoxElementRuntimeSnapshot[])[new SignalBoxElementRuntimeSnapshot { ElementId = _signal.Id, SignalAspect = aspect }]
     };
 }
