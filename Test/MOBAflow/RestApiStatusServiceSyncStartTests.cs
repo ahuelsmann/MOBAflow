@@ -2,8 +2,14 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.MOBAflow;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
+using Moba.Common.Configuration;
 using Moba.Common.Events;
+using Moba.Domain;
+using Moba.SharedUI.Interface;
 using Moba.Test.Helpers;
+using Moba.WinUI.Service;
 
 using Moq;
 
@@ -152,6 +158,75 @@ internal sealed partial class RestApiStatusServiceTests
         }
     }
 
+    [Test]
+    public async Task Start_ShouldKeepRechecking_WhileTheFirstSolutionUploadIsStillOnItsWay()
+    {
+        // Arrange: the host connects at once, but the first solution upload hangs in its HTTP request.
+        var clock = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var probe = new SyncStartProbe(clock);
+        var hostConnected = false;
+        var session = new Mock<ISolutionSession>();
+        session.SetupGet(value => value.Solution).Returns(new Solution());
+        using var uploadHandler = new SlowSolutionUploadHandler();
+        using var uploadClient = new LocalMobApiClient(new AppSettings(), uploadHandler);
+        using var statusHandler = new SyncStatusHttpMessageHandler(probe, () => hostConnected, () => uploadHandler.IsStored);
+        var dependencies = CreateDependencies(
+            statusHandler,
+            timeProvider: clock,
+            createSolutionSync: process => new RestApiSolutionSyncService(
+                new AppSettings(),
+                session.Object,
+                process,
+                NullLogger<RestApiSolutionSyncService>.Instance,
+                uploadClient));
+        await using var dependenciesLifetime = dependencies.ConfigureAwait(false);
+        dependencies.RuntimeHubHostClient.SetupGet(client => client.IsConnected).Returns(() => hostConnected);
+        dependencies.RuntimeHubHostClient
+            .Setup(client => client.ConnectAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Returns(() =>
+            {
+                probe.RecordConnectAttempt();
+                hostConnected = true;
+                return Task.CompletedTask;
+            });
+        dependencies.EventBus.Subscribe<MobaflowSyncDiagnosticsChangedEvent>(e => probe.RecordDiagnostics(e.Diagnostics));
+        dependencies.SolutionSyncService.QueuePush();
+        await uploadHandler.Started.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+
+        // Act: the 1 s re-check confirms the host while the upload still runs.
+        dependencies.StatusService.Start();
+        await probe.WaitForDiagnosticsAsync(diagnostics => diagnostics.HostClientConnected).ConfigureAwait(false);
+        clock.Advance(TimeSpan.FromSeconds(1));
+        var hostConfirmed = await probe.WaitForDiagnosticsAsync(diagnostics => diagnostics.ServerHasHost).ConfigureAwait(false);
+
+        // Assert: the rows keep waiting and the next check comes after 2 s, not after 30 s.
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(hostConfirmed.SolutionAvailable, Is.False);
+            Assert.That(hostConfirmed.SyncStarting, Is.True, "The solution row waits for the running upload.");
+        }
+
+        uploadHandler.Complete();
+        using (var uploadTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+        {
+            while (dependencies.SolutionSyncService.IsPushPending)
+            {
+                await Task.Delay(10, uploadTimeout.Token).ConfigureAwait(false);
+            }
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(2));
+        var solutionVisible = await probe.WaitForDiagnosticsAsync(diagnostics => diagnostics.SolutionAvailable).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(solutionVisible.SyncStarting, Is.False);
+            Assert.That(probe.RequestTimes, Is.EqualTo(new[] { TimeSpan.Zero, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(3) }));
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(29));
+        Assert.That(probe.RequestTimes, Has.Length.EqualTo(3), "Once the solution is visible, the status is checked every 30 s again.");
+    }
+
     /// <summary>Records status requests, connect attempts and published diagnostics against the fake clock.</summary>
     private sealed class SyncStartProbe(ManualTimeProvider clock)
     {
@@ -273,7 +348,10 @@ internal sealed partial class RestApiStatusServiceTests
     }
 
     /// <summary>Answers GET /api/status like MOBApi; the server lists the host once it registered.</summary>
-    private sealed partial class SyncStatusHttpMessageHandler(SyncStartProbe probe, Func<bool> hostRegistered) : HttpMessageHandler
+    private sealed partial class SyncStatusHttpMessageHandler(
+        SyncStartProbe probe,
+        Func<bool> hostRegistered,
+        Func<bool>? solutionStored = null) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
@@ -281,11 +359,38 @@ internal sealed partial class RestApiStatusServiceTests
         {
             probe.RecordRequest();
             var hasHost = hostRegistered() ? "true" : "false";
-            var json = $$"""{ "status": "running", "port": 5001, "runtime": { "hasHost": {{hasHost}} } }""";
+            var available = solutionStored?.Invoke() == true ? "true" : "false";
+            var json = $$"""
+                { "status": "running", "port": 5001, "runtime": { "hasHost": {{hasHost}} },
+                  "solution": { "available": {{available}}, "updatedAt": "2026-01-01T00:00:00Z" } }
+                """;
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
             });
+        }
+    }
+
+    /// <summary>Holds the solution upload until the test lets it finish; MOBApi then has the solution.</summary>
+    private sealed partial class SlowSolutionUploadHandler : HttpMessageHandler
+    {
+        private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _stored;
+
+        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public bool IsStored => Volatile.Read(ref _stored) != 0;
+
+        public void Complete() => _release.TrySetResult();
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            Started.TrySetResult();
+            await _release.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            Volatile.Write(ref _stored, 1);
+            return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
         }
     }
 }

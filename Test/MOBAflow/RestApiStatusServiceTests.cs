@@ -119,7 +119,8 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
         HttpMessageHandler statusHandler,
         IPhotoHubClient? actualPhotoHubClient = null,
         int port = 5001,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        Func<RestApiProcessService, RestApiSolutionSyncService>? createSolutionSync = null)
     {
         var appSettings = new AppSettings();
         appSettings.RestApi.Port = port;
@@ -152,7 +153,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             mobApiClient);
 
         var mainWindowViewModel = CreateMainWindowViewModel(appSettings, mobaRuntime, eventBus);
-        var solutionSyncService = new RestApiSolutionSyncService(
+        var solutionSyncService = createSolutionSync?.Invoke(restApiProcessService) ?? new RestApiSolutionSyncService(
             appSettings,
             mainWindowViewModel.SolutionSession,
             restApiProcessService,

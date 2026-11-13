@@ -255,7 +255,11 @@ public sealed class RestApiStatusService : IAsyncDisposable
                 {
                     // Another refresh is still connecting: keep the rows waiting without using up a re-check
                     // delay. That refresh schedules the next check when its connect attempt ends.
-                    PublishSyncDiagnostics(data, restApiReachable: true, syncStarting: !IsSyncSettled(data));
+                    // After the start phase the rows keep reporting the problem instead of switching back to waiting.
+                    PublishSyncDiagnostics(
+                        data,
+                        restApiReachable: true,
+                        syncStarting: IsInSyncStartPhase() && !IsSyncSettled(data));
                     return;
                 }
 
@@ -384,16 +388,17 @@ public sealed class RestApiStatusService : IAsyncDisposable
     }
 
     /// <summary>
-    /// The synchronization is set up when the server confirms the connected RuntimeHub host and every successful
-    /// solution and snapshot push is visible in the status that was read.
+    /// The synchronization is set up when the server confirms the connected RuntimeHub host, no solution upload is
+    /// still on its way and every successful solution and snapshot push is visible in the status that was read.
     /// </summary>
     private bool IsSyncSettled(StatusResponse? data)
     {
         var hostConfirmed = _runtimeHubConnected
             && _runtimeHubHostClient.IsConnected
             && (data?.Runtime?.HasHost ?? false);
-        var solutionPushNotVisible = _solutionSyncService.LastSolutionPushSucceeded
-            && !(data?.Solution?.Available ?? false);
+        var solutionAvailable = data?.Solution?.Available ?? false;
+        var solutionPushNotVisible = !solutionAvailable
+            && (_solutionSyncService.IsPushPending || _solutionSyncService.LastSolutionPushSucceeded);
         var snapshotPushNotVisible = _runtimeHubService.LastRestCachePushSucceeded
             && !(data?.Runtime?.SnapshotCache?.Available ?? false);
         return hostConfirmed && !solutionPushNotVisible && !snapshotPushNotVisible;
