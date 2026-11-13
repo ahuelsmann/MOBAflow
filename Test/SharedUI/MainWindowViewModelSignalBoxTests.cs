@@ -10,6 +10,7 @@ using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
@@ -116,7 +117,7 @@ internal sealed partial class MainWindowViewModelSignalBoxTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            gateway.Object,
+            gateway.Object,
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -125,7 +126,9 @@ internal sealed partial class MainWindowViewModelSignalBoxTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            NullLogger<MainWindowViewModel>.Instance)
+            NullLogger<MainWindowViewModel>.Instance,
+            Mock.Of<ISettingsService>(),
+            new NullDialogService())
         {
             SelectedProject = new ProjectViewModel(project, TestViewModelServices.Default)
         };

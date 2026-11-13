@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.TrainControl;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
@@ -105,6 +106,24 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
 
         Assert.DoesNotThrow(() => WinUiDiContainerValidator.ValidateCoreServices(provider));
         Assert.That(provider.GetRequiredService<RecorderPageViewModel>(), Is.Not.Null);
+    }
+
+    [Test]
+    public async Task ShellTrainControlAndLocomotiveManagementResolveTheirRequiredDesktopServices()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var settingsPersistence = provider.GetRequiredService<ISettingsService>();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<IRuntimeRoutingState>(), Is.InstanceOf<NullRuntimeRoutingState>());
+            Assert.That(provider.GetRequiredService<TrainControlViewModel>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<MainWindowViewModel>().SettingsPersistence, Is.SameAs(settingsPersistence));
+            Assert.That(provider.GetRequiredService<LocomotiveManagementViewModel>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<SettingsPageViewModel>().FeatureToggleItems, Is.Not.Empty,
+                "The desktop page provider lists the toggleable pages.");
+        }
     }
 
     [Test]

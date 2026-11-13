@@ -9,6 +9,7 @@ using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 using System.Windows.Input;
@@ -186,7 +187,9 @@ public sealed partial class JourneyCounterProjectionTests
                 _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
                 _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
                 locomotiveSession1,
-                NullLogger<MainWindowViewModel>.Instance);
+                NullLogger<MainWindowViewModel>.Instance,
+                Mock.Of<ISettingsService>(),
+                new NullDialogService());
         }
 
         public Mock<IMobaRuntime> Runtime { get; } = new();

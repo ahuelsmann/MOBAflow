@@ -216,7 +216,8 @@ public static class MobaWinUiServiceCollectionExtensions
                 sp.GetRequiredService<IRuntimeHubHostClient>(),
                 sp.GetRequiredService<IMobaRuntime>(),
                 sp.GetRequiredService<IEventBus>(),
-                sp.GetRequiredService<ILogger<RestApiStatusService>>());
+                sp.GetRequiredService<ILogger<RestApiStatusService>>(),
+                sp.GetRequiredService<TimeProvider>());
         });
 
         services.AddSingleton<RestApiProcessService>();
@@ -265,6 +266,8 @@ public static class MobaWinUiServiceCollectionExtensions
         // DialogService resolves XamlRoot lazily to avoid startup deadlocks.
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IFunctionAppearancePicker, WinUiFunctionAppearancePicker>();
+        // The desktop runs its runtimes itself; it has no remote MOBAflow session to route to.
+        services.AddSingleton<IRuntimeRoutingState, NullRuntimeRoutingState>();
 
         services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
         services.AddSingleton<HealthCheckService>();
@@ -348,15 +351,8 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<ILogger<SettingsPageViewModel>>(),
-            sp.GetService<IFeatureTogglePageProvider>(),
-            speechTestAction: async message =>
-            {
-                var result = await sp.GetRequiredService<ISpeechOutput>().SpeakAsync(message).ConfigureAwait(false);
-                if (!result.IsSuccess)
-                {
-                    throw new InvalidOperationException(result.Reason);
-                }
-            }));
+            sp.GetRequiredService<IFeatureTogglePageProvider>(),
+            sp.GetRequiredService<ISpeechOutput>()));
         services.AddSingleton(sp => new WorkflowLibraryViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<IDialogService>(),
@@ -391,7 +387,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
             sp.GetRequiredService<ISettingsService>(),
-            dialogService: sp.GetService<IDialogService>()));
+            sp.GetRequiredService<IDialogService>()));
 
         services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
         services.AddTransient<InterlockingControlViewModel>();
@@ -412,6 +408,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IFunctionAppearancePicker>(),
+            sp.GetRequiredService<IRuntimeRoutingState>(),
             options: sp.GetRequiredService<TrainControlViewModelOptions>()));
 
         services.AddSingleton(sp => new MainWindow(

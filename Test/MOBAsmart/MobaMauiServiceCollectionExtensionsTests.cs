@@ -56,6 +56,8 @@ internal sealed class MobaMauiServiceCollectionExtensionsTests
             Assert.That(provider.GetRequiredService<IRuntimeHubRemoteClient>(), Is.InstanceOf<RuntimeHubRemoteClient>());
             Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.InstanceOf<RecordingRuntimeCommandGateway>());
             Assert.That(provider.GetRequiredService<IMobileRuntimeCoordinator>(), Is.InstanceOf<MobileRuntimeCoordinator>());
+            Assert.That(provider.GetRequiredService<IRuntimeRoutingState>(),
+                Is.SameAs(provider.GetRequiredService<IMobileRuntimeCoordinator>()));
         });
     }
 

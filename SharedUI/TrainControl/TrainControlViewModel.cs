@@ -60,7 +60,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private readonly bool _useRemoteRuntimeSnapshots;
     private readonly bool _hybridRuntimeSnapshots;
     private readonly TrainControlSettingsStore _settingsStore;
-    private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
+    private readonly IRuntimeRoutingState _runtimeRouting;
     private readonly IFunctionAppearancePicker _functionAppearancePicker;
     private readonly SpeedController _speedController = new(TimeProvider.System);
     private readonly FunctionPanel _functionPanel = new(TimeProvider.System);
@@ -640,9 +640,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <param name="uiDispatcher">UI dispatcher for updating UI-bound properties.</param>
     /// <param name="eventBus">Event bus for runtime snapshot updates.</param>
     /// <param name="functionAppearancePicker">Picker for locomotive function appearance editing; MAUI registers <see cref="NullFunctionAppearancePicker"/>.</param>
+    /// <param name="runtimeRouting">Hybrid local/remote routing state; MOBAsmart passes its coordinator, MOBAflow registers <see cref="NullRuntimeRoutingState"/>.</param>
     /// <param name="useRemoteRuntimeSnapshots">When true, locomotive state is driven by MOBAflow snapshots via MOBApi.</param>
     /// <param name="options">Optional host-specific options; overrides <paramref name="useRemoteRuntimeSnapshots"/> when set.</param>
-    /// <param name="mobileRuntimeCoordinator">Optional MOBAsmart coordinator for hybrid local/remote snapshot routing.</param>
     public TrainControlViewModel(
         IRuntimeSnapshotProvider runtimeSnapshots,
         IRuntimeCommandGateway runtimeCommandGateway,
@@ -652,9 +652,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         IUiDispatcher uiDispatcher,
         IEventBus eventBus,
         IFunctionAppearancePicker functionAppearancePicker,
+        IRuntimeRoutingState runtimeRouting,
         bool useRemoteRuntimeSnapshots = false,
-        TrainControlViewModelOptions? options = null,
-        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null)
+        TrainControlViewModelOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
         ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
@@ -664,11 +664,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(functionAppearancePicker);
+        ArgumentNullException.ThrowIfNull(runtimeRouting);
         _runtimeSnapshots = runtimeSnapshots;
         _locomotiveRoster = new LocomotiveRoster(runtimeSnapshots, projectContext);
         _functionAppearancePicker = functionAppearancePicker;
         _runtimeCommandGateway = runtimeCommandGateway;
-        _mobileRuntimeCoordinator = mobileRuntimeCoordinator ?? runtimeCommandGateway as IMobileRuntimeCoordinator;
+        _runtimeRouting = runtimeRouting;
         _projectContext = projectContext;
         _logger = logger;
         _uiDispatcher = uiDispatcher;
@@ -708,11 +709,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         AttachObservedProjectLocomotives();
         UpdateJourneyFromProjectContext();
         RefreshLocomotiveList();
-
-        if (_mobileRuntimeCoordinator != null)
-        {
-            RefreshLocomotiveCommandCanExecute();
-        }
+        RefreshLocomotiveCommandCanExecute();
     }
 
     private void OnSolutionSynced()
@@ -1148,7 +1145,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private bool UsesLocalZ21LocomotiveFeedback =>
         !_hybridRuntimeSnapshots
-        || (_mobileRuntimeCoordinator?.IsLocalZ21Connected ?? IsConnected);
+        || _runtimeRouting.IsLocalZ21Connected;
 
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
     {
@@ -1157,7 +1154,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        if (_hybridRuntimeSnapshots && _mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+        if (_hybridRuntimeSnapshots && _runtimeRouting.PreferRemoteRuntime)
         {
             // Slim remote sync: locomotive state comes from local Z21 feedback when connected.
             if (UsesLocalZ21LocomotiveFeedback)
@@ -1183,7 +1180,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        if (_hybridRuntimeSnapshots && _mobileRuntimeCoordinator?.PreferRemoteRuntime != true)
+        if (_hybridRuntimeSnapshots && !_runtimeRouting.PreferRemoteRuntime)
         {
             return;
         }
@@ -1461,7 +1458,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private bool CanExecuteLocomotiveControl =>
         LocoAddress >= 1
         && LocoAddress <= 9999
-        && (IsConnected || (_mobileRuntimeCoordinator?.CanExecuteCommands ?? false));
+        && (IsConnected || _runtimeRouting.CanExecuteCommands);
 
     /// <summary>
     /// Refreshes locomotive command CanExecute state after MOBAsmart routing changes.
@@ -1639,7 +1636,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return !ShouldPreserveLocalDriveCommand(address);
         }
 
-        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime != true)
+        if (!_runtimeRouting.PreferRemoteRuntime)
         {
             return false;
         }
@@ -1812,7 +1809,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
 
         if (_hybridRuntimeSnapshots
-            && _mobileRuntimeCoordinator?.PreferRemoteRuntime == true
+            && _runtimeRouting.PreferRemoteRuntime
             && _lastRemoteRuntimeSnapshot != null)
         {
             return _lastRemoteRuntimeSnapshot;

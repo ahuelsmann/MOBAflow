@@ -13,22 +13,40 @@ using System.IO;
 /// initialization, the REST API with its connected clients, the MOBAsmart synchronization rows and the
 /// solution-loaded state. It projects events delivered on the UI thread and the session's solution state;
 /// the shell reads its REST, speech and post-startup values for the operating state.
+/// While the REST API starts and the MOBAsmart synchronization connects, the affected rows are pending: they say
+/// what they wait for and how long, so a slow start does not look broken.
 /// </summary>
 public sealed partial class SystemStatusViewModel : ObservableObject, IDisposable
 {
     private static readonly TimeSpan SyncFreshnessWindow = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan RestCacheTolerance = TimeSpan.FromSeconds(30);
 
+    /// <summary>
+    /// How long a starting REST API shows progress. The host waits as long for MOBApi to answer; after that the
+    /// row reports the slow start instead of spinning on.
+    /// </summary>
+    private static readonly TimeSpan RestApiStartPatience = TimeSpan.FromSeconds(30);
+
+    private const string WaitingForRestApiText = "Waiting for the REST API...";
+
     private readonly IEventBus _eventBus;
     private readonly ISolutionSession _session;
     private readonly SettingsPageViewModel _settingsPage;
+    private readonly TimeProvider _timeProvider;
     private readonly List<Guid> _eventBusSubscriptions = [];
+    private DateTimeOffset? _restApiWaitingSince;
+    private DateTimeOffset? _runtimeHubHostWaitingSince;
     private bool _isDisposed;
 
     /// <param name="eventBus">Delivers the post-startup, REST API and synchronization events on the UI thread.</param>
     /// <param name="session">Owns the solution path and the project selection for the solution-loaded status.</param>
     /// <param name="settingsPage">Shared settings state; a speech provider change resets the speech health.</param>
-    public SystemStatusViewModel(IEventBus eventBus, ISolutionSession session, SettingsPageViewModel settingsPage)
+    /// <param name="timeProvider">Clock for the waiting time of pending rows; defaults to the system clock.</param>
+    public SystemStatusViewModel(
+        IEventBus eventBus,
+        ISolutionSession session,
+        SettingsPageViewModel settingsPage,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(session);
@@ -37,6 +55,7 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
         _eventBus = eventBus;
         _session = session;
         _settingsPage = settingsPage;
+        _timeProvider = timeProvider ?? TimeProvider.System;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText)));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged));
@@ -129,11 +148,19 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
 
     /// <summary>Human-readable REST API status (e.g. "Running on port 5001" or "Not reachable").</summary>
     [ObservableProperty]
-    public partial string RestApiStatusText { get; private set; } = "—";
+    public partial string RestApiStatusText { get; private set; } = "Checking the REST API...";
 
     /// <summary>True when the REST API (MOBApi) is reachable at the configured port.</summary>
     [ObservableProperty]
     public partial bool RestApiIsReachable { get; private set; }
+
+    /// <summary>True until the first status check and while the REST API starts (shows progress instead of a dot).</summary>
+    [ObservableProperty]
+    public partial bool RestApiIsPending { get; private set; } = true;
+
+    /// <summary>How long the REST API has been starting, e.g. "(12 s)"; empty when it does not wait.</summary>
+    [ObservableProperty]
+    public partial string RestApiWaitingTime { get; private set; } = string.Empty;
 
     /// <summary>Clients currently connected to the REST API (e.g. MOBAsmart).</summary>
     [ObservableProperty]
@@ -144,17 +171,33 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
     public partial bool RestApiConnectedClientsEmpty { get; private set; } = true;
 
     /// <summary>Updates the REST API status and connected clients from the result of GET /api/status.</summary>
-    public void UpdateRestApiStatus(string statusText, bool isReachable, IReadOnlyList<RestApiClientInfo>? clients)
+    /// <param name="statusText">Status text of the check.</param>
+    /// <param name="isReachable">Whether the REST API answered.</param>
+    /// <param name="clients">Connected clients, or <see langword="null"/> when the REST API is not reachable.</param>
+    /// <param name="isStarting">Whether an unreachable REST API is expected to start, so the row waits for it.</param>
+    public void UpdateRestApiStatus(
+        string statusText,
+        bool isReachable,
+        IReadOnlyList<RestApiClientInfo>? clients,
+        bool isStarting = false)
     {
-        RestApiStatusText = statusText;
+        var waiting = !isReachable && isStarting
+            ? WaitingTimeSince(ref _restApiWaitingSince)
+            : StopWaiting(ref _restApiWaitingSince);
+        var isSlowStart = waiting >= RestApiStartPatience;
+
+        RestApiStatusText = isSlowStart ? "REST API is slow to start, still checking..." : statusText;
         RestApiIsReachable = isReachable;
+        RestApiIsPending = waiting.HasValue && !isSlowStart;
+        RestApiWaitingTime = FormatWaitingTime(waiting);
         RestApiConnectedClients = clients is null
             ? []
             : new ObservableCollection<RestApiClientInfo>(clients);
         RestApiConnectedClientsEmpty = RestApiConnectedClients.Count == 0;
     }
 
-    private void OnRestApiStatusChanged(RestApiStatusChangedEvent e) => UpdateRestApiStatus(e.Status, e.IsReachable, e.Clients);
+    private void OnRestApiStatusChanged(RestApiStatusChangedEvent e) =>
+        UpdateRestApiStatus(e.Status, e.IsReachable, e.Clients, e.IsStarting);
 
     #endregion
 
@@ -164,13 +207,29 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
     public partial bool RuntimeHubHostIsHealthy { get; private set; }
 
     [ObservableProperty]
-    public partial string RuntimeHubHostStatusText { get; private set; } = "—";
+    [NotifyPropertyChangedFor(nameof(RuntimeHubHostRowText))]
+    public partial string RuntimeHubHostStatusText { get; private set; } = WaitingForRestApiText;
+
+    /// <summary>The whole RuntimeHub host row as one text, so a screen reader announces its changes with the label.</summary>
+    public string RuntimeHubHostRowText => $"RuntimeHub host: {RuntimeHubHostStatusText}";
+
+    /// <summary>True while the RuntimeHub host waits for the REST API or connects to it.</summary>
+    [ObservableProperty]
+    public partial bool RuntimeHubHostIsPending { get; private set; } = true;
+
+    /// <summary>How long the RuntimeHub host has been connecting, e.g. "(3 s)"; empty when it does not connect.</summary>
+    [ObservableProperty]
+    public partial string RuntimeHubHostWaitingTime { get; private set; } = string.Empty;
 
     [ObservableProperty]
     public partial bool HubBroadcastIsHealthy { get; private set; }
 
     [ObservableProperty]
-    public partial string HubBroadcastStatusText { get; private set; } = "—";
+    public partial string HubBroadcastStatusText { get; private set; } = WaitingForRestApiText;
+
+    /// <summary>True while the first snapshot push waits for the REST API or the RuntimeHub host.</summary>
+    [ObservableProperty]
+    public partial bool HubBroadcastIsPending { get; private set; } = true;
 
     [ObservableProperty]
     public partial bool RemoteSnapshotIsHealthy { get; private set; }
@@ -188,13 +247,21 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
     public partial bool RestCacheIsHealthy { get; private set; }
 
     [ObservableProperty]
-    public partial string RestCacheStatusText { get; private set; } = "—";
+    public partial string RestCacheStatusText { get; private set; } = WaitingForRestApiText;
+
+    /// <summary>True while the REST API cache waits for the REST API or the first snapshot.</summary>
+    [ObservableProperty]
+    public partial bool RestCacheIsPending { get; private set; } = true;
 
     [ObservableProperty]
     public partial bool SolutionSyncIsHealthy { get; private set; }
 
     [ObservableProperty]
-    public partial string SolutionSyncStatusText { get; private set; } = "—";
+    public partial string SolutionSyncStatusText { get; private set; } = WaitingForRestApiText;
+
+    /// <summary>True while the solution cache waits for the REST API or the first solution push.</summary>
+    [ObservableProperty]
+    public partial bool SolutionSyncIsPending { get; private set; } = true;
 
     [ObservableProperty]
     public partial bool SolutionLoadedIsHealthy { get; private set; }
@@ -208,19 +275,48 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
     /// <summary>Projects one diagnostics record onto the six synchronization rows, then the solution-loaded row.</summary>
     private void UpdateSyncDiagnostics(MobaflowSyncDiagnostics diagnostics)
     {
-        UpdateRuntimeHubHostStatus(diagnostics);
-        UpdateHubBroadcastStatus(diagnostics);
+        var setup = GetSyncSetup(diagnostics);
+        UpdateRuntimeHubHostStatus(diagnostics, setup);
+        UpdateHubBroadcastStatus(diagnostics, setup);
         UpdateRemoteSnapshotStatus(diagnostics);
         UpdateRuntimeSnapshotStatus(diagnostics);
-        UpdateRestCacheStatus(diagnostics);
-        UpdateSolutionSyncStatus(diagnostics);
+        UpdateRestCacheStatus(diagnostics, setup);
+        UpdateSolutionSyncStatus(diagnostics, setup);
         UpdateSolutionLoadedStatus();
     }
 
-    private void UpdateRuntimeHubHostStatus(MobaflowSyncDiagnostics diagnostics)
+    /// <summary>
+    /// The synchronization waits while the REST API starts and while the host still sets up the synchronization
+    /// (it re-checks the REST API status soon); otherwise unhealthy rows report their problem.
+    /// </summary>
+    private SyncSetup GetSyncSetup(MobaflowSyncDiagnostics diagnostics)
     {
-        RuntimeHubHostIsHealthy = diagnostics.HostClientConnected && diagnostics.ServerHasHost;
-        RuntimeHubHostStatusText = DescribeRuntimeHubHost(diagnostics, RuntimeHubHostIsHealthy);
+        if (!diagnostics.RestApiReachable)
+            return RestApiIsPending ? SyncSetup.WaitingForRestApi : SyncSetup.Done;
+        return diagnostics.SyncStarting ? SyncSetup.Connecting : SyncSetup.Done;
+    }
+
+    private static string DescribePending(SyncSetup setup, string connectingText) =>
+        setup == SyncSetup.WaitingForRestApi ? WaitingForRestApiText : connectingText;
+
+    private static bool IsRuntimeHubHostHealthy(MobaflowSyncDiagnostics diagnostics) =>
+        diagnostics.HostClientConnected && diagnostics.ServerHasHost;
+
+    private void UpdateRuntimeHubHostStatus(MobaflowSyncDiagnostics diagnostics, SyncSetup setup)
+    {
+        var isHealthy = IsRuntimeHubHostHealthy(diagnostics);
+        var isPending = !isHealthy && setup != SyncSetup.Done;
+        var waiting = isPending && setup == SyncSetup.Connecting
+            ? WaitingTimeSince(ref _runtimeHubHostWaitingSince)
+            : StopWaiting(ref _runtimeHubHostWaitingSince);
+
+        RuntimeHubHostIsHealthy = isHealthy;
+        RuntimeHubHostIsPending = isPending;
+        RuntimeHubHostWaitingTime = FormatWaitingTime(waiting);
+        var connectingText = diagnostics.HostClientConnected ? "Registering with the REST API..." : "Connecting...";
+        RuntimeHubHostStatusText = isPending
+            ? DescribePending(setup, connectingText)
+            : DescribeRuntimeHubHost(diagnostics, isHealthy);
     }
 
     private static string DescribeRuntimeHubHost(MobaflowSyncDiagnostics diagnostics, bool isHealthy)
@@ -229,13 +325,22 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
             return "REST API unreachable";
         if (isHealthy)
             return "Connected";
-        return diagnostics.HostClientConnected ? "Host not registered on server" : "Host client disconnected";
+        if (diagnostics.HostClientConnected)
+            return "Host not registered on server";
+        return diagnostics.HostConnectPending ? "Host client disconnected, retrying" : "Host client disconnected";
     }
 
-    private void UpdateHubBroadcastStatus(MobaflowSyncDiagnostics diagnostics)
+    private void UpdateHubBroadcastStatus(MobaflowSyncDiagnostics diagnostics, SyncSetup setup)
     {
+        var hostIsHealthy = IsRuntimeHubHostHealthy(diagnostics);
         HubBroadcastIsHealthy = diagnostics.LastHubPushSucceeded && IsRecent(diagnostics.LastHubPushAt, SyncFreshnessWindow);
-        HubBroadcastStatusText = DescribeHubBroadcast(diagnostics);
+        HubBroadcastIsPending = !HubBroadcastIsHealthy
+            && setup != SyncSetup.Done
+            && (!hostIsHealthy || !diagnostics.LastHubPushAt.HasValue);
+        var waitingText = hostIsHealthy ? "Waiting for the first snapshot push..." : "Waiting for the RuntimeHub host...";
+        HubBroadcastStatusText = HubBroadcastIsPending
+            ? DescribePending(setup, waitingText)
+            : DescribeHubBroadcast(diagnostics);
     }
 
     private static string DescribeHubBroadcast(MobaflowSyncDiagnostics diagnostics)
@@ -268,12 +373,15 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
             : "No recent snapshot";
     }
 
-    private void UpdateRestCacheStatus(MobaflowSyncDiagnostics diagnostics)
+    private void UpdateRestCacheStatus(MobaflowSyncDiagnostics diagnostics, SyncSetup setup)
     {
         RestCacheIsHealthy = diagnostics.RestCacheAvailable
             && diagnostics.RestCacheUpdatedAt.HasValue
             && IsRestCacheFresh(diagnostics);
-        RestCacheStatusText = DescribeRestCache(diagnostics);
+        RestCacheIsPending = !RestCacheIsHealthy && setup != SyncSetup.Done && !diagnostics.RestCacheAvailable;
+        RestCacheStatusText = RestCacheIsPending
+            ? DescribePending(setup, "Waiting for the first snapshot...")
+            : DescribeRestCache(diagnostics);
     }
 
     private static string DescribeRestCache(MobaflowSyncDiagnostics diagnostics)
@@ -285,10 +393,13 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
         return $"Updated {FormatAge(diagnostics.RestCacheUpdatedAt)}, {diagnostics.RestCacheSignalBoxElementCount} signals, {diagnostics.RestCacheLocomotiveFleetCount} locos";
     }
 
-    private void UpdateSolutionSyncStatus(MobaflowSyncDiagnostics diagnostics)
+    private void UpdateSolutionSyncStatus(MobaflowSyncDiagnostics diagnostics, SyncSetup setup)
     {
         SolutionSyncIsHealthy = diagnostics.SolutionAvailable && diagnostics.SolutionUpdatedAt.HasValue;
-        SolutionSyncStatusText = DescribeSolutionSync(diagnostics);
+        SolutionSyncIsPending = !SolutionSyncIsHealthy && setup != SyncSetup.Done && !diagnostics.SolutionAvailable;
+        SolutionSyncStatusText = SolutionSyncIsPending
+            ? DescribePending(setup, "Waiting for the solution...")
+            : DescribeSolutionSync(diagnostics);
     }
 
     private static string DescribeSolutionSync(MobaflowSyncDiagnostics diagnostics)
@@ -360,6 +471,43 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
             return $"{(int)age.TotalMinutes} min ago";
 
         return $"{(int)age.TotalHours} h ago";
+    }
+
+    /// <summary>Starts the waiting time on the first pending update and returns how long the row has waited.</summary>
+    private TimeSpan? WaitingTimeSince(ref DateTimeOffset? waitingSince)
+    {
+        var now = _timeProvider.GetUtcNow();
+        waitingSince ??= now;
+        return now - waitingSince.Value;
+    }
+
+    private static TimeSpan? StopWaiting(ref DateTimeOffset? waitingSince)
+    {
+        waitingSince = null;
+        return null;
+    }
+
+    private static string FormatWaitingTime(TimeSpan? waiting)
+    {
+        if (waiting is not { } elapsed || elapsed < TimeSpan.FromSeconds(1))
+            return string.Empty;
+
+        return elapsed < TimeSpan.FromMinutes(1)
+            ? $"({(int)elapsed.TotalSeconds} s)"
+            : $"({(int)elapsed.TotalMinutes} min {elapsed.Seconds} s)";
+    }
+
+    /// <summary>What the synchronization rows still wait for.</summary>
+    private enum SyncSetup
+    {
+        /// <summary>Nothing: an unhealthy row reports its problem.</summary>
+        Done,
+
+        /// <summary>The REST API is starting.</summary>
+        WaitingForRestApi,
+
+        /// <summary>The REST API answers and the host still connects the synchronization.</summary>
+        Connecting
     }
 
     #endregion

@@ -118,7 +118,9 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
     private TestDependencies CreateDependencies(
         HttpMessageHandler statusHandler,
         IPhotoHubClient? actualPhotoHubClient = null,
-        int port = 5001)
+        int port = 5001,
+        TimeProvider? timeProvider = null,
+        Func<RestApiProcessService, RestApiSolutionSyncService>? createSolutionSync = null)
     {
         var appSettings = new AppSettings();
         appSettings.RestApi.Port = port;
@@ -141,15 +143,17 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             appSettings,
             NullLogger<RestApiProcessService>.Instance,
             NullLogger<UdpDiscoveryResponder>.Instance);
+        var runtimeSnapshots = new Mock<IProjectRuntimeSnapshots>();
+        runtimeSnapshots.SetupGet(snapshots => snapshots.Snapshots).Returns(Array.Empty<MobaRuntimeSnapshot>());
         using var mobApiClient = new LocalMobApiClient(appSettings);
         var runtimeHubService = new RestApiRuntimeHubService(
             runtimeHubHostClient.Object,
-            new Mock<IProjectRuntimeSnapshots>().Object,
+            runtimeSnapshots.Object,
             NullLogger<RestApiRuntimeHubService>.Instance,
             mobApiClient);
 
         var mainWindowViewModel = CreateMainWindowViewModel(appSettings, mobaRuntime, eventBus);
-        var solutionSyncService = new RestApiSolutionSyncService(
+        var solutionSyncService = createSolutionSync?.Invoke(restApiProcessService) ?? new RestApiSolutionSyncService(
             appSettings,
             mainWindowViewModel.SolutionSession,
             restApiProcessService,
@@ -167,7 +171,8 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             runtimeHubHostClient.Object,
             mobaRuntime.Object,
             eventBus,
-            NullLogger<RestApiStatusService>.Instance);
+            NullLogger<RestApiStatusService>.Instance,
+            timeProvider);
 
         return new TestDependencies(
             statusService,
@@ -198,7 +203,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
             mobaRuntime.Object,
-            new LocalRuntimeCommandGateway(mobaRuntime.Object),
+            new LocalRuntimeCommandGateway(mobaRuntime.Object),
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -207,7 +212,9 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            NullLogger<MainWindowViewModel>.Instance);
+            NullLogger<MainWindowViewModel>.Instance,
+            Mock.Of<ISettingsService>(),
+            new NullDialogService());
     }
 
     private sealed partial class ImmediateHttpMessageHandler : HttpMessageHandler

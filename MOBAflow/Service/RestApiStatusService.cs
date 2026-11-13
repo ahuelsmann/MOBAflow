@@ -12,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
 
 using System.Text.Json;
-using System.Timers;
 using Contracts.Discovery;
 
 /// <summary>
@@ -22,8 +21,23 @@ using Contracts.Discovery;
 /// </summary>
 public sealed class RestApiStatusService : IAsyncDisposable
 {
-    private const int PollIntervalWhenReachableMs = 30_000;  // 30 s when API is up
-    private const int PollIntervalWhenWaitingMs = 2_000;      // 2 s while "Waiting for the REST API to start..."
+    private static readonly TimeSpan PollIntervalWhenReachable = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan PollIntervalWhenWaiting = TimeSpan.FromSeconds(2); // "Waiting for the REST API to start..."
+
+    /// <summary>
+    /// Re-check delays while the MOBAsmart synchronization is set up: the status read before this refresh connected
+    /// the RuntimeHub host, and pushes may land after the read. A failed host connect is retried at the same pace.
+    /// After the last delay the normal interval applies again.
+    /// </summary>
+    private static readonly TimeSpan[] SyncStartPollDelays =
+    [
+        TimeSpan.FromSeconds(1),
+        TimeSpan.FromSeconds(2),
+        TimeSpan.FromSeconds(5),
+        TimeSpan.FromSeconds(10),
+        TimeSpan.FromSeconds(10),
+        TimeSpan.FromSeconds(10)
+    ];
 
     private readonly HttpClient _httpClient;
     private readonly AppSettings _appSettings;
@@ -35,7 +49,12 @@ public sealed class RestApiStatusService : IAsyncDisposable
     private readonly IMobaRuntime _mobaRuntime;
     private readonly IEventBus _eventBus;
     private readonly ILogger<RestApiStatusService> _logger;
-    private readonly Timer _timer;
+    private readonly ITimer _timer;
+    private readonly Lock _pollLock = new();
+    private TimeSpan _pollInterval = PollIntervalWhenWaiting;
+    private bool _isPolling;
+    private int _syncStartPolls;
+    private int _hubConnectInProgress;
     private static readonly JsonSerializerOptions SJsonOptions = new() { PropertyNameCaseInsensitive = true };
     private bool _photoHubConnected;
     private bool _runtimeHubConnected;
@@ -56,7 +75,8 @@ public sealed class RestApiStatusService : IAsyncDisposable
         IRuntimeHubHostClient runtimeHubHostClient,
         IMobaRuntime mobaRuntime,
         IEventBus eventBus,
-        ILogger<RestApiStatusService> logger)
+        ILogger<RestApiStatusService> logger,
+        TimeProvider? timeProvider = null)
     {
         _httpClient = httpClient;
         _appSettings = appSettings;
@@ -69,8 +89,11 @@ public sealed class RestApiStatusService : IAsyncDisposable
         _eventBus = eventBus;
         _logger = logger;
         _httpClient.Timeout = TimeSpan.FromSeconds(5);
-        _timer = new Timer(PollIntervalWhenWaitingMs);
-        _timer.Elapsed += (_, _) => QueueRefresh("Timer refresh");
+        _timer = (timeProvider ?? TimeProvider.System).CreateTimer(
+            _ => OnPollTimerElapsed(),
+            null,
+            Timeout.InfiniteTimeSpan,
+            Timeout.InfiniteTimeSpan);
 
         _restApiProcessService.ApiBecameReachable += OnRestApiBecameReachable;
         _photoHubClient.PhotoUploaded += OnPhotoUploadedAsync;
@@ -82,7 +105,8 @@ public sealed class RestApiStatusService : IAsyncDisposable
     }
 
     /// <summary>
-    /// Starts periodic status refresh (every 30s).
+    /// Starts periodic status refresh: every 2 s while the REST API starts, within seconds while the MOBAsmart
+    /// synchronization is set up, then every 30 s.
     /// </summary>
     public void Start()
     {
@@ -91,7 +115,7 @@ public sealed class RestApiStatusService : IAsyncDisposable
             return;
         }
 
-        _timer.Start();
+        SetPolling(true);
         QueueRefresh("Service start refresh");
     }
 
@@ -105,7 +129,7 @@ public sealed class RestApiStatusService : IAsyncDisposable
             return;
         }
 
-        _timer.Stop();
+        SetPolling(false);
         try { _disposeCts.Cancel(); } catch (ObjectDisposedException) { /* already disposed */ }
     }
 
@@ -119,7 +143,7 @@ public sealed class RestApiStatusService : IAsyncDisposable
             return;
         }
 
-        _timer.Stop();
+        SetPolling(false);
         _logger.LogDebug("Health check polling paused due to window deactivation");
     }
 
@@ -133,9 +157,39 @@ public sealed class RestApiStatusService : IAsyncDisposable
             return;
         }
 
-        _timer.Start();
+        SetPolling(true);
         _logger.LogDebug("Health check polling resumed due to window activation");
         QueueRefresh("Activation resume refresh");
+    }
+
+    private void OnPollTimerElapsed()
+    {
+        lock (_pollLock)
+        {
+            if (!_isPolling || IsDisposed)
+            {
+                return;
+            }
+
+            // One-shot timer re-armed per tick, so an interval change restarts the countdown from now.
+            _timer.Change(_pollInterval, Timeout.InfiniteTimeSpan);
+        }
+
+        QueueRefresh("Timer refresh");
+    }
+
+    private void SetPolling(bool isPolling)
+    {
+        lock (_pollLock)
+        {
+            if (IsDisposed)
+            {
+                return;
+            }
+
+            _isPolling = isPolling;
+            _timer.Change(isPolling ? _pollInterval : Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        }
     }
 
     /// <summary>
@@ -195,46 +249,72 @@ public sealed class RestApiStatusService : IAsyncDisposable
 
                 // Publish event - UiThreadEventBusDecorator marshals to UI thread
                 _eventBus.Publish(new RestApiStatusChangedEvent(statusText, isReachable: true, clients));
-                PublishSyncDiagnostics(data, restApiReachable: true);
 
-                SetPollInterval(PollIntervalWhenReachableMs);
-
-                if (!_photoHubClient.IsConnected)
+                // Overlapping refreshes (timer, reachability event, window activation) must not connect twice.
+                if (Interlocked.CompareExchange(ref _hubConnectInProgress, 1, 0) != 0)
                 {
-                    try
-                    {
-                        await _photoHubClient.ConnectAsync("127.0.0.1", port);
-                        _photoHubConnected = true;
-                        _logger.LogInformation("PhotoHub connected for photo upload notifications");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogDebug(ex, "PhotoHub connect failed (will retry on next refresh)");
-                    }
+                    // Another refresh is still connecting: keep the rows waiting without using up a re-check
+                    // delay. That refresh schedules the next check when its connect attempt ends.
+                    // After the start phase the rows keep reporting the problem instead of switching back to waiting.
+                    PublishSyncDiagnostics(
+                        data,
+                        restApiReachable: true,
+                        syncStarting: IsInSyncStartPhase() && !IsSyncSettled(data));
+                    return;
                 }
 
-                if (!_runtimeHubConnected)
+                var hostConnectedNow = false;
+                try
                 {
-                    try
+                    if (!_runtimeHubConnected && IsInSyncStartPhase())
                     {
-                        await _runtimeHubService.ConnectHostAsync(port, _disposeCts.Token);
-                        _runtimeHubConnected = true;
-                        _logger.LogInformation("RuntimeHub host connected for MOBAsmart sync");
+                        // Shows "Connecting..." while the RuntimeHub host connects below.
+                        PublishSyncDiagnostics(data, restApiReachable: true, syncStarting: true);
                     }
-                    catch (Exception ex)
+
+                    if (!_photoHubClient.IsConnected)
                     {
-                        _logger.LogDebug(ex, "RuntimeHub host connect failed (will retry on next refresh)");
+                        try
+                        {
+                            await _photoHubClient.ConnectAsync("127.0.0.1", port);
+                            _photoHubConnected = true;
+                            _logger.LogInformation("PhotoHub connected for photo upload notifications");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "PhotoHub connect failed (will retry on next refresh)");
+                        }
+                    }
+
+                    if (!_runtimeHubConnected)
+                    {
+                        try
+                        {
+                            await _runtimeHubService.ConnectHostAsync(port, _disposeCts.Token);
+                            _runtimeHubConnected = true;
+                            hostConnectedNow = true;
+                            _logger.LogInformation("RuntimeHub host connected for MOBAsmart sync");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "RuntimeHub host connect failed (will retry on next refresh)");
+                        }
                     }
                 }
+                finally
+                {
+                    Volatile.Write(ref _hubConnectInProgress, 0);
+                }
+
+                // The status above was read before this refresh connected the host and before pending pushes
+                // landed: while the synchronization is set up, re-check within seconds instead of after 30 s.
+                // A host that just connected always gets the prompt re-checks, however long the connect took.
+                var syncStarting = ScheduleNextReachablePoll(data, restartStartPhase: hostConnectedNow);
+                PublishSyncDiagnostics(data, restApiReachable: true, syncStarting);
             }
             else
             {
-                var statusText = BuildUnreachableStatusText(port);
-                _eventBus.Publish(new RestApiStatusChangedEvent(statusText, isReachable: false, clients: null));
-                PublishSyncDiagnostics(data: null, restApiReachable: false);
-                SetPollInterval(_appSettings.Application.AutoStartWebApp
-                    ? PollIntervalWhenWaitingMs
-                    : PollIntervalWhenReachableMs);
+                PublishUnreachable(port);
             }
         }
         catch (OperationCanceledException)
@@ -244,14 +324,84 @@ public sealed class RestApiStatusService : IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogDebug(ex, "REST API status check failed");
-            var portFallback = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
-            var statusText = BuildUnreachableStatusText(portFallback);
-            _eventBus.Publish(new RestApiStatusChangedEvent(statusText, isReachable: false, clients: null));
-            PublishSyncDiagnostics(data: null, restApiReachable: false);
-            SetPollInterval(_appSettings.Application.AutoStartWebApp
-                ? PollIntervalWhenWaitingMs
-                : PollIntervalWhenReachableMs);
+            PublishUnreachable(_appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001);
         }
+    }
+
+    private void PublishUnreachable(int port)
+    {
+        var statusText = BuildUnreachableStatusText(port);
+        _eventBus.Publish(new RestApiStatusChangedEvent(statusText, isReachable: false, clients: null)
+        {
+            IsStarting = _appSettings.Application.AutoStartWebApp
+        });
+        PublishSyncDiagnostics(data: null, restApiReachable: false, syncStarting: false);
+
+        lock (_pollLock)
+        {
+            // A REST API that comes back sets up the synchronization again.
+            _syncStartPolls = 0;
+            SetPollIntervalLocked(_appSettings.Application.AutoStartWebApp
+                ? PollIntervalWhenWaiting
+                : PollIntervalWhenReachable);
+        }
+    }
+
+    private bool IsInSyncStartPhase()
+    {
+        lock (_pollLock)
+        {
+            return _syncStartPolls < SyncStartPollDelays.Length;
+        }
+    }
+
+    /// <summary>
+    /// Chooses the next poll after a reachable status: 30 s once the synchronization is set up, otherwise the next
+    /// re-check delay. Returns whether the synchronization is still being set up.
+    /// </summary>
+    private bool ScheduleNextReachablePoll(StatusResponse? data, bool restartStartPhase)
+    {
+        lock (_pollLock)
+        {
+            if (restartStartPhase)
+            {
+                _syncStartPolls = 0;
+            }
+
+            if (IsSyncSettled(data))
+            {
+                _syncStartPolls = 0;
+                SetPollIntervalLocked(PollIntervalWhenReachable);
+                return false;
+            }
+
+            if (_syncStartPolls >= SyncStartPollDelays.Length)
+            {
+                // Still not set up: fall back to the normal interval; a failed host connect is retried there.
+                SetPollIntervalLocked(PollIntervalWhenReachable);
+                return false;
+            }
+
+            SetPollIntervalLocked(SyncStartPollDelays[_syncStartPolls++]);
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// The synchronization is set up when the server confirms the connected RuntimeHub host, no solution upload is
+    /// still on its way and every successful solution and snapshot push is visible in the status that was read.
+    /// </summary>
+    private bool IsSyncSettled(StatusResponse? data)
+    {
+        var hostConfirmed = _runtimeHubConnected
+            && _runtimeHubHostClient.IsConnected
+            && (data?.Runtime?.HasHost ?? false);
+        var solutionAvailable = data?.Solution?.Available ?? false;
+        var solutionPushNotVisible = !solutionAvailable
+            && (_solutionSyncService.IsPushPending || _solutionSyncService.LastSolutionPushSucceeded);
+        var snapshotPushNotVisible = _runtimeHubService.LastRestCachePushSucceeded
+            && !(data?.Runtime?.SnapshotCache?.Available ?? false);
+        return hostConfirmed && !solutionPushNotVisible && !snapshotPushNotVisible;
     }
 
     private async Task DisconnectRuntimeHubHostAsync()
@@ -275,16 +425,18 @@ public sealed class RestApiStatusService : IAsyncDisposable
         }
     }
 
-    private void SetPollInterval(int intervalMs)
+    /// <summary>Changes the poll interval; a running countdown restarts with the new interval. Caller holds the lock.</summary>
+    private void SetPollIntervalLocked(TimeSpan interval)
     {
-        if (IsDisposed)
+        if (IsDisposed || _pollInterval == interval)
         {
             return;
         }
 
-        if (Math.Abs(_timer.Interval - intervalMs) > 0.001)
+        _pollInterval = interval;
+        if (_isPolling)
         {
-            _timer.Interval = intervalMs;
+            _timer.Change(interval, Timeout.InfiniteTimeSpan);
         }
     }
 
@@ -324,8 +476,12 @@ public sealed class RestApiStatusService : IAsyncDisposable
     {
         _restApiProcessService.ApiBecameReachable -= OnRestApiBecameReachable;
         _photoHubClient.PhotoUploaded -= OnPhotoUploadedAsync;
-        _timer.Stop();
-        _timer.Dispose();
+        lock (_pollLock)
+        {
+            _isPolling = false;
+            _timer.Dispose();
+        }
+
         try { await _disposeCts.CancelAsync().ConfigureAwait(false); } catch (ObjectDisposedException) { /* already disposed */ }
 
         Task[] refreshTasks;
@@ -397,7 +553,7 @@ public sealed class RestApiStatusService : IAsyncDisposable
 
     private bool IsDisposed => Volatile.Read(ref _disposeState) != 0;
 
-    private void PublishSyncDiagnostics(StatusResponse? data, bool restApiReachable)
+    private void PublishSyncDiagnostics(StatusResponse? data, bool restApiReachable, bool syncStarting)
     {
         var localSnapshot = _mobaRuntime.Current;
         var runtime = data?.Runtime;
@@ -430,7 +586,9 @@ public sealed class RestApiStatusService : IAsyncDisposable
             SolutionUpdatedAt = solution?.UpdatedAt,
             SolutionActiveProjectName = solution?.ActiveProjectName,
             LastSolutionPushAt = _solutionSyncService.LastSolutionPushAt,
-            LastSolutionPushSucceeded = _solutionSyncService.LastSolutionPushSucceeded
+            LastSolutionPushSucceeded = _solutionSyncService.LastSolutionPushSucceeded,
+            SyncStarting = syncStarting,
+            HostConnectPending = !_runtimeHubConnected
         }));
     }
 
