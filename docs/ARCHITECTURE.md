@@ -584,8 +584,9 @@ runtime services.
   running (solution switch, project removal, a changed Z21 assignment), the runtime
   sets every known locomotive (commanded, seen on its Z21 or listed in its project) to
   speed 0. The shell asks first ("Stop all trains?") before a new or opened solution
-  or a project deletion when an affected runtime is connected; cancelling keeps
-  everything running.
+  when an affected runtime is connected; cancelling keeps everything running. A
+  project deletion always asks "Delete Project"; when the project's runtime is
+  connected, that question also says that its locomotives are set to speed 0 first.
 - App close keeps trains running: `MainWindowViewModel.PrepareForShutdownAsync` shows
   no stop-trains dialog and calls `IProjectRuntimeHost.ReleaseAsync`, which disposes
   the runtimes and closes their Z21 connections (LAN_LOGOFF) without a stop command.
