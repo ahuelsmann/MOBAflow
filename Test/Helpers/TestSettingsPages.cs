@@ -3,8 +3,10 @@ namespace Moba.Test.Helpers;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
+using Moba.Common.Navigation;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
+using Moba.Speech.Base;
 using Moq;
 
 internal static class TestSettingsPages
@@ -15,6 +17,14 @@ internal static class TestSettingsPages
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(settings)).Returns(Task.CompletedTask);
         return new SettingsPageViewModel(settings, persistence.Object, TestLayouts.Create(persistence.Object), dispatcher,
-            NullLogger<SettingsPageViewModel>.Instance);
+            NullLogger<SettingsPageViewModel>.Instance, NoFeatureToggles(), new NullSpeechOutput());
+    }
+
+    /// <summary>A host without toggleable pages.</summary>
+    public static IFeatureTogglePageProvider NoFeatureToggles()
+    {
+        var provider = new Mock<IFeatureTogglePageProvider>();
+        provider.Setup(pages => pages.GetToggleablePages()).Returns([]);
+        return provider.Object;
     }
 }

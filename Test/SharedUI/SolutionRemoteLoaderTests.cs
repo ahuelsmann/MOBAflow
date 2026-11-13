@@ -275,6 +275,7 @@ internal sealed class SolutionRemoteLoaderTests
             ImmediateUiDispatcher.Instance,
             new EventBus(NullLogger<EventBus>.Instance),
             new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState(),
             options: new TrainControlViewModelOptions());
 
         try

@@ -79,7 +79,8 @@ internal sealed partial class TrainControlViewModelCleanupTests
             NullLogger<TrainControlViewModel>.Instance,
             ImmediateUiDispatcher.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
-            new NullFunctionAppearancePicker());
+            new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState());
     }
 
     private static SolutionSession CreateSession()

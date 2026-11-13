@@ -222,6 +222,9 @@ internal sealed class MauiViewModelInitializationTests
             dependencies.Settings,
             dependencies.SettingsServiceMock.Object,
             dependencies.RestDiscoveryMock.Object);
+        var hubClient = runtimeHubRemoteClient ?? Mock.Of<IRuntimeHubRemoteClient>();
+        var coordinator = Mock.Of<IMobileRuntimeCoordinator>();
+        var context = new MobileSolutionContext(TestViewModelServices.Default);
         var viewModel = new MauiViewModel(
             dependencies.MobaRuntimeMock.Object,
             dependencies.MobaRuntimeMock.Object,
@@ -235,19 +238,18 @@ internal sealed class MauiViewModelInitializationTests
                 dependencies.Settings,
                 endpointLocator,
                 dependencies.PhotoUploadMock.Object,
-                runtimeHubRemoteClient,
+                hubClient,
                 dependencies.RestApiClientRegistrationMock.Object),
-            new MobileRuntimeProjection(
-                dependencies.MobaRuntimeMock.Object,
-                new MobileSolutionContext(TestViewModelServices.Default),
-                Mock.Of<IMobileRuntimeCoordinator>(),
-                Mock.Of<IMobileSolutionStore>()),
+            new MobileRuntimeProjection(dependencies.MobaRuntimeMock.Object, context, coordinator, Mock.Of<IMobileSolutionStore>()),
             TestSolutionSynchronizers.Create(Mock.Of<ISolutionRemoteLoader>()),
             new MobilePhotoUploader(dependencies.PhotoCaptureMock.Object, dependencies.PhotoUploadMock.Object, endpointLocator),
             dependencies.NetworkNotifierMock.Object,
             NullLogger<MauiViewModel>.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
-            runtimeHubRemoteClient: runtimeHubRemoteClient);
+            hubClient,
+            coordinator,
+            context,
+            Mock.Of<IBackgroundService>());
 
         _createdViewModels.Add(viewModel);
         return viewModel;

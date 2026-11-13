@@ -3,7 +3,6 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Contracts.Runtime;
@@ -51,7 +50,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         _settings.Layout.LocomotivesPage.IsListExpanded = false;
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(value => value.Detect(It.IsAny<Project>())).Returns(new DigitalAddressConflictReport([], []));
-        var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: _session);
+        var management = TestRollingStockPages.CreateManagement(detector.Object, _session);
         _explorer = new Mock<Action<string>>();
         _usage = TestRollingStockPages.CreateUsage(_session);
         _runtimeSnapshots = new Mock<IProjectRuntimeSnapshots>();
