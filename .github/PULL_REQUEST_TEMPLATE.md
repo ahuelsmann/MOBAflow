@@ -16,7 +16,7 @@
 
 - [ ] Relevant build completed
 - [ ] Relevant automated tests passed
-- [ ] Changed files passed the local secrets scan
+- [ ] Changed files passed the local secrets scan (cloud session without a scanner: state that no local scan ran)
 - [ ] This PR remained a draft until all new actionable Sonar findings were resolved
 - [ ] GitHub's SonarCloud analysis is green for the current PR commit and reports zero `OPEN`/`CONFIRMED` issues before review
 - [ ] Manual validation completed or documented as not applicable

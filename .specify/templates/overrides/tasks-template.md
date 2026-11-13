@@ -98,7 +98,7 @@ description: "MOBAflow task list template for feature implementation"
 - [ ] TXXX [P] Validate Light and Dark themes when UI changes
 - [ ] TXXX [P] Remove superseded models, fields, endpoints, tests, and docs; verify configuration defaults and persisted layouts still load
 - [ ] TXXX Update root documentation, changelog, and public API XML documentation as applicable
-- [ ] TXXX Run `sonar analyze secrets` over all changed files
+- [ ] TXXX Run `sonar analyze secrets` over all changed files (local sessions; a cloud session without a scanner records the missing scan in the PR)
 - [ ] TXXX Create the pull request as a draft; run Sonar code analysis only through GitHub CI and verify a green result for the current PR commit with zero `OPEN` or `CONFIRMED` issues before review
 - [ ] TXXX Create dependency-ordered GitHub task issues with `$speckit-taskstoissues` when issue-level tracking is required
 - [ ] TXXX Re-run the Constitution Check and record any approved exceptions

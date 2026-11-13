@@ -113,7 +113,8 @@ Claude Code runs the same script with `-Client claude` from `.claude/settings.js
 moves elsewhere. Claude Code runs hook commands through a POSIX shell (Git Bash on Windows), so one command
 serves both platforms.
 
-Repository policy scans likely secret-bearing inputs before reads and all changed files before publication.
+Repository policy scans likely secret-bearing inputs before reads and all changed files before publication
+in local sessions; cloud sessions without a scanner avoid such files and record the missing scan (see `AGENTS.md`).
 A session/global instruction can require every file to be scanned first; the stricter active rule still applies.
 Repository configuration cannot disable those global instructions.
 
