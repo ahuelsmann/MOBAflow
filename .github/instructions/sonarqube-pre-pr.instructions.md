@@ -34,10 +34,13 @@ Cloud sessions, such as the Executive Assistant, have no Sonar CLI and no local 
 For them the local scan is not required; the two protections are handled separately:
 
 - **Pre-read:** do not open, print or copy files whose name or location indicates secrets.
-  The rule applies by file name, without reading the file: `.env*`, `*.pfx`, `*.pem`, `*.key`,
-  `*.pubxml`, `secrets.json`, `appsettings.Development.json`, `appsettings.Local.json` and
-  `appsettings.Production.json`. The checked-in `appsettings.json`, its schema and templates
-  are ordinary configuration. If a task needs a listed file, stop and hand it to a local session.
+  The rule applies by file name, without reading the file. It covers at least `.env*`, `*.pfx`,
+  `*.p12`, `*.pem`, `*.key`, `*.keystore`, `*.jks`, `*.pubxml`, `secrets.json`, `*.user.secrets`,
+  `azure-appconfig-connection.txt` and every `appsettings.*.json` except the three tracked files
+  `MOBAflow/appsettings.json`, `MOBAflow/appsettings.schema.json` and
+  `MOBAflow/appsettings.Development.template.json`, which are ordinary configuration. The list
+  is not exhaustive: treat every name that `.gitignore` excludes as a secret the same way.
+  If a task needs such a file, stop and hand it to a local session.
 - **Pre-commit:** GitHub Push Protection checks each push and blocks only the token formats of
   known providers. It is not equivalent to the local scan: `secret_scanning_non_provider_patterns`
   is disabled for this repository (checked 2026-11-12), so generic passwords, connection strings

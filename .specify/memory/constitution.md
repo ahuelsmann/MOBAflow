@@ -66,10 +66,11 @@ In local sessions, changed files likely to contain secrets MUST pass
 `sonar analyze secrets` before they are read, and all changed files MUST pass a
 secrets scan before commit and PR publication. Ordinary source, tests, Markdown,
 schemas, and checked-in templates do not require individual pre-read scans unless
-context indicates secret material. Cloud sessions without a local scanner MUST NOT
-open likely secret-bearing files, rely on GitHub Push Protection (provider
-patterns only) for each push, and MUST record the missing local scan in the PR,
-as specified in `AGENTS.md` and the Sonar policy. Sonar code analysis MUST run only through GitHub CI; local
+context indicates secret material. Local sessions keep these scans. Cloud sessions
+without a local scanner MUST NOT open likely secret-bearing files. For each push
+they depend on GitHub Push Protection, which covers provider patterns only, and
+they MUST record the missing local scan in the PR, as specified in `AGENTS.md` and
+the Sonar policy. Sonar code analysis MUST run only through GitHub CI; local
 Sonar/Vortex code analysis and analysis hooks MUST NOT be run or installed.
 Every PR MUST be created as a draft and remain a draft until the SonarCloud check
 for its current commit is green with zero `OPEN` or `CONFIRMED` issues.
