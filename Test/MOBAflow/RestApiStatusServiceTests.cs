@@ -212,7 +212,9 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            NullLogger<MainWindowViewModel>.Instance);
+            NullLogger<MainWindowViewModel>.Instance,
+            Mock.Of<ISettingsService>(),
+            new NullDialogService());
     }
 
     private sealed partial class ImmediateHttpMessageHandler : HttpMessageHandler

@@ -539,7 +539,8 @@ runtime services.
   (`MobaflowSyncDiagnostics.SyncStarting`). The optional `TimeProvider` supplies the waiting time of the REST API
   and RuntimeHub host rows. `RestApiStatusService` publishes the synchronization after its host connect attempt
   and re-checks after 1, 2, 5, 10, 10 and 10 s until the server lists the host and every successful solution and
-  snapshot push, then every 30 s; a failed host connect is retried at the same pace. A check that overlaps a
+  snapshot push, then every 30 s; a failed host connect is retried at the same pace. A solution
+  upload that is still on its way keeps the re-checks going, within the same delays. A check that overlaps a
   running connect uses up no delay, and a host that just connected restarts the delays.
 - The shell keeps the operating state: `RecomputeOperatingState` reads `SystemStatus.RestApiIsReachable`,
   `SpeechHealthStatus` and `IsPostStartupInitializationRunning`, one `SystemStatus.PropertyChanged` handler for
@@ -552,8 +553,9 @@ runtime services.
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
-  speech selectors. Its required dependencies are AppSettings, ISettingsService, the UI dispatcher
-  and logging; speech testing uses the existing host action. It never depends on MainWindowViewModel.
+  speech selectors. Its required dependencies are AppSettings, ISettingsService, the UI dispatcher,
+  logging, the host's `IFeatureTogglePageProvider` and `ISpeechOutput`; the speech test speaks through that
+  output and shows its failure reason. It never depends on MainWindowViewModel.
 - The ViewModel owns settings persistence, feature items, Piper choices, reset commands and section
   state. SettingsPage keeps file pickers and visual ordering/reset feedback.
 - `InPortCounterViewModel` reacts to actual valid feedback-count changes since slice 5a, and
@@ -592,8 +594,9 @@ runtime services.
   running (solution switch, project removal, a changed Z21 assignment), the runtime
   sets every known locomotive (commanded, seen on its Z21 or listed in its project) to
   speed 0. The shell asks first ("Stop all trains?") before a new or opened solution
-  or a project deletion when an affected runtime is connected; cancelling keeps
-  everything running.
+  when an affected runtime is connected; cancelling keeps everything running. A
+  project deletion always asks "Delete Project"; when the project's runtime is
+  connected, that question also says that its locomotives are set to speed 0 first.
 - App close keeps trains running: `MainWindowViewModel.PrepareForShutdownAsync` shows
   no stop-trains dialog and calls `IProjectRuntimeHost.ReleaseAsync`, which disposes
   the runtimes and closes their Z21 connections (LAN_LOGOFF) without a stop command.
@@ -830,7 +833,9 @@ Control page and the MOBAsmart Engines/Control tabs. It coordinates platform-neu
 | [`TrainControlSettingsStore`](../SharedUI/TrainControl/TrainControlSettingsStore.cs) | Ramp, speed steps, series/Vmax and the per-host (WinUI/MAUI) selected locomotive. |
 
 The ViewModel keeps the bound properties, commands and the UI-thread continuations of ramps and the
-door transition; host differences stay explicit through `TrainControlViewModelOptions`.
+door transition; host differences stay explicit through `TrainControlViewModelOptions` and the required
+[`IRuntimeRoutingState`](../SharedUI/Interface/IRuntimeRoutingState.cs): MOBAsmart registers its
+`MobileRuntimeCoordinator` for the hybrid local/remote routing, MOBAflow registers `NullRuntimeRoutingState`.
 
 ### MOBAsmart session and projection
 

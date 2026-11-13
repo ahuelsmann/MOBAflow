@@ -182,7 +182,7 @@ public partial class MainWindowViewModel
     private async Task<bool> ConfirmStopTrainsAsync(string action, IReadOnlyCollection<Guid>? projectIds = null)
     {
         var connected = _session.GetConnectedProjectNames(projectIds);
-        if (connected.Count == 0 || _dialogService is null)
+        if (connected.Count == 0)
         {
             return true;
         }

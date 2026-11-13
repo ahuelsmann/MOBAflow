@@ -64,6 +64,7 @@ internal sealed class TrainControlViewModelSpeedTests
             NullLogger<TrainControlViewModel>.Instance,
             ImmediateUiDispatcher.Instance,
             new EventBus(NullLogger<EventBus>.Instance),
-            new NullFunctionAppearancePicker());
+            new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState());
     }
 }

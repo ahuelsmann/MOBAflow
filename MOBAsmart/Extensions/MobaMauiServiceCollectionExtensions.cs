@@ -122,6 +122,7 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<IMobaRuntime>(),
             sp.GetRequiredService<IRuntimeHubRemoteClient>()));
         services.AddSingleton<IMobileRuntimeCoordinator>(sp => sp.GetRequiredService<MobileRuntimeCoordinator>());
+        services.AddSingleton<IRuntimeRoutingState>(sp => sp.GetRequiredService<MobileRuntimeCoordinator>());
         services.AddSingleton(sp => new MobileRuntimeProjection(
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
             sp.GetRequiredService<IProjectContext>(),
@@ -181,21 +182,17 @@ public static class MobaMauiServiceCollectionExtensions
             HybridRuntimeSnapshots = true,
             Host = TrainControlHost.Maui
         });
-        services.AddSingleton<TrainControlViewModel>(sp =>
-        {
-            var coordinator = sp.GetRequiredService<IMobileRuntimeCoordinator>();
-            return new TrainControlViewModel(
-                sp.GetRequiredService<IRuntimeSnapshotProvider>(),
-                sp.GetRequiredService<IRuntimeCommandGateway>(),
-                sp.GetRequiredService<ISettingsService>(),
-                sp.GetRequiredService<IProjectContext>(),
-                sp.GetRequiredService<ILogger<TrainControlViewModel>>(),
-                sp.GetRequiredService<IUiDispatcher>(),
-                sp.GetRequiredService<IEventBus>(),
-                sp.GetRequiredService<IFunctionAppearancePicker>(),
-                mobileRuntimeCoordinator: coordinator,
-                options: sp.GetRequiredService<TrainControlViewModelOptions>());
-        });
+        services.AddSingleton<TrainControlViewModel>(sp => new TrainControlViewModel(
+            sp.GetRequiredService<IRuntimeSnapshotProvider>(),
+            sp.GetRequiredService<IRuntimeCommandGateway>(),
+            sp.GetRequiredService<ISettingsService>(),
+            sp.GetRequiredService<IProjectContext>(),
+            sp.GetRequiredService<ILogger<TrainControlViewModel>>(),
+            sp.GetRequiredService<IUiDispatcher>(),
+            sp.GetRequiredService<IEventBus>(),
+            sp.GetRequiredService<IFunctionAppearancePicker>(),
+            sp.GetRequiredService<IRuntimeRoutingState>(),
+            options: sp.GetRequiredService<TrainControlViewModelOptions>()));
 
         return services;
     }

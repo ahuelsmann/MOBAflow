@@ -37,9 +37,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly MobileRuntimeProjection _runtimeProjection;
     private readonly MobileSolutionSynchronizer _solutionSynchronizer;
     private readonly MobilePhotoUploader _photoUploader;
-    private readonly IRuntimeHubRemoteClient? _runtimeHubRemoteClient;
+    private readonly IRuntimeHubRemoteClient _runtimeHubRemoteClient;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
-    private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
+    private readonly IMobileRuntimeCoordinator _mobileRuntimeCoordinator;
     private readonly MobileAppLifecycle _appLifecycle;
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
     private readonly ILogger<MauiViewModel> _logger;
@@ -74,10 +74,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <param name="networkProfileChangeNotifier">Raises when device connectivity changes so cached LAN REST endpoints can be re-resolved.</param>
     /// <param name="logger">Logger for diagnostics.</param>
     /// <param name="eventBus">Event bus used to observe runtime and feedback changes.</param>
-    /// <param name="runtimeHubRemoteClient">Optional: SignalR client for remote runtime snapshots (MOBAsmart).</param>
-    /// <param name="mobileRuntimeCoordinator">Optional: MOBAsmart hybrid local/remote runtime routing.</param>
-    /// <param name="projectContext">Optional: synced MOBAflow solution for Control tab fleet list (MOBAsmart).</param>
-    /// <param name="backgroundService">Optional: Android foreground service for background keep-alive (MOBAsmart).</param>
+    /// <param name="runtimeHubRemoteClient">SignalR client for remote runtime snapshots.</param>
+    /// <param name="mobileRuntimeCoordinator">Hybrid local/remote runtime routing.</param>
+    /// <param name="projectContext">Synced MOBAflow solution for the project picker and the Control tab fleet list.</param>
+    /// <param name="backgroundService">Android foreground service for background keep-alive.</param>
     public MauiViewModel(
         IRuntimeSnapshotProvider runtimeSnapshots,
         IConnectionRuntime runtimeConnection,
@@ -94,10 +94,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
         ILogger<MauiViewModel> logger,
         IEventBus eventBus,
-        IRuntimeHubRemoteClient? runtimeHubRemoteClient = null,
-        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
-        IProjectContext? projectContext = null,
-        IBackgroundService? backgroundService = null)
+        IRuntimeHubRemoteClient runtimeHubRemoteClient,
+        IMobileRuntimeCoordinator mobileRuntimeCoordinator,
+        IProjectContext projectContext,
+        IBackgroundService backgroundService)
     {
         ArgumentNullException.ThrowIfNull(runtimeSnapshots);
         ArgumentNullException.ThrowIfNull(runtimeConnection);
@@ -114,6 +114,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(runtimeHubRemoteClient);
+        ArgumentNullException.ThrowIfNull(mobileRuntimeCoordinator);
+        ArgumentNullException.ThrowIfNull(projectContext);
+        ArgumentNullException.ThrowIfNull(backgroundService);
         _runtimeSnapshots = runtimeSnapshots;
         _runtimeConnection = runtimeConnection;
         _trafficMonitor = trafficMonitor;
@@ -142,12 +146,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         SelectedProjectIndex = -1;
         WireProjectContextForControlTab();
 
-        if (_runtimeHubRemoteClient != null)
-        {
-            _eventBusSubscriptions.Add(_eventBus.Subscribe<RemoteRuntimeSnapshotChangedEvent>(OnRemoteRuntimeSnapshotChanged));
-            _runtimeHubRemoteClient.SessionStateChanged += OnRuntimeHubSessionStateChangedAsync;
-            _runtimeHubRemoteClient.SolutionUpdated += OnRuntimeHubSolutionUpdatedAsync;
-        }
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<RemoteRuntimeSnapshotChangedEvent>(OnRemoteRuntimeSnapshotChanged));
+        _runtimeHubRemoteClient.SessionStateChanged += OnRuntimeHubSessionStateChangedAsync;
+        _runtimeHubRemoteClient.SolutionUpdated += OnRuntimeHubSolutionUpdatedAsync;
     }
 
     /// <summary>
@@ -493,11 +494,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
-        if (_runtimeHubRemoteClient != null)
-        {
-            _runtimeHubRemoteClient.SessionStateChanged -= OnRuntimeHubSessionStateChangedAsync;
-            _runtimeHubRemoteClient.SolutionUpdated -= OnRuntimeHubSolutionUpdatedAsync;
-        }
+        _runtimeHubRemoteClient.SessionStateChanged -= OnRuntimeHubSessionStateChangedAsync;
+        _runtimeHubRemoteClient.SolutionUpdated -= OnRuntimeHubSolutionUpdatedAsync;
 
         NotifyApplicationStopping();
         _appLifecycle.Dispose();
@@ -1055,18 +1053,13 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     private bool ShouldApplyLocalSignalBoxSnapshot()
     {
-        if (_runtimeHubRemoteClient == null)
-        {
-            return true;
-        }
-
         if (!IsMobaflowConnectionEnabled)
         {
             return true;
         }
 
         // When MOBAflow is enabled but the remote session is down, fall back to local/cached data.
-        return _mobileRuntimeCoordinator?.PreferRemoteRuntime != true;
+        return !_mobileRuntimeCoordinator.PreferRemoteRuntime;
     }
 
     private void ApplyRemoteRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
@@ -1084,7 +1077,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         if (snapshot.LocomotiveFleet.Count > 0)
         {
-            if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+            if (_mobileRuntimeCoordinator.PreferRemoteRuntime)
             {
                 ApplyLiveRemoteLocomotiveFleet(snapshot.LocomotiveFleet);
             }

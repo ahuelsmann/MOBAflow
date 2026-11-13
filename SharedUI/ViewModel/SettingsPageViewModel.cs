@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Backend.Service;
 using Common.Configuration;
 using Common.Extension;
 using Common.Navigation;
@@ -9,9 +8,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Interface;
 using CommunityToolkit.Mvvm.Input;
 
-using Domain;
-
 using Microsoft.Extensions.Logging;
+
+using Speech.Base;
 
 using System.Collections.ObjectModel;
 using System.IO;
@@ -26,31 +25,36 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly ILogger<SettingsPageViewModel> _logger;
-    private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
-    private readonly Func<string, Task>? _speechTestAction;
-    private readonly AnnouncementService? _announcementService;
+    private readonly IFeatureTogglePageProvider _featureTogglePageProvider;
+    private readonly ISpeechOutput _speechOutput;
 
     /// <summary>Creates shared settings presentation state with host-provided persistence and speech integration.</summary>
+    /// <param name="settings">The shared application settings this page edits.</param>
+    /// <param name="settingsService">Persists every change immediately.</param>
+    /// <param name="uiDispatcher">Marshals speech test results back to the UI thread.</param>
+    /// <param name="logger">Logger for persistence and speech test failures.</param>
+    /// <param name="featureTogglePageProvider">Pages that can be switched on and off in Settings.</param>
+    /// <param name="speechOutput">Speaks the speech test message with the current provider and options.</param>
     public SettingsPageViewModel(
         AppSettings settings,
         ISettingsService settingsService,
         IUiDispatcher uiDispatcher,
         ILogger<SettingsPageViewModel> logger,
-        IFeatureTogglePageProvider? featureTogglePageProvider = null,
-        Func<string, Task>? speechTestAction = null,
-        AnnouncementService? announcementService = null)
+        IFeatureTogglePageProvider featureTogglePageProvider,
+        ISpeechOutput speechOutput)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(featureTogglePageProvider);
+        ArgumentNullException.ThrowIfNull(speechOutput);
         _settings = settings;
         _settingsService = settingsService;
         _uiDispatcher = uiDispatcher;
         _logger = logger;
         _featureTogglePageProvider = featureTogglePageProvider;
-        _speechTestAction = speechTestAction;
-        _announcementService = announcementService;
+        _speechOutput = speechOutput;
         InitializeFeatureToggleItems();
     }
 
@@ -88,6 +92,9 @@ public sealed partial class SettingsPageViewModel : ObservableObject
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Speech test failed")]
     private static partial void LogSpeechTestFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Speech test failed: {Reason}")]
+    private static partial void LogSpeechTestUnsuccessful(ILogger logger, string reason);
 
     private readonly List<PiperVoiceOption> _availablePiperVoiceOptions = [];
     private string _selectedPiperLanguage = string.Empty;
@@ -757,7 +764,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
 
     /// <summary>
     /// Collection of feature toggle entries for the dynamic Settings UI.
-    /// Populated from IFeatureTogglePageProvider (empty if provider is not injected).
+    /// Populated from IFeatureTogglePageProvider.
     /// </summary>
     public ObservableCollection<FeatureToggleItemViewModel> FeatureToggleItems { get; } = [];
 
@@ -766,8 +773,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     internal void InitializeFeatureToggleItems()
     {
-        if (_featureTogglePageProvider == null) return;
-
         FeatureToggleItems.Clear();
         foreach (var info in _featureTogglePageProvider.GetToggleablePages())
         {
@@ -1261,50 +1266,33 @@ public sealed partial class SettingsPageViewModel : ObservableObject
             });
 
             // Use custom test message from settings (user can modify in UI)
-            var testMessage = SpeechTestMessage;
-
-            if (_speechTestAction != null)
+            var result = await _speechOutput.SpeakAsync(SpeechTestMessage).ConfigureAwait(false);
+            if (!result.IsSuccess)
             {
-                await _speechTestAction(testMessage).ConfigureAwait(false);
-
-                _uiDispatcher.InvokeOnUi(() =>
-                {
-                    ShowSuccessMessage = true;
-                    ShowErrorMessage = false;
-                });
+                LogSpeechTestUnsuccessful(_logger, result.Reason);
+                ShowSpeechTestError(result.Reason);
                 return;
             }
 
-            // Use the announcement service if available
-            if (_announcementService != null)
+            _uiDispatcher.InvokeOnUi(() =>
             {
-                var testJourney = new Journey { Text = testMessage };
-                var testStation = new Station { Name = "Test", IsExitOnLeft = false };
-                await _announcementService.GenerateAndSpeakAnnouncementAsync(
-                    testJourney.Text,
-                    testStation,
-                    1,
-                    templateName: testJourney.Name,
-                    suppressSpeechErrors: false).ConfigureAwait(false);
-
-                // SUCCESS: Show success message on UI thread
-                _uiDispatcher.InvokeOnUi(() =>
-                {
-                    ShowSuccessMessage = true;
-                    ShowErrorMessage = false;
-                });
-            }
+                ShowSuccessMessage = true;
+                ShowErrorMessage = false;
+            });
         }
         catch (Exception ex)
         {
             LogSpeechTestFailed(_logger, ex);
-            _uiDispatcher.InvokeOnUi(() =>
-            {
-                ErrorMessage = ex.Message;
-                ShowErrorMessage = true;
-            });
+            ShowSpeechTestError(ex.Message);
         }
     }
+
+    private void ShowSpeechTestError(string message) =>
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            ErrorMessage = message;
+            ShowErrorMessage = true;
+        });
 
     #endregion
 }
