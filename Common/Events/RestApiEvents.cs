@@ -19,6 +19,12 @@ public sealed record RestApiStatusChangedEvent : EventBase
     public bool IsReachable { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether an unreachable REST API is expected to start (auto-start is on), so the
+    /// status waits for it instead of reporting a problem.
+    /// </summary>
+    public bool IsStarting { get; init; }
+
+    /// <summary>
     /// Connected clients information. Null when API is not reachable.
     /// </summary>
     public List<RestApiClientInfo>? Clients { get; init; }
@@ -156,6 +162,15 @@ public sealed record MobaflowSyncDiagnostics
     public DateTimeOffset? LastSolutionPushAt { get; init; }
 
     public bool LastSolutionPushSucceeded { get; init; }
+
+    /// <summary>
+    /// True while MOBAflow still sets up the synchronization and re-checks the REST API status within seconds:
+    /// the RuntimeHub host is not confirmed by the server yet, or a successful push is not visible in the status.
+    /// </summary>
+    public bool SyncStarting { get; init; }
+
+    /// <summary>True while the RuntimeHub host has not connected yet; MOBAflow tries again on its next status check.</summary>
+    public bool HostConnectPending { get; init; }
 }
 
 /// <summary>

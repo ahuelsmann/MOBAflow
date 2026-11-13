@@ -66,7 +66,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
     }
 
     [Test]
-    public void DefaultsShowInitializingSpeechNoRestApiAndNoSynchronization()
+    public void DefaultsShowInitializingSpeechAndWaitForTheFirstRestApiCheck()
     {
         var viewModel = CreateViewModel();
 
@@ -78,22 +78,206 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
             Assert.That(viewModel.SpeechHealthColor, Is.EqualTo("SystemFillColorCautionBrush"));
             Assert.That(viewModel.IsPostStartupInitializationRunning, Is.False);
             Assert.That(viewModel.PostStartupStatusText, Is.Empty);
-            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("—"));
+            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Checking the REST API..."));
+            Assert.That(viewModel.RestApiIsPending, Is.True);
+            Assert.That(viewModel.RestApiWaitingTime, Is.Empty);
             Assert.That(viewModel.RestApiIsReachable, Is.False);
             Assert.That(viewModel.RestApiConnectedClients, Is.Empty);
             Assert.That(viewModel.RestApiConnectedClientsEmpty, Is.True);
-            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("—"));
-            Assert.That(viewModel.HubBroadcastStatusText, Is.EqualTo("—"));
+            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("Waiting for the REST API..."));
+            Assert.That(viewModel.HubBroadcastStatusText, Is.EqualTo("Waiting for the REST API..."));
+            Assert.That(viewModel.RestCacheStatusText, Is.EqualTo("Waiting for the REST API..."));
+            Assert.That(viewModel.SolutionSyncStatusText, Is.EqualTo("Waiting for the REST API..."));
+            Assert.That(viewModel.RuntimeHubHostIsPending && viewModel.HubBroadcastIsPending
+                && viewModel.RestCacheIsPending && viewModel.SolutionSyncIsPending, Is.True);
             Assert.That(viewModel.RemoteSnapshotStatusText, Is.EqualTo("—"));
             Assert.That(viewModel.RuntimeSnapshotStatusText, Is.EqualTo("—"));
-            Assert.That(viewModel.RestCacheStatusText, Is.EqualTo("—"));
-            Assert.That(viewModel.SolutionSyncStatusText, Is.EqualTo("—"));
             Assert.That(viewModel.RuntimeHubHostIsHealthy | viewModel.HubBroadcastIsHealthy | viewModel.RemoteSnapshotIsHealthy
                 | viewModel.RuntimeSnapshotIsHealthy | viewModel.RestCacheIsHealthy | viewModel.SolutionSyncIsHealthy, Is.False);
         }
     }
 
-    [TestCase("Ready", "\uE930", "Green", "Speech: Ready")]
+    [Test]
+    public void StartingRestApiShowsProgressAndWaitingTimeThenReportsASlowStartUntilItAnswers()
+    {
+        var clock = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var viewModel = CreateViewModel(clock);
+        var starting = new RestApiStatusChangedEvent("Waiting for the REST API to start...", false) { IsStarting = true };
+
+        _eventBus.Publish(starting);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RestApiIsPending, Is.True);
+            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Waiting for the REST API to start..."));
+            Assert.That(viewModel.RestApiWaitingTime, Is.Empty, "The first check has not waited yet.");
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(12));
+        _eventBus.Publish(starting);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RestApiIsPending, Is.True);
+            Assert.That(viewModel.RestApiWaitingTime, Is.EqualTo("(12 s)"));
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(18));
+        _eventBus.Publish(starting);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RestApiIsPending, Is.False, "After 30 s the row stops spinning and reports the slow start.");
+            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("REST API is slow to start, still checking..."));
+            Assert.That(viewModel.RestApiWaitingTime, Is.EqualTo("(30 s)"));
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(45));
+        _eventBus.Publish(starting);
+        Assert.That(viewModel.RestApiWaitingTime, Is.EqualTo("(1 min 15 s)"));
+
+        _eventBus.Publish(new RestApiStatusChangedEvent("Running on port 5001", true));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RestApiIsPending, Is.False);
+            Assert.That(viewModel.RestApiIsReachable, Is.True);
+            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Running on port 5001"));
+            Assert.That(viewModel.RestApiWaitingTime, Is.Empty);
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(5));
+        _eventBus.Publish(starting);
+        Assert.That(viewModel.RestApiWaitingTime, Is.Empty, "A new start waits from zero again.");
+    }
+
+    [Test]
+    public void UnreachableRestApiWithoutAutoStartIsAProblemNotAWait()
+    {
+        var viewModel = CreateViewModel();
+
+        _eventBus.Publish(new RestApiStatusChangedEvent("Not started – enable Auto-start in Settings", false));
+        _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics { RestApiReachable = false }));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RestApiIsPending, Is.False);
+            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Not started – enable Auto-start in Settings"));
+            Assert.That(viewModel.RuntimeHubHostIsPending | viewModel.HubBroadcastIsPending
+                | viewModel.RestCacheIsPending | viewModel.SolutionSyncIsPending, Is.False);
+            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("REST API unreachable"));
+            Assert.That(viewModel.SolutionSyncStatusText, Is.EqualTo("No solution cached"));
+        }
+    }
+
+    [Test]
+    public void SynchronizationRowsWaitForTheRestApiThenConnectUntilTheServerConfirmsTheHost()
+    {
+        var clock = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var viewModel = CreateViewModel(clock);
+        var notified = new List<string?>();
+        viewModel.PropertyChanged += (_, e) => notified.Add(e.PropertyName);
+
+        _eventBus.Publish(new RestApiStatusChangedEvent("Waiting for the REST API to start...", false) { IsStarting = true });
+        _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics { RestApiReachable = false, HostConnectPending = true }));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RuntimeHubHostIsPending, Is.True);
+            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("Waiting for the REST API..."));
+            Assert.That(viewModel.RuntimeHubHostWaitingTime, Is.Empty, "The REST API row shows the waiting time.");
+            Assert.That(viewModel.SolutionSyncStatusText, Is.EqualTo("Waiting for the REST API..."));
+            Assert.That(viewModel.RestCacheStatusText, Is.EqualTo("Waiting for the REST API..."));
+            Assert.That(viewModel.HubBroadcastStatusText, Is.EqualTo("Waiting for the REST API..."));
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(4));
+        _eventBus.Publish(new RestApiStatusChangedEvent("Running on port 5001", true));
+        _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics
+        {
+            RestApiReachable = true,
+            SyncStarting = true,
+            HostConnectPending = true
+        }));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RuntimeHubHostIsPending, Is.True);
+            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("Connecting..."));
+            Assert.That(viewModel.RuntimeHubHostRowText, Is.EqualTo("RuntimeHub host: Connecting..."));
+            Assert.That(notified, Does.Contain(nameof(SystemStatusViewModel.RuntimeHubHostRowText)));
+            Assert.That(viewModel.SolutionSyncIsPending, Is.True);
+            Assert.That(viewModel.SolutionSyncStatusText, Is.EqualTo("Waiting for the solution..."));
+            Assert.That(viewModel.RestCacheIsPending, Is.True);
+            Assert.That(viewModel.RestCacheStatusText, Is.EqualTo("Waiting for the first snapshot..."));
+            Assert.That(viewModel.HubBroadcastIsPending, Is.True);
+            Assert.That(viewModel.HubBroadcastStatusText, Is.EqualTo("Waiting for the RuntimeHub host..."));
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(3));
+        _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics
+        {
+            RestApiReachable = true,
+            SyncStarting = true,
+            HostClientConnected = true,
+            SolutionAvailable = true,
+            SolutionUpdatedAt = DateTimeOffset.UtcNow,
+            SolutionActiveProjectName = "Main"
+        }));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RuntimeHubHostIsPending, Is.True, "The status read before the connect does not list the host yet.");
+            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("Registering with the REST API..."));
+            Assert.That(viewModel.RuntimeHubHostWaitingTime, Is.EqualTo("(3 s)"));
+            Assert.That(viewModel.SolutionSyncIsPending, Is.False);
+            Assert.That(viewModel.SolutionSyncIsHealthy, Is.True);
+            Assert.That(viewModel.HubBroadcastStatusText, Is.EqualTo("Waiting for the RuntimeHub host..."));
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(1));
+        var now = DateTimeOffset.UtcNow;
+        _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics
+        {
+            RestApiReachable = true,
+            HostClientConnected = true,
+            ServerHasHost = true,
+            LastHubPushAt = now,
+            LastHubPushSucceeded = true,
+            LocalSnapshotCreatedAt = now,
+            RestCacheAvailable = true,
+            RestCacheUpdatedAt = now,
+            SolutionAvailable = true,
+            SolutionUpdatedAt = now,
+            SolutionActiveProjectName = "Main"
+        }));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RuntimeHubHostIsPending | viewModel.HubBroadcastIsPending
+                | viewModel.RestCacheIsPending | viewModel.SolutionSyncIsPending, Is.False);
+            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("Connected"));
+            Assert.That(viewModel.RuntimeHubHostWaitingTime, Is.Empty);
+            Assert.That(viewModel.HubBroadcastStatusText, Is.EqualTo("Last push just now"));
+            Assert.That(viewModel.RestCacheIsHealthy, Is.True);
+        }
+    }
+
+    [Test]
+    public void HostThatStillDoesNotConnectAfterTheStartPhaseSaysThatItRetries()
+    {
+        var viewModel = CreateViewModel();
+        _eventBus.Publish(new RestApiStatusChangedEvent("Running on port 5001", true));
+
+        _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics
+        {
+            RestApiReachable = true,
+            HostConnectPending = true
+        }));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.RuntimeHubHostIsPending, Is.False);
+            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("Host client disconnected, retrying"));
+            Assert.That(viewModel.SolutionSyncIsPending, Is.False);
+            Assert.That(viewModel.SolutionSyncStatusText, Is.EqualTo("No solution cached"));
+            Assert.That(viewModel.HubBroadcastStatusText, Is.EqualTo("No snapshot push yet"));
+        }
+    }
+
+    [TestCase("Ready","\uE930", "Green", "Speech: Ready")]
     [TestCase("✅ Ready", "\uE930", "Green", "Speech: Ready")]
     [TestCase("Not Configured", "\uE7BA", "SystemFillColorCautionBrush", "Speech: Not Configured")]
     [TestCase("❌ Failed: no voice", "\uE711", "Red", "Speech: Failed: no voice")]
@@ -263,6 +447,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         _selectedProject = null;
         var viewModel = CreateViewModel();
         var now = DateTimeOffset.UtcNow;
+        _eventBus.Publish(new RestApiStatusChangedEvent("Not reachable (port 5001) – check connection", false));
 
         _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics
         {
@@ -410,9 +595,9 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
             Assert.That(_eventBus.GetSubscriberCount<RestApiStatusChangedEvent>(), Is.Zero);
             Assert.That(_eventBus.GetSubscriberCount<PostStartupStatusEvent>(), Is.Zero);
             Assert.That(_eventBus.GetSubscriberCount<MobaflowSyncDiagnosticsChangedEvent>(), Is.Zero);
-            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("—"));
+            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Checking the REST API..."));
             Assert.That(viewModel.PostStartupStatusText, Is.Empty);
-            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("—"));
+            Assert.That(viewModel.RuntimeHubHostStatusText, Is.EqualTo("Waiting for the REST API..."));
             Assert.That(viewModel.SpeechHealthStatus, Is.EqualTo("Speech: Ready"));
             Assert.That(viewModel.SolutionLoadedStatusText, Is.EqualTo("In-memory only, no solution file loaded"));
         }
@@ -421,9 +606,9 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
     private void RaiseSessionChange(string propertyName) =>
         _session.Raise(value => value.PropertyChanged += null, new PropertyChangedEventArgs(propertyName));
 
-    private SystemStatusViewModel CreateViewModel()
+    private SystemStatusViewModel CreateViewModel(TimeProvider? timeProvider = null)
     {
-        var viewModel = new SystemStatusViewModel(_eventBus, _session.Object, _settingsPage);
+        var viewModel = new SystemStatusViewModel(_eventBus, _session.Object, _settingsPage, timeProvider);
         _viewModels.Add(viewModel);
         return viewModel;
     }

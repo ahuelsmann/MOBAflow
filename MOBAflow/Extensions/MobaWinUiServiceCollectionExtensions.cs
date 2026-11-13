@@ -216,7 +216,8 @@ public static class MobaWinUiServiceCollectionExtensions
                 sp.GetRequiredService<IRuntimeHubHostClient>(),
                 sp.GetRequiredService<IMobaRuntime>(),
                 sp.GetRequiredService<IEventBus>(),
-                sp.GetRequiredService<ILogger<RestApiStatusService>>());
+                sp.GetRequiredService<ILogger<RestApiStatusService>>(),
+                sp.GetRequiredService<TimeProvider>());
         });
 
         services.AddSingleton<RestApiProcessService>();
