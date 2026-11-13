@@ -4,6 +4,7 @@ namespace Moba.WinUI.Controls;
 using SharedUI.Appearance;
 
 using Microsoft.UI;
+using Microsoft.UI.System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
@@ -24,6 +25,14 @@ internal sealed partial class KsSignalScreen
 
     private SolidColorBrush OffColor => _offColor ??= CreateOffBrush();
     private SolidColorBrush? _offColor;
+
+    // In a Windows contrast theme a lit lamp also gets a ring, so "lit" never depends on the lamp color alone.
+    private const double LitLampStrokeThickness = 2;
+    private SolidColorBrush LitStroke => _litStroke ??= CreateLitStrokeBrush();
+    private SolidColorBrush? _litStroke;
+
+    // ActualThemeChanged reports only Light/Dark, so switching a contrast theme on or off is observed here.
+    private ThemeSettings? _themeSettings;
 
     private DispatcherTimer? _blinkTimer;
     private bool _blinkState;
@@ -101,24 +110,76 @@ internal sealed partial class KsSignalScreen
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         ActualThemeChanged += OnActualThemeChanged;
-        UpdateAspect();
+        ObserveContrastTheme();
+
+        // The theme may have changed while this screen was unloaded.
+        RefreshThemeBrushes();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         ActualThemeChanged -= OnActualThemeChanged;
+        if (_themeSettings != null)
+        {
+            _themeSettings.Changed -= OnThemeSettingsChanged;
+            _themeSettings = null;
+        }
+
         StopBlinking();
+    }
+
+    private void ObserveContrastTheme()
+    {
+        if (_themeSettings != null || XamlRoot?.ContentIslandEnvironment is not { } environment
+            || environment.AppWindowId.Value == 0)
+        {
+            return;
+        }
+
+        _themeSettings = ThemeSettings.CreateForWindowId(environment.AppWindowId);
+        _themeSettings.Changed += OnThemeSettingsChanged;
     }
 
     private void OnActualThemeChanged(FrameworkElement sender, object args)
     {
+        RefreshThemeBrushes();
+    }
+
+    private void OnThemeSettingsChanged(ThemeSettings sender, object args)
+    {
+        _ = sender;
+        _ = args;
+
+        // A notification can still arrive after Unloaded stopped observing; the next Loaded refreshes anyway.
+        if (_themeSettings is null)
+        {
+            return;
+        }
+
+        _ = DispatcherQueue.TryEnqueue(RefreshThemeBrushes);
+    }
+
+    private void RefreshThemeBrushes()
+    {
         _offColor = null;
-        UpdateAspect();
+        _litStroke = null;
+
+        // A refresh queued just before unloading must not restart the blink timer of an unloaded screen.
+        if (IsLoaded)
+        {
+            UpdateAspect();
+        }
     }
 
     private SolidColorBrush CreateOffBrush()
     {
         var color = ThemeResourceResolver.ResolveColor(this, "SignalLampOffBrush", Color.FromArgb(60, 64, 64, 64));
+        return new SolidColorBrush(color);
+    }
+
+    private SolidColorBrush CreateLitStrokeBrush()
+    {
+        var color = ThemeResourceResolver.ResolveColor(this, "SignalLampLitStrokeBrush", Colors.Transparent);
         return new SolidColorBrush(color);
     }
 
@@ -207,7 +268,7 @@ internal sealed partial class KsSignalScreen
 
     private void ApplyLamp(Ellipse led, KsSignalLampColor color)
     {
-        led.Fill = color switch
+        var fill = color switch
         {
             KsSignalLampColor.Red => RedOn,
             KsSignalLampColor.Green => GreenOn,
@@ -215,6 +276,16 @@ internal sealed partial class KsSignalScreen
             KsSignalLampColor.White => WhiteOn,
             _ => OffColor
         };
+
+        ShowLamp(led, fill, isLit: color != KsSignalLampColor.Off);
+    }
+
+    // The contrast ring belongs to the lit phase only, so a flashing lamp loses it in its dark phase.
+    private void ShowLamp(Ellipse led, SolidColorBrush fill, bool isLit)
+    {
+        led.Fill = fill;
+        led.Stroke = isLit ? LitStroke : null;
+        led.StrokeThickness = isLit && ThemeResourceResolver.IsHighContrast() ? LitLampStrokeThickness : 0;
     }
 
     private void StartBlinkingIfNeeded(KsSignalScreenVisualState state)
@@ -236,9 +307,10 @@ internal sealed partial class KsSignalScreen
             return;
         }
 
+        // A static preview shows the flashing lamp steadily lit, ring included.
         if (IsStaticPreview)
         {
-            led.Fill = onColor;
+            ShowLamp(led, onColor, isLit: true);
             return;
         }
 
@@ -257,7 +329,7 @@ internal sealed partial class KsSignalScreen
         }
 
         _blinkState = !_blinkState;
-        _blinkingLed.Fill = _blinkState ? _blinkingOnColor : OffColor;
+        ShowLamp(_blinkingLed, _blinkState ? _blinkingOnColor : OffColor, isLit: _blinkState);
     }
 
     private void StopBlinking()

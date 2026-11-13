@@ -83,14 +83,16 @@ public partial class AppBottomTabBar
 
     private void UpdateTabVisualState(int selectedTab)
     {
-        UpdateTabItem(CounterIndicator, CounterLabel, selectedTab == CounterTabIndex);
-        UpdateTabItem(SignalBoxIndicator, SignalBoxLabel, selectedTab == SignalBoxTabIndex);
-        UpdateTabItem(EnginesIndicator, EnginesLabel, selectedTab == EnginesTabIndex);
-        UpdateTabItem(ControlIndicator, ControlLabel, selectedTab == ControlTabIndex);
+        UpdateTabItem(CounterTab, CounterIndicator, CounterLabel, selectedTab == CounterTabIndex);
+        UpdateTabItem(SignalBoxTab, SignalBoxIndicator, SignalBoxLabel, selectedTab == SignalBoxTabIndex);
+        UpdateTabItem(EnginesTab, EnginesIndicator, EnginesLabel, selectedTab == EnginesTabIndex);
+        UpdateTabItem(ControlTab, ControlIndicator, ControlLabel, selectedTab == ControlTabIndex);
     }
 
-    private static void UpdateTabItem(BoxView indicator, Label label, bool isSelected)
+    private static void UpdateTabItem(Grid tab, BoxView indicator, Label label, bool isSelected)
     {
+        // TalkBack reads the tappable tab, not the colored indicator line, so the selection state goes into its text.
+        SemanticProperties.SetDescription(tab, isSelected ? $"{label.Text} tab, selected" : $"{label.Text} tab");
         indicator.IsVisible = isSelected;
         label.Opacity = 1.0;
 

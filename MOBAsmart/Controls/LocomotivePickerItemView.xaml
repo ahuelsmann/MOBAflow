@@ -6,12 +6,24 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:Moba.MAUI.Controls"
+    xmlns:converters="clr-namespace:Moba.MAUI.Converters"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
     Margin="0,0,0,8"
     Padding="10"
     StrokeShape="RoundRectangle 12"
     StrokeThickness="1">
+    <!--  One TalkBack description for the whole card; bound, so it follows renames and address changes in place  -->
+    <SemanticProperties.Description>
+        <MultiBinding>
+            <MultiBinding.Converter>
+                <converters:LocomotiveCardDescriptionConverter />
+            </MultiBinding.Converter>
+            <Binding Path="Locomotive.Name" Source="{x:Reference Root}" />
+            <Binding Path="Locomotive.DigitalAddress" Source="{x:Reference Root}" />
+            <Binding Path="IsSelected" Source="{x:Reference Root}" />
+        </MultiBinding>
+    </SemanticProperties.Description>
     <Border.GestureRecognizers>
         <TapGestureRecognizer Command="{Binding Source={x:Reference Root}, Path=SelectCommand}" CommandParameter="{Binding Source={x:Reference Root}, Path=Locomotive}" />
     </Border.GestureRecognizers>

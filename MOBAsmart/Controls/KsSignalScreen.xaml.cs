@@ -3,6 +3,8 @@ namespace Moba.MAUI.Controls;
 
 using SharedUI.Appearance;
 
+using Domain;
+
 using Microsoft.Maui.Controls.Shapes;
 
 /// <summary>
@@ -224,9 +226,24 @@ public partial class KsSignalScreen
         ApplyLamp(Ra12Right, state.Ra12Right);
 
         ApplySpeedIndicators(state);
+        UpdateSemanticDescription(state);
 
         StartBlinkingIfNeeded(state);
         UpdateScaleToFit();
+    }
+
+    /// <summary>
+    /// Lamp colors are not readable by TalkBack, so the screen describes the aspect and any speed indicator in words.
+    /// </summary>
+    private void UpdateSemanticDescription(KsSignalScreenVisualState state)
+    {
+        var description = Enum.TryParse<SignalAspect>(Aspect, out var aspect)
+            ? KsSignalAspectNames.GetAspectDescription(aspect, KsSignalAspectNames.Is4046Signal(SignalArticleNumber))
+            : Aspect;
+        var indicators = state.DescribeSpeedIndicators();
+        SemanticProperties.SetDescription(
+            this,
+            indicators.Length == 0 ? $"Signal aspect {description}" : $"Signal aspect {description}, {indicators}");
     }
 
     private void ApplySpeedIndicators(KsSignalScreenVisualState state)

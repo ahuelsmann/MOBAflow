@@ -18,16 +18,18 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border
+        <controls:SelectionToggleButton
             x:Name="AspectHp0Button"
             Grid.Row="0"
             Grid.Column="0"
-            Height="112"
+            MinHeight="112"
+            MinWidth="0"
             Padding="8"
+            HorizontalAlignment="Stretch"
             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
+            Click="OnAspectClicked"
             CornerRadius="10"
-            PointerPressed="OnAspectClicked"
             Tag="Hp0">
             <StackPanel
                 HorizontalAlignment="Center"
@@ -44,18 +46,20 @@
                     HorizontalAlignment="Center"
                     Text="Hp0" />
             </StackPanel>
-        </Border>
+        </controls:SelectionToggleButton>
 
-        <Border
+        <controls:SelectionToggleButton
             x:Name="AspectKs1Button"
             Grid.Row="0"
             Grid.Column="1"
-            Height="112"
+            MinHeight="112"
+            MinWidth="0"
             Padding="8"
+            HorizontalAlignment="Stretch"
             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
+            Click="OnAspectClicked"
             CornerRadius="10"
-            PointerPressed="OnAspectClicked"
             Tag="Ks1">
             <StackPanel
                 HorizontalAlignment="Center"
@@ -72,18 +76,20 @@
                     HorizontalAlignment="Center"
                     Text="Ks1" />
             </StackPanel>
-        </Border>
+        </controls:SelectionToggleButton>
 
-        <Border
+        <controls:SelectionToggleButton
             x:Name="AspectKs2Button"
             Grid.Row="0"
             Grid.Column="2"
-            Height="112"
+            MinHeight="112"
+            MinWidth="0"
             Padding="8"
+            HorizontalAlignment="Stretch"
             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
+            Click="OnAspectClicked"
             CornerRadius="10"
-            PointerPressed="OnAspectClicked"
             Tag="Ks2">
             <StackPanel
                 HorizontalAlignment="Center"
@@ -100,18 +106,20 @@
                     HorizontalAlignment="Center"
                     Text="Ks2" />
             </StackPanel>
-        </Border>
+        </controls:SelectionToggleButton>
 
-        <Border
+        <controls:SelectionToggleButton
             x:Name="AspectKs1BlinkButton"
             Grid.Row="1"
             Grid.Column="0"
-            Height="112"
+            MinHeight="112"
+            MinWidth="0"
             Padding="8"
+            HorizontalAlignment="Stretch"
             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
+            Click="OnAspectClicked"
             CornerRadius="10"
-            PointerPressed="OnAspectClicked"
             Tag="Ks1Blink">
             <StackPanel
                 HorizontalAlignment="Center"
@@ -128,18 +136,20 @@
                     HorizontalAlignment="Center"
                     Text="Ks1 Bl" />
             </StackPanel>
-        </Border>
+        </controls:SelectionToggleButton>
 
-        <Border
+        <controls:SelectionToggleButton
             x:Name="AspectKennlichtButton"
             Grid.Row="1"
             Grid.Column="1"
-            Height="112"
+            MinHeight="112"
+            MinWidth="0"
             Padding="8"
+            HorizontalAlignment="Stretch"
             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
+            Click="OnAspectClicked"
             CornerRadius="10"
-            PointerPressed="OnAspectClicked"
             Tag="Kennlicht">
             <StackPanel
                 HorizontalAlignment="Center"
@@ -156,18 +166,20 @@
                     HorizontalAlignment="Center"
                     Text="Marker" />
             </StackPanel>
-        </Border>
+        </controls:SelectionToggleButton>
 
-        <Border
+        <controls:SelectionToggleButton
             x:Name="AspectDunkelButton"
             Grid.Row="1"
             Grid.Column="2"
-            Height="112"
+            MinHeight="112"
+            MinWidth="0"
             Padding="8"
+            HorizontalAlignment="Stretch"
             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
+            Click="OnAspectClicked"
             CornerRadius="10"
-            PointerPressed="OnAspectClicked"
             Tag="Dunkel">
             <StackPanel
                 HorizontalAlignment="Center"
@@ -184,18 +196,20 @@
                     HorizontalAlignment="Center"
                     Text="Dark" />
             </StackPanel>
-        </Border>
+        </controls:SelectionToggleButton>
 
-        <Border
+        <controls:SelectionToggleButton
             x:Name="AspectRa12Button"
             Grid.Row="2"
             Grid.Column="0"
-            Height="112"
+            MinHeight="112"
+            MinWidth="0"
             Padding="8"
+            HorizontalAlignment="Stretch"
             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
+            Click="OnAspectClicked"
             CornerRadius="10"
-            PointerPressed="OnAspectClicked"
             Tag="Ra12">
             <StackPanel
                 HorizontalAlignment="Center"
@@ -212,18 +226,20 @@
                     HorizontalAlignment="Center"
                     Text="Ra12" />
             </StackPanel>
-        </Border>
+        </controls:SelectionToggleButton>
 
-        <Border
+        <controls:SelectionToggleButton
             x:Name="AspectZs1Button"
             Grid.Row="2"
             Grid.Column="1"
-            Height="112"
+            MinHeight="112"
+            MinWidth="0"
             Padding="8"
+            HorizontalAlignment="Stretch"
             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
+            Click="OnAspectClicked"
             CornerRadius="10"
-            PointerPressed="OnAspectClicked"
             Tag="Zs1">
             <StackPanel
                 HorizontalAlignment="Center"
@@ -240,18 +256,20 @@
                     HorizontalAlignment="Center"
                     Text="Zs1" />
             </StackPanel>
-        </Border>
+        </controls:SelectionToggleButton>
 
-        <Border
+        <controls:SelectionToggleButton
             x:Name="AspectZs7Button"
             Grid.Row="2"
             Grid.Column="2"
-            Height="112"
+            MinHeight="112"
+            MinWidth="0"
             Padding="8"
+            HorizontalAlignment="Stretch"
             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
+            Click="OnAspectClicked"
             CornerRadius="10"
-            PointerPressed="OnAspectClicked"
             Tag="Zs7">
             <StackPanel
                 HorizontalAlignment="Center"
@@ -268,6 +286,6 @@
                     HorizontalAlignment="Center"
                     Text="Zs7" />
             </StackPanel>
-        </Border>
+        </controls:SelectionToggleButton>
     </Grid>
 </UserControl>

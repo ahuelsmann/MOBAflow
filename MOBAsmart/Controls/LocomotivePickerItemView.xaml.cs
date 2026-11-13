@@ -5,6 +5,10 @@ using SharedUI.ViewModel;
 
 using System.Windows.Input;
 
+/// <summary>
+/// Tappable locomotive card. The whole card carries one TalkBack description with name, address and selection
+/// state (bound in XAML), so the screen reader does not read photo, name and address as three unrelated items.
+/// </summary>
 public partial class LocomotivePickerItemView
 {
     public static readonly BindableProperty LocomotiveProperty = BindableProperty.Create(
