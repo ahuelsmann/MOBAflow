@@ -168,7 +168,7 @@ public sealed partial class TrackPlanPage
         _initialFitPending = false;
         UpdateCanvasSize();
 
-        if (_settings.Layout.TrackPlanPage.FitOnLoad && _plan.Segments.Count > 0)
+        if (_layout.Layout.TrackPlanPage.FitOnLoad && _plan.Segments.Count > 0)
             FitToContent();
     }
 

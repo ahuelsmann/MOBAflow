@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
-using Common.Configuration;
 using Common.Navigation;
 
 using Controls.SignalBox;
@@ -87,13 +86,12 @@ internal static class NavigationRegistration
 
         services.AddSingleton(serviceProvider => new TrackPlanPage(
             serviceProvider.GetRequiredService<TrackPlanPageViewModels>(),
-            serviceProvider.GetRequiredService<MainWindowViewModel>(),
+            serviceProvider.GetRequiredService<ISolutionSession>(),
             new TrackPlanPageEditor(
                 serviceProvider.GetRequiredService<EditableTrackPlan>(),
                 serviceProvider.GetRequiredService<SegmentPlacementGeometry>()),
             serviceProvider.GetRequiredService<TrackPlanFeedbackHighlighter>(),
-            serviceProvider.GetRequiredService<AppSettings>(),
-            serviceProvider.GetService<ISettingsService>(),
+            serviceProvider.GetRequiredService<LayoutPersistenceService>(),
             serviceProvider.GetService<ILogger<TrackPlanPage>>()));
         pages.Add(new PageMetadata("trackplaneditor", "Track Plan", "\uE7F9", typeof(TrackPlanPage), NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel", null, false));
 
@@ -153,11 +151,10 @@ internal static class NavigationRegistration
             IsBold: false));
 
         // Manual registrations for pages with custom DI requirements
-        // JourneysPage: requires AppSettings + ISettingsService injection
+        // JourneysPage: explicit factory for its page ViewModel and the layout persistence boundary
         services.AddSingleton(sp => new JourneysPage(
             sp.GetRequiredService<JourneysPageViewModel>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetService<ISettingsService>()));
+            sp.GetRequiredService<LayoutPersistenceService>()));
         pages.Add(new PageMetadata(
             Tag: "journeys",
             Title: "Journeys",
@@ -174,8 +171,7 @@ internal static class NavigationRegistration
         // A transient page owns WinUI layout lifecycle while the singleton ViewModel preserves timetable state.
         services.AddTransient(sp => new TimetablePage(
             sp.GetRequiredService<TimetablePageViewModel>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetService<ISettingsService>(),
+            sp.GetRequiredService<LayoutPersistenceService>(),
             sp.GetService<ILogger<TimetablePage>>()));
         pages.Add(new PageMetadata(
             Tag: "timetable",
@@ -196,8 +192,7 @@ internal static class NavigationRegistration
             sp.GetRequiredService<InPortCounterViewModel>().ResetCountersCommand));
         services.AddSingleton(sp => new EventManagerPage(
             sp.GetRequiredService<EventManagerViewModel>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetService<ISettingsService>(),
+            sp.GetRequiredService<LayoutPersistenceService>(),
             sp.GetService<ILogger<EventManagerPage>>()));
         pages.Add(new PageMetadata(
             Tag: "eventmanager",
@@ -213,11 +208,10 @@ internal static class NavigationRegistration
 
         // SignalBoxPage: requires custom runtime services
         services.AddSingleton(sp => new SignalBoxPage(
-            sp.GetRequiredService<MainWindowViewModel>(),
+            sp.GetRequiredService<SignalBoxPageViewModel>(),
             sp.GetRequiredService<InterlockingControlViewModel>(),
             sp.GetRequiredService<SignalBoxPropertiesViewModel>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetService<ISettingsService>(),
+            sp.GetRequiredService<LayoutPersistenceService>(),
             sp.GetService<ILogger<SignalBoxPage>>(),
             sp.GetService<ILogger<SignalBoxCanvasControl>>()));
         pages.Add(new PageMetadata(
