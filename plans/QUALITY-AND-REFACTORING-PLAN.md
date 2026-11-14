@@ -469,10 +469,10 @@ Each child issue declares its `Spec Kit workflow` when it is created:
 | RF-04 | None | None | RF-09, RF-11, RF-18 |
 | RF-05 | None | None | RF-06, RF-07, RF-08, RF-12 |
 | RF-06 | None | RF-05 | RF-07, RF-09, RF-10, RF-13, RF-14, RF-15 |
-| RF-07 | RF-01, RF-05, RF-06 | None | RF-18 |
+| RF-07 | RF-01, RF-05, RF-06; its last slice also RF-09 and RF-10 | None | RF-18 |
 | RF-08 | RF-05 | None | MAUI release quality |
-| RF-09 | RF-04, RF-06 | RF-19 | Validation and concurrency regression protection |
-| RF-10 | RF-06 | None | Repository-wide formatting enforcement |
+| RF-09 | RF-04, RF-06 | RF-19 | RF-07 (last slice), validation and concurrency regression protection |
+| RF-10 | RF-06; not at the same time as RF-30 | None | RF-07 (last slice), repository-wide formatting enforcement |
 | RF-11 | RF-04 | None | Train-control maintainability |
 | RF-12 | RF-05 | RF-19, RF-22 | Mobile maintainability |
 | RF-13 | RF-06 | None | Issue #34 Slice 6, RF-16 |
@@ -492,7 +492,7 @@ Each child issue declares its `Spec Kit workflow` when it is created:
 | RF-27 | None | RF-24 | Object-oriented domain model |
 | RF-28 | None | RF-20 | Track-plan maintainability |
 | RF-29 | None | None | Android package size and file-service clarity |
-| RF-30 | None | RF-20, RF-26 | Contributor orientation |
+| RF-30 | RF-26 for its code slices; not at the same time as RF-10 | RF-20 | Contributor orientation |
 | RF-31 | None | RF-24 | Maintainability of remaining hotspots |
 
 The explicit issue #34 unblock path is:

@@ -25,7 +25,7 @@ Recorded on main `4ae44d75` (2026-11-14).
 | Test project | one `Test/Test.csproj` that targets `net10.0` and `net10.0-windows10.0.22621.0`, removes files per target with `Compile Remove`, references MOBAflow only for Windows and MOBAsmart only with `IncludeMobaSmartTests=true` | 3 |
 | Test folders (tracked files) | `SharedUI` 83, `Backend` 73, `MOBAdisplay` 22, `Domain` 22, `Common` 21, `Helpers` 19, `MOBAflow` 14, `Speech` 11, `MOBApi` 11, `TrackPlanRenderer` 10, `WinUI` 7, `Contracts` 7, `Architecture` 5, `Unit` 4, `Integration` 4, others 11 | 3 |
 | `Test/Analysis` | `FadrEncodingAnalysis.csproj` with its `Program.cs`, excluded from the test project with `Compile Remove` | 3 |
-| Root namespaces that differ from the project name | `MOBAflow` uses `Moba.WinUI`, `MOBAsmart` uses `Moba.MAUI`, `MOBAdisplay` uses `Moba.Display`; the other 14 projects match | 4 |
+| Root namespaces that differ from the project name | `MOBAflow` uses `Moba.WinUI`, `MOBAsmart` uses `Moba.MAUI`, `MOBAdisplay` uses `Moba.Display`; of the 18 projects in `Moba.slnx`, 3 differ and 15 match | 4 |
 | Folder names | `MOBAflow/Converter` (26 files) but `MOBAsmart/Converters` (9); `Backend/Interface` (25) and `SharedUI/Interface` (27) are consistent with each other | 4 |
 | Single-host types in `SharedUI` | desktop only: `ViewModel/DisplayViewModel.cs`, `ViewModel/RecorderPageViewModel.cs`, `ViewModel/InterlockingControlViewModel*.cs`; mobile: `SharedUI/Mobile/` already holds 20 files; a complete host-usage list is part of slice 5 | 5 |
 
@@ -89,8 +89,8 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
 
 - RF-20 (architecture rules) is complete and gains the rules of slice 5.
 - RF-26 ([#290](https://github.com/ahuelsmann/MOBAflow/issues/290)) decides the final layout of `Common`,
-  `Contracts` and `SharedUI`. The umbrella plan lists it as a recommended prerequisite; this plan makes it the
-  start condition of slices 3 to 5, because they would otherwise move the same files twice. Slices 1 and 2 do not
+  `Contracts` and `SharedUI`. It is the hard start condition of slices 3 to 5 (as the umbrella plan's dependency table
+  records), because they would otherwise move the same files twice. Slices 1 and 2 do not
   depend on it.
 - RF-10 ([#451](https://github.com/ahuelsmann/MOBAflow/issues/451)) reformats most C# files. RF-10 and the code
   slices of this package must not run at the same time; whichever runs second starts from the other's merged

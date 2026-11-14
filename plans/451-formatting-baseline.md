@@ -41,8 +41,9 @@ Existing rules and tools:
   maximum line length 140.
 - [`.gitattributes`](../.gitattributes): text is stored with LF and checked out with CRLF, with LF exceptions for
   shell scripts and Spec Kit assets.
-- `scripts/Test-LineEndings.ps1` checks line endings and mixed endings and preserves final-newline presence;
-  [AGENTS.md](../AGENTS.md) requires it after generated or scripted edits.
+- `scripts/Test-LineEndings.ps1` checks the line-ending state (CRLF or LF as `.gitattributes` requires) and mixed
+  endings in the index; `-Fix` rewrites line endings only. It has no final-newline check. [AGENTS.md](../AGENTS.md)
+  requires it after generated or scripted edits and asks editors to preserve final-newline presence.
 - [Quality CI](../.github/workflows/quality.yml) has no formatting step.
 
 ## Decisions
@@ -50,12 +51,12 @@ Existing rules and tools:
 Two decisions are open and belong to slice 1. Each has a recommendation; neither is taken by this plan.
 
 - **Final newline (open).** `insert_final_newline = false` makes `dotnet format` delete the final newline of 688
-  files, while the repository rule preserves whatever a file has. Options: (a) keep `false` and let the baseline
-  remove the newlines; (b) set `true`, the common convention of Git and most editors, and let the baseline add the
-  missing ones; (c) remove the key, so the gate ignores final newlines and `Test-LineEndings.ps1` stays the only
-  guard. Recommendation: (b), because diffs and tools then agree, with `Test-LineEndings.ps1` and the AGENTS.md
-  sentence on final newlines adjusted in the same change. The count of files that lack a final newline is measured
-  in slice 1 before the decision.
+  files, while the repository rule asks editors to preserve whatever a file has. Options: (a) keep `false` and let
+  the baseline remove the newlines; (b) set `true`, the common convention of Git and most editors, and let the
+  baseline add the missing ones; (c) remove the key, so the gate ignores final newlines; then nothing checks them,
+  because `Test-LineEndings.ps1` has no final-newline check. Recommendation: (b), because diffs and tools then
+  agree, with the AGENTS.md sentence on final-newline presence reworded in the same change. The count of files that
+  lack a final newline is measured in slice 1 before the decision.
 - **Gate scope (open).** Options: (a) whitespace only, folder-based, which runs on Linux for every project and needs
   no restore; (b) whitespace plus style for the portable projects, with `MOBAflow` and `MOBAsmart` checked for
   whitespace only; (c) whitespace, style and analyzers for every project, which needs the Windows lane and the
@@ -87,16 +88,18 @@ Two decisions are open and belong to slice 1. Each has a recommendation; neither
 
 - Slice 1: instruction consistency and documentation link checks; the gate command run locally with the result
   recorded on #451.
-- Slice 2: portable and Windows suites, the cross-platform, Windows and Android analyzer gates with unchanged
-  totals, the Android Release lane (the change touches `MOBAsmart/**`), `Test-LineEndings.ps1 -Staged`, and a
+- Slice 2: portable and Windows suites, the cross-platform, Windows and Android analyzer gates with baselines that
+  are unchanged or refreshed with lower counts (the gate also fails when a count drops without a refresh), the Android Release lane (the change touches `MOBAsmart/**`), `Test-LineEndings.ps1 -Staged`, and a
   second run of the format command that reports no change.
 - Slice 3: `actionlint`, a failing run on a misformatted file and a passing run on main.
 - No application, device or hardware is started.
 
 ## Dependencies and coordination
 
-- RF-06 (analyzer baseline) is complete; its baselines are path- and message-based, so a pure whitespace change
-  should leave them untouched. Slice 2 verifies that instead of assuming it.
+- RF-06 (analyzer baseline) is complete. A baseline entry identifies diagnostics by project, target framework,
+  rule and file path with a count; messages and line numbers are not part of it. A pure whitespace change keeps
+  paths and should keep the counts. Because the gate fails on a lower count as well as on a higher one, slice 2
+  states its baselines as unchanged or refreshed with lower counts, and verifies that instead of assuming it.
 - RF-07 ([#360](https://github.com/ahuelsmann/MOBAflow/issues/360)) records the formatting lane in its last
   slice; RF-07 therefore completes after RF-09 and this package.
 - RF-30 ([#452](https://github.com/ahuelsmann/MOBAflow/issues/452)) moves files and renames namespaces. The two
