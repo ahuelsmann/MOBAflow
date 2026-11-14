@@ -326,11 +326,28 @@ auto-save and selection behavior is preserved.
 
 ### RF-24: Decompose `MainWindowViewModel`
 
-The extraction order, source inventory, design and validation now belong to
-[the RF-24 child plan](219-main-window-viewmodel.md), owned by
-[issue #219](https://github.com/ahuelsmann/MOBAflow/issues/219).
-The hard RF-23 prerequisite remains; independent planning does not authorize
-implementation before its completion and acceptance reconciliation.
+Complete. Child issue [#219](https://github.com/ahuelsmann/MOBAflow/issues/219) owned this package and was closed
+on 2026-11-14 after its slices were delivered (slice 1 Settings #248, 2a locomotives #257, 2b wagons #264,
+2c train composition #272, 3a stations and platforms #282, 3b journeys and cities #401, 4 workflows #409,
+5a counters and traffic monitor #419, 5b diagnostics and system status #425, 6 layout persistence and final shell
+audit #442); its child plan, added in #221, was removed at closure. Outcome: every page area has its own
+platform-neutral ViewModel registered through the host composition, `LayoutPersistenceService` is the one path that
+persists the saved layout, and the superseded shell partials are deleted (see
+[the runtime boundary](../docs/ARCHITECTURE.md#runtime-boundary-current-refactoring-state)). The final shell audit
+kept these in `MainWindowViewModel`: solution new/open/save, the stop-trains confirmation and shutdown as host
+actions delegating to `ISolutionSession`; the Z21 status, telemetry and journey runtime projections; connect,
+disconnect, track power and feedback simulation as command forwarding through the gateway or connection runtime;
+the operating state; photo routing to the active inventory page; and disposal of the host page editors.
+`SolutionSessionArchitectureTests` allows only the shell, `MainWindow.xaml.cs`, `OverviewPage.xaml.cs` and the
+composition root to depend on the shell; RF-25 slice 4c removed the MOBAsmart `MainActivity` shutdown lookup.
+
+Personal UI acceptance no longer gates closure since 2026-11-06 (#417): each slice's pull request records the
+states it did not inspect in a running app, and problems found in everyday use are reported as bugs. Follow-ups
+outside RF-24: the operating-state badge, InfoBar and acknowledge command without a binding
+([#443](https://github.com/ahuelsmann/MOBAflow/issues/443)), the column widths that a layout reset does not reload
+([#444](https://github.com/ahuelsmann/MOBAflow/issues/444)) and the `MainActivity` shell lookup, which resolves
+nothing because MOBAsmart does not register the shell and is removed by
+[RF-25](https://github.com/ahuelsmann/MOBAflow/issues/318) slice 4c.
 
 ### RF-25: Explicit dependencies
 
