@@ -30,7 +30,7 @@ a lane the same way locally and in [Quality CI](../.github/workflows/quality.yml
 | `backend` | **active from step 1** | `Backend` | `mutation-backend` (Linux) | 47% (raised from 43%) |
 | `api` | **active from step 3** | `MOBApi` | `mutation-api` (Linux) | 74% (raised from 44% in step 5) |
 | `api-process` | planned | `MOBApi` | - | - |
-| `shared-ui` | **active from step 4** | `SharedUI` | `mutation-shared-ui` (Linux) | 37% |
+| `shared-ui` | **active from step 4** | `SharedUI` | `mutation-shared-ui` (Linux) | 46% (raised from 37% in step 5) |
 
 The Backend host [`Backend.MutationTests.csproj`](../MutationTest/Backend/Backend.MutationTests.csproj) compiles all
 fixtures under `Test/Backend/`, the workflow end-to-end fixture and the Z21 DCC decoder tests, with the shared fakes
@@ -214,20 +214,20 @@ separate pull requests.
      step 4) is rewritten behaviour-neutrally, except `PageLayoutViewModel.ApplyToGrid` and `UpdateFromGrid`: RF-26
      slice 2 changes that file in parallel, so its two sites stay in Safe Mode until that work has landed. A local
      Stryker run on the rewritten code reports only those two `Safe Mode!` sites. Compile-error mutants fell from 36 to
-     26 (MOBApi), from 769 to 500 (Backend) and from 1,220 to SHAREDUI_COMPILE (SharedUI).
+     26 (MOBApi), from 769 to 500 (Backend) and from 1,220 to 837 (SharedUI).
    - **(b) New tests:** `RuntimeHubRegistrationTests` (host and remote registration, project groups, moving between
      projects, snapshots per project, disconnect of host and remote), `PhotosControllerUploadTests`,
      `SolutionControllerMetaTests` and `RuntimeControllerTests` (MOBApi); `RecorderPageViewModelStateTests`,
      `TimetablePageViewModelOperationsTests`, `TrainControlViewModelRuntimeStateTests` and `MauiViewModelZ21CommandTests`
      (SharedUI). `SettingsPageViewModel` is excluded while RF-26 slice 2 changes it.
    - **Measurement:** local full runs on Windows with `Invoke-MutationLane.ps1` (Stryker.NET 5.0.0, four processes) on the
-     step-5 head, compared with the Linux CI lanes of main `eb5c1c93` (run 43620304145):
+     step-5 head before it merged main `d8fb92b3` (RF-26 slice 2), compared with the Linux CI lanes of main `eb5c1c93` (run 43620304145):
 
      | Lane | Main CI score | Step 5 local score | Killed | Survived | No coverage | Timeout | Compile errors | Floor |
      | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
      | `api` | 44.74% | 74.65% | 318 | 61 | 47 | 0 | 26 | 44% to 74% |
      | `backend` | 47.69% | 47.42% | 2,963 | 2,187 | 1,167 | 62 | 500 | 47% (unchanged) |
-     | `shared-ui` | 42.25% | SHAREDUI_SCORE | SHAREDUI_ROW | SHAREDUI_FLOOR |
+     | `shared-ui` | 42.25% | 46.65% | 4,250 | 2,992 | 1,931 | 55 | 837 | 37% to 46% |
 
      The Backend score is slightly lower although no test or behaviour changed: the 269 mutants that left Safe Mode now
      count, and the core Z21 connect and receive paths among them are only partly covered. The floors follow the
