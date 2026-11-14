@@ -138,7 +138,7 @@ dependencies.
 | RF-07 | [#360](https://github.com/ahuelsmann/MOBAflow/issues/360) | Every supported delivery target has a reproducible mandatory clean-build lane. |
 | RF-08 | [#357](https://github.com/ahuelsmann/MOBAflow/issues/357) | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
 | RF-09 | [#366](https://github.com/ahuelsmann/MOBAflow/issues/366) | Risk-critical behavior has non-decreasing coverage and mutation protection. |
-| RF-10 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Formatting drift fails CI without obscuring functional changes. |
+| RF-10 | [#451](https://github.com/ahuelsmann/MOBAflow/issues/451) | Formatting drift fails CI without obscuring functional changes. |
 | RF-11 | [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
 | RF-12 | [#242](https://github.com/ahuelsmann/MOBAflow/issues/242) | Mobile session, discovery, runtime projection, synchronization, and upload concerns are separated. |
 | RF-13 | [#91](https://github.com/ahuelsmann/MOBAflow/issues/91) | Track-plan editor operations are platform-neutral and WinUI remains a thin input and rendering adapter. |
@@ -158,7 +158,7 @@ dependencies.
 | RF-27 | [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) | Domain classes own the rules and state transitions that need only domain data. |
 | RF-28 | [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
 | RF-29 | [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) | Platform-specific sound and file services live in platform adapters with one role per class. |
-| RF-30 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
+| RF-30 | [#452](https://github.com/ahuelsmann/MOBAflow/issues/452) | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
 | RF-31 | [#349](https://github.com/ahuelsmann/MOBAflow/issues/349) | The remaining oversized code-behind and recording classes are split by responsibility. |
 
 The phrase "until child creation" is traceability, not workflow status. Issue #47
@@ -198,13 +198,9 @@ The baseline, lane order, triage rules and delivery slices now belong to
 
 ### RF-10: Formatting baseline and gate
 
-Sequence:
-
-1. wait for the RF-06 analyzer baseline to stabilize;
-2. define generated, vendored, and firmware-library exclusions;
-3. normalize formatting, line endings, and final newlines in a dedicated
-   mechanical change;
-4. add `dotnet format --verify-no-changes` to mandatory CI.
+The measured inventory, open decisions and delivery slices now belong to
+[the RF-10 child plan](451-formatting-baseline.md), owned by
+[issue #451](https://github.com/ahuelsmann/MOBAflow/issues/451).
 
 Acceptance anchor: the baseline change contains no functional or architecture
 work, `.editorconfig` and documented commands agree, and the mandatory
@@ -429,19 +425,9 @@ closure (#417), so any dialog problem found in everyday use is reported as a bug
 
 ### RF-30: Repository and test layout
 
-Sequence:
-
-1. separate the reference skill snapshot and other agent tooling from product
-   documentation, and move Office files out of `docs/`;
-2. group `docs/` into developer and user documentation;
-3. split `Test/Test.csproj` by target: portable core and API tests, Windows
-   desktop tests and integration tests; move `Test/Analysis` out of the test
-   project;
-4. align root namespaces with project names (`MOBAflow`, `MOBAsmart`,
-   `MOBAdisplay`) and folder names (`Converter`/`Converters`, `Interface`);
-5. move single-host ViewModels and services such as `DisplayViewModel`,
-   `RecorderPageViewModel`, `InterlockingControlViewModel` and the mobile
-   session services into `Desktop` or `Mobile` folders of `SharedUI`.
+The inventory, decisions and delivery slices now belong to
+[the RF-30 child plan](452-repository-test-layout.md), owned by
+[issue #452](https://github.com/ahuelsmann/MOBAflow/issues/452).
 
 Acceptance anchor: a new developer finds the architecture, build and test
 entry points from `README.md`; each test project builds for its own targets;
