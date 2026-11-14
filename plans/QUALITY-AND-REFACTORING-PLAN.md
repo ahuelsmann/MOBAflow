@@ -180,14 +180,15 @@ The deliverable inventory, decisions and delivery slices now belong to
 
 ### RF-08: Compile MAUI XAML bindings
 
-Complete after slice 3. Child issue [#357](https://github.com/ahuelsmann/MOBAflow/issues/357) owns this package
-(slice 1 #358, slice 2 #423, slice 3 the warnings-as-errors gate); the inventory, decisions and slices are in
-[the RF-08 child plan](357-maui-compiled-bindings.md) until it is removed after closure. Outcome: project-owned
-MOBAsmart XAML compiles its bindings, including those with a `Source`, and `MOBAsmart.csproj` turns an uncompiled or
-unresolvable binding (`XC0022`, `XC0025`, `XC0045`) into a build error in every configuration; the Android Release
-lane runs on every pull request that changes `MOBAsmart/**`. The function toggles and the other rebound controls
-were not inspected on a device; since 2026-11-06 that is no closure gate, and problems found in use are reported as
-bugs.
+Complete. Child issue [#357](https://github.com/ahuelsmann/MOBAflow/issues/357) owned this package and was closed
+on 2026-11-14 after its slices were delivered (slice 1 compilation with `Source` and the self-bound controls #358,
+slice 2 `FunctionToggleView` #423, slice 3 the warnings-as-errors gate #448); its child plan, added in #358, was
+removed at closure. Outcome: project-owned MOBAsmart XAML compiles its bindings, including those with a `Source`,
+and `MOBAsmart.csproj` turns an uncompiled or unresolvable binding (`XC0022`, `XC0025`, `XC0045`) into a build
+error in every configuration; the Android Release lane runs on every pull request that changes `MOBAsmart/**`
+(see [the MAUI instructions](../.github/instructions/maui.instructions.md)). The function toggles and the other
+rebound controls were not inspected on a device; since 2026-11-06 that is no closure gate (#417), and problems
+found in use are reported as bugs.
 
 ### RF-09: Coverage and mutation ratchets
 
@@ -356,20 +357,26 @@ nothing because MOBAsmart does not register the shell and is removed by
 
 ### RF-25: Explicit dependencies
 
-Complete with slice 5. Child issue [#318](https://github.com/ahuelsmann/MOBAflow/issues/318) owns this package and
-closes when slice 5 is merged (slice 1 workflow execution and validation #325, 2 runtime composition #330,
-3 static hooks #335, 4 SharedUI ViewModels #414, 4b SharedUI ViewModel remainder #435, 4c hosts, pages, Backend,
-speech and display #447, 5 container validation and last remainders #450). Its
-[child plan](318-explicit-dependencies.md) records each slice's result and is removed in the close-out after that
-merge. Outcome: every constructor names the services it needs, hosts register them (null objects where a host has
-no implementation) and tests pass explicit fakes; no service-typed optional parameter, `?? new` service fallback,
-`GetService` lookup with a fallback branch or mutable static hook remains in production code, and ViewModels neither
-create Backend services nor receive the runtime `ActionExecutionContext`. Container tests resolve every
-registration of the shared backend collection, of the WinUI host (except the XAML window and pages, which need a
-running app) and of the platform-neutral MOBAsmart composition, which moved from the Android-only app into
-`SharedUI/Extensions/MobileServiceCollectionExtensions.cs` so that the portable test target can build it.
-Left optional on purpose: value options and data defaults as classified in the child plan, and the logger of
-`SignalBoxCanvasControl`, which XAML creates before its page can attach one.
+Complete. Child issue [#318](https://github.com/ahuelsmann/MOBAflow/issues/318) owned this package and was closed
+on 2026-11-14 after its slices were delivered (slice 1 workflow execution and validation #325, 2 runtime
+composition #330, 3 static hooks #335, 4 SharedUI ViewModels #414, 4b SharedUI ViewModel remainder #435, 4c hosts,
+pages, Backend, speech and display #447, 5 container validation and last remainders #450); its child plan, added in
+#319, was removed at closure. Outcome: every constructor names the services it needs, hosts register them (null
+objects where a host has no implementation) and tests pass explicit fakes; no service-typed optional parameter,
+`?? new` service fallback, `GetService` lookup with a fallback branch or mutable static hook remains in production
+code, and ViewModels neither create Backend services nor receive the runtime `ActionExecutionContext`. Container
+tests resolve every registration of the shared backend collection, of the WinUI host (except the XAML window and
+pages, which need a running app) and of the platform-neutral MOBAsmart composition, which moved from the
+Android-only app into `SharedUI/Extensions/MobileServiceCollectionExtensions.cs` so that the portable test target
+can build it.
+
+Left optional on purpose, by the rule that RF-25 targets services (types with behavior, I/O, time or external
+effects) and not values: immutable option and limit records with documented defaults, data defaults such as an
+empty `Solution` after deserialization, pure delegates without I/O (for example the `BrakeAndDoorState` random
+source and the `ForwardingEventBus` delivery), and the logger of `SignalBoxCanvasControl`, which XAML creates
+before its page can attach one. `DialogService.GetXamlRoot` keeps one lazy lookup of the always-registered main
+window. Noted outside RF-25: `Test/MOBAsmart/MobiLanHttpClientFactoryTests.cs` and the `IncludeMobaSmartTests`
+switch still describe an opt-in test graph that cannot build; removing them is a separate cleanup.
 
 ### RF-26: Split `Common` by responsibility
 
@@ -442,15 +449,17 @@ CI runs every test project.
 
 ### RF-31: Reduce the remaining oversized classes
 
-Complete with slice 5. [Issue #349](https://github.com/ahuelsmann/MOBAflow/issues/349) owns this package;
-[the RF-31 child plan](349-oversized-classes.md) holds the inventory, the decisions and what each slice moved
-(slice 1 recording validation and drop bookkeeping #350, 2 recording control entries and artifact import #353,
-3-4 signal-box properties and Help page #354, 5 main window). Outcome: the recording session and the artifact
-import are split by responsibility behind their existing APIs, and the code-behind of the signal-box properties,
-the Help page and the main window keeps view lifecycle and visual adaptation. Slice 5 moved the host work behind
-the main window (REST API status polling, speech health checks, the runtime observers and their shutdown) into
+Complete. Child issue [#349](https://github.com/ahuelsmann/MOBAflow/issues/349) owned this package and was closed
+on 2026-11-14 after its slices were delivered (slice 1 recording validation and drop bookkeeping #350, 2 recording
+control entries and artifact import #353, 3-4 signal-box properties and Help page #354, 5 main window #449); its
+child plan, added in #350, was removed at closure. Outcome: the recording session and the artifact import are
+split by responsibility behind their existing APIs, and the code-behind of the signal-box properties, the Help
+page and the main window keeps view lifecycle and visual adaptation. Slice 5 moved the host work behind the main
+window (REST API status polling, speech health checks, the runtime observers and their shutdown) into
 `MainWindowLifecycleService` and the track power switch decision into the shell; the window keeps its chrome,
-navigation frame, theme and the order of its own shutdown steps.
+navigation frame, theme and the order of its own shutdown steps. The Help and Ks views were checked by the
+maintainer on 2026-10-26; the main window after slice 5 was not inspected in a running app, which is no closure
+gate since 2026-11-06 (#417).
 
 ## Spec Kit classification of RF-19 through RF-31
 
