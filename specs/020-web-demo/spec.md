@@ -18,7 +18,7 @@
 
 **Affected Platforms**: A new, separate web application in a new folder `MOBAweb/`. MOBAflow, MOBAsmart, MOBApi, MOBAdisplay and the shared libraries are not changed in behavior; the demo reads shared libraries and shipped sample data.
 
-**Out of Scope**: Any connection to a Z21 or other hardware; the Backend Z21 runtime; MOBApi's real runtime endpoints; creating, editing or saving content (workflows, track plans, signal-box layouts, locomotives); accounts and sign-in; persistence on the server; a mobile layout (MOBAsmart is the mobile app); the pages other than the four demo pages; localization; server-side speech or sound output; creating Azure resources, secrets, publish profiles or workflows as part of this specification.
+**Out of Scope**: Full keyboard operation of the demo (pointer input is enough; a basic accessibility floor stays, FR-041 to FR-047); any connection to a Z21 or other hardware; the Backend Z21 runtime; MOBApi's real runtime endpoints; creating, editing or saving content (workflows, track plans, signal-box layouts, locomotives); accounts and sign-in; persistence on the server; a mobile layout (MOBAsmart is the mobile app); the pages other than the four demo pages; localization; server-side speech or sound output; creating Azure resources, secrets, publish profiles or workflows as part of this specification.
 
 **Sensitive Data**: None is stored. The demo keeps no personal data, sets no account and must not show host paths, ports, machine names or real endpoints. Reference screenshots from the maintainer's machine show local paths and are therefore not committed.
 
@@ -55,11 +55,12 @@ All decisions of this session are recorded as maintainer decisions in comments o
 - Q: Which sample content and photos may be published? → A: The shipped sample data is published. The locomotive photos are the maintainer's own photographs and may be published in the demo, resized as WebP within the transfer budget.
 - Q: When is the demo deployed? → A: By a manually started deployment first; automatic deployment on merge later.
 - Q: Which theme does a first visit show? → A: Dark, not the browser's preference. A manual toggle choice is remembered in the browser.
+- Q: How much accessibility does the demo need? → A: Mouse or pointer input is enough for the demo, with a basic accessibility floor kept (about 20:30 UTC). This narrows the Head of UI/UX advice: keyboard operation of the canvases, the slider key map, app-specific keyboard shortcuts and keyboard navigation through the disabled navigation entries are dropped; accessible names, visible focus, the browser's default keyboard behavior of ordinary controls, non-color cues, reduced motion and the contrast of disabled entries stay (FR-041 to FR-046).
 - Q: What happens in a browser window narrower than 1024 pixels? → A: The demo keeps the desktop geometry (minimum width 1024 pixels, horizontal scrolling) with a dismissible notice "Desktop UI demo - best on a screen at least 1024 px wide". There is no stacked mobile layout.
 
 ### Session 2026-11-14 (Head of UI/UX advice)
 
-The Head of UI/UX (Gemini Argon via Antigravity) was consulted on the maintainer's request; the Chief Operating Officer session relayed the advice. It is folded into User Story 5 and the requirements FR-020 to FR-046, and its refinement of the same day (after it was informed of the maintainer decisions) into FR-076 and FR-077. It is advice, not a maintainer decision. Its review of this draft on #455 (2026-11-14) found four deviations from the WinUI sources; they are corrected in FR-022, FR-028, FR-029, FR-031, FR-036 and FR-044 and were checked against `MOBAflow/View/MainWindow.xaml`, `MOBAflow/View/TrainControlPage.xaml` and `MOBAflow/Service/NavigationRegistration.cs`.
+The Head of UI/UX (Gemini Argon via Antigravity) was consulted on the maintainer's request; the Chief Operating Officer session relayed the advice. It is folded into User Story 5 and the requirements FR-020 to FR-046, and its refinement of the same day (after it was informed of the maintainer decisions) into FR-076 and FR-077. It is advice, not a maintainer decision; the maintainer's decision that pointer input is enough narrows its accessibility part, and what remains of it in FR-041 to FR-046 is still attributed to this advice. Its review of this draft on #455 (2026-11-14) found four deviations from the WinUI sources; they are corrected in FR-022, FR-028, FR-029, FR-031, FR-036 and FR-044 and were checked against `MOBAflow/View/MainWindow.xaml`, `MOBAflow/View/TrainControlPage.xaml` and `MOBAflow/Service/NavigationRegistration.cs`.
 
 ## Hosting constraints (Azure App Service Free tier F1)
 
@@ -178,7 +179,7 @@ A visitor who knows screenshots of MOBAflow, or later installs it, recognizes th
 **Acceptance Scenarios**:
 
 1. **Given** the demo in Dark, **When** a reviewer compares a page with its reference screenshot, **Then** every item of the fidelity checklist (FR-024) matches, and only the permitted differences (FR-025) remain.
-2. **Given** the navigation, **When** the visitor looks at an entry outside the demo, **Then** it is greyed out in its WinUI position and explains on hover or focus that it is available in the desktop app.
+2. **Given** the navigation, **When** the visitor looks at an entry outside the demo, **Then** it is greyed out in its WinUI position and explains on hover that it is available in the desktop app.
 3. **Given** the theme toggle, **When** the visitor switches between Dark and Light, **Then** the whole demo changes theme without reloading and without losing the simulated state.
 4. **Given** the status bar, **When** the visitor reads it, **Then** it shows demo texts and no path, port, machine name or endpoint.
 
@@ -237,7 +238,7 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **FR-024**: Fidelity MUST be checkable against eight reference screenshots of the WinUI app supplied by the maintainer (four pages, each in Dark and Light, 1920 by 1080 pixels, 100 % scale). Per page and theme the following MUST match: shell structure; navigation entries, order, grouping, icons and Preview badges; command bar; Messages bar and status bar layout; surface and accent colors by value; the complete inventory of controls on the page; the arrangement of its panes.
 - **FR-025**: Permitted differences are limited to: font rendering and fallback (Segoe UI Variable, Segoe UI, system font), the browser's native scrollbars, the Mica window material shown as a flat tint, and the content differences this specification requires (disabled entries and controls, demo texts in the status bar).
 - **FR-026**: Reference screenshots from the maintainer's machine MUST NOT be committed, because they show local paths. If reference images are wanted in the repository, they are produced without host details.
-- **FR-027**: Navigation entries outside the demo MUST be shown disabled (greyed out), not hidden, in their WinUI position. They MUST stay reachable in keyboard order, be exposed as disabled to assistive technology, do nothing on activation, and explain on hover and on focus: "Available in the MOBAflow desktop app (not included in this web demo)". Their text MUST keep a contrast of at least 3:1 in Light and Dark. The four demo entries are shown at full contrast with the accent selection indicator.
+- **FR-027**: Navigation entries outside the demo MUST be shown disabled (greyed out), not hidden, in their WinUI position. They MUST be exposed as disabled to assistive technology with the description "Available in the MOBAflow desktop app (not included in this web demo)", do nothing on activation, and show that explanation on hover. Keyboard navigation through the disabled entries is not required. Their text MUST keep a contrast of at least 3:1 in Light and Dark. The four demo entries are shown at full contrast with the accent selection indicator.
 - **FR-028**: The top bar MUST reproduce the main window's layout: the Light/Dark toggle switch on the left and the command bar on the right, offering Simulate together with its inline "Feedback Point (InPort)" number box (minimum 1) and Reset as active controls. New and Open MUST be shown disabled with the explanation "Fixed sample project in the web demo". Simulate triggers the simulated feedback of the chosen feedback point, as the app's feedback simulation does; its visible effect in the demo is detailed in the plan phase.
 - **FR-029**: The status bar MUST keep the four segments of the main window's status bar, with their labels and demo texts: (1) "Solution: MOBAflow demo layout"; (2) the Z21 status "Z21: Simulated (demo)" and the "Track Power" toggle switch, which shows and switches the simulated track power; (3) "REST API: Simulated in-browser (no server endpoint)"; (4) "Speech: Visual only (not in demo)" with its provider dropdown shown disabled. No segment shows a local path, a port, a machine name or an endpoint.
 - **FR-030**: No status bar text and no other UI text, tooltip, message, page source comment or error message MUST expose a host path, port, machine name, internal address or real endpoint.
@@ -255,14 +256,17 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **FR-039**: Signal Box MUST show the elements toolbox, the canvas with the prepared sample, the context pane with the aspect tiles of the selected signal and the multiplexer configuration, and the element count footer. Active: selecting elements, setting signal aspects, switching turnouts. Disabled or read-only: dragging from the toolbox, rotation, the multiplexer configuration.
 - **FR-040**: The sample layout on Track Plan MUST be drawn from the same track geometry as in MOBAflow, produced by the existing renderer (`TrackPlan.Renderer`), not by a second, hand-written drawing.
 
-**Accessibility**
+**Accessibility (basic floor)**
 
-- **FR-041**: Every active control MUST be operable by keyboard with a visible focus indicator, and every state MUST be conveyed by text or shape in addition to color.
-- **FR-042**: The speed slider MUST expose its range 0 to 126 and a value text of the form "Step X (Y km/h)" and respond to Arrow keys by 1, Page Up and Page Down by 10, and Home and End.
-- **FR-043**: The gauges MUST expose their value without announcing every animation frame. EMERGENCY STOP MUST be a real button early in the keyboard order, labelled "Emergency stop for the selected locomotive".
-- **FR-044**: Function buttons and the Brake and Door release tiles MUST expose their pressed state; the Door blocking indicator and other tiles that only show status are not interactive and not in the keyboard order, and convey their state by icon or text in addition to color.
-- **FR-045**: Workflow graph nodes, track plan elements and signal-box elements MUST be focusable by keyboard; a workflow node announces its step, name and state (Idle, Running, Completed). The aspect tiles form one single-choice group and show the aspect code as text and the light arrangement in addition to color.
+The demo is operated primarily by mouse or pointer (maintainer decision of 2026-11-14). The following floor stays, because standard HTML and control behavior provide it at little cost.
+
+- **FR-041**: Every control MUST have an accessible name that a screen reader reads, including EMERGENCY STOP ("Emergency stop for the selected locomotive"), the function buttons, the aspect tiles with their aspect code, the theme switch and the disabled navigation entries with their description (FR-027). Focus MUST be visible. Ordinary buttons, toggles and links MUST be reachable with Tab and operable with Enter or Space, as browsers do by default.
+- **FR-042**: The speed slider MUST expose its range 0 to 126 and a value text of the form "Step X (Y km/h)". It is operated with the pointer; the browser's default slider keys are sufficient, and a custom key map is not required.
+- **FR-043**: The gauges MUST expose their value without announcing every animation frame. EMERGENCY STOP MUST be a real button and acts without confirmation.
+- **FR-044**: Function buttons and the Brake and Door release tiles MUST expose their pressed state; the Door blocking indicator and other tiles that only show status are not interactive and convey their state by icon or text in addition to color.
+- **FR-045**: Color MUST NOT be the only cue: the aspect tiles show the aspect code as text and the light arrangement, workflow steps show their state (Idle, Running, Completed) as text or icon, and status elements carry text or an icon. The canvases (Track Plan, Signal Box, workflow graph) are operated with the pointer; keyboard operation of their elements is not required.
 - **FR-046**: With the reduced-motion preference set, gauges MUST change without animation, a flashing aspect MUST be shown as steady with the text "Flashing", and pan and zoom MUST NOT animate.
+- **FR-047**: Not part of the demo: keyboard operation of canvas elements, a custom slider key map (Page Up, Page Down, Home, End), the desktop app's keyboard shortcuts (for example for emergency stop and track power), and keyboard navigation through the disabled navigation entries.
 
 **Hosting, build and deployment**
 
@@ -310,7 +314,7 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **SC-011**: Twelve visitors using the demo at the same time each get a responsive simulation, and the host's CPU and memory use does not rise with their number beyond serving the files.
 - **SC-007**: After the first load, a visitor using the demo for ten minutes causes no further server request for the simulation, so that the daily CPU quota is not the limiting factor.
 - **SC-008**: After an idle period, the complete shell is usable within 15 seconds of the first request on a normal home connection; a warm page is usable within 3 seconds.
-- **SC-009**: Every active control of the four pages is operable by keyboard alone, and an automated accessibility check of the four pages in both themes reports no critical finding.
+- **SC-009**: Every task of User Stories 1 to 6 can be completed with a mouse or pointer alone; every control has an accessible name; ordinary buttons, toggles and links are reachable with Tab; and an automated accessibility check of the four pages in both themes reports no critical finding for names, contrast and non-color cues.
 - **SC-010**: Building MOBAflow and MOBAsmart works on a machine without Node, and the `MOBAweb/` CI job runs without the WinUI or Android workloads.
 
 ## Open questions
