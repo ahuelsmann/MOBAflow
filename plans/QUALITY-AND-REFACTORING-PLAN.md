@@ -180,9 +180,14 @@ The deliverable inventory, decisions and delivery slices now belong to
 
 ### RF-08: Compile MAUI XAML bindings
 
-The inventory, decisions and delivery slices now belong to
-[the RF-08 child plan](357-maui-compiled-bindings.md), owned by
-[issue #357](https://github.com/ahuelsmann/MOBAflow/issues/357).
+Complete after slice 3. Child issue [#357](https://github.com/ahuelsmann/MOBAflow/issues/357) owns this package
+(slice 1 #358, slice 2 #423, slice 3 the warnings-as-errors gate); the inventory, decisions and slices are in
+[the RF-08 child plan](357-maui-compiled-bindings.md) until it is removed after closure. Outcome: project-owned
+MOBAsmart XAML compiles its bindings, including those with a `Source`, and `MOBAsmart.csproj` turns an uncompiled or
+unresolvable binding (`XC0022`, `XC0025`, `XC0045`) into a build error in every configuration; the Android Release
+lane runs on every pull request that changes `MOBAsmart/**`. The function toggles and the other rebound controls
+were not inspected on a device; since 2026-11-06 that is no closure gate, and problems found in use are reported as
+bugs.
 
 ### RF-09: Coverage and mutation ratchets
 

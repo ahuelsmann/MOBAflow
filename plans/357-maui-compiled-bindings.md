@@ -2,10 +2,10 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/357
 **Spec Kit**: Not applicable - build-quality change without behavior change
-**Status**: Active; slice 1 (#358) shipped this plan, compilation with `Source`, the three self-bound controls and
-the typed `ControlPage` command binding that MAUI 10.0.120 (#381) turned into an Android Release build error.
-Slice 2 declares `x:DataType` on `FunctionToggleView`; project-owned XAML now builds with 0 `XC0022`, `XC0025`
-and `XC0045`. Slice 3 (the CI gate) is open.
+**Status**: Complete with slice 3. Slice 1 (#358) shipped this plan, compilation with `Source`, the three self-bound
+controls and the typed `ControlPage` command binding that MAUI 10.0.120 (#381) turned into an Android Release build
+error. Slice 2 (#423) declares `x:DataType` on `FunctionToggleView`; project-owned XAML builds with 0 `XC0022`,
+`XC0025` and `XC0045`. Slice 3 makes these three codes build errors in `MOBAsmart.csproj` and closes #357.
 
 ## Purpose and scope
 
@@ -46,7 +46,13 @@ Six files already declare `x:DataType`; `XC0103` comes from CommunityToolkit.Mau
   same object that `ControlRoot.BindingContext` held, so behavior is unchanged and the path is compiled and checked.
   The owner of #308 carries this binding over, since that PR also edits `ControlPage.xaml`.
 - **Gate.** After slice 2, slice 3 treats `XC0022`, `XC0025` and `XC0045` as errors in `MOBAsmart.csproj`, so CI
-  rejects new uncompiled or wrong bindings.
+  rejects new uncompiled or wrong bindings. The project lists the three codes in `WarningsAsErrors`. XamlC
+  (`LoggingHelperExtensions.LogWarningOrError` in `Microsoft.Maui.Controls.Build.Tasks` 10.0.120) reports a code
+  from that list as an error even when it is in `WarningsNotAsErrors`, so MAUI's default exemption of `XC0022` and
+  `XC0025` no longer applies to these codes. The list has no configuration condition: FastDebug, Debug and Release
+  all fail on such a binding. `MauiStrictXamlCompilation` was not used, because it only lifts the exemption under
+  `TreatWarningsAsErrors` (Release) and would also change `XC0023`, which is outside this package. No `NoWarn`
+  entry and no analyzer baseline change is involved; `XC0103` stays suppressed as before.
 
 ## Independently reviewable delivery slices
 
@@ -59,12 +65,18 @@ Six files already declare `x:DataType`; `XC0103` comes from CommunityToolkit.Mau
    `ControlPage` template) is untouched because the control reads it in code-behind, not through bindings.
    `ControlPage` needed no further change; its typed `ToggleFunctionCommand` binding from slice 1 and #308 stays.
    Result: 2 `XC0022` → 0 XamlC warnings, 0 errors, in FastDebug and Android Release.
-3. **Warnings as errors, documentation and completion.**
+3. **Warnings as errors, documentation and completion.** `MOBAsmart.csproj` adds `XC0022`, `XC0025` and `XC0045` to
+   `WarningsAsErrors`. No XAML changed: main already built without these warnings after slice 2. The Android
+   Release lane of the slice 3 pull request is the evidence that the project still builds with the gate; that
+   lane runs on every pull request that changes `MOBAsmart/**`, which is where a new uncompiled binding would be
+   introduced. A binding in a referenced project cannot trigger these codes, because only MOBAsmart contains MAUI
+   XAML.
 
 ## Validation strategy
 
 Every slice: Android Release rebuild with the warning count, Android analyzer gate, portable and Windows tests
-(SharedUI is unchanged). No device deployment by the agent. Personal acceptance was abolished on 2026-11-06; the
+(SharedUI is unchanged). Slice 3 was written in a cloud session without the Android workload, so its build evidence
+is the pull request's Android Release lane, not a local rebuild. No device deployment by the agent. Personal acceptance was abolished on 2026-11-06; the
 rendered function toggles are an uninspected visual state until the user reports from the app, not a passed check.
 
 ## Risks
