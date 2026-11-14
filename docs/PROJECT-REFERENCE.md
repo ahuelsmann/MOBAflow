@@ -372,8 +372,9 @@ Passenger Wagons, Goods Wagons, Trains, Workflows, Stations, Journeys, Timetable
 Manager, Journey Map, Train Control, Track Plan, Signal Box, ESP32 Display,
 Matrix Images, Monitor, Recorder, Help, Info and Settings.
 
-Page availability and Preview labels are controlled by
-`AppSettings.FeatureToggles` and `FeatureToggleRegistry`.
+Page availability and Preview labels are controlled by the keyed
+`FeatureToggles.Pages` entries of the SharedUI `UiSettings` root; pages without an entry use the defaults of
+`FeatureToggleRegistry`.
 
 ### MOBAsmart tabs
 
@@ -393,8 +394,8 @@ The pages are mounted lazily by `AppTabHostPage` to reduce startup work.
 | `MOBAflow/Build/Schemas/*.schema.json` | Build-time data schemas |
 
 Important application sections are `Z21`, `RestApi`, `Speech`, `Application`,
-`Counter`, `HealthCheck`, `Display`, `SignalBox`, `TrainControl`, `Layout` and
-`FeatureToggles`.
+`Counter`, `HealthCheck`, `SignalBox` and `TrainControl` (neutral `AppSettings` in `Common`) and `Display`,
+`Layout`, `FeatureToggles`, `WinUiTrainControlHost` and `MauiTrainControlHost` (`UiSettings` in `SharedUI`).
 
 ## Build and test entry points
 

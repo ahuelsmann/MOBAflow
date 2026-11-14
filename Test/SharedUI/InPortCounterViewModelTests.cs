@@ -4,7 +4,7 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -27,7 +27,7 @@ internal sealed partial class InPortCounterViewModelTests : IDisposable
     private Mock<IRuntimeCommandGateway> _gateway = null!;
     private Mock<ISettingsService> _persistence = null!;
     private Mock<IUiDispatcher> _dispatcher = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private SettingsPageViewModel _settingsPage = null!;
     private SolutionSession _session = null!;
     private MobaRuntimeSnapshot _snapshot = MobaRuntimeSnapshot.Empty;
@@ -45,7 +45,7 @@ internal sealed partial class InPortCounterViewModelTests : IDisposable
         _gateway.Setup(gateway => gateway.ResetInPortCountersAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _dispatcher = new Mock<IUiDispatcher>();
         _dispatcher.Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _settings.Counter.CountOfFeedbackPoints = 7;
         _settingsPage = TestSettingsPages.Create(_settings, _dispatcher.Object);
         _persistence = new Mock<ISettingsService>();

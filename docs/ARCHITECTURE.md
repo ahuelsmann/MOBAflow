@@ -202,7 +202,7 @@ completeness, stay in `Backend/Service`.
 - `MasterDataStore` (shared cities/locomotives/multiplex master JSON, e.g. `data.json`)
 - `ActiveProjectContext` (runtime project activation inside `MobaRuntimeService`)
 - Runtime Snapshots (MobaRuntimeSnapshot, JourneyRuntimeSnapshot)
-- Configuration & Settings Management
+- Configuration & Settings Management (neutral `AppSettings` sections in `Common/Configuration`)
 - Logging Infrastructure (Serilog)
 
 **Key Interfaces:**
@@ -254,6 +254,9 @@ public interface IWorkflowService
 - `SolutionSession` (solution ownership, selection, dirty state and auto-save)
 - MainWindowViewModel (shell: solution new/open/save, Z21 status, host commands, operating state and photo routing)
 - `LayoutPersistenceService` (the single boundary that persists the saved layout)
+- `UiSettings` settings root (`SharedUI/Configuration`): the neutral `AppSettings` plus layout, keyed feature toggles
+  (`FeatureToggleRegistry`), display and per-host train-control settings; both hosts register one instance as
+  `UiSettings` and `AppSettings`, so Backend keeps the neutral type and appsettings.json stays one file
 - Page-specific ViewModels (JourneyViewModel, WorkflowViewModel, etc.)
 - ViewModels read runtime state through narrow runtime roles and send commands through
   `IRuntimeCommandGateway` (see [Runtime command path](#runtime-command-path))
@@ -553,7 +556,7 @@ runtime services.
 
 - `LayoutPersistenceService` (`SharedUI/Service/`) is the only path that persists the saved layout; pages still
   set their visual widths on the layout object before they save through it. It reads the shared
-  `AppSettings` through `ISettingsService`, loads `LayoutColumnWidthsViewModel` once, applies a change under its
+  `UiSettings` through `ISettingsService`, loads `LayoutColumnWidthsViewModel` once, applies a change under its
   existing key and persists it with one logged-failure path, offers an awaited save, resets the layouts while
   keeping the tab visibility and owns the Settings page section state (sort mode, expansion, usage, order).
 - The locomotive, wagon, train, station, journey, workflow, monitor and track-plan page ViewModels persist their
@@ -594,7 +597,7 @@ runtime services.
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
-  speech selectors. Its required dependencies are AppSettings, ISettingsService, the UI dispatcher,
+  speech selectors. Its required dependencies are UiSettings, ISettingsService, the UI dispatcher,
   logging, the host's `IFeatureTogglePageProvider` and `ISpeechOutput`; the speech test speaks through that
   output and shows its failure reason. It never depends on MainWindowViewModel.
 - The ViewModel owns settings persistence, feature items, Piper choices and reset commands; the section

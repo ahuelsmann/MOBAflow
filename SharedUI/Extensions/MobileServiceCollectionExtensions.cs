@@ -9,6 +9,8 @@ using Backend.Service;
 using Common.Configuration;
 using Common.Events;
 
+using Configuration;
+
 using Interface;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -77,7 +79,9 @@ public static class MobileServiceCollectionExtensions
 
     private static void AddMobileBackendServices(this IServiceCollection services, Func<string> appDataDirectory)
     {
-        services.AddSingleton<AppSettings>();
+        // One settings root serves the UI under UiSettings and Backend under its neutral AppSettings sections.
+        services.AddSingleton<UiSettings>();
+        services.AddSingleton<AppSettings>(sp => sp.GetRequiredService<UiSettings>());
         services.AddSingleton<InPortCounterService>(sp => new InPortCounterService(
             sp.GetRequiredService<IZ21>(), sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<InPortCounterService>>(),
@@ -157,7 +161,7 @@ public static class MobileServiceCollectionExtensions
             sp.GetRequiredService<ITrafficMonitor>(),
             sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<MobaflowEndpointLocator>(),
             sp.GetRequiredService<MobaflowHubSession>(),

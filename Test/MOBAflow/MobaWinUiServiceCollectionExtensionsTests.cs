@@ -6,7 +6,7 @@ using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Backend.Service.Recording;
 using Moba.Backend.Service.ProjectRuntimes;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Display.Transport;
 using Moba.Domain;
@@ -69,7 +69,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
                 Has.One.Matches<PageMetadata>(page =>
                     page is not null && page.Tag == "recorder"
                     && page.Title == "Recorder"
-                    && page.Category == global::Moba.Common.Navigation.NavigationCategory.Monitoring
+                    && page.Category == global::Moba.WinUI.Service.NavigationCategory.Monitoring
                     && page.Order == 20));
         });
     }
@@ -222,16 +222,16 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             services.AddSingleton<ISettingsService>(sp =>
             {
                 var settingsService = new Mock<ISettingsService>();
-                settingsService.Setup(value => value.GetSettings()).Returns(sp.GetRequiredService<AppSettings>());
-                settingsService.Setup(value => value.SaveSettingsAsync(It.IsAny<AppSettings>()))
-                    .Callback<AppSettings>(value => savedSettings.Add(System.Text.Json.JsonSerializer.Serialize(value)))
+                settingsService.Setup(value => value.GetSettings()).Returns(sp.GetRequiredService<UiSettings>());
+                settingsService.Setup(value => value.SaveSettingsAsync(It.IsAny<UiSettings>()))
+                    .Callback<UiSettings>(value => savedSettings.Add(System.Text.Json.JsonSerializer.Serialize(value)))
                     .Returns(Task.CompletedTask);
                 return settingsService.Object;
             });
         });
         await using (provider.ConfigureAwait(false))
         {
-            var settings = provider.GetRequiredService<AppSettings>();
+            var settings = provider.GetRequiredService<UiSettings>();
             settings.Speech.TestMessage = "Settings test";
             var viewModel = provider.GetRequiredService<SettingsPageViewModel>();
             await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);

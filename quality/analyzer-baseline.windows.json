@@ -18,20 +18,6 @@
     {
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1002",
-      "path": "MOBAflow/Service/MainWindowNavigationBootstrapper.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1002",
-      "path": "MOBAflow/Service/NavigationService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1003",
       "path": "MOBAflow/Service/RestApiProcessService.cs",
       "count": 1
@@ -350,20 +336,6 @@
       "ruleId": "CA1062",
       "path": "MOBAflow/Converter/PathToCanvasGeometryConverter.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1062",
-      "path": "MOBAflow/Service/MainWindowNavigationBootstrapper.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1062",
-      "path": "MOBAflow/Service/NavigationItemFactory.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -776,34 +748,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
       "path": "MOBAflow/Service/LocalMobApiClient.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Service/MainWindowNavigationBootstrapper.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Service/NavigationItemFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Service/NavigationRegistration.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Service/NavigationService.cs",
       "count": 1
     },
     {
@@ -2924,7 +2868,14 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/FeatureToggleRegistryTests.cs",
+      "path": "Test/SharedUI/FeatureToggleRegistryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/UiSettingsDefaultsTests.cs",
       "count": 1
     },
     {
@@ -4220,6 +4171,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/WinUI/InfoPageMarkupTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/WinUI/NavigationItemFactoryTests.cs",
       "count": 1
     },
     {
@@ -5661,13 +5619,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/AppSettingsDefaultsTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
       "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 11
     },
@@ -6306,7 +6257,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/Common/AppSettingsDefaultsTests.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Test",
@@ -6321,13 +6272,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Common/EventBusTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Common/FeatureToggleRegistryTests.cs",
-      "count": 7
     },
     {
       "project": "Test",

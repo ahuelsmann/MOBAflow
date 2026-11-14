@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
-using Common.Configuration;
 using Common.Extension;
 
 using Domain;
 
 using Microsoft.Extensions.Logging;
 
+using SharedUI.Configuration;
 using SharedUI.Interface;
 
 using System.Diagnostics;
@@ -19,17 +19,17 @@ using System.Text.Json;
 /// </summary>
 internal class SettingsService : ISettingsService
 {
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly string _settingsFilePath;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
     private readonly ILogger<SettingsService> _logger;
 
-    public SettingsService(AppSettings settings, ILogger<SettingsService> logger)
+    public SettingsService(UiSettings settings, ILogger<SettingsService> logger)
         : this(settings, logger, ResolveSettingsFilePath())
     {
     }
 
-    internal SettingsService(AppSettings settings, ILogger<SettingsService> logger, string settingsFilePath)
+    internal SettingsService(UiSettings settings, ILogger<SettingsService> logger, string settingsFilePath)
     {
         _settings = settings;
         _logger = logger;
@@ -78,10 +78,10 @@ internal class SettingsService : ISettingsService
     }
 
     /// <summary>
-    /// Copies all property values from a deserialized AppSettings to the DI-registered singleton.
+    /// Copies all property values from a deserialized settings root to the DI-registered singleton.
     /// Single source of truth for property mapping - used by both sync and async load paths.
     /// </summary>
-    private void ApplyLoadedSettings(AppSettings source)
+    private void ApplyLoadedSettings(UiSettings source)
     {
         _settings.Speech = source.Speech;
         _settings.Application.LastSolutionPath = source.Application.LastSolutionPath;
@@ -138,7 +138,7 @@ internal class SettingsService : ISettingsService
             if (File.Exists(_settingsFilePath))
             {
                 var json = File.ReadAllText(_settingsFilePath);
-                var loadedSettings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions.Default);
+                var loadedSettings = JsonSerializer.Deserialize<UiSettings>(json, JsonOptions.Default);
 
                 if (loadedSettings != null)
                 {
@@ -169,7 +169,7 @@ internal class SettingsService : ISettingsService
             if (File.Exists(_settingsFilePath))
             {
                 var json = await File.ReadAllTextAsync(_settingsFilePath);
-                var loadedSettings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions.Default);
+                var loadedSettings = JsonSerializer.Deserialize<UiSettings>(json, JsonOptions.Default);
 
                 if (loadedSettings != null)
                 {
@@ -191,7 +191,7 @@ internal class SettingsService : ISettingsService
     /// <summary>
     /// Gets the current application settings from IOptions.
     /// </summary>
-    public AppSettings GetSettings()
+    public UiSettings GetSettings()
     {
         return _settings;
     }
@@ -199,7 +199,7 @@ internal class SettingsService : ISettingsService
     /// <summary>
     /// Saves settings to appsettings.json file immediately.
     /// </summary>
-    public async Task SaveSettingsAsync(AppSettings settings)
+    public async Task SaveSettingsAsync(UiSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
         await _saveLock.WaitAsync();
@@ -231,7 +231,7 @@ internal class SettingsService : ISettingsService
     /// </summary>
     public async Task ResetToDefaultsAsync()
     {
-        var defaultSettings = new AppSettings();
+        var defaultSettings = new UiSettings();
         await SaveSettingsAsync(defaultSettings);
     }
     #endregion

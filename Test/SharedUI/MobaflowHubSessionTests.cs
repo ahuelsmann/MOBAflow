@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Mobile;
 using Moba.Test.Helpers;
@@ -14,7 +14,7 @@ using Moq;
 [TestFixture]
 internal sealed class MobaflowHubSessionTests
 {
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private Mock<IPhotoUploadService> _healthService = null!;
     private Mock<IRuntimeHubRemoteClient> _hubClient = null!;
     private Mock<IRestApiClientRegistration> _registration = null!;
@@ -25,7 +25,7 @@ internal sealed class MobaflowHubSessionTests
     [SetUp]
     public void SetUp()
     {
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _settings.RestApi.IsConnectionEnabled = true;
         _settings.RestApi.CurrentIpAddress = "192.168.0.20";
         _settings.RestApi.Port = 5001;

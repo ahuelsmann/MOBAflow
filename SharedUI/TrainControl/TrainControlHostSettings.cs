@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Configuration;
+namespace Moba.SharedUI.TrainControl;
 
 /// <summary>
 /// Host-specific train control UI state (not shared between MOBAflow and MOBAsmart).

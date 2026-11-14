@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/290
 **Spec Kit**: Not applicable - structural refactoring; the only persisted-format change is the internal feature-toggle collection, loaded with defaults per repository policy
-**Status**: Active; slices 1 and 3 integrated through #295; slice 4a (runtime contracts, #310) and slice 4b (discovery) in review; slice 2 can start: RF-24 is complete since 2026-11-14 (#442, #445)
+**Status**: Active; slices 1 and 3 integrated through #295; slice 4a (runtime contracts, #310) and slice 4b (discovery) in review; slice 2 delivered in its own PR (2026-11-14); slice 5 remains
 
 ## Purpose and scope
 
@@ -75,14 +75,24 @@ RF-20 architecture rule for the boundary it creates.
 
 1. **Display appearance helpers.** Move all `Common/Display` types to `SharedUI/Appearance`
    (`Moba.SharedUI.Appearance`); architecture rule: `Common` contains no `Display` namespace.
-2. **UI settings and navigation.** Its start condition is met: RF-24 slice 6 (#219, integrated through #442 on
-   2026-11-14) centralized layout persistence in `LayoutPersistenceService` and removed the shell partials that
-   an earlier move of the layout types would have churned.
-   Introduce the `SharedUI` settings root, move layout, tab visibility, feature toggles,
-   `FeatureToggleRegistry`, navigation types and the train-control host settings, replace the per-page
-   toggle properties with the keyed collection and update both `SettingsService` implementations and
-   `WinUiConfigurationBuilder`. Tests: settings round trip on both hosts, missing-key defaults, toggle
-   registry lookup.
+2. **UI settings and navigation (delivered).** `SharedUI/Configuration` (`Moba.SharedUI.Configuration`) holds the
+   settings root `UiSettings : AppSettings` with `Layout` (all page layout classes, tab visibility,
+   `PageLayoutSettings`/`ColumnState`, `SettingsPageLayoutSettings`), `FeatureToggles`, `Display` and the
+   `WinUiTrainControlHost`/`MauiTrainControlHost` sections, plus `FeatureToggleRegistry` and `FeatureTogglePages`.
+   `TrainControlHost` and `TrainControlHostSettings` moved to `SharedUI/TrainControl`, `IFeatureTogglePageProvider`
+   and `FeatureTogglePageInfo` (without category and order, which only the host needs) to `SharedUI/Interface`, and
+   `NavigationCategory` to `MOBAflow/Service`; `Common/Navigation` is gone. `FeatureToggleSettings.Pages` is one
+   dictionary keyed by page (`Overview`, `TrainControl`, ...) with `IsAvailable` and an optional `Label`; a
+   missing page is available with the registry's default label, the visual-editor flag stays a plain property.
+   `ISettingsService` returns and saves `UiSettings`; both hosts register one instance as `UiSettings` and
+   `AppSettings`. The WinUI navigation factory reads toggles through the registry instead of reflection, and the
+   per-page toggle wrappers on `SettingsPageViewModel` (unbound since the dynamic toggle list) are removed.
+   `appsettings.json`, the development template and the schema use the keyed shape; `WinUiConfigurationBuilder`
+   logs the new keys. Tests: registry lookup and missing-key defaults, JSON round trip of the root, WinUI
+   `SettingsService` round trip and loading of the removed flat toggle fields as defaults. The MAUI
+   `SettingsService` copies only its train-control host selection, as before; it has no automated test because
+   the Android test lane is not part of the desktop suites. RF-20 rules: `Common` declares no `Navigation`
+   namespace and no type named like a `SharedUI` settings type.
 3. **Remaining host-specific and unused types.** Move REST endpoint history and the mobile keep-alive policy
    to `SharedUI/Mobile`; remove `Z21BroadcastRequirements` (tests use `Z21Protocol.BroadcastFlags`),
    `IPlatformCapability` and the unused `GridSplitterLayoutSettings` class.
@@ -110,8 +120,8 @@ RF-20 architecture rule for the boundary it creates.
 
 ## Risks, compatibility and publication
 
-- **Persisted settings:** slice 2 changes the stored feature-toggle shape; old values load as defaults.
-  All other property names stay unchanged.
+- **Persisted settings:** slice 2 changed the stored feature-toggle shape to `FeatureToggles.Pages`; old flat values
+  load as defaults (no released users, no migration). All other property names stay unchanged.
 - **XAML bindings:** moved types used in XAML (`x:Bind` to settings or appearance helpers) need namespace
   updates; compile both apps for slices 1 and 2.
 - **Merge churn:** moving many files conflicts with open PRs. Slices stay small, and slice 4 waits for #267/#281.

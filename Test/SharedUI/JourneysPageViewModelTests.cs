@@ -2,7 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -22,7 +22,7 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
     private Mock<ISettingsService> _persistence = null!;
     private Mock<ICityService> _cities = null!;
     private Mock<IUiDispatcher> _dispatcher = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private JourneysPageViewModel _page = null!;
     private string _lastSaved = string.Empty;
 
@@ -48,7 +48,7 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
                 new Journey { Name = "Evening", Stations = [new Station { Name = "East" }] }]
         }] }, _dispatcher.Object, _runtime.Object, _io.Object);
         _session.CurrentSolutionPath = "journeys-test.json";
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);

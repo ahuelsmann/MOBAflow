@@ -4,7 +4,7 @@ namespace Moba.Test.MOBAflow;
 
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -34,7 +34,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
     public void GetToggleablePages_Should_CoverEveryRegisteredFeaturePage_WhenNavigationIsRegistered()
     {
         var pages = NavigationRegistration.RegisterPages(new ServiceCollection());
-        var provider = new FeatureTogglePageProvider(pages, new AppSettings());
+        var provider = new FeatureTogglePageProvider(pages, new UiSettings());
         string[] alwaysAvailablePageTags = ["help", "info", "settings"];
 
         var pagesWithoutToggle = pages
@@ -122,7 +122,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
         TimeProvider? timeProvider = null,
         Func<RestApiProcessService, RestApiSolutionSyncService>? createSolutionSync = null)
     {
-        var appSettings = new AppSettings();
+        var appSettings = new UiSettings();
         appSettings.RestApi.Port = port;
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var mobaRuntime = new Mock<IMobaRuntime>();
@@ -186,7 +186,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
     }
 
     private MainWindowViewModel CreateMainWindowViewModel(
-        AppSettings appSettings,
+        UiSettings appSettings,
         Mock<IMobaRuntime> mobaRuntime,
         IEventBus eventBus,
         out ISolutionSession session)

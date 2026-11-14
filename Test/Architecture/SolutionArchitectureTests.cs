@@ -32,7 +32,7 @@ internal sealed partial class SolutionArchitectureTests
         "CommunityToolkit.Maui",
     ];
 
-    private static readonly string[] CommonPresentationNamespaces = ["Moba.Common.Display"];
+    private static readonly string[] CommonPresentationNamespaces = ["Moba.Common.Display", "Moba.Common.Navigation"];
 
     /// <summary>The only project allowed to use each platform UI framework.</summary>
     private static readonly Dictionary<string, string> UiFrameworkOwners = new(StringComparer.Ordinal)
@@ -175,6 +175,25 @@ internal sealed partial class SolutionArchitectureTests
             Is.Empty,
             "Common rule: presentation helpers live in SharedUI or the host that uses them, not in Common. "
             + "Violations: " + string.Join("; ", violations));
+    }
+
+    [Test]
+    public void Common_DeclaresNoUiSettingsTypes()
+    {
+        var uiSettingsTypes = typeof(global::Moba.SharedUI.Configuration.UiSettings).Assembly.GetTypes()
+            .Where(type => type.Namespace == typeof(global::Moba.SharedUI.Configuration.UiSettings).Namespace)
+            .Select(type => type.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        var violations = typeof(global::Moba.Common.Configuration.AppSettings).Assembly.GetTypes()
+            .Where(type => uiSettingsTypes.Contains(type.Name))
+            .Select(type => type.FullName)
+            .ToList();
+
+        Assert.That(
+            violations,
+            Is.Empty,
+            "Common rule: layout, feature-toggle and display settings belong to the SharedUI settings root; "
+            + "Common keeps only neutral AppSettings sections. Violations: " + string.Join("; ", violations));
     }
 
     private static IEnumerable<(string Framework, string Evidence)> UiFrameworkUsage(BuildDefinition build)

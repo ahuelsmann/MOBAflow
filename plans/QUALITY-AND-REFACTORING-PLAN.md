@@ -381,8 +381,11 @@ Sequence:
 1. create a contracts project for runtime snapshots, remote runtime commands,
    hub method names and the discovery protocol shared by MOBApi, MOBAflow and
    MOBAsmart;
-2. move WinUI page layout settings to MOBAflow and replace the per-page feature
-   toggle properties with one keyed collection;
+2. move the UI settings (layout, tab visibility, feature toggles, display and per-host
+   train-control settings) to the `SharedUI` settings root `UiSettings` and the navigation
+   category to MOBAflow, and replace the per-page feature toggle properties with one keyed
+   collection (delivered as [#290](https://github.com/ahuelsmann/MOBAflow/issues/290) slice 2;
+   shared ViewModels read these settings, so `SharedUI`, not MOBAflow, is their owner);
 3. move display appearance helpers from `Common/Display` to `SharedUI` or the
    host that uses them;
 4. leave only neutral infrastructure (events, paths, logging, configuration

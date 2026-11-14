@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Domain;
 using Moba.SharedUI.Extensions;
 using Moba.SharedUI.Interface;
@@ -131,7 +131,7 @@ internal sealed class MobileServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
         var settings = new Mock<ISettingsService>();
-        settings.Setup(value => value.GetSettings()).Returns(new AppSettings());
+        settings.Setup(value => value.GetSettings()).Returns(new UiSettings());
         services.AddSingleton(settings.Object);
         services.AddSingleton<IUiDispatcher>(new ImmediateUiDispatcher());
         services.AddSingleton(Mock.Of<IBackgroundService>());
