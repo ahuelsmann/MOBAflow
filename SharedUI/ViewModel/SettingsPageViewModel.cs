@@ -133,16 +133,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
         return true;
     }
 
-    private void UpdateFeatureToggleSetting(
-        Func<bool> currentValue,
-        Action<bool> applyValue,
-        bool newValue,
-        string settingPropertyName,
-        string availabilityPropertyName)
-    {
-        _ = UpdateSetting(currentValue, applyValue, newValue, settingPropertyName, availabilityPropertyName);
-    }
-
     // Seconds settings come from sliders; smaller differences are not a change.
     private const double SecondsSettingTolerance = 0.0001;
 
