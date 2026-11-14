@@ -6,6 +6,7 @@ using SharedUI.Configuration;
 
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
@@ -30,12 +31,16 @@ internal sealed class NavigationItemFactory
     /// </summary>
     public NavigationViewItem CreateItem(PageMetadata page)
     {
+        var badgeLabel = GetBadgeLabel(page);
         var item = new NavigationViewItem
         {
             Tag = page.Tag,
             Icon = CreateIcon(page),
-            Content = CreateContent(page)
+            Content = CreateContent(page, badgeLabel)
         };
+
+        // Bold or badged items show a panel as content, which gives Narrator no name; name every item explicitly.
+        AutomationProperties.SetName(item, ComposeAccessibleName(page.Title, badgeLabel));
 
         // Apply visibility based on Feature Toggle
         if (!string.IsNullOrEmpty(page.FeatureToggleKey))
@@ -57,6 +62,13 @@ internal sealed class NavigationItemFactory
     /// Creates a NavigationViewItemSeparator.
     /// </summary>
     public NavigationViewItemSeparator CreateSeparator() => new();
+
+    /// <summary>
+    /// Composes the accessible name of a navigation item: the page title, followed by the badge when one is shown
+    /// (for example "Timetable, Preview").
+    /// </summary>
+    internal static string ComposeAccessibleName(string title, string? badgeLabel) =>
+        string.IsNullOrWhiteSpace(badgeLabel) ? title : $"{title}, {badgeLabel}";
 
     /// <summary>
     /// Creates the icon (FontIcon or PathIcon).
@@ -86,9 +98,8 @@ internal sealed class NavigationItemFactory
     /// <summary>
     /// Creates the content (title with optional badge).
     /// </summary>
-    private object CreateContent(PageMetadata page)
+    private static object CreateContent(PageMetadata page, string badgeLabel)
     {
-        var badgeLabel = GetBadgeLabel(page);
         var hasBadge = !string.IsNullOrEmpty(badgeLabel);
 
         // Simple title without badge
