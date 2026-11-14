@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/318
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: Complete with slice 5. Workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330), static hooks (slice 3, #335), SharedUI ViewModels (slice 4, #414), the SharedUI ViewModel remainder (slice 4b, #435) and hosts, pages, Backend, speech and display (slice 4c, #447) are integrated. Slice 5 (container validation and the last remainders, branch `claude/issue-318-rf25-slice5`) closes issue #318 when its pull request is merged; see [Slice 5 result](#slice-5-result). This plan is removed in the close-out after that merge, as the repository rule for completed plans requires.
+**Status**: Complete with slice 5. Workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330), static hooks (slice 3, #335), SharedUI ViewModels (slice 4, #414), the SharedUI ViewModel remainder (slice 4b, #435) and hosts, pages, Backend, speech and display (slice 4c, #447) are integrated. Slice 5 (container validation and the last remainders, #450) closes issue #318 when its pull request is merged; see [Slice 5 result](#slice-5-result). This plan is removed in the close-out after that merge, as the repository rule for completed plans requires.
 
 ## Purpose and scope
 

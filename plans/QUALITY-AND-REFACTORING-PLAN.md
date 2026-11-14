@@ -354,7 +354,7 @@ nothing because MOBAsmart does not register the shell and is removed by
 Complete with slice 5. Child issue [#318](https://github.com/ahuelsmann/MOBAflow/issues/318) owns this package and
 closes when slice 5 is merged (slice 1 workflow execution and validation #325, 2 runtime composition #330,
 3 static hooks #335, 4 SharedUI ViewModels #414, 4b SharedUI ViewModel remainder #435, 4c hosts, pages, Backend,
-speech and display #447, 5 container validation and last remainders #SLICE5PR). Its
+speech and display #447, 5 container validation and last remainders #450). Its
 [child plan](318-explicit-dependencies.md) records each slice's result and is removed in the close-out after that
 merge. Outcome: every constructor names the services it needs, hosts register them (null objects where a host has
 no implementation) and tests pass explicit fakes; no service-typed optional parameter, `?? new` service fallback,
