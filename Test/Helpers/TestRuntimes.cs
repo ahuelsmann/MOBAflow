@@ -32,12 +32,16 @@ internal sealed class TestRuntimeOptions
 
 /// <summary>
 /// Creates runtimes and journey managers with explicit test collaborators: a local event bus, a mocked
-/// interlocking runtime, production stop transitions and no runtime checkpoints. Counters the helper creates are
+/// interlocking runtime, production stop transitions, no runtime checkpoints and, unless the test passes an
+/// endpoint source for its project, no Z21 to connect to. Counters the helper creates are
 /// disposed with it, so a fixture owns one instance and disposes it after its tests.
 /// </summary>
 internal sealed partial class TestRuntimes : IDisposable
 {
     private readonly List<IDisposable> _owned = [];
+
+    /// <summary>An endpoint source without a project, for tests that never connect: resolving it reports no Z21.</summary>
+    public static IZ21EndpointSource NoZ21 { get; } = new ProjectZ21EndpointSource(() => null);
 
     /// <summary>A runtime over <paramref name="z21"/> whose InPort counters this helper owns.</summary>
     public MobaRuntimeService Create(IZ21 z21, TestRuntimeOptions? options = null)
@@ -62,7 +66,7 @@ internal sealed partial class TestRuntimes : IDisposable
                 JourneyManagerFactory = JourneyManagers(options.WorkflowService ?? Mock.Of<IWorkflowService>(), eventBus),
                 InterlockingRuntime = options.InterlockingRuntime ?? Mock.Of<IInterlockingRuntime>(),
                 InPortCounterService = counters,
-                EndpointSource = options.EndpointSource
+                EndpointSource = options.EndpointSource ?? NoZ21
             },
             options.Logger ?? NullLogger<MobaRuntimeService>.Instance);
     }

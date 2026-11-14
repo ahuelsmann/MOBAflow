@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/318
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: In progress; workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330), static hooks (slice 3, #335), SharedUI ViewModels (slice 4, #414) and the SharedUI ViewModel remainder (slice 4b, #435) are integrated. Slice 4c (hosts, pages, Backend, speech and display) is in review on branch `claude/issue-318-rf25-slice4c`; see [Slice 4c result](#slice-4c-result). Issue #318 remains open for slice 5.
+**Status**: Complete with slice 5. Workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330), static hooks (slice 3, #335), SharedUI ViewModels (slice 4, #414), the SharedUI ViewModel remainder (slice 4b, #435) and hosts, pages, Backend, speech and display (slice 4c, #447) are integrated. Slice 5 (container validation and the last remainders, #450) closes issue #318 when its pull request is merged; see [Slice 5 result](#slice-5-result). This plan is removed in the close-out after that merge, as the repository rule for completed plans requires.
 
 ## Purpose and scope
 
@@ -23,7 +23,7 @@ Counted on main `71830101`; "tests" counts construction sites in `Test/`.
 | `Backend/Service/WorkflowActionHandlers.cs` (7 handlers) | optional `IWorkflowEffectAdapter`, each falls back to its own `ProductionWorkflowEffectAdapter`; optional loggers | 36 | adapter and logger required; DI registers `ProductionWorkflowEffectAdapter` once |
 | `WorkflowService`, `ActionExecutor`, `AnnouncementService` | two convenience `WorkflowService` constructors; `ActionExecutor.CreateWithDefaultHandlers`; optional loggers and event bus; optional `ISpeechOutput` | 25 | one constructor each, everything required; hosts without speech register the existing null speech output, so `IsSpeechOutputAvailable` (always true in both hosts) is removed |
 | `WorkflowValidator`, `ProjectValidator` | `?? new WorkflowEffectPlanner()`, `?? new WorkflowValidator()` | 11 | `ProjectValidator` requires `IWorkflowValidator`; `WorkflowValidator` uses the pure planner directly (see design decisions) |
-| `MobaRuntimeService` | two constructors; `?? new` for `InPortCounterService`, `JourneyManagerFactory`, `IZ21EndpointSource`; optional event bus, interlocking runtime, time provider | 9 | one constructor; every collaborator except the `IZ21EndpointSource` (defaulted only when the host registers none) required and created by `ProjectRuntimeFactory`/DI; the runtime borrows the counters, which are owned and disposed by DI or `ProjectRuntime` |
+| `MobaRuntimeService` | two constructors; `?? new` for `InPortCounterService`, `JourneyManagerFactory`, `IZ21EndpointSource`; optional event bus, interlocking runtime, time provider | 9 | one constructor; every collaborator required and created by `ProjectRuntimeFactory`/DI (the `IZ21EndpointSource` kept a default until slice 5); the runtime borrows the counters, which are owned and disposed by DI or `ProjectRuntime` |
 | `JourneyManager`, `JourneyManagerDependencies`, `JourneyManagerFactory` | `?? new` for stop transitions, runtime state store, counters, execution coordinator, `ActionExecutionContext`; factory created with `logger: null` | 7 | dependencies record with required members; DI or `ProjectRuntimeFactory` supplies the factory's collaborators, and the factory creates a distinct execution coordinator per `Create`; each manager owns and disposes its coordinator and borrows the counters |
 | `PlatformManager` | `?? new ActionExecutionContext { Z21 = z21 }` | 0 | required `ActionExecutionContext` |
 | `Common/Discovery/LanIpv4AddressHelper.AugmentAddresses` | mutable static `Action` set by `MOBAsmart/Service/LanIpv4AddressHelperAndroidBootstrap.cs` | - | injected `ILocalIpv4AddressSource` with the network-interface implementation in `Common` and an Android decorator in MOBAsmart; `Z21DiscoveryService` and `RestApiDiscoveryService` receive it |
@@ -77,10 +77,10 @@ Kept as is: value options with documented defaults (`RecorderOptions`, `Recordin
      `SettingsPageViewModel` and their host registrations; see [Slice 4b result](#slice-4b-result).
    - **4c. Hosts, pages, Backend, speech and display.** The items listed as remaining under
      [Slice 4b result](#slice-4b-result); see [Slice 4c result](#slice-4c-result).
-5. **DI validation and completion.** WinUI and MAUI container validators resolve every changed registration (including the executable Android DI test lane described under validation);
-   update `docs/ARCHITECTURE.md` where it describes construction, replace the RF-25 anchor in the umbrella plan
-   with a delivery note and remove this plan. Slice 5 completes #318 only after slices 4b and 4c have migrated the
-   slice 4 remainder listed under [Slice 4 result](#slice-4-result); until then the issue stays open.
+5. **DI validation and completion.** Container tests resolve every registration of the WinUI host and of the
+   platform-neutral MOBAsmart composition; the last remainders become required; `docs/ARCHITECTURE.md` and the
+   umbrella plan record the result. See [Slice 5 result](#slice-5-result). The close-out after the merge removes
+   this plan.
 
 ## Slice 4 result
 
@@ -171,8 +171,8 @@ Service lifetimes and user-visible behavior are unchanged.
     [Slice 4 result](#slice-4-result) and their `GetService` resolutions in `NavigationRegistration`;
     `RestApiProcessService` (`ISettingsService?`); `RuntimeHubHostClient` (`ILogger?`, new);
     `CancellableWavePlayer` (`TimeProvider?`) and the `AudioCache` registration's
-    `GetService<TimeProvider>() ?? TimeProvider.System` (new). The page constructors also carry the layout
-    persistence that RF-24 slice 6 centralizes; align the page part with that slice before starting it.
+    `GetService<TimeProvider>() ?? TimeProvider.System` (new). The page constructors also carried layout
+    persistence at that time; RF-24 slice 6 (#442) moved it out before slice 4c started.
   - Backend: `UdpWrapper`, `InPortCounterService`, `LocomotiveWhistleAutomationService`, `Z21EventPipeline`,
     `Z21` (`ILogger<Z21>?`, `Z21Monitor?`, new) and the `ActionExecutionContext` registration that resolves speech
     and sound output with `GetService`.
@@ -199,8 +199,9 @@ Service lifetimes and user-visible behavior are unchanged.
 
 ## Slice 4c result
 
-Delivered against main `9dcba691` after RF-24 slice 6 (#442), which had already moved layout persistence out of
-the page constructors. Service lifetimes and user-visible behavior are unchanged.
+Delivered against main `653ae4ee` (RF-24 slice 6, #442, and its close-out #445), where layout persistence had
+already left the page constructors; integrated through #447 as `d4fa3002`. Service lifetimes and user-visible
+behavior are unchanged.
 
 - MOBAflow pages: the 17 page constructors listed under [Slice 4 result](#slice-4-result) require their
   `ILogger<TPage>`; `SignalBoxPage` also requires the canvas logger and `TrainControlPage` its `ISettingsService`.
@@ -261,15 +262,76 @@ the page constructors. Service lifetimes and user-visible behavior are unchanged
 - Documentation: `docs/ARCHITECTURE.md` (host audio outputs, EventBus registration, system status clock,
   solution-session allowlist) and `docs/PROJECT-REFERENCE.md` (counter storage) corrected; `docs/wiki/`
   unchanged because no user-visible behavior, setting or screen changed.
+
+## Slice 5 result
+
+Delivered against main `d4fa3002` (slice 4c, #447). Service lifetimes and user-visible behavior are unchanged.
+
+- **Container tests resolve every registration.** `ServiceRegistrations.ResolveAll` (`Test/Helpers`) resolves each
+  registered service type of a collection, including every implementation of a type registered several times, and
+  lists the types that fail. Open generic registrations such as `ILogger<T>` are resolved through the services that
+  use them. Three fixtures use it, so a new registration is covered without a new assertion:
+  - `MobaBackendServiceCollectionExtensionsTests`: the shared backend collection with `ValidateOnBuild` and
+    `ValidateScopes`.
+  - `MobaWinUiServiceCollectionExtensionsTests`: the collection `WinUiAppStartupService.BuildServiceProvider`
+    builds, including the startup services, with `ValidateScopes`. Left out are the main window, the 22 XAML pages,
+    `PostStartupInitializationService`, which takes the window, and `MatrixPageViewModel`, which creates a WinUI
+    brush: these exist only on the UI thread of a running app, so a headless test cannot construct them (the
+    FastDebug build compiles their constructors).
+    `ValidateOnBuild` is not used there because it would construct exactly those types.
+  - `MobileServiceCollectionExtensionsTests` (new, portable target): the MOBAsmart composition.
+- **Portable MOBAsmart validator instead of a CI job.** MOBAsmart targets only `net10.0-android`, so neither test
+  target can reference it (`dotnet restore Test/Test.csproj -p:IncludeMobaSmartTests=true` fails with NU1202): the opt-in fixture `MobaMauiServiceCollectionExtensionsTests` could not be built and is
+  removed, and a CI job could run such tests only on an Android emulator. The registrations that need no Android
+  API therefore moved from `MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs` to
+  `AddMobaMobileServices` in `SharedUI/Extensions/MobileServiceCollectionExtensions.cs`: EventBus, backend services
+  with the per-project counter store, the remote runtime stack, `MauiViewModel`, `TrainControlViewModel` and
+  `MobiStartupService`. `RemoteRuntimeBridge` and `MobiStartupService` moved to `SharedUI/Mobile` for that; they
+  use no MAUI type. The host passes its app data directory and its HTTP client and registers only the Android
+  implementations (dispatcher, background service, settings, address source, discovery, photo services, client
+  registration, network notifier, `RuntimeHubRemoteClient`) and the pages. The startup check
+  `MobiDiContainerValidator` became `ValidateMobaMobileServices` next to the composition; `MauiProgram` still runs
+  it at every app start. The portable fixture supplies test doubles for the nine platform services, resolves every
+  registration and shows that the startup check fails when the host forgets any one of them. Not covered by a test:
+  the Android implementations themselves and the seven MAUI pages, which exist only in the Android build.
+- **Remainders, now required:**
+  - `MatrixPageViewModel` has one constructor; the parameterless one had no caller, and session and logger are no
+    longer nullable.
+  - `MobaRuntimeServiceDependencies.EndpointSource` is required and the shared registration resolves
+    `IZ21EndpointSource` with `GetRequiredService`. The removed default (the Z21 of the runtime's own active
+    project) was used by no host: MOBAsmart registers a source for the project selected on the phone, and
+    `ProjectRuntimeFactory` passes one per project. Tests pass a source for their project or `TestRuntimes.NoZ21`.
+  - `FirewallHelper.EnsureFirewallRulesExist` requires its logger (review note from #447).
+- **Left optional, with reason:** `SignalBoxCanvasControl` keeps a nullable logger field. XAML creates the control
+  through its parameterless constructor while `SignalBoxPage.InitializeComponent` runs, before any code can pass a
+  service; the page attaches the logger in its own constructor directly afterwards, and that constructor requires
+  it (slice 4c). The value options, data defaults and optional delegates classified under
+  [Slice 4c result](#slice-4c-result) and [Source inventory](#source-inventory-and-proposed-changes) keep their
+  defaults.
+- **Acceptance check on this branch:** a search of the production projects finds no service-typed optional
+  constructor parameter, no `?? new` service fallback and no generic `GetService<T>` call. One non-generic lookup
+  stays: `DialogService.GetXamlRoot` asks the provider for the always-registered `MainWindow` on first use, because
+  the window itself depends on services that need the dialog service. Its null branch covers a window without
+  content (no `XamlRoot` yet), not a missing registration, so it is a lazy lookup rather than a hidden default.
+- Analyzer baselines: the only added entry is the usual `CA1812` for the new fixture
+  `MobileServiceCollectionExtensionsTests` (cross-platform and Windows). The moved `MobiStartupService` and
+  `RemoteRuntimeBridge` are corrected instead of carrying their three Android entries into the cross-platform
+  baseline (primary constructor, explicit task scheduler, `System.Threading.Lock`), so the Android baseline
+  loses those entries.
+- Out of scope, noted: `Test/MOBAsmart/MobiLanHttpClientFactoryTests.cs` and the `IncludeMobaSmartTests` switch
+  still describe an opt-in graph that cannot build for the same reason; removing them is a separate cleanup.
+- Documentation: `docs/ARCHITECTURE.md` (MOBAsmart composition) and the DI, architecture and MAUI instructions
+  under `.github/instructions/` name the mobile composition, the required-dependency rule and the new fixture.
+  `docs/wiki/` unchanged: no user-visible behavior, setting or screen changed, and the wiki does not describe
+  dependency injection.
+
 ## Validation strategy
 
 Every slice: portable and Windows test suites, the cross-platform, Windows and Android analyzer gates, the
-affected host builds and the DI container validation tests (`MobaWinUiServiceCollectionExtensionsTests`,
-`MobaBackendServiceCollectionExtensionsTests`, and `MobaMauiServiceCollectionExtensionsTests` with
-`MobiDiContainerValidator`). The MAUI fixture is excluded from the default test graph (`IncludeMobaSmartTests=false`,
-`SKIP_ANDROID_TESTS`) and no workflow runs it today. Slice 5 must therefore either add a CI job that builds `Test` with
-`IncludeMobaSmartTests=true` or move the validator contract into a portable boundary, and must show that the fixture
-is discovered and executed; until then slices that change MAUI registrations verify them with a MOBAsmart build. Slice 2 additionally keeps
+affected host builds and the DI container tests (`MobaBackendServiceCollectionExtensionsTests`,
+`MobaWinUiServiceCollectionExtensionsTests` and, since slice 5, the portable
+`MobileServiceCollectionExtensionsTests`). Until slice 5 the MOBAsmart registrations had no executable test (see
+[Slice 5 result](#slice-5-result)), so slices that changed them verified them with a MOBAsmart build. Slice 2 additionally keeps
 the runtime ownership and per-project isolation tests unchanged; slice 3 covers the Android address source with a
 portable test of the decorator contract. No app launch, device deployment or hardware action by the agent.
 

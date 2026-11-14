@@ -131,7 +131,7 @@ public static class MobaBackendServiceCollectionExtensions
                     sp.GetRequiredService<ILoggerFactory>()),
                 InterlockingRuntime = sp.GetRequiredService<IInterlockingRuntime>(),
                 InPortCounterService = sp.GetRequiredService<InPortCounterService>(),
-                EndpointSource = sp.GetService<IZ21EndpointSource>()
+                EndpointSource = sp.GetRequiredService<IZ21EndpointSource>()
             },
             sp.GetRequiredService<ILogger<MobaRuntimeService>>()));
         services.TryAddSingleton<IRuntimeSnapshotProvider>(sp => sp.GetRequiredService<IMobaRuntime>());

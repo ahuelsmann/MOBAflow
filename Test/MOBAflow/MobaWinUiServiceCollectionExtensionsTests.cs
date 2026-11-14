@@ -117,6 +117,35 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     }
 
     [Test]
+    public async Task EveryRegistrationOfTheHostResolvesExceptTheTypesThatNeedTheXamlWindow()
+    {
+        var services = CreateValidatorServices(services => services.AddMobaWinUiStartupServices());
+        // The real dispatcher needs the WinUI thread; the appended test double must be the only registration.
+        services.RemoveAll<IUiDispatcher>();
+        services.AddSingleton(Mock.Of<IUiDispatcher>());
+        var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
+        await using var providerLifetime = provider.ConfigureAwait(false);
+
+        var failures = ServiceRegistrations.ResolveAll(services, provider, NeedsTheXamlWindow, out var resolved);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(failures, Is.Empty);
+            Assert.That(resolved, Is.GreaterThan(150), "The host registers its backend, services and ViewModels.");
+        }
+    }
+
+    /// <summary>
+    /// XAML creates the window and its pages on the UI thread of a running app, so a headless test cannot
+    /// construct them; the startup service takes the window and the matrix ViewModel creates a WinUI brush.
+    /// The FastDebug build compiles their constructors.
+    /// </summary>
+    private static bool NeedsTheXamlWindow(Type serviceType) =>
+        typeof(Microsoft.UI.Xaml.Window).IsAssignableFrom(serviceType)
+        || typeof(Microsoft.UI.Xaml.UIElement).IsAssignableFrom(serviceType)
+        || serviceType == typeof(PostStartupInitializationService)
+        || serviceType == typeof(Moba.WinUI.ViewModel.MatrixPageViewModel);
+    [Test]
     public async Task ShellTrainControlAndLocomotiveManagementResolveTheirRequiredDesktopServices()
     {
         var provider = CreateValidatorServiceProvider();
@@ -556,7 +585,10 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         await Assert.CatchAsync<OperationCanceledException>(() => speech).ConfigureAwait(false);
         Assert.That(player.PlayCount, Is.Zero);
     }
-    private static ServiceProvider CreateValidatorServiceProvider(Action<IServiceCollection>? configure = null)
+    private static ServiceProvider CreateValidatorServiceProvider(Action<IServiceCollection>? configure = null) =>
+        CreateValidatorServices(configure).BuildServiceProvider();
+
+    private static ServiceCollection CreateValidatorServices(Action<IServiceCollection>? configure = null)
     {
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
@@ -577,7 +609,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         services.AddSingleton(TestSpeechCache.Empty());
         configure?.Invoke(services);
 
-        return services.BuildServiceProvider();
+        return services;
     }
 
     private static IConfiguration CreateTestConfiguration()

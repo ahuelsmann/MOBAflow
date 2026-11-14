@@ -33,6 +33,8 @@ internal sealed class RuntimeConstructionTests
             WithoutEventBus(Runtime(counters)), NullLogger<MobaRuntimeService>.Instance));
         yield return Case("runtime interlocking", counters => new MobaRuntimeService(
             WithoutInterlocking(Runtime(counters)), NullLogger<MobaRuntimeService>.Instance));
+        yield return Case("runtime endpoint source", counters => new MobaRuntimeService(
+            WithoutEndpointSource(Runtime(counters)), NullLogger<MobaRuntimeService>.Instance));
         yield return Case("journey project", counters => new JourneyManager(
             null!, Context(), TestRuntimes.JourneyDependencies(counters), NullLogger<JourneyManager>.Instance));
         yield return Case("journey context", counters => new JourneyManager(
@@ -142,7 +144,8 @@ internal sealed class RuntimeConstructionTests
         EventBus = Bus,
         JourneyManagerFactory = TestRuntimes.JourneyManagers(Workflows, Bus),
         InterlockingRuntime = new Mock<IInterlockingRuntime>().Object,
-        InPortCounterService = counters
+        InPortCounterService = counters,
+        EndpointSource = TestRuntimes.NoZ21
     };
 
     private static MobaRuntimeServiceDependencies WithoutEventBus(MobaRuntimeServiceDependencies dependencies) => new()
@@ -153,7 +156,8 @@ internal sealed class RuntimeConstructionTests
         EventBus = null!,
         JourneyManagerFactory = dependencies.JourneyManagerFactory,
         InterlockingRuntime = dependencies.InterlockingRuntime,
-        InPortCounterService = dependencies.InPortCounterService
+        InPortCounterService = dependencies.InPortCounterService,
+        EndpointSource = dependencies.EndpointSource
     };
 
     private static MobaRuntimeServiceDependencies WithoutInterlocking(MobaRuntimeServiceDependencies dependencies) => new()
@@ -164,6 +168,19 @@ internal sealed class RuntimeConstructionTests
         EventBus = dependencies.EventBus,
         JourneyManagerFactory = dependencies.JourneyManagerFactory,
         InterlockingRuntime = null!,
-        InPortCounterService = dependencies.InPortCounterService
+        InPortCounterService = dependencies.InPortCounterService,
+        EndpointSource = dependencies.EndpointSource
+    };
+
+    private static MobaRuntimeServiceDependencies WithoutEndpointSource(MobaRuntimeServiceDependencies dependencies) => new()
+    {
+        Z21 = dependencies.Z21,
+        ExecutionContextFactory = dependencies.ExecutionContextFactory,
+        Settings = dependencies.Settings,
+        EventBus = dependencies.EventBus,
+        JourneyManagerFactory = dependencies.JourneyManagerFactory,
+        InterlockingRuntime = dependencies.InterlockingRuntime,
+        InPortCounterService = dependencies.InPortCounterService,
+        EndpointSource = null!
     };
 }

@@ -864,8 +864,11 @@ door transition; host differences stay explicit through `TrainControlViewModelOp
 ### MOBAsmart session and projection
 
 These platform-neutral components live in [`SharedUI/Mobile`](../SharedUI/Mobile)
-and are registered as singletons by
-[`MobaMauiServiceCollectionExtensions`](../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs):
+and are registered as singletons by `AddMobaMobileServices` in
+[`MobileServiceCollectionExtensions`](../SharedUI/Extensions/MobileServiceCollectionExtensions.cs), the
+platform-neutral part of the MOBAsmart composition. The Android app
+([`MobaMauiServiceCollectionExtensions`](../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs)) adds only
+its platform implementations and pages, so the portable test target resolves every shared registration:
 
 | Component | Responsibility and owned state |
 | --- | --- |

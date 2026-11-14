@@ -54,7 +54,8 @@ internal sealed class RuntimeCommandPathArchitectureTests
     [TestCase("TrainControlViewModel", 1)]
     public void MobileHost_InjectsTheRegisteredCommandGateway(string viewModelType, int gatewayArgument)
     {
-        var path = Path.Combine(FindRepositoryRoot(), "MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs");
+        // MOBAsmart's ViewModels are registered by the platform-neutral mobile composition in SharedUI.
+        var path = Path.Combine(FindRepositoryRoot(), "SharedUI/Extensions/MobileServiceCollectionExtensions.cs");
         var root = CSharpSyntaxTree.ParseText(File.ReadAllText(path)).GetRoot();
         var constructor = root.DescendantNodes().OfType<ObjectCreationExpressionSyntax>()
             .Single(creation => TypeName(creation.Type) == viewModelType);

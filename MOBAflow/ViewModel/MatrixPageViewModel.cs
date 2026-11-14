@@ -20,8 +20,8 @@ using Windows.UI;
 
 public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 {
-    private readonly ISolutionSession? solutionSession;
-    private readonly ILogger<MatrixPageViewModel>? logger;
+    private readonly ISolutionSession solutionSession;
+    private readonly ILogger<MatrixPageViewModel> logger;
     private bool isLoading;
     private bool isDisposed;
 
@@ -33,14 +33,11 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
     public ObservableCollection<ViewModel5x5> Matrices { get; } = [];
 
-    public MatrixPageViewModel()
-    {
-        SelectedColorBrush = new SolidColorBrush(SelectedColor);
-    }
-
     public MatrixPageViewModel(ISolutionSession solutionSession, ILogger<MatrixPageViewModel> logger)
-        : this()
     {
+        ArgumentNullException.ThrowIfNull(solutionSession);
+        ArgumentNullException.ThrowIfNull(logger);
+        SelectedColorBrush = new SolidColorBrush(SelectedColor);
         this.solutionSession = solutionSession;
         this.logger = logger;
         this.solutionSession.SolutionLoaded += OnSolutionLoaded;
@@ -106,7 +103,7 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
             Matrices.Clear();
 
-            var project = solutionSession?.SelectedProject?.Model;
+            var project = solutionSession.SelectedProject?.Model;
             if (project != null)
             {
                 project.Matrices ??= [];
@@ -127,7 +124,7 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
     private void SaveMatricesToProject()
     {
-        var project = solutionSession?.SelectedProject?.Model;
+        var project = solutionSession.SelectedProject?.Model;
         if (project == null)
         {
             return;
@@ -173,7 +170,7 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
     private void QueueSaveSolution()
     {
-        solutionSession?.SaveSolutionInternalAsync().Observe(ex => logger?.LogWarning(ex, "Auto-save matrix changes failed"));
+        solutionSession.SaveSolutionInternalAsync().Observe(ex => logger.LogWarning(ex, "Auto-save matrix changes failed"));
     }
 
     public void Dispose()
@@ -185,11 +182,8 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
         isDisposed = true;
 
-        if (solutionSession != null)
-        {
-            solutionSession.SolutionLoaded -= OnSolutionLoaded;
-            solutionSession.PropertyChanged -= OnSolutionSessionPropertyChanged;
-        }
+        solutionSession.SolutionLoaded -= OnSolutionLoaded;
+        solutionSession.PropertyChanged -= OnSolutionSessionPropertyChanged;
 
         foreach (var matrix in Matrices)
         {

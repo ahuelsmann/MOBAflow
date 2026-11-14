@@ -153,7 +153,7 @@ dependencies.
 | RF-22 | [#187](https://github.com/ahuelsmann/MOBAflow/issues/187) | ViewModels send runtime commands through one port without compatibility facades or local fallbacks. |
 | RF-23 | [#191](https://github.com/ahuelsmann/MOBAflow/issues/191) | A dedicated solution session owns the loaded solution, selection, dirty state and auto-save. |
 | RF-24 | [#219](https://github.com/ahuelsmann/MOBAflow/issues/219) | `MainWindowViewModel` is a shell; each page area has its own focused ViewModel. |
-| RF-25 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Constructors declare real dependencies; no hidden optional services, fallbacks or mutable static hooks. |
+| RF-25 | [#318](https://github.com/ahuelsmann/MOBAflow/issues/318) | Constructors declare real dependencies; no hidden optional services, fallbacks or mutable static hooks. |
 | RF-26 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | `Common` is split by responsibility: shared contracts, host-owned UI settings and presentation helpers. |
 | RF-27 | [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) | Domain classes own the rules and state transitions that need only domain data. |
 | RF-28 | [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
@@ -351,21 +351,20 @@ nothing because MOBAsmart does not register the shell and is removed by
 
 ### RF-25: Explicit dependencies
 
-Proceed project by project, starting with `Backend` and ending with the hosts:
-
-1. make optional constructor dependencies required and register the needed
-   null objects in the host;
-2. remove `?? new` fallbacks and convenience constructors such as the second
-   `MobaRuntimeService` and `JourneyManagerFactory` constructors;
-3. stop ViewModels from creating Backend services such as `WorkflowValidator`
-   or receiving the runtime `ActionExecutionContext`; inject the narrow service
-   they need instead;
-4. replace mutable static hooks such as `LanIpv4AddressHelper.AugmentAddresses`
-   and `SegmentPlanPathBuilder.ScaleMmToPx` with injected services;
-5. let the existing DI container validators cover every changed registration.
-
-Acceptance anchor: constructors show every real dependency; tests use explicit
-fakes; the DI validators for WinUI and MAUI pass.
+Complete with slice 5. Child issue [#318](https://github.com/ahuelsmann/MOBAflow/issues/318) owns this package and
+closes when slice 5 is merged (slice 1 workflow execution and validation #325, 2 runtime composition #330,
+3 static hooks #335, 4 SharedUI ViewModels #414, 4b SharedUI ViewModel remainder #435, 4c hosts, pages, Backend,
+speech and display #447, 5 container validation and last remainders #450). Its
+[child plan](318-explicit-dependencies.md) records each slice's result and is removed in the close-out after that
+merge. Outcome: every constructor names the services it needs, hosts register them (null objects where a host has
+no implementation) and tests pass explicit fakes; no service-typed optional parameter, `?? new` service fallback,
+`GetService` lookup with a fallback branch or mutable static hook remains in production code, and ViewModels neither
+create Backend services nor receive the runtime `ActionExecutionContext`. Container tests resolve every
+registration of the shared backend collection, of the WinUI host (except the XAML window and pages, which need a
+running app) and of the platform-neutral MOBAsmart composition, which moved from the Android-only app into
+`SharedUI/Extensions/MobileServiceCollectionExtensions.cs` so that the portable test target can build it.
+Left optional on purpose: value options and data defaults as classified in the child plan, and the logger of
+`SignalBoxCanvasControl`, which XAML creates before its page can attach one.
 
 ### RF-26: Split `Common` by responsibility
 
