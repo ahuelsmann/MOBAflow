@@ -2,7 +2,7 @@
 
 MOBAflow uses [GitHub Spec Kit](https://github.com/github/spec-kit) for
 specification-driven feature development. The repository is initialized with
-Spec Kit 1.1.3, the Codex skills integration, and PowerShell workflow scripts.
+Spec Kit 1.4.0, the Codex skills integration, and PowerShell workflow scripts.
 
 ## Install the CLI
 
@@ -10,7 +10,7 @@ Install `uv`, then install the repository's pinned Spec Kit version:
 
 ```powershell
 winget install --id astral-sh.uv -e
-uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v1.1.3"
+uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v1.4.0"
 specify version
 ```
 
@@ -35,8 +35,9 @@ Use `$speckit-taskstoissues` when an approved task list should be published as
 dependency-ordered GitHub issues. The generated task issues use the `T###:`
 title convention and remain traceable to the originating feature artifacts.
 
-Spec Kit 1.1.3 deprecates this command but still supports it. The command displays
-an upstream warning and continues the existing workflow. Its replacement is the
+Spec Kit 1.4.0 no longer bundles this deprecated command; MOBAflow retains its
+adapted 1.1.3 copy locally. The command displays an upstream warning and continues
+the existing workflow. Its replacement is the
 optional `github` extension; this update does not install or enable extensions.
 Keep using the repository's remote-selection helper until a separate, reviewed
 change adopts the replacement.
@@ -86,7 +87,7 @@ specify check
 ```
 
 `specify integration status` should report `codex` as the default integration
-with no missing or unexplained modified managed files. Issue145 intentionally retains two managed-file adaptations: common.ps1 registry helpers and taskstoissues remote selection. Their upstream manifest hashes are preserved, so status reports two modified files; review these differences rather than hiding them by rewriting hashes. The project-specific template
+with no missing or unexplained modified managed files. The common.ps1 registry helpers remain a local adaptation, so its upstream manifest hash intentionally reports it as modified. The retained taskstoissues skill is no longer upstream-managed. The project-specific template
 overrides under `.specify/templates/overrides/` are intentionally not managed by
 the CLI and survive integration upgrades.
 
@@ -111,14 +112,14 @@ agent workflow.
 
 ## Upgrade Spec Kit
 
-### Isolated update and local adaptations (1.1.3)
+### Isolated update and local adaptations (1.4.0)
 
 Use an isolated CLI without replacing your personal installation:
 
 ```powershell
-uv tool run --from git+https://github.com/github/spec-kit.git@v1.1.3 specify version
-uv tool run --from git+https://github.com/github/spec-kit.git@v1.1.3 specify integration upgrade codex
-uv tool run --from git+https://github.com/github/spec-kit.git@v1.1.3 specify integration status
+uv tool run --from git+https://github.com/github/spec-kit.git@v1.4.0 specify version
+uv tool run --from git+https://github.com/github/spec-kit.git@v1.4.0 specify integration upgrade codex
+uv tool run --from git+https://github.com/github/spec-kit.git@v1.4.0 specify integration status
 ```
 
 Start in the task worktree, retain a reviewed diff/backup and inspect generated files before proceeding.
@@ -130,7 +131,7 @@ After an upgrade, reapply and test these two local adaptations:
   Preserve new upstream feature-resolution behavior, including `SPECIFY_FEATURE_NO_PERSIST`.
 - `speckit-taskstoissues/SKILL.md`: use `scripts/Resolve-GitHubRepository.ps1`, not a fixed `origin` URL.
 
-The upstream manifests intentionally report these two files as modified. This is an explained state;
+The upstream manifest intentionally reports common.ps1 as modified. This is an explained state;
 never edit hashes merely to make status look clean. Run `python scripts/Test-AiRepositorySetup.Tests.py`
 and review the two diffs. Refresh skill provenance and the pinned version together.
 
