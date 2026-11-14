@@ -73,6 +73,25 @@ public partial class MainWindowViewModel
         await _runtimeCommandGateway.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Applies the position of the status bar's track power switch. The switch also follows the runtime
+    /// snapshots, so a position that already matches <see cref="IsTrackPowerOn"/> is that synchronization
+    /// and sends no command.
+    /// </summary>
+    [RelayCommand]
+    private void ApplyTrackPowerSwitch(bool isOn)
+    {
+        if (isOn == IsTrackPowerOn)
+        {
+            return;
+        }
+
+        if (SetTrackPowerCommand.CanExecute(isOn))
+        {
+            SetTrackPowerCommand.Execute(isOn);
+        }
+    }
+
     private bool CanConnect() => !IsConnected;
     private bool CanDisconnect() => IsConnected;
     private bool CanToggleTrackPower() => IsOperationalControlEnabled;
