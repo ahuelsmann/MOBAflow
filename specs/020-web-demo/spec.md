@@ -6,7 +6,7 @@
 
 **Created**: 2026-11-14
 
-**Status**: Draft; clarified where the issue, the repository and the recorded decisions settle a question. Ten questions are open for the maintainer (see [Open questions](#open-questions-for-the-maintainer)). No plan, no tasks and no implementation exist.
+**Status**: Draft; clarified where the issue, the repository and the recorded decisions settle a question. Eight questions are open for the maintainer (see [Open questions](#open-questions-for-the-maintainer)). No plan, no tasks and no implementation exist.
 
 **Spec Kit**: Required
 
@@ -40,12 +40,14 @@
 
 ### Session 2026-11-14 (maintainer decisions)
 
-The first decision is recorded in #430 by the maintainer. The following three reached this specification through the Chief Operating Officer session, which reports them as maintainer decisions of 2026-11-14; they are recorded here as such and are confirmed or corrected by the maintainer in the review of this specification.
+The first decision is recorded in #430 by the maintainer. The following five reached this specification through the Chief Operating Officer session, which reports them as maintainer decisions of 2026-11-14; they are recorded here as such and are confirmed or corrected by the maintainer in the review of this specification.
 
 - Q: Where is the demo hosted? → A: Azure App Service `mobaflow-demo.azurewebsites.net`, Free tier F1, region France Central, ASP.NET Core on .NET 10 under Linux, prepared by the Technical Director.
 - Q: How closely does the web UI follow MOBAflow's look? → A: As close as possible to the WinUI pages, in Light and Dark like the app. The four pages stay: Train Control, Workflows, Track Plan, Signal Box.
 - Q: What does the status bar show? → A: The layout and position of the WinUI status bar with demo texts instead of host details: no local solution path, no REST API port, no machine or host details.
 - Q: Are the navigation items outside the demo hidden or disabled? → A: Shown greyed out (disabled), not hidden, in the same order and grouping as the WinUI navigation; a visitor can see why an item is unavailable.
+- Q: Which page opens first? → A: Train Control with a flagship sample locomotive preselected.
+- Q: What happens in a browser window narrower than 1024 pixels? → A: The demo keeps the desktop geometry (minimum width 1024 pixels, horizontal scrolling) with a dismissible notice "Desktop UI demo - best on a screen at least 1024 px wide". There is no stacked mobile layout.
 
 ### Session 2026-11-14 (Head of UI/UX advice)
 
@@ -176,7 +178,7 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - The daily CPU or bandwidth quota is used up: the platform answers every request with HTTP 403 until midnight UTC. The demo cannot show its own page then (see open question Q8).
 - First request after an idle period: the host starts cold. The visitor sees a loading state, not an empty or broken shell.
 - The connection to the host drops after the first load: what already runs in the browser keeps working; anything that needs the host fails with an Info or Warning entry in the Messages bar, not silently.
-- A browser window narrower than the supported width (see open question Q7).
+- A browser window narrower than 1024 pixels: the desktop layout stays, with horizontal scrolling and the dismissible notice (FR-033).
 - A visitor with reduced-motion preference: gauges do not animate, flashing aspects do not flash (FR-046).
 - A visitor without JavaScript: the page states that the demo needs JavaScript.
 - A request for an address that belongs to MOBApi's runtime contract (for example a runtime command or hub path): the demo host does not serve it.
@@ -215,6 +217,9 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **FR-030**: No status bar text and no other UI text, tooltip, message, page source comment or error message MUST expose a host path, port, machine name, internal address or real endpoint.
 - **FR-031**: The Messages bar MUST show its error, warning and information counters and one pre-populated Info entry on the first visit: "Interactive web demo: simulated runtime, no hardware connected. Drive locomotives, switch signals or run workflows; use Reset in the top bar at any time." There is no modal dialog and no marketing header.
 
+- **FR-032**: A visitor MUST land on Train Control with a flagship sample locomotive preselected, at speed 0.
+- **FR-033**: The full layout with all panes MUST be shown from a window width of 1280 pixels. From 1024 to 1279 pixels the navigation collapses to its compact rail and side panes may fold. Below 1024 pixels the demo MUST keep the desktop geometry with a minimum width of 1024 pixels and horizontal scrolling and show a dismissible notice "Desktop UI demo - best on a screen at least 1024 px wide"; there is no stacked mobile layout.
+
 **Read-only presentation**
 
 - **FR-035**: Toolbars, catalogues and property panes MUST NOT be hidden. Controls that would change content are shown disabled with the explanation "Editing is disabled in the read-only demo"; property fields are shown read-only at full legibility with a "Read-only in demo" mark.
@@ -250,8 +255,6 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **FR-062**: How many visitors are served at once [NEEDS CLARIFICATION: Q3].
 - **FR-063**: The abuse protection values [NEEDS CLARIFICATION: Q4].
 - **FR-064**: The accent color value [NEEDS CLARIFICATION: Q5].
-- **FR-065**: The page a visitor lands on [NEEDS CLARIFICATION: Q6].
-- **FR-066**: The behavior below the supported window width [NEEDS CLARIFICATION: Q7].
 - **FR-067**: What happens when the daily quota is used up [NEEDS CLARIFICATION: Q8].
 - **FR-068**: The sample content and locomotive photos that may be published [NEEDS CLARIFICATION: Q9].
 - **FR-069**: The deployment trigger [NEEDS CLARIFICATION: Q10].
@@ -283,7 +286,7 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 
 ## Open questions for the maintainer
 
-Each question has a recommended default and the alternatives. Answering with the letters is enough (for example "Q1 A, Q2 A, ...").
+Each question has a recommended default and the alternatives. Answering with the letters is enough (for example "Q1 A, Q2 A, ..."). Q6 (landing page) and Q7 (narrow windows) were decided on 2026-11-14 and are recorded under [Clarifications](#clarifications); the numbers of the other questions are kept.
 
 | # | Question | Recommended default | Alternatives |
 | --- | --- | --- | --- |
@@ -292,13 +295,11 @@ Each question has a recommended default and the alternatives. Answering with the
 | Q3 | **Concurrent visitors.** Is there a limit? | **A** (with Q1 A): no fixed limit; the daily bandwidth is the real ceiling (about 100 first visits per day at the SC-006 target). | **B** (with Q1 B): a fixed cap, for example 20 sessions with polling or 5 with a live connection; further visitors see "The demo is busy, please try again in a few minutes". |
 | Q4 | **Abuse protection.** Which limits apply? | **A:** per source address at most 60 requests per minute and 600 per hour to the host, cacheable static files, no endpoint that writes, standard security headers; with Q1 B additionally one session per source address. | **B:** stricter values (for example 30 per minute). **C:** no application limit, rely on the platform quota only (not recommended: one client can use up the day). |
 | Q5 | **Accent color.** MOBAflow uses the Windows accent of the machine it runs on; the repository defines no magenta. Which fixed value does the demo use? | **A:** the magenta of the maintainer's reference screenshots, taken by value from them and recorded as the demo's accent token. | **B:** Windows' default blue (`#0078D4`), which is what most MOBAflow users see. **C:** follow the visitor's system accent where the browser offers it. |
-| Q6 | **Landing page.** Which page opens first? | **A:** Train Control with a flagship sample locomotive preselected. | **B:** Track Plan. **C:** Overview is not part of the demo, so not available. |
-| Q7 | **Narrow windows.** What happens below 1024 pixels width? | **A:** keep the desktop layout with a minimum width of 1024 pixels and horizontal scrolling, plus a dismissible note "Desktop UI demo - best on a screen at least 1024 px wide". From 1280 pixels the full layout; from 1024 to 1279 pixels the navigation collapses to its compact rail and side panes may fold. | **B:** a stacked mobile layout; it would not look like the WinUI pages and MOBAsmart is the mobile app. |
 | Q8 | **Quota used up.** When the daily CPU or bandwidth quota is exhausted, the platform shows HTTP 403 until midnight UTC. | **A:** accept it for the Free tier and document it on #430 and in the README of `MOBAweb/`. | **B:** move to a paid tier (Basic) if it happens regularly; that also allows a custom domain and Always On. **C:** put a free content delivery service in front for the static files; more setup, another party. |
 | Q9 | **Sample content.** Which shipped data and photos are published? | **A:** the shipped sample solution and track plan (`MOBAflow/solution.json`, `MOBAflow/track-plan.json`) reduced to a few locomotives and workflows, with locomotive photos only where the maintainer confirms the right to publish them; otherwise neutral placeholder images. | **B:** a new, smaller sample made for the demo. |
 | Q10 | **Deployment trigger.** When is the demo deployed? | **A:** manually started workflow first; automatic deployment on changes to `MOBAweb/**` on `main` once the demo is stable. | **B:** automatic from the start. |
 
-Also to confirm in review: the three decisions of 2026-11-14 that reached this specification through the Chief Operating Officer session (design closeness, status bar texts, disabled navigation entries), and the initial theme (FR-021).
+Also to confirm in review: the five decisions of 2026-11-14 that reached this specification through the Chief Operating Officer session (design closeness, status bar texts, disabled navigation entries, landing page, narrow windows), and the initial theme (FR-021).
 
 ## Assumptions
 
