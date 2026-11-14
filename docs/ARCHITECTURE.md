@@ -252,7 +252,7 @@ public interface IWorkflowService
 
 - `SolutionSession` (solution ownership, selection, dirty state and auto-save)
 - MainWindowViewModel (shell: solution new/open/save, Z21 status, host commands, operating state and photo routing)
-- `LayoutPersistenceService` (the single boundary that writes the saved layout)
+- `LayoutPersistenceService` (the single boundary that persists the saved layout)
 - Page-specific ViewModels (JourneyViewModel, WorkflowViewModel, etc.)
 - ViewModels read runtime state through narrow runtime roles and send commands through
   `IRuntimeCommandGateway` (see [Runtime command path](#runtime-command-path))
@@ -550,7 +550,8 @@ runtime services.
 
 **Layout persistence and final shell audit (RF-24 slice 6):**
 
-- `LayoutPersistenceService` (`SharedUI/Service/`) is the only writer of the saved layout. It reads the shared
+- `LayoutPersistenceService` (`SharedUI/Service/`) is the only path that persists the saved layout; pages still
+  set their visual widths on the layout object before they save through it. It reads the shared
   `AppSettings` through `ISettingsService`, loads `LayoutColumnWidthsViewModel` once, applies a change under its
   existing key and persists it with one logged-failure path, offers an awaited save, resets the layouts while
   keeping the tab visibility and owns the Settings page section state (sort mode, expansion, usage, order).

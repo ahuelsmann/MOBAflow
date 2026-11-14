@@ -205,7 +205,6 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             mobaRuntime.Object,
             mobaRuntime.Object,
             new LocalRuntimeCommandGateway(mobaRuntime.Object),
-
             stationEventBus1,
             settingsPage1,
             trainsPage1,

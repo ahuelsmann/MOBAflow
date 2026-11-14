@@ -40,13 +40,7 @@ internal sealed class WinUiAppStartupService
 {
     private static readonly Stopwatch StartupStopwatch = Stopwatch.StartNew();
 
-    private readonly App _app;
     private Window? _startupSplashDismissWindow;
-
-    public WinUiAppStartupService(App app)
-    {
-        _app = app ?? throw new ArgumentNullException(nameof(app));
-    }
 
     /// <summary>
     /// Runs the synchronous launch path: splash dismiss, DI, main window activation.

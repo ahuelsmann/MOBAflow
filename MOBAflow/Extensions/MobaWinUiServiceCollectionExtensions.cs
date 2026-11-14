@@ -306,7 +306,7 @@ public static class MobaWinUiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<LayoutColumnWidthsViewModel>();
-        // The single writer of the saved layout; page ViewModels and pages persist through it.
+        // The single path that persists the saved layout; page ViewModels and pages save through it.
         services.AddSingleton<LayoutPersistenceService>();
         services.AddSingleton<LocomotiveManagementViewModel>();
         services.AddSingleton<LocomotiveTrainUsageViewModel>();

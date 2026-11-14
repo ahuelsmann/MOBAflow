@@ -225,8 +225,8 @@ Rollback is a revert to the preceding validated slice; do not retain a parallel 
 The source starts from main `0a7947a3` (after #425, #433 and #432). Slice 6 adds no user-visible behavior, no
 persisted-format change and no new runtime command; every layout key, default and star-column value is unchanged.
 
-**One layout persistence boundary.** `SharedUI/Service/LayoutPersistenceService.cs` is the only writer of the saved
-layout. It reads the shared `AppSettings` through `ISettingsService`, loads the reused `LayoutColumnWidthsViewModel`
+**One layout persistence boundary.** `SharedUI/Service/LayoutPersistenceService.cs` is the only path that persists the
+saved layout; pages still set their visual widths on the layout object before they save through it. It reads the shared `AppSettings` through `ISettingsService`, loads the reused `LayoutColumnWidthsViewModel`
 once (the shell's constructor did that before), applies a change under its existing key and persists it with one
 logged-failure path (`Persist`), lets a caller await and handle a write (`SaveAsync`), resets the layouts while
 keeping the tab visibility (`ResetAsync`) and owns the Settings page section state (sort mode, expansion, usage and
@@ -278,7 +278,7 @@ column widths or the settings service, and `MainWindow` receives both new page V
 
 Local checks on Windows: the MOBAflow FastDebug compile passed with zero warnings; the Windows suite passed 3,413
 tests and the portable suite 3,297 tests, each with zero failures and zero skips. Both Release analyzer gates match
-exactly: 3,127 diagnostics in 1,117 groups (portable) and 2,446 in 964 (Windows). The portable and Android baselines
+exactly: 3,127 diagnostics in 1,117 groups (portable) and 2,445 in 963 (Windows). The portable and Android baselines
 only drop or lower shell, Settings layout and track-plan entries; the Windows baseline drops the removed behavior
 files' entries and lowers three `MainWindow.xaml.cs` counts; the test baselines add one CA1812 entry per new fixture
 (`LayoutPersistenceServiceTests`, `SolutionPageViewModelTests`) and rename the moved signal-box fixture's entry. The
