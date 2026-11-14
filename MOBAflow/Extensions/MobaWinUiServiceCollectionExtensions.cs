@@ -11,7 +11,6 @@ using Backend.Service.TrackPlan;
 using Common.Configuration;
 using Common.Events;
 using Common.Multiplex;
-using Common.Navigation;
 using Display.Rendering;
 using Display.Runtime;
 using Display.Transport;
@@ -23,6 +22,7 @@ using Microsoft.Extensions.Options;
 using Moba.Backend;
 using Serilog;
 using Service;
+using SharedUI.Configuration;
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Service;
@@ -44,7 +44,7 @@ using View;
 public static class MobaWinUiServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers configuration, AppSettings, and Serilog logging.
+    /// Registers configuration, the settings root (as <see cref="UiSettings"/> and <see cref="AppSettings"/>), and Serilog logging.
     /// </summary>
     public static IServiceCollection AddMobaWinUiConfiguration(
         this IServiceCollection services,
@@ -54,8 +54,9 @@ public static class MobaWinUiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddSingleton(configuration);
-        services.Configure<AppSettings>(configuration);
-        services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
+        services.Configure<UiSettings>(configuration);
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<UiSettings>>().Value);
+        services.AddSingleton<AppSettings>(sp => sp.GetRequiredService<UiSettings>());
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
         return services;
@@ -79,7 +80,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IFeatureTogglePageProvider>(sp =>
             new FeatureTogglePageProvider(
                 sp.GetRequiredService<List<PageMetadata>>(),
-                sp.GetRequiredService<AppSettings>()));
+                sp.GetRequiredService<UiSettings>()));
 
         return services;
     }
@@ -254,7 +255,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddTransient<SignalBoxPropertiesViewModel>();
 
         services.AddSingleton<ISettingsService>(sp => new SettingsService(
-            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ILogger<SettingsService>>()));
 
         return services;
@@ -351,7 +352,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton(sp => new SettingsPageViewModel(
-            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<LayoutPersistenceService>(),
             sp.GetRequiredService<IUiDispatcher>(),
@@ -441,7 +442,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<NavigationService>(),
             sp.GetRequiredService<WinUiWindowContext>(),
             sp.GetRequiredService<List<PageMetadata>>(),
-            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ILogger<WindowActivationService>>(),
             sp.GetRequiredService<ILogger<MainWindow>>()));
 

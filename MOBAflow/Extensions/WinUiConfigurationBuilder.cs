@@ -57,11 +57,11 @@ internal static class WinUiConfigurationBuilder
         var configuration = configBuilder.Build();
 
         Log.Debug(
-            "CONFIG IsTrainControlPageAvailable: {Value}",
-            configuration["FeatureToggles:IsTrainControlPageAvailable"]);
+            "CONFIG TrainControl page available: {Value}",
+            configuration["FeatureToggles:Pages:TrainControl:IsAvailable"]);
         Log.Debug(
-            "CONFIG IsTrackPlanEditorPageAvailable: {Value}",
-            configuration["FeatureToggles:IsTrackPlanEditorPageAvailable"]);
+            "CONFIG TrackPlanEditor page available: {Value}",
+            configuration["FeatureToggles:Pages:TrackPlanEditor:IsAvailable"]);
 
         return configuration;
     }

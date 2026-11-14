@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using SharedUI.Configuration;
 using SharedUI.Interface;
 using SharedUI.TrainControl;
 using System.ComponentModel;
@@ -39,7 +40,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     private DataTemplate? _brakeReleasedTemplate;
 
     private readonly ILocomotiveService _locomotiveService;
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlPage> _logger;
     private List<LocomotiveSeries> _allLocomotives = [];
@@ -53,7 +54,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     public TrainControlPage(
         TrainControlViewModel viewModel,
         ILocomotiveService locomotiveService,
-        AppSettings settings,
+        UiSettings settings,
         ISettingsService settingsService,
         ILogger<TrainControlPage> logger)
     {

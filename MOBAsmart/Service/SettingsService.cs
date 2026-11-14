@@ -1,8 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Common.Configuration;
-
+using SharedUI.Configuration;
 using SharedUI.Interface;
 
 using System.Text.Json;
@@ -13,11 +12,11 @@ using System.Text.Json;
 /// </summary>
 public class SettingsService : ISettingsService
 {
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly string _settingsFilePath;
     private bool _isLoaded;
 
-    public SettingsService(AppSettings settings)
+    public SettingsService(UiSettings settings)
     {
         _settings = settings;
         _settingsFilePath = Path.Combine(FileSystem.AppDataDirectory, "appsettings.json");
@@ -52,7 +51,7 @@ public class SettingsService : ISettingsService
                     return;
                 }
 
-                var loadedSettings = JsonSerializer.Deserialize<AppSettings>(json);
+                var loadedSettings = JsonSerializer.Deserialize<UiSettings>(json);
 
                 if (loadedSettings != null)
                 {
@@ -116,12 +115,12 @@ public class SettingsService : ISettingsService
     /// <summary>
     /// Gets the current application settings.
     /// </summary>
-    public AppSettings GetSettings() => _settings;
+    public UiSettings GetSettings() => _settings;
 
     /// <summary>
     /// Saves settings to appsettings.json file in app data directory.
     /// </summary>
-    public async Task SaveSettingsAsync(AppSettings settings)
+    public async Task SaveSettingsAsync(UiSettings settings)
     {
         try
         {
@@ -140,7 +139,7 @@ public class SettingsService : ISettingsService
     /// </summary>
     public async Task ResetToDefaultsAsync()
     {
-        await SaveSettingsAsync(new AppSettings()).ConfigureAwait(false);
+        await SaveSettingsAsync(new UiSettings()).ConfigureAwait(false);
     }
     #endregion
 

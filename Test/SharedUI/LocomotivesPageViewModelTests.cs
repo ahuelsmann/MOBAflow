@@ -4,7 +4,7 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Backend.Service.Validation;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -21,7 +21,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     private SolutionSession _session = null!;
     private Mock<ISolutionIoService> _io = null!;
     private Mock<ISettingsService> _persistence = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private LocomotivesPageViewModel _page = null!;
     private Mock<Action<string>> _explorer = null!;
     private LocomotiveTrainUsageViewModel _usage = null!;
@@ -44,8 +44,8 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         _session = TestSolutionSessions.Create(new Solution { Projects = [new Project()] }, dispatcher.Object, runtime.Object, _io.Object);
         _session.CurrentSolutionPath = "locomotives-test.json";
         _persistence = new Mock<ISettingsService>();
-        _persistence.Setup(value => value.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-        _settings = new AppSettings();
+        _persistence.Setup(value => value.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
+        _settings = new UiSettings();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _settings.Layout.LocomotivesPage.IsListExpanded = false;
         var detector = new Mock<IDigitalAddressConflictDetector>();

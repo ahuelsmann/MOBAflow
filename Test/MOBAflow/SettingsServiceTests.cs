@@ -3,7 +3,7 @@
 namespace Moba.Test.MOBAflow;
 
 using Microsoft.Extensions.Logging.Abstractions;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.WinUI.Service;
 using System.Text.Json;
 
@@ -19,7 +19,7 @@ internal sealed class SettingsServiceTests
         try
         {
             var path = Path.Combine(directory, "appsettings.json");
-            var settings = new AppSettings();
+            var settings = new UiSettings();
             settings.Z21.AutoConnectRetryIntervalSeconds = 17;
             var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
 
@@ -52,7 +52,7 @@ internal sealed class SettingsServiceTests
         var path = Path.Combine(directory, "appsettings.json");
         try
         {
-            var settings = new AppSettings();
+            var settings = new UiSettings();
             var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
             settings.Speech.ProviderId = "piper";
             settings.Speech.Piper.ExecutablePath = "piper.exe";
@@ -62,7 +62,7 @@ internal sealed class SettingsServiceTests
             settings.Speech.Rate = 3;
             settings.Speech.Volume = 65;
             await service.SaveSettingsAsync(settings).ConfigureAwait(false);
-            var loaded = new AppSettings();
+            var loaded = new UiSettings();
             _ = new SettingsService(loaded, NullLogger<SettingsService>.Instance, path);
             using (Assert.EnterMultipleScope())
             {
@@ -83,6 +83,68 @@ internal sealed class SettingsServiceTests
     }
 
     [Test]
+    public async Task UiSections_SaveAndReloadThroughTheSettingsRoot()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "mobaflow-ui-settings-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "appsettings.json");
+        try
+        {
+            var locomotiveId = Guid.NewGuid();
+            var settings = new UiSettings();
+            var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
+            FeatureToggleRegistry.TrySetPageAvailability(settings.FeatureToggles, FeatureTogglePages.Monitor, value: false);
+            settings.FeatureToggles.Pages[FeatureTogglePages.Trains] = new FeatureTogglePageSettings { Label = string.Empty };
+            settings.Layout.SolutionPage.IsProjectListExpanded = false;
+            settings.WinUiTrainControlHost.SelectedLocomotiveFromProjectId = locomotiveId;
+            settings.Display.Esp32IpAddress = "192.0.2.40";
+            await service.SaveSettingsAsync(settings).ConfigureAwait(false);
+
+            var loaded = new UiSettings();
+            _ = new SettingsService(loaded, NullLogger<SettingsService>.Instance, path);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(loaded.FeatureToggles, FeatureTogglePages.Monitor), Is.False);
+                Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(loaded.FeatureToggles, FeatureTogglePages.Overview), Is.True);
+                Assert.That(FeatureToggleRegistry.GetBadgeLabel(loaded.FeatureToggles, FeatureTogglePages.Monitor), Is.EqualTo("Preview"));
+                Assert.That(FeatureToggleRegistry.GetBadgeLabel(loaded.FeatureToggles, FeatureTogglePages.Trains), Is.Null);
+                Assert.That(loaded.Layout.SolutionPage.IsProjectListExpanded, Is.False);
+                Assert.That(loaded.WinUiTrainControlHost.SelectedLocomotiveFromProjectId, Is.EqualTo(locomotiveId));
+                Assert.That(loaded.Display.Esp32IpAddress, Is.EqualTo("192.0.2.40"));
+            }
+        }
+        finally
+        {
+            File.Delete(path);
+            Directory.Delete(directory);
+        }
+    }
+
+    [Test]
+    public async Task FeatureToggles_RemovedFlatFieldsLoadAsRegistryDefaults()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "mobaflow-old-toggles-" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            await File.WriteAllTextAsync(path, """
+                {"featureToggles":{"isMonitorPageAvailable":false,"trainControlPageLabel":""}}
+                """).ConfigureAwait(false);
+            var settings = new UiSettings();
+            _ = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(settings.FeatureToggles.Pages, Is.Empty);
+                Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings.FeatureToggles, FeatureTogglePages.Monitor), Is.True);
+                Assert.That(FeatureToggleRegistry.GetBadgeLabel(settings.FeatureToggles, FeatureTogglePages.TrainControl), Is.EqualTo("Preview"));
+            }
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
     public async Task SpeechSettings_RemovedFieldsAreIgnoredByProductionLoader()
     {
         var path = Path.Combine(Path.GetTempPath(), "mobaflow-old-speech-" + Guid.NewGuid().ToString("N") + ".json");
@@ -91,7 +153,7 @@ internal sealed class SettingsServiceTests
             await File.WriteAllTextAsync(path, """
                 {"speech":{"speakerEngineName":"PiperTts","piperExecutablePath":"old.exe","piperModelPath":"old.onnx"}}
                 """).ConfigureAwait(false);
-            var settings = new AppSettings();
+            var settings = new UiSettings();
             settings.Speech.ProviderId = "piper";
             _ = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
             using (Assert.EnterMultipleScope())

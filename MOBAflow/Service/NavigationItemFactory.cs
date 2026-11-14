@@ -2,7 +2,7 @@
 
 namespace Moba.WinUI.Service;
 
-using Common.Configuration;
+using SharedUI.Configuration;
 
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -16,11 +16,11 @@ using Moba.WinUI.View;
 /// Factory for creating NavigationViewItems from PageMetadata.
 /// Handles icon creation, badge rendering, and Feature Toggle visibility binding.
 /// </summary>
-public sealed class NavigationItemFactory
+internal sealed class NavigationItemFactory
 {
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
 
-    public NavigationItemFactory(AppSettings settings)
+    public NavigationItemFactory(UiSettings settings)
     {
         _settings = settings;
     }
@@ -177,36 +177,14 @@ public sealed class NavigationItemFactory
     }
 
     /// <summary>
-    /// Gets the badge label from settings.
+    /// Gets the badge label of a feature-toggle page from settings.
     /// </summary>
-    private string GetBadgeLabel(PageMetadata registration)
-    {
-        // Get from FeatureToggleSettings
-        if (string.IsNullOrEmpty(registration.BadgeLabelKey))
-        {
-            return string.Empty;
-        }
-
-        var property = typeof(FeatureToggleSettings).GetProperty(registration.BadgeLabelKey);
-        if (property == null)
-        {
-            return string.Empty;
-        }
-
-        return property.GetValue(_settings.FeatureToggles) as string ?? string.Empty;
-    }
+    private string GetBadgeLabel(PageMetadata registration) =>
+        FeatureToggleRegistry.GetBadgeLabel(_settings.FeatureToggles, registration.FeatureToggleKey) ?? string.Empty;
 
     /// <summary>
-    /// Gets the Feature Toggle value from settings.
+    /// Gets the Feature Toggle value from settings; pages without a registered toggle stay visible.
     /// </summary>
-    private bool GetFeatureToggleValue(string key)
-    {
-        var property = typeof(FeatureToggleSettings).GetProperty(key);
-        if (property == null)
-        {
-            return true; // Default: visible
-        }
-
-        return property.GetValue(_settings.FeatureToggles) as bool? ?? true;
-    }
+    private bool GetFeatureToggleValue(string key) =>
+        FeatureToggleRegistry.GetPageAvailabilityOrDefault(_settings.FeatureToggles, key);
 }

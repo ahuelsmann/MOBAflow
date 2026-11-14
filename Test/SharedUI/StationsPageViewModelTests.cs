@@ -3,7 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -22,7 +22,7 @@ internal sealed partial class StationsPageViewModelTests : IDisposable
     private Mock<IMobaRuntime> _runtime = null!;
     private Mock<ISolutionIoService> _io = null!;
     private Mock<ISettingsService> _persistence = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private WorkflowLibraryViewModel _library = null!;
     private StationsPageViewModel _page = null!;
     private string _lastSaved = string.Empty;
@@ -46,7 +46,7 @@ internal sealed partial class StationsPageViewModelTests : IDisposable
             Workflows = [new Workflow { Name = "Departure" }]
         }] }, dispatcher.Object, _runtime.Object, _io.Object);
         _session.CurrentSolutionPath = "stations-test.json";
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);

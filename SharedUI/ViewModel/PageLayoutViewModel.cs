@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interop;
 
 using System.ComponentModel;
@@ -14,7 +14,7 @@ namespace Moba.SharedUI.ViewModel;
 /// </summary>
 public class PageLayoutViewModel : ObservableObject
 {
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
 
     /// <summary>
     /// Gets the unique key identifying this page.
@@ -26,7 +26,7 @@ public class PageLayoutViewModel : ObservableObject
     /// </summary>
     public Dictionary<string, ColumnViewModel> Columns { get; }
 
-    public PageLayoutViewModel(string pageKey, AppSettings settings)
+    public PageLayoutViewModel(string pageKey, UiSettings settings)
     {
         PageKey = pageKey;
         _settings = settings;

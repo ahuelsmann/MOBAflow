@@ -3,7 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -23,7 +23,7 @@ internal sealed partial class SolutionPageViewModelTests : IDisposable
 
     private SolutionSession _session = null!;
     private Mock<IDialogService> _dialogs = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private Mock<ISettingsService> _persistence = null!;
     private SolutionPageViewModel _page = null!;
     private string? _directory;
@@ -41,7 +41,7 @@ internal sealed partial class SolutionPageViewModelTests : IDisposable
         _dialogs = new Mock<IDialogService>();
         _dialogs.Setup(value => value.ShowConfirmationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string>(), It.IsAny<bool>())).ReturnsAsync(true);
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);

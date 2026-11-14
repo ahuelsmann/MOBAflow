@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Configuration;
+namespace Moba.SharedUI.Configuration;
 
 /// <summary>
 /// Represents the layout state for a single column in a grid layout.

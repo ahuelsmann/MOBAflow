@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
-using Common.Configuration;
 using Common.Extension;
+using SharedUI.Configuration;
 using SharedUI.Interface;
 using SharedUI.Mobile;
 using View;
@@ -11,7 +11,7 @@ using System.ComponentModel;
 public partial class CounterPage
 {
     private readonly ISettingsService _settingsService;
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly MauiViewModel _viewModel;
     private CancellationTokenSource? _pulseAnimationCts;
     private Task? _viewModelInitializationTask;
@@ -20,7 +20,7 @@ public partial class CounterPage
     public CounterPage(
         MauiViewModel viewModel,
         ISettingsService settingsService,
-        AppSettings settings)
+        UiSettings settings)
     {
         _viewModel = viewModel;
         _settingsService = settingsService;

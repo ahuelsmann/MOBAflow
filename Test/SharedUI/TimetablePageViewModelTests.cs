@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -714,7 +714,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object);
         var stationEventBus1 = eventBus;
-        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
+        var settingsPage1 = TestSettingsPages.Create(new UiSettings(), dispatcher.Object);
         var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null);
         var mainWindow = new MainWindowViewModel(
             runtime.Object,

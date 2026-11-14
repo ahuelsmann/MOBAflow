@@ -3,7 +3,7 @@ namespace Moba.Test.Helpers;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
@@ -19,7 +19,7 @@ internal static class TestLayouts
         new(settingsService, new LayoutColumnWidthsViewModel(), logger ?? NullLogger<LayoutPersistenceService>.Instance);
 
     /// <summary>Creates the boundary over the given settings with a settings service whose writes succeed.</summary>
-    public static LayoutPersistenceService Create(AppSettings settings)
+    public static LayoutPersistenceService Create(UiSettings settings)
     {
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);

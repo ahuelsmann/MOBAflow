@@ -4,7 +4,7 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.SharedUI.Interface;
@@ -41,8 +41,8 @@ internal sealed class TrainControlViewModelConnectionTests
     private static TrainControlViewModel CreateTrainControlViewModel(IMobaRuntime runtime, IEventBus eventBus)
     {
         var settingsService = new Mock<ISettingsService>();
-        settingsService.Setup(service => service.GetSettings()).Returns(new AppSettings());
-        settingsService.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        settingsService.Setup(service => service.GetSettings()).Returns(new UiSettings());
+        settingsService.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
 
         return new TrainControlViewModel(
             runtime,

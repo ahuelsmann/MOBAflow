@@ -3,6 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.TrainControl;
 
@@ -14,16 +15,16 @@ using Moq;
 [TestFixture]
 internal sealed class TrainControlSettingsStoreTests
 {
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private Mock<ISettingsService> _settingsService = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _settingsService = new Mock<ISettingsService>();
         _settingsService.Setup(service => service.GetSettings()).Returns(_settings);
-        _settingsService.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        _settingsService.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
     }
 
     [Test]
@@ -44,7 +45,7 @@ internal sealed class TrainControlSettingsStoreTests
             Assert.That(_settings.WinUiTrainControlHost.SelectedLocomotiveFromProjectId, Is.EqualTo(desktopLocomotive));
         }
 
-        _settingsService.Verify(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()), Times.Never);
+        _settingsService.Verify(service => service.SaveSettingsAsync(It.IsAny<UiSettings>()), Times.Never);
     }
 
     [Test]
@@ -85,7 +86,7 @@ internal sealed class TrainControlSettingsStoreTests
     public void Saves_LogAFailureInsteadOfThrowing()
     {
         _settingsService
-            .Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()))
+            .Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>()))
             .ThrowsAsync(new IOException("Expected test failure"));
         var store = new TrainControlSettingsStore(_settingsService.Object, TrainControlHost.WinUi, NullLogger.Instance);
 

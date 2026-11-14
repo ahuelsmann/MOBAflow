@@ -11,7 +11,7 @@ using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -183,7 +183,7 @@ internal sealed class MauiViewModelPerformanceTests
             .Returns(Task.CompletedTask);
         var coordinator = new MobileRuntimeCoordinator(new Mock<IMobaRuntime>().Object, hubMock.Object);
 
-        var settings = new AppSettings
+        var settings = new UiSettings
         {
             RestApi =
             {
@@ -363,7 +363,7 @@ internal sealed class MauiViewModelPerformanceTests
             .Callback(() => snapshotRequested.TrySetResult())
             .Returns(Task.CompletedTask);
 
-        var settings = new AppSettings
+        var settings = new UiSettings
         {
             RestApi = { CurrentIpAddress = "192.168.0.79", Port = 5001, IsConnectionEnabled = true }
         };
@@ -434,12 +434,12 @@ internal sealed class MauiViewModelPerformanceTests
 
     private MauiViewModel CreateViewModel(
         IEventBus eventBus,
-        AppSettings? settings = null,
+        UiSettings? settings = null,
         IRuntimeHubRemoteClient? runtimeHubRemoteClient = null,
         IRuntimeCommandGateway? runtimeCommandGateway = null,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null)
     {
-        var appSettings = settings ?? new AppSettings();
+        var appSettings = settings ?? new UiSettings();
         var mobaRuntimeMock = new Mock<IMobaRuntime>();
         mobaRuntimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
 
@@ -495,12 +495,12 @@ internal sealed class MauiViewModelPerformanceTests
         return CreateViewModel(eventBus, settings: null, runtimeHubRemoteClient: null);
     }
 
-    private static Mock<ISettingsService> CreateSettingsServiceMock(AppSettings? settings = null)
+    private static Mock<ISettingsService> CreateSettingsServiceMock(UiSettings? settings = null)
     {
-        var appSettings = settings ?? new AppSettings();
+        var appSettings = settings ?? new UiSettings();
         var settingsServiceMock = new Mock<ISettingsService>();
         settingsServiceMock.Setup(service => service.GetSettings()).Returns(appSettings);
-        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         return settingsServiceMock;
     }
 }

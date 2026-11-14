@@ -2,8 +2,8 @@
 namespace Moba.Common.Configuration;
 
 /// <summary>
-/// Application-wide settings loaded from appsettings.json.
-/// Settings are independent of Solution and persisted globally.
+/// Neutral application-wide settings loaded from appsettings.json and read by Backend, speech and the hosts.
+/// Settings are independent of Solution and persisted globally. UI sections live in the SharedUI settings root.
 /// </summary>
 public class AppSettings
 {
@@ -38,35 +38,9 @@ public class AppSettings
     public HealthCheckSettings HealthCheck { get; set; } = new();
     /// <summary>
     /// Shared train control settings (speed ramp, DCC steps, locomotive series).
-    /// Locomotive picker selection is stored per host in <see cref="WinUiTrainControlHost"/>
-    /// and <see cref="MauiTrainControlHost"/>.
+    /// The locomotive picker selection is host UI state in the SharedUI settings root.
     /// </summary>
     public TrainControlSettings TrainControl { get; set; } = new();
-
-    /// <summary>
-    /// MOBAflow-only train control UI state (e.g. active locomotive picker selection).
-    /// </summary>
-    public TrainControlHostSettings WinUiTrainControlHost { get; set; } = new();
-
-    /// <summary>
-    /// MOBAsmart-only train control UI state (e.g. active locomotive picker selection).
-    /// </summary>
-    public TrainControlHostSettings MauiTrainControlHost { get; set; } = new();
-    /// <summary>
-    /// Feature toggles for experimental/preview features (WinUI only).
-    /// This setting is optional - if not present in appsettings.json, defaults to new FeatureToggleSettings().
-    /// </summary>
-    public FeatureToggleSettings FeatureToggles { get; set; } = new();
-
-    /// <summary>
-    /// Layout settings for UI panels and splitters (persisted per user).
-    /// </summary>
-    public LayoutSettings Layout { get; set; } = new();
-
-    /// <summary>
-    /// Display page settings (ESP display transport/UI preferences).
-    /// </summary>
-    public DisplaySettings Display { get; set; } = new();
 
     /// <summary>
     /// Signal Box / Viessmann Multiplex signal settings.
