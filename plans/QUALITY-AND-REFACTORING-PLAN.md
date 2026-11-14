@@ -180,9 +180,14 @@ The deliverable inventory, decisions and delivery slices now belong to
 
 ### RF-08: Compile MAUI XAML bindings
 
-The inventory, decisions and delivery slices now belong to
-[the RF-08 child plan](357-maui-compiled-bindings.md), owned by
-[issue #357](https://github.com/ahuelsmann/MOBAflow/issues/357).
+Complete after slice 3. Child issue [#357](https://github.com/ahuelsmann/MOBAflow/issues/357) owns this package
+(slice 1 #358, slice 2 #423, slice 3 the warnings-as-errors gate); the inventory, decisions and slices are in
+[the RF-08 child plan](357-maui-compiled-bindings.md) until it is removed after closure. Outcome: project-owned
+MOBAsmart XAML compiles its bindings, including those with a `Source`, and `MOBAsmart.csproj` turns an uncompiled or
+unresolvable binding (`XC0022`, `XC0025`, `XC0045`) into a build error in every configuration; the Android Release
+lane runs on every pull request that changes `MOBAsmart/**`. The function toggles and the other rebound controls
+were not inspected on a device; since 2026-11-06 that is no closure gate, and problems found in use are reported as
+bugs.
 
 ### RF-09: Coverage and mutation ratchets
 
@@ -437,9 +442,15 @@ CI runs every test project.
 
 ### RF-31: Reduce the remaining oversized classes
 
-The inventory, decisions and delivery slices now belong to
-[the RF-31 child plan](349-oversized-classes.md), owned by
-[issue #349](https://github.com/ahuelsmann/MOBAflow/issues/349).
+Complete with slice 5. [Issue #349](https://github.com/ahuelsmann/MOBAflow/issues/349) owns this package;
+[the RF-31 child plan](349-oversized-classes.md) holds the inventory, the decisions and what each slice moved
+(slice 1 recording validation and drop bookkeeping #350, 2 recording control entries and artifact import #353,
+3-4 signal-box properties and Help page #354, 5 main window). Outcome: the recording session and the artifact
+import are split by responsibility behind their existing APIs, and the code-behind of the signal-box properties,
+the Help page and the main window keeps view lifecycle and visual adaptation. Slice 5 moved the host work behind
+the main window (REST API status polling, speech health checks, the runtime observers and their shutdown) into
+`MainWindowLifecycleService` and the track power switch decision into the shell; the window keeps its chrome,
+navigation frame, theme and the order of its own shutdown steps.
 
 ## Spec Kit classification of RF-19 through RF-31
 

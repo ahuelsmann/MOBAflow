@@ -21,6 +21,9 @@ Preserve the existing shared runtime and mobile local/remote coordination.
   at runtime. Verify the `MauiImage` items instead of assuming file paths.
 - Use `Background` for brush/gradient values. `BackgroundColor` remains appropriate where the existing control
   expects a color; do not mechanically replace it in unrelated views.
+- Bindings are compiled. Declare `x:DataType` on the page, template or self-bound control (its own type on the root
+  element for `Source={x:Reference ...}` bindings). `MOBAsmart.csproj` treats `XC0022`, `XC0025` and `XC0045` as
+  build errors; fix the binding, do not add the code to `NoWarn`.
 
 ## Threading and platform services
 

@@ -244,7 +244,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1031",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 5
+      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -1161,7 +1161,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 11
+      "count": 7
     },
     {
       "project": "MOBAflow",
@@ -1553,7 +1553,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 4
+      "count": 2
     },
     {
       "project": "MOBAflow",
@@ -1932,13 +1932,6 @@
       "ruleId": "IDE0028",
       "path": "MOBAflow/ViewModel/TrainClassViewModel.cs",
       "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0053",
-      "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 2
     },
     {
       "project": "MOBAflow",
@@ -3449,6 +3442,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAflow/MainWindowLifecycleServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs",
       "count": 1
     },
@@ -3660,6 +3660,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/MainWindowViewModelShutdownTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/MainWindowViewModelTrackPowerSwitchTests.cs",
       "count": 1
     },
     {
