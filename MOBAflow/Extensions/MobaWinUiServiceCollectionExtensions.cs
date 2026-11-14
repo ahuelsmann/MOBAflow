@@ -371,11 +371,11 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<JourneysPageViewModel>();
         services.AddSingleton<TrainsPageViewModel>();
         // OverviewPage and the Event Manager share the counter state; MonitorPage owns the traffic monitor.
-        // No shell surface binds either, so MainWindow disposes both at shutdown.
+        // No shell surface binds either, so MainWindowLifecycleService disposes both at shutdown.
         services.AddSingleton<InPortCounterViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
         // The Solution and Signal Box page states are created with the main window, so the signal-box runtime
-        // projection runs from start-up; MainWindow disposes them too.
+        // projection runs from start-up; MainWindowLifecycleService disposes them too.
         services.AddSingleton<SolutionPageViewModel>();
         services.AddSingleton<SignalBoxPageViewModel>();
         // The main window binds the Messages pane and the status bar to these two; the shell exposes and disposes them.
@@ -418,19 +418,30 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IRuntimeRoutingState>(),
             options: sp.GetRequiredService<TrainControlViewModelOptions>()));
 
+        // The host work behind the main window; resolved with it, so the runtime observers exist from start-up.
+        services.AddSingleton(sp => new MainWindowLifecycleService(
+            new ShellShutdownWorkflow(
+                sp.GetRequiredService<MainWindowViewModel>().PrepareForShutdownAsync,
+                (IDisposable[])
+                [
+                    sp.GetRequiredService<InPortCounterViewModel>(),
+                    sp.GetRequiredService<MonitorPageViewModel>(),
+                    sp.GetRequiredService<SolutionPageViewModel>(),
+                    sp.GetRequiredService<SignalBoxPageViewModel>()
+                ]),
+            sp.GetRequiredService<SystemStatusViewModel>(),
+            sp.GetRequiredService<RestApiStatusService>(),
+            sp.GetRequiredService<RestApiProcessService>(),
+            sp.GetRequiredService<HealthCheckService>(),
+            sp.GetRequiredService<IUiDispatcher>(),
+            sp.GetRequiredService<ILogger<MainWindowLifecycleService>>()));
         services.AddSingleton(sp => new MainWindow(
             sp.GetRequiredService<MainWindowViewModel>(),
-            sp.GetRequiredService<InPortCounterViewModel>(),
-            sp.GetRequiredService<MonitorPageViewModel>(),
-            sp.GetRequiredService<SolutionPageViewModel>(),
-            sp.GetRequiredService<SignalBoxPageViewModel>(),
+            sp.GetRequiredService<MainWindowLifecycleService>(),
             sp.GetRequiredService<NavigationService>(),
-            sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<WinUiWindowContext>(),
             sp.GetRequiredService<List<PageMetadata>>(),
             sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<RestApiStatusService>(),
-            sp.GetRequiredService<RestApiProcessService>(),
             sp.GetRequiredService<ILogger<WindowActivationService>>(),
             sp.GetRequiredService<ILogger<MainWindow>>()));
 
@@ -446,12 +457,11 @@ public static class MobaWinUiServiceCollectionExtensions
 
         services.AddSingleton(sp =>
         {
-            var window = sp.GetRequiredService<MainWindow>();
-            var healthChecks = sp.GetRequiredService<HealthCheckService>();
-            // The host owns attaching health events to its window; startup only invokes that action.
+            var lifecycle = sp.GetRequiredService<MainWindowLifecycleService>();
+            // The lifecycle service owns attaching health events to the status bar; startup only invokes that action.
             return new PostStartupInitializationService(
                 sp.GetRequiredService<IEventBus>(),
-                () => window.InitializeHealthChecks(healthChecks),
+                lifecycle.InitializeHealthChecks,
                 sp.GetRequiredService<JourneysPageViewModel>(),
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<MasterDataStore>(),

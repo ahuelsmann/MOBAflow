@@ -510,7 +510,7 @@ runtime services.
 - The Counter shell partial, the shell's traffic region, its `ITrafficMonitor` dependency and the Monitor
   layout members are removed. The shell keeps the Z21 status and telemetry projection (`MainCurrent`,
   `Temperature`, `SupplyVoltage`, `VccVoltage` next to serial, firmware and hardware type) and the journey
-  runtime projection. No shell surface binds the counter or monitor state, so `MainWindow` disposes both
+  runtime projection. No shell surface binds the counter or monitor state, so `MainWindowLifecycleService` disposes both
   host instances once the shell confirmed shutdown and before the runtimes stop, through the callback of
   `MainWindowViewModel.PrepareForShutdownAsync`; a cancelled shutdown keeps them subscribed. MOBAsmart keeps its own counter projection in `MauiViewModel`.
 
@@ -529,8 +529,8 @@ runtime services.
   session and the shared `SettingsPageViewModel`. It subscribes `PostStartupStatusEvent`, `RestApiStatusChangedEvent`
   and `MobaflowSyncDiagnosticsChangedEvent`, resets the speech health to Initializing when `SelectedSpeechProviderId`
   changes, evaluates `HasActiveProject` from the session and recomputes the solution-loaded status on the session's
-  `CurrentSolutionPath` and `SelectedProject` changes. `MainWindow` forwards the health-check results to
-  `SystemStatus.UpdateHealthStatus`.
+  `CurrentSolutionPath` and `SelectedProject` changes. `MainWindowLifecycleService` forwards the health-check
+  results to `SystemStatus.UpdateHealthStatus`.
 - Startup progress (issue 428): the REST API row and the RuntimeHub host, solution sync, REST cache and hub
   broadcast rows have an `...IsPending` state that the Overview shows as a progress ring with words for what the
   row waits for. A row waits while the REST API starts (`RestApiStatusChangedEvent.IsStarting`, at most 30 s of
@@ -564,13 +564,32 @@ runtime services.
 - `SolutionPageViewModel` owns project creation and deletion (confirmation, backup) and the Solution page
   expansion; `SignalBoxPageViewModel` owns the Signal Box page expansion, the ordered editor changes (runtime
   project refresh, signal aspect through the gateway, save) and the projection of runtime signal-box state onto
-  the selected plan. `MainWindow` receives both so they exist from start-up and disposes them, with the counter
-  and monitor state, once the shell confirmed shutdown. `TrackPlanPage` binds `ISolutionSession` for its save status.
+  the selected plan. `MainWindowLifecycleService` receives both so they exist from start-up and disposes them,
+  with the counter and monitor state, once the shell confirmed shutdown. `TrackPlanPage` binds `ISolutionSession` for its save status.
 - The unused `GridColumnResizeBehavior` and its visual-tree search for the shell are removed; pages resize with
   the toolkit `GridSplitter`.
 - The shell keeps solution new/open/save with the stop-trains confirmation, shutdown, the Z21 status and
   telemetry projection, the journey runtime projection, host command forwarding, the operating state and
   uploaded-photo routing. It no longer takes `ISettingsService` or the column widths.
+
+**Main window lifecycle (RF-31 slice 5):**
+
+- `MainWindowLifecycleService` (`MOBAflow/Service/`) is the host singleton for the work behind the main window.
+  It is resolved with the window, so the counter, traffic monitor, Solution page and signal-box projection it
+  receives as runtime observers exist from start-up. It starts REST API status polling after the deferred UI
+  startup, pauses and resumes it on window activation, starts the speech health checks for
+  `PostStartupInitializationService` and marshals their results through `IUiDispatcher` to the host
+  `SystemStatusViewModel`. The composition root hands it the shell's shutdown workflow and the observers as a `ShellShutdownWorkflow`, so it
+  does not depend on `MainWindowViewModel`.
+- Shutdown has two steps the window orders: `ConfirmShutdownAsync` runs the shell workflow and releases the
+  runtime observers through its callback (a cancelled shutdown keeps them subscribed, a failed workflow is
+  logged and still closes); after the window detached its own events, `StopAsync` releases the observers again
+  as a safety net and stops the REST API status service, the MOBApi process and the health checks, logging a
+  failing step and running the next one.
+- `MainWindow.xaml.cs` keeps window lifecycle and visuals: title bar and sizing, the navigation menu and frame,
+  the page tag it reports to the shell, the Z21 status refresh command on activation, the requested theme, the
+  track power icon opacity and its event subscriptions. The track power switch forwards its position to `ApplyTrackPowerSwitchCommand`; the shell
+  ignores a position that already matches the runtime snapshot and otherwise executes `SetTrackPowerCommand`.
 
 **Settings presentation (RF-24 slice 1):**
 
@@ -735,8 +754,8 @@ and must not dispatch again.
 Callbacks outside the decorated bus are separate threading boundaries. Inspect
 their actual execution context before changing UI-bound state; use the existing
 dispatcher adapter or platform bridge where needed. Examples include raw Z21
-callbacks, timers, file-load completions and health-status callbacks from
-`MOBAflow/View/MainWindow.xaml.cs`. Do not assume every asynchronous continuation
+callbacks, timers, file-load completions and health-status callbacks in
+`MOBAflow/Service/MainWindowLifecycleService.cs`. Do not assume every asynchronous continuation
 is a background callback, or introduce platform UI types into shared logic.
 
 ---
