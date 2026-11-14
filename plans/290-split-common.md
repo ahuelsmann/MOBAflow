@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/290
 **Spec Kit**: Not applicable - structural refactoring; the only persisted-format change is the internal feature-toggle collection, loaded with defaults per repository policy
-**Status**: Active; slices 1 and 3 integrated through #295; slice 4a (runtime contracts, #310) and slice 4b (discovery) in review; slice 2 waits for RF-24 slice 6
+**Status**: Active; slices 1 and 3 integrated through #295; slice 4a (runtime contracts, #310) and slice 4b (discovery) in review; slice 2 can start: RF-24 is complete since 2026-11-14 (#442, #445)
 
 ## Purpose and scope
 
@@ -75,8 +75,9 @@ RF-20 architecture rule for the boundary it creates.
 
 1. **Display appearance helpers.** Move all `Common/Display` types to `SharedUI/Appearance`
    (`Moba.SharedUI.Appearance`); architecture rule: `Common` contains no `Display` namespace.
-2. **UI settings and navigation.** Starts after RF-24 slice 6 (#219), which centralizes layout persistence
-   in one boundary; moving the layout types earlier would churn the shell partials RF-24 removes.
+2. **UI settings and navigation.** Its start condition is met: RF-24 slice 6 (#219, integrated through #442 on
+   2026-11-14) centralized layout persistence in `LayoutPersistenceService` and removed the shell partials that
+   an earlier move of the layout types would have churned.
    Introduce the `SharedUI` settings root, move layout, tab visibility, feature toggles,
    `FeatureToggleRegistry`, navigation types and the train-control host settings, replace the per-page
    toggle properties with the keyed collection and update both `SettingsService` implementations and
