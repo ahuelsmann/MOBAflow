@@ -2328,13 +2328,6 @@
     {
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
-      "ruleId": "CA2008",
-      "path": "MOBAsmart/Service/MobiStartupService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
       "ruleId": "IDE0005",
       "path": "MOBAsmart/MainPage.xaml.cs",
       "count": 1
@@ -2399,21 +2392,7 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "IDE0290",
-      "path": "MOBAsmart/Service/MobiStartupService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "IDE0290",
       "path": "MOBAsmart/Service/SettingsService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "IDE0330",
-      "path": "MOBAsmart/Service/RemoteRuntimeBridge.cs",
       "count": 1
     },
     {

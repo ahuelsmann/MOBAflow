@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.MAUI.Service;
+namespace Moba.SharedUI.Mobile;
 
 using Common.Events;
 using Contracts.Runtime;
 
-using SharedUI.Interface;
+using Interface;
 
 /// <summary>
 /// Bridges remote runtime hub snapshots into the local event bus for shared ViewModels.
@@ -15,7 +15,7 @@ public sealed class RemoteRuntimeBridge : IDisposable
 {
     private const int SnapshotCoalesceMilliseconds = 50;
 
-    private readonly object _snapshotGate = new();
+    private readonly Lock _snapshotGate = new();
     private readonly IRuntimeHubRemoteClient _runtimeHubRemoteClient;
     private readonly IEventBus _eventBus;
     private MobaRuntimeSnapshot? _pendingSnapshot;

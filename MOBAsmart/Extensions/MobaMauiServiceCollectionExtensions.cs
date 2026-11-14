@@ -2,78 +2,45 @@
 
 namespace Moba.MAUI.Extensions;
 
-using Backend;
-using Backend.Interface;
-using Backend.Service;
-using Common.Configuration;
 using Common.Discovery;
-using Common.Events;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Storage;
 using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
-using SharedUI.Mobile;
-using SharedUI.Service;
-using SharedUI.TrainControl;
-using Sound;
-using Speech.Base;
 using View;
 
 /// <summary>
-/// Dependency injection registrations for the MOBAsmart MAUI host.
+/// Dependency injection registrations for the MOBAsmart MAUI host. The Android implementations and the pages are
+/// registered here; <see cref="MobileServiceCollectionExtensions.AddMobaMobileServices"/> in SharedUI registers
+/// the platform-neutral runtime, ViewModels and startup service, where a portable test resolves them.
 /// </summary>
 public static class MobaMauiServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers platform-specific services required before backend and ViewModel wiring.
+    /// Registers logging, the Android platform services and the platform-neutral mobile composition.
     /// </summary>
     public static IServiceCollection AddMobiPlatformServices(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.AddLogging();
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
         services.AddSingleton<IBackgroundService, BackgroundService>();
-        services.AddEventBusWithUiDispatch();
-
-        return services;
-    }
-
-    /// <summary>
-    /// Registers configuration, logging, null audio implementations, and shared backend services.
-    /// </summary>
-    public static IServiceCollection AddMobiConfiguration(this IServiceCollection services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-
-        services.AddSingleton<AppSettings>();
-        services.AddSingleton<InPortCounterService>(sp => new InPortCounterService(
-            sp.GetRequiredService<IZ21>(), sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<InPortCounterService>>(),
-            InPortCounterPersistence.PerProject(projectId => new FileInPortCounterStore(
-                Path.Combine(FileSystem.AppDataDirectory, "inport-counters", projectId.ToString("N") + ".json")))));
         services.AddSingleton<ISettingsService, SettingsService>();
-        services.AddLogging();
-        services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
-        services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
-        // The phone has no file picker or function-symbol editor; the view models get the null objects.
-        services.AddSingleton<IFilePickerService, NullFilePickerService>();
-        services.AddSingleton<IFunctionAppearancePicker, NullFunctionAppearancePicker>();
-        services.AddSingleton(sp => new SolutionViewModelServices(
-            sp.GetRequiredService<IFilePickerService>(),
-            sp.GetRequiredService<ISoundPlayer>(),
-            sp.GetRequiredService<ILoggerFactory>()));
         services.AddSingleton<NetworkInterfaceIpv4AddressSource>();
+        // Registered before the shared composition, whose backend registration would otherwise add the default source.
         services.AddSingleton<ILocalIpv4AddressSource>(sp =>
             new AndroidLocalIpv4AddressSource(sp.GetRequiredService<NetworkInterfaceIpv4AddressSource>()));
-        services.AddMobaBackendServices();
+        services.AddMobaMobileServices(
+            () => FileSystem.AppDataDirectory,
+            sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient(MobiHttpClientNames.Platform));
 
         return services;
     }
 
     /// <summary>
-    /// Registers LAN discovery, photo upload, Z21 discovery, and named HTTP clients.
+    /// Registers LAN discovery, photo upload, the runtime hub client and named HTTP clients.
     /// </summary>
     public static IServiceCollection AddMobiNetworkServices(this IServiceCollection services)
     {
@@ -82,117 +49,12 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddMobiHttpClients();
         services.AddSingleton<RestApiDiscoveryService>();
         services.AddSingleton<IRestDiscoveryService>(sp => sp.GetRequiredService<RestApiDiscoveryService>());
-        services.AddSingleton<MobaflowEndpointLocator>();
         services.AddSingleton<IPhotoUploadService, PhotoUploadService>();
         services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
-        services.AddSingleton<MobilePhotoUploader>();
         services.AddSingleton<IPhotoUriResolver, MauiPhotoUriResolver>();
         services.AddSingleton<IRestApiClientRegistration, RestApiClientRegistrationService>();
         services.AddSingleton<INetworkProfileChangeNotifier, MauiNetworkProfileChangeNotifier>();
-
-        return services;
-    }
-
-    /// <summary>
-    /// Registers the remote runtime hub, solution sync, and command gateway stack.
-    /// </summary>
-    public static IServiceCollection AddMobiRemoteRuntimeServices(this IServiceCollection services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-
-        services.AddSingletonWithInterface<MobileSolutionContext, IProjectContext>();
-        // The phone controls the Z21 of the project selected on it; it never searches the network for one.
-        services.AddSingleton<IZ21EndpointSource>(sp => new ProjectZ21EndpointSource(
-            () => sp.GetRequiredService<IProjectContext>().SelectedProject?.Model,
-            solution: () => sp.GetRequiredService<IProjectContext>().SolutionViewModel?.Model));
-        services.AddSingleton<IMobileSolutionStore>(sp => new MobileSolutionStore(
-            Path.Combine(FileSystem.AppDataDirectory, "mobile-cache"),
-            sp.GetRequiredService<ILogger<MobileSolutionStore>>()));
         services.AddSingletonWithInterface<RuntimeHubRemoteClient, IRuntimeHubRemoteClient>();
-        services.AddSingleton(sp => new MobaflowHubSession(
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<MobaflowEndpointLocator>(),
-            sp.GetRequiredService<IPhotoUploadService>(),
-            sp.GetRequiredService<TimeProvider>(),
-            sp.GetRequiredService<ILogger<MobaflowHubSession>>(),
-            sp.GetRequiredService<IRuntimeHubRemoteClient>(),
-            sp.GetRequiredService<IRestApiClientRegistration>()));
-        services.AddSingleton<RemoteRuntimeBridge>();
-        services.AddSingleton<MobileRuntimeCoordinator>(sp => new MobileRuntimeCoordinator(
-            sp.GetRequiredService<IMobaRuntime>(),
-            sp.GetRequiredService<IRuntimeHubRemoteClient>()));
-        services.AddSingleton<IMobileRuntimeCoordinator>(sp => sp.GetRequiredService<MobileRuntimeCoordinator>());
-        services.AddSingleton<IRuntimeRoutingState>(sp => sp.GetRequiredService<MobileRuntimeCoordinator>());
-        services.AddSingleton(sp => new MobileRuntimeProjection(
-            sp.GetRequiredService<IRuntimeSnapshotProvider>(),
-            sp.GetRequiredService<IProjectContext>(),
-            sp.GetRequiredService<IMobileRuntimeCoordinator>(),
-            sp.GetRequiredService<IMobileSolutionStore>()));
-        // The mobile coordinator remains the mode owner while recording wraps only explicit command execution.
-        services.AddSingleton(sp => new RecordingRuntimeCommandGateway(
-            sp.GetRequiredService<MobileRuntimeCoordinator>(),
-            sp.GetRequiredService<IRecordingSessionService>()));
-        services.AddSingleton<IRuntimeCommandGateway>(sp => sp.GetRequiredService<RecordingRuntimeCommandGateway>());
-        services.AddSingleton<SolutionRemoteLoader>(sp => new SolutionRemoteLoader(
-            sp.GetRequiredService<IMobaRuntime>(),
-            sp.GetRequiredService<MobileSolutionContext>(),
-            sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<ILogger<SolutionRemoteLoader>>(),
-            sp.GetRequiredService<IHttpClientFactory>().CreateClient(MobiHttpClientNames.Platform),
-            sp.GetRequiredService<IMobileRuntimeCoordinator>(),
-            sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<IMobileSolutionStore>()));
-        services.AddSingleton<ISolutionRemoteLoader>(sp => sp.GetRequiredService<SolutionRemoteLoader>());
-        services.AddSingleton(sp => new MobileSolutionSynchronizer(
-            sp.GetRequiredService<ILogger<MobileSolutionSynchronizer>>(),
-            sp.GetRequiredService<ISolutionRemoteLoader>()));
-
-        return services;
-    }
-
-    /// <summary>
-    /// Registers MOBAsmart ViewModels.
-    /// </summary>
-    public static IServiceCollection AddMobiViewModels(this IServiceCollection services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-
-        services.AddSingleton<MauiViewModel>(sp => new MauiViewModel(
-            sp.GetRequiredService<IRuntimeSnapshotProvider>(),
-            sp.GetRequiredService<IConnectionRuntime>(),
-            sp.GetRequiredService<ITrafficMonitor>(),
-            sp.GetRequiredService<IRuntimeCommandGateway>(),
-            sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<MobaflowEndpointLocator>(),
-            sp.GetRequiredService<MobaflowHubSession>(),
-            sp.GetRequiredService<MobileRuntimeProjection>(),
-            sp.GetRequiredService<MobileSolutionSynchronizer>(),
-            sp.GetRequiredService<MobilePhotoUploader>(),
-            sp.GetRequiredService<INetworkProfileChangeNotifier>(),
-            sp.GetRequiredService<ILogger<MauiViewModel>>(),
-            sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IRuntimeHubRemoteClient>(),
-            sp.GetRequiredService<IMobileRuntimeCoordinator>(),
-            sp.GetRequiredService<IProjectContext>(),
-            sp.GetRequiredService<IBackgroundService>()));
-        services.AddSingleton(new TrainControlViewModelOptions
-        {
-            HybridRuntimeSnapshots = true,
-            Host = TrainControlHost.Maui
-        });
-        services.AddSingleton<TrainControlViewModel>(sp => new TrainControlViewModel(
-            sp.GetRequiredService<IRuntimeSnapshotProvider>(),
-            sp.GetRequiredService<IRuntimeCommandGateway>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<IProjectContext>(),
-            sp.GetRequiredService<ILogger<TrainControlViewModel>>(),
-            sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IFunctionAppearancePicker>(),
-            sp.GetRequiredService<IRuntimeRoutingState>(),
-            options: sp.GetRequiredService<TrainControlViewModelOptions>()));
 
         return services;
     }
@@ -211,18 +73,6 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddTransient<SignalBoxPage>();
         services.AddTransient<EnginePage>();
         services.AddTransient<ControlPage>();
-
-        return services;
-    }
-
-    /// <summary>
-    /// Registers explicit startup services that must be initialized after the container is built.
-    /// </summary>
-    public static IServiceCollection AddMobiStartupServices(this IServiceCollection services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-
-        services.AddSingleton<MobiStartupService>();
 
         return services;
     }
