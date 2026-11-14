@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/318
 **Spec Kit**: Not applicable - structural refactoring without behavior change
-**Status**: In progress; workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330), static hooks (slice 3, #335) and SharedUI ViewModels (slice 4, #414) are integrated. Slice 4b (the SharedUI ViewModel part of the slice 4 remainder) is in review on branch `claude/issue-318-rf25-slice4-remainder`; see [Slice 4b result](#slice-4b-result). Issue #318 remains open for slice 4c (hosts, pages, Backend, speech and display) and slice 5.
+**Status**: In progress; workflow execution and validation (slice 1, #325), runtime composition (slice 2, #330), static hooks (slice 3, #335), SharedUI ViewModels (slice 4, #414) and the SharedUI ViewModel remainder (slice 4b, #435) are integrated. Slice 4c (hosts, pages, Backend, speech and display) is in review on branch `claude/issue-318-rf25-slice4c`; see [Slice 4c result](#slice-4c-result). Issue #318 remains open for slice 5.
 
 ## Purpose and scope
 
@@ -76,7 +76,7 @@ Kept as is: value options with documented defaults (`RecorderOptions`, `Recordin
      `TrainControlViewModel` coordinator fallback, `MainWindowViewModel`, `LocomotiveManagementViewModel`,
      `SettingsPageViewModel` and their host registrations; see [Slice 4b result](#slice-4b-result).
    - **4c. Hosts, pages, Backend, speech and display.** The items listed as remaining under
-     [Slice 4b result](#slice-4b-result).
+     [Slice 4b result](#slice-4b-result); see [Slice 4c result](#slice-4c-result).
 5. **DI validation and completion.** WinUI and MAUI container validators resolve every changed registration (including the executable Android DI test lane described under validation);
    update `docs/ARCHITECTURE.md` where it describes construction, replace the RF-25 anchor in the umbrella plan
    with a delivery note and remove this plan. Slice 5 completes #318 only after slices 4b and 4c have migrated the
@@ -197,6 +197,70 @@ Service lifetimes and user-visible behavior are unchanged.
 - Documentation: `docs/ARCHITECTURE.md` (settings presentation, train control routing) corrected; `docs/wiki/`
   unchanged because no user-visible behavior, setting or screen changed.
 
+## Slice 4c result
+
+Delivered against main `9dcba691` after RF-24 slice 6 (#442), which had already moved layout persistence out of
+the page constructors. Service lifetimes and user-visible behavior are unchanged.
+
+- MOBAflow pages: the 17 page constructors listed under [Slice 4 result](#slice-4-result) require their
+  `ILogger<TPage>`; `SignalBoxPage` also requires the canvas logger and `TrainControlPage` its `ISettingsService`.
+  `NavigationRegistration` resolves the loggers with `GetRequiredService`. The `JourneysPage` factory had passed
+  no logger, so that page now logs a failed layout save on unload like every other page. `SettingsPage` loses the
+  `INavigationService` it never read. Pages are created by XAML and cannot be resolved in a headless test; the
+  FastDebug build and the Windows analyzer gate compile them.
+- MOBAflow services: `RuntimeHubHostClient`, `PhotoHubClient` (found here) and `RestApiStatusService` (found here)
+  require their logger or clock. `RestApiProcessService` loses the `ISettingsService` it never read.
+  `WinUiAppStartupService` resolves `ISettingsService` with `GetRequiredService`; the "skipping auto-load" branch
+  is gone.
+- Speech: `PiperSpeechProvider` requires `IPiperProcessRunner`, `PiperProcessRunner` its clock, and MOBAflow
+  registers the runner. The `AudioCache` registration resolves the clock with `GetRequiredService`.
+- Display: `DisplayProtocolClient` requires its clock. `UdpDisplayDeviceClient` and `UdpDisplayFrameSender` create
+  the protocol client themselves, so their public constructors take the clock and DI supplies it.
+- Backend: `UdpWrapper`, `Z21EventPipeline` and `Z21` require their logger; `Z21` requires its `Z21Monitor`, so
+  `Z21.TrafficMonitor` is never null (`IZ21.TrafficMonitor` stays nullable for other implementations).
+  `LocomotiveWhistleAutomationService` requires its clock. `InPortCounterService` requires clock, logger and an
+  `InPortCounterPersistence` that states where counts are kept: `InMemory`, `InStore(store)` (one counter service
+  per project runtime, MOBAflow) or `PerProject(factory)` (one counter service for all projects, MOBAsmart). It
+  replaces the two optional store parameters; `ProjectRuntimeServices.CounterPersistence` is required and replaces
+  the optional `CounterStoreFactory`. The shared registration defaults to `InMemory` with `TryAdd`. The
+  `ActionExecutionContext` registration resolves `ISpeechOutput` and `ISoundPlayer` with `GetRequiredService`;
+  MOBAflow now registers `WindowsSoundPlayer` with its speech services so the backend group resolves without the
+  shell group.
+- MOBAsmart: `RuntimeHubRemoteClient` requires its logger. `App.xaml.cs` resolves `MauiViewModel` with
+  `GetRequiredService`. The dead `MainActivity.OnDestroy` block and its allowlist entry in
+  `SolutionSessionArchitectureTests` are removed; `Window.Destroying` remains the disconnect on close.
+- `AddEventBusWithUiDispatch` always registers the `RecordingEventBusDecorator` and requires the recording
+  session and mapper registry. Both hosts register the backend services, so their `IEventBus` is unchanged.
+- Optional delegates, classified by the rule under [Design decisions](#design-decisions):
+  - Service, now required: the `CancellableWavePlayer` session factory opens WinMM playback (MOBAflow registers
+    `CancellableWavePlayer.CreateNativeSession`); the `SystemSpeechProvider` default voice reads the registry
+    (MOBAflow registers `SystemSpeechProvider.ReadWindowsDefaultVoice`).
+  - Value, kept: the `BrakeAndDoorState` random source (`Random.Shared.Next`, a pure function of a state object
+    the ViewModel creates); the `ForwardingEventBus` delivery (inline invocation, no I/O); the
+    `ProjectZ21EndpointSource` solution lookup (data access, absent means no cross-project ownership check and
+    nothing is created instead); the `RecordingArtifactSerializer` payload validators (a set that may be empty,
+    DI always passes the registered set) and import limits (limit record).
+- `SystemStatusViewModel` (found here) requires its clock.
+- Tests: `TestRuntimes.Counters` and `TestRuntimes.CreateZ21` build counters and Z21 with explicit clock, logger,
+  persistence and monitor; other construction sites pass `TimeProvider.System` or their fake.
+  `MobaBackendServiceCollectionExtensionsTests` resolves Z21 with its monitor, the counters, the whistle service
+  and the action context, and shows that a missing sound player fails the resolution.
+  `MobaWinUiServiceCollectionExtensionsTests` resolves the speech, hub, REST, status and display services and
+  expects the recording decorator as `IEventBus`.
+- Analyzer baselines: one Windows entry dropped by one (`CA1848` in `WinUiAppStartupService.cs`, removed branch);
+  the Android entries of `MainActivity.cs` are removed with its dead block.
+- Remaining for slice 5, verified on this branch:
+  - The DI validators and the executable MAUI container lane described under
+    [Validation strategy](#validation-strategy); MOBAsmart registrations of this slice are verified by build only.
+  - `MOBAflow/ViewModel/MatrixPageViewModel.cs` keeps a parameterless constructor next to the DI constructor and
+    therefore nullable `ISolutionSession` and logger fields (found here).
+  - `MobaRuntimeServiceDependencies.EndpointSource` keeps its documented default (slice 2): the host's
+    `IZ21EndpointSource` is looked up with `GetService` and the runtime falls back to its active project.
+  - `SignalBoxCanvasControl` keeps a nullable logger field until `SignalBoxPage` attaches the logger, because XAML
+    creates the control.
+- Documentation: `docs/ARCHITECTURE.md` (host audio outputs, EventBus registration, system status clock,
+  solution-session allowlist) and `docs/PROJECT-REFERENCE.md` (counter storage) corrected; `docs/wiki/`
+  unchanged because no user-visible behavior, setting or screen changed.
 ## Validation strategy
 
 Every slice: portable and Windows test suites, the cross-platform, Windows and Android analyzer gates, the

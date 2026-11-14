@@ -76,8 +76,9 @@ public sealed class RestApiStatusService : IAsyncDisposable
         IMobaRuntime mobaRuntime,
         IEventBus eventBus,
         ILogger<RestApiStatusService> logger,
-        TimeProvider? timeProvider = null)
+        TimeProvider timeProvider)
     {
+        ArgumentNullException.ThrowIfNull(timeProvider);
         _httpClient = httpClient;
         _appSettings = appSettings;
         _restApiProcessService = restApiProcessService;
@@ -89,7 +90,7 @@ public sealed class RestApiStatusService : IAsyncDisposable
         _eventBus = eventBus;
         _logger = logger;
         _httpClient.Timeout = TimeSpan.FromSeconds(5);
-        _timer = (timeProvider ?? TimeProvider.System).CreateTimer(
+        _timer = timeProvider.CreateTimer(
             _ => OnPollTimerElapsed(),
             null,
             Timeout.InfiniteTimeSpan,

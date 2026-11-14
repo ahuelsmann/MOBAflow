@@ -62,7 +62,7 @@ internal sealed class RuntimeConstructionTests
     [TestCaseSource(nameof(MissingDependencies))]
     public void Constructor_RejectsAMissingRuntimeDependency(Func<InPortCounterService, object> construct)
     {
-        using var counters = new InPortCounterService(Z21, new AppSettings());
+        using var counters = TestRuntimes.Counters(Z21, new AppSettings());
 
         Assert.Throws<ArgumentNullException>(() => construct(counters));
     }
@@ -72,7 +72,7 @@ internal sealed class RuntimeConstructionTests
     {
         var loggers = new Mock<ILoggerFactory>();
         loggers.Setup(factory => factory.CreateLogger(It.IsAny<string>())).Returns(NullLogger.Instance);
-        using var counters = new InPortCounterService(Z21, new AppSettings());
+        using var counters = TestRuntimes.Counters(Z21, new AppSettings());
         var journeys = new JourneyManagerFactory(Workflows, new JourneyStopTransitionService(),
             new NullJourneyRuntimeStateStore(), Bus, TimeProvider.System, loggers.Object);
         var platforms = new PlatformManagerFactory(Z21, Workflows, loggers.Object);
@@ -90,7 +90,7 @@ internal sealed class RuntimeConstructionTests
     {
         var z21 = new Mock<IZ21>();
         var settings = CountingSettings();
-        using var counters = new InPortCounterService(z21.Object, settings);
+        using var counters = TestRuntimes.Counters(z21.Object, settings);
         using (var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings }))
         {
             await runtime.ActivateProjectAsync(new Project { Journeys = [new Journey { IsActive = true }] }).ConfigureAwait(false);
@@ -107,7 +107,7 @@ internal sealed class RuntimeConstructionTests
     public void JourneyManagerDispose_DisposesItsCoordinatorOnceAndLeavesCountersCounting()
     {
         var z21 = new Mock<IZ21>();
-        using var counters = new InPortCounterService(z21.Object, CountingSettings());
+        using var counters = TestRuntimes.Counters(z21.Object, CountingSettings());
         var coordinator = new Mock<IWorkflowExecutionCoordinator>();
         var manager = TestRuntimes.JourneyManager(z21.Object, new Project(),
             TestRuntimes.JourneyDependencies(counters, coordinator: coordinator.Object));

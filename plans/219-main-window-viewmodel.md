@@ -299,8 +299,8 @@ Sonar on its head:
 2. Mark RF-24 complete in #47 and in the [umbrella plan](QUALITY-AND-REFACTORING-PLAN.md), then remove this
    standalone plan in that same documentation change; the record stays in the closed issues and Git history.
 3. Follow-ups outside RF-24, each for a separate decision: the operating-state badge, InfoBar and acknowledge
-   properties without a binding; the MOBAsmart `MainActivity` shell lookup, which always resolves nothing because
-   MOBAsmart does not register the shell; resetting the observable column widths together with a layout reset.
+   properties without a binding; the MOBAsmart `MainActivity` shell lookup, which always resolved nothing because
+   MOBAsmart does not register the shell (removed by RF-25 slice 4c); resetting the observable column widths together with a layout reset.
 
 ## Slice 5 implementation plan (2026-11-05)
 

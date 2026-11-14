@@ -21,7 +21,7 @@ internal sealed partial class TrainsPage
     public TrainsPageViewModel ViewModel { get; }
 
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<TrainsPage>? _logger;
+    private readonly ILogger<TrainsPage> _logger;
 
     private GridLength _trainsExpandedWidth = new(0.9, GridUnitType.Star);
     private GridLength _locomotiveLibraryExpandedWidth = new(0.8, GridUnitType.Star);
@@ -32,7 +32,7 @@ internal sealed partial class TrainsPage
     public TrainsPage(
         TrainsPageViewModel viewModel,
         LayoutPersistenceService layout,
-        ILogger<TrainsPage>? logger = null)
+        ILogger<TrainsPage> logger)
     {
         ViewModel = viewModel;
         _layout = layout;
@@ -54,7 +54,7 @@ internal sealed partial class TrainsPage
     {
         _ = sender;
         _ = e;
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -67,7 +67,7 @@ internal sealed partial class TrainsPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 

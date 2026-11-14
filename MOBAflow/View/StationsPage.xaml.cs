@@ -12,7 +12,7 @@ using Windows.ApplicationModel.DataTransfer;
 internal sealed partial class StationsPage
 {
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<StationsPage>? _logger;
+    private readonly ILogger<StationsPage> _logger;
 
     public StationsPageViewModel ViewModel { get; }
 
@@ -24,7 +24,7 @@ internal sealed partial class StationsPage
     public StationsPage(
         StationsPageViewModel viewModel,
         LayoutPersistenceService layout,
-        ILogger<StationsPage>? logger = null)
+        ILogger<StationsPage> logger)
     {
         ViewModel = viewModel;
         _layout = layout;
@@ -109,7 +109,7 @@ internal sealed partial class StationsPage
     {
         _ = sender;
         _ = e;
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -122,7 +122,7 @@ internal sealed partial class StationsPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 

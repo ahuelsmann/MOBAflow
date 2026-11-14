@@ -85,25 +85,32 @@ public static class MobaWinUiServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers local synthesis providers and the shared speech output.
+    /// Registers local synthesis providers, the shared speech output and the sound-effect player.
     /// </summary>
     public static IServiceCollection AddMobaWinUiSpeechServices(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.AddSingleton<IPiperProcessRunner, PiperProcessRunner>();
         services.AddSingleton<ISpeechProvider, PiperSpeechProvider>();
-        services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
-        services.AddSingleton<IWavePlayer, CancellableWavePlayer>();
+        services.AddSingleton<ISpeechProvider>(sp => new SystemSpeechProvider(
+            sp.GetRequiredService<AppSettings>(),
+            SystemSpeechProvider.ReadWindowsDefaultVoice));
+        services.AddSingleton<IWavePlayer>(sp => new CancellableWavePlayer(
+            CancellableWavePlayer.CreateNativeSession,
+            sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<IAudioCache>(sp =>
         {
             var settings = sp.GetRequiredService<AppSettings>();
             return new AudioCache(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MOBAflow", "SpeechCache"),
                 () => settings.Speech.CacheSizeLimitMegabytes * 1024L * 1024,
-                sp.GetService<TimeProvider>() ?? TimeProvider.System);
+                sp.GetRequiredService<TimeProvider>());
         });
         services.AddSingleton<SpeechOutput>();
         services.AddSingleton<ISpeechOutput>(sp => sp.GetRequiredService<SpeechOutput>());
+        // Workflow actions play sound effects next to announcements; both outputs belong to the action context.
+        services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
 
         return services;
     }
@@ -162,9 +169,9 @@ public static class MobaWinUiServiceCollectionExtensions
             TimeProvider = sp.GetRequiredService<TimeProvider>(),
             LoggerFactory = sp.GetRequiredService<ILoggerFactory>(),
             // Feedback counters are stored per project.
-            CounterStoreFactory = projectId => new FileInPortCounterStore(
+            CounterPersistence = projectId => InPortCounterPersistence.InStore(new FileInPortCounterStore(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "MOBAflow", "inport-counters", $"{projectId:N}.json"))
+                    "MOBAflow", "inport-counters", $"{projectId:N}.json")))
         });
         services.AddSingleton<ProjectRuntimeFactory>();
         services.AddSingleton<ProjectRuntimeHost>();
@@ -269,7 +276,6 @@ public static class MobaWinUiServiceCollectionExtensions
         // The desktop runs its runtimes itself; it has no remote MOBAflow session to route to.
         services.AddSingleton<IRuntimeRoutingState, NullRuntimeRoutingState>();
 
-        services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
         services.AddSingleton<HealthCheckService>();
 
         services.AddSingleton<IFrameRenderer, SkiaFrameRenderer>();

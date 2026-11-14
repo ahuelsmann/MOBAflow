@@ -16,7 +16,7 @@ internal sealed class FakeDisplayEndpointTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var frame = Enumerable.Range(0, 24).Select(value => (byte)value).ToArray();
         var frameCrc32 = DisplayPacketCodec.ComputeCrc32(frame);
         const uint frameId = 17;
@@ -85,7 +85,7 @@ internal sealed class FakeDisplayEndpointTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var frame = new byte[8];
         var frameCrc32 = DisplayPacketCodec.ComputeCrc32(frame);
         const uint frameId = 23;
@@ -121,7 +121,7 @@ internal sealed class FakeDisplayEndpointTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var priorSession = endpoint.SessionId;
 
         // Act
@@ -145,7 +145,7 @@ internal sealed class FakeDisplayEndpointTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using (var firstClient = new DisplayProtocolClient(endpoint, new DisplayIdentifierSequence(0)))
+        using (var firstClient = new DisplayProtocolClient(endpoint, TimeProvider.System, new DisplayIdentifierSequence(0)))
         {
             await firstClient.SendRequestAsync(
                 new HealthRequestPayload(),
@@ -154,7 +154,7 @@ internal sealed class FakeDisplayEndpointTests
         }
 
         using var secondClient =
-            new DisplayProtocolClient(endpoint, new DisplayIdentifierSequence(0));
+            new DisplayProtocolClient(endpoint, TimeProvider.System, new DisplayIdentifierSequence(0));
 
         // Act
         var outcome = await secondClient.SendRequestAsync(

@@ -172,7 +172,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             mobaRuntime.Object,
             eventBus,
             NullLogger<RestApiStatusService>.Instance,
-            timeProvider);
+            timeProvider ?? TimeProvider.System);
 
         return new TestDependencies(
             statusService,

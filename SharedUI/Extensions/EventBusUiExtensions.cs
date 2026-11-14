@@ -21,7 +21,8 @@ public static class EventBusUiExtensions
 {
     /// <summary>
     /// Registers the EventBus so that Publish executes all handlers on the UI thread.
-    /// Must be called after AddUiDispatcher().
+    /// Must be called after AddUiDispatcher(). The registered <see cref="IEventBus"/> records published events,
+    /// so the host also registers the backend services (recording session and event mapper registry).
     /// </summary>
     public static IServiceCollection AddEventBusWithUiDispatch(this IServiceCollection services)
     {
@@ -32,19 +33,11 @@ public static class EventBusUiExtensions
             new UiThreadEventBusDecorator(
                 sp.GetRequiredService<EventBus>(),
                 sp.GetRequiredService<IUiDispatcher>()));
-        services.AddSingleton<IEventBus>(sp =>
-        {
-            var uiEventBus = sp.GetRequiredService<UiThreadEventBusDecorator>();
-            var recordingSession = sp.GetService<IRecordingSessionService>();
-            var mapperRegistry = sp.GetService<RecordingEventMapperRegistry>();
-            return recordingSession is null || mapperRegistry is null
-                ? uiEventBus
-                : new RecordingEventBusDecorator(
-                    uiEventBus,
-                    recordingSession,
-                    mapperRegistry,
-                    sp.GetRequiredService<ILogger<RecordingEventBusDecorator>>());
-        });
+        services.AddSingleton<IEventBus>(sp => new RecordingEventBusDecorator(
+            sp.GetRequiredService<UiThreadEventBusDecorator>(),
+            sp.GetRequiredService<IRecordingSessionService>(),
+            sp.GetRequiredService<RecordingEventMapperRegistry>(),
+            sp.GetRequiredService<ILogger<RecordingEventBusDecorator>>()));
 
         return services;
     }

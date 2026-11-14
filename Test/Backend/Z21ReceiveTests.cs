@@ -2,6 +2,8 @@
 
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
+
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Model;
@@ -351,7 +353,7 @@ internal sealed class Z21ReceiveTests
 
                 Record(@event);
             });
-            Z21 = new Z21(Udp, eventBus, trafficMonitor: monitor);
+            Z21 = TestRuntimes.CreateZ21(Udp, eventBus, trafficMonitor: monitor);
         }
 
         public FakeUdpClientWrapper Udp { get; } = new();

@@ -25,7 +25,7 @@ using Windows.UI.Core;
 internal sealed partial class WorkflowsPage
 {
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<WorkflowsPage>? _logger;
+    private readonly ILogger<WorkflowsPage> _logger;
 
     public WorkflowsPageViewModel ViewModel { get; }
 
@@ -36,7 +36,7 @@ internal sealed partial class WorkflowsPage
     public WorkflowsPage(
         WorkflowsPageViewModel viewModel,
         LayoutPersistenceService layout,
-        ILogger<WorkflowsPage>? logger = null)
+        ILogger<WorkflowsPage> logger)
     {
         ViewModel = viewModel;
         _layout = layout;
@@ -58,7 +58,7 @@ internal sealed partial class WorkflowsPage
     {
         _ = sender;
         _ = e;
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -71,7 +71,7 @@ internal sealed partial class WorkflowsPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 

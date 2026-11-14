@@ -37,7 +37,7 @@ public sealed class InPortCounterServiceTests
         var z21 = new Mock<IZ21>();
         var clock = new CounterTimeProvider();
         var settings = new AppSettings { Counter = { CountOfFeedbackPoints = 1, UseTimerFilter = true, TimerIntervalSeconds = 10 } };
-        using var counters = new InPortCounterService(z21.Object, settings, clock);
+        using var counters = TestRuntimes.Counters(z21.Object, settings, clock);
         var accepted = 0;
         counters.Counted += (_, _) => accepted++;
         Raise(z21, 1);
@@ -219,7 +219,7 @@ public sealed class InPortCounterServiceTests
     }
 
     private static InPortCounterService CreateCounters(Mock<IZ21> z21, int inputCount = 1) =>
-        new(z21.Object, new AppSettings { Counter = { CountOfFeedbackPoints = inputCount, UseTimerFilter = false } });
+        TestRuntimes.Counters(z21.Object, new AppSettings { Counter = { CountOfFeedbackPoints = inputCount, UseTimerFilter = false } });
 
     internal static void Raise(Mock<IZ21> z21, int inPort) =>
         z21.Raise(source => source.Received += null, CreateFeedback(inPort));

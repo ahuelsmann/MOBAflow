@@ -18,7 +18,7 @@ using System.Runtime.InteropServices;
 internal sealed partial class MonitorPage
 {
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<MonitorPage>? _logger;
+    private readonly ILogger<MonitorPage> _logger;
 
     public MonitorPageViewModel ViewModel { get; }
 
@@ -28,7 +28,7 @@ internal sealed partial class MonitorPage
     public MonitorPage(
         MonitorPageViewModel viewModel,
         LayoutPersistenceService layout,
-        ILogger<MonitorPage>? logger = null)
+        ILogger<MonitorPage> logger)
     {
         ViewModel = viewModel;
         _layout = layout;
@@ -85,7 +85,7 @@ internal sealed partial class MonitorPage
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
         ViewModel.TrafficPackets.CollectionChanged -= OnTrafficPacketsChanged;
         ViewModel.ActivityLogs.CollectionChanged -= OnActivityLogsChanged;
     }
@@ -100,7 +100,7 @@ internal sealed partial class MonitorPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 

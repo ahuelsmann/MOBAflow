@@ -110,6 +110,42 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
         Assert.That(second, Is.SameAs(first));
     }
 
+    [Test]
+    public async Task AddMobaBackendServices_ComposesTransportCountersAndActionContextFromRegisteredServices()
+    {
+        var provider = BuildServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var context = provider.GetRequiredService<ActionExecutionContext>();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<IZ21>().TrafficMonitor,
+                Is.SameAs(provider.GetRequiredService<Z21Monitor>()));
+            Assert.That(provider.GetRequiredService<InPortCounterPersistence>(),
+                Is.SameAs(InPortCounterPersistence.InMemory), "A host without its own counter registration keeps counts in memory.");
+            Assert.That(provider.GetRequiredService<InPortCounterService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<ILocomotiveWhistleAutomationService>(),
+                Is.InstanceOf<LocomotiveWhistleAutomationService>());
+            Assert.That(context.SpeechOutput, Is.SameAs(provider.GetRequiredService<ISpeechOutput>()));
+            Assert.That(context.SoundPlayer, Is.SameAs(provider.GetRequiredService<ISoundPlayer>()));
+        }
+    }
+
+    [Test]
+    public async Task ActionExecutionContext_WithoutTheHostSoundPlayer_FailsInsteadOfRunningWithoutSound()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
+        services.AddSingleton(new AppSettings());
+        services.AddSingleton<IEventBus>(sp => new EventBus(sp.GetRequiredService<ILogger<EventBus>>()));
+        services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
+        services.AddMobaBackendServices();
+        var provider = services.BuildServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+
+        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<ActionExecutionContext>());
+    }
+
     private static ServiceProvider BuildServiceProvider()
         => CreateServiceCollection().BuildServiceProvider();
 

@@ -40,8 +40,8 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
     private readonly ILocomotiveService _locomotiveService;
     private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
-    private readonly ILogger<TrainControlPage>? _logger;
+    private readonly ISettingsService _settingsService;
+    private readonly ILogger<TrainControlPage> _logger;
     private List<LocomotiveSeries> _allLocomotives = [];
 
     // UI element references
@@ -54,12 +54,13 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         TrainControlViewModel viewModel,
         ILocomotiveService locomotiveService,
         AppSettings settings,
-        ISettingsService? settingsService = null,
-        ILogger<TrainControlPage>? logger = null)
+        ISettingsService settingsService,
+        ILogger<TrainControlPage> logger)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
         ArgumentNullException.ThrowIfNull(locomotiveService);
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(settingsService);
 
         ViewModel = viewModel;
         _locomotiveService = locomotiveService;
@@ -166,7 +167,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         UpdateSpeedStepMarkers();
 
         // Load locomotes asynchronously (fire-and-forget with error handling)
-        LoadLocomotivesAsync().Observe(ex => _logger?.LogWarning(ex, "Load locomotive series failed"));
+        LoadLocomotivesAsync().Observe(ex => _logger.LogWarning(ex, "Load locomotive series failed"));
 
         // Initialize AutoSuggestBox with saved locomotive series
         if (!string.IsNullOrEmpty(ViewModel.SelectedLocoSeries))
@@ -188,7 +189,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Failed to load locomotives");
+            _logger.LogWarning(ex, "Failed to load locomotives");
             // Fail silently - app continues with empty list
         }
     }
@@ -273,15 +274,12 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         UpdateSpeedometerScale();
         UpdateSpeedStepMarkers();
 
-        SaveSpeedStepsSettingAsync().Observe(ex => _logger?.LogWarning(ex, "Save speed step settings failed"));
+        SaveSpeedStepsSettingAsync().Observe(ex => _logger.LogWarning(ex, "Save speed step settings failed"));
     }
 
     private async Task SaveSpeedStepsSettingAsync()
     {
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-        }
+        await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
     }
 
     private void UpdateSpeedStepMarkers()

@@ -68,8 +68,8 @@ public partial class Z21 : IZ21, IAsyncDisposable
 
     private readonly IUdpClientWrapper _udp;
     private readonly Z21EventPipeline _eventPipeline;
-    private readonly ILogger<Z21>? _logger;
-    private readonly Z21Monitor? _trafficMonitor;
+    private readonly ILogger<Z21> _logger;
+    private readonly Z21Monitor _trafficMonitor;
     private CancellationTokenSource? _cancellationTokenSource;
     private Timer? _keepaliveTimer;
     private Timer? _systemStatePollingTimer;
@@ -88,9 +88,9 @@ public partial class Z21 : IZ21, IAsyncDisposable
     private bool _isConnected;
 
     /// <summary>
-    /// Gets the optional traffic monitor that records raw Z21 packets.
+    /// Gets the traffic monitor that records raw Z21 packets.
     /// </summary>
-    public Z21Monitor? TrafficMonitor => _trafficMonitor;
+    public Z21Monitor TrafficMonitor => _trafficMonitor;
 
     /// <summary>
     /// Current version information of the Z21 (serial number, firmware, hardware).
@@ -102,12 +102,14 @@ public partial class Z21 : IZ21, IAsyncDisposable
     /// </summary>
     /// <param name="udp">UDP wrapper used for low-level packet transport.</param>
     /// <param name="eventBus">Event bus for publishing domain events.</param>
-    /// <param name="logger">Optional logger for diagnostics.</param>
-    /// <param name="trafficMonitor">Optional traffic monitor for packet logging.</param>
-    public Z21(IUdpClientWrapper udp, IEventBus eventBus, ILogger<Z21>? logger = null, Z21Monitor? trafficMonitor = null)
+    /// <param name="logger">Logger for diagnostics.</param>
+    /// <param name="trafficMonitor">Traffic monitor for packet logging.</param>
+    public Z21(IUdpClientWrapper udp, IEventBus eventBus, ILogger<Z21> logger, Z21Monitor trafficMonitor)
     {
         ArgumentNullException.ThrowIfNull(udp);
         ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(trafficMonitor);
         _udp = udp;
         _logger = logger;
         _trafficMonitor = trafficMonitor;
@@ -174,7 +176,7 @@ public partial class Z21 : IZ21, IAsyncDisposable
             // This prevents overloading the Z21 before connection is established
             // See: SetConnectedIfNotAlready()
 
-            _logger?.LogInformation("Z21 connection initiated to {Address}:{Port}. Waiting for response", address, port);
+            _logger.LogInformation("Z21 connection initiated to {Address}:{Port}. Waiting for response", address, port);
 
             // Note: IsConnected will be set to true when Z21 responds (in OnUdpReceived)
             // This is handled by the _connectionTcs logic in the message handlers
@@ -212,12 +214,12 @@ public partial class Z21 : IZ21, IAsyncDisposable
                 try
                 {
                     await _udp.SendAsync(Z21Command.BuildLogoff(), CancellationToken.None).ConfigureAwait(false);
-                    _logger?.LogInformation("LAN_LOGOFF sent to Z21");
+                    _logger.LogInformation("LAN_LOGOFF sent to Z21");
                 }
                 catch (Exception ex)
                 {
                     // Don't fail disconnect if logoff fails (e.g., network already down)
-                    _logger?.LogWarning("Failed to send LAN_LOGOFF: {Message}", ex.Message);
+                    _logger.LogWarning("Failed to send LAN_LOGOFF: {Message}", ex.Message);
                 }
             }
 
@@ -243,7 +245,7 @@ public partial class Z21 : IZ21, IAsyncDisposable
 
             // Step 6: Stop UDP (this sets _client = null)
             await _udp.StopAsync().ConfigureAwait(false);
-            _logger?.LogInformation("Z21 disconnected successfully");
+            _logger.LogInformation("Z21 disconnected successfully");
         }
         finally
         {

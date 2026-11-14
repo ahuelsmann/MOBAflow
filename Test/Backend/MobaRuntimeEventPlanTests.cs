@@ -23,7 +23,7 @@ internal sealed partial class MobaRuntimeEventPlanTests : IDisposable
     public void OverlappingProjectManagersDeliverEachActivationAtMostOnce(bool replaceDuringNotification, bool disposeDuringNotification)
     {
         var z21 = new Mock<IZ21>();
-        using var counters = new InPortCounterService(z21.Object, new AppSettings { Counter = { CountOfFeedbackPoints = 1, UseTimerFilter = false } });
+        using var counters = TestRuntimes.Counters(z21.Object, new AppSettings { Counter = { CountOfFeedbackPoints = 1, UseTimerFilter = false } });
         var workflow = new Workflow();
         var journey = new Journey
         {
