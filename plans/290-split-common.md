@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/290
 **Spec Kit**: Not applicable - structural refactoring; the only persisted-format change is the internal feature-toggle collection, loaded with defaults per repository policy
-**Status**: Active; slices 1 and 3 integrated through #295; slice 4a (runtime contracts, #310) and slice 4b (discovery) in review; slice 2 delivered in its own PR (2026-11-14); slice 5 remains
+**Status**: Complete; slices 1 and 3 integrated through #295, slices 4a and 4b through #310, slice 2 through #454 and slice 5 in its own PR (2026-11-14)
 
 ## Purpose and scope
 
@@ -43,7 +43,7 @@ Consumers were counted from `using` directives and type references on main `1d45
 | `Z21/Z21BroadcastRequirements` | Backend tests only | remove; duplicates `Z21Protocol.BroadcastFlags` in Backend |
 | `Runtime/*` snapshots, `RemoteRuntimeCommands`, `RuntimeCommandValidator`, `RuntimeHubContract` (hub interfaces), `RuntimeJsonSerializer`, snapshot filter/merge helpers | Backend, SharedUI, MOBAflow, MOBAsmart, MOBApi | contracts project |
 | `Discovery/*` protocol types (`DiscoveryResponseParser`, `MobApiUdpDiscoveryResponder`, endpoint and candidate builders, `MobaApiRuntimeDeployment`, path resolver) | Backend, SharedUI, hosts, MOBApi | contracts project for wire format; host-specific discovery helpers to their owner |
-| `Events`, `Extension`, `IO`, `Path`, `Serilog`, `Validation`, `Recording`, `Multiplex`, neutral `AppSettings` sections | Backend and all hosts | stay in `Common` (re-checked in slice 5) |
+| `Events`, `Extension`, `IO`, `Path`, `Serilog`, `Validation`, `Recording`, `Multiplex`, neutral `AppSettings` sections | Backend and all hosts | stay in `Common` (confirmed in slice 5) |
 
 `AppSettings` sections used outside the UI stay in `Common`: Backend reads `Counter`, `Speech` and
 `SignalBox`; Speech.Base reads `Speech`; hosts read `Z21`, `RestApi`, `Application` and `HealthCheck`.
@@ -103,9 +103,17 @@ RF-20 architecture rule for the boundary it creates.
    moves to `SharedUI/Mobile`; the unused `NullZ21DiscoveryService` is removed. The UDP responder (used by MOBApi and
    by MOBAflow, whose MOBApi reference is optional), the network helpers and the MOBApi path/deployment helpers stay
    in `Common` as neutral infrastructure.
-5. **Common boundary and documentation.** Re-check what is left in `Common`, add the final RF-20 rules,
-   update `docs/ARCHITECTURE.md` and the repository map in `AGENTS.md`, replace the RF-26 anchor in the
-   umbrella plan with a delivery note and remove this plan.
+5. **Common boundary and documentation (delivered).** The re-check kept the remaining namespaces in `Common`:
+   `Configuration` (neutral `AppSettings` sections read by Backend, speech and the hosts), `Discovery` (LAN
+   address helpers, the UDP responder MOBApi and MOBAflow host, MOBApi path/deployment helpers), `Events`,
+   `Extension`, `IO`, `Multiplex`, `Path`, `Recording`, `Serilog` and `Validation`; each is used by Backend or
+   by more than one project above `Common`. `IO` (`IFileSystem`) is used only by Backend today and stays as the
+   neutral file-system abstraction this plan names. `docs/ARCHITECTURE.md` gains a "Common and Contracts
+   boundary" table; the RF-20 rule `Common_DeclaresOnlyDocumentedInfrastructureNamespaces` reads it and replaces
+   the narrower `Display`/`Navigation` rule. MOBApi references `Contracts` directly for the wire types it uses.
+   The unused `AllowUnsafeBlocks` setting (left from the LibraryImport check that RF-19 removed) is gone from
+   `Common.csproj`. The umbrella plan's RF-26 anchor is a completion summary; this plan is removed in a later
+   documentation close-out.
 
 ## Validation strategy
 

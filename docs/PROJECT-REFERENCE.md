@@ -54,10 +54,11 @@ flowchart TD
     WinUI <-->|"REST + SignalR"| API["MOBApi"]
     Android <-->|"REST + SignalR"| API
     Android -->|"direct UDP"| Z21
+    API --> Contracts
     API --> Common
 ```
 
-MOBApi intentionally references `Common` only. It does not host the Backend
+MOBApi intentionally references only `Contracts` and `Common`. It does not host the Backend
 runtime; MOBAflow publishes solution and runtime state into its caches and
 consumes queued remote commands.
 
