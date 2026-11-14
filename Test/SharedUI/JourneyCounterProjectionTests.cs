@@ -83,7 +83,7 @@ public sealed partial class JourneyCounterProjectionTests
         var journey = CreateJourney("Regional");
         journey.IsActive = true;
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
-        using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
+        using var editor = new EventManagerViewModel(fixture.Session,
             fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, Mock.Of<ICommand>());
         fixture.Runtime.Invocations.Clear();
 
@@ -127,7 +127,7 @@ public sealed partial class JourneyCounterProjectionTests
         var second = CreateJourney("Second");
         var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [first, second] }] });
         await using var fixtureLifetime = fixture.ConfigureAwait(false);
-        using var editor = new EventManagerViewModel(fixture.ViewModel.SolutionSession,
+        using var editor = new EventManagerViewModel(fixture.Session,
             fixture.ViewModel.StationsPage.WorkflowLibrary, fixture.ViewModel.JourneysPage, Mock.Of<ICommand>());
         fixture.ViewModel.CurrentSolutionPath = "projection-test.json";
         editor.Events.Single().CountText = "25";
@@ -174,8 +174,8 @@ public sealed partial class JourneyCounterProjectionTests
             var stationEventBus1 = _eventBus;
             var settingsPage1 = TestSettingsPages.Create(Settings, dispatcher.Object);
             var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, Runtime.Object, io.Object);
+            Session = locomotiveSession1;
             ViewModel = new MainWindowViewModel(
-                new LayoutColumnWidthsViewModel(),
                 Runtime.Object,
                 Runtime.Object,
                 Gateway.Object,
@@ -188,7 +188,6 @@ public sealed partial class JourneyCounterProjectionTests
                 _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
                 locomotiveSession1,
                 NullLogger<MainWindowViewModel>.Instance,
-                Mock.Of<ISettingsService>(),
                 new NullDialogService());
         }
 
@@ -196,6 +195,7 @@ public sealed partial class JourneyCounterProjectionTests
         public Mock<ISolutionIoService> Io { get; } = TestFileServices.CreateMock();
         public Mock<IRuntimeCommandGateway> Gateway { get; } = new();
         public MainWindowViewModel ViewModel { get; }
+        public ISolutionSession Session { get; }
         public AppSettings Settings { get; } = new();
 
         public void Publish(MobaRuntimeSnapshot snapshot)

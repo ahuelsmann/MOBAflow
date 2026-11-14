@@ -1,14 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Configuration;
-using Common.Extension;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Helper;
 using Interface;
-using Microsoft.Extensions.Logging;
+using Service;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -20,9 +18,7 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly ICityService _cityLibraryService;
-    private readonly ISettingsService _settingsService;
-    private readonly AppSettings _settings;
-    private readonly ILogger<JourneysPageViewModel> _logger;
+    private readonly LayoutPersistenceService _layout;
     private ProjectViewModel? _observedProject;
     private JourneyViewModel? _observedJourney;
     private bool _disposed;
@@ -33,28 +29,22 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
 
     public JourneysPageViewModel(ISolutionSession session,
         IRuntimeCommandGateway runtimeCommandGateway, IUiDispatcher uiDispatcher, ICityService cityLibraryService,
-        ISettingsService settingsService, LayoutColumnWidthsViewModel layoutColumnWidths,
-        ILogger<JourneysPageViewModel> logger)
+        LayoutPersistenceService layout)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(cityLibraryService);
-        ArgumentNullException.ThrowIfNull(settingsService);
-        ArgumentNullException.ThrowIfNull(layoutColumnWidths);
-        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(layout);
         _session = session;
         _runtimeCommandGateway = runtimeCommandGateway;
         _uiDispatcher = uiDispatcher;
         _cityLibraryService = cityLibraryService;
-        _settingsService = settingsService;
-        _settings = settingsService.GetSettings();
-        LayoutColumnWidths = layoutColumnWidths;
-        _logger = logger;
-        _isJourneyListExpanded = _settings.Layout.JourneysPage.IsJourneyListExpanded;
-        _isStationListExpanded = _settings.Layout.JourneysPage.IsStationListExpanded;
-        _isCityLibraryVisible = _settings.Layout.JourneysPage.IsCityLibraryExpanded;
-        _isJourneyPropertiesExpanded = _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded;
+        _layout = layout;
+        _isJourneyListExpanded = layout.Layout.JourneysPage.IsJourneyListExpanded;
+        _isStationListExpanded = layout.Layout.JourneysPage.IsStationListExpanded;
+        _isCityLibraryVisible = layout.Layout.JourneysPage.IsCityLibraryExpanded;
+        _isJourneyPropertiesExpanded = layout.Layout.JourneysPage.IsJourneyPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
         _session.SolutionReplacing += OnSolutionReplacing;
         ObserveProject(SelectedProject);
@@ -64,7 +54,6 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     }
 
     public ProjectViewModel? SelectedProject => _session.SelectedProject;
-    public LayoutColumnWidthsViewModel LayoutColumnWidths { get; }
 
     /// <summary>The session remains the canonical selection shared with the map and event editor.</summary>
     public JourneyViewModel? SelectedJourney
@@ -272,20 +261,13 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         SelectedStation = journey.Stations.LastOrDefault();
     }
 
-    private void PersistLayoutState(Action<LayoutSettings> apply)
-    {
-        apply(_settings.Layout);
-        _settingsService.SaveSettingsAsync(_settings)
-            .Observe(ex => LogOperationFailed(_logger, "Persist journey layout", ex));
-    }
-
     public bool IsJourneyListExpanded
     {
         get => _isJourneyListExpanded;
         set
         {
             if (SetProperty(ref _isJourneyListExpanded, value))
-                PersistLayoutState(layout => layout.JourneysPage.IsJourneyListExpanded = value);
+                _layout.Persist(layout => layout.JourneysPage.IsJourneyListExpanded = value);
         }
     }
 
@@ -295,7 +277,7 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         set
         {
             if (SetProperty(ref _isStationListExpanded, value))
-                PersistLayoutState(layout => layout.JourneysPage.IsStationListExpanded = value);
+                _layout.Persist(layout => layout.JourneysPage.IsStationListExpanded = value);
         }
     }
 
@@ -305,7 +287,7 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         set
         {
             if (SetProperty(ref _isCityLibraryVisible, value))
-                PersistLayoutState(layout => layout.JourneysPage.IsCityLibraryExpanded = value);
+                _layout.Persist(layout => layout.JourneysPage.IsCityLibraryExpanded = value);
         }
     }
 
@@ -315,7 +297,7 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         set
         {
             if (SetProperty(ref _isJourneyPropertiesExpanded, value))
-                PersistLayoutState(layout => layout.JourneysPage.IsJourneyPropertiesExpanded = value);
+                _layout.Persist(layout => layout.JourneysPage.IsJourneyPropertiesExpanded = value);
         }
     }
 
@@ -331,7 +313,4 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
             _session.UntrackChanges(propertiesStation);
         if (SelectedStation is { } station) _session.UntrackChanges(station);
     }
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "{OperationName} failed")]
-    private static partial void LogOperationFailed(ILogger logger, string operationName, Exception exception);
 }

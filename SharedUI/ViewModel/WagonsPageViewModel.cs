@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Configuration;
 using Common.Events;
 using Common.Extension;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -20,8 +19,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
 
     private readonly ISolutionSession _session;
     private readonly PhotoAssignmentService _photos;
-    private readonly AppSettings _settings;
-    private readonly ISettingsService _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<WagonsPageViewModel> _logger;
     private readonly Action<string> _showPhotoInExplorer;
     private ProjectViewModel? _observedProject;
@@ -36,34 +34,31 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
     public WagonsPageViewModel(
         ISolutionSession session,
         PhotoAssignmentService photos,
-        ISettingsService settingsService,
-        LayoutColumnWidthsViewModel layoutColumnWidths,
+        LayoutPersistenceService layout,
         ILogger<WagonsPageViewModel> logger,
         Action<string> showPhotoInExplorer)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(photos);
-        ArgumentNullException.ThrowIfNull(settingsService);
-        ArgumentNullException.ThrowIfNull(layoutColumnWidths);
+        ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
         _photos = photos;
-        _settingsService = settingsService;
-        _settings = settingsService.GetSettings();
+        _layout = layout;
         _logger = logger;
         _showPhotoInExplorer = showPhotoInExplorer;
-        LayoutColumnWidths = layoutColumnWidths;
-        _isPassengerWagonListExpanded = _settings.Layout.PassengerWagonPage.IsListExpanded;
-        _isPassengerWagonPropertiesExpanded = _settings.Layout.PassengerWagonPage.IsPropertiesExpanded;
-        _isGoodsWagonListExpanded = _settings.Layout.GoodsWagonPage.IsListExpanded;
-        _isGoodsWagonPropertiesExpanded = _settings.Layout.GoodsWagonPage.IsPropertiesExpanded;
+        _isPassengerWagonListExpanded = layout.Layout.PassengerWagonPage.IsListExpanded;
+        _isPassengerWagonPropertiesExpanded = layout.Layout.PassengerWagonPage.IsPropertiesExpanded;
+        _isGoodsWagonListExpanded = layout.Layout.GoodsWagonPage.IsListExpanded;
+        _isGoodsWagonPropertiesExpanded = layout.Layout.GoodsWagonPage.IsPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
         _session.SolutionReplacing += OnSolutionReplacing;
         ObserveProject(_session.SelectedProject);
     }
 
-    public LayoutColumnWidthsViewModel LayoutColumnWidths { get; }
+    /// <summary>Gets the observable column widths through which the goods wagon page remembers its pixel list width.</summary>
+    public LayoutColumnWidthsViewModel LayoutColumnWidths => _layout.ColumnWidths;
 
     public ProjectViewModel? SelectedProject => _session.SelectedProject;
 
@@ -114,10 +109,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isPassengerWagonListExpanded, value))
-            {
-                _settings.Layout.PassengerWagonPage.IsListExpanded = value;
-                PersistSettings();
-            }
+                _layout.Persist(layout => layout.PassengerWagonPage.IsListExpanded = value);
         }
     }
 
@@ -127,10 +119,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isPassengerWagonPropertiesExpanded, value))
-            {
-                _settings.Layout.PassengerWagonPage.IsPropertiesExpanded = value;
-                PersistSettings();
-            }
+                _layout.Persist(layout => layout.PassengerWagonPage.IsPropertiesExpanded = value);
         }
     }
 
@@ -140,10 +129,7 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isGoodsWagonListExpanded, value))
-            {
-                _settings.Layout.GoodsWagonPage.IsListExpanded = value;
-                PersistSettings();
-            }
+                _layout.Persist(layout => layout.GoodsWagonPage.IsListExpanded = value);
         }
     }
 
@@ -153,15 +139,9 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isGoodsWagonPropertiesExpanded, value))
-            {
-                _settings.Layout.GoodsWagonPage.IsPropertiesExpanded = value;
-                PersistSettings();
-            }
+                _layout.Persist(layout => layout.GoodsWagonPage.IsPropertiesExpanded = value);
         }
     }
-
-    private void PersistSettings() => _settingsService.SaveSettingsAsync(_settings)
-        .Observe(ex => LogSettingsSaveFailed(_logger, ex));
 
     private void SaveChanges(string operation) => _session.SaveSolutionInternalAsync()
         .Observe(ex => LogSaveFailed(_logger, operation, ex));
@@ -450,7 +430,4 @@ public sealed partial class WagonsPageViewModel : ObservableObject, IDisposable
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "{OperationName} failed")]
     private static partial void LogSaveFailed(ILogger logger, string operationName, Exception exception);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Persist wagon settings failed")]
-    private static partial void LogSettingsSaveFailed(ILogger logger, Exception exception);
 }

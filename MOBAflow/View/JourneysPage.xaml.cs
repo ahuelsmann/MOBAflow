@@ -1,15 +1,14 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 using Domain;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using SharedUI.Interface;
 using SharedUI.ViewModel;
+using SharedUI.Service;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
@@ -21,21 +20,18 @@ using Windows.System;
 // ReSharper disable once PartialTypeWithSinglePart
 internal sealed partial class JourneysPage
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<JourneysPage>? _logger;
 
     public JourneysPageViewModel ViewModel { get; }
 
     public JourneysPage(
         JourneysPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<JourneysPage>? logger = null)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
         Loaded += OnPageLoaded;
@@ -115,10 +111,7 @@ internal sealed partial class JourneysPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -128,7 +121,7 @@ internal sealed partial class JourneysPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.JourneysPage;
+        var layout = _layout.Layout.JourneysPage;
 
         // Restore Column Widths First
         if (layout.JourneysColumnWidth > 0)
@@ -194,7 +187,7 @@ internal sealed partial class JourneysPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.JourneysPage;
+        var layout = _layout.Layout.JourneysPage;
 
         // Save CollapsibleColumn states
         layout.IsJourneyListExpanded = ViewModel.IsJourneyListExpanded;

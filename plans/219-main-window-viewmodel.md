@@ -2,8 +2,8 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/219
 **Spec Kit**: Not applicable - behavior-preserving decomposition; no product or persisted-format change
-**Status**: Active; slices 1, 2a, 2b, 2c, 3a, 3b, 4 and 5a integrated through #248, #257, #264, #272, #282, #401, #409 and #419; slice 5b (diagnostics, health and synchronization status) is implemented in draft PR #425 (branch `claude/issue-219-rf24-slice5b`) awaiting review; slice 6 is not allocated
-**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13; journeys/cities at 1f8c77fd; workflows at 0e6ef5f1 on 2026-11-05. Slice 5 planning resolves against main a2b36f11 on 2026-11-05; slice 5a starts from main df8c8375 on 2026-11-07 and is integrated at 3f9590e0; slice 5b starts from main 7b1c3f96 on 2026-11-08.
+**Status**: Active; slices 1, 2a, 2b, 2c, 3a, 3b, 4, 5a and 5b integrated through #248, #257, #264, #272, #282, #401, #409, #419 and #425; slice 6 (layout persistence and final shell audit) is implemented on branch `claude/issue-219-rf24-slice6` as the last RF-24 slice; see [the slice 6 result](#slice-6-result-and-final-shell-audit-2026-11-12) and [the completion steps](#rf-24-completion-steps)
+**Evidence**: Settings integrated at bfe9b91d; locomotives at 656bc630; wagons at c4e427d0; train composition at f6ad0853; stations/platforms at 983524e847df1a36a2f91f9ef99041f54249d895 on 2026-10-13; journeys/cities at 1f8c77fd; workflows at 0e6ef5f1 on 2026-11-05. Slice 5 planning resolves against main a2b36f11 on 2026-11-05; slice 5a starts from main df8c8375 on 2026-11-07 and is integrated at 3f9590e0; slice 5b starts from main 7b1c3f96 on 2026-11-08 and is integrated at bc1e26a0; slice 6 starts from main 0a7947a3 on 2026-11-12.
 
 ## Purpose and scope
 
@@ -53,7 +53,7 @@ observations, not coverage or quality metrics. The Settings, rolling-stock and j
 | [StationsPageViewModel](../SharedUI/ViewModel/StationsPageViewModel.cs), extracted station/platform editor; [JourneysPageViewModel](../SharedUI/ViewModel/JourneysPageViewModel.cs), extracted journey/city editor | Focused page ViewModels using the session's canonical selection | Shared journey selection, stations/platforms, city library, command availability, nested model change tracking |
 | [WorkflowsPageViewModel](../SharedUI/ViewModel/WorkflowsPageViewModel.cs), extracted from the workflow partial (originally 187 lines); [WorkflowsPage](../MOBAflow/View/WorkflowsPage.xaml):32 onwards | Inject the existing host-registered WorkflowLibraryViewModel; add only page presentation state that it lacks | Selection, action editing/order, validation, dry-run cancellation, trace and editor state; no second workflow engine |
 | The Counter partial (removed in 5a; now [InPortCounterViewModel](../SharedUI/ViewModel/InPortCounterViewModel.cs)), the Diagnostics, HealthStatus, RestApiStatus and SyncDiagnostics partials (216, 141, 78, 94 and 194 lines; removed in 5b, now [ProjectDiagnosticsViewModel](../SharedUI/ViewModel/ProjectDiagnosticsViewModel.cs) and [SystemStatusViewModel](../SharedUI/ViewModel/SystemStatusViewModel.cs)), the traffic region of the [Z21 partial](../SharedUI/ViewModel/MainWindowViewModel.Z21.cs) and [MonitorPageViewModel](../SharedUI/ViewModel/MonitorPageViewModel.cs) | InPortCounterViewModel, a reworked MonitorPageViewModel, ProjectDiagnosticsViewModel and SystemStatusViewModel using the existing runtime query contracts and EventBus; see the slice 5 plan below | Counter errors and reset result, filters, health/API status, sync state and project isolation |
-| [LayoutPanels](../SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs), 337 lines; [SettingsPageViewModel.Layout](../SharedUI/ViewModel/SettingsPageViewModel.Layout.cs), extracted from the settings layout partial; [GridColumnResizeBehavior](../MOBAflow/Behavior/GridColumnResizeBehavior.cs):474 onwards | One layout persistence service; reuse LayoutColumnWidthsViewModel | Panel expansion, section usage/order, setting keys, star-column values and intentionally fixed pixels |
+| The LayoutPanels shell partial (337 lines; removed in slice 6); [SettingsPageViewModel.Layout](../SharedUI/ViewModel/SettingsPageViewModel.Layout.cs), extracted from the settings layout partial; `GridColumnResizeBehavior` (removed in slice 6) | One layout persistence service; reuse LayoutColumnWidthsViewModel | Panel expansion, section usage/order, setting keys, star-column values and intentionally fixed pixels |
 
 [MainWindowViewModel.cs](../SharedUI/ViewModel/MainWindowViewModel.cs) subscribes to session/runtime/status/photo
 events and disposes the host-owned WorkflowLibraryViewModel at shutdown through the station editor. It also owns project
@@ -197,7 +197,8 @@ Refresh the base and update this plan from evidence after each integrated slice.
      shell exposes both for the status bar and Messages pane, reads the operating-state inputs from
      SystemStatusViewModel and keeps `OperatingStateEvaluator` as the collaborator. The Diagnostics, HealthStatus,
      RestApiStatus, SyncDiagnostics and SolutionAutoSave partials and the optional diagnostics service are removed.
-6. **Layout and final shell audit:** centralize panel/section/column persistence and replace the
+6. **Layout and final shell audit (implemented; see [the slice 6 result](#slice-6-result-and-final-shell-audit-2026-11-12)):**
+   centralize panel/section/column persistence and replace the
    visual-tree search for MainWindowViewModel. Reuse any narrow settings-layout boundary established
    in slice 1. Remove LayoutPanels.cs, move SettingsPageViewModel.Layout persistence into the shared boundary, and remove superseded page glue.
    Narrow architecture exceptions and review every remaining shell member and dependency.
@@ -218,6 +219,88 @@ Rollback is a revert to the preceding validated slice; do not retain a parallel 
 | Connect/disconnect, track power, feedback simulation, raw turnout and operating-state commands | Classified in slice 5 as host command forwarding through the injected gateway or connection runtime; they stay in the shell. The operating state reads its REST, speech and post-startup inputs from SystemStatusViewModel; `OperatingStateEvaluator` remains the collaborator. |
 | SetSignalAspect and ordered ApplySignalBoxElementChange | Signal-box editor collaborator in slice 6's final shell audit. Preserve configuration-update/command/save order and the gateway; no signal behavior changes in 3b or 5. |
 | Remaining page layout and GridColumnResizeBehavior shell lookup | Slice 6's single persistence boundary; keep serialized keys and star-column semantics. Slice 5a moves only the two Monitor expansion flags with their page. |
+
+## Slice 6 result and final shell audit (2026-11-12)
+
+The source starts from main `0a7947a3` (after #425, #433 and #432). Slice 6 adds no user-visible behavior, no
+persisted-format change and no new runtime command; every layout key, default and star-column value is unchanged.
+
+**One layout persistence boundary.** `SharedUI/Service/LayoutPersistenceService.cs` is the only path that persists the
+saved layout; pages still set their visual widths on the layout object before they save through it. It reads the shared `AppSettings` through `ISettingsService`, loads the reused `LayoutColumnWidthsViewModel`
+once (the shell's constructor did that before), applies a change under its existing key and persists it with one
+logged-failure path (`Persist`), lets a caller await and handle a write (`SaveAsync`), resets the layouts while
+keeping the tab visibility (`ResetAsync`) and owns the Settings page section state (sort mode, expansion, usage and
+order) that `SettingsPageViewModel.Layout` held. The locomotive, wagon, train, station, journey, workflow, monitor and
+track-plan page ViewModels persist their panel expansion through it instead of their own `ISettingsService` helpers;
+the page code-behinds keep restoring and remembering their visual column widths (`*ColumnStarValue` stars and the
+intentionally fixed pixel widths) and save them through it on unload. `SettingsPageViewModel` keeps only the reset
+command and its result text. `TrainControlPage` saves its speed-step setting, not the layout, and is unchanged.
+
+**Visual-tree search removed.** `GridColumnResizeBehavior` and `ResizeCursorGrid` had no XAML or code reference: every
+page resizes with the toolkit `GridSplitter` and remembers its widths in code-behind. Both files, the shell lookup and
+the `LayoutColumnWidths` application resource that only the behavior read are removed.
+
+**Recorded deviations.** The layout write failures of the page ViewModels are now logged once by the service
+("Persist layout failed") instead of by each ViewModel; `WorkflowsPageViewModel`, `JourneysPageViewModel` and
+`TrackPlanViewModel` lose the logger they only used for that. The project-backup copy before a deletion now catches
+only I/O, access, path and argument failures and logs the exception. `SolutionPageViewModel` captures the project to
+delete before the confirmation; the dialog is modal, so the selection cannot change while it is open.
+
+### Final shell audit
+
+| Responsibility (members) | Owner after slice 6 | Reason |
+| --- | --- | --- |
+| Solution-page expansion, `AddProject`, `DeleteProject` with backup and confirmation | New `SolutionPageViewModel` (host singleton, disposed by `MainWindow`) | Solution page state; the session keeps the solution and selection |
+| `ItemClickedCommand`, `CurrentSelectedObject` | Removed | No page binds them (classified as unbound since slice 4) |
+| Signal-box expansion, `OpenSignalBoxWorkbench`, ordered `ApplySignalBoxElementChangeAsync`, `SetSignalAspectAsync`, the runtime signal-box projection and its `SignalBoxRuntimeStateChanged` event | New `SignalBoxPageViewModel` (host singleton, constructed with `MainWindow` so the projection runs from startup, disposed by `MainWindow` after confirmed shutdown) | Signal-box editor collaborator; configuration-update, aspect and save order and the gateway are unchanged |
+| `SetSignalAspectCommand`, `SendTurnoutCommandAsync` (Signals and RawTurnout partials) | Removed | No consumer |
+| Layout members, `LayoutColumnWidths`, `ApplicationSettings`, `SettingsPersistence`, `UiShellLogger`, the `LayoutColumnWidthsViewModel` and `ISettingsService` dependencies | `LayoutPersistenceService` | Single persistence boundary |
+| `ExitApplicationCommand`/`ExitApplicationRequested`, `RequestNavigation`/`NavigationRequested`, the two unbound wagon libraries | Removed with the `MainWindow` handlers | No binding or caller since the plugin removal |
+| `SolutionSaving`/`SolutionLoaded` forwarding, `SolutionSession`, `HasSolution`, `SaveSolutionWithStatusAsync`, `LoadSolutionFromPathAsync` | Removed | Startup reads `ISolutionSession` from DI; `SignalBoxPageViewModel` forwards `SolutionLoaded` |
+| Solution new/open/save, the stop-trains confirmation, shutdown and the session read-through (`CurrentSolutionPath`, `SelectedProject`, `SelectedJourney`, `HasUnsavedChanges`, save state) | Shell | Host actions delegating to `ISolutionSession`; the window title binds the path |
+| Z21 status and telemetry projection, journey runtime projection | Shell | Read by the status bar, `OverviewPage` and the operating state; a separate Z21 status ViewModel would move the operating-state inputs again without removing a page dependency other than `OverviewPage`, so it is not worthwhile |
+| Connect/disconnect, track power, feedback simulation, Z21 refresh, operating-state acknowledge | Shell | Host command forwarding through the gateway or connection runtime |
+| Operating state (`OperatingStateEvaluator` collaborator) | Shell | `IsOperationalControlEnabled` gates track power; the badge, InfoBar and acknowledge properties have had no binding since `9a093b37` and are a follow-up decision, not page logic |
+| Uploaded-photo routing to the active inventory page | Shell (PhotoAssignment partial) | The active page tag comes from shell navigation |
+| Disposal of the host page editors and of the shared workflow library | Shell, after confirmed shutdown | The host never disposes its container; the library stays disposed once through the station editor |
+
+Architecture exceptions: `SolutionSessionArchitectureTests` now allows only the shell, `MainWindow.xaml.cs` (hosts the
+shell), `OverviewPage.xaml.cs` (Z21 status and telemetry), the composition root and the Android shutdown lookup. The
+`MOBAflow/View/` folder, `NavigationRegistration` and `GridColumnResizeBehavior` entries are removed; `TrackPlanPage`
+binds `ISolutionSession` for its save status and `SolutionPage` and `SignalBoxPage` bind their page ViewModels.
+
+### Slice 6 local validation (2026-11-13)
+
+The branch contains main `9b82732c` (after #435 and #438). The composition root followed in a separate commit once
+RF-25 pull request #435 was merged: `LayoutPersistenceService`, `SolutionPageViewModel` and `SignalBoxPageViewModel`
+are registered, the page and ViewModel factories receive the layout boundary, the shell factory no longer passes the
+column widths or the settings service, and `MainWindow` receives both new page ViewModels.
+
+Local checks on Windows: the MOBAflow FastDebug compile passed with zero warnings; the Windows suite passed 3,413
+tests and the portable suite 3,297 tests, each with zero failures and zero skips. Both Release analyzer gates match
+exactly: 3,127 diagnostics in 1,117 groups (portable) and 2,445 in 963 (Windows). The portable and Android baselines
+only drop or lower shell, Settings layout and track-plan entries; the Windows baseline drops the removed behavior
+files' entries and lowers three `MainWindow.xaml.cs` counts; the test baselines add one CA1812 entry per new fixture
+(`LayoutPersistenceServiceTests`, `SolutionPageViewModelTests`) and rename the moved signal-box fixture's entry. The
+Android baseline mirrors the SharedUI entries by hand; the MOBAsmart FastDebug Android build passed with zero
+warnings, and CI owns the Android Release analyzer gate. Documentation links, instruction consistency, the AI
+repository setup check, secrets and line-ending checks pass. No application, device or hardware was started; Light,
+Dark, High Contrast, keyboard and Narrator states of the Solution, Signal Box, Settings and Track Plan pages were not
+inspected.
+
+### RF-24 completion steps
+
+Slice 6 is the last RF-24 slice. Its pull request references #219 and #47 but does not close #219, because the
+completion rule below needs the integrated evidence. After the slice 6 pull request is integrated with green CI and
+Sonar on its head:
+
+1. Record the integration in #219 and close it; personal UI acceptance was abolished on 2026-11-06, so each slice's
+   pull request records the states it did not inspect and the maintainer reports feedback from using the app.
+2. Mark RF-24 complete in #47 and in the [umbrella plan](QUALITY-AND-REFACTORING-PLAN.md), then remove this
+   standalone plan in that same documentation change; the record stays in the closed issues and Git history.
+3. Follow-ups outside RF-24, each for a separate decision: the operating-state badge, InfoBar and acknowledge
+   properties without a binding; the MOBAsmart `MainActivity` shell lookup, which always resolves nothing because
+   MOBAsmart does not register the shell; resetting the observable column widths together with a layout reset.
 
 ## Slice 5 implementation plan (2026-11-05)
 

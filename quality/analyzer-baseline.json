@@ -2377,13 +2377,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1003",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1014",
       "path": "<no-location>",
       "count": 1
@@ -2505,7 +2498,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2520,13 +2513,6 @@
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/SettingsPageViewModel.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2637,13 +2623,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
       "count": 1
     },
@@ -2708,13 +2687,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1307",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1308",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
       "count": 1
     },
     {
@@ -2855,20 +2827,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 5
+      "count": 3
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.OperatingState.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
       "count": 1
     },
     {
@@ -2898,13 +2863,6 @@
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/TrackPlanViewModel.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2989,13 +2947,6 @@
       "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
       "count": 9
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3246,13 +3197,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE2002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE2002",
       "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
       "count": 1
     },
@@ -3331,7 +3275,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 10
+      "count": 7
     },
     {
       "project": "SharedUI",
@@ -4821,6 +4765,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/LayoutPersistenceServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/JourneyStationProjectionTests.cs",
       "count": 1
     },
@@ -4856,7 +4807,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/MainWindowViewModelSignalBoxTests.cs",
+      "path": "Test/SharedUI/SignalBoxPageViewModelTests.cs",
       "count": 1
     },
     {
@@ -5053,6 +5004,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/SettingsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SolutionPageViewModelTests.cs",
       "count": 1
     },
     {

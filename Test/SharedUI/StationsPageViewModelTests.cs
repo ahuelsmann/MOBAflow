@@ -56,8 +56,8 @@ internal sealed partial class StationsPageViewModelTests : IDisposable
         _runtime.Invocations.Clear();
     }
 
-    private StationsPageViewModel CreatePage() => new(_session, _runtime.Object, _persistence.Object,
-        new LayoutColumnWidthsViewModel(), _library, NullLogger<StationsPageViewModel>.Instance);
+    private StationsPageViewModel CreatePage() => new(_session, _runtime.Object, TestLayouts.Create(_persistence.Object),
+        _library, NullLogger<StationsPageViewModel>.Instance);
 
     [TearDown]
     public void Dispose()

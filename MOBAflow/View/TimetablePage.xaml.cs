@@ -1,19 +1,16 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using SharedUI.Interface;
 using SharedUI.ViewModel;
+using SharedUI.Service;
 
 internal sealed partial class TimetablePage
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<TimetablePage>? _logger;
     private bool? _isCompactLayout;
 
@@ -21,13 +18,11 @@ internal sealed partial class TimetablePage
 
     public TimetablePage(
         TimetablePageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<TimetablePage>? logger = null)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
-        _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-        _settingsService = settingsService;
+        _layout = layout ?? throw new ArgumentNullException(nameof(layout));
         _logger = logger;
         InitializeComponent();
         Loaded += OnLoaded;
@@ -94,7 +89,7 @@ internal sealed partial class TimetablePage
 
     private void RestoreColumnWidths()
     {
-        var layout = _settings.Layout.TimetablePage;
+        var layout = _layout.Layout.TimetablePage;
         ServicesColumn.Width = new GridLength(Math.Max(0.1, layout.ServicesColumnStarValue), GridUnitType.Star);
         DetailsColumn.Width = new GridLength(Math.Max(0.1, layout.DetailsColumnStarValue), GridUnitType.Star);
     }
@@ -104,8 +99,8 @@ internal sealed partial class TimetablePage
         if (_isCompactLayout != false) return;
         var total = ServicesColumn.ActualWidth + DetailsColumn.ActualWidth;
         if (total <= 0) return;
-        _settings.Layout.TimetablePage.ServicesColumnStarValue = ServicesColumn.ActualWidth / total;
-        _settings.Layout.TimetablePage.DetailsColumnStarValue = DetailsColumn.ActualWidth / total;
+        _layout.Layout.TimetablePage.ServicesColumnStarValue = ServicesColumn.ActualWidth / total;
+        _layout.Layout.TimetablePage.DetailsColumnStarValue = DetailsColumn.ActualWidth / total;
     }
 
     private async void OnUnloaded(object sender, RoutedEventArgs e)
@@ -115,7 +110,7 @@ internal sealed partial class TimetablePage
         try
         {
             RememberColumnWidths();
-            if (_settingsService is not null) await _settingsService.SaveSettingsAsync(_settings);
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {

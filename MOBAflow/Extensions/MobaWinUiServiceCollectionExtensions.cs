@@ -293,9 +293,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(sp => new TrackPlanViewModel(
             sp.GetRequiredService<TrackPlanEditorService>(),
             sp.GetRequiredService<IDialogService>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<ILogger<TrackPlanViewModel>>()));
+            sp.GetRequiredService<LayoutPersistenceService>()));
 
         return services;
     }
@@ -308,6 +306,8 @@ public static class MobaWinUiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<LayoutColumnWidthsViewModel>();
+        // The single path that persists the saved layout; page ViewModels and pages save through it.
+        services.AddSingleton<LayoutPersistenceService>();
         services.AddSingleton<LocomotiveManagementViewModel>();
         services.AddSingleton<LocomotiveTrainUsageViewModel>();
         services.AddSingleton(sp => new RuntimeLocomotiveControl(
@@ -315,8 +315,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(sp => new LocomotivesPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<PhotoAssignmentService>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
+            sp.GetRequiredService<LayoutPersistenceService>(),
             new LocomotivePageAnalysis(sp.GetRequiredService<LocomotiveManagementViewModel>(),
                 sp.GetRequiredService<LocomotiveTrainUsageViewModel>(), sp.GetRequiredService<RuntimeLocomotiveControl>()),
             sp.GetRequiredService<ILogger<LocomotivesPageViewModel>>(),
@@ -326,8 +325,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(sp => new WagonsPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<PhotoAssignmentService>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
+            sp.GetRequiredService<LayoutPersistenceService>(),
             sp.GetRequiredService<ILogger<WagonsPageViewModel>>(),
             showPhotoInExplorer: fullPath => System.Diagnostics.Process.Start(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
@@ -349,6 +347,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(sp => new SettingsPageViewModel(
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsService>(),
+            sp.GetRequiredService<LayoutPersistenceService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<ILogger<SettingsPageViewModel>>(),
             sp.GetRequiredService<IFeatureTogglePageProvider>(),
@@ -369,11 +368,14 @@ public static class MobaWinUiServiceCollectionExtensions
         // No shell surface binds either, so MainWindow disposes both at shutdown.
         services.AddSingleton<InPortCounterViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
+        // The Solution and Signal Box page states are created with the main window, so the signal-box runtime
+        // projection runs from start-up; MainWindow disposes them too.
+        services.AddSingleton<SolutionPageViewModel>();
+        services.AddSingleton<SignalBoxPageViewModel>();
         // The main window binds the Messages pane and the status bar to these two; the shell exposes and disposes them.
         services.AddSingleton<ProjectDiagnosticsViewModel>();
         services.AddSingleton<SystemStatusViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
-            sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
             sp.GetRequiredService<IConnectionRuntime>(),
             sp.GetRequiredService<IRuntimeCommandGateway>(),
@@ -386,7 +388,6 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<SystemStatusViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
-            sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<IDialogService>()));
 
         services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
@@ -415,6 +416,8 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<InPortCounterViewModel>(),
             sp.GetRequiredService<MonitorPageViewModel>(),
+            sp.GetRequiredService<SolutionPageViewModel>(),
+            sp.GetRequiredService<SignalBoxPageViewModel>(),
             sp.GetRequiredService<NavigationService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<WinUiWindowContext>(),

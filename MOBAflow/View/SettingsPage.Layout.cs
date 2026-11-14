@@ -48,7 +48,7 @@ internal sealed partial class SettingsPage
             return;
         }
 
-        ViewModel.SettingsSectionSortMode = sortMode;
+        _layout.SetSettingsSectionSortMode(sortMode);
         ApplySectionOrdering();
     }
 
@@ -79,7 +79,7 @@ internal sealed partial class SettingsPage
 
     private void SyncSortModeSelection()
     {
-        var selectedMode = ViewModel.SettingsSectionSortMode;
+        var selectedMode = _layout.SettingsSectionSortMode;
         var matchingItem = SettingsSectionSortModeComboBox.Items
             .OfType<ComboBoxItem>()
             .FirstOrDefault(item => string.Equals(item.Tag as string, selectedMode, StringComparison.OrdinalIgnoreCase));
@@ -126,7 +126,7 @@ internal sealed partial class SettingsPage
         foreach (var expander in GetSectionExpanders())
         {
             var sectionKey = GetSectionKey(expander);
-            expander.IsExpanded = ViewModel.GetSettingsPageSectionIsExpanded(sectionKey);
+            expander.IsExpanded = _layout.GetSettingsSectionState(sectionKey).IsExpanded;
             if (expander.IsExpanded)
             {
                 RegisterSectionControls(expander.Content as DependencyObject, sectionKey);
@@ -143,7 +143,7 @@ internal sealed partial class SettingsPage
         }
 
         var orderedExpanders = OrderExpanders(currentExpanders);
-        ViewModel.SetSettingsPageSectionOrder(orderedExpanders.Select(GetSectionKey).ToArray());
+        _layout.SetSettingsSectionOrder(orderedExpanders.Select(GetSectionKey).ToArray());
 
         if (currentExpanders.SequenceEqual(orderedExpanders))
         {
@@ -167,11 +167,11 @@ internal sealed partial class SettingsPage
 
     private List<Expander> OrderExpanders(IReadOnlyList<Expander> currentExpanders)
     {
-        return ViewModel.SettingsSectionSortMode switch
+        return _layout.SettingsSectionSortMode switch
         {
             SettingsSectionSortModes.Frequency => currentExpanders
-                .OrderByDescending(expander => ViewModel.GetSettingsPageSectionState(GetSectionKey(expander)).UsageCount)
-                .ThenByDescending(expander => ViewModel.GetSettingsPageSectionState(GetSectionKey(expander)).LastUsedUtc ?? DateTimeOffset.MinValue)
+                .OrderByDescending(expander => _layout.GetSettingsSectionState(GetSectionKey(expander)).UsageCount)
+                .ThenByDescending(expander => _layout.GetSettingsSectionState(GetSectionKey(expander)).LastUsedUtc ?? DateTimeOffset.MinValue)
                 .ThenBy(GetSectionOrder)
                 .ToList(),
             SettingsSectionSortModes.Alphabetical => currentExpanders
@@ -179,8 +179,8 @@ internal sealed partial class SettingsPage
                 .ThenBy(GetSectionOrder)
                 .ToList(),
             _ => currentExpanders
-                .OrderByDescending(expander => ViewModel.GetSettingsPageSectionState(GetSectionKey(expander)).LastUsedUtc ?? DateTimeOffset.MinValue)
-                .ThenByDescending(expander => ViewModel.GetSettingsPageSectionState(GetSectionKey(expander)).UsageCount)
+                .OrderByDescending(expander => _layout.GetSettingsSectionState(GetSectionKey(expander)).LastUsedUtc ?? DateTimeOffset.MinValue)
+                .ThenByDescending(expander => _layout.GetSettingsSectionState(GetSectionKey(expander)).UsageCount)
                 .ThenBy(GetSectionOrder)
                 .ToList()
         };
@@ -189,7 +189,7 @@ internal sealed partial class SettingsPage
     private int GetSectionOrder(Expander expander)
     {
         var sectionKey = GetSectionKey(expander);
-        var persistedOrder = ViewModel.GetSettingsPageSectionState(sectionKey).Order;
+        var persistedOrder = _layout.GetSettingsSectionState(sectionKey).Order;
         if (persistedOrder != int.MaxValue)
         {
             return persistedOrder;
@@ -218,7 +218,7 @@ internal sealed partial class SettingsPage
         }
 
         var sectionKey = GetSectionKey(expander);
-        ViewModel.SetSettingsPageSectionIsExpanded(sectionKey, expander.IsExpanded);
+        _layout.SetSettingsSectionExpanded(sectionKey, expander.IsExpanded);
         if (expander.IsExpanded)
         {
             RegisterSectionControls(expander.Content as DependencyObject, sectionKey);
@@ -382,8 +382,8 @@ internal sealed partial class SettingsPage
             return;
         }
 
-        ViewModel.MarkSettingsPageSectionUsed(sectionKey);
-        if (!string.Equals(ViewModel.SettingsSectionSortMode, SettingsSectionSortModes.Alphabetical, StringComparison.OrdinalIgnoreCase))
+        _layout.MarkSettingsSectionUsed(sectionKey);
+        if (!string.Equals(_layout.SettingsSectionSortMode, SettingsSectionSortModes.Alphabetical, StringComparison.OrdinalIgnoreCase))
         {
             ApplySectionOrdering();
         }

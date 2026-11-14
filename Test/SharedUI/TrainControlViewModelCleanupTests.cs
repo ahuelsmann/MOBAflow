@@ -1,12 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
@@ -20,17 +18,8 @@ using Moba.SharedUI.ViewModel;
 using Moq;
 
 [TestFixture]
-internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
+internal sealed partial class TrainControlViewModelCleanupTests
 {
-    private readonly TestRollingStockPages _rollingStockPages = new();
-
-    [TearDown]
-    public void Dispose()
-    {
-        _rollingStockPages.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
     [Test]
     public void Dispose_UnsubscribesFromEventBusSnapshots()
     {
@@ -51,16 +40,16 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
     [Test]
     public void SelectedJourneyChange_DetachesOldJourneyPropertyChangedHandler()
     {
-        var mainWindowViewModel = CreateMainWindowViewModel();
+        var session = CreateSession();
         var journeyA = CreateJourneyViewModel("A", currentPos: 0, stationCount: 3);
         var journeyB = CreateJourneyViewModel("B", currentPos: 2, stationCount: 3);
-        mainWindowViewModel.SelectedJourney = journeyA;
-        using var viewModel = CreateTrainControlViewModel(mainWindowViewModel: mainWindowViewModel);
+        session.SelectedJourney = journeyA;
+        using var viewModel = CreateTrainControlViewModel(projectContext: session);
 
         journeyA.UpdateFromSessionState(new JourneySessionState { JourneyId = journeyA.Id, CurrentPos = 1 });
         Assert.That(viewModel.CurrentStationIndex, Is.EqualTo(1));
 
-        mainWindowViewModel.SelectedJourney = journeyB;
+        session.SelectedJourney = journeyB;
         Assert.That(viewModel.CurrentStationIndex, Is.EqualTo(2));
 
         journeyA.UpdateFromSessionState(new JourneySessionState { JourneyId = journeyA.Id, CurrentPos = 0 });
@@ -68,7 +57,7 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
     }
 
     private static TrainControlViewModel CreateTrainControlViewModel(
-        MainWindowViewModel? mainWindowViewModel = null,
+        SolutionSession? projectContext = null,
         IEventBus? eventBus = null)
     {
         var runtimeMock = new Mock<IMobaRuntime>();
@@ -86,7 +75,7 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
-            (IProjectContext?)mainWindowViewModel?.SolutionSession ?? new MobileSolutionContext(TestViewModelServices.Default),
+            (IProjectContext?)projectContext ?? new MobileSolutionContext(TestViewModelServices.Default),
             NullLogger<TrainControlViewModel>.Instance,
             ImmediateUiDispatcher.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
@@ -94,37 +83,17 @@ internal sealed partial class TrainControlViewModelCleanupTests : IDisposable
             new NullRuntimeRoutingState());
     }
 
-    private MainWindowViewModel CreateMainWindowViewModel()
+    private static SolutionSession CreateSession()
     {
         var runtimeMock = new Mock<IMobaRuntime>();
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
-        runtimeMock.Setup(runtime => runtime.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
 
         var uiDispatcherMock = new Mock<IUiDispatcher>();
         uiDispatcherMock
             .Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
 
-        var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, runtimeMock.Object);
-        var stationEventBus1 = new EventBus(NullLogger<EventBus>.Instance);
-        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object);
-        var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null);
-        return new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(),
-            runtimeMock.Object,
-            runtimeMock.Object,
-            new LocalRuntimeCommandGateway(runtimeMock.Object),
-            stationEventBus1,
-            settingsPage1,
-            trainsPage1,
-            _rollingStockPages.GetStationsPage(locomotiveSession1, runtimeMock.Object, stationEventBus1),
-            _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtimeMock.Object), uiDispatcherMock.Object),
-            _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
-            _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
-            locomotiveSession1,
-            new Mock<ILogger<MainWindowViewModel>>().Object,
-            Mock.Of<ISettingsService>(),
-            new NullDialogService());
+        return TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, runtimeMock.Object);
     }
 
     private static JourneyViewModel CreateJourneyViewModel(string name, int currentPos, int stationCount)

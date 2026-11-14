@@ -201,10 +201,10 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
         var settingsPage1 = TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object);
         var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null);
         return new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
+
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -214,7 +214,6 @@ internal sealed partial class MainWindowViewModelShutdownTests : IDisposable
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
             loggerMock.Object,
-            Mock.Of<ISettingsService>(),
             dialog?.Object ?? new NullDialogService());
     }
 }

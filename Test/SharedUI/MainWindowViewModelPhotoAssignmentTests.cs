@@ -123,10 +123,10 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         var settingsPage1 = TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object);
         var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null);
         return new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
             mobaRuntimeMock.Object,
             new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
+
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -136,7 +136,6 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
             loggerMock.Object,
-            Mock.Of<ISettingsService>(),
             new NullDialogService());
     }
 
@@ -398,10 +397,10 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
         var settingsPage2 = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
         var trainsPage2 = _rollingStockPages.GetTrainsPage(locomotiveSession2, runtime.Object, io.Object);
         var viewModel = new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
             new LocalRuntimeCommandGateway(runtime.Object),
+
             stationEventBus2,
             settingsPage2,
             trainsPage2,
@@ -411,7 +410,6 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             _rollingStockPages.GetSystemStatus(stationEventBus2, locomotiveSession2, settingsPage2),
             locomotiveSession2,
             NullLogger<MainWindowViewModel>.Instance,
-            Mock.Of<ISettingsService>(),
             new NullDialogService())
         {
             CurrentSolutionPath = "inventory.json",

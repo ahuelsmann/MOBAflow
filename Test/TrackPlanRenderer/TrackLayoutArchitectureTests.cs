@@ -66,7 +66,6 @@ internal sealed partial class TrackLayoutArchitectureTests
         var plan = new EditableTrackPlan();
         var segment = new PlacedSegment(new G231(), 0, 0, 0);
         plan.AddSegment(segment);
-        var settingsService = new Mock<ISettingsService>();
         using var editorService = new TrackPlanEditorService(
             plan,
             new TrackPlanInteractionService(plan, TrackPlanTestGeometry.PikoA),
@@ -76,9 +75,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         var viewModel = new TrackPlanViewModel(
             editorService,
             Mock.Of<IDialogService>(),
-            new AppSettings(),
-            settingsService.Object,
-            Mock.Of<ILogger<TrackPlanViewModel>>());
+            TestLayouts.Create(new AppSettings()));
 
         viewModel.SelectTrack(segment.Segment.No);
         viewModel.RotateSelectedTrack(15);

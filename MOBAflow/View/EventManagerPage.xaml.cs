@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Input;
@@ -10,8 +9,8 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Controls;
-using SharedUI.Interface;
 using SharedUI.ViewModel;
+using SharedUI.Service;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Windows.UI.Core;
@@ -21,8 +20,7 @@ internal sealed partial class EventManagerPage
 {
     private const string WorkflowFormat = "Workflow";
     private const string EventFormat = "JourneyEvent";
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<EventManagerPage>? _logger;
     private bool _isLoaded;
     private bool _isWide;
@@ -33,12 +31,10 @@ internal sealed partial class EventManagerPage
     private long _valuesExpansionToken;
     private long _propertiesExpansionToken;
 
-    public EventManagerPage(EventManagerViewModel viewModel, AppSettings settings,
-        ISettingsService? settingsService = null, ILogger<EventManagerPage>? logger = null)
+    public EventManagerPage(EventManagerViewModel viewModel, LayoutPersistenceService layout, ILogger<EventManagerPage>? logger = null)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
         DataContext = viewModel;
@@ -64,7 +60,7 @@ internal sealed partial class EventManagerPage
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        var layout = _settings.Layout.EventManagerPage;
+        var layout = _layout.Layout.EventManagerPage;
         _eventPlanStarValue = ValidStarValue(layout.EventPlanColumnStarValue, 2);
         _workflowLibraryStarValue = ValidStarValue(layout.WorkflowLibraryColumnStarValue, 1);
         _propertiesStarValue = ValidStarValue(layout.PropertiesColumnStarValue, 1.2);
@@ -159,14 +155,14 @@ internal sealed partial class EventManagerPage
 
     private async Task SaveLayoutAsync()
     {
-        var layout = _settings.Layout.EventManagerPage;
+        var layout = _layout.Layout.EventManagerPage;
         CaptureColumnWidths();
         layout.IsValuesExpanded = ValuesPanel.IsExpanded;
         layout.IsPropertiesExpanded = PropertiesPanel.IsExpanded;
         layout.EventPlanColumnStarValue = _eventPlanStarValue;
         layout.WorkflowLibraryColumnStarValue = _workflowLibraryStarValue;
         layout.PropertiesColumnStarValue = _propertiesStarValue;
-        if (_settingsService != null) await _settingsService.SaveSettingsAsync(_settings);
+        await _layout.SaveAsync();
     }
 
     private void WorkflowValues_DragItemsStarting(object sender, DragItemsStartingEventArgs e)

@@ -1,13 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 
-using SharedUI.Interface;
+using SharedUI.Service;
 
 using ViewModel;
 
@@ -15,8 +14,7 @@ internal sealed partial class MatrixPage
 {
     public MatrixPageViewModel ViewModel { get; }
 
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<MatrixPage>? _logger;
     private long _colorPaletteExpandedToken;
     private long _imagesExpandedToken;
@@ -26,13 +24,11 @@ internal sealed partial class MatrixPage
 
     public MatrixPage(
         MatrixPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<MatrixPage>? logger = null)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
         Loaded += OnLoaded;
@@ -56,10 +52,7 @@ internal sealed partial class MatrixPage
         try
         {
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -84,7 +77,7 @@ internal sealed partial class MatrixPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.MatrixPage;
+        var layout = _layout.Layout.MatrixPage;
 
         if (layout.ColorPaletteColumnWidth > 0)
         {
@@ -147,7 +140,7 @@ internal sealed partial class MatrixPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.MatrixPage;
+        var layout = _layout.Layout.MatrixPage;
 
         layout.IsColorPaletteExpanded = ColorPalettePanel.IsExpanded;
         layout.IsImagesExpanded = ImagesPanel.IsExpanded;

@@ -113,13 +113,12 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     {
         var provider = CreateValidatorServiceProvider();
         await using var providerLifetime = provider.ConfigureAwait(false);
-        var settingsPersistence = provider.GetRequiredService<ISettingsService>();
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(provider.GetRequiredService<IRuntimeRoutingState>(), Is.InstanceOf<NullRuntimeRoutingState>());
             Assert.That(provider.GetRequiredService<TrainControlViewModel>(), Is.Not.Null);
-            Assert.That(provider.GetRequiredService<MainWindowViewModel>().SettingsPersistence, Is.SameAs(settingsPersistence));
+            Assert.That(provider.GetRequiredService<MainWindowViewModel>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<LocomotiveManagementViewModel>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<SettingsPageViewModel>().FeatureToggleItems, Is.Not.Empty,
                 "The desktop page provider lists the toggleable pages.");
@@ -219,7 +218,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(provider.GetRequiredService<ISettingsService>().GetSettings(), Is.SameAs(shell.SettingsPage.Settings));
             Assert.That(provider.GetRequiredService<LocomotivesPageViewModel>(), Is.SameAs(locomotives));
             Assert.That(locomotives.Management, Is.SameAs(provider.GetRequiredService<LocomotiveManagementViewModel>()));
-            Assert.That(locomotives.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
+            Assert.That(locomotives.LayoutColumnWidths, Is.SameAs(provider.GetRequiredService<LayoutPersistenceService>().ColumnWidths));
         }
     }
 
@@ -234,7 +233,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             Assert.That(shell.WagonsPage, Is.SameAs(wagons));
             Assert.That(provider.GetRequiredService<WagonsPageViewModel>(), Is.SameAs(wagons));
-            Assert.That(wagons.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
+            Assert.That(wagons.LayoutColumnWidths, Is.SameAs(provider.GetRequiredService<LayoutPersistenceService>().ColumnWidths));
             Assert.That(provider.GetRequiredService<ISettingsService>().GetSettings(), Is.SameAs(shell.SettingsPage.Settings));
         }
         shell.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
@@ -258,7 +257,6 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(shell.TrainsPage, Is.SameAs(trains));
             Assert.That(trains.LocomotivesPage, Is.SameAs(provider.GetRequiredService<LocomotivesPageViewModel>()));
             Assert.That(trains.WagonsPage, Is.SameAs(provider.GetRequiredService<WagonsPageViewModel>()));
-            Assert.That(trains.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
         shell.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         trains.AddTrainCommand.Execute(null);
@@ -278,7 +276,6 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             Assert.That(shell.StationsPage, Is.SameAs(stations));
             Assert.That(stations.WorkflowLibrary, Is.SameAs(library));
-            Assert.That(stations.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
         shell.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         stations.AddProjectStationCommand.Execute(null);
@@ -352,7 +349,6 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(editor.JourneysPage, Is.SameAs(journeys));
             Assert.That(editor.ResetCountersCommand, Is.SameAs(provider.GetRequiredService<InPortCounterViewModel>().ResetCountersCommand));
             Assert.That(editor.WorkflowLibrary, Is.SameAs(provider.GetRequiredService<WorkflowLibraryViewModel>()));
-            Assert.That(journeys.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
         journeys.AddJourneyCommand.Execute(null);
         var selected = journeys.SelectedJourney!;
@@ -365,6 +361,37 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         Assert.That(await shell.PrepareForShutdownAsync().ConfigureAwait(false), Is.True);
         session.SelectedJourney = null;
         Assert.That(notifications, Is.Empty);
+    }
+
+    [Test]
+    public async Task LayoutPersistenceAndTheSolutionAndSignalBoxPagesAreHostSingletonsWithoutAShellDependency()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var layout = provider.GetRequiredService<LayoutPersistenceService>();
+        var settings = provider.GetRequiredService<ISettingsService>().GetSettings();
+        var session = provider.GetRequiredService<ISolutionSession>();
+        var solutionPage = provider.GetRequiredService<SolutionPageViewModel>();
+        var signalBoxPage = provider.GetRequiredService<SignalBoxPageViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<LayoutPersistenceService>(), Is.SameAs(layout));
+            Assert.That(layout.Layout, Is.SameAs(settings.Layout));
+            Assert.That(layout.ColumnWidths, Is.SameAs(provider.GetRequiredService<LayoutColumnWidthsViewModel>()));
+            Assert.That(provider.GetRequiredService<SolutionPageViewModel>(), Is.SameAs(solutionPage));
+            Assert.That(provider.GetRequiredService<SignalBoxPageViewModel>(), Is.SameAs(signalBoxPage));
+            Assert.That(solutionPage.SolutionViewModel, Is.SameAs(session.SolutionViewModel));
+            Assert.That(signalBoxPage.SelectedProject, Is.SameAs(session.SelectedProject));
+        }
+
+        // Page states and the Settings reset write the same saved layout.
+        solutionPage.IsProjectListExpanded = !solutionPage.IsProjectListExpanded;
+        signalBoxPage.IsSignalBoxToolboxExpanded = !signalBoxPage.IsSignalBoxToolboxExpanded;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings.Layout.SolutionPage.IsProjectListExpanded, Is.EqualTo(solutionPage.IsProjectListExpanded));
+            Assert.That(settings.Layout.SignalBoxPage.IsToolboxExpanded, Is.EqualTo(signalBoxPage.IsSignalBoxToolboxExpanded));
+        }
     }
 
     [Test]

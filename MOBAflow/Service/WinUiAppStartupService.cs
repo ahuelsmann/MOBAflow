@@ -18,7 +18,6 @@ using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
 
 using Serilog;
 
@@ -41,13 +40,7 @@ internal sealed class WinUiAppStartupService
 {
     private static readonly Stopwatch StartupStopwatch = Stopwatch.StartNew();
 
-    private readonly App _app;
     private Window? _startupSplashDismissWindow;
-
-    public WinUiAppStartupService(App app)
-    {
-        _app = app ?? throw new ArgumentNullException(nameof(app));
-    }
 
     /// <summary>
     /// Runs the synchronous launch path: splash dismiss, DI, main window activation.
@@ -72,10 +65,6 @@ internal sealed class WinUiAppStartupService
         var appSettings = services.GetRequiredService<Common.Configuration.AppSettings>();
         PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application.PhotoStoragePath);
 
-        var layoutColumnWidths = services.GetRequiredService<LayoutColumnWidthsViewModel>();
-        _app.Resources["LayoutColumnWidths"] = layoutColumnWidths;
-        LogStartupCheckpoint("Layout resources prepared");
-
         var mainWindow = services.GetRequiredService<MainWindow>();
         LogStartupCheckpoint("MainWindow resolved");
         OperatorShortcutController.Attach(
@@ -99,7 +88,7 @@ internal sealed class WinUiAppStartupService
 
         mainWindow.ScheduleDeferredUiStartup();
 
-        RunPostStartupPipelineAsync(services, mainWindow, logger)
+        RunPostStartupPipelineAsync(services, logger)
             .SafeFireAndForget(ex => logger.LogError(ex, "Post-startup initialization failed unexpectedly"));
 
         logger.LogInformation(
@@ -182,7 +171,6 @@ internal sealed class WinUiAppStartupService
 
     private static async Task RunPostStartupPipelineAsync(
         IServiceProvider services,
-        MainWindow mainWindow,
         ILogger<App> logger)
     {
         try
@@ -204,7 +192,7 @@ internal sealed class WinUiAppStartupService
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             await postStartupService.InitializeAsync(cts.Token).ConfigureAwait(false);
 
-            await AutoLoadLastSolutionAsync(services, mainWindow.ViewModel.SolutionSession, logger).ConfigureAwait(false);
+            await AutoLoadLastSolutionAsync(services, services.GetRequiredService<ISolutionSession>(), logger).ConfigureAwait(false);
 
             logger.LogInformation(
                 "[Startup] Post-startup pipeline completed in {ElapsedMs}ms",

@@ -10,6 +10,7 @@ using Microsoft.Windows.Storage.Pickers;
 using Moba.WinUI.Service;
 using Moba.WinUI.ViewModel;
 using SharedUI.Interface;
+using SharedUI.Service;
 using SharedUI.Shell;
 using SharedUI.ViewModel;
 
@@ -21,14 +22,17 @@ using SharedUI.ViewModel;
 internal sealed partial class SettingsPage
 {
     public SettingsPageViewModel ViewModel { get; }
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<SettingsPage>? _logger;
     private readonly INavigationService? _navigationService;
     public SettingsPage(
         SettingsPageViewModel viewModel,
+        LayoutPersistenceService layout,
         ILogger<SettingsPage>? logger = null,
         INavigationService? navigationService = null)
     {
         ViewModel = viewModel;
+        _layout = layout;
         _logger = logger;
         _navigationService = navigationService;
         InitializeComponent();

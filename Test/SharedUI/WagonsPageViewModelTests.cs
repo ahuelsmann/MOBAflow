@@ -45,8 +45,8 @@ internal sealed partial class WagonsPageViewModelTests : IDisposable
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
         _explorer = new Mock<Action<string>>();
-        _page = new WagonsPageViewModel(_session, TestFileServices.Photos(_io.Object), _persistence.Object,
-            new LayoutColumnWidthsViewModel(), NullLogger<WagonsPageViewModel>.Instance, _explorer.Object);
+        _page = new WagonsPageViewModel(_session, TestFileServices.Photos(_io.Object), TestLayouts.Create(_persistence.Object),
+            NullLogger<WagonsPageViewModel>.Instance, _explorer.Object);
     }
 
     [TearDown]

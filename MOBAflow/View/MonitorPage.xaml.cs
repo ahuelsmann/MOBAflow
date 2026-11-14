@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,7 @@ using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.ViewModel;
 
-using SharedUI.Interface;
+using SharedUI.Service;
 
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
@@ -18,8 +17,7 @@ using System.Runtime.InteropServices;
 // ReSharper disable once PartialTypeWithSinglePart
 internal sealed partial class MonitorPage
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<MonitorPage>? _logger;
 
     public MonitorPageViewModel ViewModel { get; }
@@ -29,13 +27,11 @@ internal sealed partial class MonitorPage
 
     public MonitorPage(
         MonitorPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<MonitorPage>? logger = null)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
 
@@ -100,10 +96,7 @@ internal sealed partial class MonitorPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -113,7 +106,7 @@ internal sealed partial class MonitorPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.MonitorPage;
+        var layout = _layout.Layout.MonitorPage;
 
         if (layout.TrafficColumnStarValue > 0)
         {
@@ -154,7 +147,7 @@ internal sealed partial class MonitorPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.MonitorPage;
+        var layout = _layout.Layout.MonitorPage;
 
         layout.IsTrafficExpanded = ViewModel.IsMonitorTrafficExpanded;
         layout.IsActivityLogExpanded = ViewModel.IsMonitorActivityLogExpanded;

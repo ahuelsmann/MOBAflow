@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
@@ -10,12 +9,11 @@ using Microsoft.UI.Xaml.Controls;
 
 using Moba.SharedUI.ViewModel;
 
-using SharedUI.Interface;
+using SharedUI.Service;
 
 internal sealed partial class GoodsWagonPage
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<GoodsWagonPage>? _logger;
 
     public WagonsPageViewModel ViewModel { get; }
@@ -25,13 +23,11 @@ internal sealed partial class GoodsWagonPage
 
     public GoodsWagonPage(
         WagonsPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
+        LayoutPersistenceService layout,
         ILogger<GoodsWagonPage>? logger = null)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
 
@@ -59,10 +55,7 @@ internal sealed partial class GoodsWagonPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
@@ -84,7 +77,7 @@ internal sealed partial class GoodsWagonPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.GoodsWagonPage;
+        var layout = _layout.Layout.GoodsWagonPage;
 
         if (layout.ListColumnWidth > 0)
         {
@@ -95,7 +88,7 @@ internal sealed partial class GoodsWagonPage
         {
             _propertiesExpandedWidth = new GridLength(layout.PropertiesColumnStarValue, GridUnitType.Star);
         }
-        ViewModel.LayoutColumnWidths.ClearColumnWidth("GoodsWagonPage", 2, _settings.Layout);
+        ViewModel.LayoutColumnWidths.ClearColumnWidth("GoodsWagonPage", 2, _layout.Layout);
 
         RestoreColumnState(layout.IsListExpanded, ColList, 0, ref _listExpandedWidth);
         RestoreStarColumnState(layout.IsPropertiesExpanded, ColProperties, _propertiesExpandedWidth);
@@ -112,7 +105,7 @@ internal sealed partial class GoodsWagonPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.GoodsWagonPage;
+        var layout = _layout.Layout.GoodsWagonPage;
 
         layout.IsListExpanded = ViewModel.IsGoodsWagonListExpanded;
         layout.IsPropertiesExpanded = ViewModel.IsGoodsWagonPropertiesExpanded;
@@ -122,8 +115,8 @@ internal sealed partial class GoodsWagonPage
             : _listExpandedWidth;
         layout.PropertiesColumnStarValue = GetCurrentStarValue(ColProperties, _propertiesExpandedWidth);
         ViewModel.LayoutColumnWidths.SetColumnWidth("GoodsWagonPage", 0, layout.ListColumnWidth);
-        _settings.Layout.ColumnWidths["GoodsWagonPage:0"] = layout.ListColumnWidth;
-        ViewModel.LayoutColumnWidths.ClearColumnWidth("GoodsWagonPage", 2, _settings.Layout);
+        _layout.Layout.ColumnWidths["GoodsWagonPage:0"] = layout.ListColumnWidth;
+        ViewModel.LayoutColumnWidths.ClearColumnWidth("GoodsWagonPage", 2, _layout.Layout);
     }
 
     private void ApplyColumnState(bool isExpanded, ColumnDefinition column, int columnIndex, ref double rememberedWidth)

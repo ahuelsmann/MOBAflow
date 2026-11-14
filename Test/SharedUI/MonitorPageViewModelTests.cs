@@ -67,7 +67,7 @@ internal sealed partial class MonitorPageViewModelTests : IDisposable
 
     private MonitorPageViewModel CreateViewModel()
     {
-        var viewModel = new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, _persistence.Object,
+        var viewModel = new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, TestLayouts.Create(_persistence.Object),
             _dispatcher.Object, NullLogger<MonitorPageViewModel>.Instance);
         _viewModels.Add(viewModel);
         return viewModel;
@@ -93,19 +93,19 @@ internal sealed partial class MonitorPageViewModelTests : IDisposable
         var logger = NullLogger<MonitorPageViewModel>.Instance;
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(() => new MonitorPageViewModel(null!, _runtime.Object, _eventBus, _session, _persistence.Object, _dispatcher.Object, logger),
+            Assert.That(() => new MonitorPageViewModel(null!, _runtime.Object, _eventBus, _session, TestLayouts.Create(_persistence.Object), _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, null!, _eventBus, _session, _persistence.Object, _dispatcher.Object, logger),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, null!, _eventBus, _session, TestLayouts.Create(_persistence.Object), _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, null!, _session, _persistence.Object, _dispatcher.Object, logger),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, null!, _session, TestLayouts.Create(_persistence.Object), _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, null!, _persistence.Object, _dispatcher.Object, logger),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, null!, TestLayouts.Create(_persistence.Object), _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
             Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, null!, _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, _persistence.Object, null!, logger),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, TestLayouts.Create(_persistence.Object), null!, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, _persistence.Object, _dispatcher.Object, null!),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, TestLayouts.Create(_persistence.Object), _dispatcher.Object, null!),
                 Throws.ArgumentNullException);
         }
     }

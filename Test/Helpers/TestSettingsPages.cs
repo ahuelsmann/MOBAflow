@@ -14,8 +14,9 @@ internal static class TestSettingsPages
     public static SettingsPageViewModel Create(AppSettings settings, IUiDispatcher dispatcher)
     {
         var persistence = new Mock<ISettingsService>();
+        persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(settings)).Returns(Task.CompletedTask);
-        return new SettingsPageViewModel(settings, persistence.Object, dispatcher,
+        return new SettingsPageViewModel(settings, persistence.Object, TestLayouts.Create(persistence.Object), dispatcher,
             NullLogger<SettingsPageViewModel>.Instance, NoFeatureToggles(), new NullSpeechOutput());
     }
 
