@@ -438,9 +438,15 @@ CI runs every test project.
 
 ### RF-31: Reduce the remaining oversized classes
 
-The inventory, decisions and delivery slices now belong to
-[the RF-31 child plan](349-oversized-classes.md), owned by
-[issue #349](https://github.com/ahuelsmann/MOBAflow/issues/349).
+Complete with slice 5. [Issue #349](https://github.com/ahuelsmann/MOBAflow/issues/349) owns this package;
+[the RF-31 child plan](349-oversized-classes.md) holds the inventory, the decisions and what each slice moved
+(slice 1 recording validation and drop bookkeeping #350, 2 recording control entries and artifact import #353,
+3-4 signal-box properties and Help page #354, 5 main window). Outcome: the recording session and the artifact
+import are split by responsibility behind their existing APIs, and the code-behind of the signal-box properties,
+the Help page and the main window keeps view lifecycle and visual adaptation. Slice 5 moved the host work behind
+the main window (REST API status polling, speech health checks, the runtime observers and their shutdown) into
+`MainWindowLifecycleService` and the track power switch decision into the shell; the window keeps its chrome,
+navigation frame, theme and the order of its own shutdown steps.
 
 ## Spec Kit classification of RF-19 through RF-31
 
