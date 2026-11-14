@@ -276,6 +276,10 @@ public sealed partial class MainWindow
 
         // Do not gate on XamlRoot: during the window constructor it is often still null.
         RootGrid.RequestedTheme = isDarkMode ? ElementTheme.Dark : ElementTheme.Light;
+
+        // The system draws the caption buttons outside XAML; without a preferred theme their glyphs follow the
+        // Windows app mode instead of the app toggle and stay white on the light title bar.
+        AppWindow.TitleBar.PreferredTheme = isDarkMode ? TitleBarTheme.Dark : TitleBarTheme.Light;
     }
 
     internal async Task<bool> PrepareForShutdownAsync()

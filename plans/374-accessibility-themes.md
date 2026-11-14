@@ -123,6 +123,21 @@ abolished on 2026-11-06, so states that this check does not inspect are recorded
 - **MOBAsmart (device or emulator, same approval):** TalkBack on the four tabs, a locomotive card, an aspect tile and
   the speed gauge; the largest Android font size on Counter, Engines and Control.
 
+### Step 6 findings and fixes
+
+The app check on 2026-11-14 (recorded on #374) found two defects, fixed in one follow-up PR:
+
+- **Unnamed navigation items:** Train Control, Journeys, Timetable and Event Manager exposed the UIA name
+  "NavigationViewItem". `NavigationItemFactory` shows a panel (title plus badge) for bold or badged pages, which gives
+  no name. Every item now gets `AutomationProperties.Name`: the title, followed by the badge when one is shown
+  ("Timetable, Preview"); plain items keep their title.
+- **Caption buttons in Light:** the system draws Minimize, Maximize and Close outside XAML. Without a preferred title
+  bar theme their glyphs followed the Windows app mode, not the app's theme toggle, and stayed white on the light
+  title bar. `MainWindow.ApplyTheme` now sets `AppWindow.TitleBar.PreferredTheme` to Light or Dark with the app theme.
+
+Both still need on-screen confirmation in the next app check. Not fixed: the Signal Box and Track Plan toolboxes stay
+drag and drop only until the product decision on a keyboard path.
+
 ## Validation strategy
 
 - Steps 2-5: compile MOBAflow (and MOBAsmart for step 5), run the Windows suite and the analyzer gates; the step 2 guard
