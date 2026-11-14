@@ -132,19 +132,21 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             Assert.That(failures, Is.Empty);
             Assert.That(resolved, Is.GreaterThan(150), "The host registers its backend, services and ViewModels.");
+            // The work behind the main window and the deferred startup resolve without the window itself.
+            Assert.That(services.Any(descriptor => descriptor.ServiceType == typeof(MainWindowLifecycleService)), Is.True);
+            Assert.That(services.Any(descriptor => descriptor.ServiceType == typeof(PostStartupInitializationService)), Is.True);
         }
     }
 
     /// <summary>
     /// XAML creates the window and its pages on the UI thread of a running app, so a headless test cannot
-    /// construct them; the startup service takes the window and the matrix ViewModel creates a WinUI brush.
-    /// The FastDebug build compiles their constructors.
+    /// construct them, and the matrix ViewModel creates a WinUI brush. The FastDebug build compiles their constructors.
     /// </summary>
     private static bool NeedsTheXamlWindow(Type serviceType) =>
         typeof(Microsoft.UI.Xaml.Window).IsAssignableFrom(serviceType)
         || typeof(Microsoft.UI.Xaml.UIElement).IsAssignableFrom(serviceType)
-        || serviceType == typeof(PostStartupInitializationService)
         || serviceType == typeof(Moba.WinUI.ViewModel.MatrixPageViewModel);
+
     [Test]
     public async Task ShellTrainControlAndLocomotiveManagementResolveTheirRequiredDesktopServices()
     {

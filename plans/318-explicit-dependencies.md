@@ -274,10 +274,11 @@ Delivered against main `d4fa3002` (slice 4c, #447). Service lifetimes and user-v
   - `MobaBackendServiceCollectionExtensionsTests`: the shared backend collection with `ValidateOnBuild` and
     `ValidateScopes`.
   - `MobaWinUiServiceCollectionExtensionsTests`: the collection `WinUiAppStartupService.BuildServiceProvider`
-    builds, including the startup services, with `ValidateScopes`. Left out are the main window, the 22 XAML pages,
-    `PostStartupInitializationService`, which takes the window, and `MatrixPageViewModel`, which creates a WinUI
-    brush: these exist only on the UI thread of a running app, so a headless test cannot construct them (the
-    FastDebug build compiles their constructors).
+    builds, including the startup services, with `ValidateScopes`. Left out are the main window, the 22 XAML pages
+    and `MatrixPageViewModel`, which creates a WinUI brush: these exist only on the UI thread of a running app, so
+    a headless test cannot construct them (the FastDebug build compiles their constructors). Since RF-31 slice 5
+    (#449) the host work behind the window, `MainWindowLifecycleService` with its `ShellShutdownWorkflow`, and
+    `PostStartupInitializationService` no longer take the window, so the test resolves them.
     `ValidateOnBuild` is not used there because it would construct exactly those types.
   - `MobileServiceCollectionExtensionsTests` (new, portable target): the MOBAsmart composition.
 - **Portable MOBAsmart validator instead of a CI job.** MOBAsmart targets only `net10.0-android`, so neither test
