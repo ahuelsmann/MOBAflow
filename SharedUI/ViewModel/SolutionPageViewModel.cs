@@ -93,7 +93,8 @@ public sealed partial class SolutionPageViewModel : ObservableObject, IDisposabl
     [RelayCommand(CanExecute = nameof(CanDeleteProject))]
     private async Task DeleteProjectAsync()
     {
-        if (SelectedProject is not { } deletedProject) return;
+        var deletedProject = SelectedProject;
+        if (deletedProject is null) return;
 
         // Show confirmation dialog; a connected runtime stops its trains when the project goes away.
         var stopsTrains = _session.GetConnectedProjectNames([deletedProject.Model.Id]).Count > 0;

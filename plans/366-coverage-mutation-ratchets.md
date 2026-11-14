@@ -2,12 +2,10 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/366
 **Spec Kit**: Not applicable - regression tests and CI lanes for existing contracts without product behavior
-**Status**: Active; steps 1 to 4 are delivered (#367, #396, #410: SharedUI lane); step 5 (completion) is open.
-Reconciled against main `7b1c3f96` on 2026-11-08 and again against main `0a7947a3` on 2026-11-12: the six active
-lanes and their floors in the table below match `mutation-lanes.json`, the Stryker configurations and the Quality jobs;
-every Safe-Mode method listed below still exists under the same name. Open scope: the Safe-Mode method lists for
-Backend and SharedUI (rewrite or Stryker change, then remeasure), new tests in the largest open SharedUI and MOBApi
-areas, and a measured-risk decision on further lanes (`sound`, `display`, `track-plan-renderer`, `contracts`).
+**Status**: Active; steps 1 to 4 are delivered (#367, #396, #410: SharedUI lane); step 5 parts (a) Safe Mode and
+(b) new tests are delivered in the step-5 PR. Open scope: the two `PageLayoutViewModel` Safe-Mode sites after RF-26
+slice 2, step 5 (c), a measured-risk decision on further lanes (`sound`, `display`, `track-plan-renderer`,
+`contracts`), and step 5 (d), the completion.
 
 ## Purpose and scope
 
@@ -30,7 +28,7 @@ a lane the same way locally and in [Quality CI](../.github/workflows/quality.yml
 | `common` | active | `Common` | `mutation-common` (Windows) | 63% |
 | `speech-base` | active | `Speech.Base` | `mutation-speech-base` (Linux) | 65% |
 | `backend` | **active from step 1** | `Backend` | `mutation-backend` (Linux) | 47% (raised from 43%) |
-| `api` | **active from step 3** | `MOBApi` | `mutation-api` (Linux) | 44% |
+| `api` | **active from step 3** | `MOBApi` | `mutation-api` (Linux) | 74% (raised from 44% in step 5) |
 | `api-process` | planned | `MOBApi` | - | - |
 | `shared-ui` | **active from step 4** | `SharedUI` | `mutation-shared-ui` (Linux) | 37% |
 
@@ -106,11 +104,19 @@ runs are not used for this floor.
 
 ### Methods outside the Backend mutation gate
 
-Stryker.NET 5.0.0 reports CS0165 ("Use of unassigned local variable") at 12 sites during its initial compile and puts
-the affected methods into Safe Mode: all their mutants count as compile errors, so no mutation result gates them.
-The cause is a Stryker instrumentation limitation, not a Backend or test defect: mutating conditions around `out` or
-pattern variables, or removing a `break` inside `try`/`catch`, breaks definite assignment. Paths relative to
-`Backend/`:
+Stryker.NET 5.0.0 reported CS0165 ("Use of unassigned local variable") at 12 Backend sites during its initial compile
+and put the affected methods into Safe Mode: all their mutants counted as compile errors, so no mutation result gated
+them. The cause is a Stryker instrumentation limitation, not a Backend or test defect. Every site had the same shape: a
+variable is introduced by a guard (`is not { } x`, `is not T x`, an `out` argument after `||`, or an assignment inside
+`try` with `return`/`throw` in `catch`) and is used after that guard. Removing the guard's `return`, `continue` or
+`throw`, or turning `||` into `&&`, leaves the variable unassigned, and the compile error points to the later use,
+outside the mutant, so Stryker cannot attribute it to one mutant.
+
+Step 5 (a) rewrote these methods behaviour-neutrally (paths relative to `Backend/`): the variable is assigned
+unconditionally and then checked (`var address = endpoint.Address; if (address is null) ...`), an `as` cast with
+`?? throw` replaces the type guard of the recording mappers, and `try`/`catch` assignments moved into small helpers that
+return the value or `null` (`UdpWrapper.TryReceiveAsync`, `RecordingJsonReader.TryReadInt32`/`TryReadInt64`/
+`TryReadCanonicalGuid`, `RecordingArtifactSerializer.ValidateKnownPayload`).
 
 - `Service/MobaRuntimeService.RuntimeApi.cs`: `ConnectCoreAsync`
 - `Service/MobaRuntimeService.AutoConnect.cs`: `AttemptZ21ConnectionCoreAsync`
@@ -121,9 +127,8 @@ pattern variables, or removing a `break` inside `try`/`catch`, breaks definite a
 - `Manager/JourneyManager.cs`: `QueueMatchingEvents`
 - `Service/TimetableStateStore.cs`: `RecordDepartureAsync`
 
-The first three are core Z21 transport and connect paths; the step-2 protection does not extend to them. Open #366
-floor work: rewrite these methods so that mutations stay definitely assigned, or change the Stryker version, then
-remeasure.
+A local Stryker run on the rewritten code reports no Safe-Mode site in Backend any more; see step 5 for the measurement.
+New rewrites follow the same rule: a variable that a guard introduces must not be read after the guard.
 
 The floor is the measured score rounded down to a whole percent. It is a safeguard, not a quality target: step 2
 closes meaningful gaps, and a fresh full run raises it.
@@ -159,10 +164,10 @@ separate pull requests.
      - `!TryDequeue || command == null` to `&&` (a successful read never returns null, because the queue rejects null);
      - `parsed != Guid.Empty` in `RuntimeHub.ParseProject`, and `ThrowIfNull` in the admission's validation: the admission
        and the validator reject the same input with the same message or exception.
-   - **Safe Mode:** Stryker reports CS0165 for `RuntimeHub.PushSnapshot` (the `entry` variable assigned in `try`), so its
-     mutants count as compile errors outside the score.
-   - **Open in the lane:** remote and host registration, disconnect handling, `Program`, the discovery service and the
-     photo and solution controllers have no in-process tests yet. A later floor raise follows from new tests there.
+   - **Safe Mode (resolved in step 5):** Stryker reported CS0165 for `RuntimeHub.PushSnapshot` (the `entry` variable
+     assigned in `try`); the `try`/`catch` moved into `RuntimeHub.CacheSnapshot`.
+   - **Open in the lane after step 5:** `Program` and the UDP discovery hosted service (a thin wrapper around real
+     multicast sockets; its responder logic is tested in the Common lane) have no in-process tests.
 4. **SharedUI lane:** train control, settings, project switches and stale asynchronous responses through the existing
    runtime interfaces. Delivered: the `shared-ui` lane with its host, Stryker configuration and the `mutation-shared-ui`
    CI job at the measured floor. Protection of train control, settings, project switches and stale asynchronous responses
@@ -193,10 +198,10 @@ separate pull requests.
 
      The eighteenth has a different cause: in `ViewModel/LocomotiveTrainUsageViewModel.cs` a mutant at the `Concat` call
      (line 73) fails with CS0411 (the type arguments of `AsyncEnumerable.Concat` cannot be inferred), and Stryker removes
-     every mutation in the whole file. Open #366 floor work, as for Backend above: rewrite these methods so that
-     mutations stay definitely assigned (and make the `Concat` type arguments explicit), or change the Stryker version,
-     then remeasure. New tests for these methods cannot move the score until their sites are out of Safe Mode; this
-     applies to the `TrainControlViewModel` and `TimetablePageViewModel` areas named next.
+     every mutation in the whole file. Main `eb5c1c93` (run 43620304145) added a nineteenth CS0165 site,
+     `ViewModel/SolutionPageViewModel.cs`: `DeleteProjectAsync`. Step 5 rewrote every site except `PageLayoutViewModel`
+     in the same way as Backend above and calls `Enumerable.Concat<LocomotiveTrainFinding>` with explicit type
+     arguments; see step 5.
    - **Largest open areas (survived + no coverage):** `TrainControlViewModel` 605, `MauiViewModel` 374,
      `SettingsPageViewModel` 250, `RecorderPageViewModel` 208, `TimetablePageViewModel` 185,
      `MauiViewModel.MobaflowConnection` 162, `WorkflowLibraryViewModel` 161, `DisplayViewModel` 144,
@@ -204,8 +209,34 @@ separate pull requests.
      diagnostics part into `SystemStatusViewModel` and `ProjectDiagnosticsViewModel`, so the next full run reports it
      there. New tests there raise the floor later;
      the ViewModels under active RF-24 extraction wait for that work.
-5. **Completion:** further lanes only where the tooling is technically suitable (Sound, display, rendering by measured
-   risk); RF-07 records the final mutation lanes in its deliverable inventory.
+5. **Safe Mode, open areas and completion.** Parts (a) and (b) are delivered in the step-5 PR; (c) and (d) are open.
+   - **(a) Safe Mode:** every listed site in Backend (12), MOBApi (`RuntimeHub.PushSnapshot`) and SharedUI (19, see
+     step 4) is rewritten behaviour-neutrally, except `PageLayoutViewModel.ApplyToGrid` and `UpdateFromGrid`: RF-26
+     slice 2 changes that file in parallel, so its two sites stay in Safe Mode until that work has landed. A local
+     Stryker run on the rewritten code reports only those two `Safe Mode!` sites. Compile-error mutants fell from 36 to
+     26 (MOBApi), from 769 to 500 (Backend) and from 1,220 to SHAREDUI_COMPILE (SharedUI).
+   - **(b) New tests:** `RuntimeHubRegistrationTests` (host and remote registration, project groups, moving between
+     projects, snapshots per project, disconnect of host and remote), `PhotosControllerUploadTests`,
+     `SolutionControllerMetaTests` and `RuntimeControllerTests` (MOBApi); `RecorderPageViewModelStateTests`,
+     `TimetablePageViewModelOperationsTests`, `TrainControlViewModelRuntimeStateTests` and `MauiViewModelZ21CommandTests`
+     (SharedUI). `SettingsPageViewModel` is excluded while RF-26 slice 2 changes it.
+   - **Measurement:** local full runs on Windows with `Invoke-MutationLane.ps1` (Stryker.NET 5.0.0, four processes) on the
+     step-5 head, compared with the Linux CI lanes of main `eb5c1c93` (run 43620304145):
+
+     | Lane | Main CI score | Step 5 local score | Killed | Survived | No coverage | Timeout | Compile errors | Floor |
+     | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+     | `api` | 44.74% | 74.65% | 318 | 61 | 47 | 0 | 26 | 44% to 74% |
+     | `backend` | 47.69% | 47.42% | 2,963 | 2,187 | 1,167 | 62 | 500 | 47% (unchanged) |
+     | `shared-ui` | 42.25% | SHAREDUI_SCORE | SHAREDUI_ROW | SHAREDUI_FLOOR |
+
+     The Backend score is slightly lower although no test or behaviour changed: the 269 mutants that left Safe Mode now
+     count, and the core Z21 connect and receive paths among them are only partly covered. The floors follow the
+     measured scores rounded down; the PR's Linux CI run is the confirming measurement, and a lower CI score lowers the
+     raise to that score before merge.
+   - **(c) Further lanes (open):** a measured-risk decision on `sound`, `display`, `track-plan-renderer` and
+     `contracts`, only where the tooling is technically suitable.
+   - **(d) Completion (open):** RF-07 records the final mutation lanes in its deliverable inventory; the remaining
+     `PageLayoutViewModel` sites follow after RF-26 slice 2.
 
 ## Classify each surviving or uncovered mutant
 

@@ -150,43 +150,53 @@ public class UdpWrapper : IUdpClientWrapper
         {
             while (!cancellationToken.IsCancellationRequested && _client != null)
             {
-                UdpReceiveResult result;
-                try
+                // A null result ends the loop: cancellation or an unrecoverable socket error.
+                var result = await TryReceiveAsync(_client, cancellationToken).ConfigureAwait(false);
+                if (result is null)
                 {
-                    // Check cancellation before blocking receive
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        _logger.LogDebug("Receiver loop cancelled before receive");
-                        break;
-                    }
-
-                    result = await _client.ReceiveAsync(cancellationToken).ConfigureAwait(false);
-
-                    IncrementReceiveCount();
-
-                    _logger.LogDebug("Received {Length} bytes from {Endpoint}: {Data}",
-                        result.Buffer.Length,
-                        result.RemoteEndPoint,
-                        BitConverter.ToString(result.Buffer).Replace("-", " "));
-                }
-                catch (OperationCanceledException)
-                {
-                    _logger.LogDebug("Receiver loop cancelled during receive");
-                    break;
-                }
-                catch (SocketException ex)
-                {
-                    _logger.LogError("Socket error in receiver loop: {Error}", ex.Message);
                     break;
                 }
 
-                Received?.Invoke(this, new UdpReceivedEventArgs(result.Buffer, result.RemoteEndPoint));
+                Received?.Invoke(this, new UdpReceivedEventArgs(result.Value.Buffer, result.Value.RemoteEndPoint));
             }
         }
         finally
         {
             _logger.LogInformation("UDP Receiver loop stopped. Stats: {SendCount} sends, {RetryCount} retries, {ReceiveCount} receives",
                 _totalSendCount, _totalRetryCount, _totalReceiveCount);
+        }
+    }
+
+    private async Task<UdpReceiveResult?> TryReceiveAsync(UdpClient client, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Check cancellation before blocking receive
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogDebug("Receiver loop cancelled before receive");
+                return null;
+            }
+
+            var result = await client.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+
+            IncrementReceiveCount();
+
+            _logger.LogDebug("Received {Length} bytes from {Endpoint}: {Data}",
+                result.Buffer.Length,
+                result.RemoteEndPoint,
+                BitConverter.ToString(result.Buffer).Replace("-", " "));
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogDebug("Receiver loop cancelled during receive");
+            return null;
+        }
+        catch (SocketException ex)
+        {
+            _logger.LogError("Socket error in receiver loop: {Error}", ex.Message);
+            return null;
         }
     }
 

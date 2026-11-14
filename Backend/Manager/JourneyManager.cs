@@ -239,11 +239,12 @@ public partial class JourneyManager : IJourneyManager
     {
         foreach (var journeyEvent in events)
         {
-            if (journeyEvent.WorkflowId is not Guid workflowId)
+            if (journeyEvent.WorkflowId is null)
             {
                 continue;
             }
 
+            var workflowId = journeyEvent.WorkflowId.Value;
             var workflow = executionProject.Workflows.FirstOrDefault(candidate => candidate.Id == workflowId);
             if (workflow is null)
             {

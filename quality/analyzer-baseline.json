@@ -292,13 +292,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Backend/Service/Recording/CoreRecordingEventMappers.cs",
-      "count": 3
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "Backend/Service/TimetableRuntimeProjectionService.cs",
       "count": 1
     },
@@ -4688,6 +4681,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBApi/PhotosControllerUploadTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeBroadcastMetricsTests.cs",
       "count": 1
     },
@@ -4723,7 +4723,28 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBApi/RuntimeControllerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBApi/RuntimeHubRegistrationTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeSnapshotCacheTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBApi/SolutionControllerMetaTests.cs",
       "count": 1
     },
     {
@@ -5031,6 +5052,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/RecorderPageViewModelStateTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/SettingsPageViewModelTests.cs",
       "count": 1
     },
@@ -5101,7 +5129,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/TimetablePageViewModelTests.cs",
+      "path": "Test/SharedUI/TimetablePageViewModelOperationsTests.cs",
       "count": 1
     },
     {
@@ -5158,6 +5186,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/StationsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/TrainControlViewModelRuntimeStateTests.cs",
       "count": 1
     },
     {

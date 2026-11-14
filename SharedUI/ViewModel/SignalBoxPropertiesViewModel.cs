@@ -120,7 +120,8 @@ public sealed partial class SignalBoxPropertiesViewModel : ObservableObject
 
     public void SetElementName(string value)
     {
-        if (SelectedElement is not { } element ||
+        var element = SelectedElement;
+        if (element is null ||
             string.Equals(element.Name, value, StringComparison.Ordinal))
         {
             return;
@@ -163,12 +164,8 @@ public sealed partial class SignalBoxPropertiesViewModel : ObservableObject
             return;
         }
 
-        MultiplexerDefinition definition;
-        try
-        {
-            definition = _multiplexerProvider.GetDefinition(articleNumber);
-        }
-        catch (ArgumentException)
+        var definition = FindMultiplexerDefinition(articleNumber);
+        if (definition is null)
         {
             return;
         }
@@ -188,6 +185,18 @@ public sealed partial class SignalBoxPropertiesViewModel : ObservableObject
 
         RefreshSignalProjection(signal);
         PublishChange(signal, requiresVisualRefresh: true, requiresPersistence: true);
+    }
+
+    private MultiplexerDefinition? FindMultiplexerDefinition(string articleNumber)
+    {
+        try
+        {
+            return _multiplexerProvider.GetDefinition(articleNumber);
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
     }
 
     public void SelectMainSignalArticle(string articleNumber)
@@ -251,7 +260,8 @@ public sealed partial class SignalBoxPropertiesViewModel : ObservableObject
     [RelayCommand]
     private void Rotate(int rotation)
     {
-        if (SelectedElement is not { } element ||
+        var element = SelectedElement;
+        if (element is null ||
             rotation is not (0 or 90 or 180 or 270) ||
             element.Rotation == rotation)
         {

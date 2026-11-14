@@ -139,10 +139,8 @@ public sealed class RuntimeSnapshotRecordingEventMapper : IRecordingEventMapper
     /// <inheritdoc />
     public RecordingEntryProjection Map(IEvent sourceEvent)
     {
-        if (sourceEvent is not RuntimeSnapshotChangedEvent runtimeEvent)
-        {
-            throw new ArgumentException($"Unsupported runtime event '{sourceEvent.GetType().Name}'.", nameof(sourceEvent));
-        }
+        var runtimeEvent = sourceEvent as RuntimeSnapshotChangedEvent
+            ?? throw new ArgumentException($"Unsupported runtime event '{sourceEvent.GetType().Name}'.", nameof(sourceEvent));
 
         var snapshot = runtimeEvent.Snapshot;
         return new RecordingEntryProjection(
@@ -188,10 +186,8 @@ public sealed class JourneyRecordingEventMapper : IRecordingEventMapper
     /// <inheritdoc />
     public RecordingEntryProjection Map(IEvent sourceEvent)
     {
-        if (sourceEvent is not JourneyRuntimeTransitionEvent transition)
-        {
-            throw new ArgumentException($"Unsupported journey event '{sourceEvent.GetType().Name}'.", nameof(sourceEvent));
-        }
+        var transition = sourceEvent as JourneyRuntimeTransitionEvent
+            ?? throw new ArgumentException($"Unsupported journey event '{sourceEvent.GetType().Name}'.", nameof(sourceEvent));
 
         var references = new List<RecordingEntityReference>
         {
@@ -239,10 +235,8 @@ public sealed class WorkflowLifecycleRecordingEventMapper : IRecordingEventMappe
     /// <inheritdoc />
     public RecordingEntryProjection Map(IEvent sourceEvent)
     {
-        if (sourceEvent is not WorkflowLifecycleEvent lifecycleEvent)
-        {
-            throw new ArgumentException($"Unsupported workflow event '{sourceEvent.GetType().Name}'.", nameof(sourceEvent));
-        }
+        var lifecycleEvent = sourceEvent as WorkflowLifecycleEvent
+            ?? throw new ArgumentException($"Unsupported workflow event '{sourceEvent.GetType().Name}'.", nameof(sourceEvent));
 
         var references = new List<RecordingEntityReference>
         {

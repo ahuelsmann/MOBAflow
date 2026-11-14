@@ -100,20 +100,23 @@ public sealed class RuntimeHub : Hub<IRuntimeHubCallbacks>, IRuntimeHubHostMetho
     public async Task PushSnapshot(string snapshotJson)
     {
         EnsureHost();
-        RuntimeSnapshotCacheEntry entry;
+        var entry = CacheSnapshot(snapshotJson);
+        var group = Clients.Group(ProjectGroup(entry.ProjectId));
+        await group.SnapshotUpdated(entry.Json).ConfigureAwait(false);
+        await group.SessionStateChanged(BuildSessionOperational(entry.ProjectId)).ConfigureAwait(false);
+        _broadcastMetrics.RecordSnapshotBroadcast(System.Text.Encoding.UTF8.GetByteCount(entry.Json));
+    }
+
+    private RuntimeSnapshotCacheEntry CacheSnapshot(string snapshotJson)
+    {
         try
         {
-            entry = _snapshotCache.Set(snapshotJson);
+            return _snapshotCache.Set(snapshotJson);
         }
         catch (ArgumentException ex)
         {
             throw new HubException(ex.Message);
         }
-
-        var group = Clients.Group(ProjectGroup(entry.ProjectId));
-        await group.SnapshotUpdated(entry.Json).ConfigureAwait(false);
-        await group.SessionStateChanged(BuildSessionOperational(entry.ProjectId)).ConfigureAwait(false);
-        _broadcastMetrics.RecordSnapshotBroadcast(System.Text.Encoding.UTF8.GetByteCount(entry.Json));
     }
 
     public async Task SetSignalAspect(string projectId, string signalId, string aspect)
