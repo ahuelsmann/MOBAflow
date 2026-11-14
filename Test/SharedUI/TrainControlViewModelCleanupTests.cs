@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -68,8 +68,8 @@ internal sealed partial class TrainControlViewModelCleanupTests
             .Returns(Task.CompletedTask);
 
         var settingsServiceMock = new Mock<ISettingsService>();
-        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
-        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new UiSettings());
+        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
 
         return new TrainControlViewModel(
             runtimeMock.Object,

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -24,10 +24,10 @@ internal sealed partial class TestRollingStockPages : IDisposable
         detector.Setup(service => service.Detect(It.IsAny<Moba.Domain.Project>()))
             .Returns(new DigitalAddressConflictReport([], []));
         var management = CreateManagement(detector.Object, session);
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
-        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         var usage = CreateUsage(session, usageReader);
         _pages.Add(usage);
         var page = new LocomotivesPageViewModel(session, TestFileServices.Photos(files),
@@ -74,10 +74,10 @@ internal sealed partial class TestRollingStockPages : IDisposable
 
     public WagonsPageViewModel GetWagonsPage(ISolutionSession session, ISolutionIoService? files = null)
     {
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
-        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         var page = new WagonsPageViewModel(session, TestFileServices.Photos(files),
             TestLayouts.Create(persistence.Object),
             NullLogger<WagonsPageViewModel>.Instance, _ => { });
@@ -88,10 +88,10 @@ internal sealed partial class TestRollingStockPages : IDisposable
         ISolutionSession session, IConnectionRuntime runtime, ISolutionIoService? files = null,
         ILocomotiveTrainRuntimeUsageReader? usageReader = null)
     {
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
-        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         var page = new TrainsPageViewModel(session, runtime, TestLayouts.Create(persistence.Object),
             GetLocomotivesPage(session, files, usageReader), GetWagonsPage(session, files),
             NullLogger<TrainsPageViewModel>.Instance);
@@ -101,10 +101,10 @@ internal sealed partial class TestRollingStockPages : IDisposable
     public StationsPageViewModel GetStationsPage(ISolutionSession session, IConnectionRuntime runtime,
         IEventBus eventBus, IDialogService? dialogs = null)
     {
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
-        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         var library = TestWorkflowLibraries.Create(session, dialogs, eventBus: eventBus);
         _pages.Add(library);
         var page = new StationsPageViewModel(session, runtime, TestLayouts.Create(persistence.Object),
@@ -116,8 +116,8 @@ internal sealed partial class TestRollingStockPages : IDisposable
         IRuntimeCommandGateway gateway, IUiDispatcher dispatcher)
     {
         var persistence = new Mock<ISettingsService>();
-        persistence.Setup(service => service.GetSettings()).Returns(new AppSettings());
-        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        persistence.Setup(service => service.GetSettings()).Returns(new UiSettings());
+        persistence.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         var page = new JourneysPageViewModel(session, gateway, dispatcher, Mock.Of<ICityService>(),
             TestLayouts.Create(persistence.Object));
         _pages.Add(page);

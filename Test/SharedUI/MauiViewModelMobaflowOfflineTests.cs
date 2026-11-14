@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Backend.Service.Recording;
 using Moba.Common.Recording;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 
 using Moba.Contracts.Runtime;
@@ -97,7 +97,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             .Setup(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var settings = new AppSettings
+        var settings = new UiSettings
         {
             RestApi =
             {
@@ -774,7 +774,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         MobileSolutionContext? projectContext = null,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
         IRuntimeCommandGateway? runtimeCommandGateway = null,
-        AppSettings? settings = null,
+        UiSettings? settings = null,
         IRestDiscoveryService? restDiscoveryService = null,
         IPhotoUploadService? photoUploadService = null)
     {
@@ -793,7 +793,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             .Setup(dispatcher => dispatcher.InvokeOnUiAsync(It.IsAny<Func<Task>>()))
             .Returns<Func<Task>>(asyncAction => asyncAction());
 
-        var appSettings = settings ?? new AppSettings();
+        var appSettings = settings ?? new UiSettings();
         var settingsService = CreateSettingsServiceMock().Object;
         var endpointLocator = TestEndpointLocators.Create(appSettings, settingsService, restDiscoveryService);
         var healthService = photoUploadService ?? new Mock<IPhotoUploadService>().Object;
@@ -830,7 +830,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     public async Task InitializeAsync_StartsWithMobaflowConnectionDisabled_WhenNoEndpointEvenIfSettingsEnabled()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         settings.RestApi.IsConnectionEnabled = true;
 
         var viewModel = CreateViewModel(eventBus, settings: settings);
@@ -844,7 +844,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     public async Task InitializeAsync_RestoresStoredSession_WhenEndpointAndEnabled()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var settings = new AppSettings
+        var settings = new UiSettings
         {
             RestApi =
             {
@@ -910,7 +910,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     public async Task RemoteControl_FollowsTheSelectedProject()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var settings = new AppSettings
+        var settings = new UiSettings
         {
             RestApi =
             {
@@ -1168,7 +1168,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     public async Task MobaflowConnectionEnabled_WhenUnreachable_KeepsToggleAndRetriesDiscovery()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var settings = new AppSettings
+        var settings = new UiSettings
         {
             RestApi =
             {
@@ -1212,7 +1212,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     public async Task MobaflowConnectionEnabled_WhenReachableButHubFails_KeepsToggleEnabled()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var settings = new AppSettings
+        var settings = new UiSettings
         {
             RestApi =
             {
@@ -1262,8 +1262,8 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     private static Mock<ISettingsService> CreateSettingsServiceMock()
     {
         var settingsServiceMock = new Mock<ISettingsService>();
-        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
-        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new UiSettings());
+        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         return settingsServiceMock;
     }
 }

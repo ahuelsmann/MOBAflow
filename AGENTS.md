@@ -121,7 +121,7 @@ Do not assume every directory is an active project or discover projects inside `
 | `Contracts/` | Wire contracts shared by MOBApi and the apps: runtime snapshots, remote commands, runtime hub, discovery protocol |
 | `Common/` | Configuration, events, network discovery helpers, paths and platform-neutral state |
 | `Backend/` | Z21 transport/protocol, runtime, journey managers and workflow action handlers |
-| `SharedUI/` | Shared MVVM state, commands, runtime projection and UI service interfaces |
+| `SharedUI/` | Shared MVVM state, UI settings root, commands, runtime projection and UI service interfaces |
 | `MOBAflow/` | WinUI 3 desktop UI and Windows service implementations |
 | `MOBAsmart/` | Android MAUI UI, local/remote runtime coordination and mobile services |
 | `MOBApi/` | ASP.NET Core REST and SignalR host (default REST port 5001) |

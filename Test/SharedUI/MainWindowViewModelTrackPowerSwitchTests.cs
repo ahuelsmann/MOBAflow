@@ -4,7 +4,7 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -93,7 +93,7 @@ internal sealed partial class MainWindowViewModelTrackPowerSwitchTests : IDispos
     {
         var dispatcher = ImmediateUiDispatcher.Instance;
         var session = TestSolutionSessions.Create(new Solution(), dispatcher, runtime.Object);
-        var settingsPage = TestSettingsPages.Create(new AppSettings(), dispatcher);
+        var settingsPage = TestSettingsPages.Create(new UiSettings(), dispatcher);
         var trainsPage = _rollingStockPages.GetTrainsPage(session, runtime.Object, null);
         var gateway = new LocalRuntimeCommandGateway(runtime.Object);
         return new MainWindowViewModel(

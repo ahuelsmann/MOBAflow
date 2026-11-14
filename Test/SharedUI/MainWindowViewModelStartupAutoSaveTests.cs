@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -223,7 +223,7 @@ internal partial class MainWindowViewModelShutdownTests
 
         var locomotiveSession1 = TestSolutionSessions.Create(solution ?? new Solution(), dispatcher.Object, runtime, ioService);
         var stationEventBus1 = eventBus;
-        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
+        var settingsPage1 = TestSettingsPages.Create(new UiSettings(), dispatcher.Object);
         var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime, ioService);
         return new MainWindowViewModel(
             runtime,

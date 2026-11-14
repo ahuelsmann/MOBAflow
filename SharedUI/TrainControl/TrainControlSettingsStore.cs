@@ -3,6 +3,8 @@ namespace Moba.SharedUI.TrainControl;
 
 using Common.Configuration;
 
+using Configuration;
+
 using Interface;
 
 using Microsoft.Extensions.Logging;
@@ -84,7 +86,7 @@ public sealed partial class TrainControlSettingsStore
         }
     }
 
-    private TrainControlHostSettings HostSettings(AppSettings settings) =>
+    private TrainControlHostSettings HostSettings(UiSettings settings) =>
         _host == TrainControlHost.Maui ? settings.MauiTrainControlHost : settings.WinUiTrainControlHost;
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Failed to save locomotive series settings")]

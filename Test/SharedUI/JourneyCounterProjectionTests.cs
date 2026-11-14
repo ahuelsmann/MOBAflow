@@ -4,7 +4,7 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -196,7 +196,7 @@ public sealed partial class JourneyCounterProjectionTests
         public Mock<IRuntimeCommandGateway> Gateway { get; } = new();
         public MainWindowViewModel ViewModel { get; }
         public ISolutionSession Session { get; }
-        public AppSettings Settings { get; } = new();
+        public UiSettings Settings { get; } = new();
 
         public void Publish(MobaRuntimeSnapshot snapshot)
         {

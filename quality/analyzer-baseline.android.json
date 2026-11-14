@@ -1332,10 +1332,10 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1805",
-      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "path": "SharedUI/Configuration/LayoutSettings.cs",
       "count": 1
     },
     {
@@ -1364,20 +1364,27 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Common/Configuration/AppSettings.Sections.cs",
-      "count": 6
+      "count": 2
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/LayoutSettings.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "SharedUI/Configuration/PageLayoutSettings.cs",
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Common/Configuration/SettingsPageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/SettingsPageLayoutSettings.cs",
       "count": 1
     },
     {
@@ -1395,24 +1402,24 @@
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "path": "SharedUI/Configuration/LayoutSettings.cs",
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/PageLayoutSettings.cs",
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/SettingsPageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/SettingsPageLayoutSettings.cs",
       "count": 1
     },
     {

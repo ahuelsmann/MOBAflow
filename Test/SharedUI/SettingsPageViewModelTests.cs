@@ -2,8 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
-using Moba.Common.Configuration;
-using Moba.Common.Navigation;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.Speech.Base;
@@ -82,7 +81,7 @@ internal sealed class SettingsPageViewModelTests
         persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Once);
     }
 
-    private static bool[] GetPolarities(AppSettings settings) =>
+    private static bool[] GetPolarities(UiSettings settings) =>
     [
         settings.SignalBox.InvertPolarityOffset0,
         settings.SignalBox.InvertPolarityOffset1,
@@ -136,7 +135,7 @@ internal sealed class SettingsPageViewModelTests
     {
         var provider = new Mock<IFeatureTogglePageProvider>();
         provider.Setup(candidate => candidate.GetToggleablePages())
-            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", nameof(FeatureToggleSettings.IsOverviewPageAvailable), null, NavigationCategory.Monitoring, 10)]);
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", FeatureTogglePages.Overview, null)]);
         var (viewModel, settings, persistence, _) = Create(provider: provider.Object);
         var toggle = viewModel.FeatureToggleItems.Single();
         toggle.IsChecked = false;
@@ -145,8 +144,7 @@ internal sealed class SettingsPageViewModelTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(toggle.CheckBoxContent, Is.EqualTo("Overview"));
-            Assert.That(viewModel.IsOverviewPageAvailable, Is.False);
-            Assert.That(settings.FeatureToggles.IsOverviewPageAvailable, Is.False);
+            Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings.FeatureToggles, FeatureTogglePages.Overview), Is.False);
         }
         persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Once);
     }
@@ -263,7 +261,7 @@ internal sealed class SettingsPageViewModelTests
     {
         var provider = new Mock<IFeatureTogglePageProvider>();
         provider.Setup(candidate => candidate.GetToggleablePages())
-            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", nameof(FeatureToggleSettings.IsOverviewPageAvailable), null, NavigationCategory.Monitoring, 10)]);
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", FeatureTogglePages.Overview, null)]);
         var (viewModel, settings, persistence, _) = Create(provider: provider.Object);
         viewModel.DisplayPort = 12345;
         viewModel.FeatureToggleItems.Single().IsChecked = false;
@@ -273,22 +271,21 @@ internal sealed class SettingsPageViewModelTests
         persistence.Setup(service => service.ResetToDefaultsAsync()).Returns(async () =>
         {
             await Task.Yield();
-            settings.Display.Port = new AppSettings().Display.Port;
-            settings.FeatureToggles.IsOverviewPageAvailable = true;
+            settings.Display.Port = new UiSettings().Display.Port;
+            settings.FeatureToggles.Pages.Clear();
         });
 
         await viewModel.ResetToDefaultsCommand.ExecuteAsync(null).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(viewModel.DisplayPort, Is.EqualTo(new AppSettings().Display.Port));
+            Assert.That(viewModel.DisplayPort, Is.EqualTo(new UiSettings().Display.Port));
             Assert.That(viewModel.FeatureToggleItems.Single().IsChecked, Is.True);
             Assert.That(viewModel.ShowSuccessMessage, Is.False);
             Assert.That(viewModel.ShowErrorMessage, Is.False);
             Assert.That(notifications, Does.Contain(nameof(SettingsPageViewModel.DisplayPort)));
-            Assert.That(notifications, Does.Contain(nameof(SettingsPageViewModel.IsOverviewPageAvailable)));
         }
-        persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()), Times.Never);
+        persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<UiSettings>()), Times.Never);
     }
 
     [Test]
@@ -323,10 +320,10 @@ internal sealed class SettingsPageViewModelTests
         }
     }
 
-    private static (SettingsPageViewModel ViewModel, AppSettings Settings, Mock<ISettingsService> Persistence, Mock<IUiDispatcher> Dispatcher)
+    private static (SettingsPageViewModel ViewModel, UiSettings Settings, Mock<ISettingsService> Persistence, Mock<IUiDispatcher> Dispatcher)
         Create(ISpeechOutput? speech = null, IFeatureTogglePageProvider? provider = null)
     {
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(settings)).Returns(Task.CompletedTask);

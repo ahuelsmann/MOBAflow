@@ -2,8 +2,6 @@
 
 namespace Moba.SharedUI.TrainControl;
 
-using Common.Configuration;
-
 /// <summary>
 /// Host-specific options for <see cref="TrainControlViewModel"/>.
 /// MOBAsmart registers remote snapshot mode; WinUI uses the default (local runtime snapshots).

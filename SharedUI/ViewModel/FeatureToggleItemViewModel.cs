@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Navigation;
-
 using CommunityToolkit.Mvvm.ComponentModel;
+
+using Interface;
 
 /// <summary>
 /// ViewModel entry for a feature toggle in the Settings page.
@@ -24,7 +24,7 @@ public sealed partial class FeatureToggleItemViewModel : ObservableObject
     private bool _isChecked;
 
     /// <summary>
-    /// Feature toggle key (e.g. IsOverviewPageAvailable).
+    /// Feature toggle page key (e.g. Overview).
     /// </summary>
     public string FeatureToggleKey { get; }
 

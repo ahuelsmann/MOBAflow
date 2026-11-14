@@ -5,7 +5,7 @@ using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.SharedUI.Interface;
@@ -50,7 +50,7 @@ internal sealed class MauiViewModelInitializationTests
     [Test]
     public async Task InitializeAsync_StartsDeferredStartupWorkOnce_AndClampsFeedbackPointCount()
     {
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         settings.Counter.CountOfFeedbackPoints = 0;
 
         var dependencies = CreateDependencies(settings);
@@ -86,7 +86,7 @@ internal sealed class MauiViewModelInitializationTests
     [Test]
     public async Task IncrementFeedbackPoints_ReplacesStatisticsCollectionAndKeepsListInSync()
     {
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         settings.Counter.CountOfFeedbackPoints = 1;
 
         var dependencies = CreateDependencies(settings);
@@ -255,9 +255,9 @@ internal sealed class MauiViewModelInitializationTests
         return viewModel;
     }
 
-    private static TestDependencies CreateDependencies(AppSettings? settings = null)
+    private static TestDependencies CreateDependencies(UiSettings? settings = null)
     {
-        var currentSettings = settings ?? new AppSettings();
+        var currentSettings = settings ?? new UiSettings();
         var mobaRuntimeMock = new Mock<IMobaRuntime>();
         var uiDispatcherMock = new Mock<IUiDispatcher>();
         var settingsServiceMock = new Mock<ISettingsService>();
@@ -286,7 +286,7 @@ internal sealed class MauiViewModelInitializationTests
 
         settingsServiceMock.Setup(service => service.GetSettings()).Returns(currentSettings);
         settingsServiceMock.Setup(service => service.LoadSettingsAsync()).Returns(Task.CompletedTask);
-        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         settingsServiceMock.Setup(service => service.ResetToDefaultsAsync()).Returns(Task.CompletedTask);
 
         restDiscoveryMock
@@ -318,7 +318,7 @@ internal sealed class MauiViewModelInitializationTests
     private static (string?, int?) CreateNoDiscoveredEndpoint() => (null, null);
 
     private sealed record TestDependencies(
-        AppSettings Settings,
+        UiSettings Settings,
         Mock<IMobaRuntime> MobaRuntimeMock,
         Mock<IUiDispatcher> UiDispatcherMock,
         Mock<ISettingsService> SettingsServiceMock,
