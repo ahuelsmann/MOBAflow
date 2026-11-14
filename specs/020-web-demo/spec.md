@@ -10,7 +10,7 @@
 
 **Spec Kit**: Required
 
-**Input**: Issue #430, requested by the maintainer on 2026-11-09: an interested user asked for a demo application. A web demo lets people try MOBAflow without installing the WinUI desktop app and without hardware: ASP.NET Core as the backend, React as the frontend, without a Z21 connection, showing the pages Track Plan, Train Control, Workflows and Signal Box. Prioritized on 2026-11-14 (verbatim): "Spezifikation jetzt" - the specification starts now, in parallel to the refactoring programme #47; implementation stays after #47.
+**Input**: Issue #430, requested by the maintainer on 2026-11-09: an interested user asked for a demo application. A web demo lets people try MOBAflow without installing the WinUI desktop app and without hardware: ASP.NET Core as the backend, React as the frontend, without a Z21 connection, showing the pages Track Plan, Train Control, Workflows and Signal Box. The maintainer prioritized the specification on 2026-11-14: it starts now, in parallel to the refactoring programme #47; implementation stays after #47.
 
 ## Governance and Traceability *(mandatory)*
 
@@ -40,7 +40,7 @@
 
 ### Session 2026-11-14 (maintainer decisions)
 
-The first decision is recorded in #430 by the maintainer. The others reached this specification through the Chief Operating Officer session, which states on #455 and #430 that the maintainer made them directly in that session on 2026-11-14.
+All decisions of this session are recorded as maintainer decisions in comments on #430: [prioritization and hosting](https://github.com/ahuelsmann/MOBAflow/issues/430#issuecomment-6882822768) (19:14 UTC), [design closeness](https://github.com/ahuelsmann/MOBAflow/issues/430#issuecomment-6883059858) (19:33), [status bar](https://github.com/ahuelsmann/MOBAflow/issues/430#issuecomment-6883112112) (19:37), [navigation](https://github.com/ahuelsmann/MOBAflow/issues/430#issuecomment-6883124336) (19:38), [landing page and narrow windows](https://github.com/ahuelsmann/MOBAflow/issues/430#issuecomment-6883248364) (19:48), [browser simulation, session lifetime, visitors and abuse protection](https://github.com/ahuelsmann/MOBAflow/issues/430#issuecomment-6883283475) (19:51), and [accent color, photos, deployment and initial theme](https://github.com/ahuelsmann/MOBAflow/issues/430#issuecomment-6883411696) (20:01). They reached this specification through the Chief Operating Officer session.
 
 - Q: Where is the demo hosted? → A: Azure App Service `mobaflow-demo.azurewebsites.net`, Free tier F1, region France Central, ASP.NET Core on .NET 10 under Linux, prepared by the Technical Director.
 - Q: How closely does the web UI follow MOBAflow's look? → A: As close as possible to the WinUI pages, in Light and Dark like the app. The four pages stay: Train Control, Workflows, Track Plan, Signal Box.
@@ -77,9 +77,11 @@ The hosting decision makes the following limits part of the design. They were re
 | WebSockets per instance (Linux) | 5 | A live connection per visitor would serve at most five visitors; the demo uses none (FR-011) | same |
 | Scale out | 1 shared instance | No scaling | same |
 | Deployment slots | Not available below the Standard tier | Every deployment replaces the live app; no staging slot | [Set up staging environments](https://learn.microsoft.com/azure/app-service/deploy-staging-slots) |
+| Always On | Not available in Free and Shared; starts at Basic | An idle app is not kept running; the first request after an idle period starts it (FR-052) | [Azure App Service limits](https://learn.microsoft.com/azure/azure-resource-manager/management/azure-subscription-service-limits#azure-app-service-limits) |
+| Service level agreement | None for Free and Shared | No availability promise | same |
 | Custom domain | Needs a paid tier, not Free (F1) | The address stays `mobaflow-demo.azurewebsites.net`, with the platform's HTTPS certificate for that host name | [Set up an existing custom domain](https://learn.microsoft.com/azure/app-service/app-service-web-tutorial-custom-domain#prerequisites) |
 
-Not verified in an official limits table: that "Always On" is unavailable in the Free tier and that an idle app is unloaded and cold-starts on the next request. A Microsoft Q&A answer states that Always On needs the Basic tier or higher. The specification assumes cold starts (FR-052) and the plan phase verifies the behavior on the real app.
+Not stated in the limits table: how long an idle app stays loaded and how long a cold start takes. The specification assumes cold starts (FR-052); the plan phase measures them on the real app.
 
 ## Threats and abuse protection
 
@@ -87,7 +89,7 @@ The demo has no accounts, stores no data and takes no input that reaches the ser
 
 | Risk | Effect | Answer |
 | --- | --- | --- |
-| Traffic flooding or bots | The daily bandwidth or CPU quota is used up; the platform answers HTTP 403 for the rest of the UTC day | Rate limiting per client address (FR-056), small and cacheable transfers (FR-057 to FR-059); the remaining risk is accepted on the Free tier |
+| Traffic flooding or bots | The daily bandwidth or CPU quota is used up; the platform answers HTTP 403 for the rest of the UTC day | Rate limiting per client address protects the CPU quota and bounds what a single client can download (FR-056); small and cacheable transfers (FR-057 to FR-059). A flood from many addresses can still use up the 165 MB; this residual risk is accepted on the Free tier (FR-075) |
 | Hotlinking of photos and other files from other sites | Bandwidth is spent on other sites' visitors | Resized, compressed images (FR-058) and a cross-origin resource policy that keeps files for the demo's own pages (FR-071) |
 | Scraping | Bandwidth use; the content itself is public sample data | Rate limiting; the indexing choice in FR-073 |
 | Misconfiguration exposing host details or real endpoints | Leaks paths, ports or a route to a real runtime | No dynamic endpoint beyond the read-only snapshot (FR-070), no server banner or detailed error page (FR-072), FR-002 and FR-030 |
@@ -271,7 +273,8 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **FR-053**: The code MUST live in `MOBAweb/` with its own Node/npm build for the React app and its own CI job; it MUST NOT be part of the WinUI or Android build graphs, and building MOBAflow or MOBAsmart MUST NOT require Node.
 - **FR-054**: Deployment to the Azure web app MUST be possible through a GitHub Actions workflow without a secret in the repository. It is started manually at first; automatic deployment on merge follows later as its own change. The workflow and its credentials are created in the implementation, not by this specification.
 - **FR-055**: Because the tier has no deployment slot, a deployment replaces the running app; the demo MUST come back without manual steps.
-- **FR-056**: The host MUST limit requests per client address with ASP.NET Core rate limiting: a strict limit on all non-static requests and a generous one on static files. Proposed starting values, fixed in the plan phase: 60 non-static requests per minute and 600 static requests per minute per client address.
+- **FR-056**: The host MUST limit requests per client address with ASP.NET Core rate limiting: a strict limit on all non-static requests and a limit on static files that is sized to the transfer budget, so that one client can download at most about ten first-visit equivalents (about 15 MB) per hour. The values are fixed in the plan phase. This protects the CPU quota and bounds a single client's bandwidth; it does not prevent a distributed flood from using up the daily 165 MB, which is an accepted residual risk on the Free tier (FR-075).
+- **FR-078**: The host MUST determine the client address for rate limiting from the forwarded headers of the App Service front end, with ASP.NET Core forwarded headers handling enabled for that front end: on App Service on Linux, TLS ends at the platform front end and the app sees the front end's address unless it processes the forwarded headers, and ASP.NET Core ignores forwarded headers from proxies it has not been told to trust. The front end has no fixed address range to list, so the host accepts the forwarded client address from the platform front end. The trade-off is accepted and documented: a forged forwarded address could at most dodge or misdirect the rate limit, because nothing else in the demo depends on the client address. The plan phase verifies on the real app that the limit acts per visitor and not on the front end as a whole.
 - **FR-057**: A first visit MUST transfer at most 1.5 MB compressed, including the application, the sample snapshot and the locomotive photos shown on the landing page. The budget MUST be checked in CI or by a documented, repeatable measurement, and a change that exceeds it fails that check.
 - **FR-058**: Responses MUST be compressed with Brotli or gzip; locomotive photos MUST be resized to their displayed size and delivered as WebP, and other images compressed likewise.
 - **FR-059**: Static files MUST carry content-hashed file names and long-lived cache headers, so that a repeat visit transfers almost nothing; the entry document is revalidated so that a new deployment is picked up.
@@ -321,7 +324,7 @@ None. The questions Q1 to Q10 of the first draft, the initial theme and the inde
 - The Technical Director provides the Azure web app; the specification creates no Azure resource, secret, publish profile or workflow.
 - The maintainer provides the eight reference screenshots outside the repository.
 - A desktop browser in a current version (Edge, Chrome, Firefox, Safari) with JavaScript is the target; phones are not.
-- Cold starts occur on the Free tier; this is assumed, not verified in an official limits table.
+- Cold starts occur on the Free tier, because Always On is not available there; their duration is measured in the plan phase.
 - The simple motion model is a visual simulation; it does not claim the timing of real decoders, and the current gauge shows simulated values.
 - "Read-only" means no content change; simulated runtime state (speed, aspects, turnout positions) is not content.
 - The Free tier limits in this document were read on 2026-11-14 and are re-read before implementation.
