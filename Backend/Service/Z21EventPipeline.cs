@@ -49,7 +49,7 @@ public sealed class Z21EventPipeline : IAsyncDisposable
     private readonly Channel<QueuedEvent> _channel;
     private readonly CancellationTokenSource _consumerCancellation = new();
     private readonly IEventBus _eventBus;
-    private readonly ILogger? _logger;
+    private readonly ILogger _logger;
     private readonly object _queueLock = new();
     private readonly Task _consumerTask;
     private bool _acceptingEvents = true;
@@ -65,11 +65,12 @@ public sealed class Z21EventPipeline : IAsyncDisposable
     /// Initializes a new ordered event pipeline.
     /// </summary>
     /// <param name="eventBus">Destination event bus.</param>
-    /// <param name="logger">Optional structured logger.</param>
+    /// <param name="logger">Structured logger.</param>
     /// <param name="capacity">Maximum number of waiting events.</param>
-    public Z21EventPipeline(IEventBus eventBus, ILogger? logger = null, int capacity = DefaultCapacity)
+    public Z21EventPipeline(IEventBus eventBus, ILogger logger, int capacity = DefaultCapacity)
     {
         ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(logger);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity);
 
         _eventBus = eventBus;
@@ -112,7 +113,7 @@ public sealed class Z21EventPipeline : IAsyncDisposable
             {
                 Interlocked.Increment(ref _rejectedEvents);
                 BackendTelemetry.RecordRejectedZ21Event(eventType);
-                _logger?.LogWarning(
+                _logger.LogWarning(
                     "Z21 event rejected. EventType={EventType}, QueueDepth={QueueDepth}, Capacity={Capacity}",
                     eventType,
                     _queueDepth,
@@ -165,7 +166,7 @@ public sealed class Z21EventPipeline : IAsyncDisposable
         {
             Interlocked.Increment(ref _shutdownTimeouts);
             BackendTelemetry.RecordPipelineShutdownTimeout();
-            _logger?.LogWarning(
+            _logger.LogWarning(
                 "Z21 event pipeline drain timed out. QueueDepth={QueueDepth}, TimeoutMilliseconds={TimeoutMilliseconds}",
                 GetSnapshot().QueueDepth,
                 timeout.TotalMilliseconds);
@@ -240,7 +241,7 @@ public sealed class Z21EventPipeline : IAsyncDisposable
                 {
                     Interlocked.Increment(ref _dispatchFailures);
                     BackendTelemetry.RecordFailedZ21Dispatch(queuedEvent.EventType);
-                    _logger?.LogError(ex, "Z21 event dispatch failed. EventType={EventType}", queuedEvent.EventType);
+                    _logger.LogError(ex, "Z21 event dispatch failed. EventType={EventType}", queuedEvent.EventType);
                 }
             }
         }

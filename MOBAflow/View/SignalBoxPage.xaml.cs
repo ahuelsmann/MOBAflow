@@ -28,7 +28,7 @@ sealed partial class SignalBoxPage
             "Apply signal-box property change failed");
 
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<SignalBoxPage>? _logger;
+    private readonly ILogger<SignalBoxPage> _logger;
     private readonly SignalBoxPropertiesViewModel _propertiesViewModel;
 
     private double _toolboxExpandedWidth = 240;
@@ -45,8 +45,8 @@ sealed partial class SignalBoxPage
         InterlockingControlViewModel interlockingViewModel,
         SignalBoxPropertiesViewModel propertiesViewModel,
         LayoutPersistenceService layout,
-        ILogger<SignalBoxPage>? logger = null,
-        ILogger<SignalBoxCanvasControl>? signalBoxCanvasLogger = null)
+        ILogger<SignalBoxPage> logger,
+        ILogger<SignalBoxCanvasControl> signalBoxCanvasLogger)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
         ArgumentNullException.ThrowIfNull(interlockingViewModel);
@@ -175,7 +175,7 @@ sealed partial class SignalBoxPage
         _ = sender;
         _ = e;
 
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
         ViewModel.SolutionLoaded -= OnSolutionLoaded;
         ViewModel.SignalBoxRuntimeStateChanged -= OnSignalBoxRuntimeStateChanged;
         _propertiesViewModel.ElementChanged -= OnPropertyEditorElementChanged;
@@ -194,7 +194,7 @@ sealed partial class SignalBoxPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 
@@ -404,10 +404,7 @@ sealed partial class SignalBoxPage
 
     private void LogSignalBoxChangeException(Exception exception)
     {
-        if (_logger is not null)
-        {
-            LogSignalBoxChangeFailure(_logger, exception);
-        }
+        LogSignalBoxChangeFailure(_logger, exception);
     }
 
     private void OnPropertyEditorDeletionRequested(

@@ -15,7 +15,7 @@ internal sealed partial class MatrixPage
     public MatrixPageViewModel ViewModel { get; }
 
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<MatrixPage>? _logger;
+    private readonly ILogger<MatrixPage> _logger;
     private long _colorPaletteExpandedToken;
     private long _imagesExpandedToken;
 
@@ -25,7 +25,7 @@ internal sealed partial class MatrixPage
     public MatrixPage(
         MatrixPageViewModel viewModel,
         LayoutPersistenceService layout,
-        ILogger<MatrixPage>? logger = null)
+        ILogger<MatrixPage> logger)
     {
         ViewModel = viewModel;
         _layout = layout;
@@ -44,7 +44,7 @@ internal sealed partial class MatrixPage
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -56,7 +56,7 @@ internal sealed partial class MatrixPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
 
         if (_colorPaletteExpandedToken != 0)

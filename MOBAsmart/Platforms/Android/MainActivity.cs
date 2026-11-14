@@ -2,13 +2,10 @@
 
 namespace Moba.MAUI.Platforms.Android;
 
-using Common.Extension;
 using global::Android.App;
 using global::Android.Content.PM;
 using global::Android.OS;
 using global::Android.Views;
-using Microsoft.Extensions.DependencyInjection;
-using SharedUI.ViewModel;
 
 [Activity(
     Theme = "@style/Maui.SplashTheme",
@@ -27,58 +24,4 @@ public class MainActivity : MauiAppCompatActivity
         _ = savedInstanceState;
         base.OnCreate(null);
     }
-
-    /// <summary>
-    /// Called when the activity is being destroyed (app closing, back button, swipe away).
-    /// Ensures Z21 disconnect before Android terminates the process.
-    /// CRITICAL: Without this, the Z21 keeps "zombie clients" that accumulate and can cause
-    /// the Z21 to become unresponsive after many app restarts.
-    /// </summary>
-    protected override void OnDestroy()
-    {
-        var services = IPlatformApplication.Current?.Services;
-
-        try
-        {
-            // Get the MainWindowViewModel from DI and trigger cleanup
-            var viewModel = services?.GetService<MainWindowViewModel>();
-            if (viewModel != null && viewModel.IsConnected)
-            {
-                // Async-first: start cleanup without synchronously blocking the Android lifecycle thread
-                CleanupAsync(viewModel).Observe();
-            }
-
-        }
-        catch (Exception)
-        {
-            // Ignore cleanup failures during activity shutdown.
-        }
-
-        base.OnDestroy();
-    }
-
-    private static async Task CleanupAsync(MainWindowViewModel viewModel)
-    {
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-
-        try
-        {
-            var disconnectTask = viewModel.DisconnectCommand.ExecuteAsync(null);
-            var completed = await Task.WhenAny(disconnectTask, Task.Delay(Timeout.Infinite, cts.Token)).ConfigureAwait(false);
-
-            if (completed == disconnectTask)
-            {
-                await disconnectTask.ConfigureAwait(false);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Ignore cancellation during shutdown.
-        }
-        catch (Exception)
-        {
-            // Ignore cleanup failures during shutdown.
-        }
-    }
-
 }

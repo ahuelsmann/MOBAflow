@@ -26,8 +26,9 @@ public sealed class UdpDisplayFrameSender : IFrameSender, IDisposable
     private bool _disposed;
 
     /// <summary>Initializes the production UDP display sender.</summary>
-    public UdpDisplayFrameSender()
-        : this(CreateConnection)
+    /// <param name="timeProvider">Time source used for waits and retry delays.</param>
+    public UdpDisplayFrameSender(TimeProvider timeProvider)
+        : this(CreateConnectionFactory(timeProvider))
     {
     }
 
@@ -112,8 +113,11 @@ public sealed class UdpDisplayFrameSender : IFrameSender, IDisposable
         _endpoint = null;
     }
 
-    private static IDisplayFrameSessionConnection CreateConnection(IPEndPoint endpoint) =>
-        new UdpDisplayFrameSessionConnection(endpoint);
+    private static Func<IPEndPoint, IDisplayFrameSessionConnection> CreateConnectionFactory(TimeProvider timeProvider)
+    {
+        ArgumentNullException.ThrowIfNull(timeProvider);
+        return endpoint => new UdpDisplayFrameSessionConnection(endpoint, timeProvider);
+    }
 
     private sealed class UdpDisplayFrameSessionConnection : IDisplayFrameSessionConnection
     {
@@ -121,10 +125,10 @@ public sealed class UdpDisplayFrameSender : IFrameSender, IDisposable
         private readonly DisplayProtocolClient _client;
         private readonly DisplayProtocolFrameSession _session;
 
-        public UdpDisplayFrameSessionConnection(IPEndPoint endpoint)
+        public UdpDisplayFrameSessionConnection(IPEndPoint endpoint, TimeProvider timeProvider)
         {
             _transport = new UdpDisplayDatagramTransport(endpoint.Address, endpoint.Port);
-            _client = new DisplayProtocolClient(_transport);
+            _client = new DisplayProtocolClient(_transport, timeProvider);
             _session = new DisplayProtocolFrameSession(_client);
         }
 

@@ -113,7 +113,8 @@ Shared projects hold platform-neutral contracts, null objects and coordination l
 implementations belong in the host that uses the role.
 
 - **Sound:** `Sound` contains `ISoundPlayer` and `NullSoundPlayer` and has no Windows API or package. MOBAflow
-  plays WAV files through its internal `WindowsSoundPlayer`; MOBAsmart registers `NullSoundPlayer`.
+  plays WAV files through its internal `WindowsSoundPlayer`; MOBAsmart registers `NullSoundPlayer`. Every host
+  registers a sound player and an `ISpeechOutput`: the shared `ActionExecutionContext` registration requires both.
 - **Discovery addresses:** [`ILocalIpv4AddressSource`](../Common/Discovery/ILocalIpv4AddressSource.cs) supplies
   private LAN addresses for the /24 candidate scans used by Z21 and MOBApi discovery. Shared backend registration
   defaults to [`NetworkInterfaceIpv4AddressSource`](../Common/Discovery/NetworkInterfaceIpv4AddressSource.cs).
@@ -349,7 +350,7 @@ runtime services.
   [the mobile session boundary](#mobasmart-session-and-projection).
 - Shared ViewModels and host services reach solution ownership through those
   contracts. Only the shell, the main window that hosts it, OverviewPage (Z21 status
-  and telemetry), the composition root and the Android shutdown lookup remain explicitly named in
+  and telemetry) and the composition root remain explicitly named in
   [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs).
   RF-24 removed the page, layout and shell-state dependencies.
 - The [RF-23 acceptance record](../specs/008-project-runtimes/acceptance.md)
@@ -534,7 +535,7 @@ runtime services.
   broadcast rows have an `...IsPending` state that the Overview shows as a progress ring with words for what the
   row waits for. A row waits while the REST API starts (`RestApiStatusChangedEvent.IsStarting`, at most 30 s of
   progress before it reports a slow start) and while `RestApiStatusService` still sets up the synchronization
-  (`MobaflowSyncDiagnostics.SyncStarting`). The optional `TimeProvider` supplies the waiting time of the REST API
+  (`MobaflowSyncDiagnostics.SyncStarting`). The host's `TimeProvider` supplies the waiting time of the REST API
   and RuntimeHub host rows. `RestApiStatusService` publishes the synchronization after its host connect attempt
   and re-checks after 1, 2, 5, 10, 10 and 10 s until the server lists the host and every successful solution and
   snapshot push, then every 30 s; a failed host connect is retried at the same pace. A solution
@@ -722,7 +723,9 @@ Z21, file I/O, timers and post-startup work can run on background threads.
 The undecorated EventBus invokes subscribers synchronously on the publishing
 thread. Updating WinUI-bound state from that thread can cause UI-thread violations.
 
-Both UI hosts register `AddEventBusWithUiDispatch()`. Its
+Both UI hosts register `AddEventBusWithUiDispatch()` together with the backend services. The registered
+`IEventBus` is the [RecordingEventBusDecorator](../Backend/Service/Recording/RecordingEventBusDecorator.cs)
+around the UI decorator and requires the recording session and mapper registry. The
 [UiThreadEventBusDecorator](../SharedUI/Service/UiThreadEventBusDecorator.cs)
 forwards publication through `IUiDispatcher.InvokeOnUiLowPriority`: publication
 on the UI thread invokes handlers immediately; background publication queues

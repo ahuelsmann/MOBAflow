@@ -231,11 +231,7 @@ public partial class App
     {
         base.OnResume();
 
-        var viewModel = _services.GetService<MauiViewModel>();
-        if (viewModel != null)
-        {
-            viewModel.OnApplicationResumedAsync().Observe();
-        }
+        _services.GetRequiredService<MauiViewModel>().OnApplicationResumedAsync().Observe();
     }
 
     /// <summary>
@@ -254,14 +250,11 @@ public partial class App
         try
         {
             // Get MauiViewModel and trigger graceful disconnect
-            var viewModel = _services.GetService<MauiViewModel>();
-            if (viewModel != null)
+            var viewModel = _services.GetRequiredService<MauiViewModel>();
+            viewModel.NotifyApplicationStopping();
+            if (viewModel.IsConnected)
             {
-                viewModel.NotifyApplicationStopping();
-                if (viewModel.IsConnected)
-                {
-                    await viewModel.DisconnectCommand.ExecuteAsync(null);
-                }
+                await viewModel.DisconnectCommand.ExecuteAsync(null);
             }
             await _services.GetRequiredService<Moba.Backend.Service.InPortCounterService>().DisposeAsync().ConfigureAwait(false);
         }

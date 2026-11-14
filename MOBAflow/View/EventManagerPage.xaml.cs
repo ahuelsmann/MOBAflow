@@ -21,7 +21,7 @@ internal sealed partial class EventManagerPage
     private const string WorkflowFormat = "Workflow";
     private const string EventFormat = "JourneyEvent";
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<EventManagerPage>? _logger;
+    private readonly ILogger<EventManagerPage> _logger;
     private bool _isLoaded;
     private bool _isWide;
     private Border? _rowDropIndicator;
@@ -31,7 +31,7 @@ internal sealed partial class EventManagerPage
     private long _valuesExpansionToken;
     private long _propertiesExpansionToken;
 
-    public EventManagerPage(EventManagerViewModel viewModel, LayoutPersistenceService layout, ILogger<EventManagerPage>? logger = null)
+    public EventManagerPage(EventManagerViewModel viewModel, LayoutPersistenceService layout, ILogger<EventManagerPage> logger)
     {
         ViewModel = viewModel;
         _layout = layout;
@@ -150,7 +150,7 @@ internal sealed partial class EventManagerPage
         ValuesPanel.UnregisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, _valuesExpansionToken);
         PropertiesPanel.UnregisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, _propertiesExpansionToken);
         ClearDropFeedback();
-        SaveLayoutAsync().Observe(ex => _logger?.LogWarning(ex, "Persist Event Manager layout failed"));
+        SaveLayoutAsync().Observe(ex => _logger.LogWarning(ex, "Persist Event Manager layout failed"));
     }
 
     private async Task SaveLayoutAsync()

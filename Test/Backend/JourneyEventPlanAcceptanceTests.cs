@@ -114,7 +114,7 @@ public sealed class JourneyEventPlanAcceptanceTests
 
         public AcceptanceFixture()
         {
-            Counters = new InPortCounterService(_z21.Object, new AppSettings { Counter = { CountOfFeedbackPoints = 3, UseTimerFilter = false } });
+            Counters = TestRuntimes.Counters(_z21.Object, new AppSettings { Counter = { CountOfFeedbackPoints = 3, UseTimerFilter = false } });
             _workflows.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
                 .Returns((WorkflowExecutionRequest request, CancellationToken _) =>
                 {

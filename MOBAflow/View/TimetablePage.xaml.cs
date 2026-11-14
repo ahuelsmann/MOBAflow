@@ -11,7 +11,7 @@ using SharedUI.Service;
 internal sealed partial class TimetablePage
 {
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<TimetablePage>? _logger;
+    private readonly ILogger<TimetablePage> _logger;
     private bool? _isCompactLayout;
 
     public TimetablePageViewModel ViewModel { get; }
@@ -19,7 +19,7 @@ internal sealed partial class TimetablePage
     public TimetablePage(
         TimetablePageViewModel viewModel,
         LayoutPersistenceService layout,
-        ILogger<TimetablePage>? logger = null)
+        ILogger<TimetablePage> logger)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         _layout = layout ?? throw new ArgumentNullException(nameof(layout));
@@ -42,7 +42,7 @@ internal sealed partial class TimetablePage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Load timetable page failed");
+            _logger.LogError(ex, "Load timetable page failed");
         }
     }
 
@@ -114,7 +114,7 @@ internal sealed partial class TimetablePage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist timetable layout on unload failed");
+            _logger.LogWarning(ex, "Persist timetable layout on unload failed");
         }
     }
 }

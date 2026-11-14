@@ -23,17 +23,18 @@ public sealed class DisplayProtocolClient : IDisposable
     /// Initializes a protocol client over an already configured datagram transport.
     /// </summary>
     /// <param name="transport">Connected datagram transport.</param>
-    /// <param name="requestIds">Request identifier sequence, or a new sequence when omitted.</param>
     /// <param name="timeProvider">Time source used for waits and retry delays.</param>
+    /// <param name="requestIds">Request identifier sequence, or a new sequence when omitted.</param>
     public DisplayProtocolClient(
         IDisplayDatagramTransport transport,
-        DisplayIdentifierSequence? requestIds = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider timeProvider,
+        DisplayIdentifierSequence? requestIds = null)
     {
         ArgumentNullException.ThrowIfNull(transport);
+        ArgumentNullException.ThrowIfNull(timeProvider);
         _transport = transport;
         _requestIds = requestIds ?? new DisplayIdentifierSequence();
-        _timeProvider = timeProvider ?? TimeProvider.System;
+        _timeProvider = timeProvider;
         _transport.DatagramReceived += OnDatagramReceived;
     }
 

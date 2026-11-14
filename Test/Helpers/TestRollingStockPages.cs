@@ -145,7 +145,7 @@ internal sealed partial class TestRollingStockPages : IDisposable
 
     public SystemStatusViewModel GetSystemStatus(IEventBus eventBus, ISolutionSession session, SettingsPageViewModel settingsPage)
     {
-        var status = new SystemStatusViewModel(eventBus, session, settingsPage);
+        var status = new SystemStatusViewModel(eventBus, session, settingsPage, TimeProvider.System);
         _pages.Add(status);
         return status;
     }

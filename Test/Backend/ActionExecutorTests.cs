@@ -32,7 +32,7 @@ internal class ActionExecutorTests
         _actionExecutor = TestWorkflowServices.Executor(); // No AnnouncementService for basic tests
         _fakeUdp = new FakeUdpClientWrapper();
         _eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        _z21 = new Z21(_fakeUdp, _eventBus);
+        _z21 = TestRuntimes.CreateZ21(_fakeUdp, _eventBus);
 
         _context = new ActionExecutionContext
         {

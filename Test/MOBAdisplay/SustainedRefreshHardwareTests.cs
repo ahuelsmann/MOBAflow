@@ -101,7 +101,7 @@ internal sealed class SustainedRefreshHardwareTests
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(HealthTimeout);
-        using var client = new UdpDisplayDeviceClient();
+        using var client = new UdpDisplayDeviceClient(TimeProvider.System);
         var negotiation = await client.ConnectAsync(endpoint, timeout.Token).ConfigureAwait(false);
         Assert.That(negotiation.IsSuccessful, Is.True, $"Negotiation failed: {negotiation.Diagnostic}");
         var health = await client.QueryHealthAsync(timeout.Token).ConfigureAwait(false);
@@ -146,7 +146,7 @@ internal sealed class SustainedRefreshHardwareTests
         {
             _transport = new UdpDisplayDatagramTransport(endpoint.Address, endpoint.Port);
             Observer = new SessionLossObserver(_transport);
-            _client = new DisplayProtocolClient(Observer);
+            _client = new DisplayProtocolClient(Observer, TimeProvider.System);
             _session = new DisplayProtocolFrameSession(_client);
         }
 

@@ -6,8 +6,6 @@ using Common.Discovery;
 
 using Microsoft.Extensions.Logging;
 
-using SharedUI.Interface;
-
 using System.Diagnostics;
 using Contracts.Discovery;
 
@@ -27,7 +25,6 @@ public sealed class RestApiProcessService : IDisposable
     public event EventHandler<int>? ApiBecameReachable;
 
     private readonly AppSettings _appSettings;
-    private readonly ISettingsService? _settingsService;
     private readonly ILogger<RestApiProcessService> _logger;
     private readonly ILogger<UdpDiscoveryResponder> _discoveryLogger;
     private Process? _process;
@@ -39,11 +36,9 @@ public sealed class RestApiProcessService : IDisposable
     public RestApiProcessService(
         AppSettings appSettings,
         ILogger<RestApiProcessService> logger,
-        ILogger<UdpDiscoveryResponder> discoveryLogger,
-        ISettingsService? settingsService = null)
+        ILogger<UdpDiscoveryResponder> discoveryLogger)
     {
         _appSettings = appSettings;
-        _settingsService = settingsService;
         _logger = logger;
         _discoveryLogger = discoveryLogger;
     }

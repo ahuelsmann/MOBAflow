@@ -2,6 +2,8 @@
 
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
+
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Protocol;
@@ -21,7 +23,7 @@ internal class Z21WrapperTests
     {
         var fake = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var z21 = new Z21(fake, eventBus);
+        var z21 = TestRuntimes.CreateZ21(fake, eventBus);
 
         await z21.ConnectAsync(IPAddress.Loopback);
 
@@ -44,7 +46,7 @@ internal class Z21WrapperTests
         var signal = new ManualResetEventSlim(false);
         var fake = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var z21 = new Z21(fake, eventBus);
+        var z21 = TestRuntimes.CreateZ21(fake, eventBus);
 
         FeedbackResult? captured = null;
 
@@ -75,7 +77,7 @@ internal class Z21WrapperTests
     {
         var fake = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var z21 = new Z21(fake, eventBus);
+        var z21 = TestRuntimes.CreateZ21(fake, eventBus);
         var activations = new List<int>();
         var publishedActivations = new List<int>();
         var sourceCorrelations = new List<Guid>();
@@ -112,7 +114,7 @@ internal class Z21WrapperTests
     public void Received_RaisesEveryNewlyActiveInPort_InOnePacket()
     {
         var fake = new FakeUdpClientWrapper();
-        var z21 = new Z21(fake, new EventBus(NullLogger<EventBus>.Instance));
+        var z21 = TestRuntimes.CreateZ21(fake, new EventBus(NullLogger<EventBus>.Instance));
         var activations = new List<int>();
         z21.Received += feedback => activations.Add(feedback.InPort);
         var packet = Z21Packets.RBusFeedbackInPort5.ToArray();
@@ -129,7 +131,7 @@ internal class Z21WrapperTests
         var signal = new ManualResetEventSlim(false);
         var fake = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var z21 = new Z21(fake, eventBus);
+        var z21 = TestRuntimes.CreateZ21(fake, eventBus);
         XBusStatus? status = null;
 
         void Handler(XBusStatus s)

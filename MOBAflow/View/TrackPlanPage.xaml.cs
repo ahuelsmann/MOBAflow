@@ -54,7 +54,7 @@ public sealed partial class TrackPlanPage
     private readonly EditableTrackPlan _plan;
     private readonly SegmentPlacementGeometry _geometry;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
-    private readonly ILogger<TrackPlanPage>? _logger;
+    private readonly ILogger<TrackPlanPage> _logger;
 
     private Canvas? _ghostLayer;
     private Canvas? _rotationHandleLayer;
@@ -84,7 +84,7 @@ public sealed partial class TrackPlanPage
         TrackPlanPageEditor editor,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
         LayoutPersistenceService layout,
-        ILogger<TrackPlanPage>? logger = null)
+        ILogger<TrackPlanPage> logger)
     {
         ArgumentNullException.ThrowIfNull(viewModels);
         ViewModel = viewModels.TrackPlan;
@@ -194,7 +194,7 @@ public sealed partial class TrackPlanPage
         _ = sender;
         _ = e;
 
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
         _plan.PlanChanged -= OnPlanChanged;
         KeyDown -= Page_KeyDown;
         _feedbackHighlighter.HighlightsChanged -= OnFeedbackHighlightsChanged;
@@ -211,7 +211,7 @@ public sealed partial class TrackPlanPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 
@@ -307,7 +307,7 @@ public sealed partial class TrackPlanPage
     private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         _ = sender;
-        HandlePageKeyDownAsync(e).Observe(ex => _logger?.LogWarning(ex, "Keyboard handler failed"));
+        HandlePageKeyDownAsync(e).Observe(ex => _logger.LogWarning(ex, "Keyboard handler failed"));
     }
 
     private void OnDeleteAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
@@ -422,7 +422,7 @@ public sealed partial class TrackPlanPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Keyboard handler failed");
+            _logger.LogWarning(ex, "Keyboard handler failed");
         }
 
         await Task.CompletedTask;
@@ -506,7 +506,7 @@ public sealed partial class TrackPlanPage
 
     private void ToolboxItem_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        HandleToolboxItemPointerPressedAsync(sender, e).Observe(ex => _logger?.LogWarning(ex, "Toolbox drag start failed"));
+        HandleToolboxItemPointerPressedAsync(sender, e).Observe(ex => _logger.LogWarning(ex, "Toolbox drag start failed"));
     }
 
     private Task HandleToolboxItemPointerPressedAsync(object sender, PointerRoutedEventArgs e)
@@ -532,7 +532,7 @@ public sealed partial class TrackPlanPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Toolbox drag start failed");
+            _logger.LogWarning(ex, "Toolbox drag start failed");
         }
 
         return Task.CompletedTask;
@@ -597,7 +597,7 @@ public sealed partial class TrackPlanPage
     private void Canvas_Drop(object sender, DragEventArgs e)
     {
         _ = sender;
-        HandleCanvasDropAsync(e).Observe(ex => _logger?.LogWarning(ex, "Drop handling failed"));
+        HandleCanvasDropAsync(e).Observe(ex => _logger.LogWarning(ex, "Drop handling failed"));
     }
 
     private async Task HandleCanvasDropAsync(DragEventArgs e)
@@ -621,7 +621,7 @@ public sealed partial class TrackPlanPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Drop handling failed");
+            _logger.LogWarning(ex, "Drop handling failed");
         }
     }
 

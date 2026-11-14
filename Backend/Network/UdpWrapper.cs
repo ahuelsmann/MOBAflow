@@ -42,7 +42,7 @@ public class UdpWrapper : IUdpClientWrapper
     private CancellationTokenSource? _cts;
     private Task? _receiverTask;
     private bool _disposed;
-    private readonly ILogger<UdpWrapper>? _logger;
+    private readonly ILogger<UdpWrapper> _logger;
 
     // Performance tracking
     private int _totalSendCount;
@@ -73,7 +73,7 @@ public class UdpWrapper : IUdpClientWrapper
             var sendsPerSecond = _totalSendCount / elapsedSeconds;
             var retriesPerSecond = _totalRetryCount / elapsedSeconds;
 
-            _logger?.LogInformation(
+            _logger.LogInformation(
                 "UDP Performance: {SendCount} total sends, {RetryCount} retries, {SendRate:F2} sends/sec, {RetryRate:F2} retries/sec, {ReceiveCount} receives",
                 _totalSendCount, _totalRetryCount, sendsPerSecond, retriesPerSecond, _totalReceiveCount);
         }
@@ -95,11 +95,12 @@ public class UdpWrapper : IUdpClientWrapper
     /// <summary>
     /// Initializes a new instance of the <see cref="UdpWrapper"/> class.
     /// </summary>
-    /// <param name="logger">Optional logger for diagnostics and performance statistics.</param>
-    public UdpWrapper(ILogger<UdpWrapper>? logger = null)
+    /// <param name="logger">Logger for diagnostics and performance statistics.</param>
+    public UdpWrapper(ILogger<UdpWrapper> logger)
     {
+        ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
-        _logger?.LogInformation("UdpWrapper initialized");
+        _logger.LogInformation("UdpWrapper initialized");
     }
 
     /// <summary>
@@ -120,11 +121,11 @@ public class UdpWrapper : IUdpClientWrapper
         // If already connected, stop the existing connection first
         if (_client != null)
         {
-            _logger?.LogInformation("Closing existing connection before reconnecting...");
+            _logger.LogInformation("Closing existing connection before reconnecting...");
             await StopAsync().ConfigureAwait(false);
         }
 
-        _logger?.LogInformation("Connecting to {Address}:{Port}", address, port);
+        _logger.LogInformation("Connecting to {Address}:{Port}", address, port);
 
         _client = new UdpClient();
         _client.Connect(address, port);
@@ -134,7 +135,7 @@ public class UdpWrapper : IUdpClientWrapper
         _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _receiverTask = Task.Run(() => ReceiverLoopAsync(_cts.Token), _cts.Token);
 
-        _logger?.LogInformation("UDP client connected and receiver loop started");
+        _logger.LogInformation("UDP client connected and receiver loop started");
     }
 
     /// <summary>
@@ -143,7 +144,7 @@ public class UdpWrapper : IUdpClientWrapper
     /// </summary>
     private async Task ReceiverLoopAsync(CancellationToken cancellationToken)
     {
-        _logger?.LogInformation("UDP Receiver loop started");
+        _logger.LogInformation("UDP Receiver loop started");
 
         try
         {
@@ -155,7 +156,7 @@ public class UdpWrapper : IUdpClientWrapper
                     // Check cancellation before blocking receive
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        _logger?.LogDebug("Receiver loop cancelled before receive");
+                        _logger.LogDebug("Receiver loop cancelled before receive");
                         break;
                     }
 
@@ -163,19 +164,19 @@ public class UdpWrapper : IUdpClientWrapper
 
                     IncrementReceiveCount();
 
-                    _logger?.LogDebug("Received {Length} bytes from {Endpoint}: {Data}",
+                    _logger.LogDebug("Received {Length} bytes from {Endpoint}: {Data}",
                         result.Buffer.Length,
                         result.RemoteEndPoint,
                         BitConverter.ToString(result.Buffer).Replace("-", " "));
                 }
                 catch (OperationCanceledException)
                 {
-                    _logger?.LogDebug("Receiver loop cancelled during receive");
+                    _logger.LogDebug("Receiver loop cancelled during receive");
                     break;
                 }
                 catch (SocketException ex)
                 {
-                    _logger?.LogError("Socket error in receiver loop: {Error}", ex.Message);
+                    _logger.LogError("Socket error in receiver loop: {Error}", ex.Message);
                     break;
                 }
 
@@ -184,7 +185,7 @@ public class UdpWrapper : IUdpClientWrapper
         }
         finally
         {
-            _logger?.LogInformation("UDP Receiver loop stopped. Stats: {SendCount} sends, {RetryCount} retries, {ReceiveCount} receives",
+            _logger.LogInformation("UDP Receiver loop stopped. Stats: {SendCount} sends, {RetryCount} retries, {ReceiveCount} receives",
                 _totalSendCount, _totalRetryCount, _totalReceiveCount);
         }
     }
@@ -213,7 +214,7 @@ public class UdpWrapper : IUdpClientWrapper
 
         IncrementSendAndLogStatsIfNeeded();
 
-        _logger?.LogDebug("Sending {Length} bytes (attempt 1/{MaxRetries}): {Data}",
+        _logger.LogDebug("Sending {Length} bytes (attempt 1/{MaxRetries}): {Data}",
             data.Length, maxRetries, BitConverter.ToString(data).Replace("-", " "));
 
         while (true)
@@ -224,7 +225,7 @@ public class UdpWrapper : IUdpClientWrapper
                 await client.SendAsync(data, cancellationToken).ConfigureAwait(false);
 
                 sendStartTime.Stop();
-                _logger?.LogDebug("Send successful in {ElapsedMs}ms", sendStartTime.ElapsedMilliseconds);
+                _logger.LogDebug("Send successful in {ElapsedMs}ms", sendStartTime.ElapsedMilliseconds);
 
                 return;
             }
@@ -234,7 +235,7 @@ public class UdpWrapper : IUdpClientWrapper
 
                 IncrementRetryCount();
 
-                _logger?.LogWarning("Send attempt {Attempt}/{MaxRetries} failed: {Error}. Retrying in {DelayMs}ms",
+                _logger.LogWarning("Send attempt {Attempt}/{MaxRetries} failed: {Error}. Retrying in {DelayMs}ms",
                     attempt, maxRetries, ex.Message, delayMs);
                 await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
                 delayMs *= 2;
@@ -249,7 +250,7 @@ public class UdpWrapper : IUdpClientWrapper
     /// </summary>
     public async Task StopAsync()
     {
-        _logger?.LogDebug("StopAsync called - stopping UDP client");
+        _logger.LogDebug("StopAsync called - stopping UDP client");
 
         // Cancel the receiver task first
         if (_cts is { IsCancellationRequested: false })
@@ -262,13 +263,13 @@ public class UdpWrapper : IUdpClientWrapper
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                _logger?.LogWarning("StopAsync receiver error: {Message}", ex.Message);
+                _logger.LogWarning("StopAsync receiver error: {Message}", ex.Message);
             }
         }
 
         DisposeClientResources();
 
-        _logger?.LogInformation("UDP client stopped successfully");
+        _logger.LogInformation("UDP client stopped successfully");
     }
 
     private async Task WaitForReceiverTaskAsync()
@@ -281,7 +282,7 @@ public class UdpWrapper : IUdpClientWrapper
         var completedTask = await Task.WhenAny(_receiverTask, Task.Delay(2000, CancellationToken.None)).ConfigureAwait(false);
         if (completedTask != _receiverTask)
         {
-            _logger?.LogWarning("Receiver task did not complete within timeout");
+            _logger.LogWarning("Receiver task did not complete within timeout");
         }
     }
 
@@ -305,11 +306,11 @@ public class UdpWrapper : IUdpClientWrapper
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Error during dispose");
+            _logger.LogError(ex, "Error during dispose");
         }
 
         DisposeClientResources();
-        _logger?.LogInformation("UdpWrapper disposed");
+        _logger.LogInformation("UdpWrapper disposed");
     }
 
     private void DisposeClientResources()
@@ -330,7 +331,7 @@ public class UdpWrapper : IUdpClientWrapper
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning("Error closing UDP client: {Message}", ex.Message);
+            _logger.LogWarning("Error closing UDP client: {Message}", ex.Message);
         }
 
         _client = null;
