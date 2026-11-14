@@ -6,7 +6,7 @@
 
 **Created**: 2026-11-14
 
-**Status**: Draft; clarified where the issue, the repository and the recorded decisions settle a question. Eight questions are open for the maintainer (see [Open questions](#open-questions-for-the-maintainer)). No plan, no tasks and no implementation exist.
+**Status**: Draft; clarified where the issue, the repository and the recorded decisions settle a question. Three questions are open for the maintainer (see [Open questions](#open-questions-for-the-maintainer)). No plan, no tasks and no implementation exist.
 
 **Spec Kit**: Required
 
@@ -40,13 +40,17 @@
 
 ### Session 2026-11-14 (maintainer decisions)
 
-The first decision is recorded in #430 by the maintainer. The following five reached this specification through the Chief Operating Officer session, which reports them as maintainer decisions of 2026-11-14; they are recorded here as such and are confirmed or corrected by the maintainer in the review of this specification.
+The first decision is recorded in #430 by the maintainer. The following nine reached this specification through the Chief Operating Officer session, which reports them as maintainer decisions of 2026-11-14; they are recorded here as such and are confirmed or corrected by the maintainer in the review of this specification.
 
 - Q: Where is the demo hosted? → A: Azure App Service `mobaflow-demo.azurewebsites.net`, Free tier F1, region France Central, ASP.NET Core on .NET 10 under Linux, prepared by the Technical Director.
 - Q: How closely does the web UI follow MOBAflow's look? → A: As close as possible to the WinUI pages, in Light and Dark like the app. The four pages stay: Train Control, Workflows, Track Plan, Signal Box.
 - Q: What does the status bar show? → A: The layout and position of the WinUI status bar with demo texts instead of host details: no local solution path, no REST API port, no machine or host details.
 - Q: Are the navigation items outside the demo hidden or disabled? → A: Shown greyed out (disabled), not hidden, in the same order and grouping as the WinUI navigation; a visitor can see why an item is unavailable.
 - Q: Which page opens first? → A: Train Control with a flagship sample locomotive preselected.
+- Q: Where does the per-visitor simulation run, and what does the host do? → A: The simulation runs in the visitor's browser. The ASP.NET Core host in `MOBAweb/` serves the static React build and one read-only sample snapshot (JSON plus SVG and images). No per-visitor server state, no SignalR, no runtime endpoints.
+- Q: How long does a visitor's state live? → A: Only as long as the visit (the browser tab). A reload or closing the tab starts fresh from the sample. Demo state is not kept in the browser's storage.
+- Q: Do 12 concurrent visitors work on the Free tier? → A: Yes. With the simulation in the browser, concurrency is not a server limit. At least 12 concurrent visitors are a supported requirement. The daily outgoing bandwidth of 165 MB limits the demo, not concurrency; a sustained higher demand needs a paid tier, which is a later maintainer decision and out of scope.
+- Q: Which abuse is conceivable and what protects against it? → A: See [Threats and abuse protection](#threats-and-abuse-protection): proportionate measures, no CAPTCHA, no accounts.
 - Q: What happens in a browser window narrower than 1024 pixels? → A: The demo keeps the desktop geometry (minimum width 1024 pixels, horizontal scrolling) with a dismissible notice "Desktop UI demo - best on a screen at least 1024 px wide". There is no stacked mobile layout.
 
 ### Session 2026-11-14 (Head of UI/UX advice)
@@ -64,14 +68,28 @@ The hosting decision makes the following limits part of the design. They were re
 | CPU time per 5 minutes | 3 minutes | No sustained server-side simulation loop | same |
 | Quota exceeded | The app is stopped until the quota resets; every request gets HTTP 403 | The demo can be offline for the rest of a UTC day; the visitor sees a platform page, not ours | [App Service quotas and metrics](https://learn.microsoft.com/azure/app-service/web-sites-monitor) |
 | Memory | 1,024 MB per App Service plan; the app stops temporarily when exceeded | No per-visitor server state that grows with the number of visitors | [Azure App Service limits](https://learn.microsoft.com/azure/azure-resource-manager/management/azure-subscription-service-limits#azure-app-service-limits) |
-| Outgoing bandwidth | 165 MB per day | The size of the first page load decides how many visitors a day can be served | same |
+| Outgoing bandwidth | 165 MB per day | The binding limit: the size of a first visit decides how many visitors a day can be served (FR-049, FR-057) | same |
 | Storage | 1 GB | Small deployment; no log growth | same |
-| WebSockets per instance (Linux) | 5 | A live connection per visitor (for example a SignalR hub over WebSockets) serves at most five visitors | same |
+| WebSockets per instance (Linux) | 5 | A live connection per visitor would serve at most five visitors; the demo uses none (FR-011) | same |
 | Scale out | 1 shared instance | No scaling | same |
 | Deployment slots | Not available below the Standard tier | Every deployment replaces the live app; no staging slot | [Set up staging environments](https://learn.microsoft.com/azure/app-service/deploy-staging-slots) |
 | Custom domain | Needs a paid tier, not Free (F1) | The address stays `mobaflow-demo.azurewebsites.net`, with the platform's HTTPS certificate for that host name | [Set up an existing custom domain](https://learn.microsoft.com/azure/app-service/app-service-web-tutorial-custom-domain#prerequisites) |
 
 Not verified in an official limits table: that "Always On" is unavailable in the Free tier and that an idle app is unloaded and cold-starts on the next request. A Microsoft Q&A answer states that Always On needs the Basic tier or higher. The specification assumes cold starts (FR-052) and the plan phase verifies the behavior on the real app.
+
+## Threats and abuse protection
+
+The demo has no accounts, stores no data and takes no input that reaches the server. Defacement through stored content, data leaks and account abuse are therefore not possible by design. The realistic risks and their answers:
+
+| Risk | Effect | Answer |
+| --- | --- | --- |
+| Traffic flooding or bots | The daily bandwidth or CPU quota is used up; the platform answers HTTP 403 for the rest of the UTC day | Rate limiting per client address (FR-056), small and cacheable transfers (FR-057 to FR-059); the remaining risk is accepted on the Free tier |
+| Hotlinking of photos and other files from other sites | Bandwidth is spent on other sites' visitors | Resized, compressed images (FR-058) and a cross-origin resource policy that keeps files for the demo's own pages (FR-071) |
+| Scraping | Bandwidth use; the content itself is public sample data | Rate limiting; the indexing choice in FR-073 |
+| Misconfiguration exposing host details or real endpoints | Leaks paths, ports or a route to a real runtime | No dynamic endpoint beyond the read-only snapshot (FR-070), no server banner or detailed error page (FR-072), FR-002 and FR-030 |
+| Supply-chain or script-injection risk in the frontend | Malicious code runs in visitors' browsers | A committed lockfile and a dependency audit in CI (FR-074), a content security policy without inline scripts (FR-071) |
+
+Not planned, because they would be out of proportion for a demo: CAPTCHA, accounts, a web application firewall.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -175,15 +193,15 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 
 ### Edge Cases
 
-- The daily CPU or bandwidth quota is used up: the platform answers every request with HTTP 403 until midnight UTC. The demo cannot show its own page then (see open question Q8).
+- The daily CPU or bandwidth quota is used up: the platform answers every request with HTTP 403 until midnight UTC. The demo cannot show its own page then; this is accepted on the Free tier (FR-075).
 - First request after an idle period: the host starts cold. The visitor sees a loading state, not an empty or broken shell.
-- The connection to the host drops after the first load: what already runs in the browser keeps working; anything that needs the host fails with an Info or Warning entry in the Messages bar, not silently.
+- The connection to the host drops after the first load: the simulation runs in the browser and keeps working; a file that still has to be loaded fails with a Warning entry in the Messages bar, not silently.
 - A browser window narrower than 1024 pixels: the desktop layout stays, with horizontal scrolling and the dismissible notice (FR-033).
 - A visitor with reduced-motion preference: gauges do not animate, flashing aspects do not flash (FR-046).
 - A visitor without JavaScript: the page states that the demo needs JavaScript.
 - A request for an address that belongs to MOBApi's runtime contract (for example a runtime command or hub path): the demo host does not serve it.
-- Many requests from one source in a short time: the host limits them (see open question Q4) without affecting other visitors more than the shared quota already does.
-- A deployment while visitors are active: there is no staging slot, so the app restarts; simulated state in a visitor's browser survives only as far as the chosen backend shape allows (Q1).
+- Many requests from one source in a short time: the host limits them (FR-056) and answers with the standard "too many requests" status; other visitors are not limited by it.
+- A deployment while visitors are active: there is no staging slot, so the app restarts; a visitor's simulation continues in the browser, and a reload afterwards starts from the new version's sample.
 
 ## Requirements *(mandatory)*
 
@@ -198,6 +216,8 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **FR-005**: Visitors MUST be able to trigger simulated actions only: drive locomotives, switch functions F0 to F31, emergency stop, set signal aspects, switch turnouts, run sample workflows, select objects, zoom, change the theme and reset.
 - **FR-006**: Visitors MUST NOT be able to create, change, delete, import, export or save workflows, track plans, signal-box layouts, locomotives or any other content.
 - **FR-007**: The demo MUST NOT persist visitor state on the server and MUST NOT use accounts, sign-in or tracking identifiers; each visitor's state is isolated from every other visitor's.
+- **FR-011**: The per-visitor simulation MUST run in the visitor's browser, seeded from one read-only sample snapshot. The host keeps no per-visitor state and opens no live connection per visitor.
+- **FR-012**: A visitor's simulated state MUST live only as long as the visit: a reload or closing the tab starts fresh from the sample. Demo state MUST NOT be written to the browser's storage. The one exception is the theme choice, which is remembered in the browser so that a returning visitor keeps Light or Dark.
 - **FR-008**: Reset MUST restore the visitor's initial sample state on all four pages.
 - **FR-009**: Speech and sound actions MUST be shown visually (a notification and a Messages entry with the text or sound name); the server produces no audio.
 - **FR-010**: The demo MUST show shipped sample content only: a sample layout, sample locomotives with their function names as data (German names such as "Stirnlicht" are sample data, not UI text), sample workflows and a prepared signal-box sample. Which shipped files and which locomotive photos may be published is open question Q9.
@@ -240,29 +260,34 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 
 **Hosting, build and deployment**
 
+- **FR-049**: The demo MUST support at least 12 concurrent visitors. The daily bandwidth quota, not concurrency, limits the demo: at the transfer budget of FR-057 the 165 MB allow 110 first visits per day (165 MB divided by 1.5 MB), fewer when visitors load more than the first page's files. A sustained higher demand needs a paid tier; that is a later maintainer decision and out of scope.
 - **FR-050**: The demo MUST be deployable to the decided host: Azure App Service `mobaflow-demo.azurewebsites.net`, Free tier F1, France Central, ASP.NET Core on .NET 10 under Linux.
-- **FR-051**: The demo MUST stay within the Free tier limits in normal use: server work per visitor close to zero, no per-visitor server memory that grows without bound, no design that needs more than the five WebSocket connections of the tier, and a first page load small enough for the 165 MB daily bandwidth (target in SC-006).
+- **FR-051**: The demo MUST stay within the Free tier limits in normal use: server work per visitor close to zero, no per-visitor server memory, no WebSocket or other live connection per visitor, and a first visit within the transfer budget of FR-057.
 - **FR-052**: The demo MUST tolerate a cold start: the first response after an idle period shows a loading state and then the complete shell.
 - **FR-053**: The code MUST live in `MOBAweb/` with its own Node/npm build for the React app and its own CI job; it MUST NOT be part of the WinUI or Android build graphs, and building MOBAflow or MOBAsmart MUST NOT require Node.
 - **FR-054**: Deployment to the Azure web app MUST be possible through a GitHub Actions workflow without a secret in the repository. The workflow, its credentials and its trigger are created in the implementation, not by this specification (trigger: open question Q10).
 - **FR-055**: Because the tier has no deployment slot, a deployment replaces the running app; the demo MUST come back without manual steps.
-- **FR-056**: The host MUST apply basic abuse protection suitable for a public, anonymous site (values: open question Q4) and MUST offer no endpoint that changes server state shared between visitors.
+- **FR-056**: The host MUST limit requests per client address with ASP.NET Core rate limiting: a strict limit on all non-static requests and a generous one on static files. Proposed starting values, fixed in the plan phase: 60 non-static requests per minute and 600 static requests per minute per client address.
+- **FR-057**: A first visit MUST transfer at most 1.5 MB compressed, including the application, the sample snapshot and the locomotive photos shown on the landing page. The budget MUST be checked in CI or by a documented, repeatable measurement, and a change that exceeds it fails that check.
+- **FR-058**: Responses MUST be compressed with Brotli or gzip; locomotive photos and other images MUST be resized to their displayed size and compressed.
+- **FR-059**: Static files MUST carry content-hashed file names and long-lived cache headers, so that a repeat visit transfers almost nothing; the entry document is revalidated so that a new deployment is picked up.
+- **FR-070**: The host MUST offer no dynamic endpoint beyond the read-only sample snapshot and no endpoint that accepts visitor data or changes server state.
+- **FR-071**: The host MUST send security headers: a content security policy without inline scripts and with `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, a `Referrer-Policy`, and a cross-origin resource policy that keeps images and other files for the demo's own pages.
+- **FR-072**: The host MUST NOT send a server banner and MUST NOT show detailed error pages; an error shows a short neutral page.
+- **FR-073**: The demo MUST ship a `robots.txt`. Default: allow indexing of the start page only. The maintainer may choose otherwise without a change to this specification.
+- **FR-074**: The `MOBAweb/` CI job MUST install from a committed lockfile and run an npm dependency audit that fails on known high or critical vulnerabilities.
+- **FR-075**: Quota exhaustion on the Free tier is accepted: the platform then answers HTTP 403 until the reset. The operator documentation in `MOBAweb/` MUST say that quota use and exhaustion are visible in the Azure portal's quota view of the web app.
 
-**Open by design** (each is a [NEEDS CLARIFICATION] with a recommended default in [Open questions](#open-questions-for-the-maintainer)):
+**Open** (each is a [NEEDS CLARIFICATION] with a recommended default in [Open questions](#open-questions-for-the-maintainer)):
 
-- **FR-060**: Where the per-visitor simulation runs and what the demo host references [NEEDS CLARIFICATION: Q1].
-- **FR-061**: How long a visitor's state lives [NEEDS CLARIFICATION: Q2].
-- **FR-062**: How many visitors are served at once [NEEDS CLARIFICATION: Q3].
-- **FR-063**: The abuse protection values [NEEDS CLARIFICATION: Q4].
 - **FR-064**: The accent color value [NEEDS CLARIFICATION: Q5].
-- **FR-067**: What happens when the daily quota is used up [NEEDS CLARIFICATION: Q8].
 - **FR-068**: The sample content and locomotive photos that may be published [NEEDS CLARIFICATION: Q9].
 - **FR-069**: The deployment trigger [NEEDS CLARIFICATION: Q10].
 
 ### Key Entities
 
-- **Demo session**: One visitor's simulated state: locomotives, signals, turnouts, running workflows, theme. Isolated per visitor, in memory only, discarded at the end of its lifetime (Q2), restorable by Reset.
-- **Sample project**: The fixed, read-only content every session starts from: sample layout, locomotives, workflows, signal-box sample.
+- **Demo session**: One visitor's simulated state: locomotives, signals, turnouts, running workflows. It lives in the visitor's browser tab only, is discarded on reload or close and is restorable by Reset.
+- **Sample project**: The fixed, read-only content every session starts from: sample layout, locomotives, workflows, signal-box sample. The host serves it as one read-only snapshot.
 - **Simulated locomotive**: Name, photo, function list with names, speed step, direction, ramp setting, switched functions, position on the layout.
 - **Sample track plan**: Placed track pieces of the Piko A-Track catalogue and the drawing produced from them.
 - **Signal-box sample**: Track elements, turnouts with a position, signals with a selected aspect out of their available aspects.
@@ -278,32 +303,29 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **SC-003**: A search of the delivered pages, scripts and responses finds no host path, port, machine name or internal address, and a request to any MOBApi runtime path is not served.
 - **SC-004**: None of the content-changing controls changes anything: a check of every disabled or read-only control listed in FR-036 to FR-039 leaves the sample content identical.
 - **SC-005**: After Reset, all four pages show the initial sample state; two visitors using the demo at the same time never see each other's changes.
-- **SC-006**: The first page load transfers at most 1.5 MB with compression, so that at least 100 first visits fit into the daily bandwidth of the Free tier; a repeat visit transfers under 100 KB. [NEEDS CLARIFICATION: these two targets are a proposal derived from the 165 MB limit; the maintainer may set others with Q3.]
-- **SC-007**: One visitor using the demo for ten minutes uses less than 2 seconds of server CPU time, so that the daily CPU quota is not the limiting factor.
+- **SC-006**: A first visit transfers at most 1.5 MB compressed, so that 110 first visits fit into the daily bandwidth of the Free tier; a repeat visit with a warm browser cache transfers under 100 KB.
+- **SC-011**: Twelve visitors using the demo at the same time each get a responsive simulation, and the host's CPU and memory use does not rise with their number beyond serving the files.
+- **SC-007**: After the first load, a visitor using the demo for ten minutes causes no further server request for the simulation, so that the daily CPU quota is not the limiting factor.
 - **SC-008**: After an idle period, the complete shell is usable within 15 seconds of the first request on a normal home connection; a warm page is usable within 3 seconds.
 - **SC-009**: Every active control of the four pages is operable by keyboard alone, and an automated accessibility check of the four pages in both themes reports no critical finding.
 - **SC-010**: Building MOBAflow and MOBAsmart works on a machine without Node, and the `MOBAweb/` CI job runs without the WinUI or Android workloads.
 
 ## Open questions for the maintainer
 
-Each question has a recommended default and the alternatives. Answering with the letters is enough (for example "Q1 A, Q2 A, ..."). Q6 (landing page) and Q7 (narrow windows) were decided on 2026-11-14 and are recorded under [Clarifications](#clarifications); the numbers of the other questions are kept.
+Each question has a recommended default and the alternatives. Answering with the letters is enough (for example "Q5 A, Q9 A, Q10 A"). Q1 to Q4 and Q6 to Q8 were decided on 2026-11-14 and are recorded under [Clarifications](#clarifications) and in the requirements; the numbers of the remaining questions are kept.
 
 | # | Question | Recommended default | Alternatives |
 | --- | --- | --- | --- |
-| Q1 | **Backend shape.** Where does the per-visitor simulation run, and what is the host? | **A:** A separate small ASP.NET Core host in `MOBAweb/` that serves the React app and a read-only snapshot of the sample project; the simulation runs in the visitor's browser. It protects the Free tier (no connection per visitor, almost no server CPU or memory) and makes Reset instant. The host references no `Backend` Z21 runtime. Repository evidence: `TrackPlan.Renderer` references `TrackLibrary.Base`, and the sample layout uses the Piko A catalogue, so the reference set is `Domain`, `Contracts`, `TrackPlan.Renderer` plus `TrackLibrary.Base` and `TrackLibrary.PikoA`, not only the first three. | **B:** Same host, but the simulation runs on the server per visitor; closer to the real runtime, but each visitor costs server CPU and memory, and live updates over WebSockets serve at most five visitors on F1. **C:** A demo mode inside MOBApi; rejected by the security decision unless the maintainer reopens it. |
-| Q2 | **Session lifetime.** How long does a visitor's state live? | **A** (with Q1 A): as long as the browser tab is open; a reload or closing the tab starts fresh; nothing is kept on the server. | **B:** kept in the browser across reloads until Reset. **C** (with Q1 B): server session, discarded after 15 minutes without activity. |
-| Q3 | **Concurrent visitors.** Is there a limit? | **A** (with Q1 A): no fixed limit; the daily bandwidth is the real ceiling (about 100 first visits per day at the SC-006 target). | **B** (with Q1 B): a fixed cap, for example 20 sessions with polling or 5 with a live connection; further visitors see "The demo is busy, please try again in a few minutes". |
-| Q4 | **Abuse protection.** Which limits apply? | **A:** per source address at most 60 requests per minute and 600 per hour to the host, cacheable static files, no endpoint that writes, standard security headers; with Q1 B additionally one session per source address. | **B:** stricter values (for example 30 per minute). **C:** no application limit, rely on the platform quota only (not recommended: one client can use up the day). |
 | Q5 | **Accent color.** MOBAflow uses the Windows accent of the machine it runs on; the repository defines no magenta. Which fixed value does the demo use? | **A:** the magenta of the maintainer's reference screenshots, taken by value from them and recorded as the demo's accent token. | **B:** Windows' default blue (`#0078D4`), which is what most MOBAflow users see. **C:** follow the visitor's system accent where the browser offers it. |
-| Q8 | **Quota used up.** When the daily CPU or bandwidth quota is exhausted, the platform shows HTTP 403 until midnight UTC. | **A:** accept it for the Free tier and document it on #430 and in the README of `MOBAweb/`. | **B:** move to a paid tier (Basic) if it happens regularly; that also allows a custom domain and Always On. **C:** put a free content delivery service in front for the static files; more setup, another party. |
 | Q9 | **Sample content.** Which shipped data and photos are published? | **A:** the shipped sample solution and track plan (`MOBAflow/solution.json`, `MOBAflow/track-plan.json`) reduced to a few locomotives and workflows, with locomotive photos only where the maintainer confirms the right to publish them; otherwise neutral placeholder images. | **B:** a new, smaller sample made for the demo. |
 | Q10 | **Deployment trigger.** When is the demo deployed? | **A:** manually started workflow first; automatic deployment on changes to `MOBAweb/**` on `main` once the demo is stable. | **B:** automatic from the start. |
 
-Also to confirm in review: the five decisions of 2026-11-14 that reached this specification through the Chief Operating Officer session (design closeness, status bar texts, disabled navigation entries, landing page, narrow windows), and the initial theme (FR-021).
+Also to confirm in review: the nine decisions of 2026-11-14 that reached this specification through the Chief Operating Officer session (design closeness, status bar texts, disabled navigation entries, landing page, narrow windows, backend shape, session lifetime, visitor numbers, abuse protection), the initial theme (FR-021) and the indexing default (FR-073).
 
 ## Assumptions
 
 - Implementation starts after the refactoring programme #47; this specification does not authorize it.
+- The host references no `Backend` Z21 runtime. To produce the sample track plan drawing it needs `TrackPlan.Renderer`, which references `TrackLibrary.Base`, and the Piko A catalogue of the sample (`TrackLibrary.PikoA`), in addition to `Domain` and `Contracts`. Whether the drawing is produced at build time or by the host is a plan-phase choice; both keep FR-040.
 - The Technical Director provides the Azure web app; the specification creates no Azure resource, secret, publish profile or workflow.
 - The maintainer provides the eight reference screenshots outside the repository.
 - A desktop browser in a current version (Edge, Chrome, Firefox, Safari) with JavaScript is the target; phones are not.
