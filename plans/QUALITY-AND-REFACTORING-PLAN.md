@@ -378,8 +378,9 @@ switch still describe an opt-in test graph that cannot build; removing them is a
 
 Complete with slice 5. Child issue [#290](https://github.com/ahuelsmann/MOBAflow/issues/290) owns this package and
 closes when slice 5 is merged (slices 1 appearance helpers and 3 host-specific and unused types #295, 4a runtime
-contracts and 4b discovery protocol #310, 2 UI settings and navigation #454, 5 boundary rules and documentation).
-Its [child plan](290-split-common.md) records each slice and is removed in a later close-out. Outcome: the new
+contracts and 4b discovery protocol #310, 2 UI settings and navigation #454, 5 boundary rules and documentation
+#458). Its child plan, added in #291, was removed with slice 5; the record stays in #290 and Git history.
+Outcome: the new
 `Contracts` project holds the runtime and discovery wire types, MOBApi references `Contracts` and the parts of
 `Common` it uses, UI settings live in the `SharedUI` root `UiSettings` with one keyed feature-toggle collection
 (old flat toggle values load as defaults), appearance and mobile helpers live in `SharedUI` and the navigation
