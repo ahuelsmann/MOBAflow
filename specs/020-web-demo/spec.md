@@ -55,7 +55,7 @@ The first decision is recorded in #430 by the maintainer. The following nine rea
 
 ### Session 2026-11-14 (Head of UI/UX advice)
 
-The Head of UI/UX (Gemini Argon via Antigravity) was consulted on the maintainer's request; the Chief Operating Officer session relayed the advice. It is folded into User Story 5 and the requirements FR-020 to FR-046. It is advice, not a maintainer decision: where it touches an open question, it appears as the recommended default under [Open questions](#open-questions-for-the-maintainer).
+The Head of UI/UX (Gemini Argon via Antigravity) was consulted on the maintainer's request; the Chief Operating Officer session relayed the advice. It is folded into User Story 5 and the requirements FR-020 to FR-046, and its refinement of the same day (after it was informed of the maintainer decisions) into FR-076 and FR-077. It is advice, not a maintainer decision: where it touches an open question, it appears as the recommended default under [Open questions](#open-questions-for-the-maintainer).
 
 ## Hosting constraints (Azure App Service Free tier F1)
 
@@ -269,8 +269,10 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **FR-055**: Because the tier has no deployment slot, a deployment replaces the running app; the demo MUST come back without manual steps.
 - **FR-056**: The host MUST limit requests per client address with ASP.NET Core rate limiting: a strict limit on all non-static requests and a generous one on static files. Proposed starting values, fixed in the plan phase: 60 non-static requests per minute and 600 static requests per minute per client address.
 - **FR-057**: A first visit MUST transfer at most 1.5 MB compressed, including the application, the sample snapshot and the locomotive photos shown on the landing page. The budget MUST be checked in CI or by a documented, repeatable measurement, and a change that exceeds it fails that check.
-- **FR-058**: Responses MUST be compressed with Brotli or gzip; locomotive photos and other images MUST be resized to their displayed size and compressed.
+- **FR-058**: Responses MUST be compressed with Brotli or gzip; locomotive photos MUST be resized to their displayed size and delivered as WebP, and other images compressed likewise.
 - **FR-059**: Static files MUST carry content-hashed file names and long-lived cache headers, so that a repeat visit transfers almost nothing; the entry document is revalidated so that a new deployment is picked up.
+- **FR-076**: The application's scripts and style sheets together MUST NOT exceed 200 KB compressed with Brotli. This ceiling lies inside the first-visit budget of FR-057 and MUST be checked the same way: in CI or by a documented, repeatable measurement, with a change that exceeds it failing the check.
+- **FR-077**: To keep FR-076, the shell (navigation, command bar, split panes, cards, Messages bar, status bar) and the domain canvases (gauges, workflow graph, track plan, signal box) MUST be built with plain style sheets whose custom properties carry the tokens of FR-023. A component library may supply interactive primitives only (for example slider, switch, tooltip, badge) and only through imports that bring in the used parts; a whole component or icon package MUST NOT be bundled, and only the icons the demo shows (about 30) are included.
 - **FR-070**: The host MUST offer no dynamic endpoint beyond the read-only sample snapshot and no endpoint that accepts visitor data or changes server state.
 - **FR-071**: The host MUST send security headers: a content security policy without inline scripts and with `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, a `Referrer-Policy`, and a cross-origin resource policy that keeps images and other files for the demo's own pages.
 - **FR-072**: The host MUST NOT send a server banner and MUST NOT show detailed error pages; an error shows a short neutral page.
@@ -303,7 +305,7 @@ A visitor who has changed speeds, aspects and turnouts presses Reset and gets th
 - **SC-003**: A search of the delivered pages, scripts and responses finds no host path, port, machine name or internal address, and a request to any MOBApi runtime path is not served.
 - **SC-004**: None of the content-changing controls changes anything: a check of every disabled or read-only control listed in FR-036 to FR-039 leaves the sample content identical.
 - **SC-005**: After Reset, all four pages show the initial sample state; two visitors using the demo at the same time never see each other's changes.
-- **SC-006**: A first visit transfers at most 1.5 MB compressed, so that 110 first visits fit into the daily bandwidth of the Free tier; a repeat visit with a warm browser cache transfers under 100 KB.
+- **SC-006**: A first visit transfers at most 1.5 MB compressed, of which scripts and style sheets are at most 200 KB, so that 110 first visits fit into the daily bandwidth of the Free tier; a repeat visit with a warm browser cache transfers under 100 KB.
 - **SC-011**: Twelve visitors using the demo at the same time each get a responsive simulation, and the host's CPU and memory use does not rise with their number beyond serving the files.
 - **SC-007**: After the first load, a visitor using the demo for ten minutes causes no further server request for the simulation, so that the daily CPU quota is not the limiting factor.
 - **SC-008**: After an idle period, the complete shell is usable within 15 seconds of the first request on a normal home connection; a warm page is usable within 3 seconds.
