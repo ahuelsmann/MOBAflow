@@ -16,6 +16,8 @@
         <NoWarn>XC0103</NoWarn>
         <!-- Compile bindings that set Source (for example x:Reference) as well; RF-08 -->
         <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+        <!-- A binding that XamlC cannot compile or resolve fails the build in every configuration; RF-08 -->
+        <WarningsAsErrors>$(WarningsAsErrors);XC0022;XC0025;XC0045</WarningsAsErrors>
         <!-- Display name -->
         <ApplicationTitle>MOBAsmart</ApplicationTitle>
         <!-- App Identifier -->
