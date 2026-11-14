@@ -21,8 +21,8 @@ Inventory on main `de4af109`:
 | `Backend/Service/Recording/RecordingSessionService.cs` | 896 | lifecycle and single-consumer pipeline; request/projection validation; bookkeeping of entries dropped at ingestion capacity; control-entry content | **Slice 1**: validation → `RecordingRequestValidator`, drop bookkeeping → `RecordingDropTracker` (both internal); stateless validation runs before the session lock, while mutable drop-tracker state is accessed under that lock; **slice 2**: control-entry content. The lock, channel and consumer stay in the session |
 | `Backend/Service/Recording/RecordingArtifactSerializer.Import.cs` | 802 | file-format parsing, limit enforcement, payload validation | **Slice 2**: separate parsing from validation behind the existing serializer API |
 | `MOBAflow/Controls/SignalBox/SignalBoxPropertiesControl.xaml.cs` | - | property editing behavior in code-behind (partly moved by RF-14) | **Slice 3**: remaining behavior into the signal-box ViewModel |
-| `MOBAflow/View/HelpPage.xaml.cs` | 663 | navigation and section state, panel layout persistence | **Slice 4**: navigation/section state into a ViewModel; the layout persistence follows RF-24 slice 6 |
-| `MOBAflow/View/MainWindow.xaml.cs` | 514 | shell lifecycle plus remaining feature wiring | **Slice 5** after RF-24 (#219, #293), then documentation and completion |
+| `MOBAflow/View/HelpPage.xaml.cs` | 663 | navigation and section state, panel layout persistence | **Slice 4**: navigation/section state into a ViewModel; the layout persistence goes through `LayoutPersistenceService` since RF-24 slice 6 (#442) |
+| `MOBAflow/View/MainWindow.xaml.cs` | 514 | shell lifecycle plus remaining feature wiring | **Slice 5**, then documentation and completion; its start condition is met, RF-24 (#219) is complete since 2026-11-14 (#442, #445) |
 
 ## Independently reviewable delivery slices
 
@@ -36,7 +36,7 @@ PR, so slices 3 and 4 and the later ones are commits of that single RF-31 PR.
 2. **Recording control entries and artifact import.** Round-trip and import-limit tests unchanged.
 3. **Signal-box properties code-behind.** Compile MOBAflow; maintainer check in Light and Dark.
 4. **Help page ViewModel.** Compile MOBAflow; maintainer check in Light and Dark.
-5. **Main window code-behind, documentation and completion** after RF-24.
+5. **Main window code-behind, documentation and completion.** RF-24 is complete, so this slice can start.
 
 ## Validation strategy
 
@@ -49,4 +49,5 @@ recorded on #349. No app launch by the agent.
 - **Concurrency:** the session's lock, channel and consumer stay unchanged. The stateless validator runs before
   `Start` and `TryRecord` acquire the session lock. The mutable drop tracker is called under that lock and owns
   no lock of its own.
-- **Open PRs:** #293 (RF-24) touches `MainWindow`; slice 5 waits for it.
+- **Open PRs:** none blocks slice 5 any more; #293 (RF-24) is closed and RF-24 changed `MainWindow` for the last
+  time in #442. Re-check open pull requests that touch `MainWindow` before slice 5 starts.
