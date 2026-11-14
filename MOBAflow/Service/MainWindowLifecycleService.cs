@@ -9,14 +9,13 @@ using SharedUI.ViewModel;
 /// <summary>
 /// The host work behind the main window: REST API status polling, speech health checks, the runtime observers
 /// no shell surface binds, and the shutdown of all of them. The window forwards its lifecycle events here and
-/// keeps only its own visuals and subscriptions. The composition root hands over the shell's shutdown workflow,
-/// so this service does not depend on the shell.
+/// keeps only its own visuals and subscriptions. The composition root hands over the shell's shutdown workflow
+/// as a <see cref="ShellShutdownWorkflow"/>, so this service does not depend on the shell.
 /// </summary>
 internal sealed partial class MainWindowLifecycleService
 {
-    private readonly Func<Action, Task<bool>> _shellShutdownWorkflow;
+    private readonly ShellShutdownWorkflow _shellShutdown;
     private readonly SystemStatusViewModel _systemStatus;
-    private readonly IReadOnlyList<IDisposable> _runtimeObservers;
     private readonly RestApiStatusService _restApiStatusService;
     private readonly RestApiProcessService _restApiProcessService;
     private readonly HealthCheckService _healthCheckService;
@@ -26,41 +25,33 @@ internal sealed partial class MainWindowLifecycleService
     private bool _healthChecksStarted;
 
     /// <summary>Creates the lifecycle owner for the host services of the main window.</summary>
-    /// <param name="shellShutdownWorkflow">
-    /// The shell's shutdown workflow. It saves unsaved changes, invokes the given release action once shutdown is
-    /// confirmed and before the runtimes stop, and returns <see langword="false"/> when the operator cancelled.
+    /// <param name="shellShutdown">
+    /// The shell's shutdown workflow with the runtime observers it releases once shutdown is confirmed.
     /// </param>
     /// <param name="systemStatus">Shows the speech health in the status bar.</param>
-    /// <param name="runtimeObservers">
-    /// Host-owned states that follow the session and the runtime without a shell binding (counters, traffic
-    /// monitor, Solution page, signal-box projection); they are disposed once shutdown is confirmed.
-    /// </param>
     /// <param name="restApiStatusService">Polls the REST API status while the window is active.</param>
     /// <param name="restApiProcessService">Owns the MOBApi process that stops with the window.</param>
     /// <param name="healthCheckService">Checks the selected speech provider periodically.</param>
     /// <param name="uiDispatcher">Marshals health results, which arrive on timer threads, to the UI thread.</param>
     /// <param name="logger">Logs shutdown steps that failed.</param>
     public MainWindowLifecycleService(
-        Func<Action, Task<bool>> shellShutdownWorkflow,
+        ShellShutdownWorkflow shellShutdown,
         SystemStatusViewModel systemStatus,
-        IReadOnlyList<IDisposable> runtimeObservers,
         RestApiStatusService restApiStatusService,
         RestApiProcessService restApiProcessService,
         HealthCheckService healthCheckService,
         IUiDispatcher uiDispatcher,
         ILogger<MainWindowLifecycleService> logger)
     {
-        ArgumentNullException.ThrowIfNull(shellShutdownWorkflow);
+        ArgumentNullException.ThrowIfNull(shellShutdown);
         ArgumentNullException.ThrowIfNull(systemStatus);
-        ArgumentNullException.ThrowIfNull(runtimeObservers);
         ArgumentNullException.ThrowIfNull(restApiStatusService);
         ArgumentNullException.ThrowIfNull(restApiProcessService);
         ArgumentNullException.ThrowIfNull(healthCheckService);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(logger);
-        _shellShutdownWorkflow = shellShutdownWorkflow;
+        _shellShutdown = shellShutdown;
         _systemStatus = systemStatus;
-        _runtimeObservers = runtimeObservers;
         _restApiStatusService = restApiStatusService;
         _restApiProcessService = restApiProcessService;
         _healthCheckService = healthCheckService;
@@ -123,7 +114,7 @@ internal sealed partial class MainWindowLifecycleService
         try
         {
             // The window continues on the UI thread: it detaches its own events and bindings afterwards.
-            return await _shellShutdownWorkflow(ReleaseRuntimeObservers).ConfigureAwait(true);
+            return await _shellShutdown.RunAsync().ConfigureAwait(true);
         }
         catch (Exception ex) when (LogFailure(LogShellShutdownFailed, ex))
         {
@@ -139,7 +130,7 @@ internal sealed partial class MainWindowLifecycleService
     public async Task StopAsync()
     {
         // Normally already released before the runtimes stopped; Dispose is idempotent and covers a failed shell workflow.
-        ReleaseRuntimeObservers();
+        _shellShutdown.ReleaseRuntimeObservers();
 
         _restApiStatusService.Stop();
 
@@ -175,18 +166,6 @@ internal sealed partial class MainWindowLifecycleService
         catch (Exception ex) when (LogFailure(LogHealthCheckDisposeFailed, ex))
         {
             // Logged by the filter; nothing else is left to stop.
-        }
-    }
-
-    /// <summary>
-    /// The shell confirmed shutdown; the counter, traffic monitor, Solution page and signal-box projection stop
-    /// following the session and the runtime.
-    /// </summary>
-    private void ReleaseRuntimeObservers()
-    {
-        foreach (var observer in _runtimeObservers)
-        {
-            observer.Dispose();
         }
     }
 

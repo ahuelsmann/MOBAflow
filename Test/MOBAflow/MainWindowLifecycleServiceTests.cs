@@ -117,9 +117,10 @@ internal sealed class MainWindowLifecycleServiceTests
 
     private static MainWindowLifecycleService CreateLifecycle(ServiceProvider provider, Mock<IDisposable> observer) =>
         new(
-            provider.GetRequiredService<MainWindowViewModel>().PrepareForShutdownAsync,
+            new ShellShutdownWorkflow(
+                provider.GetRequiredService<MainWindowViewModel>().PrepareForShutdownAsync,
+                (IDisposable[])[observer.Object]),
             provider.GetRequiredService<SystemStatusViewModel>(),
-            (IDisposable[])[observer.Object],
             provider.GetRequiredService<RestApiStatusService>(),
             provider.GetRequiredService<RestApiProcessService>(),
             provider.GetRequiredService<HealthCheckService>(),

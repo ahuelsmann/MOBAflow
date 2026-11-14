@@ -579,7 +579,7 @@ runtime services.
   receives as runtime observers exist from start-up. It starts REST API status polling after the deferred UI
   startup, pauses and resumes it on window activation, starts the speech health checks for
   `PostStartupInitializationService` and marshals their results through `IUiDispatcher` to the host
-  `SystemStatusViewModel`. The composition root hands it the shell's shutdown workflow as a delegate, so it
+  `SystemStatusViewModel`. The composition root hands it the shell's shutdown workflow and the observers as a `ShellShutdownWorkflow`, so it
   does not depend on `MainWindowViewModel`.
 - Shutdown has two steps the window orders: `ConfirmShutdownAsync` runs the shell workflow and releases the
   runtime observers through its callback (a cancelled shutdown keeps them subscribed, a failed workflow is

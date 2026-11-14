@@ -420,15 +420,16 @@ public static class MobaWinUiServiceCollectionExtensions
 
         // The host work behind the main window; resolved with it, so the runtime observers exist from start-up.
         services.AddSingleton(sp => new MainWindowLifecycleService(
-            sp.GetRequiredService<MainWindowViewModel>().PrepareForShutdownAsync,
+            new ShellShutdownWorkflow(
+                sp.GetRequiredService<MainWindowViewModel>().PrepareForShutdownAsync,
+                (IDisposable[])
+                [
+                    sp.GetRequiredService<InPortCounterViewModel>(),
+                    sp.GetRequiredService<MonitorPageViewModel>(),
+                    sp.GetRequiredService<SolutionPageViewModel>(),
+                    sp.GetRequiredService<SignalBoxPageViewModel>()
+                ]),
             sp.GetRequiredService<SystemStatusViewModel>(),
-            (IDisposable[])
-            [
-                sp.GetRequiredService<InPortCounterViewModel>(),
-                sp.GetRequiredService<MonitorPageViewModel>(),
-                sp.GetRequiredService<SolutionPageViewModel>(),
-                sp.GetRequiredService<SignalBoxPageViewModel>()
-            ],
             sp.GetRequiredService<RestApiStatusService>(),
             sp.GetRequiredService<RestApiProcessService>(),
             sp.GetRequiredService<HealthCheckService>(),

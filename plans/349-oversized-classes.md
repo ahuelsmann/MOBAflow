@@ -44,7 +44,7 @@ PR; slices 3 and 4 were integrated together through #354, and slice 5 followed a
      release of the runtime observers (counters, traffic monitor, Solution page, signal-box projection) and the
      shutdown sequence: shell workflow, then REST API status service, MOBApi process and health checks, each
      failing step logged and the next one run. `PostStartupInitializationService` starts the health checks
-     through it instead of through the window. The composition root hands it the shell's shutdown workflow and
+     through it instead of through the window. The composition root hands it the shell's shutdown workflow with the observers (`ShellShutdownWorkflow`) and
      `SystemStatusViewModel`, so it does not depend on `MainWindowViewModel` and the allow-list of
      `SolutionSessionArchitectureTests` is unchanged.
    - `MainWindowViewModel.ApplyTrackPowerSwitchCommand` decides whether a position of the status bar switch is
