@@ -3,7 +3,7 @@ namespace Moba.SharedUI.Mobile;
 
 using Backend.Interface;
 
-using Common.Configuration;
+using Configuration;
 using Common.Events;
 using Common.Extension;
 using Contracts.Runtime;
@@ -30,7 +30,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly IConnectionRuntime _runtimeConnection;
     private readonly ITrafficMonitor _trafficMonitor;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly MobaflowEndpointLocator _endpointLocator;
     private readonly MobaflowHubSession _hubSession;
@@ -84,7 +84,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ITrafficMonitor trafficMonitor,
         IRuntimeCommandGateway runtimeCommandGateway,
         IUiDispatcher uiDispatcher,
-        AppSettings settings,
+        UiSettings settings,
         ISettingsService settingsService,
         MobaflowEndpointLocator endpointLocator,
         MobaflowHubSession hubSession,
@@ -365,7 +365,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Loads settings from AppSettings singleton into ViewModel properties.
+    /// Loads settings from the settings singleton into ViewModel properties.
     /// Called during constructor after SettingsService has loaded the file.
     /// </summary>
     private void LoadSettingsIntoViewModel()

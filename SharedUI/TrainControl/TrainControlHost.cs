@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Common.Configuration;
+namespace Moba.SharedUI.TrainControl;
 
 /// <summary>
 /// Identifies which MOBA client owns host-specific train control UI state.

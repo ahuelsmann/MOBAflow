@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Configuration;
+using Configuration;
 
 /// <summary>
 /// Observable layout column widths for all pages. Bound from the UI so that when values

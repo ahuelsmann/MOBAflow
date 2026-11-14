@@ -2,7 +2,7 @@
 
 namespace Moba.Test.TrackPlanRenderer;
 
-using global::Moba.Common.Configuration;
+using global::Moba.SharedUI.Configuration;
 using global::Moba.SharedUI.Interface;
 using global::Moba.SharedUI.Service;
 using global::Moba.SharedUI.ViewModel;
@@ -100,7 +100,7 @@ internal sealed partial class TrackLayoutArchitectureTests
         var viewModel = new TrackPlanViewModel(
             editorService,
             dialogService ?? Mock.Of<IDialogService>(),
-            TestLayouts.Create(new AppSettings()));
+            TestLayouts.Create(new UiSettings()));
         return new ViewModelTestContext(viewModel, plan, editorService);
     }
 

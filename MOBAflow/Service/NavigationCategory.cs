@@ -1,12 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Common.Navigation;
+namespace Moba.WinUI.Service;
 
 /// <summary>
 /// Categories for grouping navigation items with separators.
-/// Shared across WinUI app and plugins.
 /// </summary>
-public enum NavigationCategory
+internal enum NavigationCategory
 {
     /// <summary>
     /// Core application functionality (overview, settings, solution).

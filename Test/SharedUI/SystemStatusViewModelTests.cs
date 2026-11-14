@@ -2,7 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -32,7 +32,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         _eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        _settingsPage = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
+        _settingsPage = TestSettingsPages.Create(new UiSettings(), dispatcher.Object);
         _selectedProject = new ProjectViewModel(new Project { Name = "Main" }, TestViewModelServices.Default);
         _solutionPath = null;
         _hasSolution = true;

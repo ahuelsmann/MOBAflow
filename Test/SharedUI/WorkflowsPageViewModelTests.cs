@@ -2,7 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -17,7 +17,7 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
 {
     private SolutionSession _session = null!;
     private Mock<ISettingsService> _persistence = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private WorkflowLibraryViewModel _library = null!;
 
     [SetUp]
@@ -31,7 +31,7 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
         {
             Workflows = [new Workflow { Name = "Departure" }, new Workflow { Name = "Arrival" }]
         }] }, dispatcher.Object, runtime.Object);
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);

@@ -3,7 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -19,13 +19,13 @@ using System.Text.Json;
 [TestFixture]
 internal sealed class LayoutPersistenceServiceTests
 {
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private Mock<ISettingsService> _persistence = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(service => service.GetSettings()).Returns(_settings);
         _persistence.Setup(service => service.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);
@@ -64,7 +64,7 @@ internal sealed class LayoutPersistenceServiceTests
             Assert.That(layout.ColumnWidths.GetColumnWidth("JourneysPage", 2), Is.EqualTo(250), "page default");
             Assert.That(layout.ColumnWidths.GetColumnWidth("LocomotivesPage", 0), Is.EqualTo(275), "structured fallback");
         }
-        _persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()), Times.Never);
+        _persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<UiSettings>()), Times.Never);
     }
 
     [Test]
@@ -123,7 +123,7 @@ internal sealed class LayoutPersistenceServiceTests
         });
 
         var json = JsonSerializer.Serialize(_settings, JsonOptions.Default);
-        var restored = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions.Default)!;
+        var restored = JsonSerializer.Deserialize<UiSettings>(json, JsonOptions.Default)!;
         var restoredLayout = TestLayouts.Create(restored);
 
         using var document = JsonDocument.Parse(json);
@@ -225,6 +225,6 @@ internal sealed class LayoutPersistenceServiceTests
             Assert.That(_settings.Layout.SettingsPage.Sections, Is.Empty);
             Assert.That(() => layout.GetSettingsSectionState(" "), Throws.ArgumentException);
         }
-        _persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()), Times.Never);
+        _persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<UiSettings>()), Times.Never);
     }
 }

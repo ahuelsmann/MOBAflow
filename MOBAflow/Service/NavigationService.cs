@@ -14,7 +14,7 @@ using SharedUI.Shell;
 /// For plugins: Uses ContentProvider pattern to avoid XamlTypeInfo resolution issues.
 /// Plugins provide a class with CreateContent() method that returns UIElement.
 /// </summary>
-public class NavigationService : INavigationService
+internal sealed class NavigationService : INavigationService
 {
     #region Fields
     private readonly IServiceProvider _serviceProvider;

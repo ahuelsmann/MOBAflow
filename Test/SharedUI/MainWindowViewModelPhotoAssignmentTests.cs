@@ -10,7 +10,7 @@ using Moba.Domain.Enum;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -120,7 +120,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object);
         var stationEventBus1 = eventBusMock.Object;
-        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), uiDispatcherMock.Object);
+        var settingsPage1 = TestSettingsPages.Create(new UiSettings(), uiDispatcherMock.Object);
         var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntimeMock.Object, null);
         return new MainWindowViewModel(
             mobaRuntimeMock.Object,
@@ -394,7 +394,7 @@ internal sealed partial class MainWindowViewModelPhotoAssignmentTests : IDisposa
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
         var locomotiveSession2 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object, io.Object);
         var stationEventBus2 = new Mock<IEventBus>().Object;
-        var settingsPage2 = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
+        var settingsPage2 = TestSettingsPages.Create(new UiSettings(), dispatcher.Object);
         var trainsPage2 = _rollingStockPages.GetTrainsPage(locomotiveSession2, runtime.Object, io.Object);
         var viewModel = new MainWindowViewModel(
             runtime.Object,

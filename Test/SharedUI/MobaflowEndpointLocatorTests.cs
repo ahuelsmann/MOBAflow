@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Mobile;
 using Moba.Test.Helpers;
@@ -16,7 +16,7 @@ internal sealed class MobaflowEndpointLocatorTests
 {
     private static readonly (string? ip, int? port) NotFound = (null, null);
 
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private Mock<ISettingsService> _settingsService = null!;
     private Mock<IRestDiscoveryService> _discovery = null!;
     private ManualClock _clock = null!;
@@ -25,10 +25,10 @@ internal sealed class MobaflowEndpointLocatorTests
     [SetUp]
     public void SetUp()
     {
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _settings.RestApi.CurrentIpAddress = string.Empty;
         _settingsService = new Mock<ISettingsService>();
-        _settingsService.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        _settingsService.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         _discovery = new Mock<IRestDiscoveryService>();
         _discovery.Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(NotFound);

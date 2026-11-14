@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Configuration;
 using Common.Extension;
-using Common.Navigation;
+
+using Configuration;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using Interface;
 using Service;
@@ -22,7 +23,7 @@ using System.IO;
 /// </summary>
 public sealed partial class SettingsPageViewModel : ObservableObject
 {
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly LayoutPersistenceService _layout;
     private readonly IUiDispatcher _uiDispatcher;
@@ -38,7 +39,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// <param name="featureTogglePageProvider">Pages that can be switched on and off in Settings.</param>
     /// <param name="speechOutput">Speaks the speech test message with the current provider and options.</param>
     public SettingsPageViewModel(
-        AppSettings settings,
+        UiSettings settings,
         ISettingsService settingsService,
         LayoutPersistenceService layout,
         IUiDispatcher uiDispatcher,
@@ -150,7 +151,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// Application settings - exposed for direct binding.
     /// Settings are stored in appsettings.json (not in Solution).
     /// </summary>
-    public AppSettings Settings => _settings;
+    public UiSettings Settings => _settings;
 
     // Wrapper properties for Settings page bindings
     /// <summary>
@@ -805,7 +806,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
 
     /// <summary>
     /// Writes the feature toggle value via <see cref="FeatureToggleRegistry"/> and saves.
-    /// Raises OnPropertyChanged for the corresponding read-only property (e.g. IsOverviewPageAvailable).
     /// </summary>
     internal void SetFeatureToggleValue(string key, bool value)
     {
@@ -815,7 +815,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
             return;
 
         FeatureToggleRegistry.TrySetPageAvailability(_settings.FeatureToggles, key, value);
-        OnPropertyChanged(key);
         PersistSettings();
     }
 
@@ -828,150 +827,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
         {
             item.SetChecked(GetFeatureToggleValue(item.FeatureToggleKey));
         }
-    }
-
-    #endregion
-
-    #region Feature Toggle Wrapper Properties (Legacy – still used for NavigationView)
-
-    /// <summary>
-    /// Gets or sets whether the Overview page is enabled in the navigation.
-    /// </summary>
-    public bool IsOverviewPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsOverviewPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsOverviewPageAvailable,
-            updated => _settings.FeatureToggles.IsOverviewPageAvailable = updated,
-            value,
-            nameof(IsOverviewPageAvailableSetting),
-            nameof(IsOverviewPageAvailable));
-    }
-
-    /// <summary>
-    /// Gets or sets whether the Solution page is enabled in the navigation.
-    /// </summary>
-    public bool IsSolutionPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsSolutionPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsSolutionPageAvailable,
-            updated => _settings.FeatureToggles.IsSolutionPageAvailable = updated,
-            value,
-            nameof(IsSolutionPageAvailableSetting),
-            nameof(IsSolutionPageAvailable));
-    }
-
-    /// <summary>
-    /// Gets or sets whether the Journeys page is enabled in the navigation.
-    /// </summary>
-    public bool IsJourneysPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsJourneysPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsJourneysPageAvailable,
-            updated => _settings.FeatureToggles.IsJourneysPageAvailable = updated,
-            value,
-            nameof(IsJourneysPageAvailableSetting),
-            nameof(IsJourneysPageAvailable));
-    }
-
-    /// <summary>
-    /// Gets or sets whether the Workflows page is enabled in the navigation.
-    /// </summary>
-    public bool IsWorkflowsPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsWorkflowsPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsWorkflowsPageAvailable,
-            updated => _settings.FeatureToggles.IsWorkflowsPageAvailable = updated,
-            value,
-            nameof(IsWorkflowsPageAvailableSetting),
-            nameof(IsWorkflowsPageAvailable));
-    }
-
-    /// <summary>
-    /// Gets or sets whether the Track Plan Editor page is enabled in the navigation.
-    /// </summary>
-    public bool IsTrackPlanEditorPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable,
-            updated => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable = updated,
-            value,
-            nameof(IsTrackPlanEditorPageAvailableSetting),
-            nameof(IsTrackPlanEditorPageAvailable));
-    }
-
-    /// <summary>
-    /// Gets or sets whether the Signal Box page is enabled in the navigation.
-    /// </summary>
-    public bool IsSignalBoxPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsSignalBoxPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsSignalBoxPageAvailable,
-            updated => _settings.FeatureToggles.IsSignalBoxPageAvailable = updated,
-            value,
-            nameof(IsSignalBoxPageAvailableSetting),
-            nameof(IsSignalBoxPageAvailable));
-    }
-
-    /// <summary>
-    /// Gets or sets whether the Journey Map page is enabled in the navigation.
-    /// </summary>
-    public bool IsJourneyMapPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsJourneyMapPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsJourneyMapPageAvailable,
-            updated => _settings.FeatureToggles.IsJourneyMapPageAvailable = updated,
-            value,
-            nameof(IsJourneyMapPageAvailableSetting),
-            nameof(IsJourneyMapPageAvailable));
-    }
-
-    /// <summary>
-    /// Gets or sets whether the Monitor page is enabled in the navigation.
-    /// </summary>
-    public bool IsMonitorPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsMonitorPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsMonitorPageAvailable,
-            updated => _settings.FeatureToggles.IsMonitorPageAvailable = updated,
-            value,
-            nameof(IsMonitorPageAvailableSetting),
-            nameof(IsMonitorPageAvailable));
-    }
-
-    /// <summary>
-    /// Gets or sets whether the Trains page is enabled in the navigation.
-    /// </summary>
-    public bool IsTrainsPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsTrainsPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsTrainsPageAvailable,
-            updated => _settings.FeatureToggles.IsTrainsPageAvailable = updated,
-            value,
-            nameof(IsTrainsPageAvailableSetting),
-            nameof(IsTrainsPageAvailable));
-    }
-
-    /// <summary>
-    /// Gets or sets whether the Train Control page is enabled in the navigation.
-    /// </summary>
-    public bool IsTrainControlPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsTrainControlPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsTrainControlPageAvailable,
-            updated => _settings.FeatureToggles.IsTrainControlPageAvailable = updated,
-            value,
-            nameof(IsTrainControlPageAvailableSetting),
-            nameof(IsTrainControlPageAvailable));
     }
 
     #endregion
@@ -1035,151 +890,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
 
     #endregion
 
-    #region Feature Toggle Properties (Read-Only for NavigationView Visibility)
-
-    /// <summary>
-    /// Gets whether the Overview page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsOverviewPageAvailable => _settings.FeatureToggles.IsOverviewPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Solution page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsSolutionPageAvailable => _settings.FeatureToggles.IsSolutionPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Journeys page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsJourneysPageAvailable => _settings.FeatureToggles.IsJourneysPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Workflows page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsWorkflowsPageAvailable => _settings.FeatureToggles.IsWorkflowsPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Track Plan Editor page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsTrackPlanEditorPageAvailable => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Signal Box page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsSignalBoxPageAvailable => _settings.FeatureToggles.IsSignalBoxPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Journey Map page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsJourneyMapPageAvailable => _settings.FeatureToggles.IsJourneyMapPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Settings page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public static bool IsSettingsPageAvailable => true;
-
-    /// <summary>
-    /// Gets whether the Monitor page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsMonitorPageAvailable => _settings.FeatureToggles.IsMonitorPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Trains page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsTrainsPageAvailable => _settings.FeatureToggles.IsTrainsPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Train Control page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsTrainControlPageAvailable => _settings.FeatureToggles.IsTrainControlPageAvailable;
-
-    // Feature Toggle Labels (optional)
-
-    /// <summary>
-    /// Gets the optional label override for the Overview page.
-    /// </summary>
-    public string OverviewPageLabel => _settings.FeatureToggles.OverviewPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Solution page.
-    /// </summary>
-    public string SolutionPageLabel => _settings.FeatureToggles.SolutionPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Journeys page.
-    /// </summary>
-    public string JourneysPageLabel => _settings.FeatureToggles.JourneysPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Workflows page.
-    /// </summary>
-    public string WorkflowsPageLabel => _settings.FeatureToggles.WorkflowsPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Track Plan Editor page.
-    /// </summary>
-    public string TrackPlanEditorPageLabel => _settings.FeatureToggles.TrackPlanEditorPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Signal Box page.
-    /// </summary>
-    public string SignalBoxPageLabel => _settings.FeatureToggles.SignalBoxPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Journey Map page.
-    /// </summary>
-    public string JourneyMapPageLabel => _settings.FeatureToggles.JourneyMapPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Monitor page.
-    /// </summary>
-    public string MonitorPageLabel => _settings.FeatureToggles.MonitorPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Trains page.
-    /// </summary>
-    public string TrainsPageLabel => _settings.FeatureToggles.TrainsPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Train Control page.
-    /// </summary>
-    public string TrainControlPageLabel => _settings.FeatureToggles.TrainControlPageLabel;
-
-    // Settings Page CheckBox Content (with labels)
-
-    /// <summary>
-    /// Gets the checkbox label for enabling or disabling the Track Plan Editor page.
-    /// </summary>
-    public string TrackPlanEditorCheckBoxContent => FormatPageContent("Track Plan Editor Page", TrackPlanEditorPageLabel);
-    /// <summary>
-    /// Gets the checkbox label for enabling or disabling the Signal Box page.
-    /// </summary>
-    public string SignalBoxCheckBoxContent => FormatPageContent("Signal Box Page", SignalBoxPageLabel);
-    /// <summary>
-    /// Gets the checkbox label for enabling or disabling the Journey Map page.
-    /// </summary>
-    public string JourneyMapCheckBoxContent => FormatPageContent("Journey Map Page", JourneyMapPageLabel);
-    /// <summary>
-    /// Gets the checkbox label for enabling or disabling the Monitor page.
-    /// </summary>
-    public string MonitorCheckBoxContent => FormatPageContent("Monitor Page", MonitorPageLabel);
-    /// <summary>
-    /// Gets the checkbox label for enabling or disabling the Trains page.
-    /// </summary>
-    public string TrainsCheckBoxContent => FormatPageContent("Trains Page", TrainsPageLabel);
-    /// <summary>
-    /// Gets the checkbox label for enabling or disabling the Train Control page.
-    /// </summary>
-    public string TrainControlCheckBoxContent => FormatPageContent("Train Control Page", TrainControlPageLabel);
-
-    private static string FormatPageContent(string pageName, string? label)
-    {
-        return string.IsNullOrWhiteSpace(label) ? pageName : $"{pageName} ({label})";
-    }
-
-    #endregion
-
     #region Settings Commands
     [RelayCommand]
     private async Task ResetToDefaultsAsync()
@@ -1214,30 +924,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
             OnPropertyChanged(nameof(HealthCheckEnabled));
             OnPropertyChanged(nameof(HealthCheckIntervalSeconds));
             OnPropertyChanged(nameof(CountOfFeedbackPoints));
-
-            // FeatureToggle wrapper properties
-            OnPropertyChanged(nameof(IsOverviewPageAvailableSetting));
-            OnPropertyChanged(nameof(IsSolutionPageAvailableSetting));
-            OnPropertyChanged(nameof(IsJourneysPageAvailableSetting));
-            OnPropertyChanged(nameof(IsWorkflowsPageAvailableSetting));
-            OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailableSetting));
-            OnPropertyChanged(nameof(IsSignalBoxPageAvailableSetting));
-            OnPropertyChanged(nameof(IsJourneyMapPageAvailableSetting));
-            OnPropertyChanged(nameof(IsMonitorPageAvailableSetting));
-            OnPropertyChanged(nameof(IsTrainsPageAvailableSetting));
-            OnPropertyChanged(nameof(IsTrainControlPageAvailableSetting));
-
-            // FeatureToggle read-only properties (for NavigationView)
-            OnPropertyChanged(nameof(IsOverviewPageAvailable));
-            OnPropertyChanged(nameof(IsSolutionPageAvailable));
-            OnPropertyChanged(nameof(IsJourneysPageAvailable));
-            OnPropertyChanged(nameof(IsWorkflowsPageAvailable));
-            OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailable));
-            OnPropertyChanged(nameof(IsSignalBoxPageAvailable));
-            OnPropertyChanged(nameof(IsJourneyMapPageAvailable));
-            OnPropertyChanged(nameof(IsMonitorPageAvailable));
-            OnPropertyChanged(nameof(IsTrainsPageAvailable));
-            OnPropertyChanged(nameof(IsTrainControlPageAvailable));
 
             RefreshFeatureToggleItems();
 

@@ -3,7 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -28,7 +28,7 @@ internal sealed partial class SignalBoxPageViewModelTests : IDisposable
     private Mock<IRuntimeCommandGateway> _gateway = null!;
     private EventBus _eventBus = null!;
     private SolutionSession _session = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private Mock<ISettingsService> _persistence = null!;
     private SignalBoxPageViewModel _page = null!;
 
@@ -44,7 +44,7 @@ internal sealed partial class SignalBoxPageViewModelTests : IDisposable
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
         _session = TestSolutionSessions.Create(new Solution { Projects = [_project] }, dispatcher.Object, _runtime.Object);
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);

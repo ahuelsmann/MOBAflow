@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
+using SharedUI.Configuration;
 using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
@@ -67,7 +67,7 @@ public sealed partial class MainWindow
         NavigationService navigationService,
         WinUiWindowContext windowContext,
         List<PageMetadata> pages,
-        AppSettings appSettings,
+        UiSettings appSettings,
         ILogger<WindowActivationService> windowActivationLogger,
         ILogger<MainWindow> logger)
     {

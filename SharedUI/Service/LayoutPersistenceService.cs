@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Service;
 
-using Common.Configuration;
+using Configuration;
 using Common.Extension;
 
 using Interface;
@@ -13,12 +13,12 @@ using ViewModel;
 /// <summary>
 /// The single persistence boundary for the saved layout: page panel expansion, the Settings page sections,
 /// column widths and star-column values, and the layout reset. Every change is written to the shared
-/// <see cref="AppSettings.Layout"/> under its existing key and persisted through <see cref="ISettingsService"/>.
+/// <see cref="UiSettings.Layout"/> under its existing key and persisted through <see cref="ISettingsService"/>.
 /// </summary>
 public sealed partial class LayoutPersistenceService
 {
     private readonly ISettingsService _settingsService;
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly ILogger<LayoutPersistenceService> _logger;
 
     /// <summary>Creates the layout boundary and loads the observable column widths from the saved layout.</summary>
