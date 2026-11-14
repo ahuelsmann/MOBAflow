@@ -39,14 +39,14 @@ public partial class Z21
         simulatedContent[5 + byteIndex] = (byte)(1 << bitPosition); // Feedback bit pattern
         // Remaining bytes stay 0; checksum ignored in parser/tests
 
-        _logger?.LogInformation("SimulateFeedback: InPort={InPort}, Group={Group}, Byte={ByteIndex}, Bit={BitPosition}, Subscribers={Count}",
+        _logger.LogInformation("SimulateFeedback: InPort={InPort}, Group={Group}, Byte={ByteIndex}, Bit={BitPosition}, Subscribers={Count}",
             inPort, groupNumber, byteIndex, bitPosition, Received?.GetInvocationList().Length ?? 0);
 
         var feedback = new FeedbackResult(simulatedContent);
         Received?.Invoke(feedback);
         QueueEvent(new FeedbackReceivedEvent(inPort, feedback.CorrelationId));
 
-        _logger?.LogDebug("SimulateFeedback event invoked for InPort={InPort}", inPort);
+        _logger.LogDebug("SimulateFeedback event invoked for InPort={InPort}", inPort);
     }
     #endregion
 
@@ -86,7 +86,7 @@ public partial class Z21
     /// </summary>
     public Task GetRailComDataAsync(int address, CancellationToken cancellationToken = default)
     {
-        _logger?.LogWarning("GetRailComDataAsync not yet implemented. RailCom support prepared but inactive.");
+        _logger.LogWarning("GetRailComDataAsync not yet implemented. RailCom support prepared but inactive.");
         return Task.CompletedTask;
     }
     #endregion

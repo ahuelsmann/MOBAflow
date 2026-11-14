@@ -13,7 +13,7 @@ internal sealed partial class CancellableWavePlayerTests
     {
         using var cancellation = new CancellationTokenSource();
         using var session = new FakeSession();
-        var player = new CancellableWavePlayer(_ => session);
+        var player = new CancellableWavePlayer(_ => session, TimeProvider.System);
         var playing = player.PlayAsync(TestWaveAudio.Create(new short[60000]), cancellation.Token);
         await session.Started.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
         Assert.That(playing.IsCompleted, Is.False);
@@ -32,7 +32,7 @@ internal sealed partial class CancellableWavePlayerTests
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync().ConfigureAwait(false);
         var created = false;
-        var player = new CancellableWavePlayer(_ => { created = true; return new FakeSession(); });
+        var player = new CancellableWavePlayer(_ => { created = true; return new FakeSession(); }, TimeProvider.System);
         await Assert.CatchAsync<OperationCanceledException>(() => player.PlayAsync(
             TestWaveAudio.Create([1000]), cancellation.Token)).ConfigureAwait(false);
         Assert.That(created, Is.False);
@@ -42,7 +42,7 @@ internal sealed partial class CancellableWavePlayerTests
     public async Task NormalCompletion_StopsAndDisposesPlayback()
     {
         using var session = new FakeSession();
-        await new CancellableWavePlayer(_ => session).PlayAsync(TestWaveAudio.Create([1000])).ConfigureAwait(false);
+        await new CancellableWavePlayer(_ => session, TimeProvider.System).PlayAsync(TestWaveAudio.Create([1000])).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(session.Started.Task.IsCompleted, Is.True);

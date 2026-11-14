@@ -60,7 +60,7 @@ internal sealed class RecordingEventCaptureTests
         await using var session = CreateSession();
         session.Start(new RecordingSessionStartRequest("Order", "1.0"));
         var recorder = CreateDecorator(new EventBus(NullLogger<EventBus>.Instance), session);
-        await using var pipeline = new Z21EventPipeline(recorder, capacity: 16);
+        await using var pipeline = new Z21EventPipeline(recorder, NullLogger.Instance, capacity: 16);
 
         pipeline.TryEnqueue(new FeedbackReceivedEvent(3));
         pipeline.TryEnqueue(new FeedbackReceivedEvent(3));

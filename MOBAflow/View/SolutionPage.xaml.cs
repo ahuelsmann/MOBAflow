@@ -26,7 +26,7 @@ internal sealed partial class SolutionPage
     public Z21AssignmentViewModel Z21Assignment { get; }
 
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<SolutionPage>? _logger;
+    private readonly ILogger<SolutionPage> _logger;
 
     private GridLength _projectsExpandedWidth = new(1, GridUnitType.Star);
     private GridLength _z21FinderExpandedWidth = new(1, GridUnitType.Star);
@@ -36,7 +36,7 @@ internal sealed partial class SolutionPage
         SolutionPageViewModel viewModel,
         Z21AssignmentViewModel z21Assignment,
         LayoutPersistenceService layout,
-        ILogger<SolutionPage>? logger = null)
+        ILogger<SolutionPage> logger)
     {
         ViewModel = viewModel;
         Z21Assignment = z21Assignment;
@@ -61,7 +61,7 @@ internal sealed partial class SolutionPage
     {
         _ = sender;
         _ = e;
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -75,7 +75,7 @@ internal sealed partial class SolutionPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 

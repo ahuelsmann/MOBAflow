@@ -4,9 +4,11 @@ namespace Moba.Test.MOBAflow;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
+using Moba.Backend.Service.Recording;
 using Moba.Backend.Service.ProjectRuntimes;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
+using Moba.Display.Transport;
 using Moba.Domain;
 
 using Microsoft.Extensions.Configuration;
@@ -21,6 +23,8 @@ using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
 using Moba.Speech.Base;
+using Moba.Speech.Piper;
+using Moba.Sound;
 using Moba.Test.Helpers;
 using Moba.Test.Speech;
 using Moq;
@@ -31,6 +35,8 @@ using Moq;
 [TestFixture]
 internal sealed class MobaWinUiServiceCollectionExtensionsTests
 {
+    private static readonly string[] SpeechProviderIds = ["piper", "system-speech"];
+
     [Test]
     public async Task UsageReaderAndProjection_ResolveTheExistingDesktopOwnerAndSharedPageInstance()
     {
@@ -57,7 +63,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         Assert.Multiple(() =>
         {
             Assert.That(provider.GetRequiredService<IUiDispatcher>(), Is.Not.Null);
-            Assert.That(provider.GetRequiredService<IEventBus>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<UiThreadEventBusDecorator>(), Is.Not.Null);
             Assert.That(
                 provider.GetRequiredService<List<PageMetadata>>(),
                 Has.One.Matches<PageMetadata>(page =>
@@ -77,6 +83,8 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         Assert.Multiple(() =>
         {
             Assert.That(provider.GetRequiredService<IMobaRuntime>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IEventBus>(), Is.InstanceOf<RecordingEventBusDecorator>(),
+                "The application bus records published events, so it needs the backend recording services.");
             Assert.That(replayService, Is.Not.Null);
             Assert.That(provider.GetRequiredService<IRecordingReplayStatusSource>(), Is.SameAs(replayService));
         });
@@ -122,6 +130,35 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(provider.GetRequiredService<LocomotiveManagementViewModel>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<SettingsPageViewModel>().FeatureToggleItems, Is.Not.Empty,
                 "The desktop page provider lists the toggleable pages.");
+        }
+    }
+
+    [Test]
+    public async Task HostSpeechBackendNetworkAndDisplayServicesResolveTheirRequiredDependencies()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var context = provider.GetRequiredService<ActionExecutionContext>();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<IPiperProcessRunner>(), Is.InstanceOf<PiperProcessRunner>());
+            Assert.That(provider.GetServices<ISpeechProvider>().Select(speechProvider => speechProvider.Id),
+                Is.EqualTo(SpeechProviderIds));
+            Assert.That(provider.GetRequiredService<IWavePlayer>(), Is.InstanceOf<CancellableWavePlayer>());
+            Assert.That(context.SpeechOutput, Is.SameAs(provider.GetRequiredService<ISpeechOutput>()));
+            Assert.That(context.SoundPlayer, Is.SameAs(provider.GetRequiredService<ISoundPlayer>()));
+            Assert.That(provider.GetRequiredService<IZ21>().TrafficMonitor,
+                Is.SameAs(provider.GetRequiredService<Z21Monitor>()));
+            Assert.That(provider.GetRequiredService<InPortCounterService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<ILocomotiveWhistleAutomationService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IRuntimeHubHostClient>(), Is.InstanceOf<RuntimeHubHostClient>());
+            Assert.That(provider.GetRequiredService<IPhotoHubClient>(), Is.InstanceOf<PhotoHubClient>());
+            Assert.That(provider.GetRequiredService<RestApiProcessService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<RestApiStatusService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<SystemStatusViewModel>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IFrameSender>(), Is.InstanceOf<UdpDisplayFrameSender>());
+            Assert.That(provider.GetRequiredService<IDisplayDeviceClient>(), Is.InstanceOf<UdpDisplayDeviceClient>());
         }
     }
 

@@ -41,21 +41,22 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
     /// <param name="eventBus">Delivers the post-startup, REST API and synchronization events on the UI thread.</param>
     /// <param name="session">Owns the solution path and the project selection for the solution-loaded status.</param>
     /// <param name="settingsPage">Shared settings state; a speech provider change resets the speech health.</param>
-    /// <param name="timeProvider">Clock for the waiting time of pending rows; defaults to the system clock.</param>
+    /// <param name="timeProvider">Clock for the waiting time of pending rows.</param>
     public SystemStatusViewModel(
         IEventBus eventBus,
         ISolutionSession session,
         SettingsPageViewModel settingsPage,
-        TimeProvider? timeProvider = null)
+        TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(settingsPage);
+        ArgumentNullException.ThrowIfNull(timeProvider);
 
         _eventBus = eventBus;
         _session = session;
         _settingsPage = settingsPage;
-        _timeProvider = timeProvider ?? TimeProvider.System;
+        _timeProvider = timeProvider;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText)));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged));

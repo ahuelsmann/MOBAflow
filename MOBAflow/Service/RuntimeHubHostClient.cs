@@ -18,15 +18,15 @@ using Contracts.Discovery;
 public sealed class RuntimeHubHostClient : IRuntimeHubHostClient, IRuntimeHubHostCallbacks
 {
     private readonly ProjectRuntimeCommandRouter _router;
-    private readonly ILogger<RuntimeHubHostClient>? _logger;
+    private readonly ILogger<RuntimeHubHostClient> _logger;
     private HubConnection? _hubConnection;
 
     public RuntimeHubHostClient(
         ProjectRuntimeCommandRouter router,
-        ILogger<RuntimeHubHostClient>? logger = null)
+        ILogger<RuntimeHubHostClient> logger)
     {
         _router = router ?? throw new ArgumentNullException(nameof(router));
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
@@ -34,7 +34,7 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient, IRuntimeHubHos
     public async Task ConnectAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default)
     {
         var hubUrl = new MobApiEndpoint(serverIp, serverPort).Resolve("runtime-hub");
-        _logger?.LogInformation("Connecting to RuntimeHub: {HubUrl}", hubUrl);
+        _logger.LogInformation("Connecting to RuntimeHub: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(hubUrl)
@@ -74,7 +74,7 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient, IRuntimeHubHos
         }
         catch (Exception ex)
         {
-            _logger?.LogDebug(ex, "RuntimeHub disconnect failed");
+            _logger.LogDebug(ex, "RuntimeHub disconnect failed");
         }
     }
 
@@ -109,12 +109,12 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient, IRuntimeHubHos
         }
 
         await _hubConnection.InvokeAsync(nameof(IRuntimeHubHostMethods.RegisterHost), cancellationToken).ConfigureAwait(false);
-        _logger?.LogInformation("RuntimeHub host registered");
+        _logger.LogInformation("RuntimeHub host registered");
     }
 
     private async Task OnReconnectedAsync(string? _)
     {
-        _logger?.LogInformation("RuntimeHub host reconnected, re-registering");
+        _logger.LogInformation("RuntimeHub host reconnected, re-registering");
         try
         {
             await RegisterHostAsync(CancellationToken.None).ConfigureAwait(false);
@@ -127,7 +127,7 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient, IRuntimeHubHos
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "RuntimeHub host re-register failed after reconnect");
+            _logger.LogWarning(ex, "RuntimeHub host re-register failed after reconnect");
         }
     }
 

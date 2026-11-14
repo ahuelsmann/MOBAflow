@@ -43,20 +43,20 @@ public partial class Z21
         var content = e.Buffer;
         if (content.Length < 4)
         {
-            _logger?.LogWarning("Short UDP packet received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));
+            _logger.LogWarning("Short UDP packet received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));
             return;
         }
 
         // Log received packet to traffic monitor
         // Only call ParsePacketType when actually logging (deferred execution)
-        _trafficMonitor?.LogReceivedPacket(
+        _trafficMonitor.LogReceivedPacket(
                 content,
                 Z21Monitor.ParsePacketType(content),
                 $"Length: {content.Length} bytes"
             );
 
         // Log all received packets for debugging
-        _logger?.LogDebug("UDP received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));
+        _logger.LogDebug("UDP received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));
 
         if (Z21MessageParser.IsLanXHeader(content))
         {
@@ -72,7 +72,7 @@ public partial class Z21
                     xStatus.TrackOff,
                     xStatus.ShortCircuit,
                     xStatus.Programming));
-                _logger?.LogDebug("XBus Status: EmergencyStop={EmergencyStop}, TrackOff={TrackOff}, ShortCircuit={ShortCircuit}, Programming={Programming}", xStatus.EmergencyStop, xStatus.TrackOff, xStatus.ShortCircuit, xStatus.Programming);
+                _logger.LogDebug("XBus Status: EmergencyStop={EmergencyStop}, TrackOff={TrackOff}, ShortCircuit={ShortCircuit}, Programming={Programming}", xStatus.EmergencyStop, xStatus.TrackOff, xStatus.ShortCircuit, xStatus.Programming);
             }
 
             // Parse LocoInfo response
@@ -107,7 +107,7 @@ public partial class Z21
                     locoInfo.GetFunction(18),
                     locoInfo.GetFunction(19),
                     locoInfo.GetFunction(20)));
-                _logger?.LogInformation("Loco Info: {LocoInfo}", locoInfo);
+                _logger.LogInformation("Loco Info: {LocoInfo}", locoInfo);
             }
 
             // Parse LAN_X_GET_VERSION response (0x63) - some Z21 firmware only send this instead of LAN_GET_SERIAL_NUMBER / LAN_GET_HWINFO
@@ -120,7 +120,7 @@ public partial class Z21
                     if (versionInfo.SerialNumber == 0 && versionInfo.HardwareTypeCode == 0)
                     {
                         versionInfo.FirmwareVersionCode = xbusVer; // Display as V0.xx (e.g. V0.40 for xbusVer=0x40)
-                        _logger?.LogInformation("Z21 LAN_X_GET_VERSION: X-Bus 0x{XBusVer:X2}, CMDST_ID 0x{CmdstId:X4}", xbusVer, cmdstId);
+                        _logger.LogInformation("Z21 LAN_X_GET_VERSION: X-Bus 0x{XBusVer:X2}, CMDST_ID 0x{CmdstId:X4}", xbusVer, cmdstId);
                     }
                 });
             }
@@ -158,7 +158,7 @@ public partial class Z21
                     CentralStateEx = centralStateEx
                 };
 
-                _logger?.LogInformation("SystemState received: MainCurrent={MainCurrent}mA, Temp={Temp}C, Voltage={Voltage}mV",
+                _logger.LogInformation("SystemState received: MainCurrent={MainCurrent}mA, Temp={Temp}C, Voltage={Voltage}mV",
                     mainCurrent, temperature, supplyVoltage);
                 OnSystemStateChanged?.Invoke(CurrentSystemState);
                 QueueEvent(new SystemStateChangedEvent(
@@ -173,7 +173,7 @@ public partial class Z21
             }
             else
             {
-                _logger?.LogWarning("Failed to parse SystemState packet");
+                _logger.LogWarning("Failed to parse SystemState packet");
             }
             return;
         }
@@ -203,7 +203,7 @@ public partial class Z21
                 }
 
                 QueueEvent(new FeedbackStateChangedEvent(inPort, isActive, correlationId));
-                _logger?.LogDebug(
+                _logger.LogDebug(
                     "R-Bus Feedback changed: InPort={InPort}, IsActive={IsActive}",
                     inPort,
                     isActive);
@@ -222,7 +222,7 @@ public partial class Z21
                 SetConnectedIfNotAlready();
 
                 UpdateAndPublishVersionInfo(versionInfo => versionInfo.SerialNumber = serialNumber);
-                _logger?.LogInformation("Z21 Serial Number: {SerialNumber}", serialNumber);
+                _logger.LogInformation("Z21 Serial Number: {SerialNumber}", serialNumber);
             }
             return;
         }
@@ -240,13 +240,13 @@ public partial class Z21
                 var versionInfo = VersionInfo;
                 if (versionInfo != null)
                 {
-                    _logger?.LogInformation("Z21 Hardware: {HwType}, Firmware: {FwVersion}", versionInfo.HardwareType, versionInfo.FirmwareVersion);
+                    _logger.LogInformation("Z21 Hardware: {HwType}, Firmware: {FwVersion}", versionInfo.HardwareType, versionInfo.FirmwareVersion);
                 }
             }
             return;
         }
 
-        _logger?.LogWarning("Unknown message: {Payload}", Z21Protocol.ToHex(content));
+        _logger.LogWarning("Unknown message: {Payload}", Z21Protocol.ToHex(content));
     }
     #endregion
 }

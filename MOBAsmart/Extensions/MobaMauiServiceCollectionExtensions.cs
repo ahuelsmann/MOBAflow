@@ -51,8 +51,8 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingleton<InPortCounterService>(sp => new InPortCounterService(
             sp.GetRequiredService<IZ21>(), sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<InPortCounterService>>(),
-            projectStoreFactory: projectId => new FileInPortCounterStore(
-                Path.Combine(FileSystem.AppDataDirectory, "inport-counters", projectId.ToString("N") + ".json"))));
+            InPortCounterPersistence.PerProject(projectId => new FileInPortCounterStore(
+                Path.Combine(FileSystem.AppDataDirectory, "inport-counters", projectId.ToString("N") + ".json")))));
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddLogging();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();

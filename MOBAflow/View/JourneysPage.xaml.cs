@@ -21,14 +21,14 @@ using Windows.System;
 internal sealed partial class JourneysPage
 {
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<JourneysPage>? _logger;
+    private readonly ILogger<JourneysPage> _logger;
 
     public JourneysPageViewModel ViewModel { get; }
 
     public JourneysPage(
         JourneysPageViewModel viewModel,
         LayoutPersistenceService layout,
-        ILogger<JourneysPage>? logger = null)
+        ILogger<JourneysPage> logger)
     {
         ViewModel = viewModel;
         _layout = layout;
@@ -102,7 +102,7 @@ internal sealed partial class JourneysPage
     {
         _ = sender;
         _ = e;
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -115,7 +115,7 @@ internal sealed partial class JourneysPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 

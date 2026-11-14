@@ -2,6 +2,8 @@
 
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
+
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Protocol;
@@ -296,6 +298,6 @@ internal sealed class Z21OperatorCommandTests
     private static (Z21 Z21, FakeUdpClientWrapper Udp) Create(Z21Monitor? monitor = null)
     {
         var udp = new FakeUdpClientWrapper();
-        return (new Z21(udp, new EventBus(NullLogger<EventBus>.Instance), trafficMonitor: monitor), udp);
+        return (TestRuntimes.CreateZ21(udp, new EventBus(NullLogger<EventBus>.Instance), trafficMonitor: monitor), udp);
     }
 }

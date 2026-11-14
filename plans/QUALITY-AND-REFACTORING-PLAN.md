@@ -338,8 +338,8 @@ kept these in `MainWindowViewModel`: solution new/open/save, the stop-trains con
 actions delegating to `ISolutionSession`; the Z21 status, telemetry and journey runtime projections; connect,
 disconnect, track power and feedback simulation as command forwarding through the gateway or connection runtime;
 the operating state; photo routing to the active inventory page; and disposal of the host page editors.
-`SolutionSessionArchitectureTests` allows only the shell, `MainWindow.xaml.cs`, `OverviewPage.xaml.cs`, the
-composition root and the MOBAsmart `MainActivity` shutdown lookup to depend on the shell.
+`SolutionSessionArchitectureTests` allows only the shell, `MainWindow.xaml.cs`, `OverviewPage.xaml.cs` and the
+composition root to depend on the shell; RF-25 slice 4c removed the MOBAsmart `MainActivity` shutdown lookup.
 
 Personal UI acceptance no longer gates closure since 2026-11-06 (#417): each slice's pull request records the
 states it did not inspect in a running app, and problems found in everyday use are reported as bugs. Follow-ups

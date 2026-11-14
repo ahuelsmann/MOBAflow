@@ -92,7 +92,7 @@ internal static class NavigationRegistration
                 serviceProvider.GetRequiredService<SegmentPlacementGeometry>()),
             serviceProvider.GetRequiredService<TrackPlanFeedbackHighlighter>(),
             serviceProvider.GetRequiredService<LayoutPersistenceService>(),
-            serviceProvider.GetService<ILogger<TrackPlanPage>>()));
+            serviceProvider.GetRequiredService<ILogger<TrackPlanPage>>()));
         pages.Add(new PageMetadata("trackplaneditor", "Track Plan", "\uE7F9", typeof(TrackPlanPage), NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel", null, false));
 
         services.AddSingleton<TrainControlPage>();
@@ -154,7 +154,8 @@ internal static class NavigationRegistration
         // JourneysPage: explicit factory for its page ViewModel and the layout persistence boundary
         services.AddSingleton(sp => new JourneysPage(
             sp.GetRequiredService<JourneysPageViewModel>(),
-            sp.GetRequiredService<LayoutPersistenceService>()));
+            sp.GetRequiredService<LayoutPersistenceService>(),
+            sp.GetRequiredService<ILogger<JourneysPage>>()));
         pages.Add(new PageMetadata(
             Tag: "journeys",
             Title: "Journeys",
@@ -172,7 +173,7 @@ internal static class NavigationRegistration
         services.AddTransient(sp => new TimetablePage(
             sp.GetRequiredService<TimetablePageViewModel>(),
             sp.GetRequiredService<LayoutPersistenceService>(),
-            sp.GetService<ILogger<TimetablePage>>()));
+            sp.GetRequiredService<ILogger<TimetablePage>>()));
         pages.Add(new PageMetadata(
             Tag: "timetable",
             Title: "Timetable",
@@ -193,7 +194,7 @@ internal static class NavigationRegistration
         services.AddSingleton(sp => new EventManagerPage(
             sp.GetRequiredService<EventManagerViewModel>(),
             sp.GetRequiredService<LayoutPersistenceService>(),
-            sp.GetService<ILogger<EventManagerPage>>()));
+            sp.GetRequiredService<ILogger<EventManagerPage>>()));
         pages.Add(new PageMetadata(
             Tag: "eventmanager",
             Title: "Event Manager",
@@ -212,8 +213,8 @@ internal static class NavigationRegistration
             sp.GetRequiredService<InterlockingControlViewModel>(),
             sp.GetRequiredService<SignalBoxPropertiesViewModel>(),
             sp.GetRequiredService<LayoutPersistenceService>(),
-            sp.GetService<ILogger<SignalBoxPage>>(),
-            sp.GetService<ILogger<SignalBoxCanvasControl>>()));
+            sp.GetRequiredService<ILogger<SignalBoxPage>>(),
+            sp.GetRequiredService<ILogger<SignalBoxCanvasControl>>()));
         pages.Add(new PageMetadata(
             Tag: "signalbox",
             Title: "Signal Box",

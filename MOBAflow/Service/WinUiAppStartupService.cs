@@ -211,13 +211,7 @@ internal sealed class WinUiAppStartupService
     {
         try
         {
-            var settingsService = services.GetService<ISettingsService>();
-            if (settingsService == null)
-            {
-                logger.LogWarning("SettingsService not available - skipping auto-load");
-                return;
-            }
-
+            var settingsService = services.GetRequiredService<ISettingsService>();
             if (!settingsService.AutoLoadLastSolution)
             {
                 logger.LogInformation("Auto-load disabled - skipping");

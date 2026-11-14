@@ -9,6 +9,7 @@ using Moba.Display.Protocol;
 public sealed class UdpDisplayDeviceClient : IDisplayDeviceClient
 {
     private readonly Func<DisplayEndpoint, IDisplayDatagramTransport> _transportFactory;
+    private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private IDisplayDatagramTransport? _transport;
     private DisplayProtocolClient? _protocolClient;
@@ -17,15 +18,20 @@ public sealed class UdpDisplayDeviceClient : IDisplayDeviceClient
     private bool _disposed;
 
     /// <summary>Initializes a UDP client that creates transport for the configured endpoint.</summary>
-    public UdpDisplayDeviceClient()
-        : this(endpoint => new UdpDisplayDatagramTransport(endpoint.Address, endpoint.Port))
+    /// <param name="timeProvider">Time source used for waits and retry delays.</param>
+    public UdpDisplayDeviceClient(TimeProvider timeProvider)
+        : this(endpoint => new UdpDisplayDatagramTransport(endpoint.Address, endpoint.Port), timeProvider)
     {
     }
 
-    internal UdpDisplayDeviceClient(Func<DisplayEndpoint, IDisplayDatagramTransport> transportFactory)
+    internal UdpDisplayDeviceClient(
+        Func<DisplayEndpoint, IDisplayDatagramTransport> transportFactory,
+        TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(transportFactory);
+        ArgumentNullException.ThrowIfNull(timeProvider);
         _transportFactory = transportFactory;
+        _timeProvider = timeProvider;
     }
 
     /// <inheritdoc />
@@ -40,7 +46,7 @@ public sealed class UdpDisplayDeviceClient : IDisplayDeviceClient
         {
             DisposeConnection();
             _transport = _transportFactory(endpoint);
-            _protocolClient = new DisplayProtocolClient(_transport);
+            _protocolClient = new DisplayProtocolClient(_transport, _timeProvider);
             var minimumVersion = DisplayProtocol.CurrentVersion;
             var maximumVersion = DisplayProtocol.CurrentVersion;
             var outcome = await _protocolClient.SendRequestAsync(

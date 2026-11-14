@@ -59,9 +59,9 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
     {
         using (Assert.EnterMultipleScope())
         {
-            Assert.Throws<ArgumentNullException>(() => new SystemStatusViewModel(null!, _session.Object, _settingsPage));
-            Assert.Throws<ArgumentNullException>(() => new SystemStatusViewModel(_eventBus, null!, _settingsPage));
-            Assert.Throws<ArgumentNullException>(() => new SystemStatusViewModel(_eventBus, _session.Object, null!));
+            Assert.Throws<ArgumentNullException>(() => new SystemStatusViewModel(null!, _session.Object, _settingsPage, TimeProvider.System));
+            Assert.Throws<ArgumentNullException>(() => new SystemStatusViewModel(_eventBus, null!, _settingsPage, TimeProvider.System));
+            Assert.Throws<ArgumentNullException>(() => new SystemStatusViewModel(_eventBus, _session.Object, null!, TimeProvider.System));
         }
     }
 
@@ -608,7 +608,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
 
     private SystemStatusViewModel CreateViewModel(TimeProvider? timeProvider = null)
     {
-        var viewModel = new SystemStatusViewModel(_eventBus, _session.Object, _settingsPage, timeProvider);
+        var viewModel = new SystemStatusViewModel(_eventBus, _session.Object, _settingsPage, timeProvider ?? TimeProvider.System);
         _viewModels.Add(viewModel);
         return viewModel;
     }

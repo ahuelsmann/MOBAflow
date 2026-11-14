@@ -46,9 +46,9 @@ public sealed record PiperProcessResult(int ExitCode, string StandardOutput, str
 /// <summary>
 /// Default Piper process runner.
 /// </summary>
-public sealed class PiperProcessRunner(TimeProvider? timeProvider = null) : IPiperProcessRunner
+public sealed class PiperProcessRunner(TimeProvider timeProvider) : IPiperProcessRunner
 {
-    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+    private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
     /// <summary>
     /// Piper CLI option for a pause between sentences.

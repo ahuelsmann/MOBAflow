@@ -18,7 +18,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
     /// <summary>Gets the selection state of the page; the page owns it because it has no dependencies.</summary>
     public HelpPageViewModel ViewModel { get; } = new();
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<HelpPage>? _logger;
+    private readonly ILogger<HelpPage> _logger;
     private long _navigationExpandedToken;
     private long _documentationExpandedToken;
     private string? _pendingSection;
@@ -28,7 +28,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
 
     public HelpPage(
         LayoutPersistenceService layout,
-        ILogger<HelpPage>? logger = null)
+        ILogger<HelpPage> logger)
     {
         _layout = layout;
         _logger = logger;
@@ -62,7 +62,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
     {
         _ = sender;
         _ = e;
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -74,7 +74,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
 
         if (_navigationExpandedToken != 0)

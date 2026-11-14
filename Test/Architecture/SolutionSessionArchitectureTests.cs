@@ -26,7 +26,6 @@ internal sealed class SolutionSessionArchitectureTests
         ["MOBAflow/View/MainWindow.xaml.cs"] = "the main window hosts the shell, its status bar and its shutdown",
         ["MOBAflow/View/OverviewPage.xaml.cs"] = "binds the shell's Z21 status and telemetry projection",
         ["MOBAflow/Extensions/"] = "composition root registers the shell",
-        ["MOBAsmart/Platforms/Android/MainActivity.cs"] = "shutdown cleanup lookup (MOBAsmart does not register the shell)",
     };
 
     /// <summary>Files whose constructors may receive the <c>Solution</c> instance.</summary>

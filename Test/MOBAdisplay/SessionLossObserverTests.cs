@@ -14,7 +14,7 @@ internal sealed class SessionLossObserverTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         using var observer = new SessionLossObserver(endpoint);
-        using var client = new DisplayProtocolClient(observer);
+        using var client = new DisplayProtocolClient(observer, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
 
@@ -32,7 +32,7 @@ internal sealed class SessionLossObserverTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         using var observer = new SessionLossObserver(endpoint);
-        using var client = new DisplayProtocolClient(observer);
+        using var client = new DisplayProtocolClient(observer, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
         await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
@@ -57,7 +57,7 @@ internal sealed class SessionLossObserverTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         using var observer = new SessionLossObserver(endpoint);
-        using var client = new DisplayProtocolClient(observer);
+        using var client = new DisplayProtocolClient(observer, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
         await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
@@ -77,7 +77,7 @@ internal sealed class SessionLossObserverTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         using var observer = new SessionLossObserver(endpoint);
-        using var client = new DisplayProtocolClient(observer);
+        using var client = new DisplayProtocolClient(observer, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
         await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
@@ -103,7 +103,7 @@ internal sealed class SessionLossObserverTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         using var observer = new SessionLossObserver(endpoint);
-        using var client = new DisplayProtocolClient(observer);
+        using var client = new DisplayProtocolClient(observer, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
         await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);

@@ -14,7 +14,7 @@ using SharedUI.Service;
 internal sealed partial class GoodsWagonPage
 {
     private readonly LayoutPersistenceService _layout;
-    private readonly ILogger<GoodsWagonPage>? _logger;
+    private readonly ILogger<GoodsWagonPage> _logger;
 
     public WagonsPageViewModel ViewModel { get; }
 
@@ -24,7 +24,7 @@ internal sealed partial class GoodsWagonPage
     public GoodsWagonPage(
         WagonsPageViewModel viewModel,
         LayoutPersistenceService layout,
-        ILogger<GoodsWagonPage>? logger = null)
+        ILogger<GoodsWagonPage> logger)
     {
         ViewModel = viewModel;
         _layout = layout;
@@ -46,7 +46,7 @@ internal sealed partial class GoodsWagonPage
     {
         _ = sender;
         _ = e;
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -59,7 +59,7 @@ internal sealed partial class GoodsWagonPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 

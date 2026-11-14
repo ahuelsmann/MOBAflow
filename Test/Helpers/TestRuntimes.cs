@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Manager;
+using Moba.Backend.Network;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
@@ -42,7 +43,7 @@ internal sealed partial class TestRuntimes : IDisposable
     public MobaRuntimeService Create(IZ21 z21, TestRuntimeOptions? options = null)
     {
         var settings = options?.Settings ?? new AppSettings();
-        return Create(z21, Own(new InPortCounterService(z21, settings)), options);
+        return Create(z21, Own(Counters(z21, settings)), options);
     }
 
     /// <summary>A runtime over <paramref name="z21"/> and the test's own <paramref name="counters"/>.</summary>
@@ -66,6 +67,29 @@ internal sealed partial class TestRuntimes : IDisposable
             options.Logger ?? NullLogger<MobaRuntimeService>.Instance);
     }
 
+    /// <summary>
+    /// InPort counters over <paramref name="z21"/> with the system clock unless the test passes its own, and
+    /// without persistence unless the test passes a store or a per-project store factory.
+    /// </summary>
+    public static InPortCounterService Counters(
+        IZ21 z21,
+        AppSettings settings,
+        TimeProvider? clock = null,
+        IInPortCounterStore? store = null,
+        Func<Guid, IInPortCounterStore>? projectStoreFactory = null)
+    {
+        var persistence = store is not null
+            ? InPortCounterPersistence.InStore(store)
+            : projectStoreFactory is not null
+                ? InPortCounterPersistence.PerProject(projectStoreFactory)
+                : InPortCounterPersistence.InMemory;
+        return new InPortCounterService(
+            z21, settings, clock ?? TimeProvider.System, NullLogger<InPortCounterService>.Instance, persistence);
+    }
+
+    /// <summary>A Z21 over <paramref name="udp"/> with its own traffic monitor unless the test passes one.</summary>
+    public static Z21 CreateZ21(IUdpClientWrapper udp, IEventBus eventBus, Z21Monitor? trafficMonitor = null) =>
+        new(udp, eventBus, NullLogger<Z21>.Instance, trafficMonitor ?? new Z21Monitor(NullLogger<Z21Monitor>.Instance));
     /// <summary>A journey manager factory with production stop transitions and no runtime checkpoints.</summary>
     public static JourneyManagerFactory JourneyManagers(IWorkflowService workflowService, IEventBus? eventBus = null) =>
         new(workflowService, new JourneyStopTransitionService(), new NullJourneyRuntimeStateStore(),
