@@ -15,6 +15,10 @@ Service-provider lookups belong in composition roots/factories, not feature beha
 - [WinUI](../../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs) and
   [MAUI](../../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs) compose their platform-specific services.
   Register shared backend services through the common extension rather than maintaining duplicate lists.
+- [Mobile composition](../../SharedUI/Extensions/MobileServiceCollectionExtensions.cs): `AddMobaMobileServices`
+  registers everything of MOBAsmart that needs no Android API (runtime, remote stack, ViewModels, startup service).
+  Add such registrations there so the portable container test resolves them; the Android app registers only its
+  platform implementations and pages.
 - Preserve [EventBus UI registration](../../SharedUI/Extensions/EventBusUiExtensions.cs) and its dispatcher dependency.
   Consumers of `IEventBus` in UI hosts must retain the decorated instance.
 - Prefer direct type registrations when constructors can be resolved. Use factory registrations where runtime
@@ -33,8 +37,9 @@ Service-provider lookups belong in composition roots/factories, not feature beha
 | Distinct editor/feature state | Use a dedicated ViewModel when the behavior warrants it |
 
 Do not default every ViewModel to singleton or add dependencies to MainWindowViewModel merely to avoid a new type.
-Required dependencies must resolve; optional dependencies may use the established null-object/fallback pattern.
-Do not mark a missing required dependency optional to hide a registration error.
+Constructors declare every service they need as a required parameter. A host without a capability registers the
+existing null object; do not add optional service parameters, `?? new` fallbacks or `GetService` lookups with a
+fallback branch to hide a registration error.
 
 ## Page lifecycle
 
@@ -53,7 +58,11 @@ Use the real registration extensions in affected DI tests:
 
 - `Test/Backend/MobaBackendServiceCollectionExtensionsTests.cs`
 - `Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs` (Windows target)
-- `Test/MOBAsmart/MobaMauiServiceCollectionExtensionsTests.cs` (opt-in mobile coverage)
+- `Test/SharedUI/MobileServiceCollectionExtensionsTests.cs` (portable target; the MOBAsmart composition with test
+  doubles for the Android platform services)
+
+The Windows and mobile fixtures resolve every registration of their collection; a new registration needs no new
+assertion unless its identity or lifetime matters.
 
 Cover the changed registration, shared-instance identity and lifetime behavior as relevant. Keep platform
 services/test doubles appropriate to the test host. Do not add eager resolution of every page at startup just

@@ -31,7 +31,8 @@ Preserve the existing shared runtime and mobile local/remote coordination.
 - Follow the existing Shell routes/navigation service. Do not mix in a second navigation root such as
   NavigationPage, TabbedPage or FlyoutPage. Resolve route names from current registration.
 - Keep Android-specific code in platform implementations/conditional sections. Extend the existing
-  `MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs` registration.
+  `MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs` registration for Android implementations and pages;
+  registrations without an Android API belong in `SharedUI/Extensions/MobileServiceCollectionExtensions.cs`.
 
 ## Touch and layout
 

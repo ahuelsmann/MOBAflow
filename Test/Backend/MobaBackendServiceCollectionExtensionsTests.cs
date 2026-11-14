@@ -2,6 +2,7 @@
 namespace Moba.Test.Backend;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Moba.Backend;
 using Moba.Backend.Interface;
@@ -14,6 +15,7 @@ using Moba.Sound;
 using Moba.Speech.Base;
 using Moba.Domain;
 using Moba.Domain.Enum;
+using Moba.Test.Helpers;
 using Moq;
 
 /// <summary>
@@ -132,6 +134,33 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
     }
 
     [Test]
+    public async Task Runtime_WithoutTheHostEndpointSource_FailsInsteadOfChoosingAZ21ItSelf()
+    {
+        var services = CreateServiceCollection();
+        services.RemoveAll<IZ21EndpointSource>();
+        var provider = services.BuildServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+
+        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IMobaRuntime>());
+    }
+
+    [Test]
+    public async Task EveryRegistrationResolvesOnceTheHostSuppliesBusSettingsAudioAndEndpointSource()
+    {
+        var services = CreateServiceCollection();
+        var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+        await using var providerLifetime = provider.ConfigureAwait(false);
+
+        var failures = ServiceRegistrations.ResolveAll(services, provider, skip: _ => false, out var resolved);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(failures, Is.Empty);
+            Assert.That(resolved, Is.GreaterThan(50));
+        }
+    }
+
+    [Test]
     public async Task ActionExecutionContext_WithoutTheHostSoundPlayer_FailsInsteadOfRunningWithoutSound()
     {
         var services = new ServiceCollection();
@@ -157,6 +186,7 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
         services.AddSingleton<IEventBus>(sp => new EventBus(sp.GetRequiredService<ILogger<EventBus>>()));
         services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
+        services.AddSingleton(TestRuntimes.NoZ21);
         services.AddMobaBackendServices();
         return services;
     }

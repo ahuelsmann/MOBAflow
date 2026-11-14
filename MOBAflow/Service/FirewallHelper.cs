@@ -23,10 +23,12 @@ internal static class FirewallHelper
     /// Creates rules if they don't exist, using netsh advfirewall command.
     /// </summary>
     /// <param name="httpPort">TCP port for the REST API inbound rule.</param>
-    /// <param name="logger">Optional logger; failures are logged at warning level.</param>
+    /// <param name="logger">Receives the warning when the rules cannot be created or verified.</param>
     /// <returns>True if rules were created or verified successfully; false if an error occurred.</returns>
-    public static bool EnsureFirewallRulesExist(int httpPort, ILogger? logger = null)
+    public static bool EnsureFirewallRulesExist(int httpPort, ILogger logger)
     {
+        ArgumentNullException.ThrowIfNull(logger);
+
         try
         {
             // Check and create UDP Discovery rule (Port 21106 Inbound)
@@ -43,7 +45,7 @@ internal static class FirewallHelper
         }
         catch (Exception ex)
         {
-            logger?.LogWarning(ex,
+            logger.LogWarning(ex,
                 "Failed to create or verify Windows Firewall rules for REST API (HTTP {HttpPort}). " +
                 "This is normal without admin rights; create rules manually or run once as Administrator.",
                 httpPort);

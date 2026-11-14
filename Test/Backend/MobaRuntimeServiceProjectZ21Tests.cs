@@ -11,8 +11,8 @@ using Moq;
 using System.Net;
 
 /// <summary>
-/// Without an endpoint source of its own (MOBAsmart), <see cref="MobaRuntimeService"/> connects to the Z21 of the
-/// project it runs and never searches the network.
+/// <see cref="MobaRuntimeService"/> connects to the Z21 its endpoint source names for the project it runs and
+/// never searches the network.
 /// </summary>
 [TestFixture]
 internal sealed partial class MobaRuntimeServiceProjectZ21Tests : IDisposable
@@ -25,9 +25,9 @@ internal sealed partial class MobaRuntimeServiceProjectZ21Tests : IDisposable
     public async Task StartAsync_ConnectsToTheZ21OfTheActiveProject()
     {
         var z21Mock = CreateZ21();
-        using var runtime = CreateRuntime(z21Mock.Object);
-        await runtime.ActivateProjectAsync(new Project { Name = "Yard", Z21 = { IpAddress = "192.168.0.112", Port = 21106 } })
-            .ConfigureAwait(false);
+        var project = new Project { Name = "Yard", Z21 = { IpAddress = "192.168.0.112", Port = 21106 } };
+        using var runtime = CreateRuntime(z21Mock.Object, project);
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
 
         await runtime.StartAsync().ConfigureAwait(false);
 
@@ -62,5 +62,6 @@ internal sealed partial class MobaRuntimeServiceProjectZ21Tests : IDisposable
         return z21Mock;
     }
 
-    private MobaRuntimeService CreateRuntime(IZ21 z21) => _runtimes.Create(z21);
+    private MobaRuntimeService CreateRuntime(IZ21 z21, Project? project = null) =>
+        _runtimes.Create(z21, new TestRuntimeOptions { EndpointSource = new ProjectZ21EndpointSource(() => project) });
 }
