@@ -138,7 +138,7 @@ dependencies.
 | RF-07 | [#360](https://github.com/ahuelsmann/MOBAflow/issues/360) | Every supported delivery target has a reproducible mandatory clean-build lane. |
 | RF-08 | [#357](https://github.com/ahuelsmann/MOBAflow/issues/357) | Project-owned MAUI XAML bindings are compiled and protected against binding regressions. |
 | RF-09 | [#366](https://github.com/ahuelsmann/MOBAflow/issues/366) | Risk-critical behavior has non-decreasing coverage and mutation protection. |
-| RF-10 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Formatting drift fails CI without obscuring functional changes. |
+| RF-10 | [#451](https://github.com/ahuelsmann/MOBAflow/issues/451) | Formatting drift fails CI without obscuring functional changes. |
 | RF-11 | [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) | Train-control responsibilities are delegated to focused, platform-neutral, testable collaborators. |
 | RF-12 | [#242](https://github.com/ahuelsmann/MOBAflow/issues/242) | Mobile session, discovery, runtime projection, synchronization, and upload concerns are separated. |
 | RF-13 | [#91](https://github.com/ahuelsmann/MOBAflow/issues/91) | Track-plan editor operations are platform-neutral and WinUI remains a thin input and rendering adapter. |
@@ -158,7 +158,7 @@ dependencies.
 | RF-27 | [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) | Domain classes own the rules and state transitions that need only domain data. |
 | RF-28 | [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
 | RF-29 | [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) | Platform-specific sound and file services live in platform adapters with one role per class. |
-| RF-30 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
+| RF-30 | [#452](https://github.com/ahuelsmann/MOBAflow/issues/452) | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
 | RF-31 | [#349](https://github.com/ahuelsmann/MOBAflow/issues/349) | The remaining oversized code-behind and recording classes are split by responsibility. |
 
 The phrase "until child creation" is traceability, not workflow status. Issue #47
@@ -180,14 +180,15 @@ The deliverable inventory, decisions and delivery slices now belong to
 
 ### RF-08: Compile MAUI XAML bindings
 
-Complete after slice 3. Child issue [#357](https://github.com/ahuelsmann/MOBAflow/issues/357) owns this package
-(slice 1 #358, slice 2 #423, slice 3 the warnings-as-errors gate); the inventory, decisions and slices are in
-[the RF-08 child plan](357-maui-compiled-bindings.md) until it is removed after closure. Outcome: project-owned
-MOBAsmart XAML compiles its bindings, including those with a `Source`, and `MOBAsmart.csproj` turns an uncompiled or
-unresolvable binding (`XC0022`, `XC0025`, `XC0045`) into a build error in every configuration; the Android Release
-lane runs on every pull request that changes `MOBAsmart/**`. The function toggles and the other rebound controls
-were not inspected on a device; since 2026-11-06 that is no closure gate, and problems found in use are reported as
-bugs.
+Complete. Child issue [#357](https://github.com/ahuelsmann/MOBAflow/issues/357) owned this package and was closed
+on 2026-11-14 after its slices were delivered (slice 1 compilation with `Source` and the self-bound controls #358,
+slice 2 `FunctionToggleView` #423, slice 3 the warnings-as-errors gate #448); its child plan, added in #358, was
+removed at closure. Outcome: project-owned MOBAsmart XAML compiles its bindings, including those with a `Source`,
+and `MOBAsmart.csproj` turns an uncompiled or unresolvable binding (`XC0022`, `XC0025`, `XC0045`) into a build
+error in every configuration; the Android Release lane runs on every pull request that changes `MOBAsmart/**`
+(see [the MAUI instructions](../.github/instructions/maui.instructions.md)). The function toggles and the other
+rebound controls were not inspected on a device; since 2026-11-06 that is no closure gate (#417), and problems
+found in use are reported as bugs.
 
 ### RF-09: Coverage and mutation ratchets
 
@@ -197,13 +198,9 @@ The baseline, lane order, triage rules and delivery slices now belong to
 
 ### RF-10: Formatting baseline and gate
 
-Sequence:
-
-1. wait for the RF-06 analyzer baseline to stabilize;
-2. define generated, vendored, and firmware-library exclusions;
-3. normalize formatting, line endings, and final newlines in a dedicated
-   mechanical change;
-4. add `dotnet format --verify-no-changes` to mandatory CI.
+The measured inventory, open decisions and delivery slices now belong to
+[the RF-10 child plan](451-formatting-baseline.md), owned by
+[issue #451](https://github.com/ahuelsmann/MOBAflow/issues/451).
 
 Acceptance anchor: the baseline change contains no functional or architecture
 work, `.editorconfig` and documented commands agree, and the mandatory
@@ -356,20 +353,26 @@ nothing because MOBAsmart does not register the shell and is removed by
 
 ### RF-25: Explicit dependencies
 
-Complete with slice 5. Child issue [#318](https://github.com/ahuelsmann/MOBAflow/issues/318) owns this package and
-closes when slice 5 is merged (slice 1 workflow execution and validation #325, 2 runtime composition #330,
-3 static hooks #335, 4 SharedUI ViewModels #414, 4b SharedUI ViewModel remainder #435, 4c hosts, pages, Backend,
-speech and display #447, 5 container validation and last remainders #450). Its
-[child plan](318-explicit-dependencies.md) records each slice's result and is removed in the close-out after that
-merge. Outcome: every constructor names the services it needs, hosts register them (null objects where a host has
-no implementation) and tests pass explicit fakes; no service-typed optional parameter, `?? new` service fallback,
-`GetService` lookup with a fallback branch or mutable static hook remains in production code, and ViewModels neither
-create Backend services nor receive the runtime `ActionExecutionContext`. Container tests resolve every
-registration of the shared backend collection, of the WinUI host (except the XAML window and pages, which need a
-running app) and of the platform-neutral MOBAsmart composition, which moved from the Android-only app into
-`SharedUI/Extensions/MobileServiceCollectionExtensions.cs` so that the portable test target can build it.
-Left optional on purpose: value options and data defaults as classified in the child plan, and the logger of
-`SignalBoxCanvasControl`, which XAML creates before its page can attach one.
+Complete. Child issue [#318](https://github.com/ahuelsmann/MOBAflow/issues/318) owned this package and was closed
+on 2026-11-14 after its slices were delivered (slice 1 workflow execution and validation #325, 2 runtime
+composition #330, 3 static hooks #335, 4 SharedUI ViewModels #414, 4b SharedUI ViewModel remainder #435, 4c hosts,
+pages, Backend, speech and display #447, 5 container validation and last remainders #450); its child plan, added in
+#319, was removed at closure. Outcome: every constructor names the services it needs, hosts register them (null
+objects where a host has no implementation) and tests pass explicit fakes; no service-typed optional parameter,
+`?? new` service fallback, `GetService` lookup with a fallback branch or mutable static hook remains in production
+code, and ViewModels neither create Backend services nor receive the runtime `ActionExecutionContext`. Container
+tests resolve every registration of the shared backend collection, of the WinUI host (except the XAML window and
+pages, which need a running app) and of the platform-neutral MOBAsmart composition, which moved from the
+Android-only app into `SharedUI/Extensions/MobileServiceCollectionExtensions.cs` so that the portable test target
+can build it.
+
+Left optional on purpose, by the rule that RF-25 targets services (types with behavior, I/O, time or external
+effects) and not values: immutable option and limit records with documented defaults, data defaults such as an
+empty `Solution` after deserialization, pure delegates without I/O (for example the `BrakeAndDoorState` random
+source and the `ForwardingEventBus` delivery), and the logger of `SignalBoxCanvasControl`, which XAML creates
+before its page can attach one. `DialogService.GetXamlRoot` keeps one lazy lookup of the always-registered main
+window. Noted outside RF-25: `Test/MOBAsmart/MobiLanHttpClientFactoryTests.cs` and the `IncludeMobaSmartTests`
+switch still describe an opt-in test graph that cannot build; removing them is a separate cleanup.
 
 ### RF-26: Split `Common` by responsibility
 
@@ -425,19 +428,9 @@ closure (#417), so any dialog problem found in everyday use is reported as a bug
 
 ### RF-30: Repository and test layout
 
-Sequence:
-
-1. separate the reference skill snapshot and other agent tooling from product
-   documentation, and move Office files out of `docs/`;
-2. group `docs/` into developer and user documentation;
-3. split `Test/Test.csproj` by target: portable core and API tests, Windows
-   desktop tests and integration tests; move `Test/Analysis` out of the test
-   project;
-4. align root namespaces with project names (`MOBAflow`, `MOBAsmart`,
-   `MOBAdisplay`) and folder names (`Converter`/`Converters`, `Interface`);
-5. move single-host ViewModels and services such as `DisplayViewModel`,
-   `RecorderPageViewModel`, `InterlockingControlViewModel` and the mobile
-   session services into `Desktop` or `Mobile` folders of `SharedUI`.
+The inventory, decisions and delivery slices now belong to
+[the RF-30 child plan](452-repository-test-layout.md), owned by
+[issue #452](https://github.com/ahuelsmann/MOBAflow/issues/452).
 
 Acceptance anchor: a new developer finds the architecture, build and test
 entry points from `README.md`; each test project builds for its own targets;
@@ -445,15 +438,17 @@ CI runs every test project.
 
 ### RF-31: Reduce the remaining oversized classes
 
-Complete with slice 5. [Issue #349](https://github.com/ahuelsmann/MOBAflow/issues/349) owns this package;
-[the RF-31 child plan](349-oversized-classes.md) holds the inventory, the decisions and what each slice moved
-(slice 1 recording validation and drop bookkeeping #350, 2 recording control entries and artifact import #353,
-3-4 signal-box properties and Help page #354, 5 main window). Outcome: the recording session and the artifact
-import are split by responsibility behind their existing APIs, and the code-behind of the signal-box properties,
-the Help page and the main window keeps view lifecycle and visual adaptation. Slice 5 moved the host work behind
-the main window (REST API status polling, speech health checks, the runtime observers and their shutdown) into
+Complete. Child issue [#349](https://github.com/ahuelsmann/MOBAflow/issues/349) owned this package and was closed
+on 2026-11-14 after its slices were delivered (slice 1 recording validation and drop bookkeeping #350, 2 recording
+control entries and artifact import #353, 3-4 signal-box properties and Help page #354, 5 main window #449); its
+child plan, added in #350, was removed at closure. Outcome: the recording session and the artifact import are
+split by responsibility behind their existing APIs, and the code-behind of the signal-box properties, the Help
+page and the main window keeps view lifecycle and visual adaptation. Slice 5 moved the host work behind the main
+window (REST API status polling, speech health checks, the runtime observers and their shutdown) into
 `MainWindowLifecycleService` and the track power switch decision into the shell; the window keeps its chrome,
-navigation frame, theme and the order of its own shutdown steps.
+navigation frame, theme and the order of its own shutdown steps. The Help and Ks views were checked by the
+maintainer on 2026-10-26; the main window after slice 5 was not inspected in a running app, which is no closure
+gate since 2026-11-06 (#417).
 
 ## Spec Kit classification of RF-19 through RF-31
 
@@ -477,10 +472,10 @@ Each child issue declares its `Spec Kit workflow` when it is created:
 | RF-04 | None | None | RF-09, RF-11, RF-18 |
 | RF-05 | None | None | RF-06, RF-07, RF-08, RF-12 |
 | RF-06 | None | RF-05 | RF-07, RF-09, RF-10, RF-13, RF-14, RF-15 |
-| RF-07 | RF-01, RF-05, RF-06 | None | RF-18 |
+| RF-07 | RF-01, RF-05, RF-06; its last slice also RF-09 and RF-10 | None | RF-18 |
 | RF-08 | RF-05 | None | MAUI release quality |
-| RF-09 | RF-04, RF-06 | RF-19 | Validation and concurrency regression protection |
-| RF-10 | RF-06 | None | Repository-wide formatting enforcement |
+| RF-09 | RF-04, RF-06 | RF-19 | RF-07 (last slice), validation and concurrency regression protection |
+| RF-10 | RF-06; not at the same time as RF-30 | None | RF-07 (last slice), repository-wide formatting enforcement |
 | RF-11 | RF-04 | None | Train-control maintainability |
 | RF-12 | RF-05 | RF-19, RF-22 | Mobile maintainability |
 | RF-13 | RF-06 | None | Issue #34 Slice 6, RF-16 |
@@ -500,7 +495,7 @@ Each child issue declares its `Spec Kit workflow` when it is created:
 | RF-27 | None | RF-24 | Object-oriented domain model |
 | RF-28 | None | RF-20 | Track-plan maintainability |
 | RF-29 | None | None | Android package size and file-service clarity |
-| RF-30 | None | RF-20, RF-26 | Contributor orientation |
+| RF-30 | RF-26 for its code slices; not at the same time as RF-10 | RF-20 | Contributor orientation |
 | RF-31 | None | RF-24 | Maintainability of remaining hotspots |
 
 The explicit issue #34 unblock path is:
