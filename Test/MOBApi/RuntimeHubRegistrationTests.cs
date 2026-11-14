@@ -208,7 +208,7 @@ internal sealed class RuntimeHubRegistrationTests
     }
 
     [Test]
-    public async Task PushSnapshot_WithInvalidJson_IsRejectedAsHubError()
+    public async Task PushSnapshot_WithoutProjectId_IsRejectedAsHubError()
     {
         var fixture = new HubFixture("host-1");
         await fixture.Hub.RegisterHost().ConfigureAwait(false);
