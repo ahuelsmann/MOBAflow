@@ -98,11 +98,15 @@ with issue, PR, writer, locked areas and state (design, implementation, review, 
 
 - **Circuit breaker.** If the same finding survives two review and fix rounds, or an agent-to-agent exchange on one
   topic exceeds ten messages, the COO stops the loop and asks the human with a recommendation.
-- **Agents talk by CLI.** Requests and answers between agents go through the command-line channels, not through
-  the human and not through GitHub comments: Claude to Codex with `codex queue --thread <id> --message <text>`,
-  Codex answers in its own thread and Claude reads that reply from the local Codex session log; Claude sessions
-  use their session messaging; Head of UI/UX uses the [CLI contract](#head-of-uiux-gemini-argon-via-antigravity).
-  GitHub (MOBAdev #1) holds only the board, the log and long results that must be kept.
+- **Agents talk by CLI.** Coordination requests and answers between agents go through command-line channels, not
+  through the human and not through GitHub comments. Claude starts requests to Codex with
+  `~/.codex/.sandbox-bin/codex.exe queue --thread <id> --message <text>` (the Codex app must have that thread);
+  Codex answers in the addressed thread, and Claude reads the reply from
+  `~/.codex/sessions/**/rollout-*<thread-id>.jsonl` (assistant messages only; never read `auth.json` or other
+  credential files). No command delivers a message into a Claude desktop session, so Codex raises its own
+  requests to Claude in its thread or on the board. Claude sessions use their session messaging; Head of UI/UX
+  uses the [CLI contract](#head-of-uiux-gemini-argon-via-antigravity). PR design notes, the design Go and review
+  posts stay on the PR. MOBAdev #1 holds only the board, the log and long results that must be kept.
 - **Log.** Every lock, design go, handover, merge and escalation is a short entry on the board or in MOBAdev #1 with
   UTC time and role. Agent IDs and thread IDs stay internal and are not shown to the human.
 - **Feature toggles.** A user-visible feature that spans several slices lands behind a toggle that is off by
