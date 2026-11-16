@@ -169,20 +169,36 @@ Each has a recommendation; none blocks the tasks phase, and each is confirmed or
 - **Sonar gates**: SonarCloud green on the current commit with zero OPEN/CONFIRMED issues before Ready.
 - **Issue traceability**: #430 for the feature; task issues from the tasks phase with canonical `TNNN:` titles.
 
-## Delivery order (input for the tasks phase)
+## Implementation slices
 
-1. Projects, CI job and budgets: empty host, generator and app with the checks running, so that every later step is measured.
-2. Snapshot generator with the track plan SVG and photos.
-3. Shell with tokens, navigation, command bar, Messages bar, status bar and themes (User Story 5 for the shell).
-4. Train Control with the simulation core (User Story 1) and Reset (User Story 6).
-5. Signal Box (User Story 2).
-6. Track Plan with moving locomotives (User Story 3).
-7. Workflows (User Story 4).
-8. Host hardening: headers, rate limiting, forwarded headers, error page, `robots.txt`.
-9. Deployment workflow (manual) and operator documentation; first deployment by the Technical Director's setup.
-10. Fidelity review against the reference screenshots and fixes.
+The implementation is cut for the small-batch flow of 2026-11-16 (master coordination): each slice is one pull request with one concern, at most about 25 files or 400 changed lines (generated files such as the lockfile excepted), mergeable on its own and finished within a day. Each slice names the spec requirements it delivers instead of a separate design note, writes its acceptance tests first and locks only the folders listed. The Chief Operating Officer decides the final cut, the locks and the order on the board; this table is the proposal.
 
-Each step is independently reviewable; steps 4 to 7 can be split across pull requests in any order after step 3.
+**Feature flag.** The demo is a separate application, so the WinUI feature toggles do not apply. Its switch is a list `enabledPages` in the demo's own configuration (default: empty). A page that is not enabled appears in the navigation as a disabled entry, with the mechanism FR-027 requires anyway, so `main` always builds a coherent demo while pages arrive one by one. The public deployment (slice 15) happens only after the maintainer's go; until then nothing of the demo is reachable from outside.
+
+| # | Slice | Delivers | Tests written first | Locked areas | Needs |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Host skeleton | `MOBAweb/Host` (ASP.NET Core, serves a placeholder page and a health response), solution entry, dependency table row, repository map row | Host tests: serves the entry document, serves no MOBApi runtime path, no server banner | `MOBAweb/Host`, `Test/MOBAweb`, `Moba.slnx`, the `MOBAweb` rows in `docs/ARCHITECTURE.md` and `AGENTS.md` | nothing; first slice |
+| 2 | Snapshot data | `MOBAweb/SnapshotGenerator` producing `snapshot.json` (locomotives, workflows, signal-box plan, texts) from the shipped sample | Generator tests pinning the sample content and the failure on missing page data (FR-010) | `MOBAweb/SnapshotGenerator`, `Test/MOBAweb` | 1 |
+| 3 | Snapshot drawing and photos | Track plan SVG with stable ids, track path, WebP photos (SkiaSharp is already a repository dependency) | Generator tests: ids per track piece, closed path, photo size limits (FR-040, FR-058) | `MOBAweb/SnapshotGenerator`, `Test/MOBAweb` | 2 |
+| 4 | Frontend scaffold | `MOBAweb/app` with the toolchain (T1), lockfile, Light and Dark token files, `enabledPages`, an empty page frame, unit test setup | Unit tests: token files define the same keys in both themes, `enabledPages` defaults to empty | `MOBAweb/app` (new) | 1 |
+| 5 | CI job | The `MOBAweb` job: .NET build and tests, `npm ci`, build, unit tests, dependency audit, the 200 KB check (FR-053, FR-074, FR-076) | The job itself; a deliberately oversized bundle fails in a throwaway branch | `.github/workflows`, `scripts/Get-QualityChangeScope.ps1` | 4; local session (workflow files) |
+| 6 | Shell | Navigation from the generated model with disabled entries, command bar, Messages bar, status bar, theme toggle with remembered choice (FR-021 to FR-031, FR-033) | Unit tests: navigation order and disabled state, theme default Dark and persistence, status texts contain no host detail (FR-030) | `MOBAweb/app/src/shell`, `MOBAweb/app/src/tokens` | 4, 2 |
+| 7 | Simulation core | State store, motion model, ramp, emergency stop, functions, track power, Reset; no UI (FR-003, FR-004, FR-008, FR-011, FR-012) | Unit tests from the acceptance scenarios of User Stories 1 and 6 | `MOBAweb/app/src/simulation` | 4 |
+| 8 | Train Control page | The page of FR-036 wired to the simulation; landing page (FR-032); page enabled | Component tests: scenarios of User Story 1, read-only speed-steps selection, accessible names (FR-041 to FR-044) | `MOBAweb/app/src/pages/train-control` | 6, 7 |
+| 9 | Signal Box | Signal and turnout state in the simulation and the page of FR-039; page enabled | Tests from User Story 2; aspect code as text (FR-045) | `MOBAweb/app/src/pages/signal-box`, signal part of `src/simulation` | 6, 7 |
+| 10 | Track Plan | The page of FR-038 on the generated SVG with zoom, fit, selection and moving locomotives; page enabled | Tests from User Story 3 | `MOBAweb/app/src/pages/track-plan` | 3, 6, 7 |
+| 11 | Workflows | Workflow runner in the simulation and the page of FR-037 with list and graph; page enabled | Tests from User Story 4; announcement shown as text (FR-009) | `MOBAweb/app/src/pages/workflows`, workflow part of `src/simulation` | 6, 7 |
+| 12 | Host hardening | Precompressed files, cache headers, security headers, neutral error page, `robots.txt` (FR-058, FR-059, FR-070 to FR-073) | Host tests per header and route | `MOBAweb/Host`, `Test/MOBAweb` | 1 |
+| 13 | Rate limiting | Request limit, transferred-bytes limit, forwarded headers (FR-056, FR-078, T8, T9) | Host tests: per-client limits with a forwarded address, repeated downloads of the largest file | `MOBAweb/Host`, `Test/MOBAweb` | 12 |
+| 14 | Browser checks | Playwright: first-visit and repeat-visit byte sums, smoke run per page, accessibility floor (FR-057, SC-006, SC-009) | The checks themselves | `MOBAweb/app/e2e`, `.github/workflows` | 8; local session (workflow files) |
+| 15 | Deployment | Manually started deployment workflow and operator README (FR-054, FR-055, FR-075) | A deployment to the prepared web app, verified by the smoke run against the public address | `.github/workflows`, `MOBAweb/README.md` | 12 to 14; local session; Technical Director's Azure setup; maintainer's go |
+| 16 | Fidelity fixes | Corrections from the side-by-side comparison with the reference screenshots (FR-024, SC-002); several small slices if needed | Updated component tests where behavior changes | the page or shell folder concerned | 8 to 11; the reference screenshots |
+
+**Parallel work without overlapping locks** (within the limit of three open code slices): 2 and 4 after 1; 3, 6 and 7 after 4; 8 to 11 one after another or two at a time, because each page has its own folder and the simulation parts of 9 and 11 are separate files; 12 and 13 any time after 1.
+
+**First slice after this plan merges:** slice 1. It touches no existing code area except the solution file and two table rows, needs no Node and no workflow change, and can be written and proved in a cloud session on Linux CI.
+
+**What a cloud session cannot do:** slices 5, 14 and 15 change workflow files and need a local session; everything else is portable.
 
 ## Risks
 
