@@ -154,7 +154,7 @@ dependencies.
 | RF-23 | [#191](https://github.com/ahuelsmann/MOBAflow/issues/191) | A dedicated solution session owns the loaded solution, selection, dirty state and auto-save. |
 | RF-24 | [#219](https://github.com/ahuelsmann/MOBAflow/issues/219) | `MainWindowViewModel` is a shell; each page area has its own focused ViewModel. |
 | RF-25 | [#318](https://github.com/ahuelsmann/MOBAflow/issues/318) | Constructors declare real dependencies; no hidden optional services, fallbacks or mutable static hooks. |
-| RF-26 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | `Common` is split by responsibility: shared contracts, host-owned UI settings and presentation helpers. |
+| RF-26 | [#290](https://github.com/ahuelsmann/MOBAflow/issues/290) | `Common` is split by responsibility: shared contracts, host-owned UI settings and presentation helpers. |
 | RF-27 | [#339](https://github.com/ahuelsmann/MOBAflow/issues/339) | Domain classes own the rules and state transitions that need only domain data. |
 | RF-28 | [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
 | RF-29 | [#313](https://github.com/ahuelsmann/MOBAflow/issues/313) | Platform-specific sound and file services live in platform adapters with one role per class. |
@@ -376,24 +376,17 @@ switch still describe an opt-in test graph that cannot build; removing them is a
 
 ### RF-26: Split `Common` by responsibility
 
-Sequence:
-
-1. create a contracts project for runtime snapshots, remote runtime commands,
-   hub method names and the discovery protocol shared by MOBApi, MOBAflow and
-   MOBAsmart;
-2. move the UI settings (layout, tab visibility, feature toggles, display and per-host
-   train-control settings) to the `SharedUI` settings root `UiSettings` and the navigation
-   category to MOBAflow, and replace the per-page feature toggle properties with one keyed
-   collection (delivered as [#290](https://github.com/ahuelsmann/MOBAflow/issues/290) slice 2;
-   shared ViewModels read these settings, so `SharedUI`, not MOBAflow, is their owner);
-3. move display appearance helpers from `Common/Display` to `SharedUI` or the
-   host that uses them;
-4. leave only neutral infrastructure (events, paths, logging, configuration
-   loading) in `Common`, and add the resulting rules to RF-20.
-
-Acceptance anchor: MOBApi references only what it uses; `Common` contains no
-UI layout or presentation types; stored settings load with default values for
-removed fields.
+Complete with slice 5. Child issue [#290](https://github.com/ahuelsmann/MOBAflow/issues/290) owns this package and
+closes when slice 5 is merged (slices 1 appearance helpers and 3 host-specific and unused types #295, 4a runtime
+contracts and 4b discovery protocol #310, 2 UI settings and navigation #454, 5 boundary rules and documentation
+#458). Its child plan, added in #291, was removed with slice 5; the record stays in #290 and Git history.
+Outcome: the new
+`Contracts` project holds the runtime and discovery wire types, MOBApi references `Contracts` and the parts of
+`Common` it uses, UI settings live in the `SharedUI` root `UiSettings` with one keyed feature-toggle collection
+(old flat toggle values load as defaults), appearance and mobile helpers live in `SharedUI` and the navigation
+category in MOBAflow. `Common` keeps neutral infrastructure only; the namespaces it may declare are listed in
+[the Common and Contracts boundary](../docs/ARCHITECTURE.md#common-and-contracts-boundary) and enforced by
+`SolutionArchitectureTests`.
 
 ### RF-27: Move domain rules into the domain model
 

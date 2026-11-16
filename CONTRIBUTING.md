@@ -189,7 +189,7 @@ The full rules are available in:
 In brief:
 
 - **Architecture**
-  - Follow the tested [project dependency table](docs/ARCHITECTURE.md#project-dependency-rules); `MOBApi` references only `Common`
+  - Follow the tested [project dependency table](docs/ARCHITECTURE.md#project-dependency-rules); `MOBApi` references only `Contracts` and `Common`
   - Use MVVM with `CommunityToolkit.Mvvm` (`[ObservableProperty]`, `[RelayCommand]`)
   - Use constructor injection only, not a service locator
 

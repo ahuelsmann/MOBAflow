@@ -97,7 +97,7 @@ Do not assume every directory is an active project or discover projects inside `
 | --- | --- |
 | `Domain/` | Serializable models, enums, workflow payloads and domain rules |
 | `Contracts/` | Wire contracts shared by MOBApi and the apps: runtime snapshots, remote commands, runtime hub, discovery protocol |
-| `Common/` | Configuration, events, network discovery helpers, paths and platform-neutral state |
+| `Common/` | Neutral infrastructure: `AppSettings` sections, events, network discovery helpers, paths, recording and logging |
 | `Backend/` | Z21 transport/protocol, runtime, journey managers and workflow action handlers |
 | `SharedUI/` | Shared MVVM state, UI settings root, commands, runtime projection and UI service interfaces |
 | `MOBAflow/` | WinUI 3 desktop UI and Windows service implementations |
