@@ -6,66 +6,27 @@ technical guidance by task. Use [Spec Kit](SPEC-KIT.md) for cross-cutting featur
 
 ## Work through the master chats
 
-The user discusses goals and results with the responsible masters. An implementation assignment
-includes delivery through merge under the [standing master mandate](../.github/instructions/master-coordination.instructions.md),
-unless explicitly limited. Art Director owns routine product decisions inside the assigned scope and its
-implementation, and hands work directly to Chief Project Manager (formerly Issue Master), the sole execution
-and final integration coordinator. Technical Director coordinates resources and responsibilities through that
-same queue. Since 2026-11-05 the Chief Operating Officer (COO, Claude) deploys the agents within that allocation
-and decides Ready and merge. Solution Architect (Claude) owns the technical solution design within assigned
-scope and prepares fundamental architecture decisions for the user. Documentation Lead and Head of DevOps
-deliver assigned documentation/user guidance and GitHub/repository/CI infrastructure work respectively, under
-the same standing mandate. Technical transitions, confirmed fixes and ordinary PR administration do not need
-repeated human approval. Important product goals, priorities and material UX decisions, scope expansion,
-fundamental architecture changes, new costs/external commitments and explicitly required practical permissions
-still go to the user.
+The user discusses goals and results with the responsible masters. An implementation assignment includes
+delivery through merge under the flow in
+[master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow), unless
+explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main`:
 
-Across all MOBAflow teams, Codex, Claude and Antigravity, deliver the prioritized issue together through
-integration in one leading PR, including documentation and wiki corrections. Other issues need Chief Project
-Manager's explicit allocation after qualifying independence in purpose, files, behavior, baselines, build graph
-and execution resources. There is no global one-task or five-task ceiling and no automatic PR per master.
-Assign a Senior Developer as needed; a separate Project Manager is optional for large or complex work.
-Before a substantial start or resume, obtain the current allocation in the existing queue and reconcile owners,
-actual processes and remote CI. Unclear ownership or an unresolved dependency/resource conflict blocks the
-affected start. Keep one writer per worktree, serialize review/fix/publication for each comparison and preserve
-existing executions. Coordinate safe stopping points with owners.
+1. The Chief Operating Officer (COO, Claude) cuts an issue into small slices and records each slice with the code
+   areas it locks on the board in `ahuelsmann/MOBAdev` issue #1. At most three code slices are open at once.
+2. The Senior Developer posts a short design note; code starts after the COO's or Solution Architect's Go. New
+   features write their acceptance tests first.
+3. Before handing work on, the developer merges the current `main` into the branch and resolves conflicts locally.
+4. A fresh independent Claude session reviews the Draft. With a clean review and all gates green, the COO arms
+   head-bound auto-merge.
+5. Repeated review/fix loops on the same finding stop after two rounds and go to the user.
 
-The supplier prepares the Draft with current checks and CI/Sonar; checks not run stay recorded as not run. Chief
-Project Manager verifies handover readiness and the COO decides Ready and merge; independent review follows Ready,
-not the reverse. The existing Claude plan owns fresh independent Opus 5.5-or-higher review, a separate fixer,
-independent re-review after comparison changes and SHA-bound squash merge. Do not order a second review, create another
-automation or merge concurrently. Chief Project Manager independently verifies actual merge and resulting main;
-the delivery owner follows through to that outcome. Assigned work authorizes necessary team handovers, not
-unrelated features or overrides of stops. Tool permissions and existing quality gates remain in effect.
-
-Since 2026-11-05 Claude also acts as Executive Assistant and as Senior Code Reviewer. The Executive Assistant is
-the COO's cloud session for portable work such as triage, status collection and documentation drafts; it has no
-allocation, Ready or merge authority of its own. The Senior Code Reviewer independently reviews PRs, branches and
-diffs with the `mobaflow-code-review` skill, reports findings ranked by severity, fixes or merges nothing unless
-asked and never reviews code written in the same session. Product goals, priorities and material UX decisions stay
-with the user. Since 2026-11-06 the user's personal acceptance is no Ready or merge gate; the user uses the apps
-and files feedback as ordinary issues at the user's priority. See the role sections in
-[master coordination](../.github/instructions/master-coordination.instructions.md#chief-operating-officer).
-
-Apply the [handover evidence rules](../.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
-to every team transition. Record the existing task, owner, one next recipient, observed phase/status, observation
-time with time zone, next step and limits. Complete the handover before the supplier goes quiet and retain delivery
-responsibility until actual recipient takeover. Sending proves neither takeover nor freshness; preserve newer
-confirmed evidence when messages arrive late. Keep blocked delivery in the same task under existing permissions.
-
-Every integration assesses architecture/developer documentation and the versioned user guides in `docs/wiki/`.
-Record the pages corrected or a concrete no-change reason in the handover and completion evidence. Reassess after
-behavior-changing review fixes and confirm against actual integrated main. Correct drift within the assigned
-scope; coordinate any remaining work through the same Chief Project Manager queue and state the limitation. Do not
-invent text changes or infer new user behavior from a refactoring. This does not authorize separate wiki publication.
-
-Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
-DevOps may independently consult the existing Head of UI/UX conversation (Gemini Argon via Antigravity CLI)
-within assigned work, without another human approval. Coordinate task allocation and the active caller centrally;
-contacts are serial and synchronous. This supersedes the earlier contact restriction for the two new masters.
-Use the verified contact and synchronous request/response contract in the
-[Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
-Its advice adds no approval gate and does not replace tests or Claude PR reviews.
+The user decides product goals, priorities, material UX, fundamental architecture, new costs and every app,
+device or hardware action, and does not relay messages, inspect code or administer PRs. Since 2026-11-06 the
+user's personal acceptance is no merge gate; feedback from real use arrives as ordinary issues. Every slice
+records its documentation and `docs/wiki/` impact. Any role may consult the Head of UI/UX (Gemini Argon via
+Antigravity CLI) under the
+[Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity);
+its advice adds no approval gate.
 
 ## Start in the correct checkout
 Use Git, PowerShell 7 (`pwsh`), Python 3.11+ and `rg` for development checks.
@@ -170,10 +131,9 @@ issue/PR through existing Codex delivery, independent Claude review and actual-m
 verification. No separate documentation API or App bot is activated.
 See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
-Create Draft PRs. Chief Project Manager verifies the current comparison, applicable CI, current-commit SonarCloud
-success with zero OPEN/CONFIRMED issues, ownership and documentation impact; the COO decides
-Ready and merge. The existing Claude plan performs the subsequent independent review and merge under
-[master coordination](../.github/instructions/master-coordination.instructions.md). Main, local checks and prior PR
+Create Draft PRs, one per slice. The COO verifies current CI, current-commit SonarCloud success with zero
+OPEN/CONFIRMED issues and the documentation impact, dispatches the independent review and arms head-bound
+auto-merge under [master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow). Main, local checks and prior PR
 commits are separate evidence. Non-GitHub work, including separately authorized Sites
 review/publication and independent live verification, retains its own assigned route.
 
