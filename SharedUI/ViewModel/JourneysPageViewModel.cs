@@ -172,7 +172,8 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     [RelayCommand]
     private void AddJourney()
     {
-        if (SelectedProject is not { } project) return;
+        var project = SelectedProject;
+        if (project is null) return;
         SelectedJourney = EntityEditorHelper.AddEntity(project.Model.Journeys, project.Journeys,
             () => new Journey { Name = "New Journey" },
             model => new JourneyViewModel(model, project.Model));
@@ -181,7 +182,8 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
     private void DeleteJourney()
     {
-        if (SelectedProject is not { } project) return;
+        var project = SelectedProject;
+        if (project is null) return;
         EntityEditorHelper.DeleteEntity(SelectedJourney, project.Model.Journeys, project.Journeys,
             () => SelectedJourney = null);
     }
@@ -198,7 +200,9 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     [RelayCommand(CanExecute = nameof(CanDeleteStation))]
     private void DeleteStation()
     {
-        if (SelectedJourney is not { } journey || SelectedStation is not { } station) return;
+        var journey = SelectedJourney;
+        var station = SelectedStation;
+        if (journey is null || station is null) return;
         journey.Model.Stations.Remove(station.Model);
         journey.RefreshStations();
         SelectedStation = null;
@@ -210,7 +214,8 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     [RelayCommand(CanExecute = nameof(CanResetJourney))]
     private async Task ResetJourney()
     {
-        if (SelectedJourney is not { } journey) return;
+        var journey = SelectedJourney;
+        if (journey is null) return;
         await _runtimeCommandGateway.ResetJourneyAsync(journey.Id).ConfigureAwait(true);
     }
 
@@ -255,7 +260,8 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
 
     private void AddStationToSelectedJourney(string name)
     {
-        if (SelectedJourney is not { } journey) return;
+        var journey = SelectedJourney;
+        if (journey is null) return;
         journey.Model.Stations.Add(new Station { Name = name, IsExitOnLeft = false });
         journey.RefreshStations();
         SelectedStation = journey.Stations.LastOrDefault();

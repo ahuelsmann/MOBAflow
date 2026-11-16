@@ -94,7 +94,8 @@ public sealed partial class MobaRuntimeService
         var endpoint = await _endpointSource.ResolveAsync().ConfigureAwait(false);
         if (_isManualDisconnectRequested || !EndpointMatchesActiveProject(endpoint)) return;
 
-        if (endpoint.Address is not { } address)
+        var address = endpoint.Address;
+        if (address is null)
         {
             _isZ21Connecting = false;
             _statusText = endpoint.Error ?? "No Z21 address";

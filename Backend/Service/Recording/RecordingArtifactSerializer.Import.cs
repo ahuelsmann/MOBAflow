@@ -210,16 +210,7 @@ public sealed partial class RecordingArtifactSerializer
         var effectiveApplicability = RecordingReplayApplicability.DisplayOnly;
         if (_payloadValidators.TryGetValue(typeKey, out var validator))
         {
-            RecordingPayloadValidationResult payloadResult;
-            try
-            {
-                payloadResult = validator.Validate(payload);
-            }
-            catch (Exception)
-            {
-                throw Invalid("invalid-known-payload", $"{path}.payload", "Known payload validation failed.");
-            }
-
+            var payloadResult = ValidateKnownPayload(validator, payload, path);
             if (!payloadResult.IsValid)
             {
                 throw Invalid("invalid-known-payload", $"{path}.payload", payloadResult.ErrorMessage ?? "Known payload is invalid.");
@@ -249,6 +240,21 @@ public sealed partial class RecordingArtifactSerializer
             payload,
             displayText,
             effectiveApplicability);
+    }
+
+    private static RecordingPayloadValidationResult ValidateKnownPayload(
+        IRecordingPayloadValidator validator,
+        JsonElement payload,
+        string path)
+    {
+        try
+        {
+            return validator.Validate(payload);
+        }
+        catch (Exception)
+        {
+            throw Invalid("invalid-known-payload", $"{path}.payload", "Known payload validation failed.");
+        }
     }
 
     private static RecordingSessionMetadata ReadMetadata(JsonElement element)

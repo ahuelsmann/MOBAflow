@@ -32,8 +32,9 @@ public sealed partial class MauiViewModel
 
     partial void OnSelectedProjectIndexChanged(int value)
     {
+        var projects = _projectContext.SolutionViewModel?.Projects;
         if (_isRefreshingProjectPicker
-            || _projectContext.SolutionViewModel?.Projects is not { } projects
+            || projects is null
             || value < 0
             || value >= projects.Count)
         {

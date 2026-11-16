@@ -18,7 +18,7 @@ using Moq;
 /// Verifies deferred MAUI view-model startup behavior.
 /// </summary>
 [TestFixture]
-internal sealed class MauiViewModelInitializationTests
+internal sealed partial class MauiViewModelInitializationTests
 {
     private readonly List<MauiViewModel> _createdViewModels = [];
 
