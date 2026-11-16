@@ -106,7 +106,7 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
 ## Risks
 
 - **Quiet window.** Slices 3 to 5 move or rename a large share of the files. They require that no other code
-  pull request is open, including Codex branches such as #294 (localization); Chief Project Manager allocates the
+  pull request is open, including Codex branches such as #294 (localization); The COO reserves the
   window on the board (a repository-wide lock). Slices 1 and 2 only need that nobody else edits `docs/` at the same time.
 - **Lost or silently skipped tests.** A split can drop a fixture from every project. The before and after counts
   and the result guard address this.

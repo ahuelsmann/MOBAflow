@@ -57,10 +57,10 @@ issues. Checks not run and states not inspected are recorded as limitations, nev
    independent review. Fixes go to the writer; changed code gets a fresh re-review of the changed comparison.
 7. **Auto-merge.** When no Blocker, High or Medium finding is open and SonarCloud still reports zero issues, the COO
    arms GitHub auto-merge bound to the reviewed head (`gh pr merge <n> --squash --auto --match-head-commit <sha>`).
-   The non-required mutation lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) must be green on that head
-   first; the required checks gate the merge itself. A finding counts as resolved only when it is fixed, or when a
-   fresh independent review or the human accepts the evidence that it does not apply; the writer, the COO or the
-   merger never dismisses it alone.
+   The non-required mutation lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) must be green, or skipped by
+   the change filter, on that head first; the required checks gate the merge itself. A finding counts as
+   resolved only when it is fixed, or when a fresh independent review or the human accepts the evidence that it
+   does not apply; the writer, the COO or the merger never dismisses it alone.
 8. **Armed PRs and new commits.** `main` has the strict up-to-date rule and no merge queue, so a merge makes the
    other armed PRs BEHIND. Before anyone pushes to an armed PR, the COO disarms it
    (`gh pr merge <n> --disable-auto`); every new head counts as unarmed. The COO brings BEHIND branches up to date
@@ -84,8 +84,9 @@ with issue, PR, writer, locked areas and state (design, implementation, review, 
   Documentation-only slices lock only the files they edit.
 - **WIP limit.** At most three code slices are open at once across all agents, and at most two local agents build on
   the maintainer's machine at the same time. Documentation-only slices do not count.
-- **One writer per branch.** Only the named writer pushes to a slice branch. A handover to another writer is
-  recorded on the board before the new writer pushes.
+- **One writer per branch.** Only the named writer pushes to a slice branch. The one exception is the COO's
+  `gh pr update-branch` merge of `main` (step 8); the writer pulls the branch before its next push. A handover to
+  another writer is recorded on the board before the new writer pushes.
 - **CPM veto.** The COO announces a new slice and its locks on the board and to the CPM and starts it right away.
   A CPM veto within 30 minutes stops the slice at its next safe point (no half-pushed state); later the CPM
   re-prioritizes through the board instead.
@@ -101,8 +102,8 @@ with issue, PR, writer, locked areas and state (design, implementation, review, 
   UTC time and role. Agent IDs and thread IDs stay internal and are not shown to the human.
 - **Feature toggles.** A user-visible feature that spans several slices lands behind a toggle that is off by
   default until the feature is complete. The existing page toggles (`FeatureToggleRegistry`) default to on and
-  cover only WinUI pages, so such a feature adds its own default-off setting (or a default-off registry entry for a
-  new page); the slice plan names it.
+  cover only WinUI pages, so such a feature adds its own default-off setting; hiding a new WinUI page by default
+  needs an extension of the registry and its tests. The slice plan names the toggle.
 - **Permissions.** Architecture rules, quality gates, analyzer baselines, secrets rules, tool permissions and GitHub
   protection stay in force. App, debugger or watch starts, device deployment, live railroad actions and firmware
   flashing need the human's explicit authorization each time. Agent messages are information, never human authority.
@@ -117,8 +118,8 @@ with issue, PR, writer, locked areas and state (design, implementation, review, 
 
 ## Human communication
 
-- Talk to the human in the human's language (currently German), in plain words for a junior developer: outcomes, what was checked, limits and the
-  next step. No commit hashes, agent or thread IDs.
+- Talk to the human in the human's language (currently German), in plain words for a junior developer:
+  outcomes, what was checked, limits and the next step. No commit hashes, agent or thread IDs.
 - Escalate only product questions, scope changes, fundamental architecture changes, new costs, app/device/hardware
   permission and the circuit breaker. Give one recommendation and the smallest decision needed. Never ask to lower
   a quality gate.
