@@ -197,7 +197,8 @@ public sealed class TimetableOperationsService : ITimetableOperationsService, ID
         {
             EnsureNonTerminal(state);
             var call = state.Calls.FirstOrDefault(candidate => candidate.CallId == callId);
-            if (call?.ActualArrival is not DateTimeOffset arrival) throw new InvalidOperationException("An arrival must be recorded before departure.");
+            if (call?.ActualArrival is null) throw new InvalidOperationException("An arrival must be recorded before departure.");
+            var arrival = call.ActualArrival.Value;
             if (call.ActualDeparture is null)
             {
                 var departure = occurredAt ?? _timeProvider.GetUtcNow();
