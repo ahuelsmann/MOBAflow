@@ -8,8 +8,7 @@ on Windows and Linux.
 - Complete the requested work through implementation, relevant validation, and a concise handoff.
   Make routine, reversible decisions from repository evidence without asking for confirmation.
 - Ask only when missing information materially affects correctness or scope and cannot be inferred, or an action
-  needs authorization that the user has not already given. Continue short coordination and work within the
-  current central execution allocation while blocked.
+  needs authorization that the user has not already given. Continue other slices on the board while blocked.
 - Make the smallest cohesive change that solves the problem. Preserve unrelated user edits and existing contracts;
   avoid incidental cleanup, speculative abstractions, dependency upgrades, and repository-wide formatting.
   Ask before adding mechanics the request does not name, such as runtime lifecycle commands, chaining/follow-up
@@ -36,12 +35,14 @@ Since 2026-11-16 every agent (Claude, Codex, Antigravity) follows the delivery f
   `ahuelsmann/MOBAdev` issue #1. Refactoring and feature work never run in the same locked area at once. At most
   three code slices are open, at most two local agents build at once. One writer per branch.
 - **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests); code
-  starts after the COO's or Solution Architect's Go. New features write their acceptance tests first.
-- **Pull from main.** Before every push that hands work on, merge the current `origin/main` into the branch, resolve
-  conflicts locally and rerun the affected checks. Merge, never rebase or force-push a shared branch.
+  starts after the COO's or Solution Architect's Go (docs-only, dependency updates, review fixes and small fixes of
+  at most three files without behavior change are exempt). New features write their acceptance tests first.
+- **Pull from main.** Before every push that hands work on, merge the current `main` of the configured GitHub remote
+  into the branch, resolve conflicts locally and rerun the affected checks. Merge, never rebase or force-push a
+  shared branch.
 - **Review and auto-merge.** A fresh independent Claude session (Opus 5.5 or higher) reviews every slice. With no
-  open Blocker/High/Medium, zero SonarCloud issues and green mutation lanes for touched projects, the COO arms
-  head-bound GitHub auto-merge; it merges when the required checks pass.
+  open Blocker/High/Medium, zero SonarCloud issues and green non-required mutation lanes, the COO arms head-bound
+  GitHub auto-merge; it merges when the required checks pass. Before any push to an armed PR the COO disarms it.
 - **Guard rails.** Two failed review/fix rounds on the same finding, or more than ten agent messages on one topic,
   stop the loop and go to the user. Locks, design gos, handovers and merges are logged with UTC time in MOBAdev #1.
   Multi-slice features stay behind feature toggles until complete.

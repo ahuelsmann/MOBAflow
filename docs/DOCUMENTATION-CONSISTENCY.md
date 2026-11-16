@@ -35,14 +35,14 @@ surrounding-prose preservation, malformed-input and path protections.
    on the board.
 3. State the documentation/wiki impact, relevant checks and remaining limits in
    the PR body; the COO checks them before arming auto-merge.
-4. The existing Claude plan independently reviews the current comparison,
+4. A fresh independent Claude review checks the current comparison,
    including affected documentation and wiki claims. Reviewers remain separate
    from implementers/fixers. Source-grounded contradictions are findings; missing
    evidence is a stated limitation, not a consistency pass. Review is not a Ready
    prerequisite and no additional review automation is introduced.
 5. After behavior-changing review fixes, reassess documentation/wiki impact and
-   refresh affected evidence. A changed comparison needs fresh independent review
-   through the existing plan. Current CI/Sonar still apply.
+   refresh affected evidence. A changed comparison needs a fresh independent
+   review. Current CI/Sonar still apply.
 6. Any remaining drift stays visible as a follow-up slice on the board; do not
    claim overall currency or completion while an accepted requirement remains
    open.
@@ -73,8 +73,8 @@ independent review. No branch-protection change is part of this delivery.
 
 ## Acceptance and evidence
 
-T007 now uses a real assigned leading PR with documented developer/wiki impact,
-independent review through the existing Claude plan and an actual integrated-main
+T007 (2026-10-21) used a real assigned delivery PR with documented developer/wiki
+impact, an independent Claude review and an actual integrated-main
 comparison. A synthetic repository test is not that acceptance. T008 confirms
 that the applicable existing deterministic checks remain effective; it does not
 activate the retired API-bot check. Required-rule administration remains outside

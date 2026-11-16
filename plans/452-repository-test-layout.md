@@ -107,7 +107,7 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
 
 - **Quiet window.** Slices 3 to 5 move or rename a large share of the files. They require that no other code
   pull request is open, including Codex branches such as #294 (localization); Chief Project Manager allocates the
-  window in the single queue. Slices 1 and 2 only need that nobody else edits `docs/` at the same time.
+  window on the board (a repository-wide lock). Slices 1 and 2 only need that nobody else edits `docs/` at the same time.
 - **Lost or silently skipped tests.** A split can drop a fixture from every project. The before and after counts
   and the result guard address this.
 - **Path-bound gates.** A moved file with an analyzer baseline entry under its old path would appear as new

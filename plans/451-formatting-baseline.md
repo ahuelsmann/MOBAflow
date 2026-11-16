@@ -110,7 +110,7 @@ Two decisions are open and belong to slice 1. Each has a recommendation; neither
 
 - **Quiet window.** The baseline touches most C# files. Every open code branch would conflict, including Codex
   branches such as #294 (localization). Slice 2 therefore requires that no other code pull request is open, and
-  Chief Project Manager allocates the window in the single queue.
+  The COO reserves the window on the board with a repository-wide lock.
 - **Hidden behavior change.** Whitespace inside verbatim or raw string literals and in test data is content, not
   formatting. The tool does not touch string contents, but slice 2 reviews every changed file under `Test/TestData`
   and `Test/TestFile` and any file with raw string literals in the diff.
