@@ -1,271 +1,116 @@
 ---
-description: 'Shared master mandates, one global execution queue, specialist CLI contact and independent Claude PR reviews.'
+description: 'Roles, small-batch delivery flow, domain locks, design-first, review and auto-merge for all MOBAflow agents.'
 applyTo: 'AGENTS.md,CLAUDE.md,docs/AI-DEVELOPMENT.md,.agents/skills/mobaflow-code-review/**,.claude/skills/mobaflow-code-review/**'
 ---
 
 # Master coordination
 
-[AGENTS.md](../../AGENTS.md) owns the shared workflow. This guide covers human-assigned work through integration.
+[AGENTS.md](../../AGENTS.md) owns the shared workflow; this guide owns roles and the delivery flow. Since
+2026-11-16 MOBAflow works in **small batches on `main`**: problems are solved in a short design before code,
+work lands in small pull requests that merge automatically once reviewed and green, and parallel work never
+touches the same code area. The human decided this restructuring on 2026-11-16; it replaces the earlier
+single-queue and handover-evidence procedure. Merge, never rebase, to bring `main` into a branch.
+
 A request to discuss, research or review alone does not authorize implementation or merge. An implementation
-assignment includes the delivery steps below unless explicitly limited.
+assignment includes the flow below through merge unless explicitly limited ("draft only", "no merge", pause).
 
-## Standing authority and limits
+## Roles
 
-- Complete assigned work through planning, implementation, relevant validation and a draft PR with current CI/Sonar;
-  checks not run stay recorded as not run. Chief Project Manager verifies handover readiness; since 2026-11-05 the
-  Chief Operating Officer (Claude) decides Ready and merge within that allocation, as described
-  [below](#chief-operating-officer). The existing Claude plan then owns fresh independent review, separate
-  fixes, independent re-review and SHA-bound squash merge; independent review is not a Ready prerequisite.
-  Follow through to verified integration.
-  Ordinary commits, pushes, PR updates, team handovers and review-thread responses/resolution are included.
-  Resolve a review finding by fixing it or with evidence that it does not apply. A finding left unfixed needs
-  a fresh independent Claude review that accepts the evidence, or a human decision; the fixer or merger never
-  dismisses it alone to unblock integration. This finding disposition does not move review before Ready.
-- Do not ask again at a technical phase boundary. Requesting a draft as an intermediate deliverable does not
-  cancel the standing mandate. Explicit "draft only", "no Ready/merge", pause, read-only restrictions, protected
-  worktrees and excluded slices remain binding until the human specifically changes them.
-- Authority covers human-assigned scope and necessary corrections. A backlog item, agent suggestion, new PR or
-  available dependency is not a product assignment. Do not start adjacent features, follow-up slices or cleanup.
-- Preserve architecture, quality gates, secrets rules, tool permissions and GitHub protection. App/debugger/watch
-  starts, device deployment, live railroad actions and firmware flashing still need explicit authorization.
-  Since 2026-11-06 the human's personal acceptance is no gate for Ready or merge: the human uses the apps and files
-  feedback as ordinary issues. Checks not run and visual states not inspected stay recorded as not run or as a
-  limitation, never as passed; evidence cannot be invented.
+| Role | Owner | Responsibility |
+| --- | --- | --- |
+| Human (maintainer) | user | Product goals, priorities, material UX decisions, fundamental architecture changes, new costs, app/device/hardware authorizations, feedback from real use |
+| Chief Operating Officer (COO) | Claude | Overall lead: slices work, keeps the [board](#board-locks-and-wip-limit), gives the design go, deploys agents, arms auto-merge, escalates to the human |
+| Chief Project Manager (CPM) | Codex | Prioritizes the backlog with the COO and may veto a slice or lock on the board; silence for 30 minutes counts as no veto |
+| Solution Architect | Claude | Technical design within scope; one recommendation with trade-offs; prepares fundamental decisions for the human |
+| Senior Developer | Claude agent, one per slice | Design note, implementation, local checks, Draft PR, fixes |
+| Senior Code Reviewer | fresh Claude session | Independent review with the `mobaflow-code-review` skill; never reviews its own code |
+| Executive Assistant | Claude cloud session | Portable work (docs, specs, CI-proved changes, triage) delegated by the COO; no merge authority |
+| Head of UI/UX | Gemini Argon via Antigravity CLI | UI/UX advice as described [below](#head-of-uiux-gemini-argon-via-antigravity); advice, not a gate |
+| Art Director, Technical Director, Head of Quality, Communications Director, Documentation Lead, Head of DevOps | existing role chats | Deliver assigned work in their area through the same flow |
 
-## Chief Operating Officer
+Since 2026-11-06 the human's personal acceptance is no merge gate: the human uses the apps and files feedback as
+issues. Checks not run and states not inspected are recorded as limitations, never as passed.
 
-The human designated Claude as Chief Operating Officer (COO) on 2026-11-05, the overall project lead across all
-MOBAflow teams and clients, and confirmed the division of labour the same day: Chief Project Manager keeps the
-single execution and integration queue and allocates the work, as elsewhere in this guide. Within that
-allocation the COO deploys the agents, assigns one Senior Developer agent per issue where the implementation
-needs one, runs the checks before merge and decides Ready and merge. Only those two decisions move: where this
-guide still says Chief Project Manager alone sets Ready or decides the merge, read it with this change. Queue
-ownership, prioritization and allocation do not move, and the COO opens no queue of its own.
+## Delivery flow
 
-- Product goals, priorities and material UX decisions remain with the human, including the priority of feedback
-  from the human's own use. The COO prepares those decisions with a recommendation, alternatives and the smallest
-  required decision.
-- The COO starts no agent outside the current allocation and keeps one writer per worktree. Explicit pauses,
-  no-merge instructions and excluded slices remain binding.
-- Before Ready the COO verifies the handover gates listed under [Ready handoff, integration and
-  completion](#ready-handoff-integration-and-completion): exact head/base, current CI and current-commit Sonar
-  with zero OPEN/CONFIRMED PR issues, documentation/wiki impact and writer stop.
-  Independent review follows Ready and is not its prerequisite.
-- Before merge the COO additionally verifies live head/base, mergeability, current required checks, the fresh
-  independent review of that exact comparison, resolved threads and any active stop or no-merge restriction. The
-  COO merges by squash against the reviewed head and never bypasses GitHub protection.
-- The fresh independent review rule is unchanged: a COO coordination or fix session does not review or approve its
-  own work; it dispatches the review to a separate [Senior Code Reviewer](#senior-code-reviewer) session.
-- The COO creates no second queue, lock, permit or automation. App, debugger or watch starts, device deployment,
-  live railroad actions and firmware flashing still need their explicit authorization.
+1. **Slice (micro-batch).** The COO cuts each issue into slices that merge independently: one concern, about
+   25 files or 400 changed lines at most, generated or mechanical changes excepted. One Draft PR per slice; an
+   issue may have several slices in sequence. No long-running branches: a slice that cannot finish within a day
+   is cut again.
+2. **Lock and start.** The COO records the slice and its locked areas on the [board](#board-locks-and-wip-limit)
+   before an agent starts. A slice never starts in an area another open slice has locked.
+3. **Design first.** Before touching code, the Senior Developer posts a design note of 10 to 20 lines as the first
+   PR comment or in the Draft body: goal, files and projects, approach, risks, tests that prove it. The COO (or
+   Solution Architect) answers **Go** or corrects it. No code before Go. Spec Kit features already have their
+   design in `specs/`; their slices reference the relevant requirements instead.
+4. **Test first for features.** For new product behavior, the acceptance tests from the specification are written
+   first and fail; the implementation makes them pass. Behavior-preserving refactorings rely on the existing tests
+   plus new tests only for an uncovered risk.
+5. **Pull from `main` (Hol-Schuld).** Before every push that hands work on (review, re-review, merge), the writer
+   merges the current `origin/main` into the branch, resolves conflicts locally and reruns the affected checks.
+   Never rebase or force-push a shared branch.
+6. **Review.** When the Draft is green locally and on CI, the COO marks it Ready and dispatches a fresh independent
+   review. Fixes go to the writer; changed code gets a fresh re-review of the changed comparison.
+7. **Auto-merge.** When the review has no unresolved Blocker, High or Medium and SonarCloud reports zero
+   OPEN/CONFIRMED issues, the COO arms GitHub auto-merge bound to the reviewed head
+   (`gh pr merge <n> --squash --auto --match-head-commit <sha>`). It merges as soon as the required checks pass; a
+   new commit disarms it. Mutation lanes of projects the slice changes must be green before arming, because they
+   are not required checks.
+8. **Close the loop.** After merge the slice and its locks leave the board. Documentation and `docs/wiki/` impact
+   is part of the slice (corrections or a concrete no-change reason in the PR body).
 
-## Executive Assistant
+Low and Nit findings may be fixed in the slice or recorded as follow-ups; a finding that is not fixed needs a stated
+reason in the PR. The COO never reviews its own coordination fixes.
 
-The Executive Assistant is the COO's Claude cloud session, designated on 2026-11-05 for portable work that needs
-no local worktree, device or desktop app: issue and PR triage, status collection, handover notes, documentation
-and instruction edits and research that the COO delegates within Chief Project Manager's existing allocation.
+## Board, locks and WIP limit
 
-- The Executive Assistant holds no authority of its own: no allocation, Ready, merge, publication or hardware
-  decision. It reports to the COO, who decides.
-- It delivers through the same branch/PR route and handover evidence rules as every other agent; a cloud result is
-  a report until the COO or the named owner has verified it.
-- Work that needs the local machine, a device, the WinUI app or a secret stays with a local session.
+The board is the pinned COO comment in `ahuelsmann/MOBAdev` issue #1, updated in place. It lists every open slice
+with issue, PR, writer, locked areas and state (design, implementation, review, auto-merge armed).
 
-## Responsibilities and handover
+- **Locks.** A lock names projects or folders (for example `SharedUI/ViewModel`, `MOBAflow/View`,
+  `.github/workflows`). Refactoring and feature work never run in parallel in the same locked area.
+  Documentation-only slices lock only the files they edit.
+- **WIP limit.** At most three code slices are open at once across all agents, and at most two local agents build on
+  the maintainer's machine at the same time. Documentation-only slices do not count.
+- **One writer per branch.** Only the named writer pushes to a slice branch. A handover to another writer is
+  recorded on the board before the new writer pushes.
 
-| Owner | Responsibility |
-| --- | --- |
-| Human | Product goals, priorities, material user-experience choices, fundamental architecture changes, new costs/external commitments, explicit app/device/hardware authorizations and feedback from real use |
-| Chief Operating Officer (Claude, since 2026-11-05) | Overall project lead as described [below](#chief-operating-officer): deploy the agents within Chief Project Manager's allocation, one Senior Developer agent per issue, run the checks before merge and decide Ready and merge |
-| Executive Assistant (Claude cloud session) | Portable work delegated by the Chief Operating Officer as described [below](#executive-assistant); no allocation, Ready, merge or publication authority of its own |
-| Art Director | Clarify the outcome, coordinate the assigned team, complete planning/implementation, assess the result and hand it over |
-| Chief Project Manager (formerly Issue Master) | Own the single execution and integration queue, prioritize issue delivery, allocate and qualify independent work, verify Draft handover readiness, coordinate the existing Claude plan and independently verify actual squash merges; since 2026-11-05 Ready and merge are the Chief Operating Officer's decision |
-| Technical Director | Coordinate technical resources, responsibilities and conflicts through the Chief Project Manager; maintain no second execution or integration queue |
-| Solution Architect | Own the technical solution design within assigned scope as described [below](#solution-architect); recommend with trade-offs, check architecture conformance and prepare fundamental architecture decisions for the human |
-| Head of Quality | Coordinate assigned quality work and advise delivery owners on relevant risks; preserve existing approval and integration ownership |
-| Communications Director | Coordinate assigned communication work and related design questions; preserve existing publication and integration limits |
-| Documentation Lead | Deliver assigned technical documentation and user guidance; coordinate documentation/wiki impact with delivery owners and Chief Project Manager, and related UI/UX questions within scope |
-| Head of DevOps | Deliver assigned GitHub/repository and CI infrastructure work; execute quality controls defined with Head of Quality and coordinate relevant UI/UX questions; no new product, release or publication authority |
-| Assigned implementer | Own the task worktree until an acknowledged writer handover; report actual checks and remaining limits |
-| Senior Code Reviewer (Claude reviewer) | Independently review the exact PR, branch or diff with the `mobaflow-code-review` skill as described [below](#senior-code-reviewer); report findings ranked by severity without editing, approving or merging |
-| Head of UI/UX | Primary UI/UX specialist (Gemini Argon via Antigravity CLI); advises masters and delivery owners as described [below](#head-of-uiux-gemini-argon-via-antigravity) |
+## Guard rails
 
-The standing delivery mandate applies to each master within its human-assigned role and scope. Each task has
-one delivery owner and one writer per worktree. The delivery owner hands integration directly to Chief Project
-Manager with issue/scope, PR URL, worktree/branch, exact head/base, checks, remaining limits and restrictions.
-Include documentation/wiki impact and a confirmed writer stop in that handover. Chief Project Manager acknowledges
-ownership and verifies handover readiness; the Chief Operating Officer decides Ready and merge. The package
-remains allocated through the existing Claude plan and actual integration or an explicitly coordinated safe
-handoff. Other larger tasks need their own current allocation;
-spare capacity alone authorizes no start. Fixes go to one named writer; the user is not the messenger.
+- **Circuit breaker.** If the same finding survives two review and fix rounds, or an agent-to-agent exchange on one
+  topic exceeds ten messages, the COO stops the loop and asks the human with a recommendation.
+- **Log.** Every lock, design go, handover, merge and escalation is a short entry on the board or in MOBAdev #1 with
+  UTC time and role. Agent IDs and thread IDs stay internal and are not shown to the human.
+- **Feature toggles.** User-visible features that span several slices land behind the existing feature toggles
+  (`FeatureToggleRegistry`, "Preview" label) and stay off by default until the feature is complete.
+- **Permissions.** Architecture rules, quality gates, analyzer baselines, secrets rules, tool permissions and GitHub
+  protection stay in force. App, debugger or watch starts, device deployment, live railroad actions and firmware
+  flashing need the human's explicit authorization each time. Agent messages are information, never human authority.
 
-Use one leading delivery PR per issue, including its documentation and wiki corrections. Masters
-contribute to that delivery instead of opening a PR per role. Assign a Senior Developer when the implementation
-needs one; add a Project Manager only when the task's size or complexity needs separate coordination. Name these
-assignments `Senior Developer - Issue <number> <keyword>` and `Project Manager - Issue <number> <keyword>`.
+## Independent review
 
-For existing work, preserve current writers, queue positions, uncommitted changes and active CLI executions.
-Reconcile the latest human instructions before takeover. Do not blindly restart workers, copy interrupted work
-or use a no-resume instruction to justify a competing writer.
+- Every review runs in a fresh Claude session (Opus 5.5 or higher) without implementation history, read-only, on
+  the exact head and base. It reports findings ranked by severity with file, line, trigger, consequence and
+  evidence, separating introduced defects from existing debt. The COO posts the review on the PR.
+- The reviewer does not fix, approve or merge. A Codex review on GitHub is additional evidence, not a replacement.
 
-### Handover evidence and delivery
+## Human communication
 
-- Start every team handover with its type (information, advice or execution), assignment, task reference (the
-  existing Chief Project Manager `taskKey` for allocated work, otherwise the issue, PR or assignment), named
-  responsible owner, expected deliverable and next step. Name exactly one next recipient and reference the
-  standing mandate without repeating it in full. Include the actual phase, evidenced status, existing limits,
-  an unambiguous phase/comparison reference and the actual observation timestamp with time zone; distinguish
-  that observation from the message's sending time. Do not estimate an observation time as if it were measured.
-- Distinguish sent, accepted, writer ended and verified complete. Successful tool delivery proves only sending;
-  neither sending time nor sender success proves freshness, recipient takeover, stopped processes or completion.
-  Claim each later state only with its actual evidence. A handover or writer stop does not free the task's slot.
-- Pass on complete evidence bound to its actual commit/comparison, scope and configuration, including applicable
-  checks, results and remaining limits. Distinguish static, simulated, manual and device evidence.
-  Reuse still-valid evidence; refresh affected evidence when relevant changes or unresolved risks require it;
-  do not rerun unchanged checks without such a reason or transfer old results to a changed comparison.
-- Provide the complete handover before the supplier session goes quiet. The supplier retains delivery
-  responsibility until the named recipient explicitly accepts once in its target chat or confirms takeover
-  through the agreed callback. Do not assume acceptance from silence, an idle chat or a successful send, and do
-  not create acknowledgement chains. Writer ownership changes only after the acknowledged writer handover.
-- Compare delayed messages with the latest confirmed state for the same task and phase/comparison. Identify
-  older observations as historical; do not overwrite newer evidence or restart a completed phase because an
-  earlier status arrived late. Route conflicting candidates and counterevidence to the named owner and Chief
-  Project Manager through the existing handover, without making an independent start or takeover decision.
-- If delivery is blocked or a tool rejects communication, record the exact failed action and limitation in the
-  existing task and coordinate with Chief Project Manager through an authorized route. Leave the assignment
-  with its existing owner; do not create replacement writers, automatic retries, timers or another queue, change
-  permissions/security settings or bypass a communication restriction. A local reply collected through an
-  already agreed callback is valid when permitted; it does not authorize a blocked outbound send.
-
-## Prioritized issue delivery in one queue
-
-- Across every MOBAflow team and Codex, Claude and Antigravity, work together on the prioritized issue through
-  verified integration in its one leading PR. Other issues may proceed only when Chief Project Manager has
-  qualified their independence in purpose, affected files, behavior, analyzer baselines, build graph and execution
-  resources. There is no global one-task or five-task ceiling, and no automatic PR per master. Keep one writer
-  per worktree and serialize review, fixes and publication for each exact comparison. An isolated worktree or
-  different client is not an allocation.
-- Before every substantial start or resume, coordinate the current task, owner and actual execution state with
-  Chief Project Manager in the existing queue. This includes Claude-owned refactorings and automated follow-ups.
-  Unclear ownership or an unresolved dependency/resource conflict blocks the affected start. Reconcile active
-  allocations, worker/CLI processes and remote CI; an idle chat alone proves neither independence nor capacity.
-  An allocation is internal coordination, not another human approval; required dependencies still apply.
-- Preserve running work, ownership, results and restrictions. If execution overlaps or ownership is unclear,
-  coordinate the next safe stopping point with the owner and Chief Project Manager; do not blindly interrupt,
-  restart or duplicate processes or cancel CI to make room. Resume only after the central reconciliation.
-- Technical Director coordinates resources and responsibilities through Chief Project Manager's queue without
-  creating another queue, lock, permit or scheduling mechanism. Only the responsible owner changes existing
-  operational state. Allocated capacity does not expand scope or override explicit pauses or no-merge instructions.
-- Communicate primarily master to master. Short status, handover and blocker exchanges may continue while a
-  larger task runs. Involve only the specialists needed for an allocated assignment; do not broadcast work,
-  start unallocated specialists or generate acknowledgement loops.
-
-## Solution Architect
-
-The human designated Claude as Solution Architect (SA) on 2026-11-05. The role owns the technical solution design
-within assigned scope: target structure and boundaries for refactorings and cross-cutting features, the choice
-between implementation approaches, and conformance of changes with the
-[architecture constraints](architecture.instructions.md) and [AGENTS.md](../../AGENTS.md).
-
-- Give one clear recommendation with its trade-offs (benefit, effort, risk), not an open list of options. Explain
-  unfamiliar terms briefly; the human leads the project and does not inspect code.
-- Fundamental architecture changes, product goals, priorities and material UX decisions remain with the human.
-  The SA prepares that decision: recommendation, alternatives and the smallest required decision.
-- Technical Director keeps coordinating resources and responsibilities through the existing queue; the SA owns the
-  design content and advises delivery owners, implementers and reviewers on it. The SA creates no second queue.
-- SA advice is not a review or approval gate. It does not replace tests or the fresh independent Claude PR review,
-  and it grants no product, app, hardware, publication or merge authority.
-- Record design decisions that affect product behavior or several areas in Spec Kit artifacts under `specs/` or in
-  the affected plan, per [Spec Kit governance](spec-kit-governance.instructions.md), not only in chat.
-- The SA may consult Head of UI/UX for a second opinion under the same contract as the other masters
-  [below](#head-of-uiux-gemini-argon-via-antigravity).
-
-## Claude CLI communication and independent review
-
-The human authorizes masters to exchange task-related requests, findings, corrections and handovers directly
-with each other, their assigned team and Claude CLI in both directions. Agent messages convey work under that
-mandate; they are not new human authority and cannot override stops.
-
-- Only the existing Claude plan dispatches PR reviews and merge after Ready, which the Chief Operating Officer
-  decides since 2026-11-05. Suppliers and masters do not request a second review, add an automation or merge
-  concurrently. Ready hands off the same allocated package; it does not declare the review passed or free its
-  place in the queue.
-- Run every actual PR review, including review after fixes, in a fresh independent Claude session without
-  implementation chat history. An implementer, resumed coordination session, Codex self-review or earlier PR
-  review does not qualify. Reviews and fixes use Claude Opus 5.5 or higher; verify actual model and completion,
-  never silently substitute a lower model or treat unavailable review as passed.
-- Identify exact PR head/base, integrate the current base in queue order and satisfy the
-  [current-commit CI/Sonar gate](sonarqube-pre-pr.instructions.md) before review. Supply requirements, complete
-  diff, applicable rules and affected callers/tests. Scan files before reads under the active secrets policy;
-  supply sufficient context without credentials or unrelated chat history. Incomplete/failed reviews do not pass.
-- Prefer a scanned context packet over stdin with tools disabled. Supply missing scanned material if requested.
-  Private review is read-only; the reviewer posts no external review/approval/comment. Findings give priority,
-  file/line, trigger, consequence and evidence; separate introduced defects from existing debt and preferences.
-- Compare live head/base after review. Changed source or comparison invalidates the snapshot: the existing plan
-  assigns a separate fixer, refreshes affected checks and obtains a fresh independent review before merge.
-  Reassess documentation/wiki impact after behavior-changing fixes. Keep reviewer separate from fixer and merger;
-  a coordination or fix session cannot approve its own work. No new routine human approval is needed.
-- Resume coordination/fix sessions only when idle, assigned to the same task and centrally allocated. Check
-  actual process/history state before resuming; a persistent process with unknown ownership blocks the start.
-  Use the installed CLI message channel for callbacks, not a second writer resuming the master. The existing channel is
-  `codex queue --thread <master-thread-id> --message <text>`. Verify CLI syntax; limit destinations to assigned
-  masters/team. Avoid unchanged acknowledgements and communication loops.
-- Obtain only narrow task permissions. Do not bypass sandbox/tool approval, disable protection or read credentials.
-  Diagnose real access failures within a bounded attempt; never replace missing review with confidence alone.
-
-## Senior Code Reviewer
-
-The human designated Claude as Senior Code Reviewer on 2026-11-05. The role is the named owner of the Claude
-reviewer function in this guide: the independent review of a PR, branch or uncommitted diff with the
-`mobaflow-code-review` skill against its requirements and repository rules.
-
-- Report verified findings ranked by severity with file/line, trigger, consequence and evidence; separate
-  introduced defects from existing debt and preferences. Do not fix, commit, approve or merge unless the human
-  asks for it explicitly; a requested fix then follows the separate-fixer rule and needs its own fresh re-review.
-- The reviewer never reviews code written in the same session. The fresh-independent-session rule
-  [above](#claude-cli-communication-and-independent-review) applies unchanged, including the Opus 5.5-or-higher
-  model requirement and the read-only private review.
-- A review is not a merge decision. The Chief Operating Officer weighs the findings for Ready and merge; the
-  reviewer neither sets Ready nor merges.
+- Talk to the human in German, in plain words for a junior developer: outcomes, what was checked, limits and the
+  next step. No commit hashes, agent or thread IDs.
+- Escalate only product questions, scope changes, fundamental architecture changes, new costs, app/device/hardware
+  permission and the circuit breaker. Give one recommendation and the smallest decision needed. Never ask to lower
+  a quality gate.
+- Do not ask the human to inspect code, administer PRs or relay messages.
 
 ## Head of UI/UX (Gemini Argon via Antigravity)
 
-The human designates Head of UI/UX as the primary specialist for navigation, interaction, visual hierarchy,
-accessibility and relevant UI states in assigned work. Art Director, Chief Project Manager, Solution Architect,
-Head of Quality, Communications Director, Documentation Lead and Head of DevOps may consult this existing role
-autonomously for relevant questions without another human approval. The earlier contact restriction for Documentation Lead and
-Head of DevOps is superseded. Their contact authority stays within assigned documentation or DevOps work and
-does not extend to other roles. Architecture, refactoring and test-gap advice are secondary uses inside the
-assigned scope. Material product and UX decisions remain human. Head of UI/UX follows the same boundaries;
-its first product work package remains with the human.
+Head of UI/UX is the primary specialist for navigation, interaction, visual hierarchy, accessibility and UI
+states. Any role may consult it within assigned work without another human approval. Its advice is not a review
+gate and grants no product, merge or hardware authority; it does not implement, commit or push.
 
-### Verified CLI contact
-
-Verified on 2026-10-16 through Claude coordination and a two-turn Codex exchange:
-
-| Field | Value |
-| --- | --- |
-| CLI conversation | `1d8313f7-1f6f-42c8-b32c-f0b422653677` |
-| Project | MOBAflow UI/UX Team |
-| Model | `gemini-4-argon-high` |
-
-The desktop-app conversation has a separate history and is not this CLI address. Do not use its ID, clone it or
-create a substitute. Update this contact definition only after an authorized handover and verified replacement.
-Chief Project Manager's existing handover records the active caller, target ID and open questions for this
-conversation. Before sending, obtain confirmed caller ownership there and verify that the target is idle.
-If either ownership or execution state is unclear, do not send. Retain ownership until actual completion;
-after a timeout reconcile the original execution before any retry, then record its end and release the caller.
-
-Do not infer a sandbox or read-only access from Antigravity's plan mode. Neither `--mode plan` nor the working
-directory enforces a file-access boundary; absolute paths, parent paths and tools may reach other accessible host files.
-Without verified isolation, treat the process's entire accessible host context as exposed. Establish the actual
-OS/tool permissions before contact; do not invoke it with credentials or unrelated sensitive files accessible.
-If the required access boundary cannot be established, report that concrete limitation to Chief Project Manager.
-Run agy from the caller's own task worktree or a clean worktree that no other writer uses, never from the shared
-checkout or another writer's worktree. This reduces accidental task-file changes; it does not isolate the host.
-Check `git status` there after each call and report unexpected changes instead of silently keeping or discarding
-them. This check detects only changes in that worktree, not reads or changes elsewhere.
-On Windows, use the installed executable:
+Verified contact (2026-10-16): CLI conversation `1d8313f7-1f6f-42c8-b32c-f0b422653677`, project
+MOBAflow UI/UX Team, model `gemini-4-argon-high`. Do not use the separate desktop-app conversation.
 
 ```powershell
 & "$env:LOCALAPPDATA\agy\bin\agy.exe" `
@@ -274,98 +119,14 @@ On Windows, use the installed executable:
   --mode plan `
   --output-format json `
   --print-timeout 330s `
-  -p "[Von: Codex] <task-specific question>"
+  -p "[Von: Claude] <task-specific question>"
 ```
 
-The full path also works when the shell's PATH predates installation. On another host use an existing, verified
-`agy` installation; this mandate does not authorize installing tools.
-
-- Use only serial synchronous request/response. Prefix messages with `[Von: Codex]` or `[Von: Claude]` and identify
-  the originating master in the message. Read
-  `response` and answer `An Codex:` / `An Claude:` questions in the same conversation. Coordinate the active caller
-  through Chief Project Manager's existing handover before sending, under the same central execution
-  allocation and confirmed caller ownership. Wait for actual process completion, then release the conversation. The Head
-  starts no active callbacks, `claude`/`codex` calls, file inboxes or timers.
-- Keep `--mode plan` and real tool permissions narrow. Do not combine it with `--disable-slash-commands`, use
-  `--continue`, bypass permissions or silently substitute a conversation/model. Prompts and plan mode alone are
-  not enforced read-only boundaries. Allow more than 330 seconds for the outer process and wait without blocking
-  progress communication. After a timeout inspect ongoing execution before retrying; never duplicate a possibly
-  active request.
-- Verify actual completion, model and response content. Exit zero or aggregate conversation counters alone do not
-  prove delivery of an answer. Supply only relevant context, with exact SHAs/evidence where applicable.
-  Argon may read files itself and send their content to Google; plan mode does not enforce read or write limits.
-  Apply the active secrets-before-read policy to supplied context and delegated reads, including tracked,
-  untracked and ignored files. A scanned worktree does not authorize reading elsewhere. Never send credentials
-  in prompts or expose unrelated sensitive files; distinguish observations from assumptions.
-- Advice adds no universal review or approval gate and cannot replace tests or a fresh independent Claude PR
-  review. It grants no new product, app, hardware, publication or merge authority.
-  Preserve the named writer and Chief Project Manager's exclusive execution and integration queue. This shared
-  CLI contact is advisory only: it does not implement, commit, push or open PRs. Implementation by the Head needs
-  a separate explicit human assignment, central allocation and its own task worktree; consultation grants none.
+- One caller at a time, synchronous request and response. Prefix with `[Von: Claude]` or `[Von: Codex]`, name
+  the asking role, and read `response`; check `status`, `denied_actions` and that the response is not empty.
+- Headless mode denies shell commands. Pass long content as a file path the CLI can read, not inline (the
+  argument length is limited), and never pass credentials or unrelated sensitive files.
+- Plan mode is not a file-access boundary. Run it from your own clean worktree and check `git status` afterwards.
 
 Sources (checked 2026-10-16): [Antigravity CLI headless mode](https://antigravity.google/docs/cli/headless/) and
-[resume](https://antigravity.google/docs/cli/commands/resume/) document explicit conversation IDs and the headless
-message protocol.
-
-## Ready handoff, integration and completion
-
-Chief Project Manager owns the central handover in its queue and coordinates the existing Claude plan there;
-since 2026-11-05 the [Chief Operating Officer](#chief-operating-officer) decides the Ready transition and the
-merge. The supplier hands over a Draft with exact head/base, scope, checks and their limits, current CI/Sonar,
-documentation/wiki impact and writer stop. Verify applicable gates before Ready, including current-commit Sonar
-success with zero OPEN/CONFIRMED PR issues. Independent review follows Ready; it is not its prerequisite.
-
-Use existing coordination state, not a second queue or merge permit. Before synchronization or Ready, scan/read
-that state and reconcile exact comparison, allocation and ownership. An active stop, wrong owner/comparison or
-unreadable state blocks the transition. Do not refresh all waiting branches whenever `main` moves or arm competing
-automatic merges. The existing Claude plan alone performs the subsequent review/fix/re-review/squash sequence.
-
-Immediately before merge, verify live head/base, mergeability, current required checks, current-commit Sonar
-success and zero OPEN/CONFIRMED issues, independent Claude review, threads, real GitHub approval requirements,
-applicable repository rules and any active stop or no-merge restriction. Permitted skips are not executed tests;
-a private
-Claude review cannot manufacture a GitHub approval. Squash against the reviewed head without direct `main`
-pushes or protection bypass. A changed comparison requires refreshed checks, documentation assessment and fresh
-independent review. Chief Project Manager independently verifies actual merged status, merge commit and resulting
-`main`, then updates the queue. The delivery owner follows through to that verified outcome; a Draft handover
-or successful command exit alone does not finish delivery.
-
-Non-GitHub work retains its explicitly assigned delivery route. In particular, separately authorized Sites work
-keeps its independent review, supported publication and separate live verification; the GitHub Claude plan does
-not confer publication authority or replace those phases.
-
-## Documentation and user-wiki impact
-
-- For every integration, the delivery owner assesses the actual change against architecture/developer documentation
-  and the canonical versioned user wiki in `docs/wiki/`. Record the affected pages and necessary corrections, or a
-  concrete reason no change is needed, in the handover and completion evidence. A green CI check alone is not
-  evidence that the prose matches the product.
-- Make required corrections within the assigned package. If scope or an unresolved dependency prevents them,
-  Chief Project Manager assigns the concrete remaining work in the same queue; disclose the outstanding drift
-  rather than claiming complete documentation currency. Existing stops still apply.
-- Reassess after behavior-changing review fixes and confirm the final account against actual integrated `main`.
-  Preserve correct documentation, user-authored content and the limits of actual validation; infer no new user
-  behavior from a structural refactoring. This rule creates no external wiki publication or new automation.
-
-## Automations and user communication
-
-- Keep responsibilities here; keep scope, queue, SHA-bound evidence, active executions, ownership, restrictions
-  and pending decisions in existing task/coordination records. Do not grow recurring prompts with historical
-  reports or a fixed "current main" SHA. Only the responsible owner updates operational state.
-- Keep the existing Art Director and Chief Project Manager (formerly Issue Master) heartbeats; update the matching
-  automation instead of duplicating it. Other masters retain their mandate in existing role conversations or mandate records. This
-  contact mandate does not create additional automations. Preserve cadence, notification preferences and explicit
-  pauses unless asked to change them; do not reactivate a paused specialist follow-up.
-- Reconcile actual GitHub/worker state and allocated capacity before the next authorized step; avoid duplicate
-  writers or merges.
-  Coordinate directly when another owner is working. Do not leave work idle at review, correction, Ready or merge.
-- Stay quiet without actionable assigned work. Notify only for verified delivery, a material unresolved blocker
-  or a necessary human decision. Handle routine test failures, CI progress, findings and handovers internally.
-  Do not ask the user to inspect code, administer a PR or relay messages.
-- Escalate product ambiguity, scope expansion, fundamental architecture changes, new costs/external commitments
-  and required app/device/hardware permission. Diagnose ordinary technical problems first.
-  Give a recommendation, alternatives and the smallest required decision; coordinate any change of active
-  package with Chief Project Manager while waiting.
-  Never ask to lower quality gates as a shortcut.
-- Report the user-visible outcome, actual validation and practical limits. PR/code links are optional evidence,
-  not work delegated back to the user.
+[resume](https://antigravity.google/docs/cli/commands/resume/).
