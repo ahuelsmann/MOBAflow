@@ -136,8 +136,7 @@ See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for obs
 Create Draft PRs, one per slice. The COO verifies current CI, current-commit SonarCloud success with zero
 OPEN/CONFIRMED issues and the documentation impact, dispatches the independent review and arms head-bound
 auto-merge under [master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow).
-Main, local checks and prior PR
-commits are separate evidence. Non-GitHub work, including separately authorized Sites
+Main, local checks and prior PR commits are separate evidence. Non-GitHub work, including separately authorized Sites
 review/publication and independent live verification, retains its own assigned route.
 
 ## Updating

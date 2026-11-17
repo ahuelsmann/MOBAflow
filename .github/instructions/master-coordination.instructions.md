@@ -142,10 +142,11 @@ Every code slice is worked by a small team, not handed from one agent to the nex
 
 ## Independent review
 
-- Every review runs in a fresh Claude session (Opus 5.5 or higher) without implementation history, read-only, on
+- Every final review and re-review runs in a fresh Claude session (Opus 5.5 or higher) without implementation history, read-only, on
   the exact head and base. Verify the actual model and that the review completed; an incomplete or failed review
   does not pass. It reports findings ranked by severity with file, line, trigger, consequence and
-  evidence, separating introduced defects from existing debt. The COO posts the review on the PR.
+  evidence, separating introduced defects from existing debt. The COO posts the review on the PR. Companion comments follow the
+  [slice team](#slice-team-and-review-from-the-start) rules instead.
 - The reviewer does not fix, approve or merge. A Codex review on GitHub is additional evidence, not a replacement.
 
 ## Human communication
