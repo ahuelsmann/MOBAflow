@@ -36,11 +36,6 @@ public class AppSettings
     /// Gets or sets health check configuration.
     /// </summary>
     public HealthCheckSettings HealthCheck { get; set; } = new();
-    /// <summary>
-    /// Shared train control settings (speed ramp, DCC steps, locomotive series).
-    /// The locomotive picker selection is host UI state in the SharedUI settings root.
-    /// </summary>
-    public TrainControlSettings TrainControl { get; set; } = new();
 
     /// <summary>
     /// Signal Box / Viessmann Multiplex signal settings.

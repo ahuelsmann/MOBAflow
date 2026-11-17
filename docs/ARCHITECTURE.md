@@ -94,9 +94,14 @@ commands, hub method names and the MOBApi discovery protocol (`Contracts/Runtime
 | `Serilog` | The in-memory log sink |
 
 UI layout, feature toggles, navigation and presentation helpers belong to `SharedUI` or the host that uses
-them; the `UiSettings` root in `SharedUI/Configuration` extends `AppSettings`. `SolutionArchitectureTests`
-reads this table and fails when `Common` declares another namespace or a type named like a `SharedUI`
-settings type; a new `Common` namespace needs a row here.
+them; the `UiSettings` root in `SharedUI/Configuration` extends `AppSettings` and holds the Train Control page
+settings (`TrainControl`). `SolutionArchitectureTests` reads this table and fails when `Common` declares another
+namespace or a type named like a `SharedUI` settings type; a new `Common` namespace needs a row here.
+
+The theme flags `IsDarkMode` and `UseSystemTheme` stay in the neutral `Application` section. That section is
+also read outside the UI (for example `PhotoStoragePath` in `PhotoPathHelper`), and moving only the two flags
+while keeping their JSON path would need a second `Application` object on `UiSettings` that Backend would not
+see. They are plain values, not UI types; a separate UI theme section would be a settings-format decision.
 
 ### Speech dependency rule
 
@@ -279,8 +284,8 @@ public interface IWorkflowService
 - MainWindowViewModel (shell: solution new/open/save, Z21 status, host commands, operating state and photo routing)
 - `LayoutPersistenceService` (the single boundary that persists the saved layout)
 - `UiSettings` settings root (`SharedUI/Configuration`): the neutral `AppSettings` plus layout, keyed feature toggles
-  (`FeatureToggleRegistry`), display and per-host train-control settings; both hosts register one instance as
-  `UiSettings` and `AppSettings`, so Backend keeps the neutral type and appsettings.json stays one file
+  (`FeatureToggleRegistry`), display, Train Control page and per-host train-control settings; both hosts register
+  one instance as `UiSettings` and `AppSettings`, so Backend keeps the neutral type and appsettings.json stays one file
 - Page-specific ViewModels (JourneyViewModel, WorkflowViewModel, etc.)
 - ViewModels read runtime state through narrow runtime roles and send commands through
   `IRuntimeCommandGateway` (see [Runtime command path](#runtime-command-path))
