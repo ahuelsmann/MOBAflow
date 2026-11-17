@@ -210,11 +210,145 @@ internal partial class MainWindowViewModelShutdownTests
             Times.Never);
     }
 
+    [TestCase(DialogChoice.Primary)]
+    [TestCase(DialogChoice.NotShown)]
+    public async Task PrepareForShutdownAsync_SavesAndCloses_WhenSaveIsChosenOrNoDialogCanBeShown(DialogChoice choice)
+    {
+        var ioService = TestFileServices.CreateMock();
+        ioService
+            .Setup(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()))
+            .ReturnsAsync((true, "selected.json", null));
+        var dialog = CreateChoiceDialog(choice);
+        var viewModel = CreateViewModel(CreateRuntimeMock().Object, new EventBus(NullLogger<EventBus>.Instance), ioService.Object, dialog: dialog.Object);
+        await viewModel.SaveSolutionInternalAsync().ConfigureAwait(false);
+
+        var closed = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+
+        Assert.That(closed, Is.True);
+        ioService.Verify(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()), Times.Once);
+        dialog.Verify(
+            candidate => candidate.ShowChoiceAsync("Save changes?", It.IsAny<string>(), "Save", "Don't save", "Cancel"),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task PrepareForShutdownAsync_ClosesWithoutSaving_WhenDontSaveIsChosen()
+    {
+        var ioService = TestFileServices.CreateMock();
+        var runtime = CreateRuntimeMock();
+        var viewModel = CreateViewModel(runtime.Object, new EventBus(NullLogger<EventBus>.Instance), ioService.Object, dialog: CreateChoiceDialog(DialogChoice.Secondary).Object);
+        await viewModel.SaveSolutionInternalAsync().ConfigureAwait(false);
+        var released = false;
+
+        var closed = await viewModel.PrepareForShutdownAsync(() => released = true).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(closed, Is.True);
+            Assert.That(released, Is.True);
+        }
+        ioService.Verify(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()), Times.Never);
+        ioService.Verify(candidate => candidate.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task PrepareForShutdownAsync_KeepsTheAppOpenWithoutSaving_WhenCancelIsChosen()
+    {
+        var ioService = TestFileServices.CreateMock();
+        var runtime = CreateRuntimeMock();
+        var viewModel = CreateViewModel(runtime.Object, new EventBus(NullLogger<EventBus>.Instance), ioService.Object, dialog: CreateChoiceDialog(DialogChoice.Cancel).Object);
+        await viewModel.SaveSolutionInternalAsync().ConfigureAwait(false);
+        var released = false;
+
+        var closed = await viewModel.PrepareForShutdownAsync(() => released = true).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(closed, Is.False);
+            Assert.That(released, Is.False);
+            Assert.That(viewModel.HasUnsavedChanges, Is.True);
+        }
+        ioService.Verify(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()), Times.Never);
+        runtime.Verify(candidate => candidate.DisconnectAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task PrepareForShutdownAsync_DoesNotAsk_WhenNothingIsUnsaved()
+    {
+        var dialog = new Mock<IDialogService>();
+        var viewModel = CreateViewModel(CreateRuntimeMock().Object, new EventBus(NullLogger<EventBus>.Instance), TestFileServices.CreateMock().Object, dialog: dialog.Object);
+
+        var closed = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+
+        Assert.That(closed, Is.True);
+        dialog.Verify(
+            candidate => candidate.ShowChoiceAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task PrepareForShutdownAsync_DoesNotAskTwice_WhileThePromptIsOpen()
+    {
+        var answer = new TaskCompletionSource<DialogChoice>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var dialog = new Mock<IDialogService>();
+        dialog
+            .Setup(candidate => candidate.ShowChoiceAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(answer.Task);
+        var viewModel = CreateViewModel(CreateRuntimeMock().Object, new EventBus(NullLogger<EventBus>.Instance), TestFileServices.CreateMock().Object, dialog: dialog.Object);
+        await viewModel.SaveSolutionInternalAsync().ConfigureAwait(false);
+
+        var first = viewModel.PrepareForShutdownAsync();
+        var second = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+        answer.SetResult(DialogChoice.Secondary);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(second, Is.False);
+            Assert.That(await first.ConfigureAwait(false), Is.True);
+        }
+        dialog.Verify(
+            candidate => candidate.ShowChoiceAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task PrepareForShutdownAsync_DontSave_NeverWritesTheLoadedFile_EvenWhenAModelChangesAfterwards()
+    {
+        var ioService = TestFileServices.CreateMock();
+        ioService
+            .Setup(candidate => candidate.SaveAsync(It.IsAny<Solution>(), "existing.json"))
+            .ReturnsAsync((false, (string?)null, "disk full"));
+        var solution = new Solution { Projects = [new Project { Name = "Station" }] };
+        var viewModel = CreateViewModel(CreateRuntimeMock().Object, new EventBus(NullLogger<EventBus>.Instance), ioService.Object, solution, CreateChoiceDialog(DialogChoice.Secondary).Object);
+        viewModel.CurrentSolutionPath = "existing.json";
+        // The auto-save of the loaded file failed, so the change is still unsaved when the window closes.
+        await Assert.ThrowsAsync<InvalidOperationException>(() => viewModel.SaveSolutionInternalAsync()).ConfigureAwait(false);
+        Assert.That(viewModel.HasUnsavedChanges, Is.True);
+        ioService.Invocations.Clear();
+
+        var closed = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+        viewModel.SelectedProject!.Name = "Changed while closing";
+
+        Assert.That(closed, Is.True);
+        ioService.Verify(candidate => candidate.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
+        ioService.Verify(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()), Times.Never);
+    }
+
+    private static Mock<IDialogService> CreateChoiceDialog(DialogChoice choice)
+    {
+        var dialog = new Mock<IDialogService>();
+        dialog
+            .Setup(candidate => candidate.ShowChoiceAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(choice);
+        return dialog;
+    }
+
     private MainWindowViewModel CreateViewModel(
         IMobaRuntime runtime,
         IEventBus eventBus,
         ISolutionIoService ioService,
-        Solution? solution = null)
+        Solution? solution = null,
+        IDialogService? dialog = null)
     {
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher
@@ -239,7 +373,7 @@ internal partial class MainWindowViewModelShutdownTests
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
             new Mock<ILogger<MainWindowViewModel>>().Object,
-            new NullDialogService());
+            dialog ?? new NullDialogService());
     }
 
     private static Mock<IMobaRuntime> CreateRuntimeMock()
