@@ -35,12 +35,16 @@ Since 2026-11-16 every agent (Claude, Codex, Antigravity) follows the delivery f
   `ahuelsmann/MOBAdev` issue #1. Refactoring and feature work never run in the same locked area at once. At most
   three code slices are open, at most two local agents build at once. One writer per branch.
 - **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests); code
-  starts after the COO's or Solution Architect's Go (docs-only, dependency updates, review fixes and small fixes of
-  at most three files without behavior change are exempt). New features write their acceptance tests first.
+  starts after the slice reviewer has checked the note and the COO or Solution Architect gives Go (docs-only,
+  dependency updates, review fixes and small fixes of at most three files without behavior change are exempt).
+  New features write their acceptance tests first.
 - **Pull from main.** Before every push that hands work on, merge the current `main` of the configured GitHub remote
   into the branch, resolve conflicts locally and rerun the affected checks. Merge, never rebase or force-push a
   shared branch.
-- **Review and auto-merge.** A fresh independent Claude session (Opus 5.5 or higher) reviews every slice. With no
+- **Team and review from the start.** Writer, reviewer (a fresh independent Claude session, Opus 5.5 or higher) and,
+  for UI work, the Head of UI/UX work each slice together: the reviewer checks the design note, reviews every pushed
+  commit while the slice grows and gives the final verdict at Ready.
+- **Auto-merge.** With no
   open Blocker/High/Medium, zero SonarCloud issues and green non-required mutation lanes, the COO arms head-bound
   GitHub auto-merge; it merges when the required checks pass. Before any push to an armed PR the COO disarms it.
 - **Guard rails.** Two failed review/fix rounds on the same finding, or more than ten agent messages on one topic,

@@ -41,8 +41,9 @@ issues. Checks not run and states not inspected are recorded as limitations, nev
 2. **Lock and start.** The COO records the slice and its locked areas on the [board](#board-locks-and-wip-limit)
    before an agent starts. A slice never starts in an area another open slice has locked.
 3. **Design first.** Before touching code, the Senior Developer posts a design note of 10 to 20 lines as the first
-   PR comment or in the Draft body: goal, files and projects, approach, risks, tests that prove it. The COO (or
-   Solution Architect) answers **Go** or corrects it. No code before Go. Spec Kit features already have their
+   PR comment or in the Draft body: goal, files and projects, approach, risks, tests that prove it. The slice's
+   reviewer (see [slice team](#slice-team-and-review-from-the-start)) checks the note first; the COO (or Solution
+   Architect) answers **Go** or corrects it with those findings. No code before Go. Spec Kit features already have their
    design in `specs/`; their slices reference the relevant requirements instead. Exempt: documentation-only
    slices, dependency updates, review-fix rounds and small fixes of at most three files without behavior change;
    they state their intent in the PR body instead.
@@ -52,9 +53,11 @@ issues. Checks not run and states not inspected are recorded as limitations, nev
 5. **Pull from `main` (the writer's duty).** Before every push that hands work on (review, re-review, merge), the
    writer merges the current `<remote>/main` into the branch, resolves conflicts locally and reruns the affected
    checks. Never rebase or force-push a shared branch.
-6. **Review.** When the Draft is green locally and on CI and SonarCloud reports zero OPEN/CONFIRMED issues on its
-   head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO marks it Ready and dispatches a fresh
-   independent review. Fixes go to the writer; changed code gets a fresh re-review of the changed comparison.
+6. **Review.** The reviewer accompanies the slice from the design note on (see
+   [slice team](#slice-team-and-review-from-the-start)). When the Draft is green locally and on CI and SonarCloud
+   reports zero OPEN/CONFIRMED issues on its head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO marks
+   it Ready and the reviewer gives its final verdict on the exact head. Fixes go to the writer; changed code gets a
+   re-review of the changed comparison.
 7. **Auto-merge.** When no Blocker, High or Medium finding is open and SonarCloud still reports zero issues, the COO
    arms GitHub auto-merge bound to the reviewed head (`gh pr merge <n> --squash --auto --match-head-commit <sha>`).
    The non-required mutation lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) must be green, or skipped by
@@ -116,6 +119,23 @@ with issue, PR, writer, locked areas and state (design, implementation, review, 
 - **Permissions.** Architecture rules, quality gates, analyzer baselines, secrets rules, tool permissions and GitHub
   protection stay in force. App, debugger or watch starts, device deployment, live railroad actions and firmware
   flashing need the human's explicit authorization each time. Agent messages are information, never human authority.
+
+## Slice team and review from the start
+
+Every code slice is worked by a small team, not handed from one agent to the next at the end:
+
+- **Members.** The Senior Developer (writer), one reviewer in its own fresh Claude session (Opus 5.5 or higher,
+  never the writer's session) and, for UI slices, the Head of UI/UX as adviser. The COO forms the team when the
+  slice starts and records it on the board.
+- **Design review.** The reviewer checks the design note before the Go: requirements, architecture, risks and the
+  planned tests. The Head of UI/UX comments on UI slices at the same point.
+- **Review while coding.** The writer pushes small commits to the Draft early (first tests, then implementation).
+  The reviewer reviews each pushed commit read-only and reports findings to the writer directly through the agent
+  CLI channels; findings are fixed in the next commit instead of piling up for the end.
+- **Final verdict.** At Ready the same reviewer checks the complete comparison once more and the COO posts the
+  verdict on the PR. Because the reviewer saw every step, this is a confirmation, not a first look.
+- **Independence stays.** The reviewer never writes, fixes, approves or merges code of its slice. If the reviewer's
+  session is lost, a new fresh session takes over with the PR history as context.
 
 ## Independent review
 
