@@ -98,10 +98,10 @@ them; the `UiSettings` root in `SharedUI/Configuration` extends `AppSettings` an
 settings (`TrainControl`). `SolutionArchitectureTests` reads this table and fails when `Common` declares another
 namespace or a type named like a `SharedUI` settings type; a new `Common` namespace needs a row here.
 
-The theme flags `IsDarkMode` and `UseSystemTheme` stay in the neutral `Application` section. That section is
-also read outside the UI (for example `PhotoStoragePath` in `PhotoPathHelper`), and moving only the two flags
-while keeping their JSON path would need a second `Application` object on `UiSettings` that Backend would not
-see. They are plain values, not UI types; a separate UI theme section would be a settings-format decision.
+The theme flags `IsDarkMode` and `UseSystemTheme` stay in the neutral `Application` section. That section also
+holds values that are not about the UI (`LastSolutionPath`, `AutoStartWebApp`, `PhotoStoragePath`). Moving only
+the two flags while keeping their JSON path would need a second `Application` object on `UiSettings`, and a
+separate UI theme section would be a settings-format decision.
 
 ### Speech dependency rule
 
