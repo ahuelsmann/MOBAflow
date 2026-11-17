@@ -13,16 +13,20 @@ explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main` a
 (Claude Code, ChatGPT Codex and Antigravity):
 
 1. The Chief Operating Officer (COO, Claude) is the sole technical writer on the board in `ahuelsmann/MOBAdev`
-   issue #1, cuts an issue into small slices and records each slice's risk class (`H`, `M` or `L`), cross-model
-   slice team and locked code areas. At most three code slices are open at once.
+   issue #1, cuts an issue into small slices and records each slice's risk class (`H`, `M` or `L`; review-fix rounds
+   keep their slice's class and dependency updates take the class of the affected area), cross-model slice team and
+   locked code areas. At most three code slices are open at once.
 2. Each class `H` and `M` slice is worked by a multi-model team: the Senior Developer (writer), a companion
-   reviewer from a different model family (`P1` or `P2`) and, for UI/product work, the `P3` Head of UI/UX. The
-   developer posts a short design note; the companion reviewer (and `P3` for UI/product slices) checks it, and code
-   starts after the COO's or Solution Architect's Go. New features write their acceptance tests first.
+   reviewer from a different model family (Codex `P2` when writer is Claude; Claude `P1` when writer is Codex) and,
+   for UI/product work, the `P3` Head of UI/UX. The developer posts a short design note (class `L` slices and
+   review-fix rounds state intent in the PR body/commit instead); the companion reviewer (and `P3` for UI/product
+   slices) checks it, and code starts after the COO's or Solution Architect's Go. New features write their
+   acceptance tests first.
 3. Before handing work on, the developer merges the current `main` into the branch and resolves conflicts locally.
-4. While the slice grows, the companion reviewer comments read-only on every pushed commit on the PR. At Ready a
-   separate fresh `P1` Claude session (Opus 5.5 or higher) plus cross-model `P2`/`P3` verification gives the final
-   independent review; with a clean review and all gates green, the COO arms head-bound auto-merge.
+4. While a class `H` or `M` slice grows, the companion reviewer comments read-only on every pushed commit on the
+   PR. At Ready every slice (`H`, `M` and `L`) receives a separate fresh `P1` Claude review (Opus 5.5 or higher,
+   never the writer's or companion's session) plus cross-family `P2`/`P3` verification on the exact head and base;
+   with a clean review and all gates green, the COO arms head-bound auto-merge.
 5. Two failed fix attempts on the same finding (in companion or final review) or more than ten agent messages on
    one topic stop the loop and go to the user.
 

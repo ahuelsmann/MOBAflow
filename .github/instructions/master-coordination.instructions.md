@@ -48,13 +48,15 @@ issues. Checks not run and states not inspected are recorded as limitations, nev
 
 ## Risk classes and domain matrix
 
-Every slice is assigned a risk class (`H`, `M` or `L`) when recorded on the board:
+Every slice is assigned a risk class (`H`, `M` or `L`) when recorded on the board. Review-fix rounds always keep the
+risk class of their slice. Dependency updates take the risk class of the area they affect (`H` for runtime,
+protocol or transport packages, `M` for UI/feature packages, `L` for test/analyzer/build-only tooling):
 
 | Class | MOBAflow areas | Required team and review diversity |
 | --- | --- | --- |
-| `H` High (Safety, Runtime & Protocol) | `Backend` (Z21/workflows), `Common` (EventBus/runtime), `MOBApi`, `MOBAdisplay` (`esp32/`), project-switch/stop logic | Writer (`P1`/`P2`), companion reviewer from a different model family (`P2`/`P1`), final independent `P1` review plus `P2` verification; a safety veto is binding |
-| `M` Medium (Features, UI & Audio) | `MOBAflow` (WinUI), `MOBAsmart` (MAUI), `SharedUI`, `TrackPlan.*`, `Speech.*`, `Sound`, `MOBAnews` | Writer (`P1`/`P2`/`P4`), companion reviewer from a different model family (`P1`/`P2`), `P3` (UI/UX & Product) at design note and before Ready, final independent `P1` review |
-| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, dependency updates, review-fix rounds, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the PR body; one independent final review from a different model family (`P1`, `P2` or `P3` for reader copy) |
+| `H` High (Safety, Runtime & Protocol) | `Backend` (Z21/workflows), `Common` (EventBus/runtime), `MOBApi`, `MOBAdisplay` (`esp32/`), project-switch/stop logic, runtime/protocol dependencies | Writer (`P1`/`P2`), companion reviewer from a different model family (`P2` if writer is Claude; `P1` if writer is Codex), final independent `P1` review plus cross-family `P2` verification; a safety veto is binding |
+| `M` Medium (Features, UI & Audio) | `MOBAflow` (WinUI), `MOBAsmart` (MAUI), `SharedUI`, `TrackPlan.*`, `Speech.*`, `Sound`, `MOBAnews`, UI/feature dependencies | Writer (`P1`/`P2`/`P4`), companion reviewer from a different model family (`P2`/`P1`), `P3` (UI/UX & Product) at design note and before Ready, final independent `P1` review plus cross-family `P2`/`P3` verification |
+| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the PR body (no separate design note or per-commit companion needed); final review at Ready still runs a fresh independent `P1` review plus cross-family `P2`/`P3` verification when the writer is from the Claude family |
 
 ## Delivery flow
 
@@ -66,13 +68,13 @@ Every slice is assigned a risk class (`H`, `M` or `L`) when recorded on the boar
    areas on the [board](#board-locks-and-wip-limit) before an agent starts. A slice never starts in an area
    another open slice has locked.
 3. **Design first.** Before touching code, the Senior Developer posts a design note of 10 to 20 lines as the first
-   PR comment or in the Draft body: goal, files and projects, approach, risks, tests that prove it. Class `L`
-   slices (documentation-only, dependency updates, review-fix rounds and small fixes of at most three files
-   without behavior change) state their intent in the PR body instead. For class `H` and `M` slices the companion
-   reviewer (and `P3` Head of UI/UX for UI/product slices; see
-   [slice team](#slice-team-and-review-from-the-start)) checks the note first; the COO (or Solution Architect)
-   answers **Go** or corrects it with those findings. No code before Go. Spec Kit features already have their
-   design in `specs/`; their slices reference the relevant requirements instead.
+   PR comment or in the Draft body: goal, files and projects, approach, risks, tests that prove it. Exempt from a
+   separate design note: class `L` slices and review-fix rounds on an already approved slice design; they state
+   their intent in the PR body or review-fix commit instead, while review-fix rounds retain their slice's risk
+   class (`H`, `M` or `L`). For class `H` and `M` slices the companion reviewer (and `P3` Head of UI/UX for
+   UI/product slices; see [slice team](#slice-team-and-review-from-the-start)) checks the note first; the COO (or
+   Solution Architect) answers **Go** or corrects it with those findings. No code before Go. Spec Kit features
+   already have their design in `specs/`; their slices reference the relevant requirements instead.
 4. **Test first for features.** For new product behavior, the acceptance tests from the specification are written
    first and fail; the implementation makes them pass. Behavior-preserving refactorings rely on the existing tests
    plus new tests only for an uncovered risk.
@@ -155,10 +157,11 @@ locked areas and state (design, implementation, review, auto-merge armed).
 Every class `H` and `M` slice is worked by a multi-model team from the start, not handed from one agent to the
 next at the end:
 
-- **Cross-model members.** One named Senior Developer (writer), one companion reviewer from a **different model
-  family** (`P1` Claude Opus 5.5+ or `P2` Codex GPT-6 Astra, never the writer's session or model family) and, for
-  class `M` UI, TrackPlan and editorial slices, the `P3` Head of UI/UX (`Gemini 4 Argon`). The COO forms the team
-  when the slice starts and records it on the board.
+- **Cross-model members and staffing combinations.** One named Senior Developer (writer), one companion reviewer
+  from a **different model family** (if the writer is Claude `P1`/`P4`, the companion is Codex `P2`; if the writer
+  is Codex `P2`, the companion is a fresh Claude `P1` session) and, for class `M` UI, TrackPlan and editorial
+  slices, the `P3` Head of UI/UX (`Gemini 4 Argon`). The COO forms the team when the slice starts and records it on
+  the board.
 - **Design review.** Before the Go, reviewers from at least two complementary profiles (`P1`/`P2`, plus `P3` for
   UI/product slices) check the design note: requirements, architecture, risks and planned tests.
 - **Review while coding.** The writer pushes small commits to the Draft early (first tests, then implementation).
@@ -173,12 +176,14 @@ next at the end:
 
 ## Independent review
 
-- Every final review and re-review runs read-only on the exact head and base in a fresh `P1` Claude session
-  (Opus 5.5 or higher, verified by actual model output) without implementation history, complemented by a cross-
-  model `P2` (Codex) or `P3` (Antigravity, for UI/editorial work) verification so writer and final reviewers span
-  at least two model families. An incomplete or failed review does not pass. Reviews report findings ranked by
-  severity with file, line, trigger, consequence and evidence, separating introduced defects from existing debt.
-  The COO posts the review on the PR. Companion comments follow the
+- Every final review and re-review (`H`, `M` and `L`) runs read-only on the exact head and base in a fresh `P1`
+  Claude session (Opus 5.5 or higher, verified by actual model output, never the writer's or companion's session)
+  without implementation history, complemented by an independent cross-family `P2` (Codex) or `P3` (Antigravity,
+  for UI/editorial work) verification whenever the writer is from the Claude family or the slice is class `H`/`M`.
+  This guarantees both the mandatory `P1` Opus 5.5+ gate and independent verification across at least two model
+  families. An incomplete or failed review does not pass. Reviews report findings ranked by severity with file,
+  line, trigger, consequence and evidence, separating introduced defects from existing debt. The COO posts the
+  review on the PR. Companion comments follow the
   [slice team](#slice-team-and-review-from-the-start) rules instead.
 - Reviewers do not fix, approve or merge.
 
