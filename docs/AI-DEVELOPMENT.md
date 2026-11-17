@@ -9,26 +9,45 @@ technical guidance by task. Use [Spec Kit](SPEC-KIT.md) for cross-cutting featur
 The user discusses goals and results with the responsible masters. An implementation assignment includes
 delivery through merge under the flow in
 [master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow), unless
-explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main`:
+explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main` across a multi-model agent network
+(Claude Code, ChatGPT Codex and Antigravity):
 
-1. The Chief Operating Officer (COO, Claude) cuts an issue into small slices and records each slice with the code
-   areas it locks on the board in `ahuelsmann/MOBAdev` issue #1. At most three code slices are open at once.
-2. Each code slice is worked by a team: the Senior Developer, a companion reviewer and, for UI work, the Head of
-   UI/UX. The developer posts a short design note; the companion reviewer checks it, and code starts after the
-   COO's or Solution Architect's Go. New features write their acceptance tests first.
+1. The Chief Operating Officer (COO, Claude) is the sole technical writer on the board in `ahuelsmann/MOBAdev`
+   issue #1, cuts an issue into small slices and records each slice's risk class (`H`, `M` or `L`; review-fix rounds
+   keep their slice's class and dependency updates take the class of the affected area), cross-model slice team and
+   locked code areas. At most three code slices are open at once.
+2. Each class `H` and `M` slice is worked by a multi-model team: the Senior Developer (writer), a companion
+   reviewer from a different model family (Codex `P2` when writer is Claude; Claude `P1` when writer is Codex;
+   Claude `P1` or Codex `P2` when writer is Antigravity) and, for UI/TrackPlan/editorial work, the `P3` Head of
+   UI/UX. The developer posts a short design note (class `L` slices and review-fix rounds state intent in the PR
+   body/commit instead); the companion reviewer (and `P3` for UI/TrackPlan/editorial slices) checks it, and code
+   starts after the COO's or Solution Architect's Go. New features write their acceptance tests first.
 3. Before handing work on, the developer merges the current `main` into the branch and resolves conflicts locally.
-4. While the slice grows, the companion reviewer comments on every pushed commit on the PR. At Ready a separate
-   fresh Claude session gives the final independent review; with a clean review and all gates green, the COO arms
-   head-bound auto-merge.
-5. Repeated review/fix loops on the same finding stop after two rounds and go to the user.
+4. While a class `H` or `M` slice grows, the companion reviewer comments read-only on every pushed commit on the
+   PR. At Ready every slice (`H`, `M` and `L`) receives a separate fresh `P1` Claude review (Opus 5.5 or higher)
+   plus independent cross-family `P2`/`P3` verification on the exact head and base (neither may be the writer's or
+   companion's session); with a clean review and all gates green, the COO arms head-bound auto-merge.
+5. Two failed fix attempts on the same finding (in companion or final review) or more than ten agent messages on
+   one topic stop the loop and go to the user.
 
 The user decides product goals, priorities, material UX, fundamental architecture, new costs and every app,
 device or hardware action, and does not relay messages, inspect code or administer PRs. Since 2026-11-06 the
 user's personal acceptance is no merge gate; feedback from real use arrives as ordinary issues. Every slice
-records its documentation and `docs/wiki/` impact. Any role may consult the Head of UI/UX (Gemini Argon via
-Antigravity CLI) under the
-[Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity);
-its advice adds no approval gate.
+records its documentation and `docs/wiki/` impact. Any role may consult or include the Head of UI/UX (`Gemini 4
+Argon` via Antigravity CLI) under the
+[Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
+
+## Capability profiles and models
+
+[Master coordination](../.github/instructions/master-coordination.instructions.md#capability-profiles-and-roles)
+assigns tasks by capability profile (`P1`–`P4`) so rules remain stable when models change. Current model mapping:
+
+| Profile | Active models and clients | Strengths and typical assignments |
+| --- | --- | --- |
+| `P1` Depth, Architecture & Safety | **Claude Opus 5.5** (`Claude Code`, CLI model `claude-opus-5-5`) | Deep architecture, concurrency (`async/await`, `UiThreadEventBusDecorator`), Z21 protocol safety, COO steering, companion/final independent review |
+| `P2` Repo, Build & Fact Precision | **GPT-6 Astra** (`ChatGPT Codex`) | Solution/build graph (`Moba.slnx`), Spec Kit consistency, CI/Sonar/mutation verification, CPM/TD steering, cross-model companion/final review, non-GitHub Sites publication |
+| `P3` System Context, Product & UI/UX | **Gemini 4 Argon** (`Antigravity`, CLI model `gemini-4-argon-high`) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
+| `P4` Cadence, Triage & Fast Delivery | **Claude Fable 5.2 / Sonnet-class** (`Claude Code`), **Gemini 4 Hydrogen** (`Antigravity` desktop selector) | Fast routine slices, portable/doc tasks, triage, pre-checks, status and timer monitoring (verify actual runtime model ID in review records) |
 
 ## Start in the correct checkout
 Use Git, PowerShell 7 (`pwsh`), Python 3.11+ and `rg` for development checks.
