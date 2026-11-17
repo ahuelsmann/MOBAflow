@@ -2693,7 +2693,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1716",
-      "path": "SharedUI/Interface/IBackgroundService.cs",
+      "path": "SharedUI/Interface/DialogChoice.cs",
       "count": 1
     },
     {
