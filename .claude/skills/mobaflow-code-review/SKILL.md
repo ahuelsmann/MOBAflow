@@ -8,9 +8,12 @@ Read [AGENTS.md](../../../AGENTS.md) and the relevant entries in the
 [instruction index](../../../.github/instructions/instructions-index.md).
 
 For a PR, follow the [delivery flow](../../../.github/instructions/master-coordination.instructions.md#delivery-flow):
-the Chief Operating Officer (COO, Claude) dispatches one fresh independent Opus 5.5-or-higher review per exact
-comparison of a small slice, posts it, and arms head-bound auto-merge once no Blocker, High or Medium remains and
-all gates are green. Check that the slice stays within its design note and locked areas and flag a slice that is
+a companion reviewer accompanies each code slice from its design note on and posts per-commit findings as PR
+review comments; at Ready the Chief Operating Officer (COO, Claude) dispatches one separate fresh independent
+Opus 5.5-or-higher review of the exact comparison, posts it, and arms head-bound auto-merge once no Blocker, High or
+Medium remains and all gates are green. As companion, comment read-only on each new commit; as final reviewer, use
+the companion's comments as context but form an independent verdict.
+Check that the slice stays within its design note and locked areas and flag a slice that is
 too large to review well. Do not dispatch another PR review or merge concurrently. Coordination/implementation
 sessions and Codex self-review do not satisfy the independent PR review. Every review session (PR, branch or local diff) is read-only; the reviewer never edits, merges or
 approves its own review. Confirm actual model use and preserve all current quality gates and explicit stops.
