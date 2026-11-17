@@ -26,35 +26,41 @@ on Windows and Linux.
 
 ## Master coordination: small batches on main
 
-Since 2026-11-16 every agent (Claude, Codex, Antigravity) follows the delivery flow in
+Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows the delivery flow in
 [master coordination](.github/instructions/master-coordination.instructions.md). In short:
 
+- **Role != single model.** Roles define domain responsibilities and draw on four capability profiles across Claude
+  Code (`P1` Opus 5.5, `P4` Fable 5.2), ChatGPT Codex (`P2` GPT-6 Astra) and Antigravity (`P3` Gemini 4 Argon,
+  `P4` Hydrogen). Slices are classified by risk (`H` safety/runtime/protocol, `M` features/UI/audio, `L` docs/small
+  non-behavioral fixes).
 - **Small slices.** Work is cut into slices of one concern, about 25 files or 400 changed lines at most, each with
   its own Draft PR that merges on its own. An issue may need several slices; no long-running branches.
-- **Board, locks, WIP limit.** The COO (Claude) records each open slice and the code areas it locks on the board in
-  `ahuelsmann/MOBAdev` issue #1. Refactoring and feature work never run in the same locked area at once. At most
-  three code slices are open, at most two local agents build at once. One writer per branch.
+- **Board, locks, WIP limit.** The COO (Claude) is the sole technical writer on the board in `ahuelsmann/MOBAdev`
+  issue #1 and records each open slice, its risk class, team and locked areas. Refactoring and feature work never
+  run in the same locked area at once. At most three code slices are open, at most two local agents build at once.
+  One writer per branch.
 - **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests); code
-  starts after the companion reviewer has checked the note and the COO or Solution Architect gives Go (docs-only,
-  dependency updates, review fixes and small fixes of at most three files without behavior change are exempt).
-  New features write their acceptance tests first.
+  starts after cross-model companion/UX review and the COO's or Solution Architect's Go (class `L` slices: docs-only,
+  dependency updates, review fixes and small fixes of at most three files without behavior change state their intent
+  in the PR body instead). New features write their acceptance tests first.
 - **Pull from main.** Before every push that hands work on, merge the current `main` of the configured GitHub remote
   into the branch, resolve conflicts locally and rerun the affected checks. Merge, never rebase or force-push a
   shared branch.
-- **Team and review from the start.** Writer, a companion reviewer (its own Claude session, Opus 5.5 or higher)
-  and, for UI work, the Head of UI/UX work each code slice together: the companion checks the design note and
-  reviews every pushed commit with PR review comments while the slice grows.
-- **Independent final review and auto-merge.** At Ready a separate fresh Claude session (Opus 5.5 or higher)
-  reviews the complete slice. With no open Blocker/High/Medium, zero SonarCloud issues and green non-required
-  mutation lanes, the COO arms head-bound GitHub auto-merge; it merges when the required checks pass. Before any
-  push to an armed PR the COO disarms it.
-- **Guard rails.** Two failed review/fix rounds on the same finding, or more than ten agent messages on one topic,
-  stop the loop and go to the user. Locks, design gos, handovers and merges are logged with UTC time in MOBAdev #1.
-  Multi-slice features stay behind feature toggles until complete.
+- **Multi-model team and review from the start.** Writer, a companion reviewer from a different model family (`P1`
+  Claude Opus 5.5+ or `P2` Codex GPT-6 Astra) and, for UI/product work, the `P3` Head of UI/UX (`Gemini 4 Argon`)
+  work each code slice together: the companion checks the design note and reviews every pushed commit with PR review
+  comments while the slice grows.
+- **Independent final review and auto-merge.** At Ready a separate fresh `P1` Claude session (Opus 5.5 or higher)
+  plus cross-model `P2`/`P3` verification reviews the complete slice. With no open Blocker/High/Medium, zero
+  SonarCloud issues and green non-required mutation lanes, the COO arms head-bound GitHub auto-merge; it merges when
+  the required checks pass. Before any push to an armed PR the COO disarms it.
+- **Guard rails.** Two failed fix attempts on the same finding (in companion or final review), or more than ten
+  agent messages on one topic, stop the loop and go to the user. Locks, design gos, handovers and merges are logged
+  with UTC time in MOBAdev #1. Multi-slice features stay behind feature toggles until complete.
 - **People.** The user decides product goals, priorities, material UX, fundamental architecture, new costs and every
   app, device or hardware action. Since 2026-11-06 the user's personal acceptance is no merge gate. The user does
-  not relay messages, inspect code or administer PRs. Any role may consult the Head of UI/UX (Gemini Argon via
-  Antigravity CLI) under the contract in master coordination; its advice is not a gate.
+  not relay messages, inspect code or administer PRs. Any role may consult the Head of UI/UX (`Gemini 4 Argon` via
+  Antigravity CLI) under the contract in master coordination.
 - An explicit narrower assignment, pause or no-merge instruction stays binding; do not infer new product work.
 
 ## Repository policies
