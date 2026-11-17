@@ -13,10 +13,12 @@ explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main`:
 
 1. The Chief Operating Officer (COO, Claude) cuts an issue into small slices and records each slice with the code
    areas it locks on the board in `ahuelsmann/MOBAdev` issue #1. At most three code slices are open at once.
-2. The Senior Developer posts a short design note; code starts after the COO's or Solution Architect's Go. New
-   features write their acceptance tests first.
+2. Each code slice is worked by a team: the Senior Developer, a companion reviewer and, for UI work, the Head of
+   UI/UX. The developer posts a short design note; the companion reviewer checks it, and code starts after the
+   COO's or Solution Architect's Go. New features write their acceptance tests first.
 3. Before handing work on, the developer merges the current `main` into the branch and resolves conflicts locally.
-4. A fresh independent Claude session reviews the Draft. With a clean review and all gates green, the COO arms
+4. While the slice grows, the companion reviewer comments on every pushed commit on the PR. At Ready a separate
+   fresh Claude session gives the final independent review; with a clean review and all gates green, the COO arms
    head-bound auto-merge.
 5. Repeated review/fix loops on the same finding stop after two rounds and go to the user.
 
@@ -133,8 +135,8 @@ See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for obs
 
 Create Draft PRs, one per slice. The COO verifies current CI, current-commit SonarCloud success with zero
 OPEN/CONFIRMED issues and the documentation impact, dispatches the independent review and arms head-bound
-auto-merge under [master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow). Main, local checks and prior PR
-commits are separate evidence. Non-GitHub work, including separately authorized Sites
+auto-merge under [master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow).
+Main, local checks and prior PR commits are separate evidence. Non-GitHub work, including separately authorized Sites
 review/publication and independent live verification, retains its own assigned route.
 
 ## Updating

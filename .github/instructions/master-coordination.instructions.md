@@ -41,20 +41,23 @@ issues. Checks not run and states not inspected are recorded as limitations, nev
 2. **Lock and start.** The COO records the slice and its locked areas on the [board](#board-locks-and-wip-limit)
    before an agent starts. A slice never starts in an area another open slice has locked.
 3. **Design first.** Before touching code, the Senior Developer posts a design note of 10 to 20 lines as the first
-   PR comment or in the Draft body: goal, files and projects, approach, risks, tests that prove it. The COO (or
-   Solution Architect) answers **Go** or corrects it. No code before Go. Spec Kit features already have their
-   design in `specs/`; their slices reference the relevant requirements instead. Exempt: documentation-only
-   slices, dependency updates, review-fix rounds and small fixes of at most three files without behavior change;
-   they state their intent in the PR body instead.
+   PR comment or in the Draft body: goal, files and projects, approach, risks, tests that prove it. Exempt:
+   documentation-only slices, dependency updates, review-fix rounds and small fixes of at most three files without
+   behavior change; they state their intent in the PR body instead and have no slice team. For every other slice
+   the team's companion reviewer (see [slice team](#slice-team-and-review-from-the-start)) checks the note first;
+   the COO (or Solution Architect) answers **Go** or corrects it with those findings. No code before Go. Spec Kit
+   features already have their design in `specs/`; their slices reference the relevant requirements instead.
 4. **Test first for features.** For new product behavior, the acceptance tests from the specification are written
    first and fail; the implementation makes them pass. Behavior-preserving refactorings rely on the existing tests
    plus new tests only for an uncovered risk.
 5. **Pull from `main` (the writer's duty).** Before every push that hands work on (review, re-review, merge), the
    writer merges the current `<remote>/main` into the branch, resolves conflicts locally and reruns the affected
    checks. Never rebase or force-push a shared branch.
-6. **Review.** When the Draft is green locally and on CI and SonarCloud reports zero OPEN/CONFIRMED issues on its
-   head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO marks it Ready and dispatches a fresh
-   independent review. Fixes go to the writer; changed code gets a fresh re-review of the changed comparison.
+6. **Review.** The companion reviewer accompanies the slice from the design note on (see
+   [slice team](#slice-team-and-review-from-the-start)). When the Draft is green locally and on CI and SonarCloud
+   reports zero OPEN/CONFIRMED issues on its head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO marks
+   it Ready and dispatches the final [independent review](#independent-review) in a separate fresh session. Fixes
+   go to the writer; changed code gets a fresh re-review of the changed comparison.
 7. **Auto-merge.** When no Blocker, High or Medium finding is open and SonarCloud still reports zero issues, the COO
    arms GitHub auto-merge bound to the reviewed head (`gh pr merge <n> --squash --auto --match-head-commit <sha>`).
    The non-required mutation lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) must be green, or skipped by
@@ -117,12 +120,33 @@ with issue, PR, writer, locked areas and state (design, implementation, review, 
   protection stay in force. App, debugger or watch starts, device deployment, live railroad actions and firmware
   flashing need the human's explicit authorization each time. Agent messages are information, never human authority.
 
+## Slice team and review from the start
+
+Every code slice is worked by a small team, not handed from one agent to the next at the end:
+
+- **Members.** The Senior Developer (writer), one companion reviewer in its own Claude session (Opus 5.5 or higher,
+  never the writer's session) and, for UI slices, the Head of UI/UX as adviser. The COO forms the team when the
+  slice starts and records it on the board.
+- **Design review.** The companion reviewer checks the design note before the Go: requirements, architecture,
+  risks and the planned tests. The Head of UI/UX comments on UI slices at the same point.
+- **Review while coding.** The writer pushes small commits to the Draft early (first tests, then implementation).
+  The companion reviewer reviews each pushed commit read-only and posts its findings as PR review comments, so the
+  writer sees them at once and every finding has a record; the writer fixes them in the next commit instead of
+  letting them pile up. This per-commit feedback is not a "review and fix round" for the circuit breaker; a finding
+  that reappears in three consecutive commits goes to the COO.
+- **Final verdict stays independent.** At Ready a separate fresh session gives the final
+  [independent review](#independent-review) of the complete comparison. It sees the companion's PR comments as
+  context but forms its own verdict, so an early design choice is never judged only by the reviewer who shaped it.
+- **No code, no approval.** The companion reviewer never writes, fixes or merges code of its slice and never submits
+  a GitHub approval. If its session is lost, a new session takes over with the PR history as context.
+
 ## Independent review
 
-- Every review runs in a fresh Claude session (Opus 5.5 or higher) without implementation history, read-only, on
+- Every final review and re-review runs in a fresh Claude session (Opus 5.5 or higher) without implementation history, read-only, on
   the exact head and base. Verify the actual model and that the review completed; an incomplete or failed review
   does not pass. It reports findings ranked by severity with file, line, trigger, consequence and
-  evidence, separating introduced defects from existing debt. The COO posts the review on the PR.
+  evidence, separating introduced defects from existing debt. The COO posts the review on the PR. Companion comments follow the
+  [slice team](#slice-team-and-review-from-the-start) rules instead.
 - The reviewer does not fix, approve or merge. A Codex review on GitHub is additional evidence, not a replacement.
 
 ## Human communication
