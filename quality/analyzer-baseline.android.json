@@ -292,13 +292,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Backend/Service/Recording/CoreRecordingEventMappers.cs",
-      "count": 3
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "Backend/Service/TimetableRuntimeProjectionService.cs",
       "count": 1
     },
@@ -1201,13 +1194,6 @@
     {
       "project": "Common",
       "targetFramework": "net10.0",
-      "ruleId": "CA1008",
-      "path": "Common/Configuration/TrainControlSettings.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
       "ruleId": "CA1014",
       "path": "<no-location>",
       "count": 1
@@ -1245,6 +1231,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "Common/Multiplex/MultiplexerHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1008",
+      "path": "SharedUI/Configuration/TrainControlSettings.cs",
       "count": 1
     },
     {

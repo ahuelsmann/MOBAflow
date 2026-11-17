@@ -79,6 +79,49 @@ internal sealed class UiSettingsDefaultsTests
     }
 
     [Test]
+    public void UiSettings_Should_KeepTrainControlSection_WhenSettingsRoundTrip()
+    {
+        var settings = new UiSettings();
+        settings.TrainControl.SpeedSteps = DccSpeedSteps.Steps28;
+        settings.TrainControl.SpeedRampStepSize = 9;
+        settings.TrainControl.SpeedRampIntervalMs = 250;
+        settings.TrainControl.SelectedLocoSeries = "BR 103";
+        settings.TrainControl.SelectedVmax = 160;
+
+        var json = JsonSerializer.Serialize(settings);
+        var restored = JsonSerializer.Deserialize<UiSettings>(json);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(json, Does.Contain("\"TrainControl\":{\"SpeedSteps\":28,"));
+            Assert.That(restored, Is.Not.Null);
+            Assert.That(restored!.TrainControl.SpeedSteps, Is.EqualTo(DccSpeedSteps.Steps28));
+            Assert.That(restored.TrainControl.SpeedRampStepSize, Is.EqualTo(9));
+            Assert.That(restored.TrainControl.SpeedRampIntervalMs, Is.EqualTo(250));
+            Assert.That(restored.TrainControl.SelectedLocoSeries, Is.EqualTo("BR 103"));
+            Assert.That(restored.TrainControl.SelectedVmax, Is.EqualTo(160));
+            Assert.That(typeof(AppSettings).GetProperty(nameof(UiSettings.TrainControl)), Is.Null,
+                "Train Control page settings belong to the SharedUI settings root, not to the neutral AppSettings.");
+        }
+    }
+
+    [Test]
+    public void TrainControl_Should_KeepDefaults_WhenNoSectionIsStored()
+    {
+        var restored = JsonSerializer.Deserialize<UiSettings>("{}");
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(restored, Is.Not.Null);
+            Assert.That(restored!.TrainControl.SpeedSteps, Is.EqualTo(DccSpeedSteps.Steps128));
+            Assert.That(restored.TrainControl.SpeedRampStepSize, Is.EqualTo(5));
+            Assert.That(restored.TrainControl.SpeedRampIntervalMs, Is.EqualTo(100));
+            Assert.That(restored.TrainControl.SelectedLocoSeries, Is.Empty);
+            Assert.That(restored.TrainControl.SelectedVmax, Is.EqualTo(200));
+        }
+    }
+
+    [Test]
     public void FeatureToggles_Should_DefaultTimetableToAvailablePreview_WhenNoEntryIsStored()
     {
         var toggles = new FeatureToggleSettings();

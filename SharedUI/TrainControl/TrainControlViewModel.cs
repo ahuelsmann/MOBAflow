@@ -5,7 +5,7 @@ using Appearance;
 
 using Backend.Interface;
 
-using Common.Configuration;
+using Configuration;
 
 using Contracts.Runtime;
 using Common.Events;
