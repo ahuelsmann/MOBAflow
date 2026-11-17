@@ -48,14 +48,15 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   into the branch, resolve conflicts locally and rerun the affected checks. Merge, never rebase or force-push a
   shared branch.
 - **Multi-model team and review from the start.** Writer, a companion reviewer from a different model family (Codex
-  `P2` when writer is Claude; Claude `P1` when writer is Codex) and, for UI/product work, the `P3` Head of UI/UX
-  (`Gemini 4 Argon`) work each class `H` and `M` slice together: the companion checks the design note and reviews
-  every pushed commit with PR review comments while the slice grows.
+  `P2` when writer is Claude; Claude `P1` when writer is Codex; Claude `P1` or Codex `P2` when writer is
+  Antigravity) and, for UI/TrackPlan/editorial work, the `P3` Head of UI/UX (`Gemini 4 Argon`) work each class `H`
+  and `M` slice together: the companion checks the design note and reviews every pushed commit with PR review
+  comments while the slice grows.
 - **Independent final review and auto-merge.** At Ready every slice (`H`, `M` and `L`) receives a separate fresh
-  `P1` Claude review (Opus 5.5 or higher, never the writer's or companion's session) plus cross-family `P2`/`P3`
-  verification on the exact head and base. With no open Blocker/High/Medium, zero SonarCloud issues and green
-  non-required mutation lanes, the COO arms head-bound GitHub auto-merge; it merges when the required checks pass.
-  Before any push to an armed PR the COO disarms it.
+  `P1` Claude review (Opus 5.5 or higher) plus independent cross-family `P2`/`P3` verification on the exact head
+  and base (neither may be the writer's or companion's session). With no open Blocker/High/Medium, zero SonarCloud
+  issues and green non-required mutation lanes, the COO arms head-bound GitHub auto-merge; it merges when the
+  required checks pass. Before any push to an armed PR the COO disarms it.
 - **Guard rails.** Two failed fix attempts on the same finding (in companion or final review), or more than ten
   agent messages on one topic, stop the loop and go to the user. Locks, design gos, handovers and merges are logged
   with UTC time in MOBAdev #1. Multi-slice features stay behind feature toggles until complete.

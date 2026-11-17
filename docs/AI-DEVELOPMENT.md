@@ -17,16 +17,16 @@ explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main` a
    keep their slice's class and dependency updates take the class of the affected area), cross-model slice team and
    locked code areas. At most three code slices are open at once.
 2. Each class `H` and `M` slice is worked by a multi-model team: the Senior Developer (writer), a companion
-   reviewer from a different model family (Codex `P2` when writer is Claude; Claude `P1` when writer is Codex) and,
-   for UI/product work, the `P3` Head of UI/UX. The developer posts a short design note (class `L` slices and
-   review-fix rounds state intent in the PR body/commit instead); the companion reviewer (and `P3` for UI/product
-   slices) checks it, and code starts after the COO's or Solution Architect's Go. New features write their
-   acceptance tests first.
+   reviewer from a different model family (Codex `P2` when writer is Claude; Claude `P1` when writer is Codex;
+   Claude `P1` or Codex `P2` when writer is Antigravity) and, for UI/TrackPlan/editorial work, the `P3` Head of
+   UI/UX. The developer posts a short design note (class `L` slices and review-fix rounds state intent in the PR
+   body/commit instead); the companion reviewer (and `P3` for UI/TrackPlan/editorial slices) checks it, and code
+   starts after the COO's or Solution Architect's Go. New features write their acceptance tests first.
 3. Before handing work on, the developer merges the current `main` into the branch and resolves conflicts locally.
 4. While a class `H` or `M` slice grows, the companion reviewer comments read-only on every pushed commit on the
-   PR. At Ready every slice (`H`, `M` and `L`) receives a separate fresh `P1` Claude review (Opus 5.5 or higher,
-   never the writer's or companion's session) plus cross-family `P2`/`P3` verification on the exact head and base;
-   with a clean review and all gates green, the COO arms head-bound auto-merge.
+   PR. At Ready every slice (`H`, `M` and `L`) receives a separate fresh `P1` Claude review (Opus 5.5 or higher)
+   plus independent cross-family `P2`/`P3` verification on the exact head and base (neither may be the writer's or
+   companion's session); with a clean review and all gates green, the COO arms head-bound auto-merge.
 5. Two failed fix attempts on the same finding (in companion or final review) or more than ten agent messages on
    one topic stop the loop and go to the user.
 
@@ -44,10 +44,10 @@ assigns tasks by capability profile (`P1`–`P4`) so rules remain stable when mo
 
 | Profile | Active models and clients | Strengths and typical assignments |
 | --- | --- | --- |
-| `P1` Depth, Architecture & Safety | **Claude Opus 5.5** (`Claude Code`) | Deep architecture, concurrency (`async/await`, `UiThreadEventBusDecorator`), Z21 protocol safety, COO steering, companion/final independent review |
-| `P2` Repo, Build & Fact Precision | **GPT-6 Astra** (`ChatGPT Codex`) | Solution/build graph (`Moba.slnx`), Spec Kit consistency, CI/Sonar/mutation verification, CPM/TD steering, cross-model companion/final review, Sites delivery |
-| `P3` System Context, Product & UI/UX | **Gemini 4 Argon** (`Antigravity`) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
-| `P4` Cadence, Triage & Fast Delivery | **Claude Fable 5.2** (`Claude Code`), **Gemini 4 Hydrogen** (`Antigravity`) | Fast routine slices, portable/doc tasks, triage, pre-checks, status and timer monitoring |
+| `P1` Depth, Architecture & Safety | **Claude Opus 5.5** (`Claude Code`, CLI model `claude-opus-5-5`) | Deep architecture, concurrency (`async/await`, `UiThreadEventBusDecorator`), Z21 protocol safety, COO steering, companion/final independent review |
+| `P2` Repo, Build & Fact Precision | **GPT-6 Astra** (`ChatGPT Codex`) | Solution/build graph (`Moba.slnx`), Spec Kit consistency, CI/Sonar/mutation verification, CPM/TD steering, cross-model companion/final review, non-GitHub Sites publication |
+| `P3` System Context, Product & UI/UX | **Gemini 4 Argon** (`Antigravity`, CLI model `gemini-4-argon-high`) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
+| `P4` Cadence, Triage & Fast Delivery | **Claude Fable 5.2 / Sonnet-class** (`Claude Code`), **Gemini 4 Hydrogen** (`Antigravity` desktop selector) | Fast routine slices, portable/doc tasks, triage, pre-checks, status and timer monitoring (verify actual runtime model ID in review records) |
 
 ## Start in the correct checkout
 Use Git, PowerShell 7 (`pwsh`), Python 3.11+ and `rg` for development checks.

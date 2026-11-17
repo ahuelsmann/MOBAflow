@@ -55,7 +55,7 @@ protocol or transport packages, `M` for UI/feature packages, `L` for test/analyz
 | Class | MOBAflow areas | Required team and review diversity |
 | --- | --- | --- |
 | `H` High (Safety, Runtime & Protocol) | `Backend` (Z21/workflows), `Common` (EventBus/runtime), `MOBApi`, `MOBAdisplay` (`esp32/`), project-switch/stop logic, runtime/protocol dependencies | Writer (`P1`/`P2`), companion reviewer from a different model family (`P2` if writer is Claude; `P1` if writer is Codex), final independent `P1` review plus cross-family `P2` verification; a safety veto is binding |
-| `M` Medium (Features, UI & Audio) | `MOBAflow` (WinUI), `MOBAsmart` (MAUI), `SharedUI`, `TrackPlan.*`, `Speech.*`, `Sound`, `MOBAnews`, UI/feature dependencies | Writer (`P1`/`P2`/`P4`), companion reviewer from a different model family (`P2`/`P1`), `P3` (UI/UX & Product) at design note and before Ready, final independent `P1` review plus cross-family `P2`/`P3` verification |
+| `M` Medium (Features, UI & Audio) | `MOBAflow` (WinUI), `MOBAsmart` (MAUI), `SharedUI`, `TrackPlan.*`, `Speech.*`, `Sound`, `MOBAnews`, UI/feature dependencies | Writer (`P1`/`P2`/`P4`), companion reviewer from a different model family (`P2`/`P1`), `P3` (UI/UX & Product) at the design note for UI, TrackPlan and editorial `M` slices, final independent `P1` review plus cross-family `P2`/`P3` verification |
 | `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the PR body (no separate design note or per-commit companion needed); final review at Ready runs a fresh independent `P1` review plus independent cross-family `P2`/`P3` verification |
 
 ## Delivery flow
@@ -137,10 +137,10 @@ locked areas and state (design, implementation, review, auto-merge armed).
   Codex answers in the addressed thread, and callers read the reply from
   `~/.codex/sessions/**/rollout-*<thread-id>.jsonl` (assistant messages only; never read `auth.json` or other
   credential files). No command delivers a message into a Claude desktop session, so Codex raises its own
-  requests to Claude in its thread or on the board. Claude sessions use their session messaging or `claude.exe`;
-  Antigravity roles use the [CLI contract](#head-of-uiux-gemini-argon-via-antigravity). PR design notes, the
-  design Go and review posts stay on the PR. MOBAdev #1 holds only the board, the log and long results that must
-  be kept.
+  requests to Claude in its thread or on the board. Claude sessions use their session messaging or invoke a fresh
+  `claude.exe --print` call; Antigravity roles use the [CLI contract](#head-of-uiux-gemini-argon-via-antigravity).
+  PR design notes, the design Go and review posts stay on the PR. MOBAdev #1 holds only the board, the log and
+  long results that must be kept.
 - **Log.** Every lock, design go, handover, merge and escalation is a short entry on the board or in MOBAdev #1
   with UTC time and role. Agent IDs and thread IDs stay internal and are not shown to the human.
 - **Feature toggles.** A user-visible feature that spans several slices lands behind a toggle that is off by
@@ -159,11 +159,12 @@ next at the end:
 
 - **Cross-model members and staffing combinations.** One named Senior Developer (writer), one companion reviewer
   from a **different model family** (if the writer is Claude `P1`/`P4`, the companion is Codex `P2`; if the writer
-  is Codex `P2`, the companion is a fresh Claude `P1` session) and, for class `M` UI, TrackPlan and editorial
-  slices, the `P3` Head of UI/UX (`Gemini 4 Argon`). The COO forms the team when the slice starts and records it on
-  the board.
-- **Design review.** Before the Go, reviewers from at least two complementary profiles (`P1`/`P2`, plus `P3` for
-  UI/product slices) check the design note: requirements, architecture, risks and planned tests.
+  is Codex `P2`, the companion is a fresh Claude `P1` session; if the writer is Antigravity `P3`/`P4`, the
+  companion is Claude `P1` or Codex `P2`) and, for class `M` UI, TrackPlan and editorial slices, the `P3` Head of
+  UI/UX (`Gemini 4 Argon`). The COO forms the team when the slice starts and records it on the board.
+- **Design review.** Before the Go, the companion reviewer checks the design note (plus `P3` for UI, TrackPlan and
+  editorial slices: requirements, architecture, risks and planned tests), and the COO or Solution Architect (`P1`)
+  gives the **Go** or corrects it, so at least two complementary profiles assess every design.
 - **Review while coding.** The writer pushes small commits to the Draft early (first tests, then implementation).
   The companion reviewer reviews each pushed commit read-only and posts its findings as PR review comments, so
   the writer sees them at once and every finding has a record; the writer fixes them in the next commit instead of
@@ -177,12 +178,13 @@ next at the end:
 ## Independent review
 
 - Every final review and re-review (`H`, `M` and `L`) runs read-only on the exact head and base in a fresh `P1`
-  Claude session (Opus 5.5 or higher, verified by actual model output, never the writer's or companion's session)
-  without implementation history, complemented by an independent cross-family `P2` (Codex) or `P3` (Antigravity,
-  for UI/editorial work) verification. This guarantees both the mandatory `P1` Opus 5.5+ gate and independent
-  verification across at least two model families for every slice. An incomplete or failed review does not pass.
-  Reviews report findings ranked by severity with file, line, trigger, consequence and evidence, separating
-  introduced defects from existing debt. The COO posts the review on the PR. Companion comments follow the
+  Claude session (Opus 5.5 or higher, verified by actual model output) without implementation history,
+  complemented by an independent cross-family `P2` (Codex) or `P3` (Antigravity, for UI/editorial work)
+  verification. Neither the `P1` reviewer nor the `P2`/`P3` verifier may be the writer's or companion's session.
+  This guarantees both the mandatory `P1` Opus 5.5+ gate and independent verification across at least two model
+  families for every slice. An incomplete or failed review does not pass. Reviews report findings ranked by
+  severity with file, line, trigger, consequence and evidence, separating introduced defects from existing debt.
+  The COO posts the review on the PR. Companion comments follow the
   [slice team](#slice-team-and-review-from-the-start) rules instead.
 - Reviewers do not fix, approve or merge.
 
@@ -198,13 +200,13 @@ next at the end:
 ## Head of UI/UX (Gemini Argon via Antigravity)
 
 Head of UI/UX (`P3` in Antigravity) is the specialist for product experience, navigation, interaction, visual
-hierarchy, accessibility, UI states and reader-facing clarity. It participates in class `M` UI/product slice teams
-from the design note on, and any role may consult it within assigned work without another human approval. It does
-not implement product code, commit or push, and grants no product, merge or hardware authority.
+hierarchy, accessibility, UI states and reader-facing clarity. It participates in class `M` UI, TrackPlan and
+editorial slice teams from the design note on, and any role may consult it within assigned work without another
+human approval. It does not implement product code, commit or push, and grants no product, merge or hardware
+authority.
 
 Verified contact (2026-10-16): CLI conversation `1d8313f7-1f6f-42c8-b32c-f0b422653677`, project
-MOBAflow UI/UX Team, model `gemini-4-argon-high` (or `gemini-4-hydrogen-high` for `P4` rapid checks). Do not use
-the separate desktop-app conversation.
+MOBAflow UI/UX Team, model `gemini-4-argon-high`. Do not use the separate desktop-app conversation.
 
 ```powershell
 & "$env:LOCALAPPDATA\agy\bin\agy.exe" `
