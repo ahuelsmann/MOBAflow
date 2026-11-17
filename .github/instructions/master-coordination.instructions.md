@@ -56,7 +56,7 @@ protocol or transport packages, `M` for UI/feature packages, `L` for test/analyz
 | --- | --- | --- |
 | `H` High (Safety, Runtime & Protocol) | `Backend` (Z21/workflows), `Common` (EventBus/runtime), `MOBApi`, `MOBAdisplay` (`esp32/`), project-switch/stop logic, runtime/protocol dependencies | Writer (`P1`/`P2`), companion reviewer from a different model family (`P2` if writer is Claude; `P1` if writer is Codex), final independent `P1` review plus cross-family `P2` verification; a safety veto is binding |
 | `M` Medium (Features, UI & Audio) | `MOBAflow` (WinUI), `MOBAsmart` (MAUI), `SharedUI`, `TrackPlan.*`, `Speech.*`, `Sound`, `MOBAnews`, UI/feature dependencies | Writer (`P1`/`P2`/`P4`), companion reviewer from a different model family (`P2`/`P1`), `P3` (UI/UX & Product) at design note and before Ready, final independent `P1` review plus cross-family `P2`/`P3` verification |
-| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the PR body (no separate design note or per-commit companion needed); final review at Ready still runs a fresh independent `P1` review plus cross-family `P2`/`P3` verification when the writer is from the Claude family |
+| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the PR body (no separate design note or per-commit companion needed); final review at Ready runs a fresh independent `P1` review plus independent cross-family `P2`/`P3` verification |
 
 ## Delivery flow
 
@@ -179,11 +179,10 @@ next at the end:
 - Every final review and re-review (`H`, `M` and `L`) runs read-only on the exact head and base in a fresh `P1`
   Claude session (Opus 5.5 or higher, verified by actual model output, never the writer's or companion's session)
   without implementation history, complemented by an independent cross-family `P2` (Codex) or `P3` (Antigravity,
-  for UI/editorial work) verification whenever the writer is from the Claude family or the slice is class `H`/`M`.
-  This guarantees both the mandatory `P1` Opus 5.5+ gate and independent verification across at least two model
-  families. An incomplete or failed review does not pass. Reviews report findings ranked by severity with file,
-  line, trigger, consequence and evidence, separating introduced defects from existing debt. The COO posts the
-  review on the PR. Companion comments follow the
+  for UI/editorial work) verification. This guarantees both the mandatory `P1` Opus 5.5+ gate and independent
+  verification across at least two model families for every slice. An incomplete or failed review does not pass.
+  Reviews report findings ranked by severity with file, line, trigger, consequence and evidence, separating
+  introduced defects from existing debt. The COO posts the review on the PR. Companion comments follow the
   [slice team](#slice-team-and-review-from-the-start) rules instead.
 - Reviewers do not fix, approve or merge.
 
