@@ -13,6 +13,12 @@ using TrainControl;
 public class UiSettings : AppSettings
 {
     /// <summary>
+    /// Train Control page settings shared by both hosts (speed ramp, DCC steps, locomotive series and Vmax).
+    /// The locomotive picker selection is per-host state in the host sections below.
+    /// </summary>
+    public TrainControlSettings TrainControl { get; set; } = new();
+
+    /// <summary>
     /// MOBAflow-only train control UI state (e.g. active locomotive picker selection).
     /// </summary>
     public TrainControlHostSettings WinUiTrainControlHost { get; set; } = new();
