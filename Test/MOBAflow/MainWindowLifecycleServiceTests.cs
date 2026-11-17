@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.UI.Xaml.Controls;
 
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -138,6 +139,20 @@ internal sealed class MainWindowLifecycleServiceTests
 
         // The closing workflow saves in this case, so the window still closes and no change is lost.
         Assert.That(choice, Is.EqualTo(DialogChoice.NotShown));
+    }
+
+    [TestCase(ContentDialogResult.Primary, DialogChoice.Primary)]
+    [TestCase(ContentDialogResult.Secondary, DialogChoice.Secondary)]
+    [TestCase(ContentDialogResult.None, DialogChoice.Cancel)]
+    public void TheDialogServiceMapsThePressedButtonToTheChoice(ContentDialogResult result, DialogChoice expected) =>
+        Assert.That(DialogService.ToChoice(result), Is.EqualTo(expected));
+
+    [TestCase(unchecked((int)0x80000019), true)]
+    [TestCase(unchecked((int)0x80004005), false)]
+    public void TheDialogServiceRecognizesOnlyTheSecondOpenDialogFailure(int hResult, bool expected)
+    {
+        // A second open dialog makes ShowAsync fail; the closing workflow then saves instead of closing unsaved.
+        Assert.That(DialogService.IsAnotherDialogOpen(hResult), Is.EqualTo(expected));
     }
 
     /// <summary>The operator chooses Save in the closing prompt; a headless run has no window for the real dialog.</summary>

@@ -3,8 +3,11 @@ namespace Moba.WinUI.Service;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 using Moba.SharedUI.Interface;
+
+using System.Runtime.InteropServices;
 
 using View;
 
@@ -14,6 +17,9 @@ using View;
 /// </summary>
 public sealed class DialogService : IDialogService
 {
+    /// <summary>E_ASYNC_OPERATION_NOT_STARTED, raised by a second ContentDialog.ShowAsync while one is open.</summary>
+    private const int AsyncOperationNotStartedHResult = unchecked((int)0x80000019);
+
     private readonly IServiceProvider _serviceProvider;
     private XamlRoot? _cachedXamlRoot;
 
@@ -73,9 +79,10 @@ public sealed class DialogService : IDialogService
         string cancelButtonText)
     {
         var xamlRoot = GetXamlRoot();
-        if (xamlRoot == null)
+        if (xamlRoot == null || IsContentDialogOpen(xamlRoot))
         {
-            // Without a window no dialog can be shown; the caller chooses its safe default.
+            // Without a window, or while another dialog is open (WinUI shows one ContentDialog at a time),
+            // no dialog can be shown; the caller chooses its safe default.
             return DialogChoice.NotShown;
         }
 
@@ -90,11 +97,31 @@ public sealed class DialogService : IDialogService
             DefaultButton = ContentDialogButton.Primary
         };
 
-        return await dialog.ShowAsync() switch
+        try
         {
-            ContentDialogResult.Primary => DialogChoice.Primary,
-            ContentDialogResult.Secondary => DialogChoice.Secondary,
-            _ => DialogChoice.Cancel
-        };
+            return ToChoice(await dialog.ShowAsync());
+        }
+        catch (COMException ex) when (IsAnotherDialogOpen(ex.HResult))
+        {
+            // A dialog opened between the check above and ShowAsync.
+            return DialogChoice.NotShown;
+        }
     }
+
+    /// <summary>Maps the button the operator pressed to the platform-neutral choice.</summary>
+    internal static DialogChoice ToChoice(ContentDialogResult result) => result switch
+    {
+        ContentDialogResult.Primary => DialogChoice.Primary,
+        ContentDialogResult.Secondary => DialogChoice.Secondary,
+        _ => DialogChoice.Cancel
+    };
+
+    /// <summary>
+    /// Whether <see cref="ContentDialog.ShowAsync()"/> failed because another dialog is open: WinUI reports
+    /// "Only a single ContentDialog can be open at any time" as E_ASYNC_OPERATION_NOT_STARTED.
+    /// </summary>
+    internal static bool IsAnotherDialogOpen(int hResult) => hResult == AsyncOperationNotStartedHResult;
+
+    private static bool IsContentDialogOpen(XamlRoot xamlRoot) =>
+        VisualTreeHelper.GetOpenPopupsForXamlRoot(xamlRoot).Any(popup => popup.Child is ContentDialog);
 }

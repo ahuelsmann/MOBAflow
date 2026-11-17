@@ -311,6 +311,29 @@ internal partial class MainWindowViewModelShutdownTests
             Times.Once);
     }
 
+    [Test]
+    public async Task PrepareForShutdownAsync_DontSave_NeverWritesTheLoadedFile_EvenWhenAModelChangesAfterwards()
+    {
+        var ioService = TestFileServices.CreateMock();
+        ioService
+            .Setup(candidate => candidate.SaveAsync(It.IsAny<Solution>(), "existing.json"))
+            .ReturnsAsync((false, (string?)null, "disk full"));
+        var solution = new Solution { Projects = [new Project { Name = "Station" }] };
+        var viewModel = CreateViewModel(CreateRuntimeMock().Object, new EventBus(NullLogger<EventBus>.Instance), ioService.Object, solution, CreateChoiceDialog(DialogChoice.Secondary).Object);
+        viewModel.CurrentSolutionPath = "existing.json";
+        // The auto-save of the loaded file failed, so the change is still unsaved when the window closes.
+        await Assert.ThrowsAsync<InvalidOperationException>(() => viewModel.SaveSolutionInternalAsync()).ConfigureAwait(false);
+        Assert.That(viewModel.HasUnsavedChanges, Is.True);
+        ioService.Invocations.Clear();
+
+        var closed = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
+        viewModel.SelectedProject!.Name = "Changed while closing";
+
+        Assert.That(closed, Is.True);
+        ioService.Verify(candidate => candidate.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
+        ioService.Verify(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()), Times.Never);
+    }
+
     private static Mock<IDialogService> CreateChoiceDialog(DialogChoice choice)
     {
         var dialog = new Mock<IDialogService>();
