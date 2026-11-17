@@ -76,7 +76,7 @@ internal sealed class MainWindowLifecycleServiceTests
     {
         var io = TestFileServices.CreateMock();
         io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((false, null, null));
-        var provider = CreateProvider(services => services.AddSingleton(io.Object));
+        var provider = CreateProvider(services => services.AddSingleton(io.Object).AddSingleton(ChoosingSave()));
         await using var providerLifetime = provider.ConfigureAwait(false);
         var observer = new Mock<IDisposable>();
         var lifecycle = CreateLifecycle(provider, observer);
@@ -97,7 +97,7 @@ internal sealed class MainWindowLifecycleServiceTests
     {
         var io = TestFileServices.CreateMock();
         io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((false, null, "disk full"));
-        var provider = CreateProvider(services => services.AddSingleton(io.Object));
+        var provider = CreateProvider(services => services.AddSingleton(io.Object).AddSingleton(ChoosingSave()));
         await using var providerLifetime = provider.ConfigureAwait(false);
         var observer = new Mock<IDisposable>();
         var lifecycle = CreateLifecycle(provider, observer);
@@ -126,6 +126,29 @@ internal sealed class MainWindowLifecycleServiceTests
             provider.GetRequiredService<HealthCheckService>(),
             provider.GetRequiredService<IUiDispatcher>(),
             NullLogger<MainWindowLifecycleService>.Instance);
+
+    [Test]
+    public async Task TheDialogServiceReportsThatNoDialogWasShownWithoutAMainWindow()
+    {
+        var provider = new ServiceCollection().BuildServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var dialogs = new DialogService(provider);
+
+        var choice = await dialogs.ShowChoiceAsync("Save changes?", "Save?", "Save", "Don't save", "Cancel").ConfigureAwait(false);
+
+        // The closing workflow saves in this case, so the window still closes and no change is lost.
+        Assert.That(choice, Is.EqualTo(DialogChoice.NotShown));
+    }
+
+    /// <summary>The operator chooses Save in the closing prompt; a headless run has no window for the real dialog.</summary>
+    private static IDialogService ChoosingSave()
+    {
+        var dialog = new Mock<IDialogService>();
+        dialog
+            .Setup(value => value.ShowChoiceAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(DialogChoice.Primary);
+        return dialog.Object;
+    }
 
     private static ServiceProvider CreateProvider(Action<IServiceCollection>? configure = null)
     {

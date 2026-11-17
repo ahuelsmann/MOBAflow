@@ -63,4 +63,38 @@ public sealed class DialogService : IDialogService
         var result = await dialog.ShowAsync();
         return result == ContentDialogResult.Primary;
     }
+
+    /// <inheritdoc />
+    public async Task<DialogChoice> ShowChoiceAsync(
+        string title,
+        string message,
+        string primaryButtonText,
+        string secondaryButtonText,
+        string cancelButtonText)
+    {
+        var xamlRoot = GetXamlRoot();
+        if (xamlRoot == null)
+        {
+            // Without a window no dialog can be shown; the caller chooses its safe default.
+            return DialogChoice.NotShown;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = xamlRoot,
+            Title = title,
+            Content = message,
+            PrimaryButtonText = primaryButtonText,
+            SecondaryButtonText = secondaryButtonText,
+            CloseButtonText = cancelButtonText,
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        return await dialog.ShowAsync() switch
+        {
+            ContentDialogResult.Primary => DialogChoice.Primary,
+            ContentDialogResult.Secondary => DialogChoice.Secondary,
+            _ => DialogChoice.Cancel
+        };
+    }
 }
