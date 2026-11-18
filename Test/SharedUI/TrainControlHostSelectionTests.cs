@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
 using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -41,12 +42,12 @@ internal sealed class TrainControlHostSelectionTests
         var projectContext = new MobileSolutionContext(TestViewModelServices.Default);
         projectContext.ApplySolution(solution, "myMOBA");
 
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         var settingsServiceMock = new Mock<ISettingsService>();
         settingsServiceMock.Setup(service => service.GetSettings()).Returns(() => settings);
         settingsServiceMock
-            .Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()))
-            .Returns<AppSettings>(saved =>
+            .Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>()))
+            .Returns<UiSettings>(saved =>
             {
                 settings.TrainControl = saved.TrainControl;
                 settings.WinUiTrainControlHost = saved.WinUiTrainControlHost;
@@ -67,6 +68,7 @@ internal sealed class TrainControlHostSelectionTests
             ImmediateUiDispatcher.Instance,
             eventBus,
             new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState(),
             options: new TrainControlViewModelOptions { Host = TrainControlHost.WinUi });
         winUiViewModel.RefreshLocomotiveList();
         winUiViewModel.SelectProjectLocomotiveCommand.Execute(winUiViewModel.ProjectLocomotives[0]);
@@ -80,6 +82,7 @@ internal sealed class TrainControlHostSelectionTests
             ImmediateUiDispatcher.Instance,
             eventBus,
             new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState(),
             options: new TrainControlViewModelOptions { Host = TrainControlHost.Maui });
         mauiViewModel.RefreshLocomotiveList();
         mauiViewModel.SelectProjectLocomotiveCommand.Execute(mauiViewModel.ProjectLocomotives[1]);

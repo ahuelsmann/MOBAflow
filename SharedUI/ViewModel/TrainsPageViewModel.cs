@@ -2,10 +2,10 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
-using Common.Configuration;
 using Common.Extension;
 using Interface;
 using Microsoft.Extensions.Logging;
+using Service;
 using System.ComponentModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -23,8 +23,7 @@ public sealed partial class TrainsPageViewModel : ObservableObject, IDisposable
 
     private readonly ISolutionSession _session;
     private readonly IConnectionRuntime _runtimeConnection;
-    private readonly AppSettings _settings;
-    private readonly ISettingsService _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<TrainsPageViewModel> _logger;
     private bool _disposed;
     private bool _isTrainsListExpanded;
@@ -34,37 +33,33 @@ public sealed partial class TrainsPageViewModel : ObservableObject, IDisposable
     private bool _isTrainsPropertiesExpanded;
 
     public TrainsPageViewModel(ISolutionSession session, IConnectionRuntime runtimeConnection,
-        ISettingsService settingsService, LayoutColumnWidthsViewModel layoutColumnWidths,
+        LayoutPersistenceService layout,
         LocomotivesPageViewModel locomotivesPage, WagonsPageViewModel wagonsPage,
         ILogger<TrainsPageViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(runtimeConnection);
-        ArgumentNullException.ThrowIfNull(settingsService);
-        ArgumentNullException.ThrowIfNull(layoutColumnWidths);
+        ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(locomotivesPage);
         ArgumentNullException.ThrowIfNull(wagonsPage);
         ArgumentNullException.ThrowIfNull(logger);
         _session = session;
         _runtimeConnection = runtimeConnection;
-        _settingsService = settingsService;
-        _settings = settingsService.GetSettings();
+        _layout = layout;
         _logger = logger;
-        LayoutColumnWidths = layoutColumnWidths;
         LocomotivesPage = locomotivesPage;
         WagonsPage = wagonsPage;
-        _isTrainsListExpanded = _settings.Layout.TrainsPage.IsTrainListExpanded;
-        _isTrainsLocomotiveLibraryExpanded = _settings.Layout.TrainsPage.IsLocomotiveLibraryExpanded;
-        _isTrainsPassengerLibraryExpanded = _settings.Layout.TrainsPage.IsPassengerLibraryExpanded;
-        _isTrainsGoodsLibraryExpanded = _settings.Layout.TrainsPage.IsGoodsLibraryExpanded;
-        _isTrainsPropertiesExpanded = _settings.Layout.TrainsPage.IsPropertiesExpanded;
+        _isTrainsListExpanded = layout.Layout.TrainsPage.IsTrainListExpanded;
+        _isTrainsLocomotiveLibraryExpanded = layout.Layout.TrainsPage.IsLocomotiveLibraryExpanded;
+        _isTrainsPassengerLibraryExpanded = layout.Layout.TrainsPage.IsPassengerLibraryExpanded;
+        _isTrainsGoodsLibraryExpanded = layout.Layout.TrainsPage.IsGoodsLibraryExpanded;
+        _isTrainsPropertiesExpanded = layout.Layout.TrainsPage.IsPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
         _session.SolutionReplacing += OnSolutionReplacing;
         SelectedTrain = SelectedProject?.Trains.FirstOrDefault();
     }
 
     public ProjectViewModel? SelectedProject => _session.SelectedProject;
-    public LayoutColumnWidthsViewModel LayoutColumnWidths { get; }
     public LocomotivesPageViewModel LocomotivesPage { get; }
     public WagonsPageViewModel WagonsPage { get; }
 
@@ -84,13 +79,6 @@ public sealed partial class TrainsPageViewModel : ObservableObject, IDisposable
 
     private void SaveChanges() => _session.SaveSolutionInternalAsync()
         .Observe(ex => LogOperationFailed(_logger, "Auto-save solution", ex));
-
-    private void PersistLayoutState(Action<LayoutSettings> apply)
-    {
-        apply(_settings.Layout);
-        _settingsService.SaveSettingsAsync(_settings)
-            .Observe(ex => LogOperationFailed(_logger, "Persist train layout", ex));
-    }
 
     public void Dispose()
     {
@@ -112,7 +100,7 @@ public sealed partial class TrainsPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isTrainsListExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsTrainListExpanded = value);
+                _layout.Persist(layout => layout.TrainsPage.IsTrainListExpanded = value);
         }
     }
 
@@ -122,7 +110,7 @@ public sealed partial class TrainsPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isTrainsLocomotiveLibraryExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsLocomotiveLibraryExpanded = value);
+                _layout.Persist(layout => layout.TrainsPage.IsLocomotiveLibraryExpanded = value);
         }
     }
 
@@ -132,7 +120,7 @@ public sealed partial class TrainsPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isTrainsPassengerLibraryExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsPassengerLibraryExpanded = value);
+                _layout.Persist(layout => layout.TrainsPage.IsPassengerLibraryExpanded = value);
         }
     }
 
@@ -142,7 +130,7 @@ public sealed partial class TrainsPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isTrainsGoodsLibraryExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsGoodsLibraryExpanded = value);
+                _layout.Persist(layout => layout.TrainsPage.IsGoodsLibraryExpanded = value);
         }
     }
 
@@ -152,7 +140,7 @@ public sealed partial class TrainsPageViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _isTrainsPropertiesExpanded, value))
-                PersistLayoutState(layout => layout.TrainsPage.IsPropertiesExpanded = value);
+                _layout.Persist(layout => layout.TrainsPage.IsPropertiesExpanded = value);
         }
     }
 

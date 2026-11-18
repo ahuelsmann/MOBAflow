@@ -32,8 +32,9 @@ public sealed partial class MauiViewModel
 
     partial void OnSelectedProjectIndexChanged(int value)
     {
+        var projects = _projectContext.SolutionViewModel?.Projects;
         if (_isRefreshingProjectPicker
-            || _projectContext?.SolutionViewModel?.Projects is not { } projects
+            || projects is null
             || value < 0
             || value >= projects.Count)
         {
@@ -46,8 +47,8 @@ public sealed partial class MauiViewModel
 
     private void RefreshProjectPicker()
     {
-        var selectedProject = _projectContext?.SelectedProject;
-        var projects = _projectContext?.SolutionViewModel?.Projects;
+        var selectedProject = _projectContext.SelectedProject;
+        var projects = _projectContext.SolutionViewModel?.Projects;
         _isRefreshingProjectPicker = true;
         try
         {
@@ -71,7 +72,7 @@ public sealed partial class MauiViewModel
         {
             var version = ++_projectSelectionVersion;
             _projectSelectionTask = ApplySelectedProjectAsync(
-                _projectSelectionTask, _projectContext?.SelectedProject?.Model, version);
+                _projectSelectionTask, _projectContext.SelectedProject?.Model, version);
             return _projectSelectionTask;
         }
     }
@@ -120,7 +121,7 @@ public sealed partial class MauiViewModel
 
     private async Task SelectRemoteProjectForSelectionAsync(Project? project, CancellationToken cancellationToken)
     {
-        if (project is null || _runtimeHubRemoteClient is null) return;
+        if (project is null) return;
         try
         {
             await _runtimeHubRemoteClient.SelectProjectAsync(project.Id, cancellationToken).ConfigureAwait(false);

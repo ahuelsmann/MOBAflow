@@ -655,7 +655,6 @@
 		
 		Evidence:
 		- Column width bindings work correctly at runtime
-		- GridColumnResizeBehavior reads and writes through these bindings
 		- All pages resize correctly with persisted widths
 		
 		Status: DOCUMENTED ReSharper LIMITATION

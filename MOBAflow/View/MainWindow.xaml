@@ -67,6 +67,7 @@
                         Grid.Column="0"
                         Margin="0"
                         VerticalAlignment="Center"
+                        AutomationProperties.Name="Dark theme"
                         FontSize="12"
                         IsOn="{x:Bind ViewModel.SettingsPage.IsDarkMode, Mode=TwoWay}"
                         OffContent="Light"

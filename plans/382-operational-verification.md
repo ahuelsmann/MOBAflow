@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/382
 **Spec Kit**: Not applicable - measurement and verification of existing behavior; telemetry gaps are closed as observability of existing paths, not as new product behavior
-**Status**: Active; steps 1 and 2 and the first part of step 4 are delivered (#383); step 3 and the rest of step 4 are in the open issue PR
+**Status**: Active; steps 1 to 4 are delivered (#383, #397); open: the first benchmark baseline on the maintainer's machine, step 5 device and hardware measurements, and step 6 thresholds, documentation and completion
 
 ## Purpose and scope
 
@@ -81,8 +81,8 @@ Recorded on main `f37541d9`.
 
 - RF-04 and RF-19 are complete. RF-07 is active; its Linux lane already runs the portable suite, and the benchmark job
   follows its manual-lane pattern.
-- #367 (RF-09, Z21 receive and overload tests) and #330 (RF-25, runtime composition) are integrated. The open RF-09
-  PR #396 also adds tests under `Test/MOBApi/`; whichever of it and this step 3 integrates second merges main once.
+- #367 (RF-09, Z21 receive and overload tests) and #330 (RF-25, runtime composition) are integrated. RF-09 PR #396,
+  which also added tests under `Test/MOBApi/`, and step 3 (#397) are both integrated.
 
 ## Risks
 

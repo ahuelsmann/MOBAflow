@@ -292,13 +292,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Backend/Service/Recording/CoreRecordingEventMappers.cs",
-      "count": 3
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "Backend/Service/TimetableRuntimeProjectionService.cs",
       "count": 1
     },
@@ -1201,13 +1194,6 @@
     {
       "project": "Common",
       "targetFramework": "net10.0",
-      "ruleId": "CA1008",
-      "path": "Common/Configuration/TrainControlSettings.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
       "ruleId": "CA1014",
       "path": "<no-location>",
       "count": 1
@@ -1245,6 +1231,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "Common/Multiplex/MultiplexerHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1008",
+      "path": "SharedUI/Configuration/TrainControlSettings.cs",
       "count": 1
     },
     {
@@ -1332,10 +1325,10 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1805",
-      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "path": "SharedUI/Configuration/LayoutSettings.cs",
       "count": 1
     },
     {
@@ -1364,20 +1357,27 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Common/Configuration/AppSettings.Sections.cs",
-      "count": 6
+      "count": 2
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/LayoutSettings.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "SharedUI/Configuration/PageLayoutSettings.cs",
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Common/Configuration/SettingsPageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/SettingsPageLayoutSettings.cs",
       "count": 1
     },
     {
@@ -1395,24 +1395,24 @@
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "path": "SharedUI/Configuration/LayoutSettings.cs",
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/PageLayoutSettings.cs",
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/SettingsPageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/SettingsPageLayoutSettings.cs",
       "count": 1
     },
     {
@@ -2035,13 +2035,6 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "CA1031",
-      "path": "MOBAsmart/Platforms/Android/MainActivity.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA1031",
       "path": "MOBAsmart/Service/AndroidLocalIpv4AddressSource.cs",
       "count": 1
     },
@@ -2335,13 +2328,6 @@
     {
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
-      "ruleId": "CA2008",
-      "path": "MOBAsmart/Service/MobiStartupService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
       "ruleId": "IDE0005",
       "path": "MOBAsmart/MainPage.xaml.cs",
       "count": 1
@@ -2406,21 +2392,7 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "IDE0290",
-      "path": "MOBAsmart/Service/MobiStartupService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "IDE0290",
       "path": "MOBAsmart/Service/SettingsService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "IDE0330",
-      "path": "MOBAsmart/Service/RemoteRuntimeBridge.cs",
       "count": 1
     },
     {
@@ -2436,13 +2408,6 @@
       "ruleId": "IDE2002",
       "path": "MOBAsmart/MainPage.xaml.cs",
       "count": 9
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "IDE2002",
-      "path": "MOBAsmart/Platforms/Android/MainActivity.cs",
-      "count": 2
     },
     {
       "project": "MOBAsmart",
@@ -2519,13 +2484,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1003",
       "path": "SharedUI/Mobile/MauiViewModel.SignalBox.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1003",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
       "count": 1
     },
     {
@@ -2652,13 +2610,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
       "count": 1
     },
     {
@@ -2791,13 +2742,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
       "count": 1
     },
@@ -2860,15 +2804,8 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1308",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1716",
-      "path": "SharedUI/Interface/IBackgroundService.cs",
+      "path": "SharedUI/Interface/DialogChoice.cs",
       "count": 1
     },
     {
@@ -3002,20 +2939,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 5
+      "count": 3
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.OperatingState.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
       "count": 1
     },
     {
@@ -3045,13 +2975,6 @@
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/TrackPlanViewModel.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3136,13 +3059,6 @@
       "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
       "count": 9
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3393,13 +3309,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE2002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE2002",
       "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
       "count": 1
     },
@@ -3478,7 +3387,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 10
+      "count": 7
     },
     {
       "project": "SharedUI",

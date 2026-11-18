@@ -9,11 +9,11 @@ using System.Speech.Synthesis;
 
 /// <summary>Windows SAPI synthesis to memory. The provider never opens an audio device.</summary>
 /// <param name="settings">Current speech settings.</param>
-/// <param name="windowsDefaultVoice">Reads the Windows default SAPI voice token; defaults to the registry.</param>
-public sealed class SystemSpeechProvider(AppSettings settings, Func<string>? windowsDefaultVoice = null) : ISpeechProvider
+/// <param name="windowsDefaultVoice">Reads the Windows default SAPI voice token; hosts pass <see cref="ReadWindowsDefaultVoice"/>.</param>
+public sealed class SystemSpeechProvider(AppSettings settings, Func<string> windowsDefaultVoice) : ISpeechProvider
 {
     private const string VoicesKey = @"Software\Microsoft\Speech\Voices";
-    private readonly Func<string> _windowsDefaultVoice = windowsDefaultVoice ?? ReadWindowsDefaultVoice;
+    private readonly Func<string> _windowsDefaultVoice = windowsDefaultVoice ?? throw new ArgumentNullException(nameof(windowsDefaultVoice));
 
     /// <inheritdoc />
     public string Id => "system-speech";
@@ -81,7 +81,7 @@ public sealed class SystemSpeechProvider(AppSettings settings, Func<string>? win
     }
 
     /// <summary>The SAPI default voice token, per user with the machine-wide value as fallback; empty if unreadable.</summary>
-    private static string ReadWindowsDefaultVoice()
+    public static string ReadWindowsDefaultVoice()
     {
         try
         {

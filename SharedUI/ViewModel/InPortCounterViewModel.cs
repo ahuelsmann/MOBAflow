@@ -2,7 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
-using Common.Configuration;
+using Configuration;
 using Common.Events;
 using Common.Extension;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -25,7 +25,7 @@ public sealed partial class InPortCounterViewModel : ObservableObject, IDisposab
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly SettingsPageViewModel _settingsPage;
     private readonly ISettingsService _settingsService;
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly ILogger<InPortCounterViewModel> _logger;
     private readonly Guid _snapshotSubscription;
     private MobaRuntimeSnapshot _latestRuntimeSnapshot;

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
+using SharedUI.Configuration;
 using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
@@ -10,13 +10,10 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Service;
-using SharedUI.Interface;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
-using InPortCounterViewModel = SharedUI.ViewModel.InPortCounterViewModel;
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
-using MonitorPageViewModel = SharedUI.ViewModel.MonitorPageViewModel;
 
 public sealed partial class MainWindow
 {
@@ -26,19 +23,13 @@ public sealed partial class MainWindow
     internal event EventHandler? ShutdownRequested;
 
     private readonly NavigationService _navigationService;
-    // No shell surface binds these page states; the window disposes them because the host never disposes its container.
-    private readonly InPortCounterViewModel _counters;
-    private readonly MonitorPageViewModel _monitor;
-    private HealthCheckService? _healthCheckService;
-    private readonly RestApiStatusService _restApiStatusService;
-    private readonly RestApiProcessService _restApiProcessService;
-    private readonly IUiDispatcher _uiDispatcher;
+    // Host services behind the window: status polling, health checks, runtime observers and their shutdown.
+    private readonly MainWindowLifecycleService _lifecycle;
     private readonly List<PageMetadata> _pages;
     private readonly MainWindowNavigationBootstrapper _navigationBootstrapper;
     private readonly ILogger<MainWindow> _logger;
     private bool _isClosing;
     private bool _deferredUiStartupStarted;
-    private bool _deferredUiStartupCompleted;
 
     // NEU: Window Activation Service für InputActivationListener
     private readonly WindowActivationService _windowActivationService;
@@ -72,15 +63,11 @@ public sealed partial class MainWindow
 
     internal MainWindow(
         MainWindowViewModel viewModel,
-        InPortCounterViewModel counters,
-        MonitorPageViewModel monitor,
+        MainWindowLifecycleService lifecycle,
         NavigationService navigationService,
-        IUiDispatcher uiDispatcher,
         WinUiWindowContext windowContext,
         List<PageMetadata> pages,
-        AppSettings appSettings,
-        RestApiStatusService restApiStatusService,
-        RestApiProcessService restApiProcessService,
+        UiSettings appSettings,
         ILogger<WindowActivationService> windowActivationLogger,
         ILogger<MainWindow> logger)
     {
@@ -90,12 +77,8 @@ public sealed partial class MainWindow
         {
             var timer = Stopwatch.StartNew();
             ViewModel = viewModel;
-            _counters = counters;
-            _monitor = monitor;
+            _lifecycle = lifecycle;
             _navigationService = navigationService;
-            _uiDispatcher = uiDispatcher;
-            _restApiStatusService = restApiStatusService;
-            _restApiProcessService = restApiProcessService;
             _pages = pages;
             var navigationItemFactory = new NavigationItemFactory(appSettings);
             _navigationBootstrapper = new MainWindowNavigationBootstrapper(
@@ -143,8 +126,7 @@ public sealed partial class MainWindow
     {
         var timer = Stopwatch.StartNew();
         InitializeNavigation();
-        _restApiStatusService.Start();
-        _deferredUiStartupCompleted = true;
+        _lifecycle.StartStatusPolling();
         _logger.LogInformation("[Startup] Deferred MainWindow UI startup completed in {ElapsedMs}ms", timer.ElapsedMilliseconds);
     }
 
@@ -216,8 +198,6 @@ public sealed partial class MainWindow
 
     private void SubscribeWindowEvents()
     {
-        ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
-        ViewModel.NavigationRequested += OnNavigationRequested;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         ViewModel.SettingsPage.PropertyChanged += SettingsPage_PropertyChanged;
         _navigationService.Navigated += OnNavigationServiceNavigated;
@@ -237,43 +217,13 @@ public sealed partial class MainWindow
     {
         if (e.NewState == InputActivationState.Activated)
         {
-            // Z21-Status refreshen wenn Fenster aktiv wird
-            ViewModel?.RefreshZ21StatusCommand?.Execute(null);
-            if (_deferredUiStartupCompleted)
-            {
-                _restApiStatusService?.ResumePolling();
-            }
+            ViewModel.RefreshZ21StatusCommand.Execute(null);
+            _lifecycle.ResumeStatusPolling();
         }
         else if (e.NewState == InputActivationState.Deactivated)
         {
-            // SignalR/Polling pausieren bei Inaktivität
-            if (_deferredUiStartupCompleted)
-            {
-                _restApiStatusService?.PausePolling();
-            }
+            _lifecycle.PauseStatusPolling();
         }
-    }
-
-    /// <summary>
-    /// Initializes health checks after the window is visible.
-    /// </summary>
-    public void InitializeHealthChecks(HealthCheckService healthCheckService)
-    {
-        ArgumentNullException.ThrowIfNull(healthCheckService);
-
-        if (_healthCheckService != null)
-        {
-            return;
-        }
-
-        _healthCheckService = healthCheckService;
-        _healthCheckService.HealthStatusChanged += OnHealthStatusChanged;
-        _healthCheckService.StartPeriodicChecks();
-
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            ViewModel.SystemStatus.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
-        });
     }
 
     /// <summary>
@@ -326,6 +276,10 @@ public sealed partial class MainWindow
 
         // Do not gate on XamlRoot: during the window constructor it is often still null.
         RootGrid.RequestedTheme = isDarkMode ? ElementTheme.Dark : ElementTheme.Light;
+
+        // The system draws the caption buttons outside XAML; without a preferred theme their glyphs follow the
+        // Windows app mode instead of the app toggle and stay white on the light title bar.
+        AppWindow.TitleBar.PreferredTheme = isDarkMode ? TitleBarTheme.Dark : TitleBarTheme.Light;
     }
 
     internal async Task<bool> PrepareForShutdownAsync()
@@ -335,73 +289,20 @@ public sealed partial class MainWindow
             return true;
         }
 
-        try
+        if (!await _lifecycle.ConfirmShutdownAsync().ConfigureAwait(true))
         {
-            if (!await ViewModel.PrepareForShutdownAsync(ReleaseRuntimeObservers))
-            {
-                return false;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "ViewModel shutdown workflow failed");
+            return false;
         }
 
         _isClosing = true;
         UnsubscribeWindowEvents();
-
-        // Normally already released before the runtimes stopped; Dispose is idempotent and covers a failed shell workflow.
-        ReleaseRuntimeObservers();
-
-        _restApiStatusService.Stop();
-
-        try
-        {
-            await _restApiStatusService.DisposeAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "RestApiStatusService.DisposeAsync failed");
-        }
-
-        try
-        {
-            _restApiProcessService.Stop();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "RestApiProcessService.Stop failed");
-        }
-
-        if (_healthCheckService != null)
-        {
-            _healthCheckService.HealthStatusChanged -= OnHealthStatusChanged;
-            _healthCheckService.StopPeriodicChecks();
-            try
-            {
-                _healthCheckService.Dispose();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "HealthCheckService.Dispose failed");
-            }
-        }
-
+        await _lifecycle.StopAsync().ConfigureAwait(true);
         DetachWindowBindings();
         return true;
     }
 
-    /// <summary>The shell confirmed shutdown; the counter and traffic monitor stop following the runtime.</summary>
-    private void ReleaseRuntimeObservers()
-    {
-        _counters.Dispose();
-        _monitor.Dispose();
-    }
-
     private void UnsubscribeWindowEvents()
     {
-        ViewModel.ExitApplicationRequested -= OnExitApplicationRequested;
-        ViewModel.NavigationRequested -= OnNavigationRequested;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.SettingsPage.PropertyChanged -= SettingsPage_PropertyChanged;
         _navigationService.Navigated -= OnNavigationServiceNavigated;
@@ -431,47 +332,6 @@ public sealed partial class MainWindow
         }
     }
 
-    private void OnExitApplicationRequested(object? sender, EventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        RequestShutdown();
-    }
-
-    private void OnNavigationRequested(object? sender, string tag)
-    {
-        _ = sender; // Suppress unused parameter warning
-        HandleNavigationRequestedAsync(tag).Observe(ex => _logger.LogWarning(ex, "Navigation request failed"));
-    }
-
-    private async Task HandleNavigationRequestedAsync(string tag)
-    {
-        try
-        {
-            await _navigationService.NavigateToPageAsync(tag);
-
-            // Update NavigationView selection to match the navigated page
-            var navItem = MainNavigation.MenuItems.OfType<NavigationViewItem>()
-                .FirstOrDefault(item => string.Equals(item.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
-            if (navItem != null)
-            {
-                MainNavigation.SelectedItem = navItem;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Navigation request failed for {Tag}", tag);
-        }
-    }
-
-    private void OnHealthStatusChanged(object? sender, HealthStatusChangedEventArgs e)
-    {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            ViewModel.SystemStatus.UpdateHealthStatus(e.StatusMessage);
-        });
-    }
-
     private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
         _ = sender; // Suppress unused parameter warning
@@ -496,18 +356,10 @@ public sealed partial class MainWindow
     private void TrackPower_Toggled(object sender, RoutedEventArgs e)
     {
         _ = e; // Suppress unused parameter warning
-        if (sender is not ToggleSwitch toggleSwitch) return;
-
-        // Ignore programmatic UI synchronization updates from runtime snapshots.
-        if (toggleSwitch.IsOn == ViewModel.IsTrackPowerOn)
+        // The shell decides whether the position is an operator request or only the runtime synchronization.
+        if (sender is ToggleSwitch toggleSwitch)
         {
-            return;
-        }
-
-        // Execute track power command
-        if (ViewModel.SetTrackPowerCommand.CanExecute(toggleSwitch.IsOn))
-        {
-            ViewModel.SetTrackPowerCommand.Execute(toggleSwitch.IsOn);
+            ViewModel.ApplyTrackPowerSwitchCommand.Execute(toggleSwitch.IsOn);
         }
     }
 

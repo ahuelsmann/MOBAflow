@@ -77,6 +77,7 @@ internal sealed class TestProjectRuntimeHost : IAsyncDisposable
         StopTransitionService = new JourneyStopTransitionService(),
         RuntimeStateStore = new Mock<IJourneyRuntimeStateStore>().Object,
         TimeProvider = TimeProvider.System,
-        LoggerFactory = NullLoggerFactory.Instance
+        LoggerFactory = NullLoggerFactory.Instance,
+        CounterPersistence = _ => InPortCounterPersistence.InMemory
     };
 }

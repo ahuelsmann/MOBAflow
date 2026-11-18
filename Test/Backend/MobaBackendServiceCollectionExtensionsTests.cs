@@ -2,6 +2,7 @@
 namespace Moba.Test.Backend;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Moba.Backend;
 using Moba.Backend.Interface;
@@ -14,6 +15,7 @@ using Moba.Sound;
 using Moba.Speech.Base;
 using Moba.Domain;
 using Moba.Domain.Enum;
+using Moba.Test.Helpers;
 using Moq;
 
 /// <summary>
@@ -110,6 +112,69 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
         Assert.That(second, Is.SameAs(first));
     }
 
+    [Test]
+    public async Task AddMobaBackendServices_ComposesTransportCountersAndActionContextFromRegisteredServices()
+    {
+        var provider = BuildServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var context = provider.GetRequiredService<ActionExecutionContext>();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<IZ21>().TrafficMonitor,
+                Is.SameAs(provider.GetRequiredService<Z21Monitor>()));
+            Assert.That(provider.GetRequiredService<InPortCounterPersistence>(),
+                Is.SameAs(InPortCounterPersistence.InMemory), "A host without its own counter registration keeps counts in memory.");
+            Assert.That(provider.GetRequiredService<InPortCounterService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<ILocomotiveWhistleAutomationService>(),
+                Is.InstanceOf<LocomotiveWhistleAutomationService>());
+            Assert.That(context.SpeechOutput, Is.SameAs(provider.GetRequiredService<ISpeechOutput>()));
+            Assert.That(context.SoundPlayer, Is.SameAs(provider.GetRequiredService<ISoundPlayer>()));
+        }
+    }
+
+    [Test]
+    public async Task Runtime_WithoutTheHostEndpointSource_FailsInsteadOfChoosingAZ21ItSelf()
+    {
+        var services = CreateServiceCollection();
+        services.RemoveAll<IZ21EndpointSource>();
+        var provider = services.BuildServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+
+        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IMobaRuntime>());
+    }
+
+    [Test]
+    public async Task EveryRegistrationResolvesOnceTheHostSuppliesBusSettingsAudioAndEndpointSource()
+    {
+        var services = CreateServiceCollection();
+        var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+        await using var providerLifetime = provider.ConfigureAwait(false);
+
+        var failures = ServiceRegistrations.ResolveAll(services, provider, skip: _ => false, out var resolved);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(failures, Is.Empty);
+            Assert.That(resolved, Is.GreaterThan(50));
+        }
+    }
+
+    [Test]
+    public async Task ActionExecutionContext_WithoutTheHostSoundPlayer_FailsInsteadOfRunningWithoutSound()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
+        services.AddSingleton(new AppSettings());
+        services.AddSingleton<IEventBus>(sp => new EventBus(sp.GetRequiredService<ILogger<EventBus>>()));
+        services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
+        services.AddMobaBackendServices();
+        var provider = services.BuildServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+
+        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<ActionExecutionContext>());
+    }
+
     private static ServiceProvider BuildServiceProvider()
         => CreateServiceCollection().BuildServiceProvider();
 
@@ -121,6 +186,7 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
         services.AddSingleton<IEventBus>(sp => new EventBus(sp.GetRequiredService<ILogger<EventBus>>()));
         services.AddSingleton<ISpeechOutput, NullSpeechOutput>();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
+        services.AddSingleton(TestRuntimes.NoZ21);
         services.AddMobaBackendServices();
         return services;
     }

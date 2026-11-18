@@ -10,7 +10,7 @@ using Microsoft.Windows.Storage.Pickers;
 using Moba.WinUI.Service;
 using Moba.WinUI.ViewModel;
 using SharedUI.Interface;
-using SharedUI.Shell;
+using SharedUI.Service;
 using SharedUI.ViewModel;
 
 /// <summary>
@@ -21,16 +21,16 @@ using SharedUI.ViewModel;
 internal sealed partial class SettingsPage
 {
     public SettingsPageViewModel ViewModel { get; }
-    private readonly ILogger<SettingsPage>? _logger;
-    private readonly INavigationService? _navigationService;
+    private readonly LayoutPersistenceService _layout;
+    private readonly ILogger<SettingsPage> _logger;
     public SettingsPage(
         SettingsPageViewModel viewModel,
-        ILogger<SettingsPage>? logger = null,
-        INavigationService? navigationService = null)
+        LayoutPersistenceService layout,
+        ILogger<SettingsPage> logger)
     {
         ViewModel = viewModel;
+        _layout = layout;
         _logger = logger;
-        _navigationService = navigationService;
         InitializeComponent();
     }
 
@@ -38,7 +38,7 @@ internal sealed partial class SettingsPage
     {
         _ = sender;
         _ = e;
-        HandleBrowsePhotoFolderAsync().Observe(ex => _logger?.LogWarning(ex, "Browse photo folder failed"));
+        HandleBrowsePhotoFolderAsync().Observe(ex => _logger.LogWarning(ex, "Browse photo folder failed"));
     }
 
     private async Task HandleBrowsePhotoFolderAsync()
@@ -61,7 +61,7 @@ internal sealed partial class SettingsPage
 
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Browse photo folder failed");
+            _logger.LogWarning(ex, "Browse photo folder failed");
         }
     }
 
@@ -69,7 +69,7 @@ internal sealed partial class SettingsPage
     {
         _ = sender;
         _ = e;
-        HandleResetLayoutButtonAsync().Observe(ex => _logger?.LogWarning(ex, "Reset layout failed"));
+        HandleResetLayoutButtonAsync().Observe(ex => _logger.LogWarning(ex, "Reset layout failed"));
     }
 
     private async Task HandleResetLayoutButtonAsync()
@@ -87,21 +87,21 @@ internal sealed partial class SettingsPage
     {
         _ = sender;
         _ = e;
-        HandleBrowsePiperFileAsync(".exe", path => ViewModel.PiperExecutablePath = path).Observe(ex => _logger?.LogWarning(ex, "Browse Piper executable failed"));
+        HandleBrowsePiperFileAsync(".exe", path => ViewModel.PiperExecutablePath = path).Observe(ex => _logger.LogWarning(ex, "Browse Piper executable failed"));
     }
 
     private void BrowsePiperModel_Click(object sender, RoutedEventArgs e)
     {
         _ = sender;
         _ = e;
-        HandleBrowsePiperFileAsync(".onnx", path => ViewModel.PiperModelPath = path).Observe(ex => _logger?.LogWarning(ex, "Browse Piper model failed"));
+        HandleBrowsePiperFileAsync(".onnx", path => ViewModel.PiperModelPath = path).Observe(ex => _logger.LogWarning(ex, "Browse Piper model failed"));
     }
 
     private void BrowsePiperConfig_Click(object sender, RoutedEventArgs e)
     {
         _ = sender;
         _ = e;
-        HandleBrowsePiperFileAsync(".json", path => ViewModel.PiperConfigPath = path).Observe(ex => _logger?.LogWarning(ex, "Browse Piper config failed"));
+        HandleBrowsePiperFileAsync(".json", path => ViewModel.PiperConfigPath = path).Observe(ex => _logger.LogWarning(ex, "Browse Piper config failed"));
     }
 
     private static async Task HandleBrowsePiperFileAsync(string fileType, Action<string> applyPath)

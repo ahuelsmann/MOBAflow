@@ -10,7 +10,7 @@ using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.SharedUI.Interface;
@@ -157,14 +157,15 @@ internal sealed class TrainControlViewModelPerformanceTests
             NullLogger<TrainControlViewModel>.Instance,
             ImmediateUiDispatcher.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
-            new NullFunctionAppearancePicker());
+            new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState());
     }
 
     private static Mock<ISettingsService> CreateSettingsServiceMock()
     {
         var settingsServiceMock = new Mock<ISettingsService>();
-        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
-        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new UiSettings());
+        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         return settingsServiceMock;
     }
 

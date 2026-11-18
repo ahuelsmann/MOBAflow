@@ -59,9 +59,9 @@ public sealed partial class SignalBoxCanvasControl
     private ILogger<SignalBoxCanvasControl>? _logger;
 
     /// <summary>
-    /// Attaches an optional logger for drop-handling failures (control is not constructed via DI).
+    /// Attaches the logger for drop-handling failures (XAML creates the control, so it has no constructor injection).
     /// </summary>
-    internal void AttachLogger(ILogger<SignalBoxCanvasControl>? logger) => _logger = logger;
+    internal void AttachLogger(ILogger<SignalBoxCanvasControl> logger) => _logger = logger;
 
     public static readonly DependencyProperty PlanViewModelProperty = DependencyProperty.Register(
         nameof(PlanViewModel),

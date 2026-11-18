@@ -5,7 +5,8 @@ using CommunityToolkit.Maui;
 
 using Extensions;
 
-using Service;
+using SharedUI.Extensions;
+using SharedUI.Mobile;
 
 public static class MauiProgram
 {
@@ -23,16 +24,12 @@ public static class MauiProgram
 
         builder.Services
             .AddMobiPlatformServices()
-            .AddMobiConfiguration()
             .AddMobiNetworkServices()
-            .AddMobiRemoteRuntimeServices()
-            .AddMobiViewModels()
-            .AddMobiViews()
-            .AddMobiStartupServices();
+            .AddMobiViews();
 
         var app = builder.Build();
         app.Services.GetRequiredService<MobiStartupService>().Initialize();
-        MobiDiContainerValidator.ValidateCoreServices(app.Services);
+        app.Services.ValidateMobaMobileServices();
         return app;
     }
 }

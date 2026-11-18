@@ -16,7 +16,7 @@ internal sealed class DisplayProtocolClientTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
 
         // Act
         var outcome = await client.SendRequestAsync(CreateHello(), options: SingleAttempt);
@@ -38,7 +38,7 @@ internal sealed class DisplayProtocolClientTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         endpoint.HoldNextResponse();
 
         // Act
@@ -70,7 +70,7 @@ internal sealed class DisplayProtocolClientTests
         var timeProvider = new ManualTimeProvider();
         var endpoint = new FakeDisplayEndpoint(timeProvider);
         endpoint.DropNextResponse();
-        using var client = new DisplayProtocolClient(endpoint, timeProvider: timeProvider);
+        using var client = new DisplayProtocolClient(endpoint, timeProvider);
         var options = new DisplayRequestOptions(2, TimeSpan.FromSeconds(10), TimeSpan.Zero);
 
         // Act
@@ -101,7 +101,7 @@ internal sealed class DisplayProtocolClientTests
         var endpoint = new FakeDisplayEndpoint(timeProvider);
         endpoint.DropNextResponse();
         endpoint.DropNextResponse();
-        using var client = new DisplayProtocolClient(endpoint, timeProvider: timeProvider);
+        using var client = new DisplayProtocolClient(endpoint, timeProvider);
         var options = new DisplayRequestOptions(2, TimeSpan.FromSeconds(10), TimeSpan.Zero);
 
         // Act
@@ -135,7 +135,7 @@ internal sealed class DisplayProtocolClientTests
             DisplayResultCode.Busy,
             DisplayResultFlags.Retryable,
             retryAfterMilliseconds: 30_000);
-        using var client = new DisplayProtocolClient(endpoint, timeProvider: timeProvider);
+        using var client = new DisplayProtocolClient(endpoint, timeProvider);
         var options = new DisplayRequestOptions(2, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(2));
 
         // Act
@@ -164,7 +164,7 @@ internal sealed class DisplayProtocolClientTests
         var timeProvider = new ManualTimeProvider();
         var endpoint = new FakeDisplayEndpoint(timeProvider);
         endpoint.DelayNextResponse(TimeSpan.FromSeconds(2));
-        using var client = new DisplayProtocolClient(endpoint, timeProvider: timeProvider);
+        using var client = new DisplayProtocolClient(endpoint, timeProvider);
 
         // Act
         var requestTask = client.SendRequestAsync(
@@ -190,7 +190,7 @@ internal sealed class DisplayProtocolClientTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.DropNextResponse();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         using var cancellation = new CancellationTokenSource();
         var options = new DisplayRequestOptions(3, TimeSpan.FromMinutes(1), TimeSpan.Zero);
 
@@ -218,7 +218,7 @@ internal sealed class DisplayProtocolClientTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.FailNextSend();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
 
         // Act
         var outcome = await client.SendRequestAsync(
@@ -240,7 +240,7 @@ internal sealed class DisplayProtocolClientTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.DuplicateNextResponse();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var anomalies = new List<DisplayTransportAnomalyEventArgs>();
         client.TransportAnomaly += (_, eventArgs) => anomalies.Add(eventArgs);
 
@@ -267,7 +267,7 @@ internal sealed class DisplayProtocolClientTests
         var timeProvider = new ManualTimeProvider();
         var endpoint = new FakeDisplayEndpoint(timeProvider);
         endpoint.HoldNextResponse();
-        using var client = new DisplayProtocolClient(endpoint, timeProvider: timeProvider);
+        using var client = new DisplayProtocolClient(endpoint, timeProvider);
         var anomalies = new List<DisplayTransportAnomalyEventArgs>();
         client.TransportAnomaly += (_, eventArgs) => anomalies.Add(eventArgs);
 
@@ -297,7 +297,7 @@ internal sealed class DisplayProtocolClientTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.UseWrongFrameIdForNextResponse();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var frame = new byte[] { 0xF8, 0x00 };
         var begin = new BeginFramePayload(
             1,
@@ -324,7 +324,7 @@ internal sealed class DisplayProtocolClientTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.UseWrongSessionIdForNextResponse();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
 
         // Act
         var outcome = await client.SendRequestAsync(
@@ -342,7 +342,7 @@ internal sealed class DisplayProtocolClientTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.OmitResponseFlagForNextResponse();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
 
         // Act
         var outcome = await client.SendRequestAsync(
@@ -360,7 +360,7 @@ internal sealed class DisplayProtocolClientTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.UseUnexpectedMessageTypeForNextResponse();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
 
         // Act
         var outcome = await client.SendRequestAsync(
@@ -378,7 +378,7 @@ internal sealed class DisplayProtocolClientTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.InvalidateNextResponsePayload();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
 
         // Act
         var outcome = await client.SendRequestAsync(
@@ -397,7 +397,7 @@ internal sealed class DisplayProtocolClientTests
         var timeProvider = new ManualTimeProvider();
         var endpoint = new FakeDisplayEndpoint(timeProvider);
         endpoint.CorruptNextResponse();
-        using var client = new DisplayProtocolClient(endpoint, timeProvider: timeProvider);
+        using var client = new DisplayProtocolClient(endpoint, timeProvider);
         var anomalies = new List<DisplayTransportAnomalyEventArgs>();
         client.TransportAnomaly += (_, eventArgs) => anomalies.Add(eventArgs);
 
@@ -426,7 +426,7 @@ internal sealed class DisplayProtocolClientTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.DropNextResponse();
-        var client = new DisplayProtocolClient(endpoint);
+        var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
 
         // Act
         var requestTask = client.SendRequestAsync(
@@ -445,7 +445,7 @@ internal sealed class DisplayProtocolClientTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
 
         // Act and assert
         await Assert.ThrowsAsync<ArgumentException>(async () =>

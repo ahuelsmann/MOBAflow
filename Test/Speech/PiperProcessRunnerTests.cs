@@ -29,7 +29,7 @@ internal sealed class PiperProcessRunnerTests
     {
         // ping keeps the batch running for about 30 seconds without reading stdin.
         var executable = Script("@ping -n 30 127.0.0.1 >nul");
-        var runner = new PiperProcessRunner();
+        var runner = new PiperProcessRunner(TimeProvider.System);
 
         var result = await runner.SynthesizeAsync(Request(executable, LongText, TimeSpan.FromSeconds(1)))
             .WaitAsync(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
@@ -45,7 +45,7 @@ internal sealed class PiperProcessRunnerTests
     public async Task ProcessThatReadsTheText_ReturnsItsOutput()
     {
         var executable = Script("@more >nul", "@echo done");
-        var runner = new PiperProcessRunner();
+        var runner = new PiperProcessRunner(TimeProvider.System);
 
         var result = await runner.SynthesizeAsync(Request(executable, "Next stop Minden.", TimeSpan.FromSeconds(20)))
             .WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
@@ -61,7 +61,7 @@ internal sealed class PiperProcessRunnerTests
     public void CallerCancellation_WhileTheTextIsWritten_Throws()
     {
         var executable = Script("@ping -n 30 127.0.0.1 >nul");
-        var runner = new PiperProcessRunner();
+        var runner = new PiperProcessRunner(TimeProvider.System);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 
         Assert.That(

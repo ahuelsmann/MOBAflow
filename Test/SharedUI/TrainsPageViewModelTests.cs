@@ -3,7 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Domain;
 using Moba.Domain.Enum;
 using Moba.SharedUI.Interface;
@@ -20,7 +20,7 @@ internal sealed partial class TrainsPageViewModelTests : IDisposable
     private Mock<ISolutionSession> _session = null!;
     private Mock<IConnectionRuntime> _runtime = null!;
     private Mock<ISettingsService> _persistence = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private TestRollingStockPages _stock = null!;
     private TrainsPageViewModel _page = null!;
 
@@ -36,7 +36,7 @@ internal sealed partial class TrainsPageViewModelTests : IDisposable
         _runtime = new Mock<IConnectionRuntime>();
         _runtime.Setup(value => value.UpdateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);
@@ -44,8 +44,8 @@ internal sealed partial class TrainsPageViewModelTests : IDisposable
         _page = CreatePage();
     }
 
-    private TrainsPageViewModel CreatePage() => new(_session.Object, _runtime.Object, _persistence.Object,
-        new LayoutColumnWidthsViewModel(), _stock.GetLocomotivesPage(_session.Object),
+    private TrainsPageViewModel CreatePage() => new(_session.Object, _runtime.Object, TestLayouts.Create(_persistence.Object),
+        _stock.GetLocomotivesPage(_session.Object),
         _stock.GetWagonsPage(_session.Object), NullLogger<TrainsPageViewModel>.Instance);
 
     [TearDown]

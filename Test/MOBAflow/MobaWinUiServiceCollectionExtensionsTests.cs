@@ -4,9 +4,11 @@ namespace Moba.Test.MOBAflow;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
+using Moba.Backend.Service.Recording;
 using Moba.Backend.Service.ProjectRuntimes;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
+using Moba.Display.Transport;
 using Moba.Domain;
 
 using Microsoft.Extensions.Configuration;
@@ -16,10 +18,13 @@ using Microsoft.Extensions.Logging;
 
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.TrainControl;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
 using Moba.Speech.Base;
+using Moba.Speech.Piper;
+using Moba.Sound;
 using Moba.Test.Helpers;
 using Moba.Test.Speech;
 using Moq;
@@ -30,6 +35,8 @@ using Moq;
 [TestFixture]
 internal sealed class MobaWinUiServiceCollectionExtensionsTests
 {
+    private static readonly string[] SpeechProviderIds = ["piper", "system-speech"];
+
     [Test]
     public async Task UsageReaderAndProjection_ResolveTheExistingDesktopOwnerAndSharedPageInstance()
     {
@@ -56,13 +63,13 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         Assert.Multiple(() =>
         {
             Assert.That(provider.GetRequiredService<IUiDispatcher>(), Is.Not.Null);
-            Assert.That(provider.GetRequiredService<IEventBus>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<UiThreadEventBusDecorator>(), Is.Not.Null);
             Assert.That(
                 provider.GetRequiredService<List<PageMetadata>>(),
                 Has.One.Matches<PageMetadata>(page =>
                     page is not null && page.Tag == "recorder"
                     && page.Title == "Recorder"
-                    && page.Category == global::Moba.Common.Navigation.NavigationCategory.Monitoring
+                    && page.Category == global::Moba.WinUI.Service.NavigationCategory.Monitoring
                     && page.Order == 20));
         });
     }
@@ -76,6 +83,8 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         Assert.Multiple(() =>
         {
             Assert.That(provider.GetRequiredService<IMobaRuntime>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IEventBus>(), Is.InstanceOf<RecordingEventBusDecorator>(),
+                "The application bus records published events, so it needs the backend recording services.");
             Assert.That(replayService, Is.Not.Null);
             Assert.That(provider.GetRequiredService<IRecordingReplayStatusSource>(), Is.SameAs(replayService));
         });
@@ -108,6 +117,83 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     }
 
     [Test]
+    public async Task EveryRegistrationOfTheHostResolvesExceptTheTypesThatNeedTheXamlWindow()
+    {
+        var services = CreateValidatorServices(services => services.AddMobaWinUiStartupServices());
+        // The real dispatcher needs the WinUI thread; the appended test double must be the only registration.
+        services.RemoveAll<IUiDispatcher>();
+        services.AddSingleton(Mock.Of<IUiDispatcher>());
+        var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
+        await using var providerLifetime = provider.ConfigureAwait(false);
+
+        var failures = ServiceRegistrations.ResolveAll(services, provider, NeedsTheXamlWindow, out var resolved);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(failures, Is.Empty);
+            Assert.That(resolved, Is.GreaterThan(150), "The host registers its backend, services and ViewModels.");
+            // The work behind the main window and the deferred startup resolve without the window itself.
+            Assert.That(services.Any(descriptor => descriptor.ServiceType == typeof(MainWindowLifecycleService)), Is.True);
+            Assert.That(services.Any(descriptor => descriptor.ServiceType == typeof(PostStartupInitializationService)), Is.True);
+        }
+    }
+
+    /// <summary>
+    /// XAML creates the window and its pages on the UI thread of a running app, so a headless test cannot
+    /// construct them, and the matrix ViewModel creates a WinUI brush. The FastDebug build compiles their constructors.
+    /// </summary>
+    private static bool NeedsTheXamlWindow(Type serviceType) =>
+        typeof(Microsoft.UI.Xaml.Window).IsAssignableFrom(serviceType)
+        || typeof(Microsoft.UI.Xaml.UIElement).IsAssignableFrom(serviceType)
+        || serviceType == typeof(Moba.WinUI.ViewModel.MatrixPageViewModel);
+
+    [Test]
+    public async Task ShellTrainControlAndLocomotiveManagementResolveTheirRequiredDesktopServices()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<IRuntimeRoutingState>(), Is.InstanceOf<NullRuntimeRoutingState>());
+            Assert.That(provider.GetRequiredService<TrainControlViewModel>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<MainWindowViewModel>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<LocomotiveManagementViewModel>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<SettingsPageViewModel>().FeatureToggleItems, Is.Not.Empty,
+                "The desktop page provider lists the toggleable pages.");
+        }
+    }
+
+    [Test]
+    public async Task HostSpeechBackendNetworkAndDisplayServicesResolveTheirRequiredDependencies()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var context = provider.GetRequiredService<ActionExecutionContext>();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<IPiperProcessRunner>(), Is.InstanceOf<PiperProcessRunner>());
+            Assert.That(provider.GetServices<ISpeechProvider>().Select(speechProvider => speechProvider.Id),
+                Is.EqualTo(SpeechProviderIds));
+            Assert.That(provider.GetRequiredService<IWavePlayer>(), Is.InstanceOf<CancellableWavePlayer>());
+            Assert.That(context.SpeechOutput, Is.SameAs(provider.GetRequiredService<ISpeechOutput>()));
+            Assert.That(context.SoundPlayer, Is.SameAs(provider.GetRequiredService<ISoundPlayer>()));
+            Assert.That(provider.GetRequiredService<IZ21>().TrafficMonitor,
+                Is.SameAs(provider.GetRequiredService<Z21Monitor>()));
+            Assert.That(provider.GetRequiredService<InPortCounterService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<ILocomotiveWhistleAutomationService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IRuntimeHubHostClient>(), Is.InstanceOf<RuntimeHubHostClient>());
+            Assert.That(provider.GetRequiredService<IPhotoHubClient>(), Is.InstanceOf<PhotoHubClient>());
+            Assert.That(provider.GetRequiredService<RestApiProcessService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<RestApiStatusService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<SystemStatusViewModel>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IFrameSender>(), Is.InstanceOf<UdpDisplayFrameSender>());
+            Assert.That(provider.GetRequiredService<IDisplayDeviceClient>(), Is.InstanceOf<UdpDisplayDeviceClient>());
+        }
+    }
+
+    [Test]
     public void AddMobaWinUiViewModelsAndWindow_WiresWorkflowDryRunServices()
     {
         var provider = CreateValidatorServiceProvider();
@@ -136,16 +222,16 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             services.AddSingleton<ISettingsService>(sp =>
             {
                 var settingsService = new Mock<ISettingsService>();
-                settingsService.Setup(value => value.GetSettings()).Returns(sp.GetRequiredService<AppSettings>());
-                settingsService.Setup(value => value.SaveSettingsAsync(It.IsAny<AppSettings>()))
-                    .Callback<AppSettings>(value => savedSettings.Add(System.Text.Json.JsonSerializer.Serialize(value)))
+                settingsService.Setup(value => value.GetSettings()).Returns(sp.GetRequiredService<UiSettings>());
+                settingsService.Setup(value => value.SaveSettingsAsync(It.IsAny<UiSettings>()))
+                    .Callback<UiSettings>(value => savedSettings.Add(System.Text.Json.JsonSerializer.Serialize(value)))
                     .Returns(Task.CompletedTask);
                 return settingsService.Object;
             });
         });
         await using (provider.ConfigureAwait(false))
         {
-            var settings = provider.GetRequiredService<AppSettings>();
+            var settings = provider.GetRequiredService<UiSettings>();
             settings.Speech.TestMessage = "Settings test";
             var viewModel = provider.GetRequiredService<SettingsPageViewModel>();
             await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
@@ -200,7 +286,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(provider.GetRequiredService<ISettingsService>().GetSettings(), Is.SameAs(shell.SettingsPage.Settings));
             Assert.That(provider.GetRequiredService<LocomotivesPageViewModel>(), Is.SameAs(locomotives));
             Assert.That(locomotives.Management, Is.SameAs(provider.GetRequiredService<LocomotiveManagementViewModel>()));
-            Assert.That(locomotives.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
+            Assert.That(locomotives.LayoutColumnWidths, Is.SameAs(provider.GetRequiredService<LayoutPersistenceService>().ColumnWidths));
         }
     }
 
@@ -215,7 +301,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             Assert.That(shell.WagonsPage, Is.SameAs(wagons));
             Assert.That(provider.GetRequiredService<WagonsPageViewModel>(), Is.SameAs(wagons));
-            Assert.That(wagons.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
+            Assert.That(wagons.LayoutColumnWidths, Is.SameAs(provider.GetRequiredService<LayoutPersistenceService>().ColumnWidths));
             Assert.That(provider.GetRequiredService<ISettingsService>().GetSettings(), Is.SameAs(shell.SettingsPage.Settings));
         }
         shell.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
@@ -239,7 +325,6 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(shell.TrainsPage, Is.SameAs(trains));
             Assert.That(trains.LocomotivesPage, Is.SameAs(provider.GetRequiredService<LocomotivesPageViewModel>()));
             Assert.That(trains.WagonsPage, Is.SameAs(provider.GetRequiredService<WagonsPageViewModel>()));
-            Assert.That(trains.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
         shell.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         trains.AddTrainCommand.Execute(null);
@@ -259,7 +344,6 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             Assert.That(shell.StationsPage, Is.SameAs(stations));
             Assert.That(stations.WorkflowLibrary, Is.SameAs(library));
-            Assert.That(stations.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
         shell.SelectedProject = new ProjectViewModel(new Project(), TestViewModelServices.Default);
         stations.AddProjectStationCommand.Execute(null);
@@ -333,7 +417,6 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(editor.JourneysPage, Is.SameAs(journeys));
             Assert.That(editor.ResetCountersCommand, Is.SameAs(provider.GetRequiredService<InPortCounterViewModel>().ResetCountersCommand));
             Assert.That(editor.WorkflowLibrary, Is.SameAs(provider.GetRequiredService<WorkflowLibraryViewModel>()));
-            Assert.That(journeys.LayoutColumnWidths, Is.SameAs(shell.LayoutColumnWidths));
         }
         journeys.AddJourneyCommand.Execute(null);
         var selected = journeys.SelectedJourney!;
@@ -346,6 +429,37 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         Assert.That(await shell.PrepareForShutdownAsync().ConfigureAwait(false), Is.True);
         session.SelectedJourney = null;
         Assert.That(notifications, Is.Empty);
+    }
+
+    [Test]
+    public async Task LayoutPersistenceAndTheSolutionAndSignalBoxPagesAreHostSingletonsWithoutAShellDependency()
+    {
+        var provider = CreateValidatorServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var layout = provider.GetRequiredService<LayoutPersistenceService>();
+        var settings = provider.GetRequiredService<ISettingsService>().GetSettings();
+        var session = provider.GetRequiredService<ISolutionSession>();
+        var solutionPage = provider.GetRequiredService<SolutionPageViewModel>();
+        var signalBoxPage = provider.GetRequiredService<SignalBoxPageViewModel>();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(provider.GetRequiredService<LayoutPersistenceService>(), Is.SameAs(layout));
+            Assert.That(layout.Layout, Is.SameAs(settings.Layout));
+            Assert.That(layout.ColumnWidths, Is.SameAs(provider.GetRequiredService<LayoutColumnWidthsViewModel>()));
+            Assert.That(provider.GetRequiredService<SolutionPageViewModel>(), Is.SameAs(solutionPage));
+            Assert.That(provider.GetRequiredService<SignalBoxPageViewModel>(), Is.SameAs(signalBoxPage));
+            Assert.That(solutionPage.SolutionViewModel, Is.SameAs(session.SolutionViewModel));
+            Assert.That(signalBoxPage.SelectedProject, Is.SameAs(session.SelectedProject));
+        }
+
+        // Page states and the Settings reset write the same saved layout.
+        solutionPage.IsProjectListExpanded = !solutionPage.IsProjectListExpanded;
+        signalBoxPage.IsSignalBoxToolboxExpanded = !signalBoxPage.IsSignalBoxToolboxExpanded;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(settings.Layout.SolutionPage.IsProjectListExpanded, Is.EqualTo(solutionPage.IsProjectListExpanded));
+            Assert.That(settings.Layout.SignalBoxPage.IsToolboxExpanded, Is.EqualTo(signalBoxPage.IsSignalBoxToolboxExpanded));
+        }
     }
 
     [Test]
@@ -473,7 +587,10 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         await Assert.CatchAsync<OperationCanceledException>(() => speech).ConfigureAwait(false);
         Assert.That(player.PlayCount, Is.Zero);
     }
-    private static ServiceProvider CreateValidatorServiceProvider(Action<IServiceCollection>? configure = null)
+    private static ServiceProvider CreateValidatorServiceProvider(Action<IServiceCollection>? configure = null) =>
+        CreateValidatorServices(configure).BuildServiceProvider();
+
+    private static ServiceCollection CreateValidatorServices(Action<IServiceCollection>? configure = null)
     {
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
@@ -494,7 +611,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         services.AddSingleton(TestSpeechCache.Empty());
         configure?.Invoke(services);
 
-        return services.BuildServiceProvider();
+        return services;
     }
 
     private static IConfiguration CreateTestConfiguration()

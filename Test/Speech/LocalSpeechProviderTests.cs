@@ -122,7 +122,7 @@ internal sealed class LocalSpeechProviderTests
     [Test]
     public async Task SystemSpeech_SynthesizesPcmWithoutOpeningAnAudioDevice()
     {
-        var provider = new SystemSpeechProvider(_settings);
+        var provider = new SystemSpeechProvider(_settings, SystemSpeechProvider.ReadWindowsDefaultVoice);
         var capabilities = await provider.GetCapabilitiesAsync().ConfigureAwait(false);
         if (!capabilities.IsAvailable) Assert.Ignore(capabilities.Reason);
         Assert.That(capabilities.SupportsRate && capabilities.SupportsVolume, Is.True);
@@ -157,7 +157,7 @@ internal sealed class LocalSpeechProviderTests
     [Test]
     public async Task SystemSpeech_InvalidOptionsAndCancellationAreReportedBeforeSynthesis()
     {
-        var provider = new SystemSpeechProvider(_settings);
+        var provider = new SystemSpeechProvider(_settings, SystemSpeechProvider.ReadWindowsDefaultVoice);
         var result = await provider.SynthesizeAsync(new SpeechRequest("Test", "", "", 11, 100)).ConfigureAwait(false);
         Assert.That(result.FailureKind, Is.EqualTo(SpeechFailureKind.InvalidRequest));
         using var cancellation = new CancellationTokenSource();
@@ -214,7 +214,7 @@ internal sealed class LocalSpeechProviderTests
     public async Task PiperProcessRunner_CapturesStandardOutputAndError()
     {
         var request = CreateProcessRequest("echo fake-piper-output\r\necho fake-piper-error 1>&2\r\nexit 0", TimeSpan.FromSeconds(10));
-        var result = await new PiperProcessRunner().SynthesizeAsync(request).ConfigureAwait(false);
+        var result = await new PiperProcessRunner(TimeProvider.System).SynthesizeAsync(request).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Succeeded, Is.True);
@@ -227,7 +227,7 @@ internal sealed class LocalSpeechProviderTests
     public async Task PiperProcessRunner_TimeoutTerminatesTheControlledProcess()
     {
         var request = CreateProcessRequest("ping -n 30 127.0.0.1 > nul", TimeSpan.Zero);
-        var result = await new PiperProcessRunner().SynthesizeAsync(request).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        var result = await new PiperProcessRunner(TimeProvider.System).SynthesizeAsync(request).WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.ExitCode, Is.EqualTo(-1));
@@ -270,7 +270,7 @@ internal sealed class LocalSpeechProviderTests
     [Test]
     public async Task Piper_CorruptExecutableIsUnavailableEvenWhenAllConfiguredFilesExist()
     {
-        var provider = new PiperSpeechProvider(_settings, NullLogger<PiperSpeechProvider>.Instance);
+        var provider = new PiperSpeechProvider(_settings, NullLogger<PiperSpeechProvider>.Instance, new PiperProcessRunner(TimeProvider.System));
         var capabilities = await provider.GetCapabilitiesAsync().ConfigureAwait(false);
         Assert.That(capabilities.IsAvailable, Is.False);
     }
@@ -279,7 +279,7 @@ internal sealed class LocalSpeechProviderTests
     [TestCase(true)]
     public async Task SystemSpeech_UsesProviderDefaultWhenSavedVoiceIsNoLongerInstalled(bool missingConfiguredDefault)
     {
-        var provider = new SystemSpeechProvider(_settings);
+        var provider = new SystemSpeechProvider(_settings, SystemSpeechProvider.ReadWindowsDefaultVoice);
         var capabilities = await provider.GetCapabilitiesAsync().ConfigureAwait(false);
         if (!capabilities.IsAvailable) Assert.Ignore(capabilities.Reason);
         _settings.Speech.SystemSpeech.DefaultVoiceName = missingConfiguredDefault
@@ -299,7 +299,7 @@ internal sealed class LocalSpeechProviderTests
     {
         var executable = Environment.GetEnvironmentVariable("ComSpec")
             ?? throw new InvalidOperationException("Windows command processor is unavailable.");
-        var probe = await new PiperProcessRunner().ProbeAsync(executable, TimeSpan.FromSeconds(5))
+        var probe = await new PiperProcessRunner(TimeProvider.System).ProbeAsync(executable, TimeSpan.FromSeconds(5))
             .WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
         Assert.That(probe.Succeeded, Is.True);
     }
@@ -309,7 +309,7 @@ internal sealed class LocalSpeechProviderTests
     {
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync().ConfigureAwait(false);
-        await Assert.CatchAsync<OperationCanceledException>(() => new PiperProcessRunner().ProbeAsync(
+        await Assert.CatchAsync<OperationCanceledException>(() => new PiperProcessRunner(TimeProvider.System).ProbeAsync(
             Path.Combine(_directory, "missing.exe"), TimeSpan.FromSeconds(5), cancellation.Token)).ConfigureAwait(false);
     }
 
@@ -383,7 +383,7 @@ internal sealed class LocalSpeechProviderTests
     [Test]
     public void SystemSpeechFingerprintTracksConfiguredDefaultVoice()
     {
-        var provider = new SystemSpeechProvider(_settings);
+        var provider = new SystemSpeechProvider(_settings, SystemSpeechProvider.ReadWindowsDefaultVoice);
         var request = new SpeechRequest("Test", "", "", 0, 100);
         var first = provider.PrepareSynthesis(request);
         _settings.Speech.SystemSpeech.DefaultVoiceName = "Other voice";

@@ -16,7 +16,7 @@ internal sealed class PersistentInPortCounterTests
         var settings = Settings(2);
         var z21 = new Mock<IZ21>();
         var store = new MemoryStore();
-        await using var counters = new InPortCounterService(z21.Object, settings, store: store);
+        await using var counters = TestRuntimes.Counters(z21.Object, settings, store: store);
         await counters.InitializeAsync();
         var activations = 0;
         counters.Counted += (_, _) => activations++;
@@ -45,7 +45,7 @@ internal sealed class PersistentInPortCounterTests
         try
         {
             var z21 = new Mock<IZ21>();
-            await using (var first = new InPortCounterService(z21.Object, Settings(2), store: store))
+            await using (var first = TestRuntimes.Counters(z21.Object, Settings(2), store: store))
             {
                 await first.InitializeAsync();
                 first.Set(1, ulong.MaxValue - 1);
@@ -53,7 +53,7 @@ internal sealed class PersistentInPortCounterTests
                 first.Set(2, 37);
             }
 
-            await using var restarted = new InPortCounterService(z21.Object, Settings(3), store: store);
+            await using var restarted = TestRuntimes.Counters(z21.Object, Settings(3), store: store);
             var activations = 0;
             restarted.Counted += (_, _) => activations++;
             await restarted.InitializeAsync();
@@ -78,8 +78,8 @@ internal sealed class PersistentInPortCounterTests
         var firstStore = new MemoryStore();
         var secondStore = new MemoryStore();
         var z21 = new Mock<IZ21>();
-        await using var first = new InPortCounterService(z21.Object, Settings(2), store: firstStore);
-        await using var second = new InPortCounterService(z21.Object, Settings(2), store: secondStore);
+        await using var first = TestRuntimes.Counters(z21.Object, Settings(2), store: firstStore);
+        await using var second = TestRuntimes.Counters(z21.Object, Settings(2), store: secondStore);
         await first.InitializeAsync();
         await second.InitializeAsync();
         first.Set(1, 25);
@@ -106,7 +106,7 @@ internal sealed class PersistentInPortCounterTests
         store.Setup(value => value.LoadAsync(default)).Returns(loaded.Task);
         store.Setup(value => value.SaveAsync(It.IsAny<IReadOnlyDictionary<uint, ulong>>(), default)).Returns(Task.CompletedTask);
         var z21 = new Mock<IZ21>();
-        await using var counters = new InPortCounterService(z21.Object, Settings(1), store: store.Object);
+        await using var counters = TestRuntimes.Counters(z21.Object, Settings(1), store: store.Object);
         var values = new List<ulong>();
         counters.Counted += (_, args) => values.Add(args.Snapshot.Count);
         var initialization = counters.InitializeAsync();
@@ -127,7 +127,7 @@ internal sealed class PersistentInPortCounterTests
         store.Setup(value => value.SaveAsync(It.IsAny<IReadOnlyDictionary<uint, ulong>>(), default)).Returns(Task.CompletedTask);
         var settings = Settings(2);
         var z21 = new Mock<IZ21>();
-        await using var counters = new InPortCounterService(z21.Object, settings, store: store.Object);
+        await using var counters = TestRuntimes.Counters(z21.Object, settings, store: store.Object);
         var activatedInputs = new List<uint>();
         counters.Counted += (_, args) => activatedInputs.Add(args.Snapshot.InPort);
         var initialization = counters.InitializeAsync();
@@ -161,7 +161,7 @@ internal sealed class PersistentInPortCounterTests
                 stored.Add(counts[1]);
             });
         var z21 = new Mock<IZ21>();
-        await using var counters = new InPortCounterService(z21.Object, Settings(1), store: store.Object);
+        await using var counters = TestRuntimes.Counters(z21.Object, Settings(1), store: store.Object);
         await counters.InitializeAsync();
         await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
         try
@@ -191,7 +191,7 @@ internal sealed class PersistentInPortCounterTests
         settings.Counter.TimerIntervalSeconds = 10;
         var clock = new CounterClock();
         var z21 = new Mock<IZ21>();
-        await using var counters = new InPortCounterService(z21.Object, settings, clock, store: store.Object);
+        await using var counters = TestRuntimes.Counters(z21.Object, settings, clock, store: store.Object);
         var initialization = counters.InitializeAsync();
         InPortCounterServiceTests.Raise(z21, 1);
         clock.Now += TimeSpan.FromSeconds(9);
@@ -211,7 +211,7 @@ internal sealed class PersistentInPortCounterTests
     public async Task FailedWriteIsVisibleAndNextMutationCanPersistTheCurrentValue()
     {
         var store = new MemoryStore { FailWrites = true };
-        using var counters = new InPortCounterService(Mock.Of<IZ21>(), Settings(1), store: store);
+        using var counters = TestRuntimes.Counters(Mock.Of<IZ21>(), Settings(1), store: store);
         await counters.InitializeAsync();
         counters.Set(1, 12);
         await Assert.ThrowsAsync<IOException>(async () => await counters.FlushAsync()).ConfigureAwait(false);
@@ -250,7 +250,7 @@ internal sealed class PersistentInPortCounterTests
                 }
             });
         var z21 = new Mock<IZ21>();
-        await using var counters = new InPortCounterService(z21.Object, Settings(1), store: store.Object);
+        await using var counters = TestRuntimes.Counters(z21.Object, Settings(1), store: store.Object);
         await counters.InitializeAsync();
         await firstEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
         var flushed = counters.FlushAsync();
@@ -281,7 +281,7 @@ internal sealed class PersistentInPortCounterTests
         await File.WriteAllTextAsync(path, json);
         try
         {
-            using var counters = new InPortCounterService(Mock.Of<IZ21>(), Settings(1), store: new FileInPortCounterStore(path));
+            using var counters = TestRuntimes.Counters(Mock.Of<IZ21>(), Settings(1), store: new FileInPortCounterStore(path));
             await Assert.CatchAsync<Exception>(async () => await counters.InitializeAsync()).ConfigureAwait(false);
             Assert.Throws<InvalidOperationException>(() => counters.Set(1, 0));
             var content = await File.ReadAllTextAsync(path);
@@ -305,7 +305,7 @@ internal sealed class PersistentInPortCounterTests
         try
         {
             var z21 = new Mock<IZ21>();
-            using var counters = new InPortCounterService(z21.Object, Settings(2), store: new FileInPortCounterStore(path));
+            using var counters = TestRuntimes.Counters(z21.Object, Settings(2), store: new FileInPortCounterStore(path));
             var activations = 0;
             counters.Counted += (_, _) => activations++;
             Assert.That(await counters.TryInitializeAsync(), Is.False);
@@ -339,7 +339,7 @@ internal sealed class PersistentInPortCounterTests
         var z21 = new Mock<IZ21>();
         z21.SetupGet(value => value.TrafficMonitor).Returns((Z21Monitor?)null);
         var settings = Settings(1);
-        using var counters = new InPortCounterService(z21.Object, settings, store: store.Object);
+        using var counters = TestRuntimes.Counters(z21.Object, settings, store: store.Object);
         using var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings });
 
         await runtime.StartAsync();
@@ -357,7 +357,7 @@ internal sealed class PersistentInPortCounterTests
         var yard = Guid.NewGuid();
         var stores = new Dictionary<Guid, MemoryStore> { [station] = new(), [yard] = new() };
         var z21 = new Mock<IZ21>();
-        var counters = new InPortCounterService(z21.Object, Settings(1), projectStoreFactory: id => stores[id]);
+        var counters = TestRuntimes.Counters(z21.Object, Settings(1), projectStoreFactory: id => stores[id]);
         await using (counters.ConfigureAwait(false))
         {
             await counters.SelectProjectAsync(station).ConfigureAwait(false);
@@ -370,7 +370,7 @@ internal sealed class PersistentInPortCounterTests
             await counters.SelectProjectAsync(yard).ConfigureAwait(false);
             Assert.That(counters.GetSnapshot()[0].Count, Is.EqualTo(7UL));
         }
-        var restarted = new InPortCounterService(z21.Object, Settings(1), projectStoreFactory: id => stores[id]);
+        var restarted = TestRuntimes.Counters(z21.Object, Settings(1), projectStoreFactory: id => stores[id]);
         await using var restartedScope = restarted.ConfigureAwait(false);
         await restarted.SelectProjectAsync(station).ConfigureAwait(false);
         Assert.That(restarted.GetSnapshot()[0].Count, Is.EqualTo(42UL));
@@ -383,7 +383,7 @@ internal sealed class PersistentInPortCounterTests
     {
         var station = Guid.NewGuid();
         var store = new MemoryStore { FailWrites = true };
-        var counters = new InPortCounterService(new Mock<IZ21>().Object, Settings(1), projectStoreFactory: _ => store);
+        var counters = TestRuntimes.Counters(new Mock<IZ21>().Object, Settings(1), projectStoreFactory: _ => store);
         await using var countersScope = counters.ConfigureAwait(false);
         await counters.SelectProjectAsync(station).ConfigureAwait(false);
         counters.Set(1, 42);
@@ -401,7 +401,7 @@ internal sealed class PersistentInPortCounterTests
         var stores = new Dictionary<Guid, MemoryStore> { [station.Id] = new(), [yard.Id] = new() };
         var z21 = new Mock<IZ21>();
         var settings = Settings(1);
-        var counters = new InPortCounterService(z21.Object, settings, projectStoreFactory: id => stores[id]);
+        var counters = TestRuntimes.Counters(z21.Object, settings, projectStoreFactory: id => stores[id]);
         await using var countersScope = counters.ConfigureAwait(false);
         using var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings });
         await runtime.ActivateProjectAsync(station).ConfigureAwait(false);
@@ -420,7 +420,7 @@ internal sealed class PersistentInPortCounterTests
         var broken = new Mock<IInPortCounterStore>();
         broken.Setup(value => value.LoadAsync(default)).ThrowsAsync(new InvalidDataException("Unreadable project counts"));
         var good = new MemoryStore();
-        var counters = new InPortCounterService(new Mock<IZ21>().Object, Settings(1),
+        var counters = TestRuntimes.Counters(new Mock<IZ21>().Object, Settings(1),
             projectStoreFactory: id => id == badProject ? broken.Object : good);
         await using var scope = counters.ConfigureAwait(false);
         await counters.SelectProjectAsync(badProject).ConfigureAwait(false);
@@ -448,7 +448,7 @@ internal sealed class PersistentInPortCounterTests
         var stationStore = new MemoryStore();
         var z21 = new Mock<IZ21>();
         var settings = Settings(1);
-        var counters = new InPortCounterService(z21.Object, settings,
+        var counters = TestRuntimes.Counters(z21.Object, settings,
             projectStoreFactory: id => id == station.Id ? stationStore : yardStore.Object);
         await using var countersScope = counters.ConfigureAwait(false);
         using var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings });
@@ -487,7 +487,7 @@ internal sealed class PersistentInPortCounterTests
                 return releaseWrite.Task;
             });
         var newStore = new MemoryStore();
-        var counters = new InPortCounterService(new Mock<IZ21>().Object, Settings(1),
+        var counters = TestRuntimes.Counters(new Mock<IZ21>().Object, Settings(1),
             projectStoreFactory: id => id == station ? oldStore.Object : newStore);
         await using var scope = counters.ConfigureAwait(false);
         await counters.SelectProjectAsync(station).ConfigureAwait(false);

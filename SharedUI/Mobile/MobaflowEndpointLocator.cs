@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Mobile;
 
-using Common.Configuration;
+using Configuration;
 
 using Interface;
 
@@ -31,7 +31,7 @@ public sealed partial class MobaflowEndpointLocator
     /// <summary>Each pass runs multicast and a LAN HTTP subnet probe, which is expensive on Wi-Fi.</summary>
     private static readonly TimeSpan[] StartupRetryDelays = [TimeSpan.Zero, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15)];
 
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly IRestDiscoveryService _discovery;
     private readonly TimeProvider _timeProvider;
@@ -41,7 +41,7 @@ public sealed partial class MobaflowEndpointLocator
     private DateTimeOffset? _lastDiscoveryAt;
 
     public MobaflowEndpointLocator(
-        AppSettings settings,
+        UiSettings settings,
         ISettingsService settingsService,
         IRestDiscoveryService discovery,
         TimeProvider timeProvider,

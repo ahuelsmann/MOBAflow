@@ -40,7 +40,7 @@ public sealed class ProjectRuntimeFactory(Z21ConnectionRegistry connections, Pro
             shared.Settings,
             shared.TimeProvider,
             loggers.CreateLogger<InPortCounterService>(),
-            shared.CounterStoreFactory?.Invoke(project.Id));
+            shared.CounterPersistence(project.Id));
         var interlocking = new InterlockingRuntimeService(
             z21,
             bus,
@@ -136,8 +136,8 @@ public sealed class ProjectRuntimeServices
     /// <summary>Gets the logger factory.</summary>
     public required ILoggerFactory LoggerFactory { get; init; }
 
-    /// <summary>Gets the factory of the feedback counter store of a project; null keeps counters in memory.</summary>
-    public Func<Guid, IInPortCounterStore>? CounterStoreFactory { get; init; }
+    /// <summary>Gets where the feedback counters of a project are kept.</summary>
+    public required Func<Guid, InPortCounterPersistence> CounterPersistence { get; init; }
 }
 
 /// <summary>

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Display.Protocol;
 using Moba.Display.Transport;
 using Moba.SharedUI.ViewModel;
@@ -14,7 +14,7 @@ public sealed partial class DisplayViewModelTests
     public void Constructor_Should_BlockNetworkCommands_WhenEndpointIsMissing()
     {
         using var client = new FakeDisplayDeviceClient();
-        var viewModel = new DisplayViewModel(new AppSettings(), client);
+        var viewModel = new DisplayViewModel(new UiSettings(), client);
 
         using (Assert.EnterMultipleScope())
         {
@@ -373,7 +373,7 @@ public sealed partial class DisplayViewModelTests
         }
     }
 
-    private static AppSettings CreateConfiguredSettings() =>
+    private static UiSettings CreateConfiguredSettings() =>
         new()
         {
             Display = new DisplaySettings

@@ -20,11 +20,12 @@ flowchart TD
     WinUI <-->|"REST + SignalR"| API["MOBApi caches and bridge"]
     MAUI <-->|"REST + SignalR"| API
     MAUI -->|"direct UDP"| Z21
+    API --> Contracts
     API --> Common
 ```
 
-MOBApi is deliberately a thin standalone host that references `Common`, not
-`SharedUI` or `Backend`. MOBAflow publishes the current solution and runtime
+MOBApi is deliberately a thin standalone host that references `Contracts` and
+`Common`, not `SharedUI` or `Backend`. MOBAflow publishes the current solution and runtime
 snapshots to it and consumes remote commands from it.
 
 ## 🏗️ Architecture Layers
@@ -54,7 +55,7 @@ files for the actual direct references, including conditional entries.
 | `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base` |
 | `TrackPlan.Editor` | `Moba.TrackPlan.Editor` | `Domain`, `TrackLibrary.Base`, `TrackPlan.Renderer` |
 | `MOBAdisplay` | `Moba.Display` | `Domain` |
-| `MOBApi` | `Moba.MOBApi` | `Common` |
+| `MOBApi` | `Moba.MOBApi` | `Common`, `Contracts` |
 | `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackPlan.Editor` |
 | `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `TrackPlan.Editor`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
 | `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound`, `Speech.Base` |
@@ -73,6 +74,34 @@ Further rules:
 `Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from this
 table, the project and build files, and the C# syntax of the sources; a failure
 message names the broken rule.
+
+### Common and Contracts boundary
+
+`Contracts` holds the wire types shared by MOBApi, MOBAflow and MOBAsmart: runtime snapshots, remote runtime
+commands, hub method names and the MOBApi discovery protocol (`Contracts/Runtime`, `Contracts/Discovery`).
+`Common` keeps neutral infrastructure used by several projects and declares only these namespaces below
+`Moba.Common`:
+
+| Namespace | Content |
+| --- | --- |
+| `Configuration` | The neutral `AppSettings` root and the sections Backend, speech and the hosts read |
+| `Discovery` | LAN address helpers, the MOBApi UDP discovery responder and the MOBApi path and deployment helpers |
+| `Events` | `IEvent`, the event bus and the runtime, Z21, workflow, solution and REST events |
+| `Extension`, `IO`, `Validation` | Task helpers, the file-system abstraction and JSON validation |
+| `Multiplex` | Viessmann multiplex signal definitions shared by Backend, `SharedUI` and both hosts |
+| `Path` | Photo path and remote photo URI helpers |
+| `Recording` | Recording and replay format, session and validation types |
+| `Serilog` | The in-memory log sink |
+
+UI layout, feature toggles, navigation and presentation helpers belong to `SharedUI` or the host that uses
+them; the `UiSettings` root in `SharedUI/Configuration` extends `AppSettings` and holds the Train Control page
+settings (`TrainControl`). `SolutionArchitectureTests` reads this table and fails when `Common` declares another
+namespace or a type named like a `SharedUI` settings type; a new `Common` namespace needs a row here.
+
+The theme flags `IsDarkMode` and `UseSystemTheme` stay in the neutral `Application` section. That section also
+holds values that are not about the UI (`LastSolutionPath`, `AutoStartWebApp`, `PhotoStoragePath`). Moving only
+the two flags while keeping their JSON path would need a second `Application` object on `UiSettings`, and a
+separate UI theme section would be a settings-format decision.
 
 ### Speech dependency rule
 
@@ -113,7 +142,8 @@ Shared projects hold platform-neutral contracts, null objects and coordination l
 implementations belong in the host that uses the role.
 
 - **Sound:** `Sound` contains `ISoundPlayer` and `NullSoundPlayer` and has no Windows API or package. MOBAflow
-  plays WAV files through its internal `WindowsSoundPlayer`; MOBAsmart registers `NullSoundPlayer`.
+  plays WAV files through its internal `WindowsSoundPlayer`; MOBAsmart registers `NullSoundPlayer`. Every host
+  registers a sound player and an `ISpeechOutput`: the shared `ActionExecutionContext` registration requires both.
 - **Discovery addresses:** [`ILocalIpv4AddressSource`](../Common/Discovery/ILocalIpv4AddressSource.cs) supplies
   private LAN addresses for the /24 candidate scans used by Z21 and MOBApi discovery. Shared backend registration
   defaults to [`NetworkInterfaceIpv4AddressSource`](../Common/Discovery/NetworkInterfaceIpv4AddressSource.cs).
@@ -201,7 +231,7 @@ completeness, stay in `Backend/Service`.
 - `MasterDataStore` (shared cities/locomotives/multiplex master JSON, e.g. `data.json`)
 - `ActiveProjectContext` (runtime project activation inside `MobaRuntimeService`)
 - Runtime Snapshots (MobaRuntimeSnapshot, JourneyRuntimeSnapshot)
-- Configuration & Settings Management
+- Configuration & Settings Management (neutral `AppSettings` sections in `Common/Configuration`)
 - Logging Infrastructure (Serilog)
 
 **Key Interfaces:**
@@ -251,7 +281,11 @@ public interface IWorkflowService
 **Content:**
 
 - `SolutionSession` (solution ownership, selection, dirty state and auto-save)
-- MainWindowViewModel (navigation and shell state, with page extraction reserved for RF-24)
+- MainWindowViewModel (shell: solution new/open/save, Z21 status, host commands, operating state and photo routing)
+- `LayoutPersistenceService` (the single boundary that persists the saved layout)
+- `UiSettings` settings root (`SharedUI/Configuration`): the neutral `AppSettings` plus layout, keyed feature toggles
+  (`FeatureToggleRegistry`), display, Train Control page and per-host train-control settings; both hosts register
+  one instance as `UiSettings` and `AppSettings`, so Backend keeps the neutral type and appsettings.json stays one file
 - Page-specific ViewModels (JourneyViewModel, WorkflowViewModel, etc.)
 - ViewModels read runtime state through narrow runtime roles and send commands through
   `IRuntimeCommandGateway` (see [Runtime command path](#runtime-command-path))
@@ -274,7 +308,7 @@ ViewModels do not receive the complete `IMobaRuntime` or create their own gatewa
 
 **Characteristics:**
 
-- ✅ **Platform-Agnostic** - Used by MOBAflow and MOBAsmart (MOBApi is a thin REST host with only `Common`)
+- ✅ **Platform-Agnostic** - Used by MOBAflow and MOBAsmart (MOBApi is a thin REST host with only `Contracts` and `Common`)
 - ✅ **MVVM Toolkit** - CommunityToolkit.Mvvm for source generators
 - ✅ **Observable Properties** - Reactive UI updates
 - ✅ **Commands** - RelayCommand for user interactions
@@ -347,12 +381,10 @@ runtime services.
 - MOBAsmart uses `MobileSolutionContext` as its `IProjectContext`, as described in
   [the mobile session boundary](#mobasmart-session-and-projection).
 - Shared ViewModels and host services reach solution ownership through those
-  contracts. The existing shell/composition, WinUI page bindings, column-width
-  behavior and Android shutdown
-  lookup remain explicitly named in
+  contracts. Only the shell, the main window that hosts it, OverviewPage (Z21 status
+  and telemetry) and the composition root remain explicitly named in
   [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs).
-  RF-24 removes the page, layout and shell-state dependencies; RF-23 adds no new
-  exception and does not claim that decomposition is already complete.
+  RF-24 removed the page, layout and shell-state dependencies.
 - The [RF-23 acceptance record](../specs/008-project-runtimes/acceptance.md)
   maps the feature criteria to tests and distinguishes automated evidence from
   app/device and live-hardware checks.
@@ -371,7 +403,7 @@ runtime services.
 - The page coordinates visual column widths and matching load/unload subscriptions. Editor disposal
   releases session, collection and model handlers without changing bound state during shutdown.
   The architecture guard rejects shell dependencies in LocomotivesPage. Train-composition
-  is extracted in slice 2c below; central layout-persistence extraction remains planned.
+  is extracted in slice 2c below; layout persistence is centralized in slice 6 below.
 
 **Read-only locomotive/train usage (#306):**
 
@@ -408,7 +440,7 @@ runtime services.
   entity/solution checks, refresh image bindings for repeated paths and ignore results after disposal.
 - The editor detaches session, project-collection and selected-model subscriptions at shutdown.
   The architecture guard rejects shell dependencies in both wagon inventory pages.
-  Train composition is extracted in slice 2c below; central layout persistence remains planned.
+  Train composition is extracted in slice 2c below; layout persistence is centralized in slice 6 below.
 
 **Train composition (RF-24 slice 2c):**
 
@@ -440,8 +472,7 @@ runtime services.
   EventBus and logger as required constructor dependencies; the library never holds the runtime
   `ActionExecutionContext`. Workflow behavior stays in the existing editor.
 - StationsPage keeps visual layout and workflow drag-start coordination, subscribing on load and
-  unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved;
-  central layout persistence remains planned.
+  unsubscribing on unload. Existing pixel widths and the properties star-column value are preserved.
 
 **Journey and city presentation (RF-24 slice 3b):**
 
@@ -469,7 +500,7 @@ runtime services.
   composition (slice 5a).
 - Deferred city loading uses the existing ICityService and UI dispatcher, and ignores queued
   completion after disposal. JourneysPage retains visual layout/drag-drop coordination and
-  load/unload subscriptions; existing width keys and central-layout follow-up remain unchanged.
+  load/unload subscriptions; existing width keys remain unchanged.
 
 **Workflow presentation (RF-24 slice 4):**
 
@@ -486,8 +517,8 @@ runtime services.
   workflow/action selection, its unbound WorkflowsPage ItemClicked command and its workflow layout
   members are removed; no shell surface binds workflow state. Clearing the selected project already
   clears the library selection, so the shell no longer resets it separately.
-- The shell still disposes the shared library during shutdown through the station editor it owns;
-  slice 6's final shell audit decides where that disposal lives. The architecture guard rejects
+- The shell disposes the shared library during shutdown through the station editor it owns;
+  slice 6's final shell audit kept that single disposal there. The architecture guard rejects
   shell dependencies in WorkflowsPage, which keeps visual layout, drag-start and keyboard coordination.
 
 **Counters and traffic monitor (RF-24 slice 5a):**
@@ -504,14 +535,14 @@ runtime services.
   (reloaded on `SelectedRuntimeChangedEvent`, capped at 100), the connection status derived from the runtime
   snapshot and the selected project's Z21 address, the clear command and the two persisted Monitor expansion
   flags under the existing `Layout.MonitorPage` keys. The architecture guard rejects shell dependencies in
-  MonitorPage, whose code-behind keeps the star-value persistence for slice 6. As a host singleton resolved
+  MonitorPage, whose code-behind keeps restoring and remembering the star values. As a host singleton resolved
   with the main window, it is created at start-up instead of on the first Monitor visit, so it follows
   `InMemorySink.LogAdded` and writes its "Monitor started" entry from then on; the page shows the same
   capped log.
 - The Counter shell partial, the shell's traffic region, its `ITrafficMonitor` dependency and the Monitor
   layout members are removed. The shell keeps the Z21 status and telemetry projection (`MainCurrent`,
   `Temperature`, `SupplyVoltage`, `VccVoltage` next to serial, firmware and hardware type) and the journey
-  runtime projection. No shell surface binds the counter or monitor state, so `MainWindow` disposes both
+  runtime projection. No shell surface binds the counter or monitor state, so `MainWindowLifecycleService` disposes both
   host instances once the shell confirmed shutdown and before the runtimes stop, through the callback of
   `MainWindowViewModel.PrepareForShutdownAsync`; a cancelled shutdown keeps them subscribed. MOBAsmart keeps its own counter projection in `MauiViewModel`.
 
@@ -530,8 +561,18 @@ runtime services.
   session and the shared `SettingsPageViewModel`. It subscribes `PostStartupStatusEvent`, `RestApiStatusChangedEvent`
   and `MobaflowSyncDiagnosticsChangedEvent`, resets the speech health to Initializing when `SelectedSpeechProviderId`
   changes, evaluates `HasActiveProject` from the session and recomputes the solution-loaded status on the session's
-  `CurrentSolutionPath` and `SelectedProject` changes. `MainWindow` forwards the health-check results to
-  `SystemStatus.UpdateHealthStatus`.
+  `CurrentSolutionPath` and `SelectedProject` changes. `MainWindowLifecycleService` forwards the health-check
+  results to `SystemStatus.UpdateHealthStatus`.
+- Startup progress (issue 428): the REST API row and the RuntimeHub host, solution sync, REST cache and hub
+  broadcast rows have an `...IsPending` state that the Overview shows as a progress ring with words for what the
+  row waits for. A row waits while the REST API starts (`RestApiStatusChangedEvent.IsStarting`, at most 30 s of
+  progress before it reports a slow start) and while `RestApiStatusService` still sets up the synchronization
+  (`MobaflowSyncDiagnostics.SyncStarting`). The host's `TimeProvider` supplies the waiting time of the REST API
+  and RuntimeHub host rows. `RestApiStatusService` publishes the synchronization after its host connect attempt
+  and re-checks after 1, 2, 5, 10, 10 and 10 s until the server lists the host and every successful solution and
+  snapshot push, then every 30 s; a failed host connect is retried at the same pace. A solution
+  upload that is still on its way keeps the re-checks going, within the same delays. A check that overlaps a
+  running connect uses up no delay, and a host that just connected restarts the delays.
 - The shell keeps the operating state: `RecomputeOperatingState` reads `SystemStatus.RestApiIsReachable`,
   `SpeechHealthStatus` and `IsPostStartupInitializationRunning`, one `SystemStatus.PropertyChanged` handler for
   the five REST, speech and post-startup names replaces the former partial hooks, and `OperatingStateEvaluator`
@@ -540,13 +581,56 @@ runtime services.
   lives in the PhotoAssignment partial. The shell disposes both host instances at shutdown after it confirmed
   shutdown; a cancelled shutdown keeps them subscribed.
 
+**Layout persistence and final shell audit (RF-24 slice 6):**
+
+- `LayoutPersistenceService` (`SharedUI/Service/`) is the only path that persists the saved layout; pages still
+  set their visual widths on the layout object before they save through it. It reads the shared
+  `UiSettings` through `ISettingsService`, loads `LayoutColumnWidthsViewModel` once, applies a change under its
+  existing key and persists it with one logged-failure path, offers an awaited save, resets the layouts while
+  keeping the tab visibility and owns the Settings page section state (sort mode, expansion, usage, order).
+- The locomotive, wagon, train, station, journey, workflow, monitor and track-plan page ViewModels persist their
+  panel expansion through it. The page code-behinds keep the visual part: they restore the column widths on load
+  (`*ColumnStarValue` stars, intentionally fixed pixels) and save them through the service on unload.
+  `SettingsPageViewModel` keeps the layout reset command and its result text. Keys, defaults and the persisted
+  format are unchanged.
+- `SolutionPageViewModel` owns project creation and deletion (confirmation, backup) and the Solution page
+  expansion; `SignalBoxPageViewModel` owns the Signal Box page expansion, the ordered editor changes (runtime
+  project refresh, signal aspect through the gateway, save) and the projection of runtime signal-box state onto
+  the selected plan. `MainWindowLifecycleService` receives both so they exist from start-up and disposes them,
+  with the counter and monitor state, once the shell confirmed shutdown. `TrackPlanPage` binds `ISolutionSession` for its save status.
+- The unused `GridColumnResizeBehavior` and its visual-tree search for the shell are removed; pages resize with
+  the toolkit `GridSplitter`.
+- The shell keeps solution new/open/save with the stop-trains confirmation, shutdown, the Z21 status and
+  telemetry projection, the journey runtime projection, host command forwarding, the operating state and
+  uploaded-photo routing. It no longer takes `ISettingsService` or the column widths.
+
+**Main window lifecycle (RF-31 slice 5):**
+
+- `MainWindowLifecycleService` (`MOBAflow/Service/`) is the host singleton for the work behind the main window.
+  It is resolved with the window, so the counter, traffic monitor, Solution page and signal-box projection it
+  receives as runtime observers exist from start-up. It starts REST API status polling after the deferred UI
+  startup, pauses and resumes it on window activation, starts the speech health checks for
+  `PostStartupInitializationService` and marshals their results through `IUiDispatcher` to the host
+  `SystemStatusViewModel`. The composition root hands it the shell's shutdown workflow and the observers as a `ShellShutdownWorkflow`, so it
+  does not depend on `MainWindowViewModel`.
+- Shutdown has two steps the window orders: `ConfirmShutdownAsync` runs the shell workflow and releases the
+  runtime observers through its callback (a cancelled shutdown keeps them subscribed, a failed workflow is
+  logged and still closes); after the window detached its own events, `StopAsync` releases the observers again
+  as a safety net and stops the REST API status service, the MOBApi process and the health checks, logging a
+  failing step and running the next one.
+- `MainWindow.xaml.cs` keeps window lifecycle and visuals: title bar and sizing, the navigation menu and frame,
+  the page tag it reports to the shell, the Z21 status refresh command on activation, the requested theme, the
+  track power icon opacity and its event subscriptions. The track power switch forwards its position to `ApplyTrackPowerSwitchCommand`; the shell
+  ignores a position that already matches the runtime snapshot and otherwise executes `SetTrackPowerCommand`.
+
 **Settings presentation (RF-24 slice 1):**
 
 - The host owns one `SettingsPageViewModel`, shared by SettingsPage and the shell's theme and
-  speech selectors. Its required dependencies are AppSettings, ISettingsService, the UI dispatcher
-  and logging; speech testing uses the existing host action. It never depends on MainWindowViewModel.
-- The ViewModel owns settings persistence, feature items, Piper choices, reset commands and section
-  state. SettingsPage keeps file pickers and visual ordering/reset feedback.
+  speech selectors. Its required dependencies are UiSettings, ISettingsService, the UI dispatcher,
+  logging, the host's `IFeatureTogglePageProvider` and `ISpeechOutput`; the speech test speaks through that
+  output and shows its failure reason. It never depends on MainWindowViewModel.
+- The ViewModel owns settings persistence, feature items, Piper choices and reset commands; the section
+  state moved to `LayoutPersistenceService` in slice 6. SettingsPage keeps file pickers and visual ordering/reset feedback.
 - `InPortCounterViewModel` reacts to actual valid feedback-count changes since slice 5a, and
   `SystemStatusViewModel` resets the speech health on a provider selection since slice 5b; the shell disposes
   both at shutdown. The architecture guard rejects shell dependencies in the extracted SettingsPage.
@@ -583,8 +667,9 @@ runtime services.
   running (solution switch, project removal, a changed Z21 assignment), the runtime
   sets every known locomotive (commanded, seen on its Z21 or listed in its project) to
   speed 0. The shell asks first ("Stop all trains?") before a new or opened solution
-  or a project deletion when an affected runtime is connected; cancelling keeps
-  everything running.
+  when an affected runtime is connected; cancelling keeps everything running. A
+  project deletion always asks "Delete Project"; when the project's runtime is
+  connected, that question also says that its locomotives are set to speed 0 first.
 - App close keeps trains running: `MainWindowViewModel.PrepareForShutdownAsync` shows
   no stop-trains dialog and calls `IProjectRuntimeHost.ReleaseAsync`, which disposes
   the runtimes and closes their Z21 connections (LAN_LOGOFF) without a stop command.
@@ -677,7 +762,7 @@ See [issue #132](https://github.com/ahuelsmann/MOBAflow/issues/132) and the
 
 - `MainWindowViewModel` is reduced to navigation, shell status and command forwarding: the page,
   counter, traffic, diagnostics and system-status ViewModels above are extracted (slices 1 to 5b of
-  RF-24). The remaining step is slice 6: one layout persistence boundary and the final shell audit.
+  RF-24), and slice 6 added the one layout persistence boundary and the final shell audit.
 - Every extraction updates compile-time `x:Bind` bindings in WinUI XAML, so it is verified with the
   platform UI build (not part of the cross-platform subset).
 
@@ -689,7 +774,9 @@ Z21, file I/O, timers and post-startup work can run on background threads.
 The undecorated EventBus invokes subscribers synchronously on the publishing
 thread. Updating WinUI-bound state from that thread can cause UI-thread violations.
 
-Both UI hosts register `AddEventBusWithUiDispatch()`. Its
+Both UI hosts register `AddEventBusWithUiDispatch()` together with the backend services. The registered
+`IEventBus` is the [RecordingEventBusDecorator](../Backend/Service/Recording/RecordingEventBusDecorator.cs)
+around the UI decorator and requires the recording session and mapper registry. The
 [UiThreadEventBusDecorator](../SharedUI/Service/UiThreadEventBusDecorator.cs)
 forwards publication through `IUiDispatcher.InvokeOnUiLowPriority`: publication
 on the UI thread invokes handlers immediately; background publication queues
@@ -699,8 +786,8 @@ and must not dispatch again.
 Callbacks outside the decorated bus are separate threading boundaries. Inspect
 their actual execution context before changing UI-bound state; use the existing
 dispatcher adapter or platform bridge where needed. Examples include raw Z21
-callbacks, timers, file-load completions and health-status callbacks from
-`MOBAflow/View/MainWindow.xaml.cs`. Do not assume every asynchronous continuation
+callbacks, timers, file-load completions and health-status callbacks in
+`MOBAflow/Service/MainWindowLifecycleService.cs`. Do not assume every asynchronous continuation
 is a background callback, or introduce platform UI types into shared logic.
 
 ---
@@ -821,13 +908,18 @@ Control page and the MOBAsmart Engines/Control tabs. It coordinates platform-neu
 | [`TrainControlSettingsStore`](../SharedUI/TrainControl/TrainControlSettingsStore.cs) | Ramp, speed steps, series/Vmax and the per-host (WinUI/MAUI) selected locomotive. |
 
 The ViewModel keeps the bound properties, commands and the UI-thread continuations of ramps and the
-door transition; host differences stay explicit through `TrainControlViewModelOptions`.
+door transition; host differences stay explicit through `TrainControlViewModelOptions` and the required
+[`IRuntimeRoutingState`](../SharedUI/Interface/IRuntimeRoutingState.cs): MOBAsmart registers its
+`MobileRuntimeCoordinator` for the hybrid local/remote routing, MOBAflow registers `NullRuntimeRoutingState`.
 
 ### MOBAsmart session and projection
 
 These platform-neutral components live in [`SharedUI/Mobile`](../SharedUI/Mobile)
-and are registered as singletons by
-[`MobaMauiServiceCollectionExtensions`](../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs):
+and are registered as singletons by `AddMobaMobileServices` in
+[`MobileServiceCollectionExtensions`](../SharedUI/Extensions/MobileServiceCollectionExtensions.cs), the
+platform-neutral part of the MOBAsmart composition. The Android app
+([`MobaMauiServiceCollectionExtensions`](../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs)) adds only
+its platform implementations and pages, so the portable test target resolves every shared registration:
 
 | Component | Responsibility and owned state |
 | --- | --- |

@@ -26,13 +26,13 @@ public partial class Z21
             state =>
             {
                 _ = state;
-                SendKeepaliveAsync().Observe(ex => _logger?.LogWarning(ex, "Send keepalive failed"));
+                SendKeepaliveAsync().Observe(ex => _logger.LogWarning(ex, "Send keepalive failed"));
             },
             null,
             TimeSpan.FromSeconds(30),  // First keepalive after 30 seconds
             TimeSpan.FromSeconds(30)); // Subsequent keepalives every 30 seconds
 
-        _logger?.LogDebug("Keepalive timer started (30s interval)");
+        _logger.LogDebug("Keepalive timer started (30s interval)");
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public partial class Z21
         {
             _keepaliveTimer.Dispose();
             _keepaliveTimer = null;
-            _logger?.LogDebug("Keepalive timer stopped");
+            _logger.LogDebug("Keepalive timer stopped");
         }
     }
 
@@ -58,7 +58,7 @@ public partial class Z21
         if (_isConnected) return;
 
         _isConnected = true;
-        _logger?.LogInformation("Z21 is responding - connection confirmed");
+        _logger.LogInformation("Z21 is responding - connection confirmed");
 
         // Start SystemState polling timer ONLY if interval > 0
         // Note: Z21 also sends SystemState automatically via broadcast (flag 0x0100)
@@ -66,12 +66,12 @@ public partial class Z21
         if (_systemStatePollingIntervalSeconds > 0)
         {
             StartSystemStatePollingTimer();
-            _logger?.LogDebug("SystemState polling enabled ({Interval}s). Note: Z21 also broadcasts SystemState automatically.",
+            _logger.LogDebug("SystemState polling enabled ({Interval}s). Note: Z21 also broadcasts SystemState automatically.",
                 _systemStatePollingIntervalSeconds);
         }
         else
         {
-            _logger?.LogDebug("SystemState polling disabled. Using Z21 broadcast-only (flag 0x0100).");
+            _logger.LogDebug("SystemState polling disabled. Using Z21 broadcast-only (flag 0x0100).");
         }
 
         OnConnectedChanged?.Invoke(true);
@@ -93,7 +93,7 @@ public partial class Z21
         // Check if UDP is still connected before attempting send
         if (!_udp.IsConnected)
         {
-            _logger?.LogTrace("Keep-Alive skipped: UDP not connected");
+            _logger.LogTrace("Keep-Alive skipped: UDP not connected");
             return;
         }
 
@@ -110,10 +110,10 @@ public partial class Z21
             // Success - reset failure counter
             if (_keepAliveFailures > 0)
             {
-                _logger?.LogInformation("Keep-Alive recovered after {Failures} failures", _keepAliveFailures);
+                _logger.LogInformation("Keep-Alive recovered after {Failures} failures", _keepAliveFailures);
             }
             _keepAliveFailures = 0;
-            _logger?.LogTrace("Keep-Alive sent successfully");
+            _logger.LogTrace("Keep-Alive sent successfully");
         }
         catch (OperationCanceledException) when (_cancellationTokenSource?.Token.IsCancellationRequested == true)
         {
@@ -122,21 +122,21 @@ public partial class Z21
         catch (UdpNotConnectedException ex)
         {
             // UDP disconnected during timer callback - this is expected during shutdown
-            _logger?.LogTrace(ex, "Keep-Alive skipped: UDP not connected");
+            _logger.LogTrace(ex, "Keep-Alive skipped: UDP not connected");
         }
         catch (Exception ex)
         {
             _keepAliveFailures++;
-            _logger?.LogWarning("Keep-Alive failed ({Failures}/{Max}): {Message}",
+            _logger.LogWarning("Keep-Alive failed ({Failures}/{Max}): {Message}",
                 _keepAliveFailures, MaxKeepaliveFailures, ex.Message);
 
             if (_keepAliveFailures >= MaxKeepaliveFailures)
             {
-                _logger?.LogError("Z21 connection lost after {Max} failed Keep-Alives. Disconnecting...",
+                _logger.LogError("Z21 connection lost after {Max} failed Keep-Alives. Disconnecting...",
                     MaxKeepaliveFailures);
 
                 // Trigger disconnect on background thread to avoid deadlock
-                HandleConnectionLostAsync().Observe(innerEx => _logger?.LogWarning(innerEx, "Handle connection lost failed"));
+                HandleConnectionLostAsync().Observe(innerEx => _logger.LogWarning(innerEx, "Handle connection lost failed"));
             }
         }
     }
@@ -153,7 +153,7 @@ public partial class Z21
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Error during connection lost handling");
+            _logger.LogError(ex, "Error during connection lost handling");
         }
     }
     #endregion

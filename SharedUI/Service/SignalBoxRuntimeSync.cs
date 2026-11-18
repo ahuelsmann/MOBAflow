@@ -22,7 +22,8 @@ public static class SignalBoxRuntimeSync
 
         foreach (var snapshot in elements)
         {
-            if (plan.FindElement(snapshot.ElementId) is not SbElement element)
+            var element = plan.FindElement(snapshot.ElementId);
+            if (element is null)
             {
                 continue;
             }

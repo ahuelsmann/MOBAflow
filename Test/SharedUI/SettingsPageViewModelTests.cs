@@ -2,10 +2,11 @@
 namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
-using Moba.Common.Configuration;
-using Moba.Common.Navigation;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
+using Moba.Speech.Base;
+using Moba.Test.Helpers;
 using Moq;
 using System.Diagnostics.CodeAnalysis;
 
@@ -80,7 +81,7 @@ internal sealed class SettingsPageViewModelTests
         persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Once);
     }
 
-    private static bool[] GetPolarities(AppSettings settings) =>
+    private static bool[] GetPolarities(UiSettings settings) =>
     [
         settings.SignalBox.InvertPolarityOffset0,
         settings.SignalBox.InvertPolarityOffset1,
@@ -134,7 +135,7 @@ internal sealed class SettingsPageViewModelTests
     {
         var provider = new Mock<IFeatureTogglePageProvider>();
         provider.Setup(candidate => candidate.GetToggleablePages())
-            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", nameof(FeatureToggleSettings.IsOverviewPageAvailable), null, NavigationCategory.Monitoring, 10)]);
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", FeatureTogglePages.Overview, null)]);
         var (viewModel, settings, persistence, _) = Create(provider: provider.Object);
         var toggle = viewModel.FeatureToggleItems.Single();
         toggle.IsChecked = false;
@@ -143,44 +144,20 @@ internal sealed class SettingsPageViewModelTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(toggle.CheckBoxContent, Is.EqualTo("Overview"));
-            Assert.That(viewModel.IsOverviewPageAvailable, Is.False);
-            Assert.That(settings.FeatureToggles.IsOverviewPageAvailable, Is.False);
+            Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings.FeatureToggles, FeatureTogglePages.Overview), Is.False);
         }
         persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Once);
     }
 
     [Test]
-    public void SectionLayoutPreservesKeysExpansionUsageAndOrderWithoutNoOpSaves()
-    {
-        var (viewModel, settings, persistence, _) = Create();
-        viewModel.SettingsSectionSortMode = " FREQUENCY ";
-        viewModel.SettingsSectionSortMode = "frequency";
-        viewModel.SetSettingsPageSectionIsExpanded("Speech", true);
-        viewModel.SetSettingsPageSectionIsExpanded("Speech", true);
-        viewModel.MarkSettingsPageSectionUsed("Speech");
-        viewModel.SetSettingsPageSectionOrder((string[])["Speech", "Display"]);
-        viewModel.SetSettingsPageSectionOrder((string[])["Speech", "Display"]);
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(settings.Layout.SettingsPage.SortMode, Is.EqualTo(SettingsSectionSortModes.Frequency));
-            Assert.That(viewModel.GetSettingsPageSectionIsExpanded("Speech"), Is.True);
-            Assert.That(viewModel.GetSettingsPageSectionState("Speech").UsageCount, Is.EqualTo(1));
-            Assert.That(viewModel.GetSettingsPageSectionState("Speech").LastUsedUtc, Is.Not.Null);
-            Assert.That(viewModel.GetSettingsPageSectionState("Display").Order, Is.EqualTo(1));
-        }
-        persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Exactly(4));
-    }
-
-    [Test]
-    public async Task SpeechTestPassesUserTextToExistingHostIntegration()
+    public async Task SpeechTestSpeaksUserTextThroughSpeechOutput()
     {
         string? spokenText = null;
-        var (viewModel, _, _, _) = Create(speech: message =>
-        {
-            spokenText = message;
-            return Task.CompletedTask;
-        });
+        var speech = new Mock<ISpeechOutput>();
+        speech.Setup(output => output.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((message, _) => spokenText = message)
+            .ReturnsAsync(SpeechResult.Success([]));
+        var (viewModel, _, _, _) = Create(speech: speech.Object);
         viewModel.SpeechTestMessage = "Gleis zwei";
         await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
 
@@ -195,13 +172,34 @@ internal sealed class SettingsPageViewModelTests
     [Test]
     public async Task SpeechTestFailureReportsErrorThroughUiDispatcher()
     {
-        var (viewModel, _, _, dispatcher) = Create(speech: _ => Task.FromException(new InvalidOperationException("speech unavailable")));
+        var speech = new Mock<ISpeechOutput>();
+        speech.Setup(output => output.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SpeechResult.Failure(SpeechFailureKind.Unavailable, "speech unavailable"));
+        var (viewModel, _, _, dispatcher) = Create(speech: speech.Object);
         await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(viewModel.ErrorMessage, Is.EqualTo("speech unavailable"));
             Assert.That(viewModel.ShowErrorMessage, Is.True);
+        }
+        dispatcher.Verify(candidate => candidate.InvokeOnUi(It.IsAny<Action>()), Times.Exactly(2));
+    }
+
+    [Test]
+    public async Task SpeechTestExceptionReportsErrorThroughUiDispatcher()
+    {
+        var speech = new Mock<ISpeechOutput>();
+        speech.Setup(output => output.SpeakAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("audio device lost"));
+        var (viewModel, _, _, dispatcher) = Create(speech: speech.Object);
+        await viewModel.TestSpeechCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.ErrorMessage, Is.EqualTo("audio device lost"));
+            Assert.That(viewModel.ShowErrorMessage, Is.True);
+            Assert.That(viewModel.ShowSuccessMessage, Is.False);
         }
         dispatcher.Verify(candidate => candidate.InvokeOnUi(It.IsAny<Action>()), Times.Exactly(2));
     }
@@ -263,7 +261,7 @@ internal sealed class SettingsPageViewModelTests
     {
         var provider = new Mock<IFeatureTogglePageProvider>();
         provider.Setup(candidate => candidate.GetToggleablePages())
-            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", nameof(FeatureToggleSettings.IsOverviewPageAvailable), null, NavigationCategory.Monitoring, 10)]);
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", FeatureTogglePages.Overview, null)]);
         var (viewModel, settings, persistence, _) = Create(provider: provider.Object);
         viewModel.DisplayPort = 12345;
         viewModel.FeatureToggleItems.Single().IsChecked = false;
@@ -273,22 +271,21 @@ internal sealed class SettingsPageViewModelTests
         persistence.Setup(service => service.ResetToDefaultsAsync()).Returns(async () =>
         {
             await Task.Yield();
-            settings.Display.Port = new AppSettings().Display.Port;
-            settings.FeatureToggles.IsOverviewPageAvailable = true;
+            settings.Display.Port = new UiSettings().Display.Port;
+            settings.FeatureToggles.Pages.Clear();
         });
 
         await viewModel.ResetToDefaultsCommand.ExecuteAsync(null).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(viewModel.DisplayPort, Is.EqualTo(new AppSettings().Display.Port));
+            Assert.That(viewModel.DisplayPort, Is.EqualTo(new UiSettings().Display.Port));
             Assert.That(viewModel.FeatureToggleItems.Single().IsChecked, Is.True);
             Assert.That(viewModel.ShowSuccessMessage, Is.False);
             Assert.That(viewModel.ShowErrorMessage, Is.False);
             Assert.That(notifications, Does.Contain(nameof(SettingsPageViewModel.DisplayPort)));
-            Assert.That(notifications, Does.Contain(nameof(SettingsPageViewModel.IsOverviewPageAvailable)));
         }
-        persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()), Times.Never);
+        persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<UiSettings>()), Times.Never);
     }
 
     [Test]
@@ -323,15 +320,17 @@ internal sealed class SettingsPageViewModelTests
         }
     }
 
-    private static (SettingsPageViewModel ViewModel, AppSettings Settings, Mock<ISettingsService> Persistence, Mock<IUiDispatcher> Dispatcher)
-        Create(Func<string, Task>? speech = null, IFeatureTogglePageProvider? provider = null)
+    private static (SettingsPageViewModel ViewModel, UiSettings Settings, Mock<ISettingsService> Persistence, Mock<IUiDispatcher> Dispatcher)
+        Create(ISpeechOutput? speech = null, IFeatureTogglePageProvider? provider = null)
     {
-        var settings = new AppSettings();
+        var settings = new UiSettings();
         var persistence = new Mock<ISettingsService>();
+        persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(settings)).Returns(Task.CompletedTask);
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        return (new SettingsPageViewModel(settings, persistence.Object, dispatcher.Object,
-            NullLogger<SettingsPageViewModel>.Instance, provider, speech), settings, persistence, dispatcher);
+        return (new SettingsPageViewModel(settings, persistence.Object, TestLayouts.Create(persistence.Object), dispatcher.Object,
+            NullLogger<SettingsPageViewModel>.Instance, provider ?? TestSettingsPages.NoFeatureToggles(),
+            speech ?? new NullSpeechOutput()), settings, persistence, dispatcher);
     }
 }

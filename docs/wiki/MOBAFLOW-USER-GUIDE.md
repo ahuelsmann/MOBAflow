@@ -43,16 +43,20 @@ reports the conflict: the first project in solution order connects, and later
 projects using that address stay disconnected. A project without an address also
 stays disconnected while the other projects run normally.
 
-Before opening or creating another solution or deleting a connected project,
+Before opening or creating another solution while a runtime is connected,
 **Stop all trains?** asks for confirmation. Confirming sets all
 known locomotives of the affected runtimes to speed 0 before those runtimes are
-discarded; cancelling keeps the solution and runtimes unchanged. Changing a
+discarded; cancelling keeps the solution and runtimes unchanged. Deleting a project
+always asks **Delete Project**; for a connected project the question also says that
+its locomotives are set to speed 0 first; **No** keeps the project. Changing a
 connected project's Z21 assignment stops its known locomotives before replacing
 its runtime on the new endpoint. Reloading a solution reuses existing open
 connections after the stop sequence.
 
-**Closing MOBAflow does not stop the trains.** MOBAflow asks only whether to save
-unsaved changes, then closes its Z21 connections without sending a stop command.
+**Closing MOBAflow does not stop the trains.** With unsaved changes MOBAflow asks
+only **Save changes?**: **Save** saves them (and asks for a file name if the
+solution has none yet), **Don't save** closes without saving and **Cancel** keeps
+MOBAflow open. It then closes its Z21 connections without sending a stop command.
 Trains that are running keep running at their last speed on the Z21, and the
 same applies if MOBAflow ends unexpectedly. From that moment MOBAflow no longer
 controls anything: journeys, workflows, signals and announcements stop, and
@@ -73,6 +77,18 @@ outside the solution JSON.
 
 **Overview** shows the selected project's operating state, including Z21 telemetry,
 track-power state, feedback counters, lap progress and connected clients.
+
+Its **REST API and Clients** area shows whether the REST API runs and whether
+MOBAsmart sync is ready. After MOBAflow starts, some rows need a few seconds.
+While a row is still waiting, it shows a spinning ring instead of a dot and says
+what it waits for, for example **Waiting for the REST API to start...** or
+**Connecting...**. The REST API and **RuntimeHub host** rows also show how long
+they have waited. When the REST API answers, MOBAflow connects the sync and checks
+again within seconds, so the rows usually reach **Connected** shortly after
+**Running on port 5001**. If the REST API still does not answer after 30 seconds,
+the row says **REST API is slow to start, still checking...**. If the RuntimeHub
+host cannot connect, its row says **Host client disconnected, retrying**.
+MOBAflow keeps retrying in both cases.
 
 **Monitor** shows continuous traffic and activity. The expandable **Messages**
 area at the bottom of the main window contains structural project diagnostics,
@@ -366,7 +382,9 @@ unavailable, for example without a Z21 connection or a selected locomotive.
 
 ### MOBAsmart cannot find MOBAflow
 
-- Verify that the REST API status in the desktop status bar is healthy.
+- Verify that the REST API status in the desktop status bar is healthy. On
+  **Overview**, wait until the MOBAsmart sync rows stop showing a spinning ring;
+  a row that still waits says what it waits for.
 - Keep the phone and PC on the same LAN and avoid guest-network isolation.
 - Allow TCP port `5001` and the discovery traffic through the PC firewall.
 - Tap the MOBAflow status in MOBAsmart to retry discovery.
@@ -396,6 +414,7 @@ unavailable, for example without a Z21 connection or a selected locomotive.
 ## More documentation
 
 - [Installation](INSTALLATION.md)
+- [Pages at a glance](PAGE-OVERVIEW.md)
 - [MOBAsmart guide](MOBASMART-USER-GUIDE.md)
 - [Viessmann signal mapping](VIESSMANN-SIGNAL-MAPPING.md)
 - [Project reference](../PROJECT-REFERENCE.md)

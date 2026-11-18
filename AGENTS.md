@@ -8,8 +8,7 @@ on Windows and Linux.
 - Complete the requested work through implementation, relevant validation, and a concise handoff.
   Make routine, reversible decisions from repository evidence without asking for confirmation.
 - Ask only when missing information materially affects correctness or scope and cannot be inferred, or an action
-  needs authorization that the user has not already given. Continue short coordination and work within the
-  current central execution allocation while blocked.
+  needs authorization that the user has not already given. Continue other slices on the board while blocked.
 - Make the smallest cohesive change that solves the problem. Preserve unrelated user edits and existing contracts;
   avoid incidental cleanup, speculative abstractions, dependency upgrades, and repository-wide formatting.
   Ask before adding mechanics the request does not name, such as runtime lifecycle commands, chaining/follow-up
@@ -25,54 +24,47 @@ on Windows and Linux.
   and any remaining limitation. English UI and commit-message rules do not constrain conversation language.
   Write answers for junior developers: explain unfamiliar terms briefly and make necessary next steps explicit.
 
-## Master coordination and standing mandate
+## Master coordination: small batches on main
 
-- A human-assigned implementation task includes planning, implementation, validation and a draft PR with current
-  checks and CI/Sonar; checks not run stay recorded as not run. Chief Project Manager verifies handover readiness;
-  since 2026-11-05 the Chief Operating Officer (COO, Claude) decides Ready and merge within Chief Project Manager's
-  allocation. The existing Claude plan then performs fresh independent review, separate fixes,
-  independent re-review and SHA-bound squash merge after all current gates pass. Review is not a Ready prerequisite.
-  The delivery owner follows through to verified integration without repeated technical approvals.
-  An explicit narrower assignment, pause, no-merge instruction or excluded follow-up remains binding;
-  do not infer new product work.
-- Since 2026-11-05 Claude holds three further roles. The COO is the overall project lead: within Chief Project
-  Manager's allocation it deploys the agents, one Senior Developer agent per issue, runs the checks before merge
-  and decides Ready and merge; queue and allocation stay with Chief Project Manager. The Executive Assistant is
-  the COO's cloud session for portable work and has no allocation, Ready or merge authority of its own. The
-  Senior Code Reviewer independently reviews PRs, branches and diffs with the `mobaflow-code-review` skill,
-  reports findings ranked by severity, fixes or merges nothing unless asked and never reviews code written in the
-  same session. Product goals, priorities and material UX decisions stay with the user. Since 2026-11-06 the
-  user's personal acceptance is no Ready or merge gate; feedback from real use arrives as ordinary issues at the
-  user's priority.
-- Art Director owns routine product decisions inside the assigned scope and its delivery; important product goals,
-  priorities and material UX decisions remain with the user. Chief Project Manager (formerly Issue Master) owns
-  the single execution and integration queue. Technical Director coordinates technical resources and responsibilities
-  through that queue. Solution Architect (Claude) owns the technical solution design within assigned scope:
-  recommendations with trade-offs, architecture conformance of changes and the prepared decision basis for
-  fundamental architecture changes, which remain with the user. Head of Quality, Communications Director,
-  Documentation Lead and Head of DevOps deliver work within their assigned roles. Masters hand work over directly
-  and may exchange task-related messages with their assigned team and Claude CLI in both directions. The user does
-  not relay messages, inspect code or administer PRs.
-- Across all MOBAflow teams, Codex, Claude and Antigravity, deliver the prioritized issue together through
-  integration in one leading PR, including its documentation and wiki corrections. Other issues require Chief
-  Project Manager's explicit allocation after qualifying independence in purpose, files, behavior, baselines,
-  build graph and execution resources. There is no global one-task or five-task ceiling and no automatic PR per
-  master. Assign a Senior Developer as needed and a separate Project Manager only for a large or complex task;
-  follow the role naming in master coordination. Before substantial starts/resumes, reconcile actual owners,
-  processes and remote CI in the single queue. Unclear ownership or a concrete dependency/resource conflict
-  blocks the affected start. Keep one writer per worktree and serialize review, fixes and publication for each
-  exact comparison. Preserve existing executions and safe stopping points; allocation never overrides scope,
-  pauses or no-merge instructions.
-- Art Director, Chief Project Manager, Solution Architect, Head of Quality, Communications Director, Documentation
-  Lead and Head of DevOps may independently consult the Head of UI/UX (Gemini Argon via Antigravity CLI) within
-  assigned work, without another human approval. Observe the same execution allocation and serialize callers using
-  the verified synchronous CLI contract in master coordination; PR reviews stay with fresh independent Claude sessions.
-- Follow [master coordination](.github/instructions/master-coordination.instructions.md) for ownership,
-  Claude review independence, merge evidence, automation and the decisions that still need the user.
-- Use its [handover evidence rules](.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
-  for every team transition: identify the existing task, owner, next recipient, observed phase/status, observation
-  time with time zone, next step and limits. Sending alone proves neither takeover nor completion; preserve newer
-  confirmed evidence.
+Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows the delivery flow in
+[master coordination](.github/instructions/master-coordination.instructions.md). In short:
+
+- **Role != single model.** Roles define domain responsibilities and draw on four capability profiles across Claude
+  Code (`P1` Opus 5.5, `P4` Fable 5.2), ChatGPT Codex (`P2` GPT-6 Astra) and Antigravity (`P3` Gemini 4 Argon,
+  `P4` Hydrogen). Slices are classified by risk (`H` safety/runtime/protocol, `M` features/UI/audio, `L` docs/small
+  non-behavioral fixes); review-fix rounds retain their slice's risk class and dependency updates take the class of
+  the affected area.
+- **Small slices.** Work is cut into slices of one concern, about 25 files or 400 changed lines at most, each with
+  its own Draft PR that merges on its own. An issue may need several slices; no long-running branches.
+- **Board, locks, WIP limit.** The COO (Claude) is the sole technical writer on the board in `ahuelsmann/MOBAdev`
+  issue #1 and records each open slice, its risk class, team and locked areas. Refactoring and feature work never
+  run in the same locked area at once. At most three code slices are open, at most two local agents build at once.
+  One writer per branch.
+- **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests); code
+  starts after cross-model companion/UX review and the COO's or Solution Architect's Go (class `L` slices and
+  review-fix rounds on an approved design state their intent in the PR body/commit instead, while keeping their
+  risk class). New features write their acceptance tests first.
+- **Pull from main.** Before every push that hands work on, merge the current `main` of the configured GitHub remote
+  into the branch, resolve conflicts locally and rerun the affected checks. Merge, never rebase or force-push a
+  shared branch.
+- **Multi-model team and review from the start.** Writer, a companion reviewer from a different model family (Codex
+  `P2` when writer is Claude; Claude `P1` when writer is Codex; Claude `P1` or Codex `P2` when writer is
+  Antigravity) and, for UI/TrackPlan/editorial work, the `P3` Head of UI/UX (`Gemini 4 Argon`) work each class `H`
+  and `M` slice together: the companion checks the design note and reviews every pushed commit with PR review
+  comments while the slice grows.
+- **Independent final review and auto-merge.** At Ready every slice (`H`, `M` and `L`) receives a separate fresh
+  `P1` Claude review (Opus 5.5 or higher) plus independent cross-family `P2`/`P3` verification on the exact head
+  and base (neither may be the writer's or companion's session). With no open Blocker/High/Medium, zero SonarCloud
+  issues and green non-required mutation lanes, the COO arms head-bound GitHub auto-merge; it merges when the
+  required checks pass. Before any push to an armed PR the COO disarms it.
+- **Guard rails.** Two failed fix attempts on the same finding (in companion or final review), or more than ten
+  agent messages on one topic, stop the loop and go to the user. Locks, design gos, handovers and merges are logged
+  with UTC time in MOBAdev #1. Multi-slice features stay behind feature toggles until complete.
+- **People.** The user decides product goals, priorities, material UX, fundamental architecture, new costs and every
+  app, device or hardware action. Since 2026-11-06 the user's personal acceptance is no merge gate. The user does
+  not relay messages, inspect code or administer PRs. Any role may consult the Head of UI/UX (`Gemini 4 Argon` via
+  Antigravity CLI) under the contract in master coordination.
+- An explicit narrower assignment, pause or no-merge instruction stays binding; do not infer new product work.
 
 ## Repository policies
 
@@ -92,11 +84,16 @@ on Windows and Linux.
   Remove legacy paths that already exist only in a dedicated change, not as incidental cleanup.
 - SonarQube before PR review: run code analysis only through the GitHub PR pipeline, create PRs as drafts, and
   require a green SonarCloud check on the current PR commit with zero OPEN/CONFIRMED PR issues before marking ready.
-  Do not run local Sonar/Vortex code analysis or install analysis hooks. Local secrets scans remain required. Follow
+  Do not run local Sonar/Vortex code analysis or install analysis hooks. Local sessions keep local secrets scans;
+  cloud sessions follow the cloud rule below. Follow
   [the Sonar policy](.github/instructions/sonarqube-pre-pr.instructions.md); preserve existing analyzer baseline gates.
-- Balanced secrets scanning: scan likely secret-bearing files before reading and changed files before commits/PRs.
-  If the scanner is unavailable, continue ordinary development, avoid sensitive files and record the limitation
-  before publication. If a scan finds a secret, stop handling that file and report it without exposing its value.
+- Balanced secrets scanning: local sessions scan likely secret-bearing files before reading them (pre-read) and
+  changed files before commits/PRs (pre-commit). If a scan finds a secret, stop handling that file and report it
+  without exposing its value. Cloud sessions without a local scanner, such as the Executive Assistant, need no local
+  scan: pre-read, they do not open likely secret-bearing files; pre-commit, GitHub Push Protection checks each push
+  for provider token patterns only, so generic passwords, connection strings and private keys are not detected, and
+  each PR records the missing local scan. If a local session's scanner is unavailable,
+  continue ordinary development, avoid sensitive files and record the limitation before publication.
 - After patches, generators or scripts change text files, run `scripts/Test-LineEndings.ps1 -Path <changed-paths>`.
   Use `-Fix` to normalize those files according to `.gitattributes`, then check again. Preserve LF exceptions,
   encoding and final-newline presence. Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
@@ -114,9 +111,9 @@ Do not assume every directory is an active project or discover projects inside `
 | --- | --- |
 | `Domain/` | Serializable models, enums, workflow payloads and domain rules |
 | `Contracts/` | Wire contracts shared by MOBApi and the apps: runtime snapshots, remote commands, runtime hub, discovery protocol |
-| `Common/` | Configuration, events, network discovery helpers, paths and platform-neutral state |
+| `Common/` | Neutral infrastructure: `AppSettings` sections, events, network discovery helpers, paths, recording and logging |
 | `Backend/` | Z21 transport/protocol, runtime, journey managers and workflow action handlers |
-| `SharedUI/` | Shared MVVM state, commands, runtime projection and UI service interfaces |
+| `SharedUI/` | Shared MVVM state, UI settings root, commands, runtime projection and UI service interfaces |
 | `MOBAflow/` | WinUI 3 desktop UI and Windows service implementations |
 | `MOBAsmart/` | Android MAUI UI, local/remote runtime coordination and mobile services |
 | `MOBApi/` | ASP.NET Core REST and SignalR host (default REST port 5001) |
@@ -234,8 +231,8 @@ GitHub issues, milestones and Kanban track open work; consult/update a linked is
 without making tracker access a prerequisite for independent local work.
 For every integration, assess architecture/developer documentation and the canonical user wiki under `docs/wiki/`.
 Record the affected pages and corrections, or a concrete reason no change is needed; reassess after behavior-changing
-review fixes and confirm against actual integrated `main`. Coordinate any remaining corrections through Chief Project
-Manager's existing queue without claiming complete documentation currency while known drift remains.
+review fixes and confirm against actual integrated `main`. Record remaining corrections as a follow-up slice on the board without claiming complete
+documentation currency while known drift remains.
 When committing is requested, use English Conventional Commits. Report the commands/checks run and their outcomes;
 identify unavailable platform/hardware checks and the smallest remaining check without claiming they passed.
 

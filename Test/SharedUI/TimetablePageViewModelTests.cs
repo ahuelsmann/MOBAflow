@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -703,7 +703,8 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
         TimetableEvaluationResult? evaluationResult = null,
         TimeSpan? delay = null,
         DateTimeOffset? now = null,
-        RecordingProjectionService? projection = null)
+        RecordingProjectionService? projection = null,
+        ITimetableRuntimeProjectionService? projectionService = null)
     {
         var runtime = new Mock<IMobaRuntime>();
         var dispatcher = new Mock<IUiDispatcher>();
@@ -714,13 +715,13 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object);
         var stationEventBus1 = eventBus;
-        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), dispatcher.Object);
+        var settingsPage1 = TestSettingsPages.Create(new UiSettings(), dispatcher.Object);
         var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, runtime.Object, null);
         var mainWindow = new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(),
             runtime.Object,
             runtime.Object,
-            new LocalRuntimeCommandGateway(runtime.Object),
+            new LocalRuntimeCommandGateway(runtime.Object),
+
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -729,12 +730,13 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            Mock.Of<ILogger<MainWindowViewModel>>());
+            Mock.Of<ILogger<MainWindowViewModel>>(),
+            new NullDialogService());
         var evaluation = new StubEvaluationService(evaluationResult ?? new TimetableEvaluationResult([]));
         var timing = new StubTimingService(delay ?? TimeSpan.Zero);
-        var runtimeProjection = projection ?? new RecordingProjectionService();
+        var runtimeProjection = projectionService ?? projection ?? new RecordingProjectionService();
         var viewModel = new TimetablePageViewModel(
-            mainWindow.SolutionSession,
+            locomotiveSession1,
             evaluation,
             operations,
             timing,

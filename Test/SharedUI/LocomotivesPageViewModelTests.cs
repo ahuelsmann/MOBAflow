@@ -3,9 +3,8 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -22,7 +21,7 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
     private SolutionSession _session = null!;
     private Mock<ISolutionIoService> _io = null!;
     private Mock<ISettingsService> _persistence = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private LocomotivesPageViewModel _page = null!;
     private Mock<Action<string>> _explorer = null!;
     private LocomotiveTrainUsageViewModel _usage = null!;
@@ -45,21 +44,21 @@ internal sealed partial class LocomotivesPageViewModelTests : IDisposable
         _session = TestSolutionSessions.Create(new Solution { Projects = [new Project()] }, dispatcher.Object, runtime.Object, _io.Object);
         _session.CurrentSolutionPath = "locomotives-test.json";
         _persistence = new Mock<ISettingsService>();
-        _persistence.Setup(value => value.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-        _settings = new AppSettings();
+        _persistence.Setup(value => value.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
+        _settings = new UiSettings();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _settings.Layout.LocomotivesPage.IsListExpanded = false;
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(value => value.Detect(It.IsAny<Project>())).Returns(new DigitalAddressConflictReport([], []));
-        var management = new LocomotiveManagementViewModel(detector.Object, new LocomotiveLibraryService(), projectContext: _session);
+        var management = TestRollingStockPages.CreateManagement(detector.Object, _session);
         _explorer = new Mock<Action<string>>();
         _usage = TestRollingStockPages.CreateUsage(_session);
         _runtimeSnapshots = new Mock<IProjectRuntimeSnapshots>();
         _currentSnapshots.Clear();
         _runtimeSnapshots.SetupGet(value => value.Snapshots).Returns(() => _currentSnapshots.Values.ToArray());
         _control = new RuntimeLocomotiveControl(_runtimeSnapshots.Object, dispatcher.Object);
-        _page = new LocomotivesPageViewModel(_session, TestFileServices.Photos(_io.Object), _persistence.Object,
-            new LayoutColumnWidthsViewModel(), new LocomotivePageAnalysis(management, _usage, _control),
+        _page = new LocomotivesPageViewModel(_session, TestFileServices.Photos(_io.Object), TestLayouts.Create(_persistence.Object),
+            new LocomotivePageAnalysis(management, _usage, _control),
             NullLogger<LocomotivesPageViewModel>.Instance, _explorer.Object);
     }
 

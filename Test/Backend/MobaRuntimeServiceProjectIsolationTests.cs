@@ -117,8 +117,9 @@ internal sealed partial class MobaRuntimeServiceProjectIsolationTests : IDisposa
         var z21 = CreateZ21Mock();
         z21.Setup(value => value.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(() => { entered.TrySetResult(); return release.Task; });
-        using var runtime = CreateRuntime(z21.Object);
-        await runtime.ActivateProjectAsync(new Project { Z21 = { IpAddress = "192.168.0.111" } }).ConfigureAwait(false);
+        var project = new Project { Z21 = { IpAddress = "192.168.0.111" } };
+        using var runtime = _runtimes.Create(z21.Object, new TestRuntimeOptions { EndpointSource = new ProjectZ21EndpointSource(() => project) });
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
 
         var connection = automatic ? runtime.StartAsync() : runtime.ConnectAsync();
         await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);

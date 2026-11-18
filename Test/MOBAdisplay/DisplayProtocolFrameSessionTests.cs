@@ -16,7 +16,7 @@ internal sealed class DisplayProtocolFrameSessionTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
 
@@ -43,7 +43,7 @@ internal sealed class DisplayProtocolFrameSessionTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint(maximumRegionPayloadLength: 8);
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
 
@@ -86,7 +86,7 @@ internal sealed class DisplayProtocolFrameSessionTests
             width: width,
             height: height,
             maximumRegionPayloadLength: maximumRegionPayloadLength);
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(width, height);
 
@@ -124,7 +124,7 @@ internal sealed class DisplayProtocolFrameSessionTests
         var endpoint = new FakeDisplayEndpoint(maximumRegionPayloadLength: 8);
         endpoint.DropFrameRegion(0);
         endpoint.DropFrameRegion(2);
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
 
@@ -149,7 +149,7 @@ internal sealed class DisplayProtocolFrameSessionTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint(maximumRegionPayloadLength: 8);
         endpoint.DropFrameRegion(1, int.MaxValue);
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
 
@@ -174,7 +174,7 @@ internal sealed class DisplayProtocolFrameSessionTests
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
         endpoint.DropNextResponse(DisplayMessageType.CompleteFrame);
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
 
@@ -192,7 +192,7 @@ internal sealed class DisplayProtocolFrameSessionTests
         var timeProvider = new ManualTimeProvider();
         var endpoint = new FakeDisplayEndpoint(timeProvider);
         endpoint.DropNextResponse(DisplayMessageType.BeginFrame);
-        using var client = new DisplayProtocolClient(endpoint, timeProvider: timeProvider);
+        using var client = new DisplayProtocolClient(endpoint, timeProvider);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
         using var cancellation = new CancellationTokenSource();
@@ -241,7 +241,7 @@ internal sealed class DisplayProtocolFrameSessionTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint(width: 5);
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
 
@@ -265,7 +265,7 @@ internal sealed class DisplayProtocolFrameSessionTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
         await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
@@ -293,7 +293,7 @@ internal sealed class DisplayProtocolFrameSessionTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
         await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
@@ -324,7 +324,7 @@ internal sealed class DisplayProtocolFrameSessionTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using var client = new DisplayProtocolClient(endpoint);
+        using var client = new DisplayProtocolClient(endpoint, TimeProvider.System);
         var session = new DisplayProtocolFrameSession(client);
         var frame = DisplayConformancePattern.CreateRgb565(4, 3);
         await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);

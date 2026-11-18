@@ -5,7 +5,6 @@ using Common.Configuration;
 using Contracts.Runtime;
 using Interface;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>One accepted activation and its immutable global counter value.</summary>
 public sealed class InPortCountedEventArgs(InPortCounterSnapshot snapshot, Guid correlationId, long generation = 0, long inputRevision = 0) : EventArgs
@@ -46,20 +45,22 @@ public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
     public InPortCounterService(
         IZ21 z21,
         AppSettings settings,
-        TimeProvider? timeProvider = null,
-        ILogger<InPortCounterService>? logger = null,
-        IInPortCounterStore? store = null,
-        Func<Guid, IInPortCounterStore>? projectStoreFactory = null)
+        TimeProvider timeProvider,
+        ILogger<InPortCounterService> logger,
+        InPortCounterPersistence persistence)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(timeProvider);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(persistence);
         _z21 = z21;
         _settings = settings;
-        _timeProvider = timeProvider ?? TimeProvider.System;
-        _logger = logger ?? NullLogger<InPortCounterService>.Instance;
-        _store = store;
-        _projectStoreFactory = projectStoreFactory;
-        _initialized = store is null;
+        _timeProvider = timeProvider;
+        _logger = logger;
+        _store = persistence.Store;
+        _projectStoreFactory = persistence.ProjectStoreFactory;
+        _initialized = _store is null;
         for (uint inPort = 1; inPort <= settings.Counter.CountOfFeedbackPoints; inPort++)
         {
             _counters[inPort] = new InPortCounterSnapshot(inPort, 0, null, null);

@@ -36,12 +36,10 @@ public sealed class MobaRuntimeServiceDependencies
     public required InPortCounterService InPortCounterService { get; init; }
 
     /// <summary>
-    /// Gets the Z21 endpoint source, or null to connect to the Z21 of the project the runtime runs
-    /// (that source depends on the runtime's own active project, so the runtime creates it). Production hosts
-    /// provide a source: MOBAsmart registers one for its selected project and <c>ProjectRuntimeFactory</c> passes
-    /// one per project; the default applies only when the host registers none.
+    /// Gets the source of the Z21 the runtime connects to. MOBAsmart registers one for the project selected on the
+    /// phone and <c>ProjectRuntimeFactory</c> passes one per project.
     /// </summary>
-    public IZ21EndpointSource? EndpointSource { get; init; }
+    public required IZ21EndpointSource EndpointSource { get; init; }
 }
 
 /// <summary>
@@ -111,6 +109,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ArgumentNullException.ThrowIfNull(dependencies.JourneyManagerFactory);
         ArgumentNullException.ThrowIfNull(dependencies.InterlockingRuntime);
         ArgumentNullException.ThrowIfNull(dependencies.InPortCounterService);
+        ArgumentNullException.ThrowIfNull(dependencies.EndpointSource);
         ArgumentNullException.ThrowIfNull(logger);
 
         _z21 = dependencies.Z21;
@@ -120,8 +119,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _settings = dependencies.Settings;
         _logger = logger;
         _eventBus = dependencies.EventBus;
-        // When the host registers no source, the runtime connects to the Z21 of the project it runs.
-        _endpointSource = dependencies.EndpointSource ?? new ProjectZ21EndpointSource(() => _activeProjectContext?.ActiveProject);
+        _endpointSource = dependencies.EndpointSource;
         _interlockingRuntime = dependencies.InterlockingRuntime;
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
         _inPortCounters.SnapshotChanged += OnJourneyRuntimeChanged;

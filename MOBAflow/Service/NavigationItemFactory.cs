@@ -2,10 +2,11 @@
 
 namespace Moba.WinUI.Service;
 
-using Common.Configuration;
+using SharedUI.Configuration;
 
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
@@ -16,11 +17,11 @@ using Moba.WinUI.View;
 /// Factory for creating NavigationViewItems from PageMetadata.
 /// Handles icon creation, badge rendering, and Feature Toggle visibility binding.
 /// </summary>
-public sealed class NavigationItemFactory
+internal sealed class NavigationItemFactory
 {
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
 
-    public NavigationItemFactory(AppSettings settings)
+    public NavigationItemFactory(UiSettings settings)
     {
         _settings = settings;
     }
@@ -30,12 +31,16 @@ public sealed class NavigationItemFactory
     /// </summary>
     public NavigationViewItem CreateItem(PageMetadata page)
     {
+        var badgeLabel = GetBadgeLabel(page);
         var item = new NavigationViewItem
         {
             Tag = page.Tag,
             Icon = CreateIcon(page),
-            Content = CreateContent(page)
+            Content = CreateContent(page, badgeLabel)
         };
+
+        // Bold or badged items show a panel as content, which gives Narrator no name; name every item explicitly.
+        AutomationProperties.SetName(item, ComposeAccessibleName(page.Title, badgeLabel));
 
         // Apply visibility based on Feature Toggle
         if (!string.IsNullOrEmpty(page.FeatureToggleKey))
@@ -57,6 +62,13 @@ public sealed class NavigationItemFactory
     /// Creates a NavigationViewItemSeparator.
     /// </summary>
     public NavigationViewItemSeparator CreateSeparator() => new();
+
+    /// <summary>
+    /// Composes the accessible name of a navigation item: the page title, followed by the badge when one is shown
+    /// (for example "Timetable, Preview").
+    /// </summary>
+    internal static string ComposeAccessibleName(string title, string? badgeLabel) =>
+        string.IsNullOrWhiteSpace(badgeLabel) ? title : $"{title}, {badgeLabel}";
 
     /// <summary>
     /// Creates the icon (FontIcon or PathIcon).
@@ -86,9 +98,8 @@ public sealed class NavigationItemFactory
     /// <summary>
     /// Creates the content (title with optional badge).
     /// </summary>
-    private object CreateContent(PageMetadata page)
+    private static object CreateContent(PageMetadata page, string badgeLabel)
     {
-        var badgeLabel = GetBadgeLabel(page);
         var hasBadge = !string.IsNullOrEmpty(badgeLabel);
 
         // Simple title without badge
@@ -177,36 +188,14 @@ public sealed class NavigationItemFactory
     }
 
     /// <summary>
-    /// Gets the badge label from settings.
+    /// Gets the badge label of a feature-toggle page from settings.
     /// </summary>
-    private string GetBadgeLabel(PageMetadata registration)
-    {
-        // Get from FeatureToggleSettings
-        if (string.IsNullOrEmpty(registration.BadgeLabelKey))
-        {
-            return string.Empty;
-        }
-
-        var property = typeof(FeatureToggleSettings).GetProperty(registration.BadgeLabelKey);
-        if (property == null)
-        {
-            return string.Empty;
-        }
-
-        return property.GetValue(_settings.FeatureToggles) as string ?? string.Empty;
-    }
+    private string GetBadgeLabel(PageMetadata registration) =>
+        FeatureToggleRegistry.GetBadgeLabel(_settings.FeatureToggles, registration.FeatureToggleKey) ?? string.Empty;
 
     /// <summary>
-    /// Gets the Feature Toggle value from settings.
+    /// Gets the Feature Toggle value from settings; pages without a registered toggle stay visible.
     /// </summary>
-    private bool GetFeatureToggleValue(string key)
-    {
-        var property = typeof(FeatureToggleSettings).GetProperty(key);
-        if (property == null)
-        {
-            return true; // Default: visible
-        }
-
-        return property.GetValue(_settings.FeatureToggles) as bool? ?? true;
-    }
+    private bool GetFeatureToggleValue(string key) =>
+        FeatureToggleRegistry.GetPageAvailabilityOrDefault(_settings.FeatureToggles, key);
 }

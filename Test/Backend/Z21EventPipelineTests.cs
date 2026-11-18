@@ -149,15 +149,15 @@ internal sealed class Z21EventPipelineTests
     {
         using (Assert.EnterMultipleScope())
         {
-            Assert.Throws<ArgumentNullException>(() => _ = new Z21EventPipeline(null!));
-            Assert.Throws<ArgumentOutOfRangeException>(() => _ = new Z21EventPipeline(new RecordingEventBus(), capacity: 0));
+            Assert.Throws<ArgumentNullException>(() => _ = new Z21EventPipeline(null!, NullLogger.Instance));
+            Assert.Throws<ArgumentOutOfRangeException>(() => _ = new Z21EventPipeline(new RecordingEventBus(), NullLogger.Instance, capacity: 0));
         }
     }
 
     [Test]
     public async Task TryEnqueue_RejectsNullEventAndStopAsync_RejectsNonPositiveTimeout()
     {
-        await using var pipeline = new Z21EventPipeline(new RecordingEventBus(), capacity: 1);
+        await using var pipeline = new Z21EventPipeline(new RecordingEventBus(), NullLogger.Instance, capacity: 1);
 
         Assert.Throws<ArgumentNullException>(() => pipeline.TryEnqueue<FeedbackReceivedEvent>(null!));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => pipeline.StopAsync(TimeSpan.Zero)).ConfigureAwait(false);
@@ -204,7 +204,7 @@ internal sealed class Z21EventPipelineTests
     [Test]
     public async Task Cancel_RejectsLaterEvents()
     {
-        await using var pipeline = new Z21EventPipeline(new RecordingEventBus(), capacity: 2);
+        await using var pipeline = new Z21EventPipeline(new RecordingEventBus(), NullLogger.Instance, capacity: 2);
 
         pipeline.Cancel();
 

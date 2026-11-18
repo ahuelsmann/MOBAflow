@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
-using Common.Configuration;
+using SharedUI.Configuration;
 
 using Domain;
 
@@ -46,9 +46,9 @@ internal class NullLocomotiveService : ILocomotiveService
 /// </summary>
 internal class NullSettingsService : ISettingsService
 {
-    public AppSettings GetSettings() => new();
+    public UiSettings GetSettings() => new();
     public Task LoadSettingsAsync() => Task.CompletedTask;
-    public Task SaveSettingsAsync(AppSettings settings) => Task.CompletedTask;
+    public Task SaveSettingsAsync(UiSettings settings) => Task.CompletedTask;
     public Task ResetToDefaultsAsync() => Task.CompletedTask;
     public string? LastSolutionPath { get; set; }
     public bool AutoLoadLastSolution { get; set; }

@@ -668,7 +668,7 @@ public sealed class JourneyEventPlanTests
                 }
             };
             Project = new Project { Journeys = [Journey], Workflows = [Workflow] };
-            Counters = new InPortCounterService(Z21.Object, Settings);
+            Counters = TestRuntimes.Counters(Z21.Object, Settings);
             WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
                 .Returns((WorkflowExecutionRequest request, CancellationToken _) =>
                 {

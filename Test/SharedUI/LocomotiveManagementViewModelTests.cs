@@ -6,8 +6,8 @@ using global::Moba.Backend.Service;
 using global::Moba.Backend.Service.Validation;
 using global::Moba.Common.Multiplex;
 using global::Moba.Domain;
-using global::Moba.SharedUI.ViewModel;
 using global::Moba.SharedUI.Interface;
+using global::Moba.Test.Helpers;
 using Moq;
 
 internal sealed class LocomotiveManagementViewModelTests
@@ -28,7 +28,7 @@ internal sealed class LocomotiveManagementViewModelTests
         };
         var conflicting = new Locomotive { Name = "Second", DigitalAddress = 5 };
         var project = new Project { Locomotives = [locomotive, conflicting] };
-        var viewModel = new LocomotiveManagementViewModel(detector, new LocomotiveLibraryService());
+        var viewModel = TestRollingStockPages.CreateManagement(detector, Mock.Of<IProjectContext>());
 
         viewModel.SetContext(project, locomotive);
 
@@ -47,9 +47,7 @@ internal sealed class LocomotiveManagementViewModelTests
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(candidate => candidate.Detect(It.IsAny<Project>()))
             .Returns(new DigitalAddressConflictReport([], []));
-        var viewModel = new LocomotiveManagementViewModel(
-            detector.Object,
-            new LocomotiveLibraryService());
+        var viewModel = TestRollingStockPages.CreateManagement(detector.Object, Mock.Of<IProjectContext>());
 
         viewModel.SetContext(new Project(), new Locomotive());
         viewModel.SetContext(null, null);
@@ -73,10 +71,7 @@ internal sealed class LocomotiveManagementViewModelTests
         project.Locomotives.Add(locomotive);
         var projectContext = new Mock<IProjectContext>();
         projectContext.Setup(candidate => candidate.SaveSolutionInternalAsync()).Returns(Task.CompletedTask);
-        var viewModel = new LocomotiveManagementViewModel(
-            detector.Object,
-            new LocomotiveLibraryService(),
-            projectContext: projectContext.Object);
+        var viewModel = TestRollingStockPages.CreateManagement(detector.Object, projectContext.Object);
         viewModel.SetContext(project, locomotive);
 
         await viewModel.AddWhistleRuleCommand.ExecuteAsync(null);
@@ -119,12 +114,10 @@ internal sealed class LocomotiveManagementViewModelTests
             }
         };
         var project = new Project { Locomotives = [locomotive] };
-        var viewModel = new LocomotiveManagementViewModel(
+        var viewModel = TestRollingStockPages.CreateManagement(
             detector.Object,
-            new LocomotiveLibraryService(),
-            new LocomotivePassportHtmlRenderer(),
-            new DecoderCvService(),
-            picker.Object);
+            Mock.Of<IProjectContext>(),
+            filePicker: picker.Object);
         viewModel.SetContext(project, locomotive);
 
         try
@@ -163,9 +156,9 @@ internal sealed class LocomotiveManagementViewModelTests
         picker.Setup(candidate => candidate.BrowseForJsonFileAsync()).ReturnsAsync(path);
         var locomotive = new Locomotive();
         var project = new Project { Locomotives = [locomotive] };
-        var viewModel = new LocomotiveManagementViewModel(
+        var viewModel = TestRollingStockPages.CreateManagement(
             detector.Object,
-            new LocomotiveLibraryService(),
+            Mock.Of<IProjectContext>(),
             decoderCvService: cvService,
             filePicker: picker.Object);
         viewModel.SetContext(project, locomotive);
@@ -199,12 +192,10 @@ internal sealed class LocomotiveManagementViewModelTests
         picker.Setup(candidate => candidate.BrowseForJsonFileAsync()).ReturnsAsync(path);
         var projectContext = new Mock<IProjectContext>();
         var locomotive = new Locomotive();
-        var viewModel = new LocomotiveManagementViewModel(
+        var viewModel = TestRollingStockPages.CreateManagement(
             detector.Object,
-            new LocomotiveLibraryService(),
-            decoderCvService: new DecoderCvService(),
-            filePicker: picker.Object,
-            projectContext: projectContext.Object);
+            projectContext.Object,
+            filePicker: picker.Object);
         viewModel.SetContext(new Project { Locomotives = [locomotive] }, locomotive);
 
         try

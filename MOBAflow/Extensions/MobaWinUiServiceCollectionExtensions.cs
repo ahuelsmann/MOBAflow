@@ -11,7 +11,6 @@ using Backend.Service.TrackPlan;
 using Common.Configuration;
 using Common.Events;
 using Common.Multiplex;
-using Common.Navigation;
 using Display.Rendering;
 using Display.Runtime;
 using Display.Transport;
@@ -23,6 +22,7 @@ using Microsoft.Extensions.Options;
 using Moba.Backend;
 using Serilog;
 using Service;
+using SharedUI.Configuration;
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Service;
@@ -44,7 +44,7 @@ using View;
 public static class MobaWinUiServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers configuration, AppSettings, and Serilog logging.
+    /// Registers configuration, the settings root (as <see cref="UiSettings"/> and <see cref="AppSettings"/>), and Serilog logging.
     /// </summary>
     public static IServiceCollection AddMobaWinUiConfiguration(
         this IServiceCollection services,
@@ -54,8 +54,9 @@ public static class MobaWinUiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddSingleton(configuration);
-        services.Configure<AppSettings>(configuration);
-        services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
+        services.Configure<UiSettings>(configuration);
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<UiSettings>>().Value);
+        services.AddSingleton<AppSettings>(sp => sp.GetRequiredService<UiSettings>());
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
         return services;
@@ -79,31 +80,38 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IFeatureTogglePageProvider>(sp =>
             new FeatureTogglePageProvider(
                 sp.GetRequiredService<List<PageMetadata>>(),
-                sp.GetRequiredService<AppSettings>()));
+                sp.GetRequiredService<UiSettings>()));
 
         return services;
     }
 
     /// <summary>
-    /// Registers local synthesis providers and the shared speech output.
+    /// Registers local synthesis providers, the shared speech output and the sound-effect player.
     /// </summary>
     public static IServiceCollection AddMobaWinUiSpeechServices(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.AddSingleton<IPiperProcessRunner, PiperProcessRunner>();
         services.AddSingleton<ISpeechProvider, PiperSpeechProvider>();
-        services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
-        services.AddSingleton<IWavePlayer, CancellableWavePlayer>();
+        services.AddSingleton<ISpeechProvider>(sp => new SystemSpeechProvider(
+            sp.GetRequiredService<AppSettings>(),
+            SystemSpeechProvider.ReadWindowsDefaultVoice));
+        services.AddSingleton<IWavePlayer>(sp => new CancellableWavePlayer(
+            CancellableWavePlayer.CreateNativeSession,
+            sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<IAudioCache>(sp =>
         {
             var settings = sp.GetRequiredService<AppSettings>();
             return new AudioCache(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MOBAflow", "SpeechCache"),
                 () => settings.Speech.CacheSizeLimitMegabytes * 1024L * 1024,
-                sp.GetService<TimeProvider>() ?? TimeProvider.System);
+                sp.GetRequiredService<TimeProvider>());
         });
         services.AddSingleton<SpeechOutput>();
         services.AddSingleton<ISpeechOutput>(sp => sp.GetRequiredService<SpeechOutput>());
+        // Workflow actions play sound effects next to announcements; both outputs belong to the action context.
+        services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
 
         return services;
     }
@@ -162,9 +170,9 @@ public static class MobaWinUiServiceCollectionExtensions
             TimeProvider = sp.GetRequiredService<TimeProvider>(),
             LoggerFactory = sp.GetRequiredService<ILoggerFactory>(),
             // Feedback counters are stored per project.
-            CounterStoreFactory = projectId => new FileInPortCounterStore(
+            CounterPersistence = projectId => InPortCounterPersistence.InStore(new FileInPortCounterStore(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "MOBAflow", "inport-counters", $"{projectId:N}.json"))
+                    "MOBAflow", "inport-counters", $"{projectId:N}.json")))
         });
         services.AddSingleton<ProjectRuntimeFactory>();
         services.AddSingleton<ProjectRuntimeHost>();
@@ -216,7 +224,8 @@ public static class MobaWinUiServiceCollectionExtensions
                 sp.GetRequiredService<IRuntimeHubHostClient>(),
                 sp.GetRequiredService<IMobaRuntime>(),
                 sp.GetRequiredService<IEventBus>(),
-                sp.GetRequiredService<ILogger<RestApiStatusService>>());
+                sp.GetRequiredService<ILogger<RestApiStatusService>>(),
+                sp.GetRequiredService<TimeProvider>());
         });
 
         services.AddSingleton<RestApiProcessService>();
@@ -246,7 +255,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddTransient<SignalBoxPropertiesViewModel>();
 
         services.AddSingleton<ISettingsService>(sp => new SettingsService(
-            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ILogger<SettingsService>>()));
 
         return services;
@@ -265,8 +274,9 @@ public static class MobaWinUiServiceCollectionExtensions
         // DialogService resolves XamlRoot lazily to avoid startup deadlocks.
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IFunctionAppearancePicker, WinUiFunctionAppearancePicker>();
+        // The desktop runs its runtimes itself; it has no remote MOBAflow session to route to.
+        services.AddSingleton<IRuntimeRoutingState, NullRuntimeRoutingState>();
 
-        services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
         services.AddSingleton<HealthCheckService>();
 
         services.AddSingleton<IFrameRenderer, SkiaFrameRenderer>();
@@ -290,9 +300,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(sp => new TrackPlanViewModel(
             sp.GetRequiredService<TrackPlanEditorService>(),
             sp.GetRequiredService<IDialogService>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<ILogger<TrackPlanViewModel>>()));
+            sp.GetRequiredService<LayoutPersistenceService>()));
 
         return services;
     }
@@ -305,6 +313,8 @@ public static class MobaWinUiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<LayoutColumnWidthsViewModel>();
+        // The single path that persists the saved layout; page ViewModels and pages save through it.
+        services.AddSingleton<LayoutPersistenceService>();
         services.AddSingleton<LocomotiveManagementViewModel>();
         services.AddSingleton<LocomotiveTrainUsageViewModel>();
         services.AddSingleton(sp => new RuntimeLocomotiveControl(
@@ -312,8 +322,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(sp => new LocomotivesPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<PhotoAssignmentService>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
+            sp.GetRequiredService<LayoutPersistenceService>(),
             new LocomotivePageAnalysis(sp.GetRequiredService<LocomotiveManagementViewModel>(),
                 sp.GetRequiredService<LocomotiveTrainUsageViewModel>(), sp.GetRequiredService<RuntimeLocomotiveControl>()),
             sp.GetRequiredService<ILogger<LocomotivesPageViewModel>>(),
@@ -323,8 +332,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton(sp => new WagonsPageViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<PhotoAssignmentService>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
+            sp.GetRequiredService<LayoutPersistenceService>(),
             sp.GetRequiredService<ILogger<WagonsPageViewModel>>(),
             showPhotoInExplorer: fullPath => System.Diagnostics.Process.Start(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
@@ -344,19 +352,13 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton(sp => new SettingsPageViewModel(
-            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ISettingsService>(),
+            sp.GetRequiredService<LayoutPersistenceService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<ILogger<SettingsPageViewModel>>(),
-            sp.GetService<IFeatureTogglePageProvider>(),
-            speechTestAction: async message =>
-            {
-                var result = await sp.GetRequiredService<ISpeechOutput>().SpeakAsync(message).ConfigureAwait(false);
-                if (!result.IsSuccess)
-                {
-                    throw new InvalidOperationException(result.Reason);
-                }
-            }));
+            sp.GetRequiredService<IFeatureTogglePageProvider>(),
+            sp.GetRequiredService<ISpeechOutput>()));
         services.AddSingleton(sp => new WorkflowLibraryViewModel(
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<IDialogService>(),
@@ -370,14 +372,17 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<JourneysPageViewModel>();
         services.AddSingleton<TrainsPageViewModel>();
         // OverviewPage and the Event Manager share the counter state; MonitorPage owns the traffic monitor.
-        // No shell surface binds either, so MainWindow disposes both at shutdown.
+        // No shell surface binds either, so MainWindowLifecycleService disposes both at shutdown.
         services.AddSingleton<InPortCounterViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
+        // The Solution and Signal Box page states are created with the main window, so the signal-box runtime
+        // projection runs from start-up; MainWindowLifecycleService disposes them too.
+        services.AddSingleton<SolutionPageViewModel>();
+        services.AddSingleton<SignalBoxPageViewModel>();
         // The main window binds the Messages pane and the status bar to these two; the shell exposes and disposes them.
         services.AddSingleton<ProjectDiagnosticsViewModel>();
         services.AddSingleton<SystemStatusViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
-            sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
             sp.GetRequiredService<IConnectionRuntime>(),
             sp.GetRequiredService<IRuntimeCommandGateway>(),
@@ -390,8 +395,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<SystemStatusViewModel>(),
             sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
-            sp.GetRequiredService<ISettingsService>(),
-            dialogService: sp.GetService<IDialogService>()));
+            sp.GetRequiredService<IDialogService>()));
 
         services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
         services.AddTransient<InterlockingControlViewModel>();
@@ -412,19 +416,33 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IFunctionAppearancePicker>(),
+            sp.GetRequiredService<IRuntimeRoutingState>(),
             options: sp.GetRequiredService<TrainControlViewModelOptions>()));
 
-        services.AddSingleton(sp => new MainWindow(
-            sp.GetRequiredService<MainWindowViewModel>(),
-            sp.GetRequiredService<InPortCounterViewModel>(),
-            sp.GetRequiredService<MonitorPageViewModel>(),
-            sp.GetRequiredService<NavigationService>(),
-            sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<WinUiWindowContext>(),
-            sp.GetRequiredService<List<PageMetadata>>(),
-            sp.GetRequiredService<AppSettings>(),
+        // The host work behind the main window; resolved with it, so the runtime observers exist from start-up.
+        services.AddSingleton(sp => new MainWindowLifecycleService(
+            new ShellShutdownWorkflow(
+                sp.GetRequiredService<MainWindowViewModel>().PrepareForShutdownAsync,
+                (IDisposable[])
+                [
+                    sp.GetRequiredService<InPortCounterViewModel>(),
+                    sp.GetRequiredService<MonitorPageViewModel>(),
+                    sp.GetRequiredService<SolutionPageViewModel>(),
+                    sp.GetRequiredService<SignalBoxPageViewModel>()
+                ]),
+            sp.GetRequiredService<SystemStatusViewModel>(),
             sp.GetRequiredService<RestApiStatusService>(),
             sp.GetRequiredService<RestApiProcessService>(),
+            sp.GetRequiredService<HealthCheckService>(),
+            sp.GetRequiredService<IUiDispatcher>(),
+            sp.GetRequiredService<ILogger<MainWindowLifecycleService>>()));
+        services.AddSingleton(sp => new MainWindow(
+            sp.GetRequiredService<MainWindowViewModel>(),
+            sp.GetRequiredService<MainWindowLifecycleService>(),
+            sp.GetRequiredService<NavigationService>(),
+            sp.GetRequiredService<WinUiWindowContext>(),
+            sp.GetRequiredService<List<PageMetadata>>(),
+            sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ILogger<WindowActivationService>>(),
             sp.GetRequiredService<ILogger<MainWindow>>()));
 
@@ -440,12 +458,11 @@ public static class MobaWinUiServiceCollectionExtensions
 
         services.AddSingleton(sp =>
         {
-            var window = sp.GetRequiredService<MainWindow>();
-            var healthChecks = sp.GetRequiredService<HealthCheckService>();
-            // The host owns attaching health events to its window; startup only invokes that action.
+            var lifecycle = sp.GetRequiredService<MainWindowLifecycleService>();
+            // The lifecycle service owns attaching health events to the status bar; startup only invokes that action.
             return new PostStartupInitializationService(
                 sp.GetRequiredService<IEventBus>(),
-                () => window.InitializeHealthChecks(healthChecks),
+                lifecycle.InitializeHealthChecks,
                 sp.GetRequiredService<JourneysPageViewModel>(),
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<MasterDataStore>(),

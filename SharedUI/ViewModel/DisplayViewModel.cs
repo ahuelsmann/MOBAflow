@@ -3,7 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Display.Protocol;
 using Moba.Display.Transport;
 
@@ -56,7 +56,7 @@ public enum DisplayCapabilityFreshness
 public sealed partial class DisplayViewModel : ObservableObject
 {
     private const string NotNegotiatedText = "Not negotiated";
-    private readonly AppSettings _settings;
+    private readonly UiSettings _settings;
     private readonly IDisplayDeviceClient _deviceClient;
     private DisplayEndpoint? _configuredEndpoint;
     private DisplayEndpoint? _connectedEndpoint;
@@ -65,7 +65,7 @@ public sealed partial class DisplayViewModel : ObservableObject
     /// <summary>Initializes display diagnostics and commands for the persisted endpoint settings.</summary>
     /// <param name="settings">Application settings containing the explicit display endpoint.</param>
     /// <param name="deviceClient">Capability-aware display transport client.</param>
-    public DisplayViewModel(AppSettings settings, IDisplayDeviceClient deviceClient)
+    public DisplayViewModel(UiSettings settings, IDisplayDeviceClient deviceClient)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(deviceClient);

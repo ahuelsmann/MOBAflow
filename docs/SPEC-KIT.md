@@ -63,8 +63,8 @@ with Spec Kit keeps `spec.md`, `plan.md`, and `tasks.md` together under `specs/`
 
 ## Balanced secrets scanning
 
-Before reading files that are likely to contain credentials, tokens, private keys,
-certificates, connection strings, or deployment secrets, run:
+In a local session, before reading files that are likely to contain credentials, tokens,
+private keys, certificates, connection strings, or deployment secrets, run:
 
 ```powershell
 sonar analyze secrets <path>
@@ -73,7 +73,9 @@ sonar analyze secrets <path>
 Ordinary source files, tests, Markdown documentation, schemas, and templates do
 not require an individual pre-read scan unless their context indicates that they
 may contain secrets. Before a commit or pull request, every changed file must pass
-the deterministic secrets scan.
+the deterministic secrets scan. Cloud sessions without a local scanner follow the
+[cloud rule](../.github/instructions/sonarqube-pre-pr.instructions.md#cloud-sessions-without-a-local-scanner):
+they do not open such files and record the missing scan in the pull request.
 
 ## Validate the installation
 

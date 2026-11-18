@@ -1,28 +1,18 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Microsoft.Extensions.Logging;
-using Moba.Test.Helpers;
-using Moba.Common.Configuration;
-using Moba.Common.Events;
+using Moba.Backend.Interface;
 using Moba.Contracts.Runtime;
+using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
+using Moba.Test.Helpers;
 using Moq;
 
 [TestFixture]
-internal sealed partial class JourneyMapViewModelTests : IDisposable
+internal sealed class JourneyMapViewModelTests
 {
-    private readonly TestRollingStockPages _rollingStockPages = new();
-
-    [TearDown]
-    public void Dispose()
-    {
-        _rollingStockPages.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
     [Test]
     public void RouteStations_ReturnsJourneyStations()
     {
@@ -36,44 +26,24 @@ internal sealed partial class JourneyMapViewModelTests : IDisposable
         };
         var project = new Project { Journeys = [journey] };
         var projectViewModel = new ProjectViewModel(project, TestViewModelServices.Default);
-        var mainViewModel = CreateMainWindowViewModel();
-        mainViewModel.SelectedProject = projectViewModel;
-        mainViewModel.SelectedJourney = projectViewModel.Journeys.Single();
-        var viewModel = new JourneyMapViewModel(mainViewModel.SolutionSession);
+        var session = CreateSession();
+        session.SelectedProject = projectViewModel;
+        session.SelectedJourney = projectViewModel.Journeys.Single();
+        var viewModel = new JourneyMapViewModel(session);
 
         Assert.That(viewModel.RouteStations.Select(station => station.Name), Is.EqualTo(new[] { "Bielefeld", "Herford" }));
         Assert.That(viewModel.ProgressText, Is.EqualTo("Station 1 of 2"));
     }
 
-    private MainWindowViewModel CreateMainWindowViewModel()
+    private static SolutionSession CreateSession()
     {
         var runtimeMock = new Mock<IMobaRuntime>();
-        var eventBusMock = new Mock<IEventBus>();
         var dispatcherMock = new Mock<IUiDispatcher>();
-        var loggerMock = new Mock<ILogger<MainWindowViewModel>>();
         dispatcherMock
             .Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
         runtimeMock.Setup(runtime => runtime.Current).Returns(new MobaRuntimeSnapshot());
-        runtimeMock.Setup(runtime => runtime.GetTrafficPackets()).Returns([]);
 
-        var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), dispatcherMock.Object, runtimeMock.Object);
-        var stationEventBus1 = eventBusMock.Object;
-        var settingsPage1 = TestSettingsPages.Create(new AppSettings(), dispatcherMock.Object);
-        var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, runtimeMock.Object, null);
-        return new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(),
-            runtimeMock.Object,
-            runtimeMock.Object,
-            new LocalRuntimeCommandGateway(runtimeMock.Object),
-            stationEventBus1,
-            settingsPage1,
-            trainsPage1,
-            _rollingStockPages.GetStationsPage(locomotiveSession1, runtimeMock.Object, stationEventBus1),
-            _rollingStockPages.GetJourneysPage(locomotiveSession1, new LocalRuntimeCommandGateway(runtimeMock.Object), dispatcherMock.Object),
-            _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
-            _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
-            locomotiveSession1,
-            loggerMock.Object);
+        return TestSolutionSessions.Create(new Solution(), dispatcherMock.Object, runtimeMock.Object);
     }
 }

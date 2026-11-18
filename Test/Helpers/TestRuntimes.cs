@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Manager;
+using Moba.Backend.Network;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
@@ -31,18 +32,22 @@ internal sealed class TestRuntimeOptions
 
 /// <summary>
 /// Creates runtimes and journey managers with explicit test collaborators: a local event bus, a mocked
-/// interlocking runtime, production stop transitions and no runtime checkpoints. Counters the helper creates are
+/// interlocking runtime, production stop transitions, no runtime checkpoints and, unless the test passes an
+/// endpoint source for its project, no Z21 to connect to. Counters the helper creates are
 /// disposed with it, so a fixture owns one instance and disposes it after its tests.
 /// </summary>
 internal sealed partial class TestRuntimes : IDisposable
 {
     private readonly List<IDisposable> _owned = [];
 
+    /// <summary>An endpoint source without a project, for tests that never connect: resolving it reports no Z21.</summary>
+    public static IZ21EndpointSource NoZ21 { get; } = new ProjectZ21EndpointSource(() => null);
+
     /// <summary>A runtime over <paramref name="z21"/> whose InPort counters this helper owns.</summary>
     public MobaRuntimeService Create(IZ21 z21, TestRuntimeOptions? options = null)
     {
         var settings = options?.Settings ?? new AppSettings();
-        return Create(z21, Own(new InPortCounterService(z21, settings)), options);
+        return Create(z21, Own(Counters(z21, settings)), options);
     }
 
     /// <summary>A runtime over <paramref name="z21"/> and the test's own <paramref name="counters"/>.</summary>
@@ -61,11 +66,34 @@ internal sealed partial class TestRuntimes : IDisposable
                 JourneyManagerFactory = JourneyManagers(options.WorkflowService ?? Mock.Of<IWorkflowService>(), eventBus),
                 InterlockingRuntime = options.InterlockingRuntime ?? Mock.Of<IInterlockingRuntime>(),
                 InPortCounterService = counters,
-                EndpointSource = options.EndpointSource
+                EndpointSource = options.EndpointSource ?? NoZ21
             },
             options.Logger ?? NullLogger<MobaRuntimeService>.Instance);
     }
 
+    /// <summary>
+    /// InPort counters over <paramref name="z21"/> with the system clock unless the test passes its own, and
+    /// without persistence unless the test passes a store or a per-project store factory.
+    /// </summary>
+    public static InPortCounterService Counters(
+        IZ21 z21,
+        AppSettings settings,
+        TimeProvider? clock = null,
+        IInPortCounterStore? store = null,
+        Func<Guid, IInPortCounterStore>? projectStoreFactory = null)
+    {
+        var persistence = store is not null
+            ? InPortCounterPersistence.InStore(store)
+            : projectStoreFactory is not null
+                ? InPortCounterPersistence.PerProject(projectStoreFactory)
+                : InPortCounterPersistence.InMemory;
+        return new InPortCounterService(
+            z21, settings, clock ?? TimeProvider.System, NullLogger<InPortCounterService>.Instance, persistence);
+    }
+
+    /// <summary>A Z21 over <paramref name="udp"/> with its own traffic monitor unless the test passes one.</summary>
+    public static Z21 CreateZ21(IUdpClientWrapper udp, IEventBus eventBus, Z21Monitor? trafficMonitor = null) =>
+        new(udp, eventBus, NullLogger<Z21>.Instance, trafficMonitor ?? new Z21Monitor(NullLogger<Z21Monitor>.Instance));
     /// <summary>A journey manager factory with production stop transitions and no runtime checkpoints.</summary>
     public static JourneyManagerFactory JourneyManagers(IWorkflowService workflowService, IEventBus? eventBus = null) =>
         new(workflowService, new JourneyStopTransitionService(), new NullJourneyRuntimeStateStore(),

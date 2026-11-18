@@ -66,7 +66,7 @@ public sealed partial class LocomotiveTrainUsageViewModel : ObservableObject, ID
 
     /// <summary>Source-qualified copied occurrences for the active explicit query only.</summary>
     public ImmutableArray<LocomotiveTrainFinding> Diagnostics =>
-        [.. (EditedResult?.Findings ?? []).Concat(RuntimeObservation?.Definition.Findings ?? [])];
+        [.. Enumerable.Concat<LocomotiveTrainFinding>(EditedResult?.Findings ?? [], RuntimeObservation?.Definition.Findings ?? [])];
 
     /// <summary>Always-visible source and A/B/C coverage; never an aggregate non-use or Delete decision.</summary>
     public string CoverageSummary

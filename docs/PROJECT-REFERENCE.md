@@ -54,10 +54,11 @@ flowchart TD
     WinUI <-->|"REST + SignalR"| API["MOBApi"]
     Android <-->|"REST + SignalR"| API
     Android -->|"direct UDP"| Z21
+    API --> Contracts
     API --> Common
 ```
 
-MOBApi intentionally references `Common` only. It does not host the Backend
+MOBApi intentionally references only `Contracts` and `Common`. It does not host the Backend
 runtime; MOBAflow publishes solution and runtime state into its caches and
 consumes queued remote commands.
 
@@ -153,9 +154,11 @@ shared master data loaded through `MasterDataStore`.
 ### Journeys and feedback
 
 `InPortCounterService` counts accepted activations per configured InPort and
-persists counts through `IInPortCounterStore` / `FileInPortCounterStore`.
-WinUI uses `%LOCALAPPDATA%/MOBAflow/inport-counters.json`; Android uses a separate
-file in its app-data directory. Counts survive restarts; timestamps and lap
+persists counts through `IInPortCounterStore` / `FileInPortCounterStore`. The host states the storage with
+a required `InPortCounterPersistence`: WinUI gives each project runtime its own store
+(`%LOCALAPPDATA%/MOBAflow/inport-counters/{projectId:N}.json`), Android one counter service that switches to
+the selected project's file in its app-data directory, and a host that registers nothing keeps counts in
+memory. Counts survive restarts; timestamps and lap
 timing do not. Set/reset commands save corrections without publishing feedback
 activations. An unreadable store disables counting until a later load succeeds
 or an explicit reset replaces the saved counts. A journey's
@@ -370,8 +373,9 @@ Passenger Wagons, Goods Wagons, Trains, Workflows, Stations, Journeys, Timetable
 Manager, Journey Map, Train Control, Track Plan, Signal Box, ESP32 Display,
 Matrix Images, Monitor, Recorder, Help, Info and Settings.
 
-Page availability and Preview labels are controlled by
-`AppSettings.FeatureToggles` and `FeatureToggleRegistry`.
+Page availability and Preview labels are controlled by the keyed
+`FeatureToggles.Pages` entries of the SharedUI `UiSettings` root; pages without an entry use the defaults of
+`FeatureToggleRegistry`.
 
 ### MOBAsmart tabs
 
@@ -391,8 +395,8 @@ The pages are mounted lazily by `AppTabHostPage` to reduce startup work.
 | `MOBAflow/Build/Schemas/*.schema.json` | Build-time data schemas |
 
 Important application sections are `Z21`, `RestApi`, `Speech`, `Application`,
-`Counter`, `HealthCheck`, `Display`, `SignalBox`, `TrainControl`, `Layout` and
-`FeatureToggles`.
+`Counter`, `HealthCheck`, `SignalBox` and `TrainControl` (neutral `AppSettings` in `Common`) and `Display`,
+`Layout`, `FeatureToggles`, `WinUiTrainControlHost` and `MauiTrainControlHost` (`UiSettings` in `SharedUI`).
 
 ## Build and test entry points
 

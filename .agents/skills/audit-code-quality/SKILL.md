@@ -46,7 +46,7 @@ Run, when supported and already configured:
 3. Unit and integration tests using the repository's documented command.
 4. Coverage collection using the repository's configured collector and thresholds.
 5. Dependency vulnerability auditing, including transitive dependencies.
-6. Existing mutation tests, architecture tests, lint tools or firmware checks; read SonarCloud/CodeQL results from GitHub CI. Never run local Sonar/Vortex code analysis or install analysis hooks. Local deterministic secrets scans remain required.
+6. Existing mutation tests, architecture tests, lint tools or firmware checks; read SonarCloud/CodeQL results from GitHub CI. Never run local Sonar/Vortex code analysis or install analysis hooks. Local sessions keep the local deterministic secrets scans; cloud sessions without a scanner follow the cloud rule in `AGENTS.md`.
 7. Code metrics already available in the environment: maintainability index, cyclomatic complexity, class coupling, inheritance depth, and source lines.
 
 Do not install tools, update packages, restore prohibited solution graphs, start external services, or change configuration solely for the audit without explicit permission. If a check cannot run, state `Not verified`, give the exact reason, and use narrower evidence without treating absence of evidence as a pass.

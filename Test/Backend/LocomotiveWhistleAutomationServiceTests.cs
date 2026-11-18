@@ -31,10 +31,10 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
         var clock = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
         var bus = new EventBus(NullLogger<EventBus>.Instance);
         using var udp = new FakeUdpClientWrapper();
-        var z21 = new Z21(udp, bus);
+        var z21 = TestRuntimes.CreateZ21(udp, bus);
         try
         {
-            using var counters = new InPortCounterService(z21, new AppSettings
+            using var counters = TestRuntimes.Counters(z21, new AppSettings
             {
                 Counter = { CountOfFeedbackPoints = 5, UseTimerFilter = true, TimerIntervalSeconds = 3600 }
             }, clock);
@@ -119,7 +119,7 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var gateway = new RecordingGateway();
         using var service = new LocomotiveWhistleAutomationService(
-            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance);
+            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance, TimeProvider.System);
         var locomotive = new Locomotive { DigitalAddress = 12 };
         service.Activate(new Project
         {
@@ -148,7 +148,7 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var gateway = new RecordingGateway();
         using var service = new LocomotiveWhistleAutomationService(
-            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance);
+            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance, TimeProvider.System);
         var locomotive = new Locomotive { DigitalAddress = 3 };
         service.Activate(new Project
         {
@@ -169,7 +169,7 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var gateway = new RecordingGateway();
         using var service = new LocomotiveWhistleAutomationService(
-            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance);
+            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance, TimeProvider.System);
         var locomotive = new Locomotive { DigitalAddress = 12 };
         service.Activate(new Project
         {
@@ -209,7 +209,7 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         using var service = new LocomotiveWhistleAutomationService(
-            eventBus, new RecordingGateway(), NullLogger<LocomotiveWhistleAutomationService>.Instance);
+            eventBus, new RecordingGateway(), NullLogger<LocomotiveWhistleAutomationService>.Instance, TimeProvider.System);
 
         var errors = service.Validate(new LocomotiveWhistleRule
         {
@@ -228,7 +228,7 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         using var service = new LocomotiveWhistleAutomationService(
-            eventBus, new RecordingGateway(), NullLogger<LocomotiveWhistleAutomationService>.Instance);
+            eventBus, new RecordingGateway(), NullLogger<LocomotiveWhistleAutomationService>.Instance, TimeProvider.System);
         var locomotiveId = Guid.NewGuid();
 
         var lowest = service.Validate(new LocomotiveWhistleRule
@@ -250,7 +250,7 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var gateway = new RecordingGateway();
         using var service = new LocomotiveWhistleAutomationService(
-            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance);
+            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance, TimeProvider.System);
         var locomotive = new Locomotive { DigitalAddress = 12 };
         var rule = new LocomotiveWhistleRule
         {

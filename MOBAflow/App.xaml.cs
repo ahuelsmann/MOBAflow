@@ -71,7 +71,7 @@ public partial class App
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        var startupService = new WinUiAppStartupService(this);
+        var startupService = new WinUiAppStartupService();
 
         try
         {

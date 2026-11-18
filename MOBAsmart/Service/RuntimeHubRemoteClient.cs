@@ -21,7 +21,7 @@ using Contracts.Discovery;
 public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHubRemoteCallbacks
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger<RuntimeHubRemoteClient>? _logger;
+    private readonly ILogger<RuntimeHubRemoteClient> _logger;
     private HubConnection? _hubConnection;
     private bool _hasActiveHost;
     private string _serverIp = string.Empty;
@@ -31,9 +31,10 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
 
     public RuntimeHubRemoteClient(
         IHttpClientFactory httpClientFactory,
-        ILogger<RuntimeHubRemoteClient>? logger = null)
+        ILogger<RuntimeHubRemoteClient> logger)
     {
         ArgumentNullException.ThrowIfNull(httpClientFactory);
+        ArgumentNullException.ThrowIfNull(logger);
         _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.Platform);
         _logger = logger;
     }
@@ -74,7 +75,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
             }
             catch (Exception ex)
             {
-                _logger?.LogDebug(ex, "RuntimeHub remote stop before reconnect failed");
+                _logger.LogDebug(ex, "RuntimeHub remote stop before reconnect failed");
             }
 
             await _hubConnection.DisposeAsync().ConfigureAwait(false);
@@ -82,7 +83,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
         }
 
         var hubUrl = new MobApiEndpoint(serverIp, serverPort).Resolve("runtime-hub");
-        _logger?.LogInformation("Connecting to RuntimeHub remote: {HubUrl}", hubUrl);
+        _logger.LogInformation("Connecting to RuntimeHub remote: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(hubUrl, options => options.HttpMessageHandlerFactory = _ => MobiLanHttpClientFactory.CreateLanSignalRHandler())
@@ -123,7 +124,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
         }
         catch (Exception ex)
         {
-            _logger?.LogDebug(ex, "RuntimeHub remote disconnect failed");
+            _logger.LogDebug(ex, "RuntimeHub remote disconnect failed");
         }
     }
 
@@ -151,7 +152,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
             }
             catch (Exception ex)
             {
-                _logger?.LogDebug(ex, "Signal aspect hub invoke failed, trying REST fallback");
+                _logger.LogDebug(ex, "Signal aspect hub invoke failed, trying REST fallback");
             }
         }
 
@@ -174,7 +175,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
             }
             catch (Exception ex)
             {
-                _logger?.LogDebug(ex, "Drive hub invoke failed, trying REST fallback");
+                _logger.LogDebug(ex, "Drive hub invoke failed, trying REST fallback");
             }
         }
 
@@ -197,7 +198,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
             }
             catch (Exception ex)
             {
-                _logger?.LogDebug(ex, "Function hub invoke failed, trying REST fallback");
+                _logger.LogDebug(ex, "Function hub invoke failed, trying REST fallback");
             }
         }
 
@@ -283,7 +284,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
 
     private async Task OnReconnectedAsync(string? _)
     {
-        _logger?.LogInformation("RuntimeHub remote reconnected, re-registering client {ClientId}", _clientId);
+        _logger.LogInformation("RuntimeHub remote reconnected, re-registering client {ClientId}", _clientId);
         try
         {
             await RegisterRemoteAsync(CancellationToken.None).ConfigureAwait(false);
@@ -291,7 +292,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
         }
         catch (Exception ex)
         {
-            _logger?.LogDebug(ex, "RuntimeHub remote re-register failed after reconnect");
+            _logger.LogDebug(ex, "RuntimeHub remote re-register failed after reconnect");
         }
     }
 
@@ -300,7 +301,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
         _hasActiveHost = false;
         if (ex != null)
         {
-            _logger?.LogDebug(ex, "RuntimeHub remote connection closed");
+            _logger.LogDebug(ex, "RuntimeHub remote connection closed");
         }
 
         if (SessionStateChanged != null)
@@ -340,7 +341,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient, IRuntimeHu
         }
         catch (Exception ex)
         {
-            _logger?.LogDebug(ex, "Runtime REST snapshot fetch failed");
+            _logger.LogDebug(ex, "Runtime REST snapshot fetch failed");
         }
     }
 

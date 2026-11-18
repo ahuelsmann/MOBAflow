@@ -4,7 +4,7 @@ namespace Moba.Test.MOBAflow;
 
 using Moba.Test.Helpers;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -34,7 +34,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
     public void GetToggleablePages_Should_CoverEveryRegisteredFeaturePage_WhenNavigationIsRegistered()
     {
         var pages = NavigationRegistration.RegisterPages(new ServiceCollection());
-        var provider = new FeatureTogglePageProvider(pages, new AppSettings());
+        var provider = new FeatureTogglePageProvider(pages, new UiSettings());
         string[] alwaysAvailablePageTags = ["help", "info", "settings"];
 
         var pagesWithoutToggle = pages
@@ -118,9 +118,11 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
     private TestDependencies CreateDependencies(
         HttpMessageHandler statusHandler,
         IPhotoHubClient? actualPhotoHubClient = null,
-        int port = 5001)
+        int port = 5001,
+        TimeProvider? timeProvider = null,
+        Func<RestApiProcessService, RestApiSolutionSyncService>? createSolutionSync = null)
     {
-        var appSettings = new AppSettings();
+        var appSettings = new UiSettings();
         appSettings.RestApi.Port = port;
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var mobaRuntime = new Mock<IMobaRuntime>();
@@ -141,17 +143,19 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             appSettings,
             NullLogger<RestApiProcessService>.Instance,
             NullLogger<UdpDiscoveryResponder>.Instance);
+        var runtimeSnapshots = new Mock<IProjectRuntimeSnapshots>();
+        runtimeSnapshots.SetupGet(snapshots => snapshots.Snapshots).Returns(Array.Empty<MobaRuntimeSnapshot>());
         using var mobApiClient = new LocalMobApiClient(appSettings);
         var runtimeHubService = new RestApiRuntimeHubService(
             runtimeHubHostClient.Object,
-            new Mock<IProjectRuntimeSnapshots>().Object,
+            runtimeSnapshots.Object,
             NullLogger<RestApiRuntimeHubService>.Instance,
             mobApiClient);
 
-        var mainWindowViewModel = CreateMainWindowViewModel(appSettings, mobaRuntime, eventBus);
-        var solutionSyncService = new RestApiSolutionSyncService(
+        _ = CreateMainWindowViewModel(appSettings, mobaRuntime, eventBus, out var solutionSession);
+        var solutionSyncService = createSolutionSync?.Invoke(restApiProcessService) ?? new RestApiSolutionSyncService(
             appSettings,
-            mainWindowViewModel.SolutionSession,
+            solutionSession,
             restApiProcessService,
             NullLogger<RestApiSolutionSyncService>.Instance,
             mobApiClient);
@@ -167,7 +171,8 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             runtimeHubHostClient.Object,
             mobaRuntime.Object,
             eventBus,
-            NullLogger<RestApiStatusService>.Instance);
+            NullLogger<RestApiStatusService>.Instance,
+            timeProvider ?? TimeProvider.System);
 
         return new TestDependencies(
             statusService,
@@ -181,9 +186,10 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
     }
 
     private MainWindowViewModel CreateMainWindowViewModel(
-        AppSettings appSettings,
+        UiSettings appSettings,
         Mock<IMobaRuntime> mobaRuntime,
-        IEventBus eventBus)
+        IEventBus eventBus,
+        out ISolutionSession session)
     {
         var uiDispatcher = new Mock<IUiDispatcher>();
         uiDispatcher
@@ -191,14 +197,14 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             .Callback<Action>(action => action());
 
         var locomotiveSession1 = TestSolutionSessions.Create(new Solution(), uiDispatcher.Object, mobaRuntime.Object);
+        session = locomotiveSession1;
         var stationEventBus1 = eventBus;
         var settingsPage1 = TestSettingsPages.Create(appSettings, uiDispatcher.Object);
         var trainsPage1 = _rollingStockPages.GetTrainsPage(locomotiveSession1, mobaRuntime.Object, null);
         return new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
             mobaRuntime.Object,
-            new LocalRuntimeCommandGateway(mobaRuntime.Object),
+            new LocalRuntimeCommandGateway(mobaRuntime.Object),
             stationEventBus1,
             settingsPage1,
             trainsPage1,
@@ -207,7 +213,8 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             _rollingStockPages.GetProjectDiagnostics(locomotiveSession1, trainsPage1),
             _rollingStockPages.GetSystemStatus(stationEventBus1, locomotiveSession1, settingsPage1),
             locomotiveSession1,
-            NullLogger<MainWindowViewModel>.Instance);
+            NullLogger<MainWindowViewModel>.Instance,
+            new NullDialogService());
     }
 
     private sealed partial class ImmediateHttpMessageHandler : HttpMessageHandler

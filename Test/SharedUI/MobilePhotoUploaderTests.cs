@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Mobile;
 using Moba.Test.Helpers;
@@ -17,7 +17,7 @@ internal sealed class MobilePhotoUploaderTests
     private static readonly MobaflowEndpoint KnownEndpoint = new("192.168.0.20", 5001);
     private static readonly (string? ip, int? port) NotFound = (null, null);
 
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private Mock<IPhotoCaptureService> _capture = null!;
     private Mock<IPhotoUploadService> _upload = null!;
     private Mock<IRestDiscoveryService> _discovery = null!;
@@ -26,9 +26,9 @@ internal sealed class MobilePhotoUploaderTests
     [SetUp]
     public void SetUp()
     {
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         var settingsService = new Mock<ISettingsService>();
-        settingsService.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        settingsService.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         _capture = new Mock<IPhotoCaptureService>();
         _capture.Setup(capture => capture.CapturePhotoAsync()).ReturnsAsync("photo.jpg");
         _upload = new Mock<IPhotoUploadService>();

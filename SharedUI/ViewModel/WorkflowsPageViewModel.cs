@@ -1,39 +1,30 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Configuration;
-using Common.Extension;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Interface;
-using Microsoft.Extensions.Logging;
+using Service;
 
 /// <summary>
 /// Owns the Workflows page presentation: the shared workflow library and the persisted panel expansion.
 /// Workflow selection, action editing, validation, dry run and trace stay in <see cref="WorkflowLibraryViewModel"/>,
 /// which the host registers once and shares with the station and event-manager surfaces.
 /// </summary>
-public sealed partial class WorkflowsPageViewModel : ObservableObject
+public sealed class WorkflowsPageViewModel : ObservableObject
 {
-    private readonly ISettingsService _settingsService;
-    private readonly AppSettings _settings;
-    private readonly ILogger<WorkflowsPageViewModel> _logger;
+    private readonly LayoutPersistenceService _layout;
     private bool _isWorkflowListExpanded;
     private bool _isWorkflowActionsExpanded;
     private bool _isWorkflowPropertiesExpanded;
 
-    public WorkflowsPageViewModel(WorkflowLibraryViewModel workflowLibrary, ISettingsService settingsService,
-        ILogger<WorkflowsPageViewModel> logger)
+    public WorkflowsPageViewModel(WorkflowLibraryViewModel workflowLibrary, LayoutPersistenceService layout)
     {
         ArgumentNullException.ThrowIfNull(workflowLibrary);
-        ArgumentNullException.ThrowIfNull(settingsService);
-        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(layout);
         WorkflowLibrary = workflowLibrary;
-        _settingsService = settingsService;
-        _settings = settingsService.GetSettings();
-        _logger = logger;
-        _isWorkflowListExpanded = _settings.Layout.WorkflowsPage.IsWorkflowListExpanded;
-        _isWorkflowActionsExpanded = _settings.Layout.WorkflowsPage.IsActionsExpanded;
-        _isWorkflowPropertiesExpanded = _settings.Layout.WorkflowsPage.IsPropertiesExpanded;
+        _layout = layout;
+        _isWorkflowListExpanded = layout.Layout.WorkflowsPage.IsWorkflowListExpanded;
+        _isWorkflowActionsExpanded = layout.Layout.WorkflowsPage.IsActionsExpanded;
+        _isWorkflowPropertiesExpanded = layout.Layout.WorkflowsPage.IsPropertiesExpanded;
     }
 
     /// <summary>Gets the host-owned workflow catalog and editor state shared by every workflow surface.</summary>
@@ -45,7 +36,7 @@ public sealed partial class WorkflowsPageViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _isWorkflowListExpanded, value))
-                PersistLayoutState(layout => layout.WorkflowsPage.IsWorkflowListExpanded = value);
+                _layout.Persist(layout => layout.WorkflowsPage.IsWorkflowListExpanded = value);
         }
     }
 
@@ -55,7 +46,7 @@ public sealed partial class WorkflowsPageViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _isWorkflowActionsExpanded, value))
-                PersistLayoutState(layout => layout.WorkflowsPage.IsActionsExpanded = value);
+                _layout.Persist(layout => layout.WorkflowsPage.IsActionsExpanded = value);
         }
     }
 
@@ -65,17 +56,7 @@ public sealed partial class WorkflowsPageViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _isWorkflowPropertiesExpanded, value))
-                PersistLayoutState(layout => layout.WorkflowsPage.IsPropertiesExpanded = value);
+                _layout.Persist(layout => layout.WorkflowsPage.IsPropertiesExpanded = value);
         }
     }
-
-    private void PersistLayoutState(Action<LayoutSettings> apply)
-    {
-        apply(_settings.Layout);
-        _settingsService.SaveSettingsAsync(_settings)
-            .Observe(ex => LogOperationFailed(_logger, "Persist workflow layout", ex));
-    }
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "{OperationName} failed")]
-    private static partial void LogOperationFailed(ILogger logger, string operationName, Exception exception);
 }
