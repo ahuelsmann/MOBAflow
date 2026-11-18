@@ -124,12 +124,15 @@ uv tool run --from git+https://github.com/github/spec-kit.git@v1.4.0 specify int
 
 Start in the task worktree, retain a reviewed diff/backup and inspect generated files before proceeding.
 Do not force an update over unreviewed local changes. Preserve the constitution and template overrides.
-After an upgrade, reapply and test these two local adaptations:
+After an upgrade, reapply and test the two local adaptations below. `speckit-taskstoissues` is retained from v1.1.3
+and is no longer managed upstream, so `specify integration upgrade` neither updates nor verifies it; check it manually
+after each upgrade:
 
 - `common.ps1`: extension registry validation and shared preset registry helpers from the prior integration.
   Keep the Python override capability check in `Test-Python3WithYaml` to satisfy the Sonar complexity limit.
   Preserve new upstream feature-resolution behavior, including `SPECIFY_FEATURE_NO_PERSIST`.
-- `speckit-taskstoissues/SKILL.md`: use `scripts/Resolve-GitHubRepository.ps1`, not a fixed `origin` URL.
+- `speckit-taskstoissues/SKILL.md` (retained, unmanaged): use `scripts/Resolve-GitHubRepository.ps1`, not a fixed
+  `origin` URL.
 
 The upstream manifest intentionally reports common.ps1 as modified. This is an explained state;
 never edit hashes merely to make status look clean. Run `python scripts/Test-AiRepositorySetup.Tests.py`
