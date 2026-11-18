@@ -28,13 +28,7 @@
             <controls:CollapsibleColumnCollection.PanelContent>
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="16">
-                        <StackPanel Spacing="4">
-                            <TextBlock
-                                FontSize="20"
-                                FontWeight="SemiBold"
-                                Text="MOBAflow Wiki" />
-                            <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Dokumentation" />
-                        </StackPanel>
+                        <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Dokumentation" />
 
                         <TreeView
                             x:Name="NavigationTreeView"
