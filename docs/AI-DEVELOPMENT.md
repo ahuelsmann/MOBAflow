@@ -6,7 +6,10 @@ technical guidance by task. Use [Spec Kit](SPEC-KIT.md) for cross-cutting featur
 
 ## Work through the master chats
 
-The user discusses goals and results with the responsible masters. An implementation assignment includes
+The user discusses goals and results with the responsible masters. Each tool maintains **one** standing monitoring/steering
+session (`COO` in Claude Code, `CPM/TD` in Codex, `Head of AI Strategy` in Antigravity), while task-specific writers,
+companion reviewers, final reviewers and domain specialists are spawned on demand at runtime with their profile model
+(`P1`–`P4`) and archived or removed (along with their worktree) immediately after completion. An implementation assignment includes
 delivery through merge under the flow in
 [master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow), unless
 explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main` across a multi-model agent network

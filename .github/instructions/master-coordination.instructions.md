@@ -140,6 +140,12 @@ companion/review profiles, locked areas and state). `ahuelsmann/MOBAdev` holds o
   requests to Claude in its thread or on the board. Claude sessions use their session messaging or invoke a fresh
   `claude.exe --print` call; Antigravity roles use the [CLI contract](#head-of-uiux-gemini-argon-via-antigravity).
   PR design notes, the design Go, slice locks and review posts stay on the `MOBAflow` issue and Draft PR.
+- **Standing monitoring sessions vs. ephemeral task agents.** Keep exactly **one** standing monitoring/steering
+  session per tool (`COO` `P1` in Claude Code, `CPM/TD` `P2` in Codex, `Head of AI Strategy` `P3` in Antigravity).
+  Task-specific writers, companion reviewers, final reviewers and domain specialists (`Head of UI/UX`, `Head of
+  MOBAnews`, `Security`, `DevOps`) are spawned on demand at task runtime with their assigned profile model
+  (`P1`–`P4`) and archived or removed (along with their worktree) immediately after task completion (`claude rm` /
+  `--no-session-persistence`, `codex archive`, ephemeral `agy --agent` runs).
 - **Log.** Every lock, design go, handover, merge and escalation is a short entry on the `MOBAflow` issue or
   Draft PR with UTC time and role, with status reflected on the [MOBAflow GitHub Kanban](../../docs/KANBAN.md). Agent IDs and thread IDs stay internal and are not shown to the human.
 - **Feature toggles.** A user-visible feature that spans several slices lands behind a toggle that is off by
