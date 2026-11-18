@@ -233,8 +233,18 @@ separate pull requests.
      count, and the core Z21 connect and receive paths among them are only partly covered. The floors follow the
      measured scores rounded down; the PR's Linux CI run is the confirming measurement, and a lower CI score lowers the
      raise to that score before merge.
-   - **(c) Further lanes (open):** a measured-risk decision on `sound`, `display`, `track-plan-renderer` and
-     `contracts`, only where the tooling is technically suitable.
+   - **(c) Further lanes (measured 2026-11-18, decision pending the design go on the completion PR):** probe runs on
+     Linux (Stryker.NET 5.0.0, four processes, .NET SDK 10.0.114, main `91912ff9`) in a throwaway worktree, with
+     temporary lane hosts that compile each project's existing fixtures; nothing of the probes is committed.
+
+     | Candidate | Production code | Tests in the probe | Mutants | Run time | Score | Safe Mode | Recommendation |
+     | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+     | `contracts` | `Contracts` (17 files, about 1,060 lines) | 145 (`Test/Contracts`) | 264 | 38 s | 76.85% | none | activate at the Linux CI score rounded down |
+     | `track-plan-renderer` | `TrackPlan.Renderer` (4 files, about 360 lines) | 24 (renderer fixtures) | 189 | 65 s | 26.51% | none | keep planned: 104 of 110 survivors are in `PlacedTrackPlanSvgRenderer`; add assertions first, in a follow-up |
+     | `display` | `MOBAdisplay` (34 files, about 4,380 lines) | 167 (without the Skia and hardware fixtures) | 1,643 | 413 s | 50.70% | `EnsureNegotiatedAsync`, `SendResultAsync` | keep planned: 237 uncovered mutants are in `ClockRenderer` and `Rgb565Converter`, whose Skia tests cannot run on Linux; a Windows lane costs more than it adds now |
+     | `sound` | `Sound` (2 files, 34 lines: the contract and its null object) | 1 | - | - | - | - | no lane: nothing to mutate meaningfully |
+
+     The probe scores are local and not a floor; a lane's floor comes from its first Linux CI run.
    - **(d) Completion (open):** RF-07 records the final mutation lanes in its deliverable inventory; the remaining
      `PageLayoutViewModel` sites follow after RF-26 slice 2.
 
