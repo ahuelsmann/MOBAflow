@@ -67,7 +67,8 @@ For repository-specific diagnosis and review, see the
 - Choose checks from the validation table in AGENTS.md rather than always building
   the entire Windows/Android solution.
 - Keep task status in GitHub issues, not Azure DevOps.
-- Run local secrets scans; Sonar code analysis belongs to the GitHub PR pipeline.
+- Run local secrets scans in local sessions (cloud sessions follow the cloud rule in `AGENTS.md`); Sonar code
+  analysis belongs to the GitHub PR pipeline.
 
 ## Before accepting generated changes
 

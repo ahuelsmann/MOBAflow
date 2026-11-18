@@ -59,7 +59,8 @@ fixed executable path under `bin/Debug`.
 
 ## Before committing
 
-Run the checks required by the changed behavior, scan changed files for secrets,
+Run the checks required by the changed behavior, scan changed files for secrets
+(local sessions; cloud sessions follow the cloud rule in `AGENTS.md`),
 and check staged line endings:
 
 ```powershell

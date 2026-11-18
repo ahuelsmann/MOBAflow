@@ -33,6 +33,8 @@ internal sealed class RuntimeConstructionTests
             WithoutEventBus(Runtime(counters)), NullLogger<MobaRuntimeService>.Instance));
         yield return Case("runtime interlocking", counters => new MobaRuntimeService(
             WithoutInterlocking(Runtime(counters)), NullLogger<MobaRuntimeService>.Instance));
+        yield return Case("runtime endpoint source", counters => new MobaRuntimeService(
+            WithoutEndpointSource(Runtime(counters)), NullLogger<MobaRuntimeService>.Instance));
         yield return Case("journey project", counters => new JourneyManager(
             null!, Context(), TestRuntimes.JourneyDependencies(counters), NullLogger<JourneyManager>.Instance));
         yield return Case("journey context", counters => new JourneyManager(
@@ -62,7 +64,7 @@ internal sealed class RuntimeConstructionTests
     [TestCaseSource(nameof(MissingDependencies))]
     public void Constructor_RejectsAMissingRuntimeDependency(Func<InPortCounterService, object> construct)
     {
-        using var counters = new InPortCounterService(Z21, new AppSettings());
+        using var counters = TestRuntimes.Counters(Z21, new AppSettings());
 
         Assert.Throws<ArgumentNullException>(() => construct(counters));
     }
@@ -72,7 +74,7 @@ internal sealed class RuntimeConstructionTests
     {
         var loggers = new Mock<ILoggerFactory>();
         loggers.Setup(factory => factory.CreateLogger(It.IsAny<string>())).Returns(NullLogger.Instance);
-        using var counters = new InPortCounterService(Z21, new AppSettings());
+        using var counters = TestRuntimes.Counters(Z21, new AppSettings());
         var journeys = new JourneyManagerFactory(Workflows, new JourneyStopTransitionService(),
             new NullJourneyRuntimeStateStore(), Bus, TimeProvider.System, loggers.Object);
         var platforms = new PlatformManagerFactory(Z21, Workflows, loggers.Object);
@@ -90,7 +92,7 @@ internal sealed class RuntimeConstructionTests
     {
         var z21 = new Mock<IZ21>();
         var settings = CountingSettings();
-        using var counters = new InPortCounterService(z21.Object, settings);
+        using var counters = TestRuntimes.Counters(z21.Object, settings);
         using (var runtime = TestRuntimes.Create(z21.Object, counters, new TestRuntimeOptions { Settings = settings }))
         {
             await runtime.ActivateProjectAsync(new Project { Journeys = [new Journey { IsActive = true }] }).ConfigureAwait(false);
@@ -107,7 +109,7 @@ internal sealed class RuntimeConstructionTests
     public void JourneyManagerDispose_DisposesItsCoordinatorOnceAndLeavesCountersCounting()
     {
         var z21 = new Mock<IZ21>();
-        using var counters = new InPortCounterService(z21.Object, CountingSettings());
+        using var counters = TestRuntimes.Counters(z21.Object, CountingSettings());
         var coordinator = new Mock<IWorkflowExecutionCoordinator>();
         var manager = TestRuntimes.JourneyManager(z21.Object, new Project(),
             TestRuntimes.JourneyDependencies(counters, coordinator: coordinator.Object));
@@ -142,7 +144,8 @@ internal sealed class RuntimeConstructionTests
         EventBus = Bus,
         JourneyManagerFactory = TestRuntimes.JourneyManagers(Workflows, Bus),
         InterlockingRuntime = new Mock<IInterlockingRuntime>().Object,
-        InPortCounterService = counters
+        InPortCounterService = counters,
+        EndpointSource = TestRuntimes.NoZ21
     };
 
     private static MobaRuntimeServiceDependencies WithoutEventBus(MobaRuntimeServiceDependencies dependencies) => new()
@@ -153,7 +156,8 @@ internal sealed class RuntimeConstructionTests
         EventBus = null!,
         JourneyManagerFactory = dependencies.JourneyManagerFactory,
         InterlockingRuntime = dependencies.InterlockingRuntime,
-        InPortCounterService = dependencies.InPortCounterService
+        InPortCounterService = dependencies.InPortCounterService,
+        EndpointSource = dependencies.EndpointSource
     };
 
     private static MobaRuntimeServiceDependencies WithoutInterlocking(MobaRuntimeServiceDependencies dependencies) => new()
@@ -164,6 +168,19 @@ internal sealed class RuntimeConstructionTests
         EventBus = dependencies.EventBus,
         JourneyManagerFactory = dependencies.JourneyManagerFactory,
         InterlockingRuntime = null!,
-        InPortCounterService = dependencies.InPortCounterService
+        InPortCounterService = dependencies.InPortCounterService,
+        EndpointSource = dependencies.EndpointSource
+    };
+
+    private static MobaRuntimeServiceDependencies WithoutEndpointSource(MobaRuntimeServiceDependencies dependencies) => new()
+    {
+        Z21 = dependencies.Z21,
+        ExecutionContextFactory = dependencies.ExecutionContextFactory,
+        Settings = dependencies.Settings,
+        EventBus = dependencies.EventBus,
+        JourneyManagerFactory = dependencies.JourneyManagerFactory,
+        InterlockingRuntime = dependencies.InterlockingRuntime,
+        InPortCounterService = dependencies.InPortCounterService,
+        EndpointSource = null!
     };
 }

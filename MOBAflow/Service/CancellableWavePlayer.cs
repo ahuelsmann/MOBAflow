@@ -15,14 +15,17 @@ internal interface IWavePlaybackSession : IDisposable
 
 /// <summary>Plays WAV audio asynchronously and stops it when the caller cancels.</summary>
 internal sealed partial class CancellableWavePlayer(
-    Func<ReadOnlyMemory<byte>, IWavePlaybackSession>? createSession = null,
-    TimeProvider? timeProvider = null) : IWavePlayer
+    Func<ReadOnlyMemory<byte>, IWavePlaybackSession> createSession,
+    TimeProvider timeProvider) : IWavePlayer
 {
-    private readonly Func<ReadOnlyMemory<byte>, IWavePlaybackSession> _createSession = createSession ?? (audio => new NativeSession(audio));
-    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+    private readonly Func<ReadOnlyMemory<byte>, IWavePlaybackSession> _createSession = createSession ?? throw new ArgumentNullException(nameof(createSession));
+    private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     // WinMM replaces playback process-wide; only the current speech session may stop it.
     private static readonly Lock PlaybackGate = new();
     private static IWavePlaybackSession? _activeSession;
+
+    /// <summary>Creates the WinMM playback session the host registers for production playback.</summary>
+    internal static IWavePlaybackSession CreateNativeSession(ReadOnlyMemory<byte> audio) => new NativeSession(audio);
 
     /// <inheritdoc />
     public async Task PlayAsync(ReadOnlyMemory<byte> waveAudio, CancellationToken cancellationToken = default)

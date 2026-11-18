@@ -17,8 +17,8 @@ internal static class TestHubSessions
         AppSettings settings,
         MobaflowEndpointLocator endpointLocator,
         IPhotoUploadService healthService,
-        IRuntimeHubRemoteClient? hubClient = null,
-        IRestApiClientRegistration? clientRegistration = null,
+        IRuntimeHubRemoteClient hubClient,
+        IRestApiClientRegistration clientRegistration,
         TimeProvider? timeProvider = null) =>
         new(
             settings,

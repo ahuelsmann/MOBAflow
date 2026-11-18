@@ -34,7 +34,7 @@ public partial class Z21
 
         var packet = Z21Command.BuildSetLocoDrive(address, speed, forward);
 
-        _logger?.LogInformation(
+        _logger.LogInformation(
             "SetLocoDrive: Addr={Address}, Speed={Speed}, Forward={Forward}, Packet={Packet}",
             address,
             speed,
@@ -63,7 +63,7 @@ public partial class Z21
 
         var command = Z21Command.BuildSetLocoFunction(address, functionIndex, on);
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
-        _logger?.LogDebug("SetLocoFunction: Address={Address}, Function={Function}, On={On}",
+        _logger.LogDebug("SetLocoFunction: Address={Address}, Function={Function}, On={On}",
             address, functionIndex, on);
     }
 
@@ -85,7 +85,7 @@ public partial class Z21
             await SendAsync(command, cancellationToken).ConfigureAwait(false);
         }
 
-        _logger?.LogDebug("SetAllLocoFunctionsOff: Address={Address} (F0-F31 OFF)", address);
+        _logger.LogDebug("SetAllLocoFunctionsOff: Address={Address} (F0-F31 OFF)", address);
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public partial class Z21
 
         var command = Z21Command.BuildGetLocoInfo(address);
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
-        _logger?.LogDebug("GetLocoInfo: Address={Address}", address);
+        _logger.LogDebug("GetLocoInfo: Address={Address}", address);
     }
     #endregion
 
@@ -124,7 +124,7 @@ public partial class Z21
 
         var command = Z21Command.BuildSetTurnout(decoderAddress, output, activate, queue);
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
-        _logger?.LogInformation("SetTurnout: Address={Address}, Output={Output}, Activate={Activate}, Queue={Queue}", decoderAddress, output, activate, queue);
+        _logger.LogInformation("SetTurnout: Address={Address}, Output={Output}, Activate={Activate}, Queue={Queue}", decoderAddress, output, activate, queue);
     }
 
     /// <summary>
@@ -132,27 +132,27 @@ public partial class Z21
     /// </summary>
     public async Task SetExtAccessoryAsync(int extAccessoryAddress, int commandValue, CancellationToken cancellationToken = default)
     {
-        _logger?.LogDebug("SetExtAccessory start: Address={Address}, Value={Value}", extAccessoryAddress, commandValue);
+        _logger.LogDebug("SetExtAccessory start: Address={Address}, Value={Value}", extAccessoryAddress, commandValue);
 
         if (extAccessoryAddress is < 0 or > 255)
         {
-            _logger?.LogWarning("SetExtAccessory invalid address: {Address}", extAccessoryAddress);
+            _logger.LogWarning("SetExtAccessory invalid address: {Address}", extAccessoryAddress);
             throw new ArgumentOutOfRangeException(nameof(extAccessoryAddress), "Extended accessory address must be between 0 and 255");
         }
 
         if (commandValue is < 0 or > 255)
         {
-            _logger?.LogWarning("SetExtAccessory invalid command value: {CommandValue}", commandValue);
+            _logger.LogWarning("SetExtAccessory invalid command value: {CommandValue}", commandValue);
             throw new ArgumentOutOfRangeException(nameof(commandValue), "Command value must be between 0 and 255");
         }
 
         var command = Z21Command.BuildSetExtAccessory(extAccessoryAddress, commandValue);
-        _logger?.LogTrace("SetExtAccessory command built: {CommandBytes}", string.Join(" ", command.Select(b => b.ToString("X2"))));
+        _logger.LogTrace("SetExtAccessory command built: {CommandBytes}", string.Join(" ", command.Select(b => b.ToString("X2"))));
 
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
 
-        _logger?.LogDebug("SetExtAccessory command sent successfully");
-        _logger?.LogInformation("SetExtAccessory: Address={Address}, Value={Value}", extAccessoryAddress, commandValue);
+        _logger.LogDebug("SetExtAccessory command sent successfully");
+        _logger.LogInformation("SetExtAccessory: Address={Address}, Value={Value}", extAccessoryAddress, commandValue);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public partial class Z21
 
         var command = Z21Command.BuildGetTurnoutInfo(decoderAddress);
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
-        _logger?.LogDebug("GetTurnoutInfo: Address={Address}", decoderAddress);
+        _logger.LogDebug("GetTurnoutInfo: Address={Address}", decoderAddress);
     }
     #endregion
 }

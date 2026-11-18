@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
@@ -13,7 +12,7 @@ using Microsoft.UI.Xaml.Input;
 using Moba.SharedUI.ViewModel;
 using Moba.SharedUI.ViewModel.Action;
 
-using SharedUI.Interface;
+using SharedUI.Service;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
@@ -25,9 +24,8 @@ using Windows.UI.Core;
 /// </summary>
 internal sealed partial class WorkflowsPage
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
-    private readonly ILogger<WorkflowsPage>? _logger;
+    private readonly LayoutPersistenceService _layout;
+    private readonly ILogger<WorkflowsPage> _logger;
 
     public WorkflowsPageViewModel ViewModel { get; }
 
@@ -37,13 +35,11 @@ internal sealed partial class WorkflowsPage
 
     public WorkflowsPage(
         WorkflowsPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
-        ILogger<WorkflowsPage>? logger = null)
+        LayoutPersistenceService layout,
+        ILogger<WorkflowsPage> logger)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
 
@@ -62,7 +58,7 @@ internal sealed partial class WorkflowsPage
     {
         _ = sender;
         _ = e;
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -71,14 +67,11 @@ internal sealed partial class WorkflowsPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 
@@ -133,7 +126,7 @@ internal sealed partial class WorkflowsPage
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.WorkflowsPage;
+        var layout = _layout.Layout.WorkflowsPage;
 
         if (layout.WorkflowListColumnWidth > 0)
         {
@@ -180,7 +173,7 @@ internal sealed partial class WorkflowsPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.WorkflowsPage;
+        var layout = _layout.Layout.WorkflowsPage;
 
         layout.IsWorkflowListExpanded = ViewModel.IsWorkflowListExpanded;
         layout.IsActionsExpanded = ViewModel.IsWorkflowActionsExpanded;

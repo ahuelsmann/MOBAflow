@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 /// <param name="RemoteZ21Connected">Whether MOBAflow reports an active Z21, or null to keep it.</param>
 public sealed record HubConnectionOutcome(bool IsConnected, bool? HubConnected, bool? RemoteZ21Connected)
 {
-    /// <summary>Nothing changed, for example without a hub client or after cancellation.</summary>
+    /// <summary>Nothing changed, for example while MOBApi is unreachable or after cancellation.</summary>
     public static HubConnectionOutcome Unchanged { get; } = new(false, null, null);
 
     /// <summary>The session is off: no hub and no remote Z21.</summary>
@@ -51,8 +51,8 @@ public sealed partial class MobaflowHubSession
     private readonly IPhotoUploadService _healthService;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<MobaflowHubSession> _logger;
-    private readonly IRuntimeHubRemoteClient? _hubClient;
-    private readonly IRestApiClientRegistration? _clientRegistration;
+    private readonly IRuntimeHubRemoteClient _hubClient;
+    private readonly IRestApiClientRegistration _clientRegistration;
     private DateTimeOffset? _lastClientRegistration;
 
     /// <summary>
@@ -63,22 +63,24 @@ public sealed partial class MobaflowHubSession
     /// <param name="healthService">Checks whether MOBApi answers on an endpoint.</param>
     /// <param name="timeProvider">Clock for the registration cadence and connect retries.</param>
     /// <param name="logger">Logger for diagnostics.</param>
-    /// <param name="hubClient">Optional: SignalR client for the runtime hub.</param>
-    /// <param name="clientRegistration">Optional: registers the phone in MOBAflow's client overview.</param>
+    /// <param name="hubClient">SignalR client for the runtime hub.</param>
+    /// <param name="clientRegistration">Registers the phone in MOBAflow's client overview.</param>
     public MobaflowHubSession(
         AppSettings settings,
         MobaflowEndpointLocator endpointLocator,
         IPhotoUploadService healthService,
         TimeProvider timeProvider,
         ILogger<MobaflowHubSession> logger,
-        IRuntimeHubRemoteClient? hubClient = null,
-        IRestApiClientRegistration? clientRegistration = null)
+        IRuntimeHubRemoteClient hubClient,
+        IRestApiClientRegistration clientRegistration)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(endpointLocator);
         ArgumentNullException.ThrowIfNull(healthService);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(hubClient);
+        ArgumentNullException.ThrowIfNull(clientRegistration);
         _settings = settings;
         _endpointLocator = endpointLocator;
         _healthService = healthService;
@@ -89,7 +91,7 @@ public sealed partial class MobaflowHubSession
     }
 
     /// <summary>Gets whether the runtime hub is connected.</summary>
-    public bool IsConnected => _hubClient?.IsConnected ?? false;
+    public bool IsConnected => _hubClient.IsConnected;
 
     /// <summary>
     /// Checks whether MOBApi answers; while <paramref name="connecting"/>, a short timeout keeps the toggle responsive.
@@ -106,11 +108,6 @@ public sealed partial class MobaflowHubSession
     public Task RegisterClientWhenDueAsync(MobaflowEndpoint endpoint)
     {
         ArgumentNullException.ThrowIfNull(endpoint);
-        if (_clientRegistration is null)
-        {
-            return Task.CompletedTask;
-        }
-
         var now = _timeProvider.GetUtcNow();
         if (_lastClientRegistration is { } last && now - last < ClientRegistrationInterval)
         {
@@ -133,11 +130,6 @@ public sealed partial class MobaflowHubSession
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(beforeConnectAttempt);
-        if (_hubClient is null)
-        {
-            return HubConnectionOutcome.Unchanged;
-        }
-
         if (!_settings.RestApi.IsConnectionEnabled)
         {
             await DisconnectAsync().ConfigureAwait(false);
@@ -167,12 +159,11 @@ public sealed partial class MobaflowHubSession
             await DisconnectAsync().ConfigureAwait(false);
         }
 
-        return await ConnectWithRetriesAsync(_hubClient, endpoint, forceReconnect, beforeConnectAttempt, cancellationToken)
+        return await ConnectWithRetriesAsync(endpoint, forceReconnect, beforeConnectAttempt, cancellationToken)
             .ConfigureAwait(false);
     }
 
     private async Task<HubConnectionOutcome> ConnectWithRetriesAsync(
-        IRuntimeHubRemoteClient hubClient,
         MobaflowEndpoint endpoint,
         bool forceReconnect,
         Func<Task> beforeConnectAttempt,
@@ -190,10 +181,10 @@ public sealed partial class MobaflowHubSession
             try
             {
                 await beforeConnectAttempt().ConfigureAwait(false);
-                await hubClient
+                await _hubClient
                     .ConnectAsync(endpoint.IpAddress, endpoint.Port, clientId, cancellationToken, forceReconnect)
                     .ConfigureAwait(false);
-                return HubConnectionOutcome.Connected(hubClient.HasActiveHost);
+                return HubConnectionOutcome.Connected(_hubClient.HasActiveHost);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -225,7 +216,7 @@ public sealed partial class MobaflowHubSession
 
     private string ResolveClientId()
     {
-        var clientId = _clientRegistration?.ClientId;
+        var clientId = _clientRegistration.ClientId;
         return string.IsNullOrWhiteSpace(clientId) ? Guid.NewGuid().ToString("N") : clientId;
     }
 
@@ -234,7 +225,7 @@ public sealed partial class MobaflowHubSession
     /// </summary>
     public async Task DisconnectAsync()
     {
-        if (_hubClient?.IsConnected != true)
+        if (!_hubClient.IsConnected)
         {
             return;
         }

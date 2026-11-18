@@ -189,7 +189,8 @@ public sealed partial class MobaRuntimeService
         await _inPortCounters.TryInitializeAsync(cancellationToken).ConfigureAwait(false);
         var endpoint = await _endpointSource.ResolveAsync(cancellationToken).ConfigureAwait(false);
         if (!EndpointMatchesActiveProject(endpoint)) return;
-        if (endpoint.Address is not { } address)
+        var address = endpoint.Address;
+        if (address is null)
         {
             _isZ21Connecting = false;
             _statusText = endpoint.Error ?? "No Z21 address";

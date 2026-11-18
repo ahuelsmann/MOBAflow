@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 
 using System.Reflection;
 
@@ -100,10 +100,10 @@ public class ColumnViewModel : ObservableObject
 
         var width = IsExpanded ? _width : 0;
         var widthProperty = columnDefinition.GetType().GetProperty("Width", BindingFlags.Public | BindingFlags.Instance);
-        if (widthProperty is null || widthProperty.PropertyType is not { } gridLengthType)
+        if (widthProperty is null)
             return;
 
-        var ctor = gridLengthType.GetConstructor([typeof(double)]);
+        var ctor = widthProperty.PropertyType.GetConstructor([typeof(double)]);
         if (ctor is null)
             return;
 

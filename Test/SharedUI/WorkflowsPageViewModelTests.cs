@@ -1,10 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -19,7 +17,7 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
 {
     private SolutionSession _session = null!;
     private Mock<ISettingsService> _persistence = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private WorkflowLibraryViewModel _library = null!;
 
     [SetUp]
@@ -33,7 +31,7 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
         {
             Workflows = [new Workflow { Name = "Departure" }, new Workflow { Name = "Arrival" }]
         }] }, dispatcher.Object, runtime.Object);
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
         _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);
@@ -47,19 +45,16 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private WorkflowsPageViewModel CreatePage(ILogger<WorkflowsPageViewModel>? logger = null) =>
-        new(_library, _persistence.Object, logger ?? NullLogger<WorkflowsPageViewModel>.Instance);
+    private WorkflowsPageViewModel CreatePage() => new(_library, TestLayouts.Create(_persistence.Object));
 
     [Test]
-    public void Constructor_RequiresLibrarySettingsAndLogger()
+    public void Constructor_RequiresLibraryAndLayout()
     {
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(() => new WorkflowsPageViewModel(null!, _persistence.Object, NullLogger<WorkflowsPageViewModel>.Instance),
+            Assert.That(() => new WorkflowsPageViewModel(null!, TestLayouts.Create(_persistence.Object)),
                 Throws.ArgumentNullException);
-            Assert.That(() => new WorkflowsPageViewModel(_library, null!, NullLogger<WorkflowsPageViewModel>.Instance),
-                Throws.ArgumentNullException);
-            Assert.That(() => new WorkflowsPageViewModel(_library, _persistence.Object, null!), Throws.ArgumentNullException);
+            Assert.That(() => new WorkflowsPageViewModel(_library, null!), Throws.ArgumentNullException);
         }
     }
 
@@ -135,17 +130,11 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
     }
 
     [Test]
-    public async Task Layout_PersistenceFailureIsLoggedAndKeepsTheNewState()
+    public void Layout_PersistenceFailureKeepsTheNewState()
     {
-        var logged = new TaskCompletionSource<Exception?>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var logger = new Mock<ILogger<WorkflowsPageViewModel>>();
-        logger.Setup(value => value.IsEnabled(LogLevel.Warning)).Returns(true);
-        logger.Setup(value => value.Log(LogLevel.Warning, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(),
-                It.IsAny<Exception?>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()))
-            .Callback(new InvocationAction(invocation => logged.TrySetResult((Exception?)invocation.Arguments[3])));
-        var failure = new IOException("settings file locked");
-        _persistence.Setup(value => value.SaveSettingsAsync(_settings)).Returns(Task.FromException(failure));
-        var page = CreatePage(logger.Object);
+        _persistence.Setup(value => value.SaveSettingsAsync(_settings))
+            .Returns(Task.FromException(new IOException("settings file locked")));
+        var page = CreatePage();
 
         page.IsWorkflowActionsExpanded = false;
 
@@ -153,7 +142,6 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
         {
             Assert.That(page.IsWorkflowActionsExpanded, Is.False);
             Assert.That(_settings.Layout.WorkflowsPage.IsActionsExpanded, Is.False);
-            Assert.That(await logged.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false), Is.SameAs(failure));
         }
     }
 }

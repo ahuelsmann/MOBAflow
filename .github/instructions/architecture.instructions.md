@@ -37,6 +37,8 @@ Use [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for broader context and v
 - [WinUI registrations](../../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs) and
   [MAUI registrations](../../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs) compose platform services,
   dispatchers, ViewModels and pages. Extend these rather than duplicating registrations in startup files.
+  MOBAsmart's platform-neutral registrations live in the
+  [mobile composition](../../SharedUI/Extensions/MobileServiceCollectionExtensions.cs).
 - [EventBus registration](../../SharedUI/Extensions/EventBusUiExtensions.cs) registers the inner bus and decorated
   `IEventBus`; provide the UI dispatcher first. Do not replace the decorated registration with a bare bus later.
 - Preserve singleton shared state and transient page lifetimes. Unsubscribe transient views from singleton events

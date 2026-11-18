@@ -72,7 +72,7 @@ internal sealed partial class MobaRuntimeServiceTrackPowerTests : IDisposable
         var z21Mock = CreateZ21Mock();
 
         using var runtime = CreateRuntime(z21Mock.Object, new AppSettings());
-        await runtime.ActivateProjectAsync(LayoutWithZ21()).ConfigureAwait(false);
+        await runtime.ActivateProjectAsync(Layout).ConfigureAwait(false);
 
         z21Mock.Verify(
             z => z.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
@@ -95,7 +95,7 @@ internal sealed partial class MobaRuntimeServiceTrackPowerTests : IDisposable
             {
                 Z21 = new Z21Settings { AutoConnectRetryIntervalSeconds = 60 }
             });
-        await runtime.ActivateProjectAsync(LayoutWithZ21()).ConfigureAwait(false);
+        await runtime.ActivateProjectAsync(Layout).ConfigureAwait(false);
 
         var startTask = runtime.StartAsync();
 
@@ -113,7 +113,7 @@ internal sealed partial class MobaRuntimeServiceTrackPowerTests : IDisposable
         connectRelease.SetResult();
     }
 
-    private static Project LayoutWithZ21() => new() { Name = "Layout", Z21 = { IpAddress = "192.168.0.111" } };
+    private static readonly Project Layout = new() { Name = "Layout", Z21 = { IpAddress = "192.168.0.111" } };
 
     private static Mock<IZ21> CreateZ21Mock()
     {
@@ -130,5 +130,10 @@ internal sealed partial class MobaRuntimeServiceTrackPowerTests : IDisposable
 
     // Without an active project the runtime has no Z21 to connect to.
     private MobaRuntimeService CreateRuntime(IZ21 z21, AppSettings? settings = null) =>
-        _runtimes.Create(z21, new TestRuntimeOptions { Settings = settings });
+        _runtimes.Create(z21, new TestRuntimeOptions
+        {
+            Settings = settings,
+            // As in the hosts, the runtime connects to the Z21 of the project it runs.
+            EndpointSource = new ProjectZ21EndpointSource(() => Layout)
+        });
 }

@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Configuration;
 using Common.Events;
 using Common.Extension;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -27,8 +26,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
 {
     private readonly ISolutionSession _session;
     private readonly PhotoAssignmentService _photos;
-    private readonly AppSettings _settings;
-    private readonly ISettingsService _settingsService;
+    private readonly LayoutPersistenceService _layout;
     private readonly ILogger<LocomotivesPageViewModel> _logger;
     private readonly Action<string> _showPhotoInExplorer;
     private readonly RuntimeLocomotiveControl _control;
@@ -41,16 +39,14 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
     public LocomotivesPageViewModel(
         ISolutionSession session,
         PhotoAssignmentService photos,
-        ISettingsService settingsService,
-        LayoutColumnWidthsViewModel layoutColumnWidths,
+        LayoutPersistenceService layout,
         LocomotivePageAnalysis analysis,
         ILogger<LocomotivesPageViewModel> logger,
         Action<string> showPhotoInExplorer)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(photos);
-        ArgumentNullException.ThrowIfNull(settingsService);
-        ArgumentNullException.ThrowIfNull(layoutColumnWidths);
+        ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(analysis);
         ArgumentNullException.ThrowIfNull(analysis.Management);
         ArgumentNullException.ThrowIfNull(analysis.Usage);
@@ -59,23 +55,22 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         ArgumentNullException.ThrowIfNull(showPhotoInExplorer);
         _session = session;
         _photos = photos;
-        _settings = settingsService.GetSettings();
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         _showPhotoInExplorer = showPhotoInExplorer;
-        LayoutColumnWidths = layoutColumnWidths;
         Management = analysis.Management;
         Usage = analysis.Usage;
         _control = analysis.Control;
-        _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage.IsListExpanded;
-        _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage.IsPropertiesExpanded;
+        _isLocomotivesListExpanded = layout.Layout.LocomotivesPage.IsListExpanded;
+        _isLocomotivesPropertiesExpanded = layout.Layout.LocomotivesPage.IsPropertiesExpanded;
         _session.PropertyChanged += OnSessionPropertyChanged;
         _session.SolutionReplacing += OnSolutionReplacing;
         _control.Changed += OnLocomotiveControlChanged;
         ObserveProject(_session.SelectedProject);
     }
 
-    public LayoutColumnWidthsViewModel LayoutColumnWidths { get; }
+    /// <summary>Gets the observable column widths through which the page remembers its pixel list width.</summary>
+    public LayoutColumnWidthsViewModel LayoutColumnWidths => _layout.ColumnWidths;
 
     public LocomotiveManagementViewModel Management { get; }
 
@@ -114,10 +109,7 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         set
         {
             if (SetProperty(ref _isLocomotivesListExpanded, value))
-            {
-                _settings.Layout.LocomotivesPage.IsListExpanded = value;
-                PersistSettings();
-            }
+                _layout.Persist(layout => layout.LocomotivesPage.IsListExpanded = value);
         }
     }
 
@@ -127,15 +119,9 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
         set
         {
             if (SetProperty(ref _isLocomotivesPropertiesExpanded, value))
-            {
-                _settings.Layout.LocomotivesPage.IsPropertiesExpanded = value;
-                PersistSettings();
-            }
+                _layout.Persist(layout => layout.LocomotivesPage.IsPropertiesExpanded = value);
         }
     }
-
-    private void PersistSettings() => _settingsService.SaveSettingsAsync(_settings)
-        .Observe(ex => LogSettingsSaveFailed(_logger, ex));
 
     private void SaveChanges(string operation) => _session.SaveSolutionInternalAsync()
         .Observe(ex => LogSaveFailed(_logger, operation, ex));
@@ -411,7 +397,4 @@ public sealed partial class LocomotivesPageViewModel : ObservableObject, IDispos
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "{OperationName} failed")]
     private static partial void LogSaveFailed(ILogger logger, string operationName, Exception exception);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Persist locomotive settings failed")]
-    private static partial void LogSettingsSaveFailed(ILogger logger, Exception exception);
 }

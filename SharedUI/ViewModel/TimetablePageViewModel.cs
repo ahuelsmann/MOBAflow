@@ -174,16 +174,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
             return;
         }
 
-        IReadOnlyList<TimetableServiceState> states;
-        try
-        {
-            states = await _operations.GetStatesAsync(project.Id);
-        }
-        catch (Exception) when (refreshVersion == _refreshVersion && ReferenceEquals(project, CurrentProject))
-        {
-            StatusText = "Unable to load the timetable. Select Refresh to try again.";
-            throw;
-        }
+        var states = await LoadStatesAsync(project, refreshVersion).ConfigureAwait(true);
         if (refreshVersion != _refreshVersion || !ReferenceEquals(project, CurrentProject)) return;
 
         var stateByService = states.ToDictionary(state => state.ServiceId);
@@ -204,6 +195,19 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
             : $"{result.Issues.Count} validation issues or conflicts";
         OnPropertyChanged(nameof(HasIssues));
         StatusText = "Timetable refreshed";
+    }
+
+    private async Task<IReadOnlyList<TimetableServiceState>> LoadStatesAsync(Project project, int refreshVersion)
+    {
+        try
+        {
+            return await _operations.GetStatesAsync(project.Id);
+        }
+        catch (Exception) when (refreshVersion == _refreshVersion && ReferenceEquals(project, CurrentProject))
+        {
+            StatusText = "Unable to load the timetable. Select Refresh to try again.";
+            throw;
+        }
     }
 
     [RelayCommand(CanExecute = nameof(HasProject))]

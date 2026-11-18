@@ -296,8 +296,8 @@ test-case filters. Planned lanes remain explicitly outside the mutation guarante
 | domain | `Domain/Domain.csproj` | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% |
 | backend | `Backend/Backend.csproj` | `MutationTest/Backend/Backend.MutationTests.csproj` | [`stryker-backend-config.json`](../MutationTest/stryker-backend-config.json) | 47% |
 | common | `Common/Common.csproj` | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% |
-| shared-ui | `SharedUI/SharedUI.csproj` | `MutationTest/SharedUI/SharedUI.MutationTests.csproj` | [`stryker-shared-ui-config.json`](../MutationTest/stryker-shared-ui-config.json) | 37% |
-| api | `MOBApi/MOBApi.csproj` | `MutationTest/Api/Api.MutationTests.csproj` | [`stryker-api-config.json`](../MutationTest/stryker-api-config.json) | 44% |
+| shared-ui | `SharedUI/SharedUI.csproj` | `MutationTest/SharedUI/SharedUI.MutationTests.csproj` | [`stryker-shared-ui-config.json`](../MutationTest/stryker-shared-ui-config.json) | 46% |
+| api | `MOBApi/MOBApi.csproj` | `MutationTest/Api/Api.MutationTests.csproj` | [`stryker-api-config.json`](../MutationTest/stryker-api-config.json) | 74% |
 | speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% |
 <!-- documentation-facts:mutation:end -->
 

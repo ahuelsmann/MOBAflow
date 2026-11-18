@@ -506,5 +506,13 @@ public sealed class WorkflowLibraryViewModelTests
             _ = isCancelDefault;
             return Task.FromResult(result);
         }
+
+        public Task<DialogChoice> ShowChoiceAsync(
+            string title,
+            string message,
+            string primaryButtonText,
+            string secondaryButtonText,
+            string cancelButtonText) =>
+            throw new NotSupportedException("The workflow library asks only Yes/No questions.");
     }
 }

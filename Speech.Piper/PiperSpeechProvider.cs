@@ -9,10 +9,10 @@ using Microsoft.Extensions.Logging;
 public sealed partial class PiperSpeechProvider(
     AppSettings settings,
     ILogger<PiperSpeechProvider> logger,
-    IPiperProcessRunner? processRunner = null,
+    IPiperProcessRunner processRunner,
     string? diagnosticDirectory = null) : ISpeechProvider
 {
-    private readonly IPiperProcessRunner _runner = processRunner ?? new PiperProcessRunner();
+    private readonly IPiperProcessRunner _runner = processRunner ?? throw new ArgumentNullException(nameof(processRunner));
     private readonly string _diagnosticDirectory = diagnosticDirectory ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MOBAflow", "PiperDiagnostics");
 

@@ -292,13 +292,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Backend/Service/Recording/CoreRecordingEventMappers.cs",
-      "count": 3
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "Backend/Service/TimetableRuntimeProjectionService.cs",
       "count": 1
     },
@@ -1201,13 +1194,6 @@
     {
       "project": "Common",
       "targetFramework": "net10.0",
-      "ruleId": "CA1008",
-      "path": "Common/Configuration/TrainControlSettings.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
       "ruleId": "CA1014",
       "path": "<no-location>",
       "count": 1
@@ -1245,6 +1231,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "Common/Multiplex/MultiplexerHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1008",
+      "path": "SharedUI/Configuration/TrainControlSettings.cs",
       "count": 1
     },
     {
@@ -1332,10 +1325,10 @@
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1805",
-      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "path": "SharedUI/Configuration/LayoutSettings.cs",
       "count": 1
     },
     {
@@ -1364,20 +1357,27 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Common/Configuration/AppSettings.Sections.cs",
-      "count": 6
+      "count": 2
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/LayoutSettings.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "SharedUI/Configuration/PageLayoutSettings.cs",
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Common/Configuration/SettingsPageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/SettingsPageLayoutSettings.cs",
       "count": 1
     },
     {
@@ -1395,24 +1395,24 @@
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "path": "SharedUI/Configuration/LayoutSettings.cs",
       "count": 4
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/PageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/PageLayoutSettings.cs",
       "count": 1
     },
     {
-      "project": "Common",
+      "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "Common/Configuration/SettingsPageLayoutSettings.cs",
+      "path": "SharedUI/Configuration/SettingsPageLayoutSettings.cs",
       "count": 1
     },
     {
@@ -2377,13 +2377,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1003",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1014",
       "path": "<no-location>",
       "count": 1
@@ -2505,7 +2498,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2520,13 +2513,6 @@
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/SettingsPageViewModel.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2637,13 +2623,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
       "count": 1
     },
@@ -2713,15 +2692,8 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1308",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1716",
-      "path": "SharedUI/Interface/IBackgroundService.cs",
+      "path": "SharedUI/Interface/DialogChoice.cs",
       "count": 1
     },
     {
@@ -2855,20 +2827,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 5
+      "count": 3
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.OperatingState.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
       "count": 1
     },
     {
@@ -2898,13 +2863,6 @@
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
       "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/TrackPlanViewModel.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -2989,13 +2947,6 @@
       "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
       "count": 9
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3246,13 +3197,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE2002",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE2002",
       "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
       "count": 1
     },
@@ -3331,7 +3275,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 10
+      "count": 7
     },
     {
       "project": "SharedUI",
@@ -4191,7 +4135,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/FeatureToggleRegistryTests.cs",
+      "path": "Test/SharedUI/FeatureToggleRegistryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/UiSettingsDefaultsTests.cs",
       "count": 1
     },
     {
@@ -4730,6 +4681,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBApi/PhotosControllerUploadTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeBroadcastMetricsTests.cs",
       "count": 1
     },
@@ -4765,7 +4723,28 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBApi/RuntimeControllerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBApi/RuntimeHubRegistrationTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeSnapshotCacheTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBApi/SolutionControllerMetaTests.cs",
       "count": 1
     },
     {
@@ -4821,6 +4800,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/LayoutPersistenceServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/JourneyStationProjectionTests.cs",
       "count": 1
     },
@@ -4856,7 +4842,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/MainWindowViewModelSignalBoxTests.cs",
+      "path": "Test/SharedUI/MainWindowViewModelTrackPowerSwitchTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SignalBoxPageViewModelTests.cs",
       "count": 1
     },
     {
@@ -4934,6 +4927,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/MobileRuntimeProjectionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/MobileServiceCollectionExtensionsTests.cs",
       "count": 1
     },
     {
@@ -5052,7 +5052,21 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/RecorderPageViewModelStateTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/SettingsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SolutionPageViewModelTests.cs",
       "count": 1
     },
     {
@@ -5115,7 +5129,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/TimetablePageViewModelTests.cs",
+      "path": "Test/SharedUI/TimetablePageViewModelOperationsTests.cs",
       "count": 1
     },
     {
@@ -5172,6 +5186,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/StationsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/TrainControlViewModelRuntimeStateTests.cs",
       "count": 1
     },
     {
@@ -6669,13 +6690,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/AppSettingsDefaultsTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
       "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 11
     },
@@ -7300,7 +7314,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/Common/AppSettingsDefaultsTests.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Test",
@@ -7315,13 +7329,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Common/EventBusTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Common/FeatureToggleRegistryTests.cs",
-      "count": 7
     },
     {
       "project": "Test",

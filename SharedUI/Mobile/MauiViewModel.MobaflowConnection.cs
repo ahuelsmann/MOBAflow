@@ -263,67 +263,41 @@ public sealed partial class MauiViewModel
 
     private void UpdateRuntimeCoordinatorState()
     {
-        if (_mobileRuntimeCoordinator != null)
+        // Require an operational MOBAflow host (remote Z21), not just REST/SignalR reachability.
+        var mobaflowSessionActive = IsMobaflowConnectionEnabled
+            && IsRestApiReachable
+            && IsRuntimeHubConnected
+            && IsRemoteZ21Connected;
 
+        var wasActive = _mobaflowSessionWasActive;
+        var sessionEnded = wasActive && !mobaflowSessionActive;
+        var sessionStarted = !wasActive && mobaflowSessionActive;
+        _mobaflowSessionWasActive = mobaflowSessionActive;
+
+        _mobileRuntimeCoordinator.SetMobaflowSessionActive(mobaflowSessionActive);
+        _mobileRuntimeCoordinator.SetLocalZ21Connected(ResolveLocalZ21ConnectedForCoordinator());
+        _eventBus.Publish(new RuntimeCommandAvailabilityChangedEvent());
+
+        if (sessionEnded)
         {
+            _solutionSynchronizer.ResetInitialCatalog();
+            RunInBackground(ActivateLocalProjectForZ21OnlyAsync(), "Activate cached project after MOBAflow session ended");
+            ApplyBestAvailableSignalBoxElements();
+            ApplyBestAvailableLocomotiveFleet();
+        }
 
-            // Require an operational MOBAflow host (remote Z21), not just REST/SignalR reachability.
-            var mobaflowSessionActive = IsMobaflowConnectionEnabled
-                && IsRestApiReachable
-                && IsRuntimeHubConnected
-                && IsRemoteZ21Connected;
+        if (sessionStarted)
+        {
+            ClearCachedRemoteLocomotiveFleet();
+            RequestSignalBoxSnapshotRefresh();
+            RunInBackground(ApplyInitialMobaflowCatalogAsync(), "Initial MOBAflow catalog import");
+        }
 
-            var wasActive = _mobaflowSessionWasActive;
-
-            var sessionEnded = wasActive && !mobaflowSessionActive;
-
-            var sessionStarted = !wasActive && mobaflowSessionActive;
-
-            _mobaflowSessionWasActive = mobaflowSessionActive;
-
-            _mobileRuntimeCoordinator.SetMobaflowSessionActive(mobaflowSessionActive);
-
-            _mobileRuntimeCoordinator.SetLocalZ21Connected(ResolveLocalZ21ConnectedForCoordinator());
-
-            _eventBus.Publish(new RuntimeCommandAvailabilityChangedEvent());
-
-            if (sessionEnded)
-
-            {
-
-                _solutionSynchronizer.ResetInitialCatalog();
-
-                RunInBackground(ActivateLocalProjectForZ21OnlyAsync(), "Activate cached project after MOBAflow session ended");
-
-                ApplyBestAvailableSignalBoxElements();
-
-                ApplyBestAvailableLocomotiveFleet();
-
-            }
-
-            if (sessionStarted)
-
-            {
-
-                ClearCachedRemoteLocomotiveFleet();
-
-                RequestSignalBoxSnapshotRefresh();
-
-                RunInBackground(ApplyInitialMobaflowCatalogAsync(), "Initial MOBAflow catalog import");
-
-            }
-
-            if (mobaflowSessionActive
-
-                && !_solutionSynchronizer.IsInitialCatalogApplied
-
-                && (!_runtimeProjection.HasAnySignalBoxElementsAvailable || !_runtimeProjection.HasAnyLocomotiveFleetAvailable))
-
-            {
-
-                RequestSignalBoxSnapshotRefresh();
-
-            }
+        if (mobaflowSessionActive
+            && !_solutionSynchronizer.IsInitialCatalogApplied
+            && (!_runtimeProjection.HasAnySignalBoxElementsAvailable || !_runtimeProjection.HasAnyLocomotiveFleetAvailable))
+        {
+            RequestSignalBoxSnapshotRefresh();
         }
 
         RequestBackgroundServiceSync();
@@ -334,7 +308,7 @@ public sealed partial class MauiViewModel
 
     {
 
-        if (_projectContext?.SelectedProject?.Model is not Project project)
+        if (_projectContext.SelectedProject?.Model is not Project project)
 
         {
 
@@ -410,11 +384,6 @@ public sealed partial class MauiViewModel
 
     private async Task RequestInitialRuntimeSnapshotAsync()
     {
-        if (_runtimeHubRemoteClient == null)
-        {
-            return;
-        }
-
         try
         {
             await _runtimeHubRemoteClient
@@ -434,7 +403,7 @@ public sealed partial class MauiViewModel
     {
         var synced = await _solutionSynchronizer
             .RequestSyncAsync(
-                (_projectContext?.SelectedProject?.Locomotives.Count ?? 0) > 0,
+                (_projectContext.SelectedProject?.Locomotives.Count ?? 0) > 0,
                 IsMobaflowConnectionEnabled ? ToRestApiEndpoint(RestApiIpAddress, RestApiPort) : null,
                 cancellationToken)
             .ConfigureAwait(false);

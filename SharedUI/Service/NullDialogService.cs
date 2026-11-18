@@ -21,4 +21,13 @@ public sealed class NullDialogService : IDialogService
         // Always returns false (not confirmed) - no dialogs in headless/testing mode
         return Task.FromResult(false);
     }
+
+    /// <inheritdoc />
+    public Task<DialogChoice> ShowChoiceAsync(
+        string title,
+        string message,
+        string primaryButtonText,
+        string secondaryButtonText,
+        string cancelButtonText) =>
+        Task.FromResult(DialogChoice.NotShown);
 }

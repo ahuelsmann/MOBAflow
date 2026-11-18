@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
 
 /// <summary>
@@ -25,7 +25,7 @@ internal class SettingsServiceInterfaceTests
         var settings = _service.GetSettings();
 
         Assert.That(settings, Is.Not.Null);
-        Assert.That(settings, Is.TypeOf<AppSettings>());
+        Assert.That(settings, Is.TypeOf<UiSettings>());
     }
 
     [Test]
@@ -39,7 +39,7 @@ internal class SettingsServiceInterfaceTests
     [Test]
     public async Task SaveSettingsAsync_CompletesSuccessfully()
     {
-        var settings = new AppSettings();
+        var settings = new UiSettings();
 
         await _service.SaveSettingsAsync(settings);
 
@@ -88,14 +88,14 @@ internal class SettingsServiceInterfaceTests
     /// </summary>
     private class TestSettingsService : ISettingsService
     {
-        private readonly AppSettings _settings = new();
+        private readonly UiSettings _settings = new();
 
         public bool LoadCalled { get; private set; }
         public bool SaveCalled { get; private set; }
         public bool ResetCalled { get; private set; }
-        public AppSettings? LastSavedSettings { get; private set; }
+        public UiSettings? LastSavedSettings { get; private set; }
 
-        public AppSettings GetSettings() => _settings;
+        public UiSettings GetSettings() => _settings;
 
         public Task LoadSettingsAsync()
         {
@@ -103,7 +103,7 @@ internal class SettingsServiceInterfaceTests
             return Task.CompletedTask;
         }
 
-        public Task SaveSettingsAsync(AppSettings settings)
+        public Task SaveSettingsAsync(UiSettings settings)
         {
             SaveCalled = true;
             LastSavedSettings = settings;

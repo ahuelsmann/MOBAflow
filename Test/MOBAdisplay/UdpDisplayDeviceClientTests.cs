@@ -13,7 +13,7 @@ internal sealed class UdpDisplayDeviceClientTests
     public async Task ConnectAsync_Should_EnableHealthAndStandardPattern_WhenNegotiationSucceeds()
     {
         var endpointTransport = new FakeDisplayEndpoint(width: 5, height: 4);
-        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport, TimeProvider.System);
         var endpoint = new DisplayEndpoint(IPAddress.Loopback, 4210);
 
         var negotiation = await client.ConnectAsync(endpoint).ConfigureAwait(false);
@@ -39,7 +39,7 @@ internal sealed class UdpDisplayDeviceClientTests
     public async Task QueryHealthAsync_Should_InvalidateSession_WhenDeviceReboots()
     {
         var endpointTransport = new FakeDisplayEndpoint();
-        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport, TimeProvider.System);
         await client.ConnectAsync(new DisplayEndpoint(IPAddress.Loopback, 4210)).ConfigureAwait(false);
 
         endpointTransport.Reboot();
@@ -59,7 +59,7 @@ internal sealed class UdpDisplayDeviceClientTests
     public async Task SendStandardTestPatternAsync_Should_DropCapabilities_WhenDeviceReboots()
     {
         var endpointTransport = new FakeDisplayEndpoint();
-        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport, TimeProvider.System);
         await client.ConnectAsync(new DisplayEndpoint(IPAddress.Loopback, 4210)).ConfigureAwait(false);
         endpointTransport.Reboot();
 
@@ -79,7 +79,7 @@ internal sealed class UdpDisplayDeviceClientTests
     public async Task SetBrightnessAsync_Should_UseNegotiatedSession_WhenCapabilityIsAdvertised()
     {
         var endpointTransport = new FakeDisplayEndpoint();
-        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport, TimeProvider.System);
         await client.ConnectAsync(new DisplayEndpoint(IPAddress.Loopback, 4210)).ConfigureAwait(false);
 
         var builtInPattern = await client.RenderBuiltInTestPatternAsync().ConfigureAwait(false);
@@ -103,7 +103,7 @@ internal sealed class UdpDisplayDeviceClientTests
     {
         var endpointTransport = new FakeDisplayEndpoint(
             selectedVersion: new DisplayProtocolVersion(1, 1));
-        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport, TimeProvider.System);
 
         var negotiation = await client.ConnectAsync(
             new DisplayEndpoint(IPAddress.Loopback, 4210)).ConfigureAwait(false);
@@ -123,7 +123,7 @@ internal sealed class UdpDisplayDeviceClientTests
     {
         var endpointTransport = new FakeDisplayEndpoint();
         endpointTransport.UseProtocolVersionForNextResponse(new DisplayProtocolVersion(9, 0));
-        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport, TimeProvider.System);
 
         var negotiation = await client.ConnectAsync(
             new DisplayEndpoint(IPAddress.Loopback, 4210)).ConfigureAwait(false);
@@ -142,7 +142,7 @@ internal sealed class UdpDisplayDeviceClientTests
         var endpointTransport = new FakeDisplayEndpoint(
             width: ushort.MaxValue,
             height: ushort.MaxValue);
-        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport, TimeProvider.System);
 
         var negotiation = await client.ConnectAsync(
             new DisplayEndpoint(IPAddress.Loopback, 4210)).ConfigureAwait(false);

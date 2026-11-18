@@ -16,7 +16,7 @@
 
 - [ ] Relevant build completed
 - [ ] Relevant automated tests passed
-- [ ] Changed files passed the local secrets scan
+- [ ] Changed files passed the local secrets scan (cloud session without a scanner: state that no local scan ran)
 - [ ] This PR remained a draft until all new actionable Sonar findings were resolved
 - [ ] GitHub's SonarCloud analysis is green for the current PR commit and reports zero `OPEN`/`CONFIRMED` issues before review
 - [ ] Manual validation completed or documented as not applicable
@@ -25,9 +25,8 @@
 
 <!-- Compare the actual base/head change with implementation, callers and host configuration.
 List affected developer/architecture pages AND canonical docs/wiki pages, with corrections
-or a concrete source-grounded reason no change is needed. Keep changes in this leading PR.
-Include this assessment in the Chief Project Manager handover. Reassess after behavior-changing
-review fixes; confirm affected pages against actual integrated main in the final handover.
+or a concrete source-grounded reason no change is needed. Keep the corrections in this slice.
+Reassess after behavior-changing review fixes.
 Structural CI alone does not establish semantic consistency. -->
 
 - Developer/architecture documentation:

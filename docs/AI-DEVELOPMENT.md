@@ -6,66 +6,48 @@ technical guidance by task. Use [Spec Kit](SPEC-KIT.md) for cross-cutting featur
 
 ## Work through the master chats
 
-The user discusses goals and results with the responsible masters. An implementation assignment
-includes delivery through merge under the [standing master mandate](../.github/instructions/master-coordination.instructions.md),
-unless explicitly limited. Art Director owns routine product decisions inside the assigned scope and its
-implementation, and hands work directly to Chief Project Manager (formerly Issue Master), the sole execution
-and final integration coordinator. Technical Director coordinates resources and responsibilities through that
-same queue. Since 2026-11-05 the Chief Operating Officer (COO, Claude) deploys the agents within that allocation
-and decides Ready and merge. Solution Architect (Claude) owns the technical solution design within assigned
-scope and prepares fundamental architecture decisions for the user. Documentation Lead and Head of DevOps
-deliver assigned documentation/user guidance and GitHub/repository/CI infrastructure work respectively, under
-the same standing mandate. Technical transitions, confirmed fixes and ordinary PR administration do not need
-repeated human approval. Important product goals, priorities and material UX decisions, scope expansion,
-fundamental architecture changes, new costs/external commitments and explicitly required practical permissions
-still go to the user.
+The user discusses goals and results with the responsible masters. An implementation assignment includes
+delivery through merge under the flow in
+[master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow), unless
+explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main` across a multi-model agent network
+(Claude Code, ChatGPT Codex and Antigravity):
 
-Across all MOBAflow teams, Codex, Claude and Antigravity, deliver the prioritized issue together through
-integration in one leading PR, including documentation and wiki corrections. Other issues need Chief Project
-Manager's explicit allocation after qualifying independence in purpose, files, behavior, baselines, build graph
-and execution resources. There is no global one-task or five-task ceiling and no automatic PR per master.
-Assign a Senior Developer as needed; a separate Project Manager is optional for large or complex work.
-Before a substantial start or resume, obtain the current allocation in the existing queue and reconcile owners,
-actual processes and remote CI. Unclear ownership or an unresolved dependency/resource conflict blocks the
-affected start. Keep one writer per worktree, serialize review/fix/publication for each comparison and preserve
-existing executions. Coordinate safe stopping points with owners.
+1. The Chief Operating Officer (COO, Claude) is the sole technical writer on the board in `ahuelsmann/MOBAdev`
+   issue #1, cuts an issue into small slices and records each slice's risk class (`H`, `M` or `L`; review-fix rounds
+   keep their slice's class and dependency updates take the class of the affected area), cross-model slice team and
+   locked code areas. At most three code slices are open at once.
+2. Each class `H` and `M` slice is worked by a multi-model team: the Senior Developer (writer), a companion
+   reviewer from a different model family (Codex `P2` when writer is Claude; Claude `P1` when writer is Codex;
+   Claude `P1` or Codex `P2` when writer is Antigravity) and, for UI/TrackPlan/editorial work, the `P3` Head of
+   UI/UX. The developer posts a short design note (class `L` slices and review-fix rounds state intent in the PR
+   body/commit instead); the companion reviewer (and `P3` for UI/TrackPlan/editorial slices) checks it, and code
+   starts after the COO's or Solution Architect's Go. New features write their acceptance tests first.
+3. Before handing work on, the developer merges the current `main` into the branch and resolves conflicts locally.
+4. While a class `H` or `M` slice grows, the companion reviewer comments read-only on every pushed commit on the
+   PR. At Ready every slice (`H`, `M` and `L`) receives a separate fresh `P1` Claude review (Opus 5.5 or higher)
+   plus independent cross-family `P2`/`P3` verification on the exact head and base (neither may be the writer's or
+   companion's session); with a clean review and all gates green, the COO arms head-bound auto-merge.
+5. Two failed fix attempts on the same finding (in companion or final review) or more than ten agent messages on
+   one topic stop the loop and go to the user.
 
-The supplier prepares the Draft with current checks and CI/Sonar; checks not run stay recorded as not run. Chief
-Project Manager verifies handover readiness and the COO decides Ready and merge; independent review follows Ready,
-not the reverse. The existing Claude plan owns fresh independent Opus 5.5-or-higher review, a separate fixer,
-independent re-review after comparison changes and SHA-bound squash merge. Do not order a second review, create another
-automation or merge concurrently. Chief Project Manager independently verifies actual merge and resulting main;
-the delivery owner follows through to that outcome. Assigned work authorizes necessary team handovers, not
-unrelated features or overrides of stops. Tool permissions and existing quality gates remain in effect.
-
-Since 2026-11-05 Claude also acts as Executive Assistant and as Senior Code Reviewer. The Executive Assistant is
-the COO's cloud session for portable work such as triage, status collection and documentation drafts; it has no
-allocation, Ready or merge authority of its own. The Senior Code Reviewer independently reviews PRs, branches and
-diffs with the `mobaflow-code-review` skill, reports findings ranked by severity, fixes or merges nothing unless
-asked and never reviews code written in the same session. Product goals, priorities and material UX decisions stay
-with the user. Since 2026-11-06 the user's personal acceptance is no Ready or merge gate; the user uses the apps
-and files feedback as ordinary issues at the user's priority. See the role sections in
-[master coordination](../.github/instructions/master-coordination.instructions.md#chief-operating-officer).
-
-Apply the [handover evidence rules](../.github/instructions/master-coordination.instructions.md#handover-evidence-and-delivery)
-to every team transition. Record the existing task, owner, one next recipient, observed phase/status, observation
-time with time zone, next step and limits. Complete the handover before the supplier goes quiet and retain delivery
-responsibility until actual recipient takeover. Sending proves neither takeover nor freshness; preserve newer
-confirmed evidence when messages arrive late. Keep blocked delivery in the same task under existing permissions.
-
-Every integration assesses architecture/developer documentation and the versioned user guides in `docs/wiki/`.
-Record the pages corrected or a concrete no-change reason in the handover and completion evidence. Reassess after
-behavior-changing review fixes and confirm against actual integrated main. Correct drift within the assigned
-scope; coordinate any remaining work through the same Chief Project Manager queue and state the limitation. Do not
-invent text changes or infer new user behavior from a refactoring. This does not authorize separate wiki publication.
-
-Art Director, Chief Project Manager, Head of Quality, Communications Director, Documentation Lead and Head of
-DevOps may independently consult the existing Head of UI/UX conversation (Gemini Argon via Antigravity CLI)
-within assigned work, without another human approval. Coordinate task allocation and the active caller centrally;
-contacts are serial and synchronous. This supersedes the earlier contact restriction for the two new masters.
-Use the verified contact and synchronous request/response contract in the
+The user decides product goals, priorities, material UX, fundamental architecture, new costs and every app,
+device or hardware action, and does not relay messages, inspect code or administer PRs. Since 2026-11-06 the
+user's personal acceptance is no merge gate; feedback from real use arrives as ordinary issues. Every slice
+records its documentation and `docs/wiki/` impact. Any role may consult or include the Head of UI/UX (`Gemini 4
+Argon` via Antigravity CLI) under the
 [Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
-Its advice adds no approval gate and does not replace tests or Claude PR reviews.
+
+## Capability profiles and models
+
+[Master coordination](../.github/instructions/master-coordination.instructions.md#capability-profiles-and-roles)
+assigns tasks by capability profile (`P1`–`P4`) so rules remain stable when models change. Current model mapping:
+
+| Profile | Active models and clients | Strengths and typical assignments |
+| --- | --- | --- |
+| `P1` Depth, Architecture & Safety | **Claude Opus 5.5** (`Claude Code`, CLI model `claude-opus-5-5`) | Deep architecture, concurrency (`async/await`, `UiThreadEventBusDecorator`), Z21 protocol safety, COO steering, companion/final independent review |
+| `P2` Repo, Build & Fact Precision | **GPT-6 Astra** (`ChatGPT Codex`) | Solution/build graph (`Moba.slnx`), Spec Kit consistency, CI/Sonar/mutation verification, CPM/TD steering, cross-model companion/final review, non-GitHub Sites publication |
+| `P3` System Context, Product & UI/UX | **Gemini 4 Argon** (`Antigravity`, CLI model `gemini-4-argon-high`) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
+| `P4` Cadence, Triage & Fast Delivery | **Claude Fable 5.2 / Sonnet-class** (`Claude Code`), **Gemini 4 Hydrogen** (`Antigravity` desktop selector) | Fast routine slices, portable/doc tasks, triage, pre-checks, status and timer monitoring (verify actual runtime model ID in review records) |
 
 ## Start in the correct checkout
 Use Git, PowerShell 7 (`pwsh`), Python 3.11+ and `rg` for development checks.
@@ -113,7 +95,8 @@ Claude Code runs the same script with `-Client claude` from `.claude/settings.js
 moves elsewhere. Claude Code runs hook commands through a POSIX shell (Git Bash on Windows), so one command
 serves both platforms.
 
-Repository policy scans likely secret-bearing inputs before reads and all changed files before publication.
+Repository policy scans likely secret-bearing inputs before reads and all changed files before publication
+in local sessions; cloud sessions without a scanner avoid such files and record the missing scan (see `AGENTS.md`).
 A session/global instruction can require every file to be scanned first; the stricter active rule still applies.
 Repository configuration cannot disable those global instructions.
 
@@ -169,11 +152,10 @@ issue/PR through existing Codex delivery, independent Claude review and actual-m
 verification. No separate documentation API or App bot is activated.
 See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
-Create Draft PRs. Chief Project Manager verifies the current comparison, applicable CI, current-commit SonarCloud
-success with zero OPEN/CONFIRMED issues, ownership and documentation impact; the COO decides
-Ready and merge. The existing Claude plan performs the subsequent independent review and merge under
-[master coordination](../.github/instructions/master-coordination.instructions.md). Main, local checks and prior PR
-commits are separate evidence. Non-GitHub work, including separately authorized Sites
+Create Draft PRs, one per slice. The COO verifies current CI, current-commit SonarCloud success with zero
+OPEN/CONFIRMED issues and the documentation impact, dispatches the independent review and arms head-bound
+auto-merge under [master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow).
+Main, local checks and prior PR commits are separate evidence. Non-GitHub work, including separately authorized Sites
 review/publication and independent live verification, retains its own assigned route.
 
 ## Updating

@@ -15,7 +15,7 @@ using System.ComponentModel;
 /// </summary>
 public sealed partial class MauiViewModel
 {
-    private readonly IProjectContext? _projectContext;
+    private readonly IProjectContext _projectContext;
     private bool _controlTabActive;
     private IReadOnlyList<LocomotiveFleetSnapshot>? _pendingLocomotiveFleet;
     private IReadOnlyList<LocomotiveFleetSnapshot>? _lastPublishedLocomotiveFleet;
@@ -23,11 +23,6 @@ public sealed partial class MauiViewModel
 
     private void WireProjectContextForControlTab()
     {
-        if (_projectContext == null)
-        {
-            return;
-        }
-
         _projectContext.PropertyChanged += OnProjectContextPropertyChangedForControlTab;
         RefreshProjectPicker();
         Z21IpAddress = _projectContext.SelectedProject?.Model.Z21.IpAddress.Trim() ?? string.Empty;
@@ -50,7 +45,7 @@ public sealed partial class MauiViewModel
             return;
         }
 
-        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+        if (_mobileRuntimeCoordinator.PreferRemoteRuntime)
         {
             RequestSignalBoxSnapshotRefresh();
         }
@@ -165,7 +160,7 @@ public sealed partial class MauiViewModel
         {
             ApplyBestAvailableLocomotiveFleet();
 
-            if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+            if (_mobileRuntimeCoordinator.PreferRemoteRuntime)
             {
                 RequestSignalBoxSnapshotRefresh();
             }
@@ -179,7 +174,7 @@ public sealed partial class MauiViewModel
             return;
         }
 
-        var projectId = _projectContext?.SelectedProject?.Model.Id;
+        var projectId = _projectContext.SelectedProject?.Model.Id;
         if (_shownProjectId is { } previous && previous != projectId)
         {
             // Locomotives and signals of the previous project must not stay controllable under the new project id.

@@ -2,7 +2,6 @@
 
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 using Converter;
 using Microsoft.Extensions.Logging;
@@ -46,16 +45,16 @@ public sealed partial class TrackPlanPage
     private double _panStartVerticalOffset;
     private Pointer? _panningPointer;
 
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
+    private readonly LayoutPersistenceService _layout;
 
     public TrackPlanViewModel ViewModel { get; }
     public InterlockingControlViewModel InterlockingViewModel { get; }
-    public MainWindowViewModel MainViewModel { get; }
+    /// <summary>Gets the session whose persistence status the page shows.</summary>
+    public ISolutionSession Session { get; }
     private readonly EditableTrackPlan _plan;
     private readonly SegmentPlacementGeometry _geometry;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
-    private readonly ILogger<TrackPlanPage>? _logger;
+    private readonly ILogger<TrackPlanPage> _logger;
 
     private Canvas? _ghostLayer;
     private Canvas? _rotationHandleLayer;
@@ -81,23 +80,21 @@ public sealed partial class TrackPlanPage
 
     internal TrackPlanPage(
         TrackPlanPageViewModels viewModels,
-        MainWindowViewModel mainViewModel,
+        ISolutionSession session,
         TrackPlanPageEditor editor,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
-        ILogger<TrackPlanPage>? logger = null)
+        LayoutPersistenceService layout,
+        ILogger<TrackPlanPage> logger)
     {
         ArgumentNullException.ThrowIfNull(viewModels);
         ViewModel = viewModels.TrackPlan;
         InterlockingViewModel = viewModels.Interlocking;
-        MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
+        Session = session ?? throw new ArgumentNullException(nameof(session));
         ArgumentNullException.ThrowIfNull(editor);
         _plan = editor.Plan;
         _geometry = editor.Geometry;
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
         InitializeEditorFeatures();
@@ -197,7 +194,7 @@ public sealed partial class TrackPlanPage
         _ = sender;
         _ = e;
 
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
         _plan.PlanChanged -= OnPlanChanged;
         KeyDown -= Page_KeyDown;
         _feedbackHighlighter.HighlightsChanged -= OnFeedbackHighlightsChanged;
@@ -210,20 +207,17 @@ public sealed partial class TrackPlanPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.TrackPlanPage;
+        var layout = _layout.Layout.TrackPlanPage;
 
         if (layout.ToolboxColumnWidth > 0)
         {
@@ -268,7 +262,7 @@ public sealed partial class TrackPlanPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.TrackPlanPage;
+        var layout = _layout.Layout.TrackPlanPage;
 
         layout.IsToolboxExpanded = ViewModel.IsToolboxExpanded;
         layout.IsPropertiesExpanded = ViewModel.IsPropertiesExpanded;
@@ -313,7 +307,7 @@ public sealed partial class TrackPlanPage
     private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         _ = sender;
-        HandlePageKeyDownAsync(e).Observe(ex => _logger?.LogWarning(ex, "Keyboard handler failed"));
+        HandlePageKeyDownAsync(e).Observe(ex => _logger.LogWarning(ex, "Keyboard handler failed"));
     }
 
     private void OnDeleteAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
@@ -428,7 +422,7 @@ public sealed partial class TrackPlanPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Keyboard handler failed");
+            _logger.LogWarning(ex, "Keyboard handler failed");
         }
 
         await Task.CompletedTask;
@@ -512,7 +506,7 @@ public sealed partial class TrackPlanPage
 
     private void ToolboxItem_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        HandleToolboxItemPointerPressedAsync(sender, e).Observe(ex => _logger?.LogWarning(ex, "Toolbox drag start failed"));
+        HandleToolboxItemPointerPressedAsync(sender, e).Observe(ex => _logger.LogWarning(ex, "Toolbox drag start failed"));
     }
 
     private Task HandleToolboxItemPointerPressedAsync(object sender, PointerRoutedEventArgs e)
@@ -538,7 +532,7 @@ public sealed partial class TrackPlanPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Toolbox drag start failed");
+            _logger.LogWarning(ex, "Toolbox drag start failed");
         }
 
         return Task.CompletedTask;
@@ -603,7 +597,7 @@ public sealed partial class TrackPlanPage
     private void Canvas_Drop(object sender, DragEventArgs e)
     {
         _ = sender;
-        HandleCanvasDropAsync(e).Observe(ex => _logger?.LogWarning(ex, "Drop handling failed"));
+        HandleCanvasDropAsync(e).Observe(ex => _logger.LogWarning(ex, "Drop handling failed"));
     }
 
     private async Task HandleCanvasDropAsync(DragEventArgs e)
@@ -627,7 +621,7 @@ public sealed partial class TrackPlanPage
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Drop handling failed");
+            _logger.LogWarning(ex, "Drop handling failed");
         }
     }
 

@@ -15,7 +15,7 @@ using Contracts.Discovery;
 public class PhotoHubClient : IPhotoHubClient
 {
     private HubConnection? _hubConnection;
-    private readonly ILogger<PhotoHubClient>? _logger;
+    private readonly ILogger<PhotoHubClient> _logger;
     private readonly Lock _connectionLock = new();
     private Task _connectTask = Task.CompletedTask;
 
@@ -25,9 +25,9 @@ public class PhotoHubClient : IPhotoHubClient
 
     public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 
-    public PhotoHubClient(ILogger<PhotoHubClient>? logger)
+    public PhotoHubClient(ILogger<PhotoHubClient> logger)
     {
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ public class PhotoHubClient : IPhotoHubClient
             }
 
             var hubUrl = new MobApiEndpoint(serverIp, serverPort).Resolve("photos-hub");
-            _logger?.LogInformation("🔗 Connecting to PhotoHub: {HubUrl}", hubUrl);
+            _logger.LogInformation("🔗 Connecting to PhotoHub: {HubUrl}", hubUrl);
 
             _hubConnection = new HubConnectionBuilder()
                 .WithUrl(hubUrl)
@@ -75,11 +75,11 @@ public class PhotoHubClient : IPhotoHubClient
             _hubConnection.On<string, Guid, DateTime>("PhotoDeleted", OnPhotoDeleted);
 
             await _hubConnection.StartAsync();
-            _logger?.LogInformation("✅ Connected to PhotoHub successfully");
+            _logger.LogInformation("✅ Connected to PhotoHub successfully");
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "❌ Failed to connect to PhotoHub");
+            _logger.LogError(ex, "❌ Failed to connect to PhotoHub");
             throw;
         }
     }
@@ -94,11 +94,11 @@ public class PhotoHubClient : IPhotoHubClient
             try
             {
                 await _hubConnection.StopAsync();
-                _logger?.LogInformation("✅ Disconnected from PhotoHub");
+                _logger.LogInformation("✅ Disconnected from PhotoHub");
             }
             catch (Exception ex)
             {
-                _logger?.LogWarning(ex, "Error disconnecting from PhotoHub");
+                _logger.LogWarning(ex, "Error disconnecting from PhotoHub");
             }
         }
     }
@@ -110,14 +110,14 @@ public class PhotoHubClient : IPhotoHubClient
     {
         try
         {
-            _logger?.LogInformation("📸 [REAL-TIME] Photo uploaded: {PhotoPath}", photoPath);
+            _logger.LogInformation("📸 [REAL-TIME] Photo uploaded: {PhotoPath}", photoPath);
 
             if (PhotoUploaded != null)
                 await PhotoUploaded.Invoke(photoPath, uploadedAt);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Error handling PhotoUploaded event");
+            _logger.LogError(ex, "Error handling PhotoUploaded event");
         }
     }
 
@@ -128,14 +128,14 @@ public class PhotoHubClient : IPhotoHubClient
     {
         try
         {
-            _logger?.LogInformation("🗑️ [REAL-TIME] Photo deleted: {Category}/{EntityId}", category, entityId);
+            _logger.LogInformation("🗑️ [REAL-TIME] Photo deleted: {Category}/{EntityId}", category, entityId);
 
             if (PhotoDeleted != null)
                 await PhotoDeleted.Invoke(category, entityId, deletedAt);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Error handling PhotoDeleted event");
+            _logger.LogError(ex, "Error handling PhotoDeleted event");
         }
     }
 

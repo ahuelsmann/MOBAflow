@@ -2,6 +2,8 @@
 
 namespace Moba.Test.Backend;
 
+using Moba.Test.Helpers;
+
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Common.Events;
@@ -18,7 +20,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        using var z21 = new Z21(fakeUdp, eventBus);
+        using var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
 
         FeedbackResult? captured = null;
         var signaled = new TaskCompletionSource<bool>();
@@ -43,7 +45,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var z21 = new Z21(fakeUdp, eventBus);
+        var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
         var receivedInPorts = new List<int>();
         eventBus.Subscribe<FeedbackReceivedEvent>(@event => receivedInPorts.Add(@event.InPort));
 
@@ -68,7 +70,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var z21 = new Z21(fakeUdp, eventBus);
+        var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
         var observations = new List<(int InPort, bool IsActive)>();
         eventBus.Subscribe<FeedbackStateChangedEvent>(@event =>
             observations.Add((@event.InPort, @event.IsActive)));
@@ -85,7 +87,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var z21 = new Z21(fakeUdp, eventBus);
+        var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
         TurnoutInfoChangedEvent? observation = null;
         eventBus.Subscribe<TurnoutInfoChangedEvent>(@event => observation = @event);
 
@@ -111,7 +113,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        using var z21 = new Z21(fakeUdp, eventBus);
+        using var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
         await z21.ConnectAsync(address);
@@ -136,7 +138,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        using var z21 = new Z21(fakeUdp, eventBus);
+        using var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
         await z21.ConnectAsync(address);
@@ -161,7 +163,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        using var z21 = new Z21(fakeUdp, eventBus);
+        using var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
         await z21.ConnectAsync(address);
@@ -185,7 +187,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var z21 = new Z21(fakeUdp, eventBus);
+        var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
         await z21.ConnectAsync(address);
@@ -204,7 +206,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        using var z21 = new Z21(fakeUdp, eventBus);
+        using var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
 
         await z21.SetLocoFunctionAsync(address: 3, functionIndex: 31, on: true);
 
@@ -222,7 +224,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        using var z21 = new Z21(fakeUdp, eventBus);
+        using var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => z21.SetLocoFunctionAsync(address: 3, functionIndex: 32, on: true)).ConfigureAwait(false);
@@ -233,7 +235,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        using var z21 = new Z21(fakeUdp, eventBus);
+        using var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
 
         await z21.SetAllLocoFunctionsOffAsync(address: 3);
 
@@ -255,7 +257,7 @@ internal class Z21UnitTests
     {
         var fakeUdp = new FakeUdpClientWrapper();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        using var z21 = new Z21(fakeUdp, eventBus);
+        using var z21 = TestRuntimes.CreateZ21(fakeUdp, eventBus);
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => z21.SetAllLocoFunctionsOffAsync(address: 0)).ConfigureAwait(false);

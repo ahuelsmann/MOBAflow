@@ -2,14 +2,12 @@
 
 namespace Moba.WinUI.Service;
 
-using Common.Navigation;
-
 using Microsoft.UI.Xaml.Controls;
 
 /// <summary>
 /// Builds and initializes shell navigation from registered page metadata.
 /// </summary>
-public sealed class MainWindowNavigationBootstrapper
+internal sealed class MainWindowNavigationBootstrapper
 {
     private readonly NavigationService _navigationService;
     private readonly List<PageMetadata> _pages;

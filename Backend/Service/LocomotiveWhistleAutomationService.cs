@@ -34,12 +34,12 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
         IEventBus eventBus,
         ILocomotiveFunctionCommandGateway gateway,
         ILogger<LocomotiveWhistleAutomationService> logger,
-        TimeProvider? timeProvider = null)
+        TimeProvider timeProvider)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _gateway = gateway ?? throw new ArgumentNullException(nameof(gateway));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _timeProvider = timeProvider ?? TimeProvider.System;
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _subscriptionId = _eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived);
     }
 

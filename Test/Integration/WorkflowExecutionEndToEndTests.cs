@@ -25,7 +25,7 @@ internal sealed class WorkflowExecutionEndToEndTests
     public void SetUp()
     {
         _fakeUdp = new FakeUdpClientWrapper();
-        _z21 = new Z21(_fakeUdp, new EventBus(NullLogger<EventBus>.Instance));
+        _z21 = TestRuntimes.CreateZ21(_fakeUdp, new EventBus(NullLogger<EventBus>.Instance));
         _workflowService = TestWorkflowServices.Workflow(TestWorkflowServices.Executor());
     }
 

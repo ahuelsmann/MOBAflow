@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Events;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -27,7 +27,7 @@ internal sealed partial class MonitorPageViewModelTests : IDisposable
     private Mock<IMobaRuntime> _runtime = null!;
     private Mock<ISettingsService> _persistence = null!;
     private Mock<IUiDispatcher> _dispatcher = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private SolutionSession _session = null!;
     private MobaRuntimeSnapshot _snapshot = MobaRuntimeSnapshot.Empty;
     private Z21TrafficPacket[] _recordedPackets = [];
@@ -46,7 +46,7 @@ internal sealed partial class MonitorPageViewModelTests : IDisposable
         _dispatcher = new Mock<IUiDispatcher>();
         _dispatcher.Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
         _dispatcher.Setup(dispatcher => dispatcher.InvokeOnUiAsync(It.IsAny<Func<Task>>())).Returns<Func<Task>>(action => action());
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(service => service.GetSettings()).Returns(_settings);
         _persistence.Setup(service => service.SaveSettingsAsync(_settings)).Returns(Task.CompletedTask);
@@ -67,7 +67,7 @@ internal sealed partial class MonitorPageViewModelTests : IDisposable
 
     private MonitorPageViewModel CreateViewModel()
     {
-        var viewModel = new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, _persistence.Object,
+        var viewModel = new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, TestLayouts.Create(_persistence.Object),
             _dispatcher.Object, NullLogger<MonitorPageViewModel>.Instance);
         _viewModels.Add(viewModel);
         return viewModel;
@@ -93,19 +93,19 @@ internal sealed partial class MonitorPageViewModelTests : IDisposable
         var logger = NullLogger<MonitorPageViewModel>.Instance;
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(() => new MonitorPageViewModel(null!, _runtime.Object, _eventBus, _session, _persistence.Object, _dispatcher.Object, logger),
+            Assert.That(() => new MonitorPageViewModel(null!, _runtime.Object, _eventBus, _session, TestLayouts.Create(_persistence.Object), _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, null!, _eventBus, _session, _persistence.Object, _dispatcher.Object, logger),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, null!, _eventBus, _session, TestLayouts.Create(_persistence.Object), _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, null!, _session, _persistence.Object, _dispatcher.Object, logger),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, null!, _session, TestLayouts.Create(_persistence.Object), _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, null!, _persistence.Object, _dispatcher.Object, logger),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, null!, TestLayouts.Create(_persistence.Object), _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
             Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, null!, _dispatcher.Object, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, _persistence.Object, null!, logger),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, TestLayouts.Create(_persistence.Object), null!, logger),
                 Throws.ArgumentNullException);
-            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, _persistence.Object, _dispatcher.Object, null!),
+            Assert.That(() => new MonitorPageViewModel(_runtime.Object, _runtime.Object, _eventBus, _session, TestLayouts.Create(_persistence.Object), _dispatcher.Object, null!),
                 Throws.ArgumentNullException);
         }
     }

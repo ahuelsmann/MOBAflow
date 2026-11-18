@@ -32,7 +32,7 @@ public partial class Z21
             }
         }
 
-        _logger?.LogInformation("System state polling interval set to {Interval}s", intervalSeconds);
+        _logger.LogInformation("System state polling interval set to {Interval}s", intervalSeconds);
     }
 
     /// <summary>
@@ -49,13 +49,13 @@ public partial class Z21
             state =>
             {
                 _ = state;
-                SendSystemStateRequestAsync().Observe(ex => _logger?.LogWarning(ex, "Send system state request failed"));
+                SendSystemStateRequestAsync().Observe(ex => _logger.LogWarning(ex, "Send system state request failed"));
             },
             null,
             interval,  // First poll after interval
             interval); // Subsequent polls at interval
 
-        _logger?.LogDebug("SystemState polling timer started ({Interval}s interval)", _systemStatePollingIntervalSeconds);
+        _logger.LogDebug("SystemState polling timer started ({Interval}s interval)", _systemStatePollingIntervalSeconds);
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ public partial class Z21
         {
             _systemStatePollingTimer.Dispose();
             _systemStatePollingTimer = null;
-            _logger?.LogDebug("SystemState polling timer stopped");
+            _logger.LogDebug("SystemState polling timer stopped");
         }
     }
 
@@ -84,7 +84,7 @@ public partial class Z21
         // Check if UDP is still connected before attempting send
         if (!_udp.IsConnected)
         {
-            _logger?.LogTrace("SystemState request skipped: UDP not connected");
+            _logger.LogTrace("SystemState request skipped: UDP not connected");
             return;
         }
 
@@ -96,7 +96,7 @@ public partial class Z21
                 timeoutCts.Token);
 
             await SendAsync(Z21Command.BuildHandshake(), linkedCts.Token).ConfigureAwait(false);
-            _logger?.LogTrace("SystemState request sent");
+            _logger.LogTrace("SystemState request sent");
         }
         catch (OperationCanceledException) when (_cancellationTokenSource?.Token.IsCancellationRequested == true)
         {
@@ -105,11 +105,11 @@ public partial class Z21
         catch (UdpNotConnectedException ex)
         {
             // UDP disconnected during timer callback - this is expected during shutdown
-            _logger?.LogTrace(ex, "SystemState request skipped: UDP not connected");
+            _logger.LogTrace(ex, "SystemState request skipped: UDP not connected");
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning("SystemState request failed: {Message}", ex.Message);
+            _logger.LogWarning("SystemState request failed: {Message}", ex.Message);
         }
     }
     #endregion

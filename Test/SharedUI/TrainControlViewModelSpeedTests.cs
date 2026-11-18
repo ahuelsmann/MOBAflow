@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.SharedUI.Interface;
@@ -53,8 +53,8 @@ internal sealed class TrainControlViewModelSpeedTests
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
 
         var settingsServiceMock = new Mock<ISettingsService>();
-        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
-        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new UiSettings());
+        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
 
         return new TrainControlViewModel(
             runtimeMock.Object,
@@ -64,6 +64,7 @@ internal sealed class TrainControlViewModelSpeedTests
             NullLogger<TrainControlViewModel>.Instance,
             ImmediateUiDispatcher.Instance,
             new EventBus(NullLogger<EventBus>.Instance),
-            new NullFunctionAppearancePicker());
+            new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState());
     }
 }

@@ -17,6 +17,7 @@ internal sealed partial class SolutionArchitectureTests
 {
     private const string ArchitectureDocument = "docs/ARCHITECTURE.md";
     private const string DependencySection = "### Project dependency rules";
+    private const string CommonBoundarySection = "### Common and Contracts boundary";
 
     private static readonly string[] WinUiPackagePrefixes =
     [
@@ -31,8 +32,6 @@ internal sealed partial class SolutionArchitectureTests
         "Microsoft.Maui",
         "CommunityToolkit.Maui",
     ];
-
-    private static readonly string[] CommonPresentationNamespaces = ["Moba.Common.Display"];
 
     /// <summary>The only project allowed to use each platform UI framework.</summary>
     private static readonly Dictionary<string, string> UiFrameworkOwners = new(StringComparer.Ordinal)
@@ -161,20 +160,48 @@ internal sealed partial class SolutionArchitectureTests
     }
 
     [Test]
-    public void Common_DeclaresNoPresentationNamespaces()
+    public void Common_DeclaresOnlyDocumentedInfrastructureNamespaces()
     {
         var common = LoadSolutionProjects().Single(project => project.Name == "Common");
+        var allowed = ReadTableRows(CommonBoundarySection)
+            .SelectMany(cells => CodeSpans(cells[0]))
+            .Select(name => $"{common.RootNamespace}.{name}")
+            .ToList();
+        if (allowed.Count == 0)
+        {
+            throw new InvalidOperationException($"{ArchitectureDocument} lists no Common namespaces under '{CommonBoundarySection}'.");
+        }
+
         var violations = ReadNamespaceDeclarations(common)
-            .Where(declaration => CommonPresentationNamespaces.Any(
-                presentation => IsBelow(declaration.Namespace, presentation)))
+            .Where(declaration => !allowed.Any(owner => IsBelow(declaration.Namespace, owner)))
             .Select(declaration => $"{declaration.File}: namespace {declaration.Namespace}")
             .ToList();
 
         Assert.That(
             violations,
             Is.Empty,
-            "Common rule: presentation helpers live in SharedUI or the host that uses them, not in Common. "
-            + "Violations: " + string.Join("; ", violations));
+            $"Common rule: Common declares only the neutral infrastructure namespaces listed in {ArchitectureDocument} "
+            + $"('{CommonBoundarySection}'); UI layout, navigation and presentation types belong to SharedUI or the "
+            + "host that uses them, wire contracts to Contracts. Violations: " + string.Join("; ", violations));
+    }
+
+    [Test]
+    public void Common_DeclaresNoUiSettingsTypes()
+    {
+        var uiSettingsTypes = typeof(global::Moba.SharedUI.Configuration.UiSettings).Assembly.GetTypes()
+            .Where(type => type.Namespace == typeof(global::Moba.SharedUI.Configuration.UiSettings).Namespace)
+            .Select(type => type.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        var violations = typeof(global::Moba.Common.Configuration.AppSettings).Assembly.GetTypes()
+            .Where(type => uiSettingsTypes.Contains(type.Name))
+            .Select(type => type.FullName)
+            .ToList();
+
+        Assert.That(
+            violations,
+            Is.Empty,
+            "Common rule: layout, feature-toggle and display settings belong to the SharedUI settings root; "
+            + "Common keeps only neutral AppSettings sections. Violations: " + string.Join("; ", violations));
     }
 
     private static IEnumerable<(string Framework, string Evidence)> UiFrameworkUsage(BuildDefinition build)
@@ -259,17 +286,9 @@ internal sealed partial class SolutionArchitectureTests
 
     private static Dictionary<string, DocumentedProject> LoadDocumentedProjects()
     {
-        var lines = File.ReadAllLines(Path.Combine(FindRepositoryRoot(), ArchitectureDocument));
-        var start = Array.FindIndex(lines, line => line.Trim() == DependencySection);
-        if (start < 0)
-        {
-            throw new InvalidOperationException($"{ArchitectureDocument} has no '{DependencySection}' section.");
-        }
-
         var rows = new Dictionary<string, DocumentedProject>(StringComparer.Ordinal);
-        foreach (var line in lines.Skip(start + 1).SkipWhile(line => !line.StartsWith('|')).TakeWhile(line => line.StartsWith('|')))
+        foreach (var cells in ReadTableRows(DependencySection))
         {
-            var cells = line.Trim('|').Split('|').Select(cell => cell.Trim()).ToArray();
             var project = CodeSpans(cells[0]).FirstOrDefault();
             if (cells.Length < 3 || project is null)
             {
@@ -280,6 +299,23 @@ internal sealed partial class SolutionArchitectureTests
         }
 
         return rows;
+    }
+
+    /// <summary>The cells of each row of the first table after <paramref name="section"/> in the architecture document.</summary>
+    private static List<string[]> ReadTableRows(string section)
+    {
+        var lines = File.ReadAllLines(Path.Combine(FindRepositoryRoot(), ArchitectureDocument));
+        var start = Array.FindIndex(lines, line => line.Trim() == section);
+        if (start < 0)
+        {
+            throw new InvalidOperationException($"{ArchitectureDocument} has no '{section}' section.");
+        }
+
+        return lines.Skip(start + 1)
+            .SkipWhile(line => !line.StartsWith('|'))
+            .TakeWhile(line => line.StartsWith('|'))
+            .Select(line => line.Trim('|').Split('|').Select(cell => cell.Trim()).ToArray())
+            .ToList();
     }
 
     private static IEnumerable<string> CodeSpans(string cell) =>

@@ -3,7 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -20,7 +20,7 @@ internal sealed partial class WagonsPageViewModelTests : IDisposable
     private SolutionSession _session = null!;
     private Mock<ISolutionIoService> _io = null!;
     private Mock<ISettingsService> _persistence = null!;
-    private AppSettings _settings = null!;
+    private UiSettings _settings = null!;
     private WagonsPageViewModel _page = null!;
     private Mock<Action<string>> _explorer = null!;
 
@@ -38,15 +38,15 @@ internal sealed partial class WagonsPageViewModelTests : IDisposable
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
         _session = TestSolutionSessions.Create(new Solution { Projects = [new Project()] }, dispatcher.Object, runtime.Object, _io.Object);
         _session.CurrentSolutionPath = "wagons-test.json";
-        _settings = new AppSettings();
+        _settings = new UiSettings();
         _settings.Layout.PassengerWagonPage.IsListExpanded = false;
         _settings.Layout.GoodsWagonPage.IsPropertiesExpanded = false;
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);
-        _persistence.Setup(value => value.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
+        _persistence.Setup(value => value.SaveSettingsAsync(It.IsAny<UiSettings>())).Returns(Task.CompletedTask);
         _explorer = new Mock<Action<string>>();
-        _page = new WagonsPageViewModel(_session, TestFileServices.Photos(_io.Object), _persistence.Object,
-            new LayoutColumnWidthsViewModel(), NullLogger<WagonsPageViewModel>.Instance, _explorer.Object);
+        _page = new WagonsPageViewModel(_session, TestFileServices.Photos(_io.Object), TestLayouts.Create(_persistence.Object),
+            NullLogger<WagonsPageViewModel>.Instance, _explorer.Object);
     }
 
     [TearDown]

@@ -18,20 +18,6 @@
     {
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1002",
-      "path": "MOBAflow/Service/MainWindowNavigationBootstrapper.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1002",
-      "path": "MOBAflow/Service/NavigationService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1003",
       "path": "MOBAflow/Service/RestApiProcessService.cs",
       "count": 1
@@ -244,7 +230,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1031",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 6
+      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -334,13 +320,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1062",
-      "path": "MOBAflow/Behavior/GridColumnResizeBehavior.cs",
-      "count": 4
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1062",
       "path": "MOBAflow/Controls/Matrix/ViewModel5x5.cs",
       "count": 1
     },
@@ -357,20 +336,6 @@
       "ruleId": "CA1062",
       "path": "MOBAflow/Converter/PathToCanvasGeometryConverter.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1062",
-      "path": "MOBAflow/Service/MainWindowNavigationBootstrapper.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1062",
-      "path": "MOBAflow/Service/NavigationItemFactory.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -468,20 +433,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
       "path": "MOBAflow/App.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Behavior/GridColumnResizeBehavior.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Behavior/ResizeCursorGrid.cs",
       "count": 1
     },
     {
@@ -803,34 +754,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
-      "path": "MOBAflow/Service/MainWindowNavigationBootstrapper.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Service/NavigationItemFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Service/NavigationRegistration.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Service/NavigationService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
       "path": "MOBAflow/Service/PhotoHubClient.cs",
       "count": 1
     },
@@ -999,13 +922,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
-      "path": "MOBAflow/Behavior/GridColumnResizeBehavior.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1848",
       "path": "MOBAflow/Controls/SignalBox/SignalBoxCanvasControl.xaml.cs",
       "count": 2
     },
@@ -1133,7 +1049,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
       "path": "MOBAflow/Service/WinUiAppStartupService.cs",
-      "count": 12
+      "count": 11
     },
     {
       "project": "MOBAflow",
@@ -1189,7 +1105,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 13
+      "count": 7
     },
     {
       "project": "MOBAflow",
@@ -1581,7 +1497,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 5
+      "count": 2
     },
     {
       "project": "MOBAflow",
@@ -1701,13 +1617,6 @@
       "ruleId": "CA5392",
       "path": "MOBAflow/Controls/FunctionSymbolPickerWindow.xaml.cs",
       "count": 3
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1028",
-      "path": "MOBAflow/Behavior/ResizeCursorGrid.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -1972,13 +1881,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0053",
-      "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0053",
       "path": "MOBAflow/View/SignalBoxPage.xaml.cs",
       "count": 2
     },
@@ -2113,13 +2015,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0290",
       "path": "MOBAflow/Service/WindowActivationService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0290",
-      "path": "MOBAflow/Service/WinUiAppStartupService.cs",
       "count": 1
     },
     {
@@ -2973,7 +2868,14 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/FeatureToggleRegistryTests.cs",
+      "path": "Test/SharedUI/FeatureToggleRegistryTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/UiSettingsDefaultsTests.cs",
       "count": 1
     },
     {
@@ -3491,6 +3393,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAflow/MainWindowLifecycleServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs",
       "count": 1
     },
@@ -3575,6 +3484,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBApi/PhotosControllerUploadTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeBroadcastMetricsTests.cs",
       "count": 1
     },
@@ -3610,7 +3526,28 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBApi/RuntimeControllerTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBApi/RuntimeHubRegistrationTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBApi/RuntimeSnapshotCacheTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBApi/SolutionControllerMetaTests.cs",
       "count": 1
     },
     {
@@ -3666,6 +3603,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/LayoutPersistenceServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/JourneyStationProjectionTests.cs",
       "count": 1
     },
@@ -3701,7 +3645,14 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/MainWindowViewModelSignalBoxTests.cs",
+      "path": "Test/SharedUI/MainWindowViewModelTrackPowerSwitchTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SignalBoxPageViewModelTests.cs",
       "count": 1
     },
     {
@@ -3779,6 +3730,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/MobileRuntimeProjectionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/MobileServiceCollectionExtensionsTests.cs",
       "count": 1
     },
     {
@@ -3897,7 +3855,21 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/RecorderPageViewModelStateTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/SettingsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/SolutionPageViewModelTests.cs",
       "count": 1
     },
     {
@@ -3960,7 +3932,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/TimetablePageViewModelTests.cs",
+      "path": "Test/SharedUI/TimetablePageViewModelOperationsTests.cs",
       "count": 1
     },
     {
@@ -4017,6 +3989,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/StationsPageViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/TrainControlViewModelRuntimeStateTests.cs",
       "count": 1
     },
     {
@@ -4234,6 +4213,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/WinUI/InfoPageMarkupTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/WinUI/NavigationItemFactoryTests.cs",
       "count": 1
     },
     {
@@ -5675,13 +5661,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/AppSettingsDefaultsTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
       "path": "Test/Contracts/DiscoveryResponseParserTests.cs",
       "count": 11
     },
@@ -6320,7 +6299,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/Common/AppSettingsDefaultsTests.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Test",
@@ -6335,13 +6314,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Common/EventBusTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Common/FeatureToggleRegistryTests.cs",
-      "count": 7
     },
     {
       "project": "Test",

@@ -41,6 +41,19 @@ public sealed class RestApiSolutionSyncService : IDisposable
     private readonly object _metricsLock = new();
     private DateTimeOffset? _lastSolutionPushAt;
     private bool _lastSolutionPushSucceeded;
+    private bool _pushPending;
+
+    /// <summary>True from a queued push until its upload ended, so the status can wait for the result.</summary>
+    public bool IsPushPending
+    {
+        get
+        {
+            lock (_debounceLock)
+            {
+                return _pushPending;
+            }
+        }
+    }
 
     public DateTimeOffset? LastSolutionPushAt
     {
@@ -155,6 +168,8 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
             token = _debounceCts.Token;
 
+            _pushPending = true;
+
         }
 
         _ = PushDebouncedAsync(token);
@@ -189,6 +204,18 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
             _logger.LogWarning(ex, "Debounced solution push failed");
 
+        }
+
+        finally
+        {
+            lock (_debounceLock)
+            {
+                // A newer queued push keeps the pending state; it owns the current token.
+                if (_debounceCts is null || _debounceCts.Token == cancellationToken)
+                {
+                    _pushPending = false;
+                }
+            }
         }
     }
 
@@ -326,6 +353,8 @@ public sealed class RestApiSolutionSyncService : IDisposable
             _debounceCts?.Dispose();
 
             _debounceCts = null;
+
+            _pushPending = false;
 
         }
     }

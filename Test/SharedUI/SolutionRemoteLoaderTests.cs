@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.Test.Helpers;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
@@ -255,7 +255,7 @@ internal sealed class SolutionRemoteLoaderTests
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
         var mobileContext = new MobileSolutionContext(TestViewModelServices.Default);
         var settingsMock = new Mock<ISettingsService>();
-        settingsMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
+        settingsMock.Setup(service => service.GetSettings()).Returns(new UiSettings());
         var loader = new SolutionRemoteLoader(
             runtimeMock.Object,
             mobileContext,
@@ -275,6 +275,7 @@ internal sealed class SolutionRemoteLoaderTests
             ImmediateUiDispatcher.Instance,
             new EventBus(NullLogger<EventBus>.Instance),
             new NullFunctionAppearancePicker(),
+            new NullRuntimeRoutingState(),
             options: new TrainControlViewModelOptions());
 
         try

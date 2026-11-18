@@ -1,20 +1,18 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Configuration;
 using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using SharedUI.Interface;
 using SharedUI.ViewModel;
+using SharedUI.Service;
 using Windows.ApplicationModel.DataTransfer;
 
 internal sealed partial class StationsPage
 {
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
-    private readonly ILogger<StationsPage>? _logger;
+    private readonly LayoutPersistenceService _layout;
+    private readonly ILogger<StationsPage> _logger;
 
     public StationsPageViewModel ViewModel { get; }
 
@@ -25,13 +23,11 @@ internal sealed partial class StationsPage
 
     public StationsPage(
         StationsPageViewModel viewModel,
-        AppSettings settings,
-        ISettingsService? settingsService = null,
-        ILogger<StationsPage>? logger = null)
+        LayoutPersistenceService layout,
+        ILogger<StationsPage> logger)
     {
         ViewModel = viewModel;
-        _settings = settings;
-        _settingsService = settingsService;
+        _layout = layout;
         _logger = logger;
         InitializeComponent();
         Loaded += OnPageLoaded;
@@ -113,7 +109,7 @@ internal sealed partial class StationsPage
     {
         _ = sender;
         _ = e;
-        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+        HandlePageUnloadedAsync().Observe(ex => _logger.LogWarning(ex, "Persist layout on unload failed"));
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -122,20 +118,17 @@ internal sealed partial class StationsPage
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             SaveLayout();
-            if (_settingsService != null)
-            {
-                await _settingsService.SaveSettingsAsync(_settings);
-            }
+            await _layout.SaveAsync();
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Persist layout on unload failed");
+            _logger.LogWarning(ex, "Persist layout on unload failed");
         }
     }
 
     private void RestoreLayout()
     {
-        var layout = _settings.Layout.StationsPage;
+        var layout = _layout.Layout.StationsPage;
 
         // Restore Column Widths First
         if (layout.StationsColumnWidth > 0)
@@ -215,7 +208,7 @@ internal sealed partial class StationsPage
 
     private void SaveLayout()
     {
-        var layout = _settings.Layout.StationsPage;
+        var layout = _layout.Layout.StationsPage;
 
         // Save CollapsibleColumn states
         layout.IsStationsListExpanded = ViewModel.IsStationsListExpanded;

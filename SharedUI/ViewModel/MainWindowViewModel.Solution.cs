@@ -10,36 +10,14 @@ using Interface;
 using System.ComponentModel;
 
 /// <summary>
-/// MainWindowViewModel - Solution and Project Management.
+/// MainWindowViewModel - solution new/open/save.
 /// The <see cref="ISolutionSession"/> owns the solution, its persistence and the project/journey selection;
-/// this partial exposes them for XAML binding and keeps the page-level reactions.
+/// this partial reads them through for the window title, the shell's commands and the runtime projection.
+/// Project creation and deletion live in <see cref="SolutionPageViewModel"/>.
 /// </summary>
 public partial class MainWindowViewModel
 {
-    #region Solution Events
-    /// <summary>
-    /// Raised before saving the Solution. Subscribers should sync their data to Domain models.
-    /// </summary>
-    public event EventHandler? SolutionSaving
-    {
-        add => _session.SolutionSaving += value;
-        remove => _session.SolutionSaving -= value;
-    }
-
-    /// <summary>
-    /// Raised after loading a Solution. Subscribers should load their data from Domain models.
-    /// </summary>
-    public event EventHandler? SolutionLoaded
-    {
-        add => _session.SolutionLoaded += value;
-        remove => _session.SolutionLoaded -= value;
-    }
-    #endregion
-
     #region Session-backed state
-    /// <summary>Gets the solution session that owns the loaded solution.</summary>
-    public ISolutionSession SolutionSession => _session;
-
     /// <summary>Gets the loaded solution.</summary>
     public Solution Solution => _session.Solution;
 
@@ -52,9 +30,6 @@ public partial class MainWindowViewModel
 
     /// <summary>Gets whether the solution has changes that were not written yet.</summary>
     public bool HasUnsavedChanges => _session.HasUnsavedChanges;
-
-    /// <summary>Gets whether the solution contains at least one project.</summary>
-    public bool HasSolution => _session.HasSolution;
 
     /// <summary>Gets the view model of the loaded solution.</summary>
     public SolutionViewModel? SolutionViewModel => _session.SolutionViewModel;
@@ -101,7 +76,6 @@ public partial class MainWindowViewModel
                 OnPropertyChanged(nameof(CurrentSolutionPath));
                 break;
             case nameof(ISolutionSession.HasUnsavedChanges):
-            case nameof(ISolutionSession.HasSolution):
             case nameof(ISolutionSession.SolutionViewModel):
             case nameof(ISolutionSession.SolutionSaveState):
             case nameof(ISolutionSession.SolutionSaveStatusText):
@@ -139,11 +113,6 @@ public partial class MainWindowViewModel
     /// </summary>
     public Task SaveSolutionInternalAsync() => _session.SaveSolutionInternalAsync();
 
-    /// <summary>
-    /// Persists solution changes and returns the resulting host persistence status.
-    /// </summary>
-    public Task<SolutionSaveResult> SaveSolutionWithStatusAsync() => _session.SaveSolutionWithStatusAsync();
-
     [RelayCommand]
     private async Task NewSolutionAsync()
     {
@@ -163,18 +132,6 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Loads a solution from a specific file path.
-    /// Used by auto-load functionality to ensure the same code path as manual loading.
-    /// </summary>
-    public async Task LoadSolutionFromPathAsync(string filePath)
-    {
-        if (await ConfirmStopTrainsAsync("Opening another solution").ConfigureAwait(true))
-        {
-            await _session.LoadSolutionFromPathAsync(filePath).ConfigureAwait(true);
-        }
-    }
-
-    /// <summary>
     /// Warns before an action discards runtimes that are connected to their Z21. Confirming lets the runtimes set
     /// their locomotives to speed 0 before they are discarded; cancelling keeps everything running.
     /// </summary>
@@ -182,7 +139,7 @@ public partial class MainWindowViewModel
     private async Task<bool> ConfirmStopTrainsAsync(string action, IReadOnlyCollection<Guid>? projectIds = null)
     {
         var connected = _session.GetConnectedProjectNames(projectIds);
-        if (connected.Count == 0 || _dialogService is null)
+        if (connected.Count == 0)
         {
             return true;
         }
@@ -203,17 +160,13 @@ public partial class MainWindowViewModel
     private bool CanSaveSolution() => _session.CanSave;
 
     /// <summary>
-    /// Clears all selections across all pages to reset property panels.
-    /// Called when the session replaces the solution and when the selected project is deleted.
+    /// Clears the project and journey selection to reset the property panels when the session replaces the solution.
     /// </summary>
     private void ClearAllSelections()
     {
         // The shared workflow library follows the cleared project selection itself.
         SelectedProject = null;
         SelectedJourney = null;
-
-        // General
-        CurrentSelectedObject = null;
     }
 
     #endregion

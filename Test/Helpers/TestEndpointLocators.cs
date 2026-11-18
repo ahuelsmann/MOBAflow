@@ -4,7 +4,7 @@ namespace Moba.Test.Helpers;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-using Moba.Common.Configuration;
+using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Mobile;
 
@@ -16,7 +16,7 @@ using Moq;
 internal static class TestEndpointLocators
 {
     public static MobaflowEndpointLocator Create(
-        AppSettings settings,
+        UiSettings settings,
         ISettingsService settingsService,
         IRestDiscoveryService? discovery = null,
         TimeProvider? timeProvider = null) =>

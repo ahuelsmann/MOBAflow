@@ -39,6 +39,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IFileSystem>(SystemFileSystem.Instance);
         services.TryAddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
         services.TryAddSingleton(TimeProvider.System);
+        services.TryAddSingleton(InPortCounterPersistence.InMemory);
         services.TryAddSingleton<InPortCounterService>();
         services.TryAddSingleton<IDecoderCvService, DecoderCvService>();
         services.TryAddSingleton<ILocomotiveLibraryService, LocomotiveLibraryService>();
@@ -109,8 +110,8 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton(sp => new ActionExecutionContext
         {
             Z21 = sp.GetRequiredService<IZ21>(),
-            SpeechOutput = sp.GetService<ISpeechOutput>(),
-            SoundPlayer = sp.GetService<ISoundPlayer>()
+            SpeechOutput = sp.GetRequiredService<ISpeechOutput>(),
+            SoundPlayer = sp.GetRequiredService<ISoundPlayer>()
         });
         services.TryAddSingleton<ActionExecutionContextFactory>();
         services.TryAddSingleton<IWorkflowDryRunService, WorkflowDryRunService>();
@@ -130,7 +131,7 @@ public static class MobaBackendServiceCollectionExtensions
                     sp.GetRequiredService<ILoggerFactory>()),
                 InterlockingRuntime = sp.GetRequiredService<IInterlockingRuntime>(),
                 InPortCounterService = sp.GetRequiredService<InPortCounterService>(),
-                EndpointSource = sp.GetService<IZ21EndpointSource>()
+                EndpointSource = sp.GetRequiredService<IZ21EndpointSource>()
             },
             sp.GetRequiredService<ILogger<MobaRuntimeService>>()));
         services.TryAddSingleton<IRuntimeSnapshotProvider>(sp => sp.GetRequiredService<IMobaRuntime>());
