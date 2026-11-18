@@ -283,17 +283,14 @@ launch, train movement or layout action is part of this plan; tests use fakes an
   timeout 100 minutes),
   followed by Backend (about 35 minutes; timeout 60 minutes); each job timeout follows the measured duration. If a lane
   outgrows its timeout, split the lane by namespace rather than excluding mutants.
-- **Main evidence cancelled by later merges:** Quality runs use `concurrency: quality-${{ github.ref }}` with
-  `cancel-in-progress: true`. On `main`, each merge cancels the previous run, so the Backend lane (about 35 to 40
-  minutes) and the SharedUI lane (about 47 to 51 minutes) finish there only when no merge follows within that time.
-  On 2026-11-12 four consecutive `main` runs (43281875704, 43286861678, 43291112851, 43295757485) cancelled both
-  lanes after 24 to 31 minutes ("Canceling since a higher priority waiting request ... exists"), so the commits
-  `a573df48`, `0bd746d5`, `9c451c8a` and `ff4f0ec0` have no post-merge mutation result of their own. Observed on
-  2026-11-12 at 21:18 UTC: the latest complete `main` run is 43301142712 on `0a7947a3`, with all six mutation lanes
-  green (Backend 40 min, SharedUI 47 min); the one before it is 42916281964 (`1b037bee`, 2026-11-10: Backend 37 min,
-  SharedUI 47 min). The PR runs still gate each change, and a later complete `main` run covers the cancelled commits
-  cumulatively. The structural gap stays: any merge within about 50 minutes cancels the post-merge confirmation.
-  Closing it needs a workflow change outside RF-09 documentation, for example no cancellation on `main` or a
-  scheduled full mutation run.
+- **Main evidence cancelled by later merges (fixed 2026-11-18):** Quality runs used `cancel-in-progress: true`, so on
+  2026-11-12 four consecutive `main` runs (43281875704, 43286861678, 43291112851, 43295757485) cancelled both long
+  lanes after 24 to 31 minutes, and the commits `a573df48`, `0bd746d5`, `9c451c8a` and `ff4f0ec0` have no post-merge
+  mutation result of their own. The workflow now cancels superseded runs only for `pull_request`. A running `main`
+  run finishes; a newer `main` run waits, and GitHub keeps only the latest pending run, so a pending run can replace
+  an older pending one and intermediate commits can get no run of their own (the later run covers them
+  cumulatively). Main runs serialize for all jobs, which delays later main evidence by up to about 50 minutes.
+  Each manual dispatch (for example `validate_android`) uses its own group `dispatch-<run id>`, so no merge or later
+  run cancels or replaces it. The PR runs still gate each change.
 - **Flaky timing tests:** a mutant that changes a delay can turn a wall-clock test into a timeout; such tests move to
   `TimeProvider`-based fakes instead of being excluded.

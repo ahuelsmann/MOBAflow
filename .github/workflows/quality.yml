@@ -16,8 +16,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: quality-${{ github.ref }}
-  cancel-in-progress: true
+  # Pull requests cancel superseded runs. Main runs finish; a newer main run waits, and GitHub keeps only the
+  # latest pending one. Each manual dispatch (for example validate_android) gets its own group, so no merge or
+  # later run can cancel or replace it.
+  group: quality-${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}', github.run_id) || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Documentation-only pull requests skip the build, test and firmware jobs. Pull requests that touch neither
