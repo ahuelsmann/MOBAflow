@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.UI.Xaml.Controls;
 
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -76,7 +77,7 @@ internal sealed class MainWindowLifecycleServiceTests
     {
         var io = TestFileServices.CreateMock();
         io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((false, null, null));
-        var provider = CreateProvider(services => services.AddSingleton(io.Object));
+        var provider = CreateProvider(services => services.AddSingleton(io.Object).AddSingleton(ChoosingSave()));
         await using var providerLifetime = provider.ConfigureAwait(false);
         var observer = new Mock<IDisposable>();
         var lifecycle = CreateLifecycle(provider, observer);
@@ -97,7 +98,7 @@ internal sealed class MainWindowLifecycleServiceTests
     {
         var io = TestFileServices.CreateMock();
         io.Setup(value => value.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((false, null, "disk full"));
-        var provider = CreateProvider(services => services.AddSingleton(io.Object));
+        var provider = CreateProvider(services => services.AddSingleton(io.Object).AddSingleton(ChoosingSave()));
         await using var providerLifetime = provider.ConfigureAwait(false);
         var observer = new Mock<IDisposable>();
         var lifecycle = CreateLifecycle(provider, observer);
@@ -126,6 +127,43 @@ internal sealed class MainWindowLifecycleServiceTests
             provider.GetRequiredService<HealthCheckService>(),
             provider.GetRequiredService<IUiDispatcher>(),
             NullLogger<MainWindowLifecycleService>.Instance);
+
+    [Test]
+    public async Task TheDialogServiceReportsThatNoDialogWasShownWithoutAMainWindow()
+    {
+        var provider = new ServiceCollection().BuildServiceProvider();
+        await using var providerLifetime = provider.ConfigureAwait(false);
+        var dialogs = new DialogService(provider);
+
+        var choice = await dialogs.ShowChoiceAsync("Save changes?", "Save?", "Save", "Don't save", "Cancel").ConfigureAwait(false);
+
+        // The closing workflow saves in this case, so the window still closes and no change is lost.
+        Assert.That(choice, Is.EqualTo(DialogChoice.NotShown));
+    }
+
+    [TestCase(ContentDialogResult.Primary, DialogChoice.Primary)]
+    [TestCase(ContentDialogResult.Secondary, DialogChoice.Secondary)]
+    [TestCase(ContentDialogResult.None, DialogChoice.Cancel)]
+    public void TheDialogServiceMapsThePressedButtonToTheChoice(ContentDialogResult result, DialogChoice expected) =>
+        Assert.That(DialogService.ToChoice(result), Is.EqualTo(expected));
+
+    [TestCase(unchecked((int)0x80000019), true)]
+    [TestCase(unchecked((int)0x80004005), false)]
+    public void TheDialogServiceRecognizesOnlyTheSecondOpenDialogFailure(int hResult, bool expected)
+    {
+        // A second open dialog makes ShowAsync fail; the closing workflow then saves instead of closing unsaved.
+        Assert.That(DialogService.IsAnotherDialogOpen(hResult), Is.EqualTo(expected));
+    }
+
+    /// <summary>The operator chooses Save in the closing prompt; a headless run has no window for the real dialog.</summary>
+    private static IDialogService ChoosingSave()
+    {
+        var dialog = new Mock<IDialogService>();
+        dialog
+            .Setup(value => value.ShowChoiceAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(DialogChoice.Primary);
+        return dialog.Object;
+    }
 
     private static ServiceProvider CreateProvider(Action<IServiceCollection>? configure = null)
     {

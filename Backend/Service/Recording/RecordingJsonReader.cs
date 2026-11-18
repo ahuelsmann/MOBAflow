@@ -63,23 +63,45 @@ internal static class RecordingJsonReader
     internal static int RequireInt32(JsonElement element, string propertyName, string parentPath)
     {
         var property = RequireProperty(element, propertyName, parentPath);
-        if (property.ValueKind != JsonValueKind.Number || !property.TryGetInt32(out var value))
+        var value = TryReadInt32(property);
+        if (value is null)
         {
             throw Invalid("invalid-number", $"{parentPath}.{propertyName}", $"Property '{propertyName}' must be a 32-bit integer.");
         }
 
-        return value;
+        return value.Value;
+    }
+
+    private static int? TryReadInt32(JsonElement property)
+    {
+        if (property.ValueKind != JsonValueKind.Number)
+        {
+            return null;
+        }
+
+        return property.TryGetInt32(out var value) ? value : null;
     }
 
     internal static long RequireInt64(JsonElement element, string propertyName, string parentPath)
     {
         var property = RequireProperty(element, propertyName, parentPath);
-        if (property.ValueKind != JsonValueKind.Number || !property.TryGetInt64(out var value))
+        var value = TryReadInt64(property);
+        if (value is null)
         {
             throw Invalid("invalid-number", $"{parentPath}.{propertyName}", $"Property '{propertyName}' must be a 64-bit integer.");
         }
 
-        return value;
+        return value.Value;
+    }
+
+    private static long? TryReadInt64(JsonElement property)
+    {
+        if (property.ValueKind != JsonValueKind.Number)
+        {
+            return null;
+        }
+
+        return property.TryGetInt64(out var value) ? value : null;
     }
 
     internal static Guid RequireGuid(JsonElement element, string propertyName, string parentPath)
@@ -90,14 +112,23 @@ internal static class RecordingJsonReader
 
     internal static Guid ReadGuid(JsonElement element, string path)
     {
-        if (element.ValueKind != JsonValueKind.String
-            || !Guid.TryParseExact(element.GetString(), "D", out var value)
-            || value == Guid.Empty)
+        var value = TryReadCanonicalGuid(element);
+        if (value is null || value.Value == Guid.Empty)
         {
             throw Invalid("invalid-id", path, "Identifier must be a non-empty canonical GUID.");
         }
 
-        return value;
+        return value.Value;
+    }
+
+    private static Guid? TryReadCanonicalGuid(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.String)
+        {
+            return null;
+        }
+
+        return Guid.TryParseExact(element.GetString(), "D", out var value) ? value : null;
     }
 
     internal static Guid? ReadNullableGuid(JsonElement element, string path)

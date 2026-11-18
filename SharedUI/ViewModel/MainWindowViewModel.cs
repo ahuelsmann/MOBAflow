@@ -37,6 +37,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly List<Guid> _eventBusSubscriptions = [];
 
     private bool _isShuttingDown;
+    private bool _isAskingToSaveBeforeClosing;
 
     #endregion
 
@@ -56,7 +57,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="systemStatus">Host-owned speech, post-startup, REST API and synchronization status bound by the status bar.</param>
     /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
-    /// <param name="dialogService">Asks before new or opened solutions stop connected runtimes.</param>
+    /// <param name="dialogService">
+    /// Asks before new or opened solutions stop connected runtimes, and whether to save before closing.
+    /// </param>
     public MainWindowViewModel(
         IRuntimeSnapshotProvider runtimeSnapshots,
         IConnectionRuntime runtimeConnection,
@@ -170,7 +173,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     #region Lifecycle
     /// <summary>
-    /// Stops runtime-driven UI updates and disconnects from the Z21 before the host window completes shutdown.
+    /// Asks whether to save unsaved changes, then stops runtime-driven UI updates and disconnects from the Z21
+    /// before the host window completes shutdown.
     /// Closing never asks about running trains and never stops them: they keep running on the Z21.
     /// </summary>
     /// <param name="releaseRuntimeObservers">
@@ -184,15 +188,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return true;
         }
 
-        if (HasUnsavedChanges)
+        if (HasUnsavedChanges && !await ConfirmUnsavedChangesAsync().ConfigureAwait(false))
         {
-            var saved = await _session
-                .SaveAsync(allowPathSelection: string.IsNullOrWhiteSpace(CurrentSolutionPath))
-                .ConfigureAwait(false);
-            if (!saved)
-            {
-                return false;
-            }
+            return false;
         }
 
         if (!TryBeginShutdown())
@@ -224,6 +222,46 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         await _session.DrainPendingSaveAsync().ConfigureAwait(false);
         return true;
+    }
+
+    /// <summary>
+    /// Asks whether to save the unsaved changes before closing: Save saves them (with Save As for an unnamed
+    /// solution), Don't save closes without saving and Cancel keeps the app open. When no dialog can be shown the
+    /// changes are saved, so the window can still close and nothing is lost. A close request while the prompt is
+    /// open does not ask again and keeps the app open.
+    /// </summary>
+    /// <returns><see langword="true"/> to continue closing.</returns>
+    private async Task<bool> ConfirmUnsavedChangesAsync()
+    {
+        if (_isAskingToSaveBeforeClosing)
+        {
+            return false;
+        }
+
+        _isAskingToSaveBeforeClosing = true;
+        try
+        {
+            // The dialog needs the UI thread; stay on it until the operator answered.
+            var choice = await _dialogService.ShowChoiceAsync(
+                title: "Save changes?",
+                message: $"Do you want to save the changes to '{Solution.Name}' before closing MOBAflow?",
+                primaryButtonText: "Save",
+                secondaryButtonText: "Don't save",
+                cancelButtonText: "Cancel").ConfigureAwait(true);
+
+            return choice switch
+            {
+                DialogChoice.Secondary => true,
+                DialogChoice.Cancel => false,
+                _ => await _session
+                    .SaveAsync(allowPathSelection: string.IsNullOrWhiteSpace(CurrentSolutionPath))
+                    .ConfigureAwait(false)
+            };
+        }
+        finally
+        {
+            _isAskingToSaveBeforeClosing = false;
+        }
     }
 
     private bool TryBeginShutdown()

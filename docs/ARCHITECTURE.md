@@ -20,11 +20,12 @@ flowchart TD
     WinUI <-->|"REST + SignalR"| API["MOBApi caches and bridge"]
     MAUI <-->|"REST + SignalR"| API
     MAUI -->|"direct UDP"| Z21
+    API --> Contracts
     API --> Common
 ```
 
-MOBApi is deliberately a thin standalone host that references `Common`, not
-`SharedUI` or `Backend`. MOBAflow publishes the current solution and runtime
+MOBApi is deliberately a thin standalone host that references `Contracts` and
+`Common`, not `SharedUI` or `Backend`. MOBAflow publishes the current solution and runtime
 snapshots to it and consumes remote commands from it.
 
 ## 🏗️ Architecture Layers
@@ -54,7 +55,7 @@ files for the actual direct references, including conditional entries.
 | `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base` |
 | `TrackPlan.Editor` | `Moba.TrackPlan.Editor` | `Domain`, `TrackLibrary.Base`, `TrackPlan.Renderer` |
 | `MOBAdisplay` | `Moba.Display` | `Domain` |
-| `MOBApi` | `Moba.MOBApi` | `Common` |
+| `MOBApi` | `Moba.MOBApi` | `Common`, `Contracts` |
 | `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackPlan.Editor` |
 | `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `TrackPlan.Editor`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
 | `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound`, `Speech.Base` |
@@ -73,6 +74,34 @@ Further rules:
 `Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from this
 table, the project and build files, and the C# syntax of the sources; a failure
 message names the broken rule.
+
+### Common and Contracts boundary
+
+`Contracts` holds the wire types shared by MOBApi, MOBAflow and MOBAsmart: runtime snapshots, remote runtime
+commands, hub method names and the MOBApi discovery protocol (`Contracts/Runtime`, `Contracts/Discovery`).
+`Common` keeps neutral infrastructure used by several projects and declares only these namespaces below
+`Moba.Common`:
+
+| Namespace | Content |
+| --- | --- |
+| `Configuration` | The neutral `AppSettings` root and the sections Backend, speech and the hosts read |
+| `Discovery` | LAN address helpers, the MOBApi UDP discovery responder and the MOBApi path and deployment helpers |
+| `Events` | `IEvent`, the event bus and the runtime, Z21, workflow, solution and REST events |
+| `Extension`, `IO`, `Validation` | Task helpers, the file-system abstraction and JSON validation |
+| `Multiplex` | Viessmann multiplex signal definitions shared by Backend, `SharedUI` and both hosts |
+| `Path` | Photo path and remote photo URI helpers |
+| `Recording` | Recording and replay format, session and validation types |
+| `Serilog` | The in-memory log sink |
+
+UI layout, feature toggles, navigation and presentation helpers belong to `SharedUI` or the host that uses
+them; the `UiSettings` root in `SharedUI/Configuration` extends `AppSettings` and holds the Train Control page
+settings (`TrainControl`). `SolutionArchitectureTests` reads this table and fails when `Common` declares another
+namespace or a type named like a `SharedUI` settings type; a new `Common` namespace needs a row here.
+
+The theme flags `IsDarkMode` and `UseSystemTheme` stay in the neutral `Application` section. That section also
+holds values that are not about the UI (`LastSolutionPath`, `AutoStartWebApp`, `PhotoStoragePath`). Moving only
+the two flags while keeping their JSON path would need a second `Application` object on `UiSettings`, and a
+separate UI theme section would be a settings-format decision.
 
 ### Speech dependency rule
 
@@ -255,8 +284,8 @@ public interface IWorkflowService
 - MainWindowViewModel (shell: solution new/open/save, Z21 status, host commands, operating state and photo routing)
 - `LayoutPersistenceService` (the single boundary that persists the saved layout)
 - `UiSettings` settings root (`SharedUI/Configuration`): the neutral `AppSettings` plus layout, keyed feature toggles
-  (`FeatureToggleRegistry`), display and per-host train-control settings; both hosts register one instance as
-  `UiSettings` and `AppSettings`, so Backend keeps the neutral type and appsettings.json stays one file
+  (`FeatureToggleRegistry`), display, Train Control page and per-host train-control settings; both hosts register
+  one instance as `UiSettings` and `AppSettings`, so Backend keeps the neutral type and appsettings.json stays one file
 - Page-specific ViewModels (JourneyViewModel, WorkflowViewModel, etc.)
 - ViewModels read runtime state through narrow runtime roles and send commands through
   `IRuntimeCommandGateway` (see [Runtime command path](#runtime-command-path))
@@ -279,7 +308,7 @@ ViewModels do not receive the complete `IMobaRuntime` or create their own gatewa
 
 **Characteristics:**
 
-- ✅ **Platform-Agnostic** - Used by MOBAflow and MOBAsmart (MOBApi is a thin REST host with only `Common`)
+- ✅ **Platform-Agnostic** - Used by MOBAflow and MOBAsmart (MOBApi is a thin REST host with only `Contracts` and `Common`)
 - ✅ **MVVM Toolkit** - CommunityToolkit.Mvvm for source generators
 - ✅ **Observable Properties** - Reactive UI updates
 - ✅ **Commands** - RelayCommand for user interactions

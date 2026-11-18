@@ -703,7 +703,8 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
         TimetableEvaluationResult? evaluationResult = null,
         TimeSpan? delay = null,
         DateTimeOffset? now = null,
-        RecordingProjectionService? projection = null)
+        RecordingProjectionService? projection = null,
+        ITimetableRuntimeProjectionService? projectionService = null)
     {
         var runtime = new Mock<IMobaRuntime>();
         var dispatcher = new Mock<IUiDispatcher>();
@@ -733,7 +734,7 @@ internal sealed partial class TimetablePageViewModelTests : IDisposable
             new NullDialogService());
         var evaluation = new StubEvaluationService(evaluationResult ?? new TimetableEvaluationResult([]));
         var timing = new StubTimingService(delay ?? TimeSpan.Zero);
-        var runtimeProjection = projection ?? new RecordingProjectionService();
+        var runtimeProjection = projectionService ?? projection ?? new RecordingProjectionService();
         var viewModel = new TimetablePageViewModel(
             locomotiveSession1,
             evaluation,

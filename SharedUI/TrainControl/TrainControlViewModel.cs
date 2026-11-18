@@ -5,7 +5,7 @@ using Appearance;
 
 using Backend.Interface;
 
-using Common.Configuration;
+using Configuration;
 
 using Contracts.Runtime;
 using Common.Events;
@@ -958,7 +958,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
 
         var savedId = _settingsStore.SavedLocomotiveId;
-        if (LocomotiveRoster.FindSelectionToRestore(ProjectLocomotives, savedId) is not { } selection)
+        var selection = LocomotiveRoster.FindSelectionToRestore(ProjectLocomotives, savedId);
+        if (selection is null)
         {
             return;
         }
@@ -2050,7 +2051,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             Temperature,
             PeakMainCurrent,
             PeakTemperature);
-        if (TelemetryProjection.Apply(current, snapshot) is not { } telemetry)
+        var telemetry = TelemetryProjection.Apply(current, snapshot);
+        if (telemetry is null)
         {
             return;
         }
