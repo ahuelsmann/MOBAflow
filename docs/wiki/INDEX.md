@@ -19,6 +19,7 @@ solution, fleet photos, signal-box data and live desktop runtime state.
 ## User guides
 
 - [Installation and setup](INSTALLATION.md)
+- [Pages at a glance](PAGE-OVERVIEW.md)
 - [MOBAflow Desktop](MOBAFLOW-USER-GUIDE.md)
 - [MOBAsmart](MOBASMART-USER-GUIDE.md)
 - [Piper TTS setup](PIPER-TTS-SETUP.md)
@@ -39,7 +40,8 @@ solution, fleet photos, signal-box data and live desktop runtime state.
 ## Project status and support
 
 MOBAflow is under active development. Some desktop navigation items carry a
-**Preview** badge and may still change.
+**Preview** badge and may still change; [pages at a glance](PAGE-OVERVIEW.md)
+lists which.
 
 - Report bugs and request features through
   [GitHub Issues](https://github.com/ahuelsmann/MOBAflow/issues).
