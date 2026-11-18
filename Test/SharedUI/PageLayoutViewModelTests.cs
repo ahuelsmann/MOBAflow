@@ -7,7 +7,7 @@ using Moba.SharedUI.ViewModel;
 using System.Collections;
 
 [TestFixture]
-internal sealed class PageLayoutViewModelTests
+internal sealed partial class PageLayoutViewModelTests
 {
     [Test]
     public void ApplyToGrid_MapsColumnsByNameOrder()
@@ -141,7 +141,7 @@ internal sealed class PageLayoutViewModelTests
         return viewModel;
     }
 
-    private sealed class NamelessSecondColumnViewModel : PageLayoutViewModel
+    private sealed partial class NamelessSecondColumnViewModel : PageLayoutViewModel
     {
         public NamelessSecondColumnViewModel()
             : base("TestPage", new UiSettings())
