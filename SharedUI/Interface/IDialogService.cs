@@ -23,4 +23,20 @@ public interface IDialogService
         string confirmButtonText = "Yes",
         string cancelButtonText = "No",
         bool isCancelDefault = true);
+
+    /// <summary>
+    /// Shows a dialog with a primary, a secondary and a cancel button; the primary button is the default.
+    /// </summary>
+    /// <param name="title">Dialog title.</param>
+    /// <param name="message">Dialog message content.</param>
+    /// <param name="primaryButtonText">Text for the primary button.</param>
+    /// <param name="secondaryButtonText">Text for the secondary button.</param>
+    /// <param name="cancelButtonText">Text for the cancel button.</param>
+    /// <returns>The chosen button, or <see cref="DialogChoice.NotShown"/> when no dialog could be shown.</returns>
+    Task<DialogChoice> ShowChoiceAsync(
+        string title,
+        string message,
+        string primaryButtonText,
+        string secondaryButtonText,
+        string cancelButtonText);
 }

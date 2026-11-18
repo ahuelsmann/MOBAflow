@@ -53,8 +53,10 @@ connected project's Z21 assignment stops its known locomotives before replacing
 its runtime on the new endpoint. Reloading a solution reuses existing open
 connections after the stop sequence.
 
-**Closing MOBAflow does not stop the trains.** MOBAflow asks only whether to save
-unsaved changes, then closes its Z21 connections without sending a stop command.
+**Closing MOBAflow does not stop the trains.** With unsaved changes MOBAflow asks
+only **Save changes?**: **Save** saves them (and asks for a file name if the
+solution has none yet), **Don't save** closes without saving and **Cancel** keeps
+MOBAflow open. It then closes its Z21 connections without sending a stop command.
 Trains that are running keep running at their last speed on the Z21, and the
 same applies if MOBAflow ends unexpectedly. From that moment MOBAflow no longer
 controls anything: journeys, workflows, signals and announcements stop, and
