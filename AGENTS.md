@@ -36,8 +36,8 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   the affected area.
 - **Small slices.** Work is cut into slices of one concern, about 25 files or 400 changed lines at most, each with
   its own Draft PR that merges on its own. An issue may need several slices; no long-running branches.
-- **Board, locks, WIP limit.** The COO (Claude) is the sole technical writer on the board in `ahuelsmann/MOBAdev`
-  issue #1 and records each open slice, its risk class, team and locked areas. Refactoring and feature work never
+- **Board, locks, WIP limit.** The COO (Claude) coordinates open work on the [MOBAflow GitHub Kanban](docs/KANBAN.md)
+  and records each open slice, its risk class, team and locked areas on the `MOBAflow` issue and Draft PR (`ahuelsmann/MOBAdev` holds only versioned AI configuration). Refactoring and feature work never
   run in the same locked area at once. At most three code slices are open, at most two local agents build at once.
   One writer per branch.
 - **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests); code
@@ -59,7 +59,7 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   required checks pass. Before any push to an armed PR the COO disarms it.
 - **Guard rails.** Two failed fix attempts on the same finding (in companion or final review), or more than ten
   agent messages on one topic, stop the loop and go to the user. Locks, design gos, handovers and merges are logged
-  with UTC time in MOBAdev #1. Multi-slice features stay behind feature toggles until complete.
+  with UTC time on the `MOBAflow` issue or Draft PR and tracked on the [MOBAflow GitHub Kanban](docs/KANBAN.md). Multi-slice features stay behind feature toggles until complete.
 - **People.** The user decides product goals, priorities, material UX, fundamental architecture, new costs and every
   app, device or hardware action. Since 2026-11-06 the user's personal acceptance is no merge gate. The user does
   not relay messages, inspect code or administer PRs. Any role may consult the Head of UI/UX (`Gemini 4 Argon` via

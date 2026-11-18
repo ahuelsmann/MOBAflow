@@ -12,8 +12,8 @@ delivery through merge under the flow in
 explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main` across a multi-model agent network
 (Claude Code, ChatGPT Codex and Antigravity):
 
-1. The Chief Operating Officer (COO, Claude) is the sole technical writer on the board in `ahuelsmann/MOBAdev`
-   issue #1, cuts an issue into small slices and records each slice's risk class (`H`, `M` or `L`; review-fix rounds
+1. The Chief Operating Officer (COO, Claude) coordinates active work on the [MOBAflow GitHub Kanban](KANBAN.md)
+   and `MOBAflow` issues/Draft PRs (`ahuelsmann/MOBAdev` holds only versioned AI configuration), cuts an issue into small slices and records each slice's risk class (`H`, `M` or `L`; review-fix rounds
    keep their slice's class and dependency updates take the class of the affected area), cross-model slice team and
    locked code areas. At most three code slices are open at once.
 2. Each class `H` and `M` slice is worked by a multi-model team: the Senior Developer (writer), a companion

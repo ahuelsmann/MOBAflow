@@ -107,9 +107,9 @@ stated reason in the PR. The COO never reviews its own coordination fixes.
 
 ## Board, locks and WIP limit
 
-The board is the COO comment in `ahuelsmann/MOBAdev` issue #1 that the issue description links at its top; the
-COO edits it in place. It lists every open slice with issue, PR, risk class, writer, companion/review profiles,
-locked areas and state (design, implementation, review, auto-merge armed).
+The board is the [MOBAflow GitHub Project Kanban](../../docs/KANBAN.md) (`https://github.com/users/ahuelsmann/projects/1`),
+complemented by the slice metadata header in each `MOBAflow` issue and Draft PR (risk class, writer,
+companion/review profiles, locked areas and state). `ahuelsmann/MOBAdev` holds only versioned AI configuration.
 
 - **Locks.** A lock names projects or folders (for example `SharedUI/ViewModel`, `MOBAflow/View`,
   `.github/workflows`). Refactoring and feature work never run in parallel in the same locked area.
@@ -122,9 +122,9 @@ locked areas and state (design, implementation, review, auto-merge armed).
 - **CPM/TD veto.** The COO announces a new slice and its locks on the board and to the CPM/TD and starts it right
   away. A CPM/TD veto within 30 minutes stops the slice at its next safe point (no half-pushed state); later the
   CPM/TD re-prioritizes through the board instead.
-- **Board and Kanban.** The GitHub Project Kanban ([KANBAN.md](../../docs/KANBAN.md)) keeps tracking issues and
-  the backlog; the board only tracks slices in flight and their locks. Status messages that arrive late never
-  overwrite a newer board entry.
+- **Board and Kanban.** The [GitHub Project Kanban](../../docs/KANBAN.md) tracks both the backlog and active
+  slices in flight (`Ready`, `In progress`, `In review`), while the linked `MOBAflow` issue and Draft PR record
+  the slice's risk class, team and locked areas. Status messages that arrive late never overwrite a newer state.
 
 ## Guard rails
 
@@ -139,10 +139,9 @@ locked areas and state (design, implementation, review, auto-merge armed).
   credential files). No command delivers a message into a Claude desktop session, so Codex raises its own
   requests to Claude in its thread or on the board. Claude sessions use their session messaging or invoke a fresh
   `claude.exe --print` call; Antigravity roles use the [CLI contract](#head-of-uiux-gemini-argon-via-antigravity).
-  PR design notes, the design Go and review posts stay on the PR. MOBAdev #1 holds only the board, the log and
-  long results that must be kept.
-- **Log.** Every lock, design go, handover, merge and escalation is a short entry on the board or in MOBAdev #1
-  with UTC time and role. Agent IDs and thread IDs stay internal and are not shown to the human.
+  PR design notes, the design Go, slice locks and review posts stay on the `MOBAflow` issue and Draft PR.
+- **Log.** Every lock, design go, handover, merge and escalation is a short entry on the `MOBAflow` issue or
+  Draft PR with UTC time and role, with status reflected on the [MOBAflow GitHub Kanban](../../docs/KANBAN.md). Agent IDs and thread IDs stay internal and are not shown to the human.
 - **Feature toggles.** A user-visible feature that spans several slices lands behind a toggle that is off by
   default until the feature is complete. The existing page toggles (`FeatureToggleRegistry`) default to on and
   cover only WinUI pages, so such a feature adds its own default-off setting; hiding a new WinUI page by default
