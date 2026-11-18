@@ -414,6 +414,7 @@ unavailable, for example without a Z21 connection or a selected locomotive.
 ## More documentation
 
 - [Installation](INSTALLATION.md)
+- [Pages at a glance](PAGE-OVERVIEW.md)
 - [MOBAsmart guide](MOBASMART-USER-GUIDE.md)
 - [Viessmann signal mapping](VIESSMANN-SIGNAL-MAPPING.md)
 - [Project reference](../PROJECT-REFERENCE.md)
