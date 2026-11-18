@@ -100,8 +100,8 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.6.1` | `MOBAflow` | Optional Azure App Configuration source. |
 | `Microsoft.CodeAnalysis.CSharp` | `5.12.0` | `Test` | C# parsing for architecture tests. |
 | `Microsoft.Extensions.DependencyInjection` | `10.0.15` | `MutationTest`, `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `Test` | Dependency injection container. |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `10.0.15` | `Backend`, `Common`, `Sound`, `Speech.Base` | Dependency injection contracts. |
-| `Microsoft.Extensions.Http` | `10.0.13` | `MOBAsmart` | HTTP client registration. |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `10.0.15` | `Backend` | Dependency injection contracts. |
+| `Microsoft.Extensions.Http` | `10.0.15` | `MOBAsmart` | HTTP client registration. |
 | `Microsoft.Extensions.Logging` | `10.0.15` | `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `MutationTest/Speech.Base`, `Test` | Logging services. |
 | `Microsoft.Extensions.Logging.Abstractions` | `10.0.15` | `Backend`, `Common`, `SharedUI`, `Sound`, `Speech.Base`, `Speech.Piper` | Logging contracts. |
 | `Microsoft.Extensions.Logging.Console` | `10.0.15` | `Test` | Console logging output. |
@@ -128,7 +128,7 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `Serilog.Sinks.File` | `7.0.0` | `MOBAflow` | File logging output. |
 | `SkiaSharp` | `4.156.1` | `MOBAdisplay`, `MOBAflow` | Display frame and image rendering. |
 | `System.Drawing.Common` | `10.0.15` | `MOBAdisplay` | Image conversion utilities. |
-| `System.Formats.Nrbf` | `10.0.13` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
+| `System.Formats.Nrbf` | `10.0.15` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
 | `System.Speech` | `10.0.15` | `Speech.SystemSpeech` | Windows text-to-speech. |
 | `System.Windows.Extensions` | `10.0.15` | `MOBAflow` | Windows audio APIs. |
 | `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | Android startup integration. |
