@@ -77,7 +77,7 @@ change with no observable difference in behavior. Do not force tests to reject e
 
 ### Mutation testing with Stryker
 
-The active test groups are `Domain`, `Common`, `Speech.Base`, `Backend`, `MOBApi` and `SharedUI`. Their test projects include
+The active test groups are `Domain`, `Common`, `Contracts`, `Speech.Base`, `Backend`, `MOBApi` and `SharedUI`. Their test projects include
 the same files as the regular test suite; new tests under `Test/Domain/` and `Test/Common/` are included automatically.
 The Common group also runs the existing Backend tests `Recording*.cs` and
 `MultiplexerCommandResolverTests.cs` to verify shared Common contracts, and
@@ -87,7 +87,7 @@ The Common configuration limits parallel Stryker test processes to four.
 The Backend group mutates the `Backend` assembly with all tests under `Test/Backend/`, the workflow
 end-to-end fixture and `Test/Z21DccCommandDecoderTests.cs`; new tests under `Test/Backend/` are
 included automatically. Methods that Stryker puts into Safe Mode are excluded from the score; see
-[methods outside the Backend mutation gate](plans/366-coverage-mutation-ratchets.md#methods-outside-the-backend-mutation-gate).
+[Safe Mode and methods outside the gate](docs/BUILD-PERFORMANCE.md#safe-mode-and-methods-outside-the-gate).
 It runs on Linux and takes about 35 minutes.
 The portable Speech.Base group runs `AudioCacheTests.cs`, `CachedSpeechOutputTests.cs`,
 `SpeechOutputTests.cs` and `WaveAudioTests.cs` against the entire `Speech.Base` assembly.
@@ -100,8 +100,12 @@ the MOBApi process fixtures stay in the planned `api-process` group. The SharedU
 every fixture under `Test/SharedUI/`, the track-layout architecture fixture parts that
 `SignalBoxPropertiesViewModelTests` extends, and the shared test helpers; it is the largest group (about 12,000 mutants
 and 63 minutes locally with four Stryker processes) and runs on Linux.
+The Contracts group mutates `Contracts` with every fixture under `Test/Contracts/` and runs on Linux in under a minute.
 Other groups are still marked as planned in [mutation-lanes.json](MutationTest/mutation-lanes.json)
-and are not currently protected by Stryker.
+and are not currently protected by Stryker;
+[BUILD-PERFORMANCE.md](docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons) records why for the RF-09 candidates.
+Triage rules for surviving mutants are in
+[Working with surviving mutants](docs/BUILD-PERFORMANCE.md#working-with-surviving-mutants).
 
 ```powershell
 dotnet tool restore
@@ -110,6 +114,7 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 # Each output directory must be new. Choose a different path for a later run.
 ./scripts/Invoke-MutationLane.ps1 -LaneName domain -OutputPath artifacts/mutation/domain-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName common -OutputPath artifacts/mutation/common-local
+./scripts/Invoke-MutationLane.ps1 -LaneName contracts -OutputPath artifacts/mutation/contracts-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName backend -OutputPath artifacts/mutation/backend-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName api -OutputPath artifacts/mutation/api-local
@@ -125,8 +130,9 @@ Missing files, filters, stale reports and unexecuted mutations fail the job. A t
 cover a particular mutant is not forced to run against it; Stryker keeps its coverage-based selection.
 See [Build Performance](docs/BUILD-PERFORMANCE.md#active-mutation-lanes) for job selection.
 The quality pipeline runs selected groups and archives the HTML/JSON reports. The minimum scores
-are 90% for `Domain`, initially 65% for `Speech.Base`, 63% for `Common`, 47% for `Backend`, 74% for `MOBApi` and 46% for
-`SharedUI`. The Speech.Base, Common, Backend, MOBApi and SharedUI thresholds are baseline safeguards, not quality
+are 90% for `Domain`, initially 65% for `Speech.Base`, 63% for `Common`, 68% for `Contracts`, 47% for `Backend`, 74% for `MOBApi` and 46% for
+`SharedUI`. A `Contracts` score below its design floor of 70% is a finding to investigate, not a reason to lower a
+threshold. The Speech.Base, Common, Contracts, Backend, MOBApi and SharedUI thresholds are baseline safeguards, not quality
 targets: close meaningful gaps first, then raise the thresholds as results improve. Surviving mutations, including scheduling-only
 `ConfigureAwait` changes, remain in the report and score; the lane does not hide them with exclusions.
 Extending coverage to the rest of the solution remains separate, unfinished work.

@@ -302,8 +302,8 @@ test-case filters. Planned lanes remain explicitly outside the mutation guarante
 | speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% |
 <!-- documentation-facts:mutation:end -->
 
-Domain runs when its inputs change; Common, Speech.Base, Backend, SharedUI and MOBApi run for every code-relevant PR.
-All six also run on main pushes and manual Quality runs. Domain, Speech.Base, Backend, SharedUI and MOBApi run on
+Domain runs when its inputs change; Common, Contracts, Speech.Base, Backend, SharedUI and MOBApi run for every code-relevant PR.
+All seven also run on main pushes and manual Quality runs. Domain, Contracts, Speech.Base, Backend, SharedUI and MOBApi run on
 Linux. Common uses Windows because its existing fixtures include Windows-specific
 photo paths. Its concurrency is limited to four test processes. The Common lane includes selected Backend test
 fixtures for Common contracts and `SpeechSettingsTests.cs`; it does not mutate Backend production code.
@@ -317,9 +317,10 @@ minutes locally); the MOBApi process fixtures start real processes, cannot detec
 `api-process` lane. The SharedUI lane mutates `SharedUI` with every fixture under `Test/SharedUI/`, the track-layout
 architecture fixture parts that `SignalBoxPropertiesViewModelTests` extends, and the shared test helpers. It is the
 largest lane (about 12,000 mutants; 63 minutes locally and 51 minutes in CI with four Stryker processes). Methods that
-Stryker puts into Safe Mode are excluded from the score; see
-[methods outside the Backend mutation gate](../plans/366-coverage-mutation-ratchets.md#methods-outside-the-backend-mutation-gate).
-Thresholds come from the configuration files; the Common, Speech.Base, Backend, SharedUI and MOBApi minimums are baseline
+Stryker puts into Safe Mode are excluded from the score; see [Safe Mode](#safe-mode-and-methods-outside-the-gate).
+The Contracts lane mutates `Contracts` (wire contracts, about 260 mutants, under one minute) with every fixture under
+`Test/Contracts/`; it has no Safe-Mode sites.
+Thresholds come from the configuration files; the Common, Contracts, Speech.Base, Backend, SharedUI and MOBApi minimums are baseline
 safeguards, not targets for test quality. Speech.Base keeps scheduling-only `ConfigureAwait`
 mutants visible rather than excluding them to inflate the score.
 
@@ -332,13 +333,14 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 # Use new output directories; existing directories are rejected, not deleted.
 ./scripts/Invoke-MutationLane.ps1 -LaneName domain -OutputPath artifacts/mutation/domain-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName common -OutputPath artifacts/mutation/common-local
+./scripts/Invoke-MutationLane.ps1 -LaneName contracts -OutputPath artifacts/mutation/contracts-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName speech-base -OutputPath artifacts/mutation/speech-base-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName backend -OutputPath artifacts/mutation/backend-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName api -OutputPath artifacts/mutation/api-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName shared-ui -OutputPath artifacts/mutation/shared-ui-local
 ```
 
-On Linux, run the Domain, Speech.Base, Backend, MOBApi and SharedUI lanes; omit the Windows-specific Common lane. Run
+On Linux, run the Domain, Contracts, Speech.Base, Backend, MOBApi and SharedUI lanes; omit the Windows-specific Common lane. Run
 Stryker and ordinary builds/tests sequentially: Stryker recreates shared
 intermediate files. CI uses the same runner, which requires a nonempty, fully passing ordinary-test
 TRX baseline before starting Stryker. It validates the new JSON report's production root, registered
@@ -348,3 +350,56 @@ and uncovered mutants remain visible and subject to the unchanged Stryker score 
 The jobs archive the baseline, report and Stryker logs below `artifacts/mutation/<lane>/`, including
 on failure. `scripts/Test-MutationGuards.Tests.ps1` tests rejection paths in the Windows quality job.
 Intentional job skips retain the path-selection rules above and are not execution evidence.
+
+#### Working with surviving mutants
+
+Classify each surviving or uncovered mutant; mutant IDs are not stable between runs, so record project, file, method,
+mutation kind, report commit, contract, risk and the test or rationale instead.
+
+| Category | Action |
+| --- | --- |
+| Relevant existing test not in the lane host | Include it and its helpers in the host; confirm the tests are discovered |
+| Meaningful change not detected | Strengthen an assertion or add the missing behavior case; the test must pass the original code and detect the mutant |
+| Confirmed production defect | Add a failing regression test first, then the smallest fix |
+| Equivalent mutant | Prove it: state the valid input range and why no observable behavior differs (messages and error precedence can be observable) |
+| Contract or ownership unclear | Keep it open and inspect callers and requirements; no speculative fix |
+
+Rules:
+
+- Never exclude files, strings or mutation types, and never remove production code, to raise a score.
+- Never derive expected values from the production tables under test.
+- Coordinate asynchronous tests deterministically, not with sleeps. A mutant that changes a delay can turn a
+  wall-clock test into a timeout; move such tests to `TimeProvider`-based fakes instead of excluding them. A timeout
+  counts as detected but is no substitute for a precise assertion.
+- A floor is raised only from comparable CI runs (same platform, tool version and compile-error set) and is never
+  lowered automatically; a lower CI score is a finding to investigate.
+- A lane that outgrows its job timeout is split by namespace, not trimmed by excluding mutants.
+- Coverage thresholds in `Test/coverage-thresholds.json` only rise after a measured improvement and never fall without
+  an approved rationale. An empty coverage report with zero instrumented lines is an invalid measurement, not 0%.
+  Keep portable, Windows and Android measurements separate.
+
+#### Safe Mode and methods outside the gate
+
+Stryker.NET reports CS0165 ("Use of unassigned local variable") when a mutant removes the `return`, `continue` or
+`throw` of a guard that introduces a variable (`is not { } x`, an `out` argument after `||`, or an assignment inside
+`try`) and the variable is read after the guard. The compile error points outside the mutant, so Stryker cannot
+attribute it, puts the whole method into Safe Mode and counts all its mutants as compile errors: no result gates that
+method. A mutant that fails to compile elsewhere (for example CS0411 on an uninferable generic call) removes the mutants
+of the whole file the same way. Watch the `Safe Mode!` lines of a lane's log.
+
+Rewrite such a method behaviour-neutrally instead of excluding it: assign the variable unconditionally and then check it,
+use `as` with `?? throw`, or move a `try`/`catch` assignment into a small helper that returns the value or `null`.
+A variable that a guard introduces must not be read after the guard. The Backend, MOBApi and SharedUI lanes have no
+Safe-Mode site left (RF-09, #366).
+
+#### Planned lanes with measured reasons
+
+RF-09 measured three candidates on 2026-11-18 with throwaway lane hosts on Linux (nothing of the probes is committed;
+the scores are not floors; a lane's floor is set from measured evidence with a margin and is never lowered automatically):
+
+| Candidate | Mutants | Run time | Score | Decision |
+| --- | ---: | ---: | ---: | --- |
+| `contracts` | 264 | 38 s | 76.85% | active; no Safe Mode |
+| `track-plan-renderer` (`TrackPlan.Renderer`, 24 renderer fixtures) | 189 | 65 s | 26.51% | stays planned: 104 of 110 survivors are in `PlacedTrackPlanSvgRenderer`, whose tests assert too little; assertions first, in [#497](https://github.com/ahuelsmann/MOBAflow/issues/497) |
+| `display` (`MOBAdisplay`, 167 tests without the Skia and hardware fixtures) | 1,643 | 413 s | 50.70% | stays planned: 237 uncovered mutants are in `ClockRenderer` and `Rgb565Converter`, whose Skia tests cannot run on Linux, and two Safe-Mode sites (`EnsureNegotiatedAsync`, `SendResultAsync`) remain; a Windows lane costs more than it adds now |
+| `sound` (2 files, 34 lines: the contract and its null object) | - | - | - | stays `planned` in the registry (every fixture is registered) and never gets an active lane: nothing to mutate meaningfully |

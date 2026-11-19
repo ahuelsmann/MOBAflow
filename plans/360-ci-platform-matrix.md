@@ -5,7 +5,8 @@
 **Status**: Active; slice 1 is delivered (#361 plus the ruleset change of 2026-10-19). Slice 2 (Android lane policy)
 is delivered: the 2026-11-08 extension (automatic run on PRs that change MOBAsmart) ships with the Android trigger
 change for [#360](https://github.com/ahuelsmann/MOBAflow/issues/360); slice 3 (mutation and formatting lanes,
-completion) waits for RF-09 and RF-10. Reconciled against main `7b1c3f96` on 2026-11-08.
+completion) waits for RF-10. Reconciled against main `7b1c3f96` on 2026-11-08. Since 2026-11-19 RF-09 is complete
+(seven active mutation lanes, recorded in the deliverable table below).
 
 ## Purpose and scope
 
@@ -27,7 +28,7 @@ Recorded on main `f4756172`, re-read on main `7b1c3f96` (2026-11-08). The CI lan
 | MOBApi host and its process integration tests | `dotnet build MOBApi/MOBApi.csproj` | `display-protocol` (MOBApi process integration) and the `desktop` test graph | yes, when code changes |
 | Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (pinned PlatformIO) | firmware build when firmware paths change |
 | Android app (`MOBAsmart`) Release AAB | the clean Release AAB steps in [Build Performance](../docs/BUILD-PERFORMANCE.md); `scripts/Test-AndroidAppBundle.ps1` | `android-release` (AAB artifact kept 30 days) | on PRs that change `MOBAsmart/**` or `quality/analyzer-baseline.android.json` (maintainer decision of 2026-11-08, [#360](https://github.com/ahuelsmann/MOBAflow/issues/360)) and on manual `workflow_dispatch` with `validate_android` ([decision of 2026-10-19](https://github.com/ahuelsmann/MOBAflow/issues/360#issuecomment-6256088821)); the check name is required and passes as skipped on all other PR runs and on `main` runs |
-| Mutation lanes (`domain`, `common`, `speech-base`, `backend`, `api`, `shared-ui` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-speech-base`, `mutation-backend`, `mutation-api`, `mutation-shared-ui` | all run by change scope; only Domain mutation testing is a required check; further lanes belong to [RF-09](366-coverage-mutation-ratchets.md) |
+| Mutation lanes (`domain`, `common`, `contracts`, `speech-base`, `backend`, `api`, `shared-ui` active) | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | `mutation-domain`, `mutation-common`, `mutation-contracts`, `mutation-speech-base`, `mutation-backend`, `mutation-api`, `mutation-shared-ui` | all run by change scope; only Domain mutation testing is a required check; RF-09 ([#366](https://github.com/ahuelsmann/MOBAflow/issues/366), completed by #498) decided the lane set; planned lanes and reasons are in [Build Performance](../docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons) |
 | Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule | yes |
 | Release package | [Release Studio](../.github/workflows/release-studio.yml) | manual release workflow | release only |
 
@@ -35,7 +36,7 @@ Required (merge-blocking) checks are those of the `main` branch ruleset 24007434
 again on 2026-11-08): Repository instruction consistency; Windows desktop build, tests, and coverage; Display protocol
 host, parser, and firmware; Android Release AAB; Domain mutation testing; SonarCloud Code Analysis; Portable tests on
 Linux. The ruleset also requires the branch to be up to date with `main` (strict status checks). The other mutation
-lanes (Common, Speech.Base, Backend, MOBApi, SharedUI) run but do not block a merge.
+lanes (Common, Contracts, Speech.Base, Backend, MOBApi, SharedUI) run but do not block a merge.
 
 ## Design decisions
 

@@ -98,8 +98,7 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
 - RF-07 ([#360](https://github.com/ahuelsmann/MOBAflow/issues/360)) waits for RF-09 and RF-10, not for this
   package; if RF-07 is already complete when slice 3 changes the CI lanes, slice 3 updates its recorded deliverable
   inventory in the documentation.
-- RF-09 ([#366](https://github.com/ahuelsmann/MOBAflow/issues/366)) adds tests and mutation lanes; slice 3 starts
-  only when no RF-09 pull request is open.
+- RF-09 ([#366](https://github.com/ahuelsmann/MOBAflow/issues/366)) added tests and mutation lanes and is complete.
 - Slices 3 and later edit workflow files. A cloud session cannot push workflow changes; those slices need a local
   session.
 
