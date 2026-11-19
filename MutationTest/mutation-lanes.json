@@ -41,7 +41,8 @@
     },
     {
       "name": "contracts",
-      "status": "planned",
+      "status": "active",
+      "stryker-config": "MutationTest/stryker-contracts-config.json",
       "test-directories": ["Test/Contracts"],
       "production-projects": ["Contracts/Contracts.csproj"]
     },
