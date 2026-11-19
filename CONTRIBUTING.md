@@ -103,7 +103,8 @@ and 63 minutes locally with four Stryker processes) and runs on Linux.
 The Contracts group mutates `Contracts` with every fixture under `Test/Contracts/` and runs on Linux in under a minute.
 Other groups are still marked as planned in [mutation-lanes.json](MutationTest/mutation-lanes.json)
 and are not currently protected by Stryker; triage rules for surviving mutants are in
-[Working with surviving mutants](docs/BUILD-PERFORMANCE.md#working-with-surviving-mutants); [BUILD-PERFORMANCE.md](docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons) records why for the RF-09 candidates.
+[Working with surviving mutants](docs/BUILD-PERFORMANCE.md#working-with-surviving-mutants).
+[BUILD-PERFORMANCE.md](docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons) records why for the RF-09 candidates.
 
 ```powershell
 dotnet tool restore
@@ -128,8 +129,9 @@ Missing files, filters, stale reports and unexecuted mutations fail the job. A t
 cover a particular mutant is not forced to run against it; Stryker keeps its coverage-based selection.
 See [Build Performance](docs/BUILD-PERFORMANCE.md#active-mutation-lanes) for job selection.
 The quality pipeline runs selected groups and archives the HTML/JSON reports. The minimum scores
-are 90% for `Domain`, initially 65% for `Speech.Base`, 63% for `Common`, 47% for `Backend`, 74% for `MOBApi` and 46% for
-`SharedUI`. The Speech.Base, Common, Backend, MOBApi and SharedUI thresholds are baseline safeguards, not quality
+are 90% for `Domain`, initially 65% for `Speech.Base`, 63% for `Common`, 68% for `Contracts`, 47% for `Backend`, 74% for `MOBApi` and 46% for
+`SharedUI`. A `Contracts` score below its design floor of 70% is a finding to investigate, not a reason to lower a
+threshold. The Speech.Base, Common, Contracts, Backend, MOBApi and SharedUI thresholds are baseline safeguards, not quality
 targets: close meaningful gaps first, then raise the thresholds as results improve. Surviving mutations, including scheduling-only
 `ConfigureAwait` changes, remain in the report and score; the lane does not hide them with exclusions.
 Extending coverage to the rest of the solution remains separate, unfinished work.
