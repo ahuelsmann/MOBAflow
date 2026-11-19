@@ -49,8 +49,9 @@ issues. Checks not run and states not inspected are recorded as limitations, nev
 ## Risk classes and domain matrix
 
 Every slice is assigned a risk class (`H`, `M` or `L`) when recorded in the Kanban item and the PR slice header.
-Review-fix rounds always keep the risk class of their slice. Dependency updates take the risk class of the area they affect (`H` for runtime,
-protocol or transport packages, `M` for UI/feature packages, `L` for test/analyzer/build-only tooling):
+Review-fix rounds always keep the risk class of their slice. Dependency updates take the risk class of the area
+they affect (`H` for runtime, protocol or transport packages, `M` for UI/feature packages, `L` for
+test/analyzer/build-only tooling):
 
 | Class | MOBAflow areas | Required team and review diversity |
 | --- | --- | --- |
@@ -64,8 +65,8 @@ protocol or transport packages, `M` for UI/feature packages, `L` for test/analyz
    25 files or 400 changed lines at most, generated or mechanical changes excepted. One Draft PR per slice; an
    issue may have several slices in sequence. No long-running branches: a slice that cannot finish within a day
    is cut again.
-2. **Lock and start.** The COO sets the slice's Kanban fields (risk class `H`, `M` or `L`, writer, locked areas)
-   and fills the slice header of the Draft PR with its team before an agent starts
+2. **Lock and start.** The COO adds the slice's Draft PR to the Kanban project, sets Risk class, Locked areas and
+   Writer, and fills the slice header of the PR with its team before an agent starts
    ([fields and header](#board-locks-and-wip-limit)). A slice never starts in an area another open slice has
    locked.
 3. **Design first.** Before touching code, the Senior Developer posts a design note of 10 to 20 lines as the first
@@ -101,7 +102,8 @@ protocol or transport packages, `M` for UI/feature packages, `L` for test/analyz
    head whose only change is a conflict-free merge of `main` needs fresh checks but no new review; a resolved
    conflict or any other change needs a fresh review of that delta. Then the COO re-arms with the new head.
 9. **Close the loop.** After merge the Kanban item moves to Done and its locks are released.
-   Documentation and `docs/wiki/` impact is part of the slice (corrections or a concrete no-change reason in the PR body).
+   Documentation and `docs/wiki/` impact is part of the slice (corrections or a concrete no-change reason in the
+   PR body).
 
 Low and Nit findings may be fixed in the slice or recorded as follow-ups; a Low or Nit that is not fixed needs a
 stated reason in the PR. The COO never reviews its own coordination fixes.
@@ -109,18 +111,19 @@ stated reason in the PR. The COO never reviews its own coordination fixes.
 ## Board, locks and WIP limit
 
 The board is the [MOBAflow GitHub Project Kanban](../../docs/KANBAN.md)
-(`https://github.com/users/ahuelsmann/projects/1`). Each open slice is one Kanban item (its Draft PR) with the slice fields **Risk class**, **Locked areas**, **Writer**
-and **Status** described there. The same facts sit in the slice header block at the top of the Draft PR body
-(`.github/PULL_REQUEST_TEMPLATE.md`): issue, risk class, locked areas, writer, companion and review profiles.
-WIP and lock checks use the Kanban view of open slices (Status `Ready`, `In progress`, `In review`) and the PR
-headers; if the two disagree, the PR header is corrected first.
+(`https://github.com/users/ahuelsmann/projects/1`). Each open slice is one Kanban item (its Draft PR) with the
+slice fields **Risk class**, **Locked areas**, **Writer** and **Status** described there. The same facts sit in
+the slice header block at the top of the Draft PR body (`.github/PULL_REQUEST_TEMPLATE.md`): issue, risk class,
+locked areas, writer, companion and review profiles. The PR header is the source of truth; if the Kanban field
+differs, the Kanban field is corrected to match. WIP and lock checks use the Kanban view of open slices (items
+with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In review`) and read the PR headers.
 
 - **Locks.** A lock names projects or folders (for example `SharedUI/ViewModel`, `MOBAflow/View`,
   `.github/workflows`) in the Locked areas field. Refactoring and feature work never run in parallel in the same
   locked area. Documentation-only slices lock only the files they edit.
-- **WIP limit.** At most three code slices are open at once across all agents, counted in the Kanban view of open
-  slices, and at most two local agents build on the maintainer's machine at the same time. Documentation-only
-  slices do not count.
+- **WIP limit.** At most three code slices are open at once across all agents, counted as Kanban items with
+  Risk class set that are code slices (documentation-only slices are excluded), and at most two local agents
+  build on the maintainer's machine at the same time.
 - **One writer per branch.** Only the named writer pushes to a slice branch. The one exception is the COO's
   `gh pr update-branch` merge of `main` (step 8); the writer pulls the branch before its next push. A handover to
   another writer is a PR comment plus an updated Writer field and PR header before the new writer pushes.
@@ -128,25 +131,28 @@ headers; if the two disagree, the PR header is corrected first.
   PR comment, and starts it right away. A CPM/TD veto within 30 minutes, sent through the CLI channel and repeated
   as a PR comment, stops the slice at its next safe point (no half-pushed state); later the CPM/TD
   re-prioritizes through the Kanban Priority field instead.
-- **Status.** The Kanban Status field mirrors the slice (`Ready`, `In progress`, `In review`, `Done`). Status
-  messages that arrive late never overwrite a newer state.
+- **Status.** The Kanban Status field mirrors the slice: `Planned` = slice cut, design note awaiting Go;
+  `Ready` = Go given, writer may start (not the PR's "Ready for review"); `In progress` = implementation and
+  review fixes; `In review` = PR marked ready for review, final review, and auto-merge armed; `Done` = merged.
+  Status messages that arrive late never overwrite a newer state.
 
 ## Guard rails
 
 - **Circuit breaker.** If the same finding survives two failed fix attempts (whether raised in companion review or
   final review), or an agent-to-agent exchange on one topic exceeds ten messages, the COO stops the loop and asks
   the human with a recommendation.
-- **Agents talk by CLI.** Coordination requests and answers between agents go through command-line channels, not
-  through the human and not through GitHub comments. Agents start requests to Codex with
-  `~/.codex/.sandbox-bin/codex.exe queue --thread <id> --message <text>` (the Codex app must have that thread);
+- **Agents talk by CLI.** The CLI is the coordination channel: requests and answers between agents go through
+  command-line channels, not through the human. PR comments are the record, not the channel: after a CLI
+  exchange the COO or the receiving role logs announcements, vetoes, design Go and handovers there. Agents start
+  requests to Codex with `~/.codex/.sandbox-bin/codex.exe queue --thread <id> --message <text>` (the Codex app must have that thread);
   Codex answers in the addressed thread, and callers read the reply from
   `~/.codex/sessions/**/rollout-*<thread-id>.jsonl` (assistant messages only; never read `auth.json` or other
   credential files). No command delivers a message into a Claude desktop session, so Codex raises its own
-  requests to Claude in its thread or as a PR comment. Claude sessions use their session messaging or invoke a fresh
-  `claude.exe --print` call; Antigravity roles use the [CLI contract](#head-of-uiux-gemini-argon-via-antigravity).
+  requests to Claude in its thread (the outcome is logged as a PR comment). Claude sessions use their session
+  messaging or invoke a fresh `claude.exe --print` call; Antigravity roles use the [CLI contract](#head-of-uiux-gemini-argon-via-antigravity).
   PR design notes, the design Go, slice locks and review posts stay on the `MOBAflow` issue and Draft PR.
-- **Log.** Every lock, design go, handover, merge and escalation is a short PR comment (or a comment on the
-  Kanban item) with UTC time and role; the Kanban fields carry only the current state. Agent IDs and thread IDs
+- **Log.** Every lock, design go, handover, merge and escalation is a short comment on the slice's Draft PR with
+  UTC time and role; the Kanban fields carry only the current state. Agent IDs and thread IDs
   stay internal and are not shown to the human.
 - **Feature toggles.** A user-visible feature that spans several slices lands behind a toggle that is off by
   default until the feature is complete. The existing page toggles (`FeatureToggleRegistry`) default to on and
