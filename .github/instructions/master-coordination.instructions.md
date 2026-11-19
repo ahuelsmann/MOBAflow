@@ -134,6 +134,11 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
 - **Status.** The Kanban Status field mirrors the slice: `Planned` = slice cut, design note awaiting Go;
   `Ready` = Go given, writer may start (not the PR's "Ready for review"); `In progress` = implementation and
   review fixes; `In review` = PR marked ready for review, final review, and auto-merge armed; `Done` = merged.
+  For repository issues, moving an issue from `Planned` to `Ready` is the maintainer's pull-trigger authorizing
+  `Claude Monitor` (COO, sole intake owner) to claim it and immediately set it to `In progress` when Code WIP
+  (`< 3`) and domain locks allow (issues marked `needs-specification` or needing open product, UX, or architecture
+  decisions begin with Decision & Steering Triad analysis and a concrete recommendation to the maintainer instead
+  of premature coding; the local MOBAdev dashboard stays strictly read-only).
   Status messages that arrive late never overwrite a newer state.
 
 ## Guard rails

@@ -27,6 +27,13 @@ Status for slices: **Planned** = slice cut, design note awaiting Go; **Ready** =
 marked ready for review, final review and armed auto-merge; **Done** = merged. Open slices are the items with
 Risk class set and a Status from Planned to In review.
 
+Status for issues: **Planned** = accepted backlog awaiting maintainer start; **Ready** = maintainer pull-trigger
+authorizing `Claude Monitor` (COO, sole intake owner) to pick up the issue once Code WIP (`< 3`) and locks allow,
+immediately moving it to **In progress** on claim to prevent duplicate pickup (issues labeled `needs-specification`
+or requiring open product, UX, or architecture decisions begin with Decision & Steering Triad analysis and a concise
+recommendation to the maintainer instead of coding); **In progress** = active Triad / slice delivery;
+**In review** = final slice PRs in review; **Done** = completed and merged.
+
 ## Views
 
 1. **Current work** filters the board to Planned, Ready, In progress, and In review (all open slices).
