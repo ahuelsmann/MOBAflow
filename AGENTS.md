@@ -103,8 +103,9 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   Spec Kit-managed `.specify/**` files, which keep their upstream bytes. Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
   it checks both staged files on disk and mixed line endings in the index.
 - C# whitespace check (folder-based, no restore): `dotnet format whitespace --folder . --verify-no-changes
-  --exclude .nuget MOBAdisplay/esp32`. The required `Portable tests on Linux` check runs the same command, so fix
-  drift in the files you changed; do not reformat files outside the task.
+  --exclude .nuget MOBAdisplay/esp32`, run from the task worktree root (it ignores `.gitignore`). The required
+  `Portable tests on Linux` check runs the same command, so fix drift in the files you changed; do not reformat
+  files outside the task.
 - Standalone Markdown plans belong in `plans/`; remove completed plans, retaining Git history and closed GitHub issues.
   Spec Kit artifacts remain under `specs/`. Use [Spec Kit governance](.github/instructions/spec-kit-governance.instructions.md)
   for product behavior and cross-cutting features; this does not require a standalone plan for every small fix.

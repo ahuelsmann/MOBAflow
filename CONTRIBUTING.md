@@ -69,7 +69,11 @@ The required `Portable tests on Linux` check fails on drift. Check locally witho
 dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32
 ```
 
+Run it from the root of your task checkout or worktree: `--folder` does not apply Git ignore rules, so
+a checkout that contains other worktrees (for example `.claude/worktrees/`) would be scanned too.
 Without `--verify-no-changes` the command fixes the drift; keep the fix to the files you changed.
+If an SDK update changes the formatter's output, the pull request that bumps the SDK fixes the gate;
+a further repository-wide reformat is added to `.git-blame-ignore-revs` after it merges.
 The one-time repository-wide reformat is listed in `.git-blame-ignore-revs`. To hide it from
 `git blame`, optionally run `git config blame.ignoreRevsFile .git-blame-ignore-revs`; GitHub's
 blame view uses the file automatically.
