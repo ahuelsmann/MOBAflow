@@ -203,13 +203,12 @@ assertions continue in [#497](https://github.com/ahuelsmann/MOBAflow/issues/497)
 
 ### RF-10: Formatting baseline and gate
 
-The measured inventory, open decisions and delivery slices now belong to
-[the RF-10 child plan](451-formatting-baseline.md), owned by
-[issue #451](https://github.com/ahuelsmann/MOBAflow/issues/451).
-
-Acceptance anchor: the baseline change contains no functional or architecture
-work, `.editorconfig` and documented commands agree, and the mandatory
-formatting gate rejects subsequent drift.
+Complete since 2026-11-19 ([#451](https://github.com/ahuelsmann/MOBAflow/issues/451)): #499 set
+`insert_final_newline = true` (vendored `MOBAdisplay/esp32/lib/**` and `.specify/**` excepted) and documented the
+command; #500 applied the mechanical whitespace and final-newline baseline (444 files, no functional change, listed in
+`.git-blame-ignore-revs`); slice 3 added the gate `dotnet format whitespace --folder . --verify-no-changes --exclude
+.nuget MOBAdisplay/esp32` to the required `Portable tests on Linux` job. Scope is whitespace only (decision of
+2026-11-19); style and analyzer formatting rules stay with the analyzer baselines.
 
 ### RF-11: Decompose `TrainControlViewModel`
 

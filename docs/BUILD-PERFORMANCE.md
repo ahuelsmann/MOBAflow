@@ -154,7 +154,10 @@ resolved NuGet audit described below. A successful job is not a claim of complet
 The public, authoritative pull-request check is `.github/workflows/quality.yml`.
 It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
-and retains the reports and packages. The Android Release AAB job runs on a
+and retains the reports and packages. The required `Portable tests on Linux` job
+first runs `dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32`
+(about 15 seconds, no restore) and fails on C# whitespace or final-newline drift (RF-10,
+[#451](https://github.com/ahuelsmann/MOBAflow/issues/451)). The Android Release AAB job runs on a
 pull request only when it changes `MOBAsmart/` or
 `quality/analyzer-baseline.android.json` (maintainer decision of 2026-11-08,
 [#360](https://github.com/ahuelsmann/MOBAflow/issues/360)). On all other PR runs

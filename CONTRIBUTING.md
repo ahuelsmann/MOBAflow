@@ -53,10 +53,26 @@ After changes made by patches, generators, or other tools:
 
 Without `-Path`, the script checks all tracked files and new files that are not ignored;
 `-Fix` normalizes them. CRLF is the default. LF exceptions from `.gitattributes` (shell scripts
-and managed Spec Kit files) are preserved, as are encoding and final-newline presence.
+and managed Spec Kit files) and the encoding are preserved. `-Fix` does not add or remove a final
+newline; `.editorconfig` requires one in every file except vendored `MOBAdisplay/esp32/lib/**` and
+Spec Kit-managed `.specify/**` files.
 Binary files are skipped. The Git index continues to store normalized text files with LF.
 CI complements this local check, but cannot detect mixed line endings in the original working
 directory once Git has already normalized them during staging.
+
+### C# formatting
+
+C# whitespace (indentation, spacing, line breaks and the final newline) follows `.editorconfig`.
+The required `Portable tests on Linux` check fails on drift. Check locally without a restore:
+
+```powershell
+dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32
+```
+
+Without `--verify-no-changes` the command fixes the drift; keep the fix to the files you changed.
+The one-time repository-wide reformat is listed in `.git-blame-ignore-revs`. To hide it from
+`git blame`, optionally run `git config blame.ignoreRevsFile .git-blame-ignore-revs`; GitHub's
+blame view uses the file automatically.
 
 ### Run tests
 

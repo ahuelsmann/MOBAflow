@@ -1,0 +1,5 @@
+# Mechanical, repository-wide reformatting commits that git blame should skip.
+# GitHub uses this file automatically; locally run: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: apply the RF-10 formatting baseline (RF-10 slice 2) (#500)
+d1853d37f4bac1d1f1607918e9a2a217782ed67d

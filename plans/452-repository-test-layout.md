@@ -92,9 +92,8 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
   `Contracts` and `SharedUI`. It is the hard start condition of slices 3 to 5 (as the umbrella plan's dependency table
   records), because they would otherwise move the same files twice. Slices 1 and 2 do not
   depend on it.
-- RF-10 ([#451](https://github.com/ahuelsmann/MOBAflow/issues/451)) reformats most C# files. RF-10 and the code
-  slices of this package must not run at the same time; whichever runs second starts from the other's merged
-  result.
+- RF-10 ([#451](https://github.com/ahuelsmann/MOBAflow/issues/451)) is complete; its whitespace gate in
+  `Portable tests on Linux` also checks the files that the code slices of this package move.
 - RF-07 ([#360](https://github.com/ahuelsmann/MOBAflow/issues/360)) waits for RF-09 and RF-10, not for this
   package; if RF-07 is already complete when slice 3 changes the CI lanes, slice 3 updates its recorded deliverable
   inventory in the documentation.
