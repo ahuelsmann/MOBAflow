@@ -8,7 +8,7 @@ charset = utf-8
 trim_trailing_whitespace = true
 end_of_line = crlf
 max_line_length = 140
-insert_final_newline = false
+insert_final_newline = true
 
 # Unix shell scripts must remain executable across platforms.
 [*.sh]
@@ -17,6 +17,10 @@ end_of_line = lf
 # Match Git's LF exceptions, including byte-stable Spec Kit assets.
 [{.agents/skills/speckit-*/SKILL.md,.specify/.gitignore,.specify/scripts/**,.specify/templates/*.md}]
 end_of_line = lf
+
+# Vendored firmware libraries and Spec Kit-managed assets keep their upstream bytes, including a missing final newline.
+[{MOBAdisplay/esp32/lib/**,.specify/**}]
+insert_final_newline = false
 
 # ReSharper team-shared settings file
 [Moba.sln.DotSettings]
