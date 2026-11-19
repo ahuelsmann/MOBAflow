@@ -5,7 +5,7 @@
 **Status**: Active; slice 1 is delivered (#361 plus the ruleset change of 2026-10-19). Slice 2 (Android lane policy)
 is delivered: the 2026-11-08 extension (automatic run on PRs that change MOBAsmart) ships with the Android trigger
 change for [#360](https://github.com/ahuelsmann/MOBAflow/issues/360); slice 3 (mutation and formatting lanes,
-completion) waits for RF-10. Reconciled against main `7b1c3f96` on 2026-11-08. Since 2026-11-19 RF-09 is complete
+completion) can start: RF-10 is complete. Reconciled against main `7b1c3f96` on 2026-11-08. Since 2026-11-19 RF-09 is complete
 (seven active mutation lanes, recorded in the deliverable table below).
 
 ## Purpose and scope

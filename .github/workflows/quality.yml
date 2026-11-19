@@ -627,6 +627,11 @@ jobs:
         with:
           global-json-file: global.json
 
+      # RF-10 gate: C# whitespace and final newlines follow .editorconfig. Folder mode needs no restore; vendored
+      # firmware and the NuGet cache stay outside, as in the documented local command.
+      - name: Check C# whitespace formatting
+        run: dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32
+
       # AGENTS.md promises portable .NET work on Windows or Linux; this lane proves the portable suite on Linux.
       # Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource needs Windows file locks ([Platform("Win")])
       # and runs in the Windows desktop lane; explicit maintainer-run hardware tests (category Hardware) never run in
