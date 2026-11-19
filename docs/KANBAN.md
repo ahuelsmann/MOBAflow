@@ -29,7 +29,7 @@ Risk class set and a Status from Planned to In review.
 
 ## Views
 
-1. **Current work** filters the board to Ready, In progress, and In review.
+1. **Current work** filters the board to Planned, Ready, In progress, and In review (all open slices).
 2. **Product areas** groups work by Area.
 3. **Quality & maintenance** collects Infrastructure work, including security and dependency maintenance.
 4. **Roadmap** groups work by Target release.

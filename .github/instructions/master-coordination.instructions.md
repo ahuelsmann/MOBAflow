@@ -144,12 +144,14 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
 - **Agents talk by CLI.** The CLI is the coordination channel: requests and answers between agents go through
   command-line channels, not through the human. PR comments are the record, not the channel: after a CLI
   exchange the COO or the receiving role logs announcements, vetoes, design Go and handovers there. Agents start
-  requests to Codex with `~/.codex/.sandbox-bin/codex.exe queue --thread <id> --message <text>` (the Codex app must have that thread);
+  requests to Codex with `~/.codex/.sandbox-bin/codex.exe queue --thread <id> --message <text>` (the Codex app
+  must have that thread);
   Codex answers in the addressed thread, and callers read the reply from
   `~/.codex/sessions/**/rollout-*<thread-id>.jsonl` (assistant messages only; never read `auth.json` or other
   credential files). No command delivers a message into a Claude desktop session, so Codex raises its own
   requests to Claude in its thread (the outcome is logged as a PR comment). Claude sessions use their session
-  messaging or invoke a fresh `claude.exe --print` call; Antigravity roles use the [CLI contract](#head-of-uiux-gemini-argon-via-antigravity).
+  messaging or invoke a fresh `claude.exe --print` call; Antigravity roles use the
+  [CLI contract](#head-of-uiux-gemini-argon-via-antigravity).
   PR design notes, the design Go, slice locks and review posts stay on the `MOBAflow` issue and Draft PR.
 - **Log.** Every lock, design go, handover, merge and escalation is a short comment on the slice's Draft PR with
   UTC time and role; the Kanban fields carry only the current state. Agent IDs and thread IDs
