@@ -351,6 +351,33 @@ The jobs archive the baseline, report and Stryker logs below `artifacts/mutation
 on failure. `scripts/Test-MutationGuards.Tests.ps1` tests rejection paths in the Windows quality job.
 Intentional job skips retain the path-selection rules above and are not execution evidence.
 
+#### Working with surviving mutants
+
+Classify each surviving or uncovered mutant; mutant IDs are not stable between runs, so record project, file, method,
+mutation kind, report commit, contract, risk and the test or rationale instead.
+
+| Category | Action |
+| --- | --- |
+| Relevant existing test not in the lane host | Include it and its helpers in the host; confirm the tests are discovered |
+| Meaningful change not detected | Strengthen an assertion or add the missing behavior case; the test must pass the original code and detect the mutant |
+| Confirmed production defect | Add a failing regression test first, then the smallest fix |
+| Equivalent mutant | Prove it: state the valid input range and why no observable behavior differs (messages and error precedence can be observable) |
+| Contract or ownership unclear | Keep it open and inspect callers and requirements; no speculative fix |
+
+Rules:
+
+- Never exclude files, strings or mutation types, and never remove production code, to raise a score.
+- Never derive expected values from the production tables under test.
+- Coordinate asynchronous tests deterministically, not with sleeps. A mutant that changes a delay can turn a
+  wall-clock test into a timeout; move such tests to `TimeProvider`-based fakes instead of excluding them. A timeout
+  counts as detected but is no substitute for a precise assertion.
+- A floor is raised only from comparable CI runs (same platform, tool version and compile-error set) and is never
+  lowered automatically; a lower CI score is a finding to investigate.
+- A lane that outgrows its job timeout is split by namespace, not trimmed by excluding mutants.
+- Coverage thresholds in `Test/coverage-thresholds.json` only rise after a measured improvement and never fall without
+  an approved rationale. An empty coverage report with zero instrumented lines is an invalid measurement, not 0%.
+  Keep portable, Windows and Android measurements separate.
+
 #### Safe Mode and methods outside the gate
 
 Stryker.NET reports CS0165 ("Use of unassigned local variable") when a mutant removes the `return`, `continue` or
@@ -368,7 +395,7 @@ Safe-Mode site left (RF-09, #366).
 #### Planned lanes with measured reasons
 
 RF-09 measured three candidates on 2026-11-18 with throwaway lane hosts on Linux (nothing of the probes is committed;
-the scores are not floors, a lane's floor comes from its first Linux CI run):
+the scores are not floors; a lane's floor is set from measured evidence with a margin and is never lowered automatically):
 
 | Candidate | Mutants | Run time | Score | Decision |
 | --- | ---: | ---: | ---: | --- |

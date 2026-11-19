@@ -102,7 +102,8 @@ every fixture under `Test/SharedUI/`, the track-layout architecture fixture part
 and 63 minutes locally with four Stryker processes) and runs on Linux.
 The Contracts group mutates `Contracts` with every fixture under `Test/Contracts/` and runs on Linux in under a minute.
 Other groups are still marked as planned in [mutation-lanes.json](MutationTest/mutation-lanes.json)
-and are not currently protected by Stryker; [BUILD-PERFORMANCE.md](docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons) records why.
+and are not currently protected by Stryker; triage rules for surviving mutants are in
+[Working with surviving mutants](docs/BUILD-PERFORMANCE.md#working-with-surviving-mutants); [BUILD-PERFORMANCE.md](docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons) records why for the RF-09 candidates.
 
 ```powershell
 dotnet tool restore
