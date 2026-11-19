@@ -77,7 +77,8 @@ Existing rules and tools:
   shell scripts and Spec Kit assets.
 - `scripts/Test-LineEndings.ps1` checks the line-ending state (CRLF or LF as `.gitattributes` requires) and mixed
   endings in the index; `-Fix` rewrites line endings only. It has no final-newline check. [AGENTS.md](../AGENTS.md)
-  requires it after generated or scripted edits and, since slice 1, asks for a final newline in every file written.
+  requires it after generated or scripted edits and, since slice 1, asks for a final newline in every file written, except vendored `MOBAdisplay/esp32/lib/**` and Spec Kit-managed
+  `.specify/**` files.
 - [Quality CI](../.github/workflows/quality.yml) has no formatting step.
 
 ## Decisions

@@ -99,7 +99,8 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
 - After patches, generators or scripts change text files, run `scripts/Test-LineEndings.ps1 -Path <changed-paths>`.
   Use `-Fix` to normalize those files according to `.gitattributes`, then check again. Preserve LF exceptions
   and encoding. End every file you create or edit with a final newline (`.editorconfig` sets
-  `insert_final_newline = true`; `-Fix` does not add one). Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
+  `insert_final_newline = true`; `-Fix` does not add one), except vendored `MOBAdisplay/esp32/lib/**` and
+  Spec Kit-managed `.specify/**` files, which keep their upstream bytes. Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
   it checks both staged files on disk and mixed line endings in the index.
 - C# whitespace check (folder-based, no restore): `dotnet format whitespace --folder . --verify-no-changes
   --exclude .nuget MOBAdisplay/esp32`. It reports drift only; do not reformat files outside the task.
