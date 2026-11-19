@@ -80,19 +80,24 @@ public class PageLayoutViewModel : ObservableObject
     /// <param name="grid">The Grid whose columns should be updated.</param>
     public void ApplyToGrid(object? grid)
     {
-        if (grid is null || !WinUiGridInterop.TryGetColumnDefinitions(grid, out var columnDefinitions))
+        if (grid is null)
+            return;
+
+        if (!WinUiGridInterop.TryGetColumnDefinitions(grid, out var columnDefinitions))
             return;
 
         for (int i = 0; i < columnDefinitions.Count && i < Columns.Count; i++)
         {
             var columnName = GetColumnNameByIndex(i);
+            if (columnName is null)
+                continue;
 
-            if (columnName != null && Columns.TryGetValue(columnName, out var column))
-            {
-                var columnDefinition = columnDefinitions[i];
-                if (columnDefinition != null)
-                    column.ApplyToColumnDefinition(columnDefinition);
-            }
+            if (!Columns.TryGetValue(columnName, out var column))
+                continue;
+
+            var columnDefinition = columnDefinitions[i];
+            if (columnDefinition != null)
+                column.ApplyToColumnDefinition(columnDefinition);
         }
     }
 
@@ -103,19 +108,24 @@ public class PageLayoutViewModel : ObservableObject
     /// <param name="grid">The Grid whose columns should be read.</param>
     public void UpdateFromGrid(object? grid)
     {
-        if (grid is null || !WinUiGridInterop.TryGetColumnDefinitions(grid, out var columnDefinitions))
+        if (grid is null)
+            return;
+
+        if (!WinUiGridInterop.TryGetColumnDefinitions(grid, out var columnDefinitions))
             return;
 
         for (int i = 0; i < columnDefinitions.Count && i < Columns.Count; i++)
         {
             var columnName = GetColumnNameByIndex(i);
+            if (columnName is null)
+                continue;
 
-            if (columnName != null && Columns.TryGetValue(columnName, out var column))
-            {
-                var columnDefinition = columnDefinitions[i];
-                if (columnDefinition != null)
-                    column.UpdateFromColumnDefinition(columnDefinition);
-            }
+            if (!Columns.TryGetValue(columnName, out var column))
+                continue;
+
+            var columnDefinition = columnDefinitions[i];
+            if (columnDefinition != null)
+                column.UpdateFromColumnDefinition(columnDefinition);
         }
     }
 

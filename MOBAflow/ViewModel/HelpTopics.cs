@@ -19,7 +19,7 @@ internal static class HelpTopics
     public static HelpCategory[] Categories { get; } =
     [
         new("Getting Started", true, ["Welcome", "Installation", "Z21 Connection", "First Ride"]),
-        new("Train Control", false, ["Speed Control", "Functions F0-F28", "Direction", "Emergency Stop"]),
+        new("Train Control", false, ["Speed Control", "Functions F0-F31", "Direction", "Emergency Stop"]),
         new("Automation", false, ["Create Journey", "Define Stations", "Workflows", "Speech Announcements"]),
         new("Signal Box", false, ["Track Plan Editor", "Signals", "Switches", "Feedback Points"]),
         new("Track Plan", false, ["Track Libraries", "Place Tracks", "Connections"]),
@@ -113,13 +113,13 @@ internal static class HelpTopics
                 - 126 steps (recommended)
                 """,
 
-            "Functions F0-F28" => """
+            "Functions F0-F31" => """
                 Locomotive functions:
 
                 F0: Headlight/Marker light
                 F1-F4: Often sound (horn, whistle, etc.)
                 F5-F8: Additional sounds or lighting
-                F9-F28: Additional functions depending on decoder
+                F9-F31: Additional functions depending on decoder
 
                 Operation:
                 - Click function button to toggle
