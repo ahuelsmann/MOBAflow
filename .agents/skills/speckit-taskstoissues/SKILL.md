@@ -12,7 +12,7 @@ metadata:
 
 You **MUST display the following concise warning first**, as the first step of this command and before the User Input and Pre-Execution Checks sections below:
 
-> ⚠️ `$speckit-taskstoissues` is deprecated and will be removed in a future minor release. Use the bundled `github` extension instead: run `specify extension add github`, then invoke `$speckit-github-taskstoissues`.
+> ⚠️ `$speckit-taskstoissues` is deprecated and was removed upstream in Spec Kit 1.4.0; this repository retains the v1.1.3 copy. Use the bundled `github` extension instead: run `specify extension add github`, then invoke `$speckit-github-taskstoissues`.
 
 Continue with the existing workflow unchanged. Do not install or enable the extension automatically, do not stop, and do not run the replacement command.
 
