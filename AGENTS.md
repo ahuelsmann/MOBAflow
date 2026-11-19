@@ -97,9 +97,14 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   each PR records the missing local scan. If a local session's scanner is unavailable,
   continue ordinary development, avoid sensitive files and record the limitation before publication.
 - After patches, generators or scripts change text files, run `scripts/Test-LineEndings.ps1 -Path <changed-paths>`.
-  Use `-Fix` to normalize those files according to `.gitattributes`, then check again. Preserve LF exceptions,
-  encoding and final-newline presence. Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
+  Use `-Fix` to normalize those files according to `.gitattributes`, then check again. Preserve LF exceptions
+  and encoding. End every file you create or edit with a final newline (`.editorconfig` sets
+  `insert_final_newline = true`; `-Fix` does not add one), except vendored `MOBAdisplay/esp32/lib/**` and
+  Spec Kit-managed `.specify/**` files, which keep their upstream bytes. Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
   it checks both staged files on disk and mixed line endings in the index.
+- C# whitespace check (folder-based, no restore): `dotnet format whitespace --folder . --verify-no-changes
+  --exclude .nuget MOBAdisplay/esp32`. It reports drift only; do not reformat files outside the task.
+  Until the RF-10 baseline is merged it still lists existing drift: 80 spacing findings and C# files that lack a final newline.
 - Standalone Markdown plans belong in `plans/`; remove completed plans, retaining Git history and closed GitHub issues.
   Spec Kit artifacts remain under `specs/`. Use [Spec Kit governance](.github/instructions/spec-kit-governance.instructions.md)
   for product behavior and cross-cutting features; this does not require a standalone plan for every small fix.
