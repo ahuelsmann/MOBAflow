@@ -67,9 +67,9 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 
 ### GitHub Spec Kit
 
-- **Source:** [GitHub Spec Kit v1.1.3](https://github.com/github/spec-kit/tree/v1.1.3)
+- **Source:** [GitHub Spec Kit v1.4.0](https://github.com/github/spec-kit/tree/v1.4.0), plus the retained `speckit-taskstoissues` skill from [v1.1.3](https://github.com/github/spec-kit/tree/v1.1.3) (removed upstream in 1.4.0)
 - **License:** MIT; the complete original GitHub, Inc. notice is retained in [`.specify/LICENSE`](../.specify/LICENSE).
-- **Scope:** Imported scripts and templates under `.specify/` and the ten `.agents/skills/speckit-*/` skills. Local adaptations retain that notice.
+- **Scope:** Imported scripts and templates under `.specify/` the nine managed `.agents/skills/speckit-*/` skills and the retained 1.1.3 `speckit-taskstoissues` skill. Local adaptations retain that notice.
 - **Traceability:** The [source registry](../.agents/skills/sources.json) and integration manifests under `.specify/integrations/` record the imported version and adaptations.
 
 ### Adapted Matt Pocock Skills
