@@ -95,23 +95,23 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | Observable properties and relay commands. |
 | `CommunityToolkit.WinUI.Controls.ColorPicker` | `8.2.251219` | `MOBAflow` | WinUI color picker. |
 | `CommunityToolkit.WinUI.Controls.Sizers` | `8.2.251219` | `MOBAflow` | WinUI grid splitters. |
-| `coverlet.collector` | `10.1.0` | `Test` | Test coverage collection. |
-| `Microsoft.AspNetCore.SignalR.Client` | `10.0.13` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
-| `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.6.0` | `MOBAflow` | Optional Azure App Configuration source. |
-| `Microsoft.CodeAnalysis.CSharp` | `5.9.0` | `Test` | C# parsing for architecture tests. |
-| `Microsoft.Extensions.DependencyInjection` | `10.0.13` | `MutationTest`, `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `Test` | Dependency injection container. |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `10.0.13` | `Backend` | Dependency injection contracts. |
-| `Microsoft.Extensions.Http` | `10.0.13` | `MOBAsmart` | HTTP client registration. |
-| `Microsoft.Extensions.Logging` | `10.0.13` | `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `MutationTest/Speech.Base`, `Test` | Logging services. |
-| `Microsoft.Extensions.Logging.Abstractions` | `10.0.13` | `Backend`, `Common`, `SharedUI`, `Sound`, `Speech.Base`, `Speech.Piper` | Logging contracts. |
-| `Microsoft.Extensions.Logging.Console` | `10.0.13` | `Test` | Console logging output. |
-| `Microsoft.Extensions.Options` | `10.0.13` | `Sound` | Typed configuration options. |
+| `coverlet.collector` | `10.1.1` | `Test` | Test coverage collection. |
+| `Microsoft.AspNetCore.SignalR.Client` | `10.0.15` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
+| `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.6.1` | `MOBAflow` | Optional Azure App Configuration source. |
+| `Microsoft.CodeAnalysis.CSharp` | `5.12.0` | `Test` | C# parsing for architecture tests. |
+| `Microsoft.Extensions.DependencyInjection` | `10.0.15` | `MutationTest`, `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `Test` | Dependency injection container. |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `10.0.15` | `Backend` | Dependency injection contracts. |
+| `Microsoft.Extensions.Http` | `10.0.15` | `MOBAsmart` | HTTP client registration. |
+| `Microsoft.Extensions.Logging` | `10.0.15` | `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `MutationTest/Speech.Base`, `Test` | Logging services. |
+| `Microsoft.Extensions.Logging.Abstractions` | `10.0.15` | `Backend`, `Common`, `SharedUI`, `Sound`, `Speech.Base`, `Speech.Piper` | Logging contracts. |
+| `Microsoft.Extensions.Logging.Console` | `10.0.15` | `Test` | Console logging output. |
+| `Microsoft.Extensions.Options` | `10.0.15` | `Sound` | Typed configuration options. |
 | `Microsoft.Graphics.Win2D` | `1.4.0` | `MOBAflow` | Windows GPU-accelerated 2D rendering. |
 | `Microsoft.Maui.Controls` | `10.0.120` | `MOBAsmart` | Android MAUI UI framework. |
-| `Microsoft.NET.Test.Sdk` | `18.11.0` | `MutationTest`, `MutationTest/Api`, `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `MutationTest/Speech.Base`, `Test` | Test execution host. |
-| `Microsoft.Windows.SDK.BuildTools` | `10.0.28000.2705` | `MOBAflow` | Windows SDK build tools under Microsoft's SDK license; development only. |
-| `Microsoft.Windows.SDK.BuildTools.MSIX` | `1.7.260930100` | `MOBAflow` | Windows packaging build tools under Microsoft's SDK license; development only. |
-| `Microsoft.WindowsAppSDK` | `2.5.1` | `MOBAflow` | Windows desktop UI and runtime. |
+| `Microsoft.NET.Test.Sdk` | `18.12.0` | `MutationTest`, `MutationTest/Api`, `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `MutationTest/Speech.Base`, `Test` | Test execution host. |
+| `Microsoft.Windows.SDK.BuildTools` | `10.0.28000.2957` | `MOBAflow` | Windows SDK build tools under Microsoft's SDK license; development only. |
+| `Microsoft.Windows.SDK.BuildTools.MSIX` | `1.7.261102100` | `MOBAflow` | Windows packaging build tools under Microsoft's SDK license; development only. |
+| `Microsoft.WindowsAppSDK` | `2.6.5` | `MOBAflow` | Windows desktop UI and runtime. |
 | `Microsoft.Xaml.Behaviors.WinUI.Managed` | `3.0.1` | `MOBAflow` | WinUI XAML behaviors. |
 | `MinVer` | `8.0.0` | Build-wide via `Directory.Build.props` | Build-time versions from Git tags. |
 | `Moq` | `4.21.0` | `MutationTest/Api`, `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `MutationTest/Speech.Base`, `Test` | Test doubles. |
@@ -126,11 +126,11 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `Serilog.Sinks.Async` | `2.1.0` | `MOBAflow` | Asynchronous logging. |
 | `Serilog.Sinks.Debug` | `3.0.0` | `MOBAflow` | Debug logging output. |
 | `Serilog.Sinks.File` | `7.0.0` | `MOBAflow` | File logging output. |
-| `SkiaSharp` | `4.153.1` | `MOBAdisplay`, `MOBAflow` | Display frame and image rendering. |
-| `System.Drawing.Common` | `10.0.13` | `MOBAdisplay` | Image conversion utilities. |
-| `System.Formats.Nrbf` | `10.0.13` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
-| `System.Speech` | `10.0.13` | `Speech.SystemSpeech` | Windows text-to-speech. |
-| `System.Windows.Extensions` | `10.0.13` | `MOBAflow` | Windows audio APIs. |
+| `SkiaSharp` | `4.156.1` | `MOBAdisplay`, `MOBAflow` | Display frame and image rendering. |
+| `System.Drawing.Common` | `10.0.15` | `MOBAdisplay` | Image conversion utilities. |
+| `System.Formats.Nrbf` | `10.0.15` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
+| `System.Speech` | `10.0.15` | `Speech.SystemSpeech` | Windows text-to-speech. |
+| `System.Windows.Extensions` | `10.0.15` | `MOBAflow` | Windows audio APIs. |
 | `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | Android startup integration. |
 <!-- documentation-facts:packages:end -->
 
@@ -142,8 +142,8 @@ Native assets are tracked separately because their redistribution and platform b
 
 | Component | Version source | License | Distribution context |
 | --- | --- | --- | --- |
-| SkiaSharp native binaries | `SkiaSharp 4.153.1` in `Directory.Packages.props` | MIT | Native graphics binaries used by MOBAdisplay frame and image rendering. |
-| Windows App SDK runtime | `Microsoft.WindowsAppSDK 2.5.1` in `Directory.Packages.props` | MIT | Windows desktop runtime and deployment components. |
+| SkiaSharp native binaries | `SkiaSharp 4.156.1` in `Directory.Packages.props` | MIT | Native graphics binaries used by MOBAdisplay frame and image rendering. |
+| Windows App SDK runtime | `Microsoft.WindowsAppSDK 2.6.5` in `Directory.Packages.props` | MIT | Windows desktop runtime and deployment components. |
 | Win2D native components | `Microsoft.Graphics.Win2D 1.4.0` in `Directory.Packages.props` | MIT | GPU-accelerated Windows 2D rendering. |
 | AndroidX Startup runtime | `Xamarin.AndroidX.Startup.StartupRuntime 1.2.0.8` in `Directory.Packages.props` | Apache-2.0 | Android initialization runtime distributed with MOBAsmart. |
 | .NET / MAUI platform runtimes | Selected by the pinned .NET SDK and installed workloads | MIT and platform-specific notices | Framework/runtime files are supplied by Microsoft workloads and must be reviewed again when the SDK or workload changes. |
