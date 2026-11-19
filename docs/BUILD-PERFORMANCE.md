@@ -283,6 +283,32 @@ Run the same checks locally after producing a Release Cobertura report:
 ./scripts/Test-MutationLaneCoverage.ps1
 ```
 
+### Deliverables, lanes and required checks
+
+Every supported deliverable has a documented local command and a CI lane (RF-07,
+[#360](https://github.com/ahuelsmann/MOBAflow/issues/360), complete since 2026-11-20). The lanes are jobs of
+[Quality CI](../.github/workflows/quality.yml) unless noted.
+
+| Deliverable | Local command | CI lane |
+| --- | --- | --- |
+| Portable libraries and tests on Linux | `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0` | `portable-linux`, with the C# whitespace gate |
+| Windows desktop, Windows test suite, coverage, analyzer gates, NuGet audit | `dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false` | `desktop` |
+| MOBApi host and its process integration tests | `dotnet build MOBApi/MOBApi.csproj` | `display-protocol` and the `desktop` test graph |
+| Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (firmware when firmware paths change) |
+| Android Release AAB | the Release AAB steps above; `scripts/Test-AndroidAppBundle.ps1` | `android-release` on PRs that change `MOBAsmart/**` or the Android analyzer baseline, or by manual dispatch (maintainer decision of 2026-11-08) |
+| Mutation lanes | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | one `mutation-<lane>` job per active lane (below) |
+| C# formatting | `dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32` | step of `portable-linux` |
+| Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule |
+| Release package | [Release Studio](../.github/workflows/release-studio.yml) (`MOBAflow` and `MOBApi` only) | manual release workflow |
+
+The `main` ruleset requires these checks and an up-to-date branch: Repository instruction consistency; Windows
+desktop build, tests, and coverage; Display protocol host, parser, and firmware; Android Release AAB; Domain
+mutation testing; SonarCloud Code Analysis; Portable tests on Linux. A skipped scoped job satisfies its required
+check but is no evidence of a build. The other mutation lanes do not block a merge in GitHub; the
+[master coordination](../.github/instructions/master-coordination.instructions.md) rules still require them to be
+green before auto-merge is armed. Jobs archive their test results, coverage, mutation reports and the AAB as
+workflow artifacts.
+
 ### Active mutation lanes
 
 [`mutation-lanes.json`](../MutationTest/mutation-lanes.json) registers every test
