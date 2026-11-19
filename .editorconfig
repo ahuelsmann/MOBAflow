@@ -18,6 +18,10 @@ end_of_line = lf
 [{.agents/skills/speckit-*/SKILL.md,.specify/.gitignore,.specify/scripts/**,.specify/templates/*.md}]
 end_of_line = lf
 
+# Vendored firmware libraries and Spec Kit-managed assets keep their upstream bytes, including a missing final newline.
+[{MOBAdisplay/esp32/lib/**,.specify/**}]
+insert_final_newline = false
+
 # ReSharper team-shared settings file
 [Moba.sln.DotSettings]
 indent_style = tab

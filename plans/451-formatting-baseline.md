@@ -56,6 +56,10 @@ dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdis
   therefore remove no tracked product C# file. Generated code exists only in untracked `obj`/`bin` output, which a
   folder-based run on a clean checkout does not contain. Spec Kit managed assets are Markdown and scripts, outside
   `dotnet format whitespace`. Keep the two excludes (`.nuget`, `MOBAdisplay/esp32`) in the gate command.
+- Non-C# text files: `dotnet format whitespace` does not check them, but the `[*]` rule covers every file. 42 tracked
+  non-C# text files lack a final newline: 10 `.DotSettings`, 9 `.xaml`, 7 `.md`, 7 `.csproj`, 6 `.json`, 1 `.slnx`,
+  1 `.manifest` and 1 vendored header (`MOBAdisplay/esp32/lib/TFT_eSPI/TFT_Drivers/ST7789_Init.h`). One `.json` is the
+  Spec Kit-managed `.specify/workflows/workflow-registry.json`.
 - The tool wrote no file in either run (`git status` clean apart from the intended edits).
 - The Linux cloud numbers (768 findings in 691 files) differ from Windows (793 in 716); the cause (main commit, SDK
   patch, checkout state) was not isolated. Slice 2 re-measures on the day of the baseline.
@@ -97,6 +101,10 @@ Both decisions were taken by the maintainer on 2026-11-19 (comment on #451), on 
   folder `.nuget`, the ESP32 firmware and its libraries under `MOBAdisplay/esp32`, and Spec Kit managed assets.
   Slice 1 verified that no tracked product file is excluded by accident; the gate excludes `.nuget` and
   `MOBAdisplay/esp32` explicitly (see the Windows measurement).
+- **Non-C# files (decided for slice 2).** The baseline also adds the final newline to the non-vendored, non-Spec
+  Kit-managed files of the 42 above (40 files), in the same mechanical commit. Vendored `MOBAdisplay/esp32/lib/**` and
+  Spec Kit-managed `.specify/**` stay untouched; `.editorconfig` sets `insert_final_newline = false` for exactly
+  those two paths so the rule does not contradict them.
 - **Mechanical change only.** The baseline commit is produced by the tool with the decided rules. A finding that
   the tool cannot fix without changing meaning is left out and recorded, not fixed by hand in the same change.
 - **Line endings.** The baseline must not change line endings: the working tree uses CRLF, the index LF.
@@ -115,7 +123,8 @@ Both decisions were taken by the maintainer on 2026-11-19 (comment on #451), on 
 3. **Gate, documentation and completion.** Add the `dotnet format ... --verify-no-changes` step to a mandatory
    lane of Quality CI, show that it fails on a deliberately misformatted file in a throwaway branch, replace the
    RF-10 anchor in the umbrella plan with a delivery note and remove this plan. It also documents the local command in
-   `CONTRIBUTING.md` or `docs/BUILD-PERFORMANCE.md` once those files are free.
+   `CONTRIBUTING.md` or `docs/BUILD-PERFORMANCE.md` once those files are free, and rewords `CONTRIBUTING.md` line 56
+   ("preserved, as are encoding and final-newline presence") to the new final-newline rule.
 
 ## Validation strategy
 

@@ -103,7 +103,7 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   it checks both staged files on disk and mixed line endings in the index.
 - C# whitespace check (folder-based, no restore): `dotnet format whitespace --folder . --verify-no-changes
   --exclude .nuget MOBAdisplay/esp32`. It reports drift only; do not reformat files outside the task.
-  Until the RF-10 baseline is merged it still lists existing files that lack a final newline.
+  Until the RF-10 baseline is merged it still lists existing drift: 80 spacing findings and C# files that lack a final newline.
 - Standalone Markdown plans belong in `plans/`; remove completed plans, retaining Git history and closed GitHub issues.
   Spec Kit artifacts remain under `specs/`. Use [Spec Kit governance](.github/instructions/spec-kit-governance.instructions.md)
   for product behavior and cross-cutting features; this does not require a standalone plan for every small fix.
