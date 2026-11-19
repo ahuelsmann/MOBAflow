@@ -8,7 +8,7 @@ on Windows and Linux.
 - Complete the requested work through implementation, relevant validation, and a concise handoff.
   Make routine, reversible decisions from repository evidence without asking for confirmation.
 - Ask only when missing information materially affects correctness or scope and cannot be inferred, or an action
-  needs authorization that the user has not already given. Continue other slices on the board while blocked.
+  needs authorization that the user has not already given. Continue other slices on the Kanban while blocked.
 - Make the smallest cohesive change that solves the problem. Preserve unrelated user edits and existing contracts;
   avoid incidental cleanup, speculative abstractions, dependency upgrades, and repository-wide formatting.
   Ask before adding mechanics the request does not name, such as runtime lifecycle commands, chaining/follow-up
@@ -36,9 +36,10 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   the affected area.
 - **Small slices.** Work is cut into slices of one concern, about 25 files or 400 changed lines at most, each with
   its own Draft PR that merges on its own. An issue may need several slices; no long-running branches.
-- **Board, locks, WIP limit.** The COO (Claude) is the sole technical writer on the board in `ahuelsmann/MOBAdev`
-  issue #1 and records each open slice, its risk class, team and locked areas. Refactoring and feature work never
-  run in the same locked area at once. At most three code slices are open, at most two local agents build at once.
+- **Board, locks, WIP limit.** The COO (Claude) coordinates open work on the [MOBAflow GitHub Kanban](docs/KANBAN.md)
+  and records each open slice, its risk class, writer and locked areas in the Kanban item fields and the Draft PR
+  slice header. Refactoring and feature work never run in the same locked area at once. At most three code
+  slices (Kanban items with Risk class set, docs-only excluded) are open, at most two local agents build at once.
   One writer per branch.
 - **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests); code
   starts after cross-model companion/UX review and the COO's or Solution Architect's Go (class `L` slices and
@@ -59,7 +60,8 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   required checks pass. Before any push to an armed PR the COO disarms it.
 - **Guard rails.** Two failed fix attempts on the same finding (in companion or final review), or more than ten
   agent messages on one topic, stop the loop and go to the user. Locks, design gos, handovers and merges are logged
-  with UTC time in MOBAdev #1. Multi-slice features stay behind feature toggles until complete.
+  as UTC-timed comments on the slice's Draft PR; the [Kanban](docs/KANBAN.md) holds the current state. Multi-slice
+  features stay behind feature toggles until complete.
 - **People.** The user decides product goals, priorities, material UX, fundamental architecture, new costs and every
   app, device or hardware action. Since 2026-11-06 the user's personal acceptance is no merge gate. The user does
   not relay messages, inspect code or administer PRs. Any role may consult the Head of UI/UX (`Gemini 4 Argon` via
@@ -231,8 +233,8 @@ GitHub issues, milestones and Kanban track open work; consult/update a linked is
 without making tracker access a prerequisite for independent local work.
 For every integration, assess architecture/developer documentation and the canonical user wiki under `docs/wiki/`.
 Record the affected pages and corrections, or a concrete reason no change is needed; reassess after behavior-changing
-review fixes and confirm against actual integrated `main`. Record remaining corrections as a follow-up slice on the board without claiming complete
-documentation currency while known drift remains.
+review fixes and confirm against actual integrated `main`. Record remaining corrections as a follow-up slice on the
+Kanban without claiming complete documentation currency while known drift remains.
 When committing is requested, use English Conventional Commits. Report the commands/checks run and their outcomes;
 identify unavailable platform/hardware checks and the smallest remaining check without claiming they passed.
 

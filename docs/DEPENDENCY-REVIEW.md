@@ -41,8 +41,8 @@ and no clean result is claimed. The normal workflow token provides separate runt
 
 GitHub Manager owns technical reporting, fixtures and SHA provenance. Head of Quality triages
 relevance, production/development/transitive scope, prerequisites and evidence. Senior PM assigns
-priority and a named fix owner; the COO records the fix as a slice on the board. The delivery owner proves a correction;
-the existing independent Claude process reviews the resulting PR.
+priority and a named fix owner; the COO opens the fix as a slice (Kanban item and Draft PR header).
+The delivery owner proves a correction; the existing independent Claude process reviews the resulting PR.
 
 Material risk acceptance remains with the human, prepared by HQ and Senior PM. HQ may explain
 a technically demonstrated false positive; a fixed finding is not an exception. There is no
