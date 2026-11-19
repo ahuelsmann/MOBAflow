@@ -196,7 +196,7 @@ Completed (child plan removed at closure; issue [#366](https://github.com/ahuels
 design decision is on PR #486). Outcome: seven active mutation lanes (`domain`, `common`, `contracts`, `speech-base`,
 `backend`, `api`, `shared-ui`), each with a measured floor that is never lowered automatically; the Backend,
 MOBApi and SharedUI lanes have no Safe-Mode site left. The `contracts` lane was added on a measured probe (264 mutants,
-38 s, 76.85%). `track-plan-renderer` and `display` stay `planned` and `sound` gets no lane; the measurements and
+38 s, 76.85%). `track-plan-renderer` and `display` stay `planned` and `sound` stays `planned` without ever getting an active lane; the measurements and
 reasons are in [Build Performance](../docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons), and renderer
 assertions continue in [#497](https://github.com/ahuelsmann/MOBAflow/issues/497). The coverage thresholds in
 `Test/coverage-thresholds.json` keep gating the Windows `desktop` lane.

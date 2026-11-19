@@ -402,4 +402,4 @@ the scores are not floors; a lane's floor is set from measured evidence with a m
 | `contracts` | 264 | 38 s | 76.85% | active; no Safe Mode |
 | `track-plan-renderer` (`TrackPlan.Renderer`, 24 renderer fixtures) | 189 | 65 s | 26.51% | stays planned: 104 of 110 survivors are in `PlacedTrackPlanSvgRenderer`, whose tests assert too little; assertions first, in [#497](https://github.com/ahuelsmann/MOBAflow/issues/497) |
 | `display` (`MOBAdisplay`, 167 tests without the Skia and hardware fixtures) | 1,643 | 413 s | 50.70% | stays planned: 237 uncovered mutants are in `ClockRenderer` and `Rgb565Converter`, whose Skia tests cannot run on Linux, and two Safe-Mode sites (`EnsureNegotiatedAsync`, `SendResultAsync`) remain; a Windows lane costs more than it adds now |
-| `sound` (2 files, 34 lines: the contract and its null object) | - | - | - | no lane: nothing to mutate meaningfully |
+| `sound` (2 files, 34 lines: the contract and its null object) | - | - | - | stays `planned` in the registry (every fixture is registered) and never gets an active lane: nothing to mutate meaningfully |
