@@ -339,7 +339,8 @@ internal sealed class RuntimeCommandAdmissionTests
                 SignalId = new Guid(variant + 1, 0, 0, new byte[8]),
                 SignalAspect = variant == 0 ? SignalAspect.Hp0 : SignalAspect.Ks1
             }
-        } with { CommandId = Guid.Empty, CreatedAt = default };
+        } with
+        { CommandId = Guid.Empty, CreatedAt = default };
 
         public Task InvokeValidAsync(HubCommand command, int variant = 0)
         {

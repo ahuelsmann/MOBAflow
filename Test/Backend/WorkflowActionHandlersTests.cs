@@ -32,8 +32,10 @@ internal sealed class WorkflowActionHandlersTests
             .Returns("Next Minden");
         var context = new ActionExecutionContext
         {
-            Z21 = z21.Object, SoundPlayer = sound.Object,
-            CurrentStation = new Station { Name = "Minden" }, CurrentStationIndex = 2
+            Z21 = z21.Object,
+            SoundPlayer = sound.Object,
+            CurrentStation = new Station { Name = "Minden" },
+            CurrentStationIndex = 2
         };
         var actions = new WorkflowAction[]
         {
@@ -129,7 +131,8 @@ internal sealed class WorkflowActionHandlersTests
         var handler = new CommandWorkflowActionHandler(NullLogger<CommandWorkflowActionHandler>.Instance, adapter.Object);
         await Assert.ThrowsAsync<InvalidOperationException>(() => handler.ExecuteAsync(new WorkflowAction
         {
-            Type = ActionType.Command, Command = new() { BytesBase64 = "AQID" }
+            Type = ActionType.Command,
+            Command = new() { BytesBase64 = "AQID" }
         }, new ActionExecutionContext { Z21 = new Mock<IZ21>(MockBehavior.Strict).Object })).ConfigureAwait(false);
     }
 

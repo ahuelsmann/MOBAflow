@@ -215,7 +215,7 @@ internal sealed class SolutionFileService : ISolutionIoService
             // Check if there are unsaved changes
             if (hasUnsavedChanges)
             {
-                        var dialog = new ContentDialog
+                var dialog = new ContentDialog
                 {
                     Title = "Unsaved Changes",
                     Content = "You have unsaved changes in the current solution. Do you want to save before creating a new solution?",

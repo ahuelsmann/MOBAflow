@@ -40,11 +40,14 @@ internal sealed partial class StationsPageViewModelTests : IDisposable
         _io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
             .Callback((Solution solution, string _) => _lastSaved = JsonSerializer.Serialize(solution))
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
-        _session = TestSolutionSessions.Create(new Solution { Projects = [new Project
+        _session = TestSolutionSessions.Create(new Solution
+        {
+            Projects = [new Project
         {
             Stations = [new Station { Name = "Central", Platforms = [new Platform { Name = "Platform 1", Number = 1 }] }],
             Workflows = [new Workflow { Name = "Departure" }]
-        }] }, dispatcher.Object, _runtime.Object, _io.Object);
+        }]
+        }, dispatcher.Object, _runtime.Object, _io.Object);
         _session.CurrentSolutionPath = "stations-test.json";
         _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();

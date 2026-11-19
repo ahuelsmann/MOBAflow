@@ -5,6 +5,7 @@ using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 namespace Moba.Test.SharedUI;
+
 [TestFixture]
 internal sealed class MobileSolutionStoreTests
 {

@@ -27,10 +27,13 @@ internal sealed partial class WorkflowsPageViewModelTests : IDisposable
         runtime.SetupGet(value => value.Current).Returns(MobaRuntimeSnapshot.Empty);
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        _session = TestSolutionSessions.Create(new Solution { Projects = [new Project
+        _session = TestSolutionSessions.Create(new Solution
+        {
+            Projects = [new Project
         {
             Workflows = [new Workflow { Name = "Departure" }, new Workflow { Name = "Arrival" }]
-        }] }, dispatcher.Object, runtime.Object);
+        }]
+        }, dispatcher.Object, runtime.Object);
         _settings = new UiSettings();
         _persistence = new Mock<ISettingsService>();
         _persistence.Setup(value => value.GetSettings()).Returns(_settings);

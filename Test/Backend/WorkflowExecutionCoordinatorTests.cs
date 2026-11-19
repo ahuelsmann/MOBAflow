@@ -32,7 +32,9 @@ public sealed class WorkflowExecutionCoordinatorTests
         using var coordinator = new WorkflowExecutionCoordinator(service.Object, TimeProvider.System);
         var first = coordinator.EnqueueAsync(new QueuedWorkflowExecution
         {
-            SourceKey = "journey:1", OwnerId = Guid.NewGuid(), WorkflowId = firstRequest.Workflow.Id,
+            SourceKey = "journey:1",
+            OwnerId = Guid.NewGuid(),
+            WorkflowId = firstRequest.Workflow.Id,
             RequestFactory = () => firstRequest
         });
         await firstEntered.Task.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
@@ -42,7 +44,9 @@ public sealed class WorkflowExecutionCoordinatorTests
         var laterRequest = CreateRequest();
         var later = coordinator.EnqueueAsync(new QueuedWorkflowExecution
         {
-            SourceKey = "journey:1", OwnerId = Guid.NewGuid(), WorkflowId = laterRequest.Workflow.Id,
+            SourceKey = "journey:1",
+            OwnerId = Guid.NewGuid(),
+            WorkflowId = laterRequest.Workflow.Id,
             RequestFactory = () => { contextBuilt = true; observedState = state; return laterRequest; }
         });
         try

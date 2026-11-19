@@ -35,7 +35,9 @@ public sealed class WorkflowActionViewModelFactory(
         if (action == null)
             return new InvalidWorkflowActionViewModel(new WorkflowAction
             {
-                Id = Guid.Empty, Type = (ActionType)(-1), Name = "Missing action"
+                Id = Guid.Empty,
+                Type = (ActionType)(-1),
+                Name = "Missing action"
             });
 
         if (!_descriptors.TryGetValue(action.Type, out var descriptor) ||

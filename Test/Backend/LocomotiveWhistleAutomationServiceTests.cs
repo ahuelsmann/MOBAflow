@@ -233,7 +233,11 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
 
         var lowest = service.Validate(new LocomotiveWhistleRule
         {
-            LocomotiveId = locomotiveId, InPort = 1, FunctionIndex = 0, DelayMilliseconds = 0, ActiveDurationMilliseconds = 1
+            LocomotiveId = locomotiveId,
+            InPort = 1,
+            FunctionIndex = 0,
+            DelayMilliseconds = 0,
+            ActiveDurationMilliseconds = 1
         });
         var highest = service.Validate(new LocomotiveWhistleRule { LocomotiveId = locomotiveId, InPort = 1, FunctionIndex = 31 });
 
@@ -254,7 +258,10 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
         var locomotive = new Locomotive { DigitalAddress = 12 };
         var rule = new LocomotiveWhistleRule
         {
-            LocomotiveId = locomotive.Id, InPort = 7, FunctionIndex = 2, ActiveDurationMilliseconds = 20
+            LocomotiveId = locomotive.Id,
+            InPort = 7,
+            FunctionIndex = 2,
+            ActiveDurationMilliseconds = 20
         };
         var project = new Project { Locomotives = [locomotive], LocomotiveWhistleRules = [rule] };
         service.Activate(project);

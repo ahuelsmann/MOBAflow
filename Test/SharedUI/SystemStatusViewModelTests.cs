@@ -277,7 +277,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         }
     }
 
-    [TestCase("Ready","\uE930", "Green", "Speech: Ready")]
+    [TestCase("Ready", "\uE930", "Green", "Speech: Ready")]
     [TestCase("✅ Ready", "\uE930", "Green", "Speech: Ready")]
     [TestCase("Not Configured", "\uE7BA", "SystemFillColorCautionBrush", "Speech: Not Configured")]
     [TestCase("❌ Failed: no voice", "\uE711", "Red", "Speech: Failed: no voice")]

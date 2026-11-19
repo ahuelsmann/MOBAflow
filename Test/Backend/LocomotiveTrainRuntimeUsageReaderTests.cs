@@ -322,7 +322,8 @@ internal static class LocomotiveTrainRuntimeUsageReaderTests
         var locomotive = new Locomotive { Name = "Harbor pilot" };
         return new Project
         {
-            Name = "Yard", Locomotives = [locomotive],
+            Name = "Yard",
+            Locomotives = [locomotive],
             Trains = [new Train { Name = "Morning service", Vehicles = [new Vehicle { VehicleKind = TrainVehicleKind.Locomotive, VehicleId = locomotive.Id }] }]
         };
     }
