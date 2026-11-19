@@ -214,7 +214,9 @@ public partial class JourneyManager : IJourneyManager
             PublishTransition(match.Journey, match.Snapshot, JourneyRuntimeTransitionKind.FeedbackAccepted, (int)args.Snapshot.InPort);
             OnFeedbackReceived(new JourneyFeedbackEventArgs
             {
-                JourneyId = match.Journey.Id, SessionState = match.Snapshot, IsCounterFeedback = true
+                JourneyId = match.Journey.Id,
+                SessionState = match.Snapshot,
+                IsCounterFeedback = true
             });
             lock (_stateSync)
             {
@@ -313,7 +315,9 @@ public partial class JourneyManager : IJourneyManager
             PublishTransition(journey, snapshot, JourneyRuntimeTransitionKind.StopChanged);
             OnStationChanged(new StationChangedEventArgs
             {
-                JourneyId = journey.Id, Station = result.CurrentStation, SessionState = snapshot
+                JourneyId = journey.Id,
+                Station = result.CurrentStation,
+                SessionState = snapshot
             });
         }
         return result;

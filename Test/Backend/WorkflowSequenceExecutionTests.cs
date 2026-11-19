@@ -242,10 +242,15 @@ internal sealed class WorkflowSequenceExecutionTests
         var factory = new ActionExecutionContextFactory(new ActionExecutionContext { Z21 = Mock.Of<IZ21>() });
         var context = factory.Create(new ActionExecutionContextState
         {
-            SourceEvent = sourceEvent, SourceEventDefinitionId = eventId,
-            CurrentJourney = journey, CurrentStation = station, CurrentPlatform = platform,
-            CurrentJourneySessionState = session, CurrentStationIndex = 2,
-            JourneyTemplateText = "Regional", FeedbackInPort = 12
+            SourceEvent = sourceEvent,
+            SourceEventDefinitionId = eventId,
+            CurrentJourney = journey,
+            CurrentStation = station,
+            CurrentPlatform = platform,
+            CurrentJourneySessionState = session,
+            CurrentStationIndex = 2,
+            JourneyTemplateText = "Regional",
+            FeedbackInPort = 12
         });
         var invocation = new ActionExecutionContextFactory(context).CreateForExecution();
         using (Assert.EnterMultipleScope())
@@ -266,7 +271,10 @@ internal sealed class WorkflowSequenceExecutionTests
 
     private static WorkflowAction Command(string name, uint number = 1) => new()
     {
-        Name = name, Number = number, Type = ActionType.Command, Command = new() { BytesBase64 = "AQID" }
+        Name = name,
+        Number = number,
+        Type = ActionType.Command,
+        Command = new() { BytesBase64 = "AQID" }
     };
 
     private static WorkflowExecutionRequest Request(Workflow workflow, ActionExecutionContext? context = null) => new()

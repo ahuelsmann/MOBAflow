@@ -13,6 +13,7 @@ using Moba.SharedUI.Service;
 using Moba.SharedUI.TrainControl;
 using Moq;
 namespace Moba.Test.SharedUI;
+
 [TestFixture]
 internal sealed class MauiViewModelControlTabTests
 {

@@ -30,10 +30,10 @@ public sealed class TrackPlanSpatialIndex
         var minY = ToCell(y - radiusMm);
         var maxY = ToCell(y + radiusMm);
         for (var cellX = minX; cellX <= maxX; cellX++)
-        for (var cellY = minY; cellY <= maxY; cellY++)
-            if (_cells.TryGetValue((cellX, cellY), out var contents))
-                foreach (var placed in contents.Values)
-                    result[placed.Segment.No] = placed;
+            for (var cellY = minY; cellY <= maxY; cellY++)
+                if (_cells.TryGetValue((cellX, cellY), out var contents))
+                    foreach (var placed in contents.Values)
+                        result[placed.Segment.No] = placed;
         return result.Values.ToList();
     }
 
@@ -77,14 +77,14 @@ public sealed class TrackPlanSpatialIndex
         var ports = _geometry.GetAllPortWorldPositions(placed);
         var segmentCells = new HashSet<(int X, int Y)>();
         for (var cellX = ToCell(ports.Min(port => port.X)); cellX <= ToCell(ports.Max(port => port.X)); cellX++)
-        for (var cellY = ToCell(ports.Min(port => port.Y)); cellY <= ToCell(ports.Max(port => port.Y)); cellY++)
-        {
-            var cell = (cellX, cellY);
-            if (!_cells.TryGetValue(cell, out var contents))
-                _cells[cell] = contents = [];
-            contents[placed.Segment.No] = placed;
-            segmentCells.Add(cell);
-        }
+            for (var cellY = ToCell(ports.Min(port => port.Y)); cellY <= ToCell(ports.Max(port => port.Y)); cellY++)
+            {
+                var cell = (cellX, cellY);
+                if (!_cells.TryGetValue(cell, out var contents))
+                    _cells[cell] = contents = [];
+                contents[placed.Segment.No] = placed;
+                segmentCells.Add(cell);
+            }
         _cellsBySegmentId[placed.Segment.No] = segmentCells;
     }
 

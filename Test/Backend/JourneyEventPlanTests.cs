@@ -289,7 +289,8 @@ public sealed class JourneyEventPlanTests
             {
                 request.Context.ApplyJourneyStopTransition!(new JourneyStopTransition
                 {
-                    Mode = JourneyStopTransitionMode.SpecificStation, StationId = first.Id
+                    Mode = JourneyStopTransitionMode.SpecificStation,
+                    StationId = first.Id
                 });
                 return Success(request);
             });

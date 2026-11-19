@@ -10,8 +10,15 @@ internal class JourneyTests
     public void EventPlanRoundTripPreservesSparseCountsAndActiveFlag()
     {
         var workflowId = Guid.NewGuid();
-        var journey = new Journey { IsActive = true, EventPlan = new JourneyEventPlan { Events =
-            [new JourneyEvent { InPort = 2, Count = ulong.MaxValue, WorkflowId = workflowId }] } };
+        var journey = new Journey
+        {
+            IsActive = true,
+            EventPlan = new JourneyEventPlan
+            {
+                Events =
+            [new JourneyEvent { InPort = 2, Count = ulong.MaxValue, WorkflowId = workflowId }]
+            }
+        };
         var copy = System.Text.Json.JsonSerializer.Deserialize<Journey>(System.Text.Json.JsonSerializer.Serialize(journey))!;
         Assert.Multiple(() =>
         {

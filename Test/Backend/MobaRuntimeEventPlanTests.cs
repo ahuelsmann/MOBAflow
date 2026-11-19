@@ -178,8 +178,10 @@ internal sealed partial class MobaRuntimeEventPlanTests : IDisposable
                 }
                 return new WorkflowExecutionResult
                 {
-                    ExecutionId = Guid.NewGuid(), WorkflowId = request.Workflow.Id,
-                    SourceCorrelationId = request.SourceCorrelationId, Status = WorkflowExecutionStatus.Succeeded
+                    ExecutionId = Guid.NewGuid(),
+                    WorkflowId = request.Workflow.Id,
+                    SourceCorrelationId = request.SourceCorrelationId,
+                    Status = WorkflowExecutionStatus.Succeeded
                 };
             });
         using var runtime = CreateRuntime(z21.Object, workflowService: workflows.Object, interlocking: interlocking.Object);

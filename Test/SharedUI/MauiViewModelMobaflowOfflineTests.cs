@@ -991,7 +991,8 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         // Connected to the Z21 of the project selected first.
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(() => new MobaRuntimeSnapshot
         {
-            IsConnected = connected, IsZ21Connecting = connecting
+            IsConnected = connected,
+            IsZ21Connecting = connecting
         });
         connected = !connecting;
 
@@ -1076,7 +1077,8 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         await connected.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         var freshYard = new Project
         {
-            Id = yard.Id, Name = yard.Name,
+            Id = yard.Id,
+            Name = yard.Name,
             Z21 = { IpAddress = changeEndpoint ? "192.168.0.113" : yard.Z21.IpAddress },
             Journeys = [new Journey { Name = "New definition" }]
         };

@@ -114,7 +114,8 @@ internal sealed class WorkflowExecutionEndToEndTests
         var sourceId = Guid.NewGuid();
         var result = await _workflowService.ExecuteAsync(new WorkflowExecutionRequest
         {
-            Project = project, Workflow = workflow,
+            Project = project,
+            Workflow = workflow,
             Context = new ActionExecutionContext { Z21 = _z21, SourceEvent = new FeedbackReceivedEvent(5, sourceId) }
         });
         var entries = trace.GetEntries();
@@ -146,7 +147,8 @@ internal sealed class WorkflowExecutionEndToEndTests
     {
         Actions = commands.Select((bytes, index) => new WorkflowAction
         {
-            Name = $"Command {index + 1}", Type = ActionType.Command,
+            Name = $"Command {index + 1}",
+            Type = ActionType.Command,
             Command = new CommandActionPayload { BytesBase64 = Convert.ToBase64String(bytes) }
         }).ToList()
     };

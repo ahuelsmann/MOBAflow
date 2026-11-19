@@ -156,7 +156,10 @@ internal sealed partial class MobaRuntimeServiceLocomotiveStateTests : IDisposab
         ConfirmConnection(z21);
         ReportLocomotiveInfo(z21, new LocoInfo
         {
-            Address = 3, Speed = 12, IsForward = true, Functions = 5
+            Address = 3,
+            Speed = 12,
+            IsForward = true,
+            Functions = 5
         });
         z21.Invocations.Clear();
 

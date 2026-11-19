@@ -416,7 +416,8 @@ public sealed partial class DisplayViewModelTests
     private sealed partial class FakeDisplayDeviceClient : IDisplayDeviceClient
     {
         public Func<DisplayEndpoint, CancellationToken, Task<DisplayDeviceNegotiationResult>>?
-            ConnectHandler { get; set; }
+            ConnectHandler
+        { get; set; }
 
         public Func<CancellationToken, Task<DisplayDeviceHealthResult>>? HealthHandler { get; set; }
 

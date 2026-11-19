@@ -451,7 +451,10 @@ internal sealed class ProjectRuntimeHostTests
         var locomotive = new Locomotive { DigitalAddress = 12 };
         var rule = new LocomotiveWhistleRule
         {
-            LocomotiveId = locomotive.Id, InPort = 1, FunctionIndex = 2, ActiveDurationMilliseconds = 1
+            LocomotiveId = locomotive.Id,
+            InPort = 1,
+            FunctionIndex = 2,
+            ActiveDurationMilliseconds = 1
         };
         project.Locomotives.Add(locomotive);
         project.LocomotiveWhistleRules.Add(rule);

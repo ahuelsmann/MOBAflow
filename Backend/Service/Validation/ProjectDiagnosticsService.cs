@@ -104,7 +104,9 @@ public sealed class ProjectDiagnosticsService(
             $"{finding.Message} - locomotive {location.TargetId:D}, {location.FieldPath}",
             [location.ProjectId, location.TrainId, location.TargetId])
         {
-            RuleCode = finding.RuleCode, Location = location, ObservedAtUtc = observedAtUtc
+            RuleCode = finding.RuleCode,
+            Location = location,
+            ObservedAtUtc = observedAtUtc
         };
     }
 
