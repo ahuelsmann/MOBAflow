@@ -14,6 +14,13 @@ requests remain the work items; the Kanban adds shared fields and useful views.
 | Area           | MOBAflow, MOBAsmart, MOBApi, MOBAdisplay, Track plan, Z21, Documentation, Infrastructure |
 | Type           | Feature, Bug, Refactoring, Documentation, Security, Release                              |
 | Target release | First stable release, Future                                                            |
+| Risk class     | H, M, L (see risk classes in master coordination; review-fix rounds keep their slice's) |
+| Locked areas   | Text: projects or folders the open slice locks, for example `SharedUI/ViewModel`        |
+| Writer         | Text: the one named Senior Developer who pushes to the slice branch                     |
+
+Risk class, Locked areas and Writer are filled for items that represent an open slice (a Draft PR) and mirror the
+slice header block of the PR body. Status doubles as the slice state: Ready, In progress and In review count as open.
+The COO sets these fields; the PR header is the source if the two disagree.
 
 ## Views
 
@@ -26,6 +33,13 @@ requests remain the work items; the Kanban adds shared fields and useful views.
 GitHub Projects cannot combine different fields with an `OR` filter. Security
 and dependency-maintenance items therefore use the Infrastructure area so they
 appear together in **Quality & maintenance**.
+
+## Slices, locks and WIP limit
+
+The flow in [master coordination](../.github/instructions/master-coordination.instructions.md#board-locks-and-wip-limit)
+uses the Current work view for its checks: a new slice may start only in an area that no open item lists under
+Locked areas, and at most three code slices are open. Locks, design Go, handovers and merges are logged as PR
+comments; the item fields hold only the current state.
 
 ## Automation
 

@@ -1,3 +1,13 @@
+## Slice header
+
+<!-- Mirrors the Kanban fields; keep both in sync. Details: docs/KANBAN.md. -->
+
+- Issue:
+- Risk class (H/M/L):
+- Locked areas:
+- Writer:
+- Companion / review profiles (P1-P4, or none for class L):
+
 ## Summary
 
 <!-- What does this pull request change, and why? -->

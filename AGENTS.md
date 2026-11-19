@@ -8,7 +8,7 @@ on Windows and Linux.
 - Complete the requested work through implementation, relevant validation, and a concise handoff.
   Make routine, reversible decisions from repository evidence without asking for confirmation.
 - Ask only when missing information materially affects correctness or scope and cannot be inferred, or an action
-  needs authorization that the user has not already given. Continue other slices on the board while blocked.
+  needs authorization that the user has not already given. Continue other slices on the Kanban while blocked.
 - Make the smallest cohesive change that solves the problem. Preserve unrelated user edits and existing contracts;
   avoid incidental cleanup, speculative abstractions, dependency upgrades, and repository-wide formatting.
   Ask before adding mechanics the request does not name, such as runtime lifecycle commands, chaining/follow-up
@@ -37,9 +37,9 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
 - **Small slices.** Work is cut into slices of one concern, about 25 files or 400 changed lines at most, each with
   its own Draft PR that merges on its own. An issue may need several slices; no long-running branches.
 - **Board, locks, WIP limit.** The COO (Claude) coordinates open work on the [MOBAflow GitHub Kanban](docs/KANBAN.md)
-  and records each open slice, its risk class, team and locked areas on the `MOBAflow` issue and Draft PR (`ahuelsmann/MOBAdev` holds only versioned AI configuration). Refactoring and feature work never
-  run in the same locked area at once. At most three code slices are open, at most two local agents build at once.
-  One writer per branch.
+  and records each open slice, its risk class, writer and locked areas in the Kanban item fields and the Draft PR
+  slice header. Refactoring and feature work never run in the same locked area at once. At most three code slices are open, at most two local agents build
+  at once. One writer per branch.
 - **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests); code
   starts after cross-model companion/UX review and the COO's or Solution Architect's Go (class `L` slices and
   review-fix rounds on an approved design state their intent in the PR body/commit instead, while keeping their
@@ -231,8 +231,8 @@ GitHub issues, milestones and Kanban track open work; consult/update a linked is
 without making tracker access a prerequisite for independent local work.
 For every integration, assess architecture/developer documentation and the canonical user wiki under `docs/wiki/`.
 Record the affected pages and corrections, or a concrete reason no change is needed; reassess after behavior-changing
-review fixes and confirm against actual integrated `main`. Record remaining corrections as a follow-up slice on the board without claiming complete
-documentation currency while known drift remains.
+review fixes and confirm against actual integrated `main`. Record remaining corrections as a follow-up slice on the
+Kanban without claiming complete documentation currency while known drift remains.
 When committing is requested, use English Conventional Commits. Report the commands/checks run and their outcomes;
 identify unavailable platform/hardware checks and the smallest remaining check without claiming they passed.
 
