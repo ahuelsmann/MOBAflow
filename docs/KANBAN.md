@@ -13,11 +13,23 @@ requests remain the work items; the Kanban adds shared fields and useful views.
 | Priority       | P0, P1, P2, P3                                                                           |
 | Area           | MOBAflow, MOBAsmart, MOBApi, MOBAdisplay, Track plan, Z21, Documentation, Infrastructure |
 | Type           | Feature, Bug, Refactoring, Documentation, Security, Release                              |
-| Target release | First stable release, Future                                                            |
+| Target release | First stable release, Future                                                             |
+| Risk class     | H, M, L (review-fix rounds keep their slice's class)                                     |
+| Locked areas   | Text: projects or folders the open slice locks, for example `SharedUI/ViewModel`         |
+| Writer         | Text: the one named Senior Developer who pushes to the slice branch                      |
+
+Risk class, Locked areas and Writer are filled for items that represent an open slice (a Draft PR) and mirror the
+slice header block of the PR body. The COO adds each slice PR to the project when the slice starts and sets these
+fields. The PR header is the source of truth; if the Kanban field differs, the Kanban field is corrected to match.
+
+Status for slices: **Planned** = slice cut, design note awaiting Go; **Ready** = Go given, the writer may start
+(this is not the PR's "Ready for review"); **In progress** = implementation and review fixes; **In review** = PR
+marked ready for review, final review and armed auto-merge; **Done** = merged. Open slices are the items with
+Risk class set and a Status from Planned to In review.
 
 ## Views
 
-1. **Current work** filters the board to Ready, In progress, and In review.
+1. **Current work** filters the board to Planned, Ready, In progress, and In review (all open slices).
 2. **Product areas** groups work by Area.
 3. **Quality & maintenance** collects Infrastructure work, including security and dependency maintenance.
 4. **Roadmap** groups work by Target release.
@@ -26,6 +38,14 @@ requests remain the work items; the Kanban adds shared fields and useful views.
 GitHub Projects cannot combine different fields with an `OR` filter. Security
 and dependency-maintenance items therefore use the Infrastructure area so they
 appear together in **Quality & maintenance**.
+
+## Slices, locks and WIP limit
+
+The flow in [master coordination](../.github/instructions/master-coordination.instructions.md#board-locks-and-wip-limit)
+uses the open slices (items with Risk class set) for its checks: a new slice may start only in an area that no
+open item lists under Locked areas, and at most three code slices (documentation-only slices excluded) are open.
+Locks, design Go, handovers and merges are logged as comments on the Draft PR; the item fields hold only the
+current state.
 
 ## Automation
 

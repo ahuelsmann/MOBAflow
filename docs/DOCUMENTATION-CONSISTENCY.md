@@ -32,7 +32,7 @@ surrounding-prose preservation, malformed-input and path protections.
 2. Make necessary corrections in the same slice PR and worktree. Documentation
    Lead contributes when documentation expertise is needed; one writer pushes
    to the branch. A correction outside the slice's scope becomes its own slice
-   on the board.
+   as its own Kanban item and Draft PR.
 3. State the documentation/wiki impact, relevant checks and remaining limits in
    the PR body; the COO checks them before arming auto-merge.
 4. A fresh independent Claude review checks the current comparison,
@@ -43,7 +43,7 @@ surrounding-prose preservation, malformed-input and path protections.
 5. After behavior-changing review fixes, reassess documentation/wiki impact and
    refresh affected evidence. A changed comparison needs a fresh independent
    review. Current CI/Sonar still apply.
-6. Any remaining drift stays visible as a follow-up slice on the board; do not
+6. Any remaining drift stays visible as a follow-up Kanban item; do not
    claim overall currency or completion while an accepted requirement remains
    open.
 
@@ -63,7 +63,7 @@ API budget or new subscription-to-CI integration to configure.
 Use the existing native clients under their approved subscription login and
 usage limits. Do not silently switch to usage-based API billing, buy extra usage,
 export login tokens to CI or introduce a replacement automation. At an allowance
-limit, the COO records the waiting slice on the board. Existing credentials
+limit, the COO notes the waiting slice in its Kanban item and PR comment. Existing credentials
 used by other work are not read, changed or deleted by this change.
 
 The former custom bot check is not a required check. The existing Quality,
