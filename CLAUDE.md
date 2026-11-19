@@ -8,7 +8,7 @@ Antigravity as defined in [master coordination](.github/instructions/master-coor
 roles map to capability profiles (`P1`–`P4`) rather than a single fixed model; each slice has its own Draft PR, a
 risk class (`H`, `M` or `L`; review-fix rounds keep their slice's risk class and dependency updates take the class
 of the affected area), a cross-model slice team for class `H` and `M` (writer + companion reviewer from a different
-model family + `P3` Head of UI/UX for UI/product work), a board entry with locks in `ahuelsmann/MOBAdev` issue #1,
+model family + `P3` Head of UI/UX for UI/product work), a Kanban item with locks and a PR slice header,
 a short design note and Go before code (class `L` and review-fix rounds state intent in the PR body/commit), test-
 first for new features, merging (never rebasing) the current `main` into the branch before every hand-on push, a
 fresh independent `P1` (Opus 5.5 or higher, never the writer's or companion's session) plus cross-family `P2`/`P3`
