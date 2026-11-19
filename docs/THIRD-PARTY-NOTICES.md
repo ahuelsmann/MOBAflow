@@ -111,7 +111,7 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `Microsoft.NET.Test.Sdk` | `18.12.0` | `MutationTest`, `MutationTest/Api`, `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/Contracts`, `MutationTest/SharedUI`, `MutationTest/Speech.Base`, `Test` | Test execution host. |
 | `Microsoft.Windows.SDK.BuildTools` | `10.0.28000.2957` | `MOBAflow` | Windows SDK build tools under Microsoft's SDK license; development only. |
 | `Microsoft.Windows.SDK.BuildTools.MSIX` | `1.7.261102100` | `MOBAflow` | Windows packaging build tools under Microsoft's SDK license; development only. |
-| `Microsoft.WindowsAppSDK` | `2.6.5` | `MOBAflow` | Windows desktop UI and runtime. |
+| `Microsoft.WindowsAppSDK` | `2.7.0` | `MOBAflow` | Windows desktop UI and runtime. |
 | `Microsoft.Xaml.Behaviors.WinUI.Managed` | `3.0.1` | `MOBAflow` | WinUI XAML behaviors. |
 | `MinVer` | `8.0.0` | Build-wide via `Directory.Build.props` | Build-time versions from Git tags. |
 | `Moq` | `4.21.0` | `MutationTest/Api`, `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/SharedUI`, `MutationTest/Speech.Base`, `Test` | Test doubles. |
@@ -126,7 +126,7 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `Serilog.Sinks.Async` | `2.1.0` | `MOBAflow` | Asynchronous logging. |
 | `Serilog.Sinks.Debug` | `3.0.0` | `MOBAflow` | Debug logging output. |
 | `Serilog.Sinks.File` | `7.0.0` | `MOBAflow` | File logging output. |
-| `SkiaSharp` | `4.156.1` | `MOBAdisplay`, `MOBAflow` | Display frame and image rendering. |
+| `SkiaSharp` | `4.157.0` | `MOBAdisplay`, `MOBAflow` | Display frame and image rendering. |
 | `System.Drawing.Common` | `10.0.15` | `MOBAdisplay` | Image conversion utilities. |
 | `System.Formats.Nrbf` | `10.0.15` | `MOBAsmart` | Android AOT dependency of the existing sound graph. |
 | `System.Speech` | `10.0.15` | `Speech.SystemSpeech` | Windows text-to-speech. |
@@ -142,8 +142,8 @@ Native assets are tracked separately because their redistribution and platform b
 
 | Component | Version source | License | Distribution context |
 | --- | --- | --- | --- |
-| SkiaSharp native binaries | `SkiaSharp 4.156.1` in `Directory.Packages.props` | MIT | Native graphics binaries used by MOBAdisplay frame and image rendering. |
-| Windows App SDK runtime | `Microsoft.WindowsAppSDK 2.6.5` in `Directory.Packages.props` | MIT | Windows desktop runtime and deployment components. |
+| SkiaSharp native binaries | `SkiaSharp 4.157.0` in `Directory.Packages.props` | MIT | Native graphics binaries used by MOBAdisplay frame and image rendering. |
+| Windows App SDK runtime | `Microsoft.WindowsAppSDK 2.7.0` in `Directory.Packages.props` | MIT | Windows desktop runtime and deployment components. |
 | Win2D native components | `Microsoft.Graphics.Win2D 1.4.0` in `Directory.Packages.props` | MIT | GPU-accelerated Windows 2D rendering. |
 | AndroidX Startup runtime | `Xamarin.AndroidX.Startup.StartupRuntime 1.2.0.8` in `Directory.Packages.props` | Apache-2.0 | Android initialization runtime distributed with MOBAsmart. |
 | .NET / MAUI platform runtimes | Selected by the pinned .NET SDK and installed workloads | MIT and platform-specific notices | Framework/runtime files are supplied by Microsoft workloads and must be reviewed again when the SDK or workload changes. |
