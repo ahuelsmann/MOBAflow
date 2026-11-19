@@ -192,9 +192,14 @@ found in use are reported as bugs.
 
 ### RF-09: Coverage and mutation ratchets
 
-The baseline, lane order, triage rules and delivery slices now belong to
-[the RF-09 child plan](366-coverage-mutation-ratchets.md), owned by
-[issue #366](https://github.com/ahuelsmann/MOBAflow/issues/366).
+Completed (child plan removed at closure; issue [#366](https://github.com/ahuelsmann/MOBAflow/issues/366); the
+design decision is on PR #486). Outcome: seven active mutation lanes (`domain`, `common`, `contracts`, `speech-base`,
+`backend`, `api`, `shared-ui`), each with a floor measured on Linux CI and never lowered automatically; the Backend,
+MOBApi and SharedUI lanes have no Safe-Mode site left. The `contracts` lane was added on a measured probe (264 mutants,
+38 s, 76.85%). `track-plan-renderer` and `display` stay `planned` and `sound` gets no lane; the measurements and
+reasons are in [Build Performance](../docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons), and renderer
+assertions continue in [#497](https://github.com/ahuelsmann/MOBAflow/issues/497). The coverage thresholds in
+`Test/coverage-thresholds.json` keep gating the Windows `desktop` lane.
 
 ### RF-10: Formatting baseline and gate
 
