@@ -209,7 +209,7 @@ internal static class HostHardening
         var typed = request.GetTypedHeaders();
         if (headers.ContainsKey(HeaderNames.IfNoneMatch))
         {
-            var kept = ToFileTags(typed.IfNoneMatch, suffix);
+            var kept = ToFileTags(typed.IfNoneMatch, suffix, strongOnly: false);
             if (kept.Count == 0)
             {
                 headers.Remove(HeaderNames.IfNoneMatch);
@@ -226,7 +226,7 @@ internal static class HostHardening
 
         if (headers.ContainsKey(HeaderNames.IfMatch))
         {
-            var kept = ToFileTags(typed.IfMatch, suffix);
+            var kept = ToFileTags(typed.IfMatch, suffix, strongOnly: true);
             headers.IfMatch = kept.Count == 0 ? NeverMatchingTag : string.Join(", ", kept);
         }
 
@@ -236,11 +236,17 @@ internal static class HostHardening
         }
     }
 
-    private static List<string> ToFileTags(IList<EntityTagHeaderValue> tags, string suffix)
+    // If-Match uses strong comparison (RFC 9110 13.1.1), so a weak tag is skipped there; If-None-Match compares weakly.
+    private static List<string> ToFileTags(IList<EntityTagHeaderValue> tags, string suffix, bool strongOnly)
     {
         var kept = new List<string>();
         foreach (var tag in tags)
         {
+            if (strongOnly && tag.IsWeak)
+            {
+                continue;
+            }
+
             var value = tag.Tag.Value ?? string.Empty;
             if (value == "*")
             {

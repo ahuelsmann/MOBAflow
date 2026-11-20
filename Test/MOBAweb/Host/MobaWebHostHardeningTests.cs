@@ -500,6 +500,47 @@ internal sealed class MobaWebHostHardeningTests
     }
 
     [Test]
+    public async Task IfMatch_WithAWeakOwnVariantTag_FailsThePrecondition()
+    {
+        // RFC 9110 13.1.1: If-Match uses strong comparison, a weak tag never matches.
+        using var first = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", "br")).ConfigureAwait(false);
+        using var response = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("Accept-Encoding", "br"),
+            ("If-Match", "W/" + first.Headers.ETag!)).ConfigureAwait(false);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.PreconditionFailed));
+    }
+
+    [Test]
+    public async Task IfMatch_WithAWeakAndAStrongOwnVariantTag_IsAccepted()
+    {
+        using var first = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", "br")).ConfigureAwait(false);
+        var tag = first.Headers.ETag!.ToString();
+        using var response = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("Accept-Encoding", "br"),
+            ("If-Match", $"W/{tag}, {tag}")).ConfigureAwait(false);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    [Test]
+    public async Task IfNoneMatch_WithAWeakOwnVariantTag_StillReturns304()
+    {
+        using var first = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", "br")).ConfigureAwait(false);
+        using var response = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("Accept-Encoding", "br"),
+            ("If-None-Match", "W/" + first.Headers.ETag!)).ConfigureAwait(false);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotModified));
+    }
+
+    [Test]
     public async Task IfNoneMatch_WithAnotherVariantTag_IgnoresIfModifiedSince()
     {
         // RFC 9110 13.2.2: with If-None-Match present, If-Modified-Since is ignored.
