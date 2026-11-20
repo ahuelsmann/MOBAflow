@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+    <!--
+      MOBAdemo web showcase host. Serves the prepared static files of wwwroot and a health response only.
+      It references no repository project and runs no npm or Node step; the build script of a later slice
+      produces wwwroot.
+    -->
+    <PropertyGroup>
+        <RootNamespace>Moba.Web</RootNamespace>
+        <AssemblyName>MOBAweb.Host</AssemblyName>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+    <ItemGroup>
+        <!-- A local run from the build output serves the same files as the published host. -->
+        <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+</Project>
