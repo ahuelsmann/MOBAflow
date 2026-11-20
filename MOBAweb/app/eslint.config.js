@@ -41,8 +41,8 @@ const wholePackagePatterns = [
 const message = (what) =>
   `Do not import ${what} as a whole (FR-077); import only the single module the demo uses.`;
 
-const escape = (text) => text.replace(/[.+?^${}()|[\]\\/-]/g, '\\$&');
-const globToRegex = (glob) => escape(glob).replace(/\*/g, '[^/]*');
+const escape = (text) => text.replace(/[.+?^${}()|[\]\\/-]/g, String.raw`\$&`);
+const globToRegex = (glob) => escape(glob).replaceAll('*', '[^/]*');
 const restrictedSourceRegex = `^(${[
   ...wholePackages.map(escape),
   ...wholePackagePatterns.map(globToRegex),

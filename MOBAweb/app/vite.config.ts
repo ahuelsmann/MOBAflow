@@ -14,6 +14,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // The first ESLint run is cold and runs next to the build test; 5 s is not always enough.
+    testTimeout: 30_000,
     setupFiles: ['./tests/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
   },

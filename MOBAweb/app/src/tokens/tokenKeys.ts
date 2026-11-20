@@ -4,5 +4,5 @@ export function parseTokenKeys(css: string): string[] {
   const keys = [...withoutComments.matchAll(/(?:^|[{;\s])(--[a-z0-9-]+)\s*:/g)].map(
     (match) => match[1],
   );
-  return keys.sort();
+  return keys.sort((a, b) => a.localeCompare(b));
 }
