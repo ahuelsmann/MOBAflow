@@ -34,9 +34,15 @@ internal static class MobaWebHost
             context.Response.ContentType = "text/plain";
             await context.Response.WriteAsync("Internal Server Error", context.RequestAborted).ConfigureAwait(false);
         }));
+        app.UseResponsePolicy();
         app.UseDefaultFiles();
-        app.UseStaticFiles();
-        app.MapGet("/health", () => "ok");
+        app.UsePrecompressedFiles();
+        app.UseStaticFiles(HostHardening.CreateStaticFileOptions());
+        app.MapMethods("/health", ["GET", "HEAD"], () => "ok");
+        app.MapMethods(
+            "/robots.txt",
+            ["GET", "HEAD"],
+            () => Results.Text("User-agent: *\nAllow: /$\nDisallow: /\n", "text/plain"));
         configure?.Invoke(app);
         return app;
     }
