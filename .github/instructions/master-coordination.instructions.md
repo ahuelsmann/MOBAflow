@@ -131,15 +131,23 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
   PR comment, and starts it right away. A CPM/TD veto within 30 minutes, sent through the CLI channel and repeated
   as a PR comment, stops the slice at its next safe point (no half-pushed state); later the CPM/TD
   re-prioritizes through the Kanban Priority field instead.
-- **Status.** The Kanban Status field mirrors the slice: `Planned` = slice cut, design note awaiting Go;
-  `Ready` = Go given, writer may start (not the PR's "Ready for review"); `In progress` = implementation and
-  review fixes; `In review` = PR marked ready for review, final review, and auto-merge armed; `Done` = merged.
-  For repository issues, moving an issue from `Planned` to `Ready` is the maintainer's pull-trigger authorizing
-  `Claude Monitor` (COO, sole intake owner) to claim it and immediately set it to `In progress` when Code WIP
-  (`< 3`) and domain locks allow (issues marked `needs-specification` or needing open product, UX, or architecture
-  decisions begin with Decision & Steering Triad analysis and a concrete recommendation to the maintainer instead
-  of premature coding; the local MOBAdev dashboard stays strictly read-only).
-  Status messages that arrive late never overwrite a newer state.
+- **Status.** For slice items (Risk class set) the Kanban Status field mirrors the slice: `Planned` = slice cut,
+  design note awaiting Go; `Ready` = Go given, writer may start (not the PR's "Ready for review"); `In progress` =
+  implementation and review fixes; `In review` = PR marked ready for review, final review, and auto-merge armed;
+  `Done` = merged. Status messages that arrive late never overwrite a newer state.
+- **Issue intake.** Issue items have no Risk class. `Planned` = accepted backlog; `Ready` = the maintainer's pull
+  trigger: the maintainer moved the issue there so that the COO takes it in. Only the COO claims `Ready` issues; its
+  scheduled monitoring session (Claude Monitor) does this on the COO's behalf. On claim the COO moves the issue to
+  `In progress` at once, so it is not picked up twice; the issue stays there during analysis, while it waits for a
+  maintainer decision and while its slices are delivered. `Done` = closed, delivered or decided against.
+  - An issue labelled `needs-specification`, or one that needs an open product, UX or architecture decision, starts
+    with a Decision & Steering Triad analysis and a concise recommendation to the maintainer, not with code. This
+    analysis is not held back by the WIP limit.
+  - Every code slice cut from an issue follows the normal flow: the code-slice WIP limit above (a new code slice
+    starts only while fewer than three are open), free locks, design note and Go, and the CPM/TD announcement
+    and veto window. When no slice can start, the issue stays in `Ready`.
+  - The MOBAdev repository (`ahuelsmann/MOBAdev`) and its local dashboard only display this board; nobody claims or
+    moves items from there.
 
 ## Guard rails
 
