@@ -79,7 +79,7 @@ Recorded on main `f37541d9`.
 
 ## Dependencies and coordination
 
-- RF-04 and RF-19 are complete. RF-07 is active; its Linux lane already runs the portable suite, and the benchmark job
+- RF-04 and RF-19 are complete. RF-07 is complete; its Linux lane runs the portable suite, and the benchmark job
   follows its manual-lane pattern.
 - #367 (RF-09, Z21 receive and overload tests) and #330 (RF-25, runtime composition) are integrated. RF-09 PR #396,
   which also added tests under `Test/MOBApi/`, and step 3 (#397) are both integrated.

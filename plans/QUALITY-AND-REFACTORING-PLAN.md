@@ -174,9 +174,12 @@ updates issue #47, and remains inside the package and feature-scope boundaries.
 
 ### RF-07: Complete the CI platform matrix
 
-The deliverable inventory, decisions and delivery slices now belong to
-[the RF-07 child plan](360-ci-platform-matrix.md), owned by
-[issue #360](https://github.com/ahuelsmann/MOBAflow/issues/360).
+Complete since 2026-11-20 ([#360](https://github.com/ahuelsmann/MOBAflow/issues/360)): slice 1 added the required
+`Portable tests on Linux` lane and the deliverable inventory (#361); slice 2 runs the Android Release AAB lane
+automatically on PRs that change `MOBAsmart/**` or the Android analyzer baseline, as decided by the maintainer on
+2026-11-08; slice 3 recorded the RF-09 mutation lanes and the RF-10 formatting gate and removed the child plan.
+The inventory of deliverables, local commands, CI lanes and required checks is in
+[Build Performance](../docs/BUILD-PERFORMANCE.md#deliverables-lanes-and-required-checks).
 
 ### RF-08: Compile MAUI XAML bindings
 
