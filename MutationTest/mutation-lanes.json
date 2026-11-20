@@ -71,6 +71,12 @@
       "production-projects": ["MOBApi/MOBApi.csproj"]
     },
     {
+      "name": "web-host",
+      "status": "planned",
+      "test-directories": ["Test/MOBAweb/Host"],
+      "production-projects": ["MOBAweb/Host/MOBAweb.Host.csproj"]
+    },
+    {
       "name": "sound",
       "status": "planned",
       "test-directories": ["Test/Sound"],

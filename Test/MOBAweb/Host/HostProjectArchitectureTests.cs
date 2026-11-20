@@ -28,11 +28,11 @@ internal sealed class HostProjectArchitectureTests
             .Where(value => ForbiddenText.Any(word => value.Contains(word, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(execTasks, Is.Empty, "The host project must not run external commands.");
             Assert.That(nodeMentions, Is.Empty, "The host project must not mention npm, node or package.json.");
-        });
+        }
     }
 
     private static XElement LoadHostProject()

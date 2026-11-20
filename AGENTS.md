@@ -125,7 +125,7 @@ Do not assume every directory is an active project or discover projects inside `
 | `MOBAflow/` | WinUI 3 desktop UI and Windows service implementations |
 | `MOBAsmart/` | Android MAUI UI, local/remote runtime coordination and mobile services |
 | `MOBApi/` | ASP.NET Core REST and SignalR host (default REST port 5001) |
-| `MOBAweb/` | MOBAdemo web showcase: static ASP.NET Core host; the React app follows |
+| `MOBAweb/` | MOBAdemo web showcase: static ASP.NET Core host and its web app |
 | `MOBAdisplay/` | Display rendering/transport; ESP32-S3 firmware in `esp32/` |
 | `Sound/` | Platform-neutral sound-effect playback contracts and null implementation |
 | `Speech.Base/` | Platform-neutral speech contracts, shared output and audio cache |
