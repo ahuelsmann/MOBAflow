@@ -39,6 +39,9 @@ internal static class MobaWebHost
         app.UsePrecompressedFiles();
         app.UseStaticFiles(HostHardening.CreateStaticFileOptions());
         app.MapMethods("/health", ["GET", "HEAD"], () => "ok");
+        // "$" (end of path) is a Google and Bing extension that RFC 9309 does not define. A plain RFC rule cannot
+        // allow "/" alone (every prefix rule also covers the sub-paths), so the extension is kept: crawlers that
+        // ignore it only see "Disallow: /" and index nothing, which is the safe failure.
         app.MapMethods(
             "/robots.txt",
             ["GET", "HEAD"],

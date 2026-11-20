@@ -6,12 +6,15 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Moba.Web;
 
 /// <summary>Security headers, caching, precompressed files and routing rules of the demo host (FR-007, FR-051, FR-058, FR-059, FR-070 to FR-073).</summary>
 [TestFixture]
 internal sealed class MobaWebHostHardeningTests
 {
     private const string ScriptPath = "/assets/app.abc123.js";
+    private const string TwinPath = "/assets/twin.js";
     private const string Script = "console.log('mobaweb');\nconsole.log('mobaweb');\nconsole.log('mobaweb');\nconsole.log('mobaweb');\n";
 
     private static readonly (string Name, string Value)[] ExpectedSecurityHeaders =
@@ -20,7 +23,6 @@ internal sealed class MobaWebHostHardeningTests
         ("X-Content-Type-Options", "nosniff"),
         ("Referrer-Policy", "no-referrer"),
         ("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()"),
-        ("Strict-Transport-Security", "max-age=31536000"),
         ("Cross-Origin-Resource-Policy", "same-origin"),
     ];
 
@@ -312,6 +314,176 @@ internal sealed class MobaWebHostHardeningTests
         }
     }
 
+    [TestCase(ScriptPath, "br", "bytes=999-", HttpStatusCode.RequestedRangeNotSatisfiable, "Range Not Satisfiable", null)]
+    [TestCase(ScriptPath, "", "bytes=999-", HttpStatusCode.RequestedRangeNotSatisfiable, "Range Not Satisfiable", null)]
+    [TestCase(ScriptPath, "br", null, HttpStatusCode.PreconditionFailed, "Precondition Failed", "\"nope\"")]
+    [TestCase("/", "br", null, HttpStatusCode.PreconditionFailed, "Precondition Failed", "\"nope\"")]
+    [TestCase("/", "", "bytes=999-", HttpStatusCode.RequestedRangeNotSatisfiable, "Range Not Satisfiable", null)]
+    public async Task ErrorResponse_IsNeutralAndCarriesNoVariantOrImmutableHeaders(
+        string path,
+        string acceptEncoding,
+        string? range,
+        HttpStatusCode status,
+        string text,
+        string? ifMatch)
+    {
+        using var response = await SendAsync(
+            HttpMethod.Get,
+            path,
+            ("Accept-Encoding", acceptEncoding),
+            ("Range", range),
+            ("If-Match", ifMatch)).ConfigureAwait(false);
+        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(status));
+            Assert.That(body, Is.EqualTo(text));
+            Assert.That(response.Content.Headers.ContentEncoding, Is.Empty);
+            Assert.That(response.Headers.ETag, Is.Null);
+            Assert.That(response.Headers.CacheControl?.ToString(), Is.EqualTo("no-cache"));
+        }
+
+        AssertSecurityHeaders(response);
+    }
+
+    [Test]
+    public async Task SatisfiableRange_OnVariant_IsConsistentWithTheVariant()
+    {
+        using var full = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", "br")).ConfigureAwait(false);
+        var variant = await full.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+        using var part = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("Accept-Encoding", "br"),
+            ("Range", "bytes=0-3")).ConfigureAwait(false);
+        var bytes = await part.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(part.StatusCode, Is.EqualTo(HttpStatusCode.PartialContent));
+            Assert.That(part.Content.Headers.ContentEncoding, Is.EqualTo(Br));
+            Assert.That(part.Content.Headers.ContentRange?.ToString(), Is.EqualTo($"bytes 0-3/{variant.Length}"));
+            Assert.That(part.Headers.ETag, Is.EqualTo(full.Headers.ETag));
+            Assert.That(part.Headers.Vary, Does.Contain("Accept-Encoding"));
+            Assert.That(bytes, Is.EqualTo(variant[..4]));
+        }
+    }
+
+    [TestCase("identity;q=1, br;q=0.1", "")]
+    [TestCase("identity, br;q=0.5, gzip;q=0.5", "")]
+    [TestCase("br;q=0.2, identity;q=0.9", "")]
+    [TestCase("identity;q=0, gzip", "gzip")]
+    [TestCase("identity;q=0, br;q=0.5, gzip;q=0.4", "br")]
+    [TestCase("identity;q=0", "")]
+    [TestCase("*;q=0", "")]
+    [TestCase("*;q=0, identity", "")]
+    [TestCase("*;q=0, br", "br")]
+    [TestCase("br;q=0, *;q=0.5", "gzip")]
+    public async Task AcceptEncoding_HonoursIdentityAndWildcardQuality(string acceptEncoding, string expectedEncoding)
+    {
+        // RFC 9110 12.5.3: when nothing is acceptable ("identity;q=0" or "*;q=0" alone) the server may answer 406
+        // or serve the file unencoded; the host serves it unencoded.
+        using var response = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", acceptEncoding))
+            .ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(string.Join(",", response.Content.Headers.ContentEncoding), Is.EqualTo(expectedEncoding));
+        }
+    }
+
+    [Test]
+    public async Task VariantsOfEqualSizeAndTime_HaveDistinctETags()
+    {
+        using var br = await SendAsync(HttpMethod.Get, TwinPath, ("Accept-Encoding", "br")).ConfigureAwait(false);
+        using var gz = await SendAsync(HttpMethod.Get, TwinPath, ("Accept-Encoding", "gzip")).ConfigureAwait(false);
+        using var plain = await SendAsync(HttpMethod.Get, TwinPath).ConfigureAwait(false);
+
+        Assert.That(
+            new[] { br.Headers.ETag!.ToString(), gz.Headers.ETag!.ToString(), plain.Headers.ETag!.ToString() }.Distinct().Count(),
+            Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task Revalidation_WithTheTagOfAnotherVariant_DoesNotReturn304()
+    {
+        using var br = await SendAsync(HttpMethod.Get, TwinPath, ("Accept-Encoding", "br")).ConfigureAwait(false);
+        using var sameVariant = await SendAsync(
+            HttpMethod.Get,
+            TwinPath,
+            ("Accept-Encoding", "br"),
+            ("If-None-Match", br.Headers.ETag!.ToString())).ConfigureAwait(false);
+        using var otherVariant = await SendAsync(
+            HttpMethod.Get,
+            TwinPath,
+            ("Accept-Encoding", "gzip"),
+            ("If-None-Match", br.Headers.ETag!.ToString())).ConfigureAwait(false);
+        using var uncompressed = await SendAsync(
+            HttpMethod.Get,
+            TwinPath,
+            ("If-None-Match", br.Headers.ETag!.ToString())).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(sameVariant.StatusCode, Is.EqualTo(HttpStatusCode.NotModified));
+            Assert.That(otherVariant.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(uncompressed.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        }
+    }
+
+    [Test]
+    public async Task HstsIsAbsent_OnPlainHttpLoopback()
+    {
+        using var response = await SendAsync(HttpMethod.Get, "/").ConfigureAwait(false);
+
+        Assert.That(response.Headers.Contains("Strict-Transport-Security"), Is.False);
+    }
+
+    [TestCase(true, "demo.azurewebsites.net", true)]
+    [TestCase(true, "DEMO.example.org:8443", true)]
+    [TestCase(false, "demo.azurewebsites.net", false)]
+    [TestCase(true, "localhost", false)]
+    [TestCase(true, "localhost:5001", false)]
+    [TestCase(true, "app.localhost", false)]
+    [TestCase(true, "127.0.0.1", false)]
+    [TestCase(true, "127.0.0.1:5001", false)]
+    [TestCase(true, "[::1]", false)]
+    [TestCase(true, "[::1]:5001", false)]
+    public void Hsts_IsSentOnlyOverHttpsToANonLoopbackHost(bool isHttps, string host, bool expected)
+    {
+        Assert.That(HostHardening.ShouldSendHsts(isHttps, new HostString(host)), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public async Task NotModified_ForAnAsset_KeepsTheImmutableCacheControl()
+    {
+        using var first = await SendAsync(HttpMethod.Get, ScriptPath).ConfigureAwait(false);
+        using var second = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("If-None-Match", first.Headers.ETag!.ToString())).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(second.StatusCode, Is.EqualTo(HttpStatusCode.NotModified));
+            Assert.That(second.Headers.CacheControl?.ToString(), Is.EqualTo("public, max-age=31536000, immutable"));
+        }
+    }
+
+    [TestCase(ScriptPath + ".br.")]
+    [TestCase(ScriptPath + ".gz.")]
+    [TestCase(ScriptPath + ".br ")]
+    [TestCase(ScriptPath + ".BR")]
+    [TestCase(ScriptPath + ".Gz")]
+    public async Task CompressedSiblingVariants_OfThePathAreNotServed(string path)
+    {
+        using var response = await SendAsync(HttpMethod.Get, path, ("Accept-Encoding", "br, gzip")).ConfigureAwait(false);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
     private static void AssertSecurityHeaders(HttpResponseMessage response)
     {
         foreach (var (name, value) in ExpectedSecurityHeaders)
@@ -334,6 +506,17 @@ internal sealed class MobaWebHostHardeningTests
         var assets = Directory.CreateDirectory(Path.Combine(webRoot, "assets")).FullName;
         WriteVariants(Path.Combine(assets, "app.abc123.js"), Script);
         WriteVariants(Path.Combine(webRoot, "index.html"), RunningHost.FixtureDocument);
+
+        // Variants with identical length and identical timestamp: their file-derived ETags would collide.
+        var twin = Path.Combine(assets, "twin.js");
+        File.WriteAllText(twin, "twin original content, longer than the variants");
+        File.WriteAllBytes(twin + ".br", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+        File.WriteAllBytes(twin + ".gz", new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 });
+        var stamp = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        foreach (var file in new[] { twin, twin + ".br", twin + ".gz" })
+        {
+            File.SetLastWriteTimeUtc(file, stamp);
+        }
     }
 
     private static void WriteVariants(string path, string content)
