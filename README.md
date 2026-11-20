@@ -11,7 +11,7 @@ Built for Roco Z21, with a Windows control center and an Android companion.
 [![Windows](https://img.shields.io/badge/desktop-Windows-0078D4?style=flat-square&logo=windows)](#mobaflow-desktop)
 [![Android](https://img.shields.io/badge/mobile-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](#mobasmart)
 [![Quality](https://github.com/ahuelsmann/MOBAflow/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/ahuelsmann/MOBAflow/actions/workflows/quality.yml)
-[![Web Demo: coming soon](https://img.shields.io/badge/web%20demo-coming%20soon-0078D4?style=flat-square)](specs/020-web-demo/spec.md)
+[![MOBAdemo](https://img.shields.io/badge/MOBAdemo-coming%20soon-e3008c?style=flat-square)](https://mobaflow-demo.azurewebsites.net/)
 
 [Get started](#get-started) ·
 [Features](#features) ·
@@ -31,9 +31,9 @@ locomotives from your PC or phone, organize your rolling stock, and define what
 happens when a train reaches a feedback point. Reusable workflows connect those
 events to commands, station announcements, signal changes and journey progress.
 
-**Web demo (coming soon):** A browser-based visual showcase of MOBAflow (Train
-Control, Workflows, Track Plan and Signal Box — no Windows installation or Z21
-hardware required) is being prepared for
+**MOBAdemo (coming soon):** A browser-based visual showcase of MOBAflow (Train
+Control, Workflows, Track Plan and Signal Box—no Windows installation or Z21
+hardware required) is being prepared on the live coming-soon page at
 [mobaflow-demo.azurewebsites.net](https://mobaflow-demo.azurewebsites.net/)
 (tracked in [#430](https://github.com/ahuelsmann/MOBAflow/issues/430);
 [specification](specs/020-web-demo/spec.md)).
@@ -207,7 +207,7 @@ client isolation and firewall rules can prevent discovery or communication.
 | Planned work and current status | [Roadmap](plans/ROADMAP.md) · [Public Kanban](https://github.com/users/ahuelsmann/projects/1) · [Issues](https://github.com/ahuelsmann/MOBAflow/issues) |
 | Version history | [Tags](https://github.com/ahuelsmann/MOBAflow/tags) · [Changelog](CHANGELOG.md) |
 | A quick look at recent development | [MOBAnews](https://mobaflow-fortschritt.ahuelsmann1177.chatgpt.site) |
-| Browser showcase (coming soon) | [mobaflow-demo.azurewebsites.net](https://mobaflow-demo.azurewebsites.net/) · [Specification](specs/020-web-demo/spec.md) · [#430](https://github.com/ahuelsmann/MOBAflow/issues/430) |
+| MOBAdemo (coming soon) | [Live coming-soon page](https://mobaflow-demo.azurewebsites.net/) · [Specification](specs/020-web-demo/spec.md) · [#430](https://github.com/ahuelsmann/MOBAflow/issues/430) |
 
 ## Contributing
 
