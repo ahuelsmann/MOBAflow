@@ -1,9 +1,10 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
-// The host serves the app under a content security policy of
-// script-src 'self'; style-src 'self' (spec FR-071), so the output must carry no
-// inline script or style. The module preload polyfill is an inline script, so it is off.
+// The host serves the app under script-src 'self'; style-src 'self' (spec FR-071), so the output must carry no
+// inline script or style; the build test checks the entry document. Vite 8 injects the module
+// preload polyfill into the entry chunk (not as an inline script), so it is not a CSP risk. It
+// stays off because every supported browser has native module preload, which saves bytes.
 export default defineConfig({
   plugins: [react()],
   build: {

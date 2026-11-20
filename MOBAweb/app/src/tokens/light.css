@@ -4,7 +4,7 @@
   --text-primary: #1a1a1a;
   --text-secondary: #5c5c5c;
   --stroke-default: #e0e0e0;
-  /* Neutral placeholder until the maintainer's magenta is sampled (plan T5, slice 20). */
+  /* Neutral placeholder until slice 20 sets the maintainer's purple (decision 2026-11-20, plan T5). */
   --accent-fill-default: #6e6e6e;
   --accent-fill-secondary: #7f7f7f;
   --accent-fill-tertiary: #909090;

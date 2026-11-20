@@ -7,7 +7,7 @@ export interface AppProps {
 
 type LoadState = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; message: string };
 
-export function App({ load }: AppProps) {
+export function App({ load }: Readonly<AppProps>) {
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
 
   useEffect(() => {
@@ -29,9 +29,9 @@ export function App({ load }: AppProps) {
 
   if (state.kind === 'loading') {
     return (
-      <div role="status" className="app-message">
+      <output className="app-message">
         Loading MOBAdemo...
-      </div>
+      </output>
     );
   }
 

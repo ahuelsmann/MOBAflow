@@ -30,4 +30,4 @@ Run them in this folder.
   `@mui/icons-material` and `react-icons`; import one used part instead.
 - **Page flags.** `src/config/enabledPages.ts` is composed from one `enabled.ts` per page under
   `src/pages/`. A page slice flips only its own flag, in the pull request whose browser checks pass.
-- **Accent colour.** The accent tokens hold a neutral placeholder until the magenta is confirmed (T5).
+- **Accent colour.** Accent colour: purple (maintainer decision 2026-11-20); the value is set in slice 20. Until then the accent tokens hold a neutral placeholder (T5).

@@ -1,11 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { parseTokenKeys } from './tokenKeys';
 
 function readTokenKeys(fileName: string): string[] {
-  const css = readFileSync(join(import.meta.dirname, fileName), 'utf8');
-  const keys = [...css.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gim)].map((match) => match[1]);
-  return keys.sort();
+  return parseTokenKeys(readFileSync(join(import.meta.dirname, fileName), 'utf8'));
 }
 
 describe('theme token files (FR-023)', () => {
