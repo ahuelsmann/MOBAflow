@@ -137,15 +137,17 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
   `Done` = merged. Status messages that arrive late never overwrite a newer state.
 - **Issue intake.** Issue items have no Risk class. `Planned` = accepted backlog; `Ready` = the maintainer's pull
   trigger: the maintainer moved the issue there so that the COO takes it in. Only the COO claims `Ready` issues; its
-  scheduled monitoring session (Claude Monitor) does this on the COO's behalf. On claim the COO moves the issue to
-  `In progress` at once, so it is not picked up twice; the issue stays there during analysis, while it waits for a
-  maintainer decision and while its slices are delivered. `Done` = closed, delivered or decided against.
+  scheduled monitoring session (Claude Monitor) does this on the COO's behalf. The COO claims an issue when its
+  analysis or its first slice can start, and then moves it to `In progress` at once, so it is not picked up twice.
+  A claimed issue stays in `In progress` during analysis, while it waits for a maintainer decision and while its
+  slices are delivered, also when a later slice has to wait. `Done` = closed, delivered or decided against.
   - An issue labelled `needs-specification`, or one that needs an open product, UX or architecture decision, starts
     with a Decision & Steering Triad analysis and a concise recommendation to the maintainer, not with code. This
-    analysis is not held back by the WIP limit.
+    analysis is not held back by the WIP limit, so such an issue is claimed even when three code slices are open.
   - Every code slice cut from an issue follows the normal flow: the code-slice WIP limit above (a new code slice
     starts only while fewer than three are open), free locks, design note and Go, and the CPM/TD announcement
-    and veto window. When no slice can start, the issue stays in `Ready`.
+    and veto window. An issue that is ready for implementation stays in `Ready`, unclaimed, until its first slice
+    can start.
   - The MOBAdev repository (`ahuelsmann/MOBAdev`) and its local dashboard only display this board; nobody claims or
     moves items from there.
 
