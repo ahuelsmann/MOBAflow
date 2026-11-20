@@ -34,9 +34,18 @@ internal static class MobaWebHost
             context.Response.ContentType = "text/plain";
             await context.Response.WriteAsync("Internal Server Error", context.RequestAborted).ConfigureAwait(false);
         }));
+        app.UseResponsePolicy();
         app.UseDefaultFiles();
-        app.UseStaticFiles();
-        app.MapGet("/health", () => "ok");
+        app.UsePrecompressedFiles();
+        app.UseStaticFiles(HostHardening.CreateStaticFileOptions());
+        app.MapMethods("/health", ["GET", "HEAD"], () => "ok");
+        // "$" (end of path) is a Google and Bing extension that RFC 9309 does not define. A plain RFC rule cannot
+        // allow "/" alone (every prefix rule also covers the sub-paths), so the extension is kept: crawlers that
+        // ignore it only see "Disallow: /" and index nothing, which is the safe failure.
+        app.MapMethods(
+            "/robots.txt",
+            ["GET", "HEAD"],
+            () => Results.Text("User-agent: *\nAllow: /$\nDisallow: /\n", "text/plain"));
         configure?.Invoke(app);
         return app;
     }
