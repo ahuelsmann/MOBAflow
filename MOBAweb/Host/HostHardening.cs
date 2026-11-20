@@ -65,39 +65,13 @@ internal static class HostHardening
             context.Response.OnStarting(static state =>
             {
                 var response = (HttpResponse)state;
-                var headers = response.Headers;
-                headers.ContentSecurityPolicy = ContentSecurityPolicy;
-                headers.XContentTypeOptions = "nosniff";
-                headers["Referrer-Policy"] = "no-referrer";
-                headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
-                if (ShouldSendHsts(response.HttpContext.Request.IsHttps, response.HttpContext.Request.Host))
-                {
-                    headers.StrictTransportSecurity = "max-age=31536000";
-                }
-
-                headers["Cross-Origin-Resource-Policy"] = "same-origin";
-                if (response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    headers["Cross-Origin-Opener-Policy"] = "same-origin";
-                }
-
+                ApplySecurityHeaders(response);
                 if (response.StatusCode >= StatusCodes.Status400BadRequest)
                 {
-                    // An error answer belongs to no file variant and must never be cached as one.
-                    headers.Remove(HeaderNames.ContentEncoding);
-                    headers.Remove(HeaderNames.ETag);
-                    headers.Remove(HeaderNames.LastModified);
-                    if (headers.CacheControl.ToString().Contains("immutable", StringComparison.Ordinal))
-                    {
-                        headers.Remove(HeaderNames.CacheControl);
-                    }
+                    StripVariantHeaders(response.Headers);
                 }
 
-                if (!headers.ContainsKey(HeaderNames.CacheControl))
-                {
-                    headers[HeaderNames.CacheControl] = "no-cache";
-                }
-
+                ApplyDefaultCacheControl(response.Headers);
                 return Task.CompletedTask;
             }, context.Response);
             await next(context).ConfigureAwait(false);
@@ -121,6 +95,45 @@ internal static class HostHardening
             context.Response.StatusCode = StatusCodes.Status405MethodNotAllowed;
             context.Response.Headers.Allow = AllowedMethods;
         });
+    }
+
+    private static void ApplySecurityHeaders(HttpResponse response)
+    {
+        var headers = response.Headers;
+        headers.ContentSecurityPolicy = ContentSecurityPolicy;
+        headers.XContentTypeOptions = "nosniff";
+        headers["Referrer-Policy"] = "no-referrer";
+        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
+        headers["Cross-Origin-Resource-Policy"] = "same-origin";
+        if (ShouldSendHsts(response.HttpContext.Request.IsHttps, response.HttpContext.Request.Host))
+        {
+            headers.StrictTransportSecurity = "max-age=31536000";
+        }
+
+        if (response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            headers["Cross-Origin-Opener-Policy"] = "same-origin";
+        }
+    }
+
+    // An error answer belongs to no file variant and must never be cached as one.
+    private static void StripVariantHeaders(IHeaderDictionary headers)
+    {
+        headers.Remove(HeaderNames.ContentEncoding);
+        headers.Remove(HeaderNames.ETag);
+        headers.Remove(HeaderNames.LastModified);
+        if (headers.CacheControl.ToString().Contains("immutable", StringComparison.Ordinal))
+        {
+            headers.Remove(HeaderNames.CacheControl);
+        }
+    }
+
+    private static void ApplyDefaultCacheControl(IHeaderDictionary headers)
+    {
+        if (!headers.ContainsKey(HeaderNames.CacheControl))
+        {
+            headers[HeaderNames.CacheControl] = "no-cache";
+        }
     }
 
     /// <summary>Serves a <c>.br</c> or <c>.gz</c> sibling of a requested file when the client accepts it; never compresses at run time.</summary>
@@ -182,18 +195,49 @@ internal static class HostHardening
         },
     };
 
+    // A tag that matches no file tag: the static-file middleware compares with the tags of the served file, which are
+    // hexadecimal digits only.
+    private const string NeverMatchingTag = "\"-\"";
+
     // A conditional request for a variant can only match a tag that names that variant's coding. Tags of other
-    // variants (or of the uncompressed file) are dropped; matching tags lose the coding suffix so that the static
-    // file middleware compares them with the file's own tag.
+    // variants (or of the uncompressed file) never match; matching tags lose the coding suffix so that the
+    // static-file middleware compares them with the file's own tag.
     private static void RestrictConditionalToVariant(HttpRequest request, string coding)
     {
-        var tags = request.GetTypedHeaders().IfNoneMatch;
-        if (tags.Count == 0)
+        var suffix = "-" + coding + "\"";
+        var headers = request.Headers;
+        var typed = request.GetTypedHeaders();
+        if (headers.ContainsKey(HeaderNames.IfNoneMatch))
         {
-            return;
+            var kept = ToFileTags(typed.IfNoneMatch, suffix);
+            if (kept.Count == 0)
+            {
+                headers.Remove(HeaderNames.IfNoneMatch);
+            }
+            else
+            {
+                headers.IfNoneMatch = string.Join(", ", kept);
+            }
+
+            // RFC 9110 13.2.2: with If-None-Match present If-Modified-Since is ignored; dropping a tag that cannot
+            // match must not let If-Modified-Since answer 304 instead.
+            headers.Remove(HeaderNames.IfModifiedSince);
         }
 
-        var suffix = "-" + coding + "\"";
+        if (headers.ContainsKey(HeaderNames.IfMatch))
+        {
+            var kept = ToFileTags(typed.IfMatch, suffix);
+            headers.IfMatch = kept.Count == 0 ? NeverMatchingTag : string.Join(", ", kept);
+        }
+
+        if (headers.TryGetValue(HeaderNames.IfRange, out var range))
+        {
+            headers.IfRange = MapIfRange(range.ToString(), suffix);
+        }
+    }
+
+    private static List<string> ToFileTags(IList<EntityTagHeaderValue> tags, string suffix)
+    {
         var kept = new List<string>();
         foreach (var tag in tags)
         {
@@ -208,14 +252,19 @@ internal static class HostHardening
             }
         }
 
-        if (kept.Count == 0)
+        return kept;
+    }
+
+    // If-Range carries either a tag or a date; only a tag needs mapping.
+    private static string MapIfRange(string value, string suffix)
+    {
+        var trimmed = value.Trim();
+        if (!trimmed.StartsWith('"') && !trimmed.StartsWith("W/", StringComparison.Ordinal))
         {
-            request.Headers.Remove(HeaderNames.IfNoneMatch);
+            return value;
         }
-        else
-        {
-            request.Headers.IfNoneMatch = string.Join(", ", kept);
-        }
+
+        return trimmed.EndsWith(suffix, StringComparison.Ordinal) ? trimmed[..^suffix.Length] + "\"" : NeverMatchingTag;
     }
 
     // RFC 9110 12.5.3: the coding with the highest quality wins, ties go to Brotli, then gzip, then identity.
@@ -238,7 +287,9 @@ internal static class HostHardening
             }
         }
 
-        return bestQuality >= QualityOf(accepted, "identity", defaultQuality: 1.0) ? best : null;
+        // An identity that is not listed (and not covered by "*") is the least preferred fallback: any listed coding
+        // with a positive quality beats it, but it still wins over a coding refused with q=0.
+        return bestQuality >= QualityOf(accepted, "identity", defaultQuality: double.Epsilon) ? best : null;
     }
 
     private static double QualityOf(IList<StringWithQualityHeaderValue> accepted, string encoding, double defaultQuality)

@@ -380,6 +380,9 @@ internal sealed class MobaWebHostHardeningTests
     [TestCase("*;q=0, identity", "")]
     [TestCase("*;q=0, br", "br")]
     [TestCase("br;q=0, *;q=0.5", "gzip")]
+    [TestCase("br;q=0.9, gzip;q=0.8", "br")]
+    [TestCase("gzip;q=0.1", "gzip")]
+    [TestCase("br;q=0.001", "br")]
     public async Task AcceptEncoding_HonoursIdentityAndWildcardQuality(string acceptEncoding, string expectedEncoding)
     {
         // RFC 9110 12.5.3: when nothing is acceptable ("identity;q=0" or "*;q=0" alone) the server may answer 406
@@ -431,6 +434,85 @@ internal sealed class MobaWebHostHardeningTests
             Assert.That(otherVariant.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(uncompressed.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
+    }
+
+    [Test]
+    public async Task IfRange_WithTheOwnVariantTag_ReturnsPartialContent()
+    {
+        using var full = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", "br")).ConfigureAwait(false);
+        var variant = await full.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+        using var part = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("Accept-Encoding", "br"),
+            ("Range", "bytes=0-3"),
+            ("If-Range", full.Headers.ETag!.ToString())).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(part.StatusCode, Is.EqualTo(HttpStatusCode.PartialContent));
+            Assert.That(await part.Content.ReadAsByteArrayAsync().ConfigureAwait(false), Is.EqualTo(variant[..4]));
+        }
+    }
+
+    [Test]
+    public async Task IfRange_WithAnotherVariantTag_ReturnsTheFullVariant()
+    {
+        using var gzip = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", "gzip")).ConfigureAwait(false);
+        using var full = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("Accept-Encoding", "br"),
+            ("Range", "bytes=0-3"),
+            ("If-Range", gzip.Headers.ETag!.ToString())).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(full.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(full.Content.Headers.ContentEncoding, Is.EqualTo(Br));
+        }
+    }
+
+    [Test]
+    public async Task IfMatch_WithTheOwnVariantTag_IsAccepted()
+    {
+        using var first = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", "br")).ConfigureAwait(false);
+        using var second = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("Accept-Encoding", "br"),
+            ("If-Match", first.Headers.ETag!.ToString())).ConfigureAwait(false);
+
+        Assert.That(second.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    [Test]
+    public async Task IfMatch_WithAnotherVariantTag_FailsThePrecondition()
+    {
+        using var gzip = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", "gzip")).ConfigureAwait(false);
+        using var response = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("Accept-Encoding", "br"),
+            ("If-Match", gzip.Headers.ETag!.ToString())).ConfigureAwait(false);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.PreconditionFailed));
+    }
+
+    [Test]
+    public async Task IfNoneMatch_WithAnotherVariantTag_IgnoresIfModifiedSince()
+    {
+        // RFC 9110 13.2.2: with If-None-Match present, If-Modified-Since is ignored.
+        using var gzip = await SendAsync(HttpMethod.Get, ScriptPath, ("Accept-Encoding", "gzip")).ConfigureAwait(false);
+        var modified = gzip.Content.Headers.LastModified!.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+        using var response = await SendAsync(
+            HttpMethod.Get,
+            ScriptPath,
+            ("Accept-Encoding", "br"),
+            ("If-None-Match", gzip.Headers.ETag!.ToString()),
+            ("If-Modified-Since", modified)).ConfigureAwait(false);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 
     [Test]
