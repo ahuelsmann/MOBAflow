@@ -91,7 +91,7 @@ test/analyzer/build-only tooling):
 7. **Auto-merge.** When no Blocker, High or Medium finding is open and SonarCloud still reports zero issues, the
    COO arms GitHub auto-merge bound to the reviewed head
    (`gh pr merge <n> --squash --auto --match-head-commit <sha>`). The non-required mutation lanes (Common,
-   Speech.Base, Backend, MOBApi, SharedUI) must be green, or skipped by the change filter, on that head first; the
+   Contracts, Speech.Base, Backend, MOBApi, SharedUI) must be green, or skipped by the change filter, on that head first; the
    required checks gate the merge itself. A finding counts as resolved only when it is fixed, or when a fresh
    independent review or the human accepts the evidence that it does not apply; the writer, the COO or the merger
    never dismisses it alone.

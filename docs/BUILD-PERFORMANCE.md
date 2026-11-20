@@ -165,8 +165,9 @@ and on main runs it is skipped; its required check name remains in place, and a
 skipped job is not an AAB build. Changes in the projects MOBAsmart compiles
 (`SharedUI`, `Common`, `Sound`, `Backend`, `MOBAdisplay`, `TrackPlan.Renderer`,
 `TrackPlan.Editor`, `TrackLibrary.Base`, `Speech.Base`, `Domain`, `Contracts`),
-in repository-wide build inputs (`Directory.*.props`, `global.json`) and in the
-job definition itself do not start it automatically. To validate those or
+in repository-wide build inputs (`Directory.*.props`/`.targets`, `global.json`, `NuGet.Config`) and in the
+job definition, the change-scope rules and the scripts the job calls do not start it automatically
+(accepted trade-off). No release workflow builds the AAB; this job is its only CI evidence. To validate those or
 SDK/workload changes on a clean Windows runner,
 dispatch Quality with `validate_android=true` against the task branch:
 
@@ -199,7 +200,8 @@ category, the Windows file-lock test
 and the Skia fixtures `ClockRendererTests`, `Rgb565ConverterTests` and
 `SkiaFrameRendererTests`, which run in the Windows desktop job.
 `scripts/Test-TestRunResults.ps1` requires at least 2500 passed tests and no
-skipped test; the TRX results are archived for 30 days. Locally:
+skipped test; the TRX results are archived for 30 days. A Linux-only test failure is fixed in the test or
+product code, not excluded, unless the test needs a Windows API. Locally:
 
 ```powershell
 dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --configuration Release --filter "TestCategory!=Hardware&FullyQualifiedName!=Moba.Test.Common.MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource&FullyQualifiedName!~ClockRendererTests&FullyQualifiedName!~Rgb565ConverterTests&FullyQualifiedName!~SkiaFrameRendererTests"
@@ -210,7 +212,7 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main` and manual runs classify all scopes as enabled. Other PR changes enable
-desktop, display, Common, Speech.Base, Backend, MOBApi and SharedUI mutation jobs; Domain mutation and ESP32 firmware
+desktop, display, Common, Contracts, Speech.Base, Backend, MOBApi and SharedUI mutation jobs; Domain mutation and ESP32 firmware
 steps also depend on their input paths. Android runs on PRs that change
 `MOBAsmart/` or `quality/analyzer-baseline.android.json` and with the manual
 `validate_android` input; pushes to `main` do not run it. If change detection
@@ -220,7 +222,7 @@ skipped. A skipped check is not evidence that tests ran.
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
 when `MOBAdisplay/esp32/` changes or an unknown input path requires them. The
-Common, Speech.Base, Backend, MOBApi and SharedUI mutation jobs run for every code-relevant PR. Domain mutation testing runs when
+Common, Contracts, Speech.Base, Backend, MOBApi and SharedUI mutation jobs run for every code-relevant PR. Domain mutation testing runs when
 `Domain/`, its linked tests and fixture data (`Test/TestFile/`), `MutationTest/`
 or the .NET build configuration change. A path outside the known .NET areas,
 such as a workflow, a script or a new top-level folder, enables both firmware
@@ -282,6 +284,35 @@ Run the same checks locally after producing a Release Cobertura report:
 ./scripts/Test-CoverageThresholds.ps1 -CoveragePath <coverage.cobertura.xml>
 ./scripts/Test-MutationLaneCoverage.ps1
 ```
+
+### Deliverables, lanes and required checks
+
+Every supported deliverable has a documented local command and a CI lane (RF-07,
+[#360](https://github.com/ahuelsmann/MOBAflow/issues/360), complete since 2026-11-20). The lanes are jobs of
+[Quality CI](../.github/workflows/quality.yml) unless noted.
+
+| Deliverable | Local command | CI lane |
+| --- | --- | --- |
+| Portable libraries and tests on Linux | `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0` | `portable-linux`, with the C# whitespace gate |
+| Windows desktop, Windows test suite, coverage, analyzer gates, NuGet audit | `dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false` | `desktop` |
+| MOBApi host and its process integration tests | `dotnet build MOBApi/MOBApi.csproj` | `display-protocol` and the `desktop` test graph |
+| Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (firmware when firmware paths change) |
+| Android Release AAB | the Release AAB steps above; `scripts/Test-AndroidAppBundle.ps1` | `android-release` on PRs that change `MOBAsmart/**` or the Android analyzer baseline, or by manual dispatch (maintainer decision of 2026-11-08); the AAB artifact is kept 30 days |
+| Mutation lanes | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | one `mutation-<lane>` job per active lane (below) |
+| C# formatting | `dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32` | step of `portable-linux` |
+| Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule |
+| Release package | [Release Studio](../.github/workflows/release-studio.yml) (`MOBAflow` and `MOBApi` only) | manual release workflow |
+
+The `main` ruleset requires these checks and an up-to-date branch: Repository instruction consistency; Windows
+desktop build, tests, and coverage; Display protocol host, parser, and firmware; Android Release AAB; Domain
+mutation testing; SonarCloud Code Analysis; Portable tests on Linux. A skipped scoped job satisfies its required
+check but is no evidence of a build. The other mutation lanes (Common, Contracts, Speech.Base, Backend, MOBApi,
+SharedUI) do not block a merge in GitHub; the [master
+coordination](../.github/instructions/master-coordination.instructions.md) rules still require them to be green, or
+skipped by the change filter, on the reviewed head before auto-merge is armed. The desktop and Linux jobs archive
+their test results (the desktop job also its coverage), the mutation jobs their reports, `android-release` the AAB
+and `display-protocol` the ESP32 bundle as workflow artifacts; the MOBApi integration results of `display-protocol`
+are checked but not archived.
 
 ### Active mutation lanes
 
