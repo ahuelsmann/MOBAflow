@@ -21,6 +21,7 @@ using Windows.UI;
 public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 {
     private readonly ISolutionSession solutionSession;
+    private readonly IDialogService dialogService;
     private readonly ILogger<MatrixPageViewModel> logger;
     private bool isLoading;
     private bool isDisposed;
@@ -33,12 +34,14 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
     public ObservableCollection<ViewModel5x5> Matrices { get; } = [];
 
-    public MatrixPageViewModel(ISolutionSession solutionSession, ILogger<MatrixPageViewModel> logger)
+    public MatrixPageViewModel(ISolutionSession solutionSession, IDialogService dialogService, ILogger<MatrixPageViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(solutionSession);
+        ArgumentNullException.ThrowIfNull(dialogService);
         ArgumentNullException.ThrowIfNull(logger);
         SelectedColorBrush = new SolidColorBrush(SelectedColor);
         this.solutionSession = solutionSession;
+        this.dialogService = dialogService;
         this.logger = logger;
         this.solutionSession.SolutionLoaded += OnSolutionLoaded;
         this.solutionSession.PropertyChanged += OnSolutionSessionPropertyChanged;
@@ -64,9 +67,16 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void DeleteMatrix(ViewModel5x5? matrix)
+    private async Task DeleteMatrixAsync(ViewModel5x5? matrix)
     {
         if (matrix == null)
+        {
+            return;
+        }
+
+        var confirmed = await MatrixDeleteConfirmation.ConfirmAsync(
+            dialogService, solutionSession, matrix.Name, () => Matrices.Contains(matrix)).ConfigureAwait(true);
+        if (!confirmed)
         {
             return;
         }

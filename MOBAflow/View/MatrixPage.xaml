@@ -58,6 +58,7 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
@@ -65,7 +66,15 @@
                         <SelectorBarItem IsSelected="True" Text="5x5 Matrix" />
                     </SelectorBar>
 
-                    <matrix:Matrix5x5ConfigurationView Grid.Row="1" DataContext="{x:Bind ViewModel, Mode=OneWay}" />
+                    <TextBlock
+                        Grid.Row="1"
+                        Margin="12,4,12,0"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Left-click sets a pixel, right-click clears it."
+                        TextWrapping="Wrap" />
+
+                    <matrix:Matrix5x5ConfigurationView Grid.Row="2" DataContext="{x:Bind ViewModel, Mode=OneWay}" />
                 </Grid>
             </controls:CollapsibleColumnHelper.PanelContent>
         </controls:CollapsibleColumnHelper>
