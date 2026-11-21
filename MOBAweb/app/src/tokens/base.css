@@ -1,0 +1,15 @@
+body {
+  margin: 0;
+  background: var(--background-default);
+  color: var(--text-primary);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.app-message {
+  padding: 24px;
+}
+
+.app-message-error {
+  color: var(--text-primary);
+  border-left: 4px solid var(--accent-fill-default);
+}
