@@ -5,8 +5,8 @@
       produces wwwroot.
     -->
     <PropertyGroup>
-        <RootNamespace>Moba.Web</RootNamespace>
-        <AssemblyName>MOBAweb.Host</AssemblyName>
+        <RootNamespace>Moba.Demo</RootNamespace>
+        <AssemblyName>MOBAdemo</AssemblyName>
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>

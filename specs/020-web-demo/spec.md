@@ -16,7 +16,7 @@
 
 **GitHub Issue**: #430
 
-**Affected Platforms**: A new, separate web application in a new folder `MOBAweb/`. MOBAflow, MOBAsmart, MOBApi, MOBAdisplay and the shared libraries are not changed; the demo uses its own static example data and assets.
+**Affected Platforms**: A new, separate web application in a new folder `MOBAdemo/`. MOBAflow, MOBAsmart, MOBApi, MOBAdisplay and the shared libraries are not changed; the demo uses its own static example data and assets.
 
 **Out of Scope**: Any simulation of a railway (motion, signals, turnouts, track power, feedback); workflow execution; importing or reading a desktop solution; a generator that derives the demo's data from shipped project files at build or run time; full keyboard operation of the demo (pointer input is enough; a basic accessibility floor stays, FR-041 to FR-047); any connection to a Z21 or other hardware; the Backend Z21 runtime; MOBApi's real runtime endpoints; creating, editing or saving content; accounts and sign-in; persistence on the server; a mobile layout (MOBAsmart is the mobile app); the pages other than the four demo pages; localization; speech or sound output; creating Azure resources, secrets, publish profiles or workflows as part of this specification.
 
@@ -33,7 +33,7 @@
 - Q: Does the demo use a Z21 or a simulated command station? → A: No. A demo-only runtime without the Z21 protocol and without a simulated command station behind the `IZ21` roles. The motion model of this answer is superseded by the decision of 2026-11-17 (no simulation).
 - Q: May visitors create or edit content? → A: No. A read-only showcase; visitors cannot create or edit workflows, track plans or other content. The simulated actions this answer allowed (drive, set turnouts and signals, run sample workflows) are superseded by the decision of 2026-11-17.
 - Q: Is state stored? → A: No persistence and no accounts. Each visitor's state lives in memory only.
-- Q: Where does the code live? → A: A new folder `MOBAweb/` with the React app, its own Node/npm build and its own CI job, outside the WinUI and Android build graphs.
+- Q: Where does the code live? → A: A new folder `MOBAdemo/` with the React app, its own Node/npm build and its own CI job, outside the WinUI and Android build graphs.
 - Q: Which UI language? → A: English, as in the apps.
 - Q: Who may open it? → A: Anyone; public, anonymous, no account and no sign-in.
 - Q: What must never be reachable? → A: MOBApi's real runtime endpoints and any real hardware. The demo host serves static files only.
@@ -47,7 +47,7 @@ All decisions of this session are recorded as maintainer decisions in comments o
 - Q: What does the status bar show? → A: The layout and position of the WinUI status bar with demo texts instead of host details: no local solution path, no REST API port, no machine or host details.
 - Q: Are the navigation items outside the demo hidden or disabled? → A: Shown greyed out (disabled), not hidden, in the same order and grouping as the WinUI navigation; a visitor can see why an item is unavailable.
 - Q: Which page opens first? → A: Train Control with a flagship sample locomotive preselected.
-- Q: Where does the per-visitor simulation run, and what does the host do? → A: Superseded on 2026-11-17: there is no simulation. What stays: the ASP.NET Core host in `MOBAweb/` serves static files; no per-visitor server state, no SignalR, no runtime endpoints.
+- Q: Where does the per-visitor simulation run, and what does the host do? → A: Superseded on 2026-11-17: there is no simulation. What stays: the ASP.NET Core host in `MOBAdemo/` serves static files; no per-visitor server state, no SignalR, no runtime endpoints.
 - Q: How long does a visitor's state live? → A: Only as long as the visit (the browser tab); a reload starts fresh. After 2026-11-17 the only state is the user interface itself (current page, slider position, notices).
 - Q: Do 12 concurrent visitors work on the Free tier? → A: Yes. Because the host only serves files, concurrency is not a server limit. At least 12 concurrent visitors are a supported requirement. The daily outgoing bandwidth of 165 MB limits the demo, not concurrency; a sustained higher demand needs a paid tier, which is a later maintainer decision and out of scope.
 - Q: Which abuse is conceivable and what protects against it? → A: See [Threats and abuse protection](#threats-and-abuse-protection): proportionate measures, no CAPTCHA, no accounts.
@@ -229,7 +229,7 @@ The demo is operated primarily by mouse or pointer (maintainer decision of 2026-
 - **FR-050**: The demo MUST be deployable to the decided host: Azure App Service `mobaflow-demo.azurewebsites.net`, Free tier F1, France Central, ASP.NET Core on .NET 10 under Linux.
 - **FR-051**: The demo MUST stay within the Free tier limits in normal use: server work per visitor close to zero (static files only), no per-visitor server memory, no WebSocket or other live connection, and a first visit within the transfer budget of FR-057.
 - **FR-052**: The demo MUST tolerate a cold start: the first response after an idle period shows a loading state and then the complete shell.
-- **FR-053**: The code MUST live in `MOBAweb/` with its own Node/npm build for the React app and its own CI job; it MUST NOT be part of the WinUI or Android build graphs, and building MOBAflow or MOBAsmart MUST NOT require Node.
+- **FR-053**: The code MUST live in `MOBAdemo/` with its own Node/npm build for the React app and its own CI job; it MUST NOT be part of the WinUI or Android build graphs, and building MOBAflow or MOBAsmart MUST NOT require Node.
 - **FR-054**: Deployment to the Azure web app MUST be possible through a GitHub Actions workflow without a secret in the repository. It is started manually at first; automatic deployment on merge follows later as its own change. The workflow and its credentials are created in the implementation, not by this specification.
 - **FR-055**: Because the tier has no deployment slot, a deployment replaces the running app; the demo MUST come back without manual steps.
 - **FR-056**: The host MUST limit requests per client address with ASP.NET Core rate limiting: a strict limit on all requests that are not static files and a limit on static files that is sized to the transfer budget, so that one client can download at most about ten first-visit equivalents (about 15 MB) per hour. The values are fixed in the plan phase. This protects the CPU quota and bounds a single client's bandwidth; it does not prevent a distributed flood from using up the daily 165 MB, which is an accepted residual risk on the Free tier (FR-075).
@@ -243,8 +243,8 @@ The demo is operated primarily by mouse or pointer (maintainer decision of 2026-
 - **FR-071**: The host MUST send security headers: a content security policy without inline scripts and with `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, a `Referrer-Policy`, and a cross-origin resource policy that keeps images and other files for the demo's own pages.
 - **FR-072**: The host MUST NOT send a server banner and MUST NOT show detailed error pages; an error shows a short neutral page.
 - **FR-073**: The demo MUST ship a `robots.txt`. Default: allow indexing of the start page only. The maintainer may choose otherwise without a change to this specification.
-- **FR-074**: The `MOBAweb/` CI job MUST install from a committed lockfile and run an npm dependency audit that fails on known high or critical vulnerabilities.
-- **FR-075**: Quota exhaustion on the Free tier is accepted: the platform then answers HTTP 403 until the reset. The operator documentation in `MOBAweb/` MUST say that quota use and exhaustion are visible in the Azure portal's quota view of the web app.
+- **FR-074**: The `MOBAdemo/` CI job MUST install from a committed lockfile and run an npm dependency audit that fails on known high or critical vulnerabilities.
+- **FR-075**: Quota exhaustion on the Free tier is accepted: the platform then answers HTTP 403 until the reset. The operator documentation in `MOBAdemo/` MUST say that quota use and exhaustion are visible in the Azure portal's quota view of the web app.
 
 ### Key Entities
 
@@ -267,7 +267,7 @@ The demo is operated primarily by mouse or pointer (maintainer decision of 2026-
 - **SC-007**: After the first load, switching between the pages requests at most the static files not loaded yet, so that the daily CPU quota is not the limiting factor.
 - **SC-008**: After an idle period, the complete shell is usable within 15 seconds of the first request on a normal home connection; a warm page is usable within 3 seconds.
 - **SC-009**: Every task of User Stories 1 to 3 can be completed with a mouse or pointer alone; every control has an accessible name; the demo's navigation entries, the theme switch and the slider are reachable with Tab; and an automated accessibility check of the four pages in both themes reports no critical finding for names, contrast and non-color cues.
-- **SC-010**: Building MOBAflow and MOBAsmart works on a machine without Node, and the `MOBAweb/` CI job runs without the WinUI or Android workloads.
+- **SC-010**: Building MOBAflow and MOBAsmart works on a machine without Node, and the `MOBAdemo/` CI job runs without the WinUI or Android workloads.
 
 ## Open questions
 

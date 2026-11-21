@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Test.MOBAweb.Host;
+namespace Moba.Test.MOBAdemo;
 
 using System.IO.Compression;
 using System.Net;
@@ -7,15 +7,15 @@ using System.Net.Sockets;
 using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Moba.Web;
+using Moba.Demo;
 
 /// <summary>Security headers, caching, precompressed files and routing rules of the demo host (FR-007, FR-051, FR-058, FR-059, FR-070 to FR-073).</summary>
 [TestFixture]
-internal sealed class MobaWebHostHardeningTests
+internal sealed class MobaDemoHostHardeningTests
 {
     private const string ScriptPath = "/assets/app.abc123.js";
     private const string TwinPath = "/assets/twin.js";
-    private const string Script = "console.log('mobaweb');\nconsole.log('mobaweb');\nconsole.log('mobaweb');\nconsole.log('mobaweb');\n";
+    private const string Script = "console.log('mobademo');\nconsole.log('mobademo');\nconsole.log('mobademo');\nconsole.log('mobademo');\n";
 
     private static readonly (string Name, string Value)[] ExpectedSecurityHeaders =
     [

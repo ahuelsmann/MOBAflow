@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Test.MOBAweb.Host;
+namespace Moba.Test.MOBAdemo;
 
 using System.Net;
 using Microsoft.AspNetCore.Builder;
 
 /// <summary>Starts the demo host on a loopback port (FR-002, FR-072, SC-003).</summary>
 [TestFixture]
-internal sealed class MobaWebHostTests
+internal sealed class MobaDemoHostTests
 {
     private const string FixtureDocument = "<!doctype html><title>fixture</title><p>fixture entry document</p>";
 

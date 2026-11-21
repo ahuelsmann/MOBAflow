@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 
-namespace Moba.Web;
+namespace Moba.Demo;
 
 /// <summary>
 /// Response policy of the demo host: security headers, cache headers, precompressed file selection and the
