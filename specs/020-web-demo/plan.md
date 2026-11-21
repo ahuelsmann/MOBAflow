@@ -6,7 +6,7 @@
 
 **Spec Kit**: Required
 
-**Status**: Draft. The product folder is `MOBAdemo/` (renamed from `MOBAweb/` in #508). Planning only: no `MOBAdemo/` code, no workflow, no Azure change and no `tasks.md` exist. The first implementation slice starts once the refactoring programme #47 is complete.
+**Status**: Draft. The product folder is `MOBAdemo/` (renamed from `MOBAweb/` in #508). Slices 1, 2 and 18a are delivered (#505, #506, #507): the host skeleton, the React scaffold and the host hardening. No workflow, no Azure change and no `tasks.md` exist yet.
 
 **Input**: Feature specification from `/specs/020-web-demo/spec.md`, narrowed on 2026-11-17 to a visual showcase.
 
@@ -74,7 +74,7 @@ specs/020-web-demo/
 
 No `research.md`, `data-model.md`, `quickstart.md` or `contracts/`: the governance check does not require them, and the content they would hold is short enough for the sections below.
 
-### Source Code (planned; nothing exists yet)
+### Source Code (planned; slices 1, 2 and 18a exist)
 
 ```text
 MOBAdemo/
@@ -87,7 +87,7 @@ MOBAdemo/
 |   `-- public/assets/         # example layout SVG, locomotive photos (WebP), icons
 |-- build.(ps1|sh)             # builds the app, precompresses it and copies it into Host/wwwroot
 `-- README.md                  # build, run, budgets, operator notes (quota view, deployment), how assets are produced
-Test/MOBAdemo/                  # NUnit (portable target): Host/, Build/, Navigation/, TrackPlanAsset/
+Test/MOBAdemo/                 # NUnit (portable target): Host/, Build/, Navigation/, TrackPlanAsset/
 .github/workflows/             # one new CI job and, later, one manually started deployment workflow
 ```
 
