@@ -36,6 +36,7 @@ function Assert-Scope(
 
 # Documentation only: nothing runs.
 Assert-Scope @('docs/ARCHITECTURE.md') $false $false $false 'documentation page'
+Assert-Scope @('.agents/references/engineering/tdd.md', 'assets/office/MOBAnews.docx') $false $false $false 'reference pages and Office files'
 Assert-Scope @('plans/QUALITY-AND-REFACTORING-PLAN.md', 'specs/007-x/spec.md', '.specify/memory/constitution.md') $false $false $false 'plans and specifications'
 Assert-Scope @('README.md', 'AGENTS.md', 'CHANGELOG.md', 'LICENSE') $false $false $false 'root documentation'
 Assert-Scope @('.github/instructions/quick-reference.md', '.github/ISSUE_TEMPLATE/bug.yml', '.github/PULL_REQUEST_TEMPLATE.md') $false $false $false 'GitHub guidance'
