@@ -2,7 +2,8 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/452
 **Spec Kit**: Not applicable - repository and project layout without product behavior or persisted-format change; reclassify before implementation if a renamed namespace is part of a persisted or wire format
-**Status**: Slice 1 delivered; slice 2 and the code slices remain. The documentation slice can start; the code slices wait for RF-26
+**Status**: Slice 1 delivered; slice 2 and the code slices remain. The documentation slice can start;
+the code slices wait for RF-26
 
 ## Purpose and scope
 
@@ -19,8 +20,8 @@ Recorded on main `4ae44d75` (2026-11-14).
 
 | Area | Today | Sequence step |
 | --- | --- | --- |
-| Agent tooling inside `docs/` | `docs/engineering/` (17 skill reference files) and `docs/productivity/` (5 files) sit beside product documentation | 1 |
-| Office files in `docs/` | `FeedbackWorkflow.pptx`, `Journey-Editor.xlsx`, `MOBAnews.docx` | 1 |
+| Agent tooling inside `docs/` | Resolved by slice 1: `docs/engineering/` (17 files) and `docs/productivity/` (5 files) moved to `.agents/references/` | 1 |
+| Office files in `docs/` | Resolved by slice 1: `FeedbackWorkflow.pptx`, `Journey-Editor.xlsx`, `MOBAnews.docx` moved to `assets/office/` | 1 |
 | `docs/` top level | 16 Markdown files that mix developer topics (architecture, build, release, Spec Kit, AI development) with user-facing or legal topics; the user wiki is `docs/wiki/` (9 files); `docs/index.html` with `docs/assets/` is a site entry page | 2 |
 | Test project | one `Test/Test.csproj` that targets `net10.0` and `net10.0-windows10.0.22621.0`, removes files per target with `Compile Remove`, references MOBAflow only for Windows and MOBAsmart only with `IncludeMobaSmartTests=true` | 3 |
 | Test folders (tracked files) | `SharedUI` 83, `Backend` 73, `MOBAdisplay` 22, `Domain` 22, `Common` 21, `Helpers` 19, `MOBAflow` 14, `Speech` 11, `MOBApi` 11, `TrackPlanRenderer` 10, `WinUI` 7, `Contracts` 7, `Architecture` 5, `Unit` 4, `Integration` 4, others 11 | 3 |
@@ -59,8 +60,9 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
 ## Independently reviewable delivery slices
 
 1. **Agent tooling and Office files out of `docs/`.** Delivered 2026-11-21: `docs/engineering` and `docs/productivity`
-   now live in `.agents/references/`, the three Office files in `assets/office/` (maintainer decision 2026-11-21). Scope was: move `docs/engineering` and `docs/productivity` to an agent
-   tooling location outside product documentation and move the three Office files to a non-documentation folder
+   now live in `.agents/references/`, the three Office files in `assets/office/` (maintainer decision
+   2026-11-21). Scope was: move `docs/engineering` and `docs/productivity` to an agent tooling location outside
+   product documentation and move the three Office files to a non-documentation folder
    (or remove those that are obsolete, by the maintainer's decision); fix every link and the checks that read
    these paths (`scripts/Test-AiRepositorySetup.py`, documentation link check).
 2. **Developer and user documentation.** Group the top-level files of `docs/` into developer and user sections,
