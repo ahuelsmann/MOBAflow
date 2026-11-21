@@ -115,7 +115,8 @@ Claude Code loads the two MOBAflow skills from `.claude/skills/`. Those folders 
 Personal skills are separate. A globally installed `audit-code-quality` may duplicate the repository name;
 check which source the client loads. This repo does not remove personal installations.
 The [source registry](../.agents/skills/sources.json) records active origins and adaptations.
-The [reference collection](../skills/README.md) is not another active skill directory.
+The [reference collection](../skills/README.md) is not another active skill directory;
+`.agents/references/` holds reference pages for that external collection, not active skills.
 
 ## Validation and GitHub
 Select checks from AGENTS.md. Documentation uses structural checks; tooling changes use isolated fixtures.
