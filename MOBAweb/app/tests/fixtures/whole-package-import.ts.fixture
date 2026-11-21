@@ -1,0 +1,5 @@
+import { Button } from '@fluentui/react-components';
+import * as Icons from '@fluentui/react-icons';
+import _ from 'lodash';
+
+export const used = [Button, Icons, _];
