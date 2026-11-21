@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/452
 **Spec Kit**: Not applicable - repository and project layout without product behavior or persisted-format change; reclassify before implementation if a renamed namespace is part of a persisted or wire format
-**Status**: Planned; nothing is implemented. The documentation slices can start; the code slices wait for RF-26
+**Status**: Slice 1 delivered; slice 2 and the code slices remain. The documentation slice can start; the code slices wait for RF-26
 
 ## Purpose and scope
 
@@ -58,7 +58,8 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
 
 ## Independently reviewable delivery slices
 
-1. **Agent tooling and Office files out of `docs/`.** Move `docs/engineering` and `docs/productivity` to an agent
+1. **Agent tooling and Office files out of `docs/`.** Delivered 2026-11-21: `docs/engineering` and `docs/productivity`
+   now live in `.agents/references/`, the three Office files in `assets/office/` (maintainer decision 2026-11-21). Scope was: move `docs/engineering` and `docs/productivity` to an agent
    tooling location outside product documentation and move the three Office files to a non-documentation folder
    (or remove those that are obsolete, by the maintainer's decision); fix every link and the checks that read
    these paths (`scripts/Test-AiRepositorySetup.py`, documentation link check).
