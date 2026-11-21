@@ -16,6 +16,8 @@ $ErrorActionPreference = 'Stop'
 # projects such as Sound package it as content.
 $documentationOnlyPatterns = @(
     '^docs/',
+    '^\.agents/references/',
+    '^assets/office/',
     '^plans/',
     '^specs/',
     '^\.specify/',
