@@ -17,7 +17,7 @@ using Moq;
 /// and a UI thread, so the decision is tested through <see cref="MatrixDeleteConfirmation"/>.
 /// </summary>
 [TestFixture]
-internal sealed class MatrixPageViewModelTests
+internal sealed class MatrixDeleteConfirmationTests
 {
     private sealed class Fixture
     {
@@ -120,6 +120,16 @@ internal sealed class MatrixPageViewModelTests
         var fixture = new Fixture();
         fixture.Dialogs.Setup(dialogs => dialogs.ShowConfirmationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
             .ThrowsAsync(new InvalidOperationException("Another dialog is open."));
+
+        Assert.That(await fixture.ConfirmAsync("Signal").ConfigureAwait(true), Is.False);
+    }
+
+    [Test]
+    public async Task Confirm_DialogThrowsComException_CountsAsCancel()
+    {
+        var fixture = new Fixture();
+        fixture.Dialogs.Setup(dialogs => dialogs.ShowConfirmationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+            .ThrowsAsync(System.Runtime.InteropServices.Marshal.GetExceptionForHR(unchecked((int)0x80000019))!);
 
         Assert.That(await fixture.ConfirmAsync("Signal").ConfigureAwait(true), Is.False);
     }
