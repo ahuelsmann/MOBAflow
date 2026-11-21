@@ -3,10 +3,6 @@ namespace Moba.Test.MOBAweb.Host;
 
 using System.Net;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
-using Microsoft.Extensions.DependencyInjection;
-using Moba.Web;
 
 /// <summary>Starts the demo host on a loopback port (FR-002, FR-072, SC-003).</summary>
 [TestFixture]
@@ -115,91 +111,4 @@ internal sealed class MobaWebHostTests
     }
 
     private sealed record Reply(HttpStatusCode Status, string Body, string? MediaType, bool HasServerHeader);
-
-    /// <summary>A started host with a temporary web root; disposing stops it and deletes the root.</summary>
-    private sealed class RunningHost : IAsyncDisposable
-    {
-        private readonly string? _webRoot;
-        private readonly WebApplication _app;
-
-        private RunningHost(string? webRoot, WebApplication app, HttpClient client)
-        {
-            _webRoot = webRoot;
-            _app = app;
-            Client = client;
-        }
-
-        public HttpClient Client { get; }
-
-        public static async Task<RunningHost> StartAsync(
-            bool useDefaultWebRoot = false,
-            string environment = "Production",
-            Action<WebApplication>? configure = null)
-        {
-            string? webRoot = null;
-            WebApplication? app = null;
-            try
-            {
-                if (!useDefaultWebRoot)
-                {
-                    webRoot = Path.Combine(Path.GetTempPath(), "mobaweb-host-" + Guid.NewGuid().ToString("N"));
-                    Directory.CreateDirectory(webRoot);
-                    await File.WriteAllTextAsync(Path.Combine(webRoot, "index.html"), FixtureDocument)
-                        .ConfigureAwait(false);
-                }
-
-                app = MobaWebHost.Build(
-                    ["--urls", "http://127.0.0.1:0", "--environment", environment],
-                    webRoot,
-                    configure);
-                await app.StartAsync().ConfigureAwait(false);
-
-                var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!
-                    .Addresses.Single();
-                return new RunningHost(webRoot, app, new HttpClient { BaseAddress = new Uri(address) });
-            }
-            catch
-            {
-                await CleanUpAsync(app, webRoot).ConfigureAwait(false);
-                throw;
-            }
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            try
-            {
-                Client.Dispose();
-            }
-            finally
-            {
-                await CleanUpAsync(_app, _webRoot).ConfigureAwait(false);
-            }
-        }
-
-        private static async Task CleanUpAsync(WebApplication? app, string? webRoot)
-        {
-            try
-            {
-                if (app != null)
-                {
-                    try
-                    {
-                        await app.StopAsync().ConfigureAwait(false);
-                    }
-                    finally
-                    {
-                        await app.DisposeAsync().ConfigureAwait(false);
-                    }
-                }
-            }
-            finally
-            {
-                if (webRoot != null && Directory.Exists(webRoot))
-                {
-                    Directory.Delete(webRoot, recursive: true);
-                }
-            }
-        }
-    }
 }
