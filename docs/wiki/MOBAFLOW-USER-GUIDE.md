@@ -286,7 +286,9 @@ on while MOBAflow is open.
 ### Matrix Images and ESP32 Display
 
 **Matrix Images** provides a 5x5 color editor whose images are stored in the
-project. To test one network display, enter its IP address and UDP port under
+project. Left-click a pixel to set it and right-click to clear it. Deleting a
+matrix image asks for confirmation first; **Cancel** is the default button. To
+test one network display, enter its IP address and UDP port under
 **Settings > ESP32 Display**, then open **ESP32 Display** and select **Connect and
 negotiate**. The page reads the resolution, protocol version, firmware identity,
 adapter identity, supported formats and rotations, and current health directly
