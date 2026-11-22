@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Web;
+namespace Moba.Demo;
 
 /// <summary>
 /// Builds the MOBAdemo host: it serves the static files of the web root and a health response, nothing else.
 /// </summary>
-internal static class MobaWebHost
+internal static class MobaDemoHost
 {
     /// <summary>Creates the host. <paramref name="webRootPath"/> overrides the web root (used by tests).</summary>
     /// <param name="args">Command-line arguments.</param>

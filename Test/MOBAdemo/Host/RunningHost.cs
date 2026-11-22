@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Test.MOBAweb.Host;
+namespace Moba.Test.MOBAdemo.Host;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
-using Moba.Web;
+using Moba.Demo;
 
 /// <summary>A started demo host with a temporary web root; disposing stops it and deletes the root.</summary>
 internal sealed class RunningHost : IAsyncDisposable
@@ -41,14 +41,14 @@ internal sealed class RunningHost : IAsyncDisposable
         {
             if (!useDefaultWebRoot)
             {
-                webRoot = Path.Combine(Path.GetTempPath(), "mobaweb-host-" + Guid.NewGuid().ToString("N"));
+                webRoot = Path.Combine(Path.GetTempPath(), "mobademo-host-" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(webRoot);
                 await File.WriteAllTextAsync(Path.Combine(webRoot, "index.html"), FixtureDocument)
                     .ConfigureAwait(false);
                 seedWebRoot?.Invoke(webRoot);
             }
 
-            app = MobaWebHost.Build(
+            app = MobaDemoHost.Build(
                 ["--urls", "http://127.0.0.1:0", "--environment", environment],
                 webRoot,
                 configure);

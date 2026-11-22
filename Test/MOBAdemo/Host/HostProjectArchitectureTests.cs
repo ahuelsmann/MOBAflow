@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Test.MOBAweb.Host;
+namespace Moba.Test.MOBAdemo.Host;
 
 using System.Xml.Linq;
 
@@ -44,6 +44,6 @@ internal sealed class HostProjectArchitectureTests
         }
 
         Assert.That(directory, Is.Not.Null, "Repository root (Moba.slnx) not found.");
-        return XDocument.Load(Path.Combine(directory!.FullName, "MOBAweb", "Host", "MOBAweb.Host.csproj")).Root!;
+        return XDocument.Load(Path.Combine(directory!.FullName, "MOBAdemo", "Host", "MOBAdemo.csproj")).Root!;
     }
 }

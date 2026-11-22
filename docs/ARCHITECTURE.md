@@ -56,12 +56,12 @@ files for the actual direct references, including conditional entries.
 | `TrackPlan.Editor` | `Moba.TrackPlan.Editor` | `Domain`, `TrackLibrary.Base`, `TrackPlan.Renderer` |
 | `MOBAdisplay` | `Moba.Display` | `Domain` |
 | `MOBApi` | `Moba.MOBApi` | `Common`, `Contracts` |
-| `MOBAweb.Host` | `Moba.Web` | none |
+| `MOBAdemo` | `Moba.Demo` | none |
 | `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackPlan.Editor` |
 | `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `TrackPlan.Editor`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
 | `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound`, `Speech.Base` |
 
-`MOBAweb.Host` only serves the static MOBAdemo web showcase: the files of its web root (precompressed `.br`/`.gz`
+`MOBAdemo` only serves the static MOBAdemo web showcase: the files of its web root (precompressed `.br`/`.gz`
 variants selected by `Accept-Encoding`), `/health` and `/robots.txt`, with security and cache headers, neutral plain-text
 errors and GET/HEAD only. It references no other project and is not part of the runtime, MOBApi or app graph.
 

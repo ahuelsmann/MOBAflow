@@ -24,7 +24,7 @@
   <Project Path="MOBAdisplay/MOBAdisplay.csproj" />
   <Project Path="MOBAflow/MOBAflow.csproj" />
   <Project Path="MOBApi/MOBApi.csproj" />
-  <Project Path="MOBAweb/Host/MOBAweb.Host.csproj" />
+  <Project Path="MOBAdemo/Host/MOBAdemo.csproj" />
   <Project Path="MOBAsmart/MOBAsmart.csproj">
     <Deploy Solution="Debug|*" />
   </Project>

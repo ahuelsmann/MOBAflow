@@ -4765,21 +4765,21 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/MOBAweb/Host/HostProjectArchitectureTests.cs",
+      "path": "Test/MOBAdemo/Host/HostProjectArchitectureTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/MOBAweb/Host/MobaWebHostHardeningTests.cs",
+      "path": "Test/MOBAdemo/Host/MobaDemoHostHardeningTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/MOBAweb/Host/MobaWebHostTests.cs",
+      "path": "Test/MOBAdemo/Host/MobaDemoHostTests.cs",
       "count": 1
     },
     {
