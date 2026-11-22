@@ -59,12 +59,8 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
 
         var workflowsIndex = tags.IndexOf("workflows");
         var eventManagerIndex = tags.IndexOf("eventmanager");
-
-        Assert.That(workflowsIndex, Is.GreaterThanOrEqualTo(0));
-        Assert.That(eventManagerIndex, Is.GreaterThanOrEqualTo(0));
-
-        var workflows = pages[workflowsIndex];
-        var eventManager = pages[eventManagerIndex];
+        var workflows = pages.First(p => p.Tag == "workflows");
+        var eventManager = pages.First(p => p.Tag == "eventmanager");
         var otherJourneyIcons = pages
             .Where(p => p.Category == NavigationCategory.Journey && p.Tag != "workflows")
             .Select(p => p.Icon)
@@ -72,6 +68,8 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
 
         using (Assert.EnterMultipleScope())
         {
+            Assert.That(workflowsIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(eventManagerIndex, Is.GreaterThanOrEqualTo(0));
             Assert.That(workflows.Category, Is.EqualTo(NavigationCategory.Journey));
             Assert.That(eventManager.Category, Is.EqualTo(NavigationCategory.Journey));
             Assert.That(workflows.Order, Is.LessThan(eventManager.Order));
