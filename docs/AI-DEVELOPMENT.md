@@ -12,7 +12,7 @@ delivery through merge under the flow in
 explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main` across a multi-model agent network
 (Claude Code, ChatGPT Codex and Antigravity):
 
-1. The Chief Operating Officer (COO, Claude) coordinates active work on the [MOBAflow GitHub Kanban](KANBAN.md)
+1. The Chief Operating Officer (COO, Claude — or `Antigravity` as sole single-writer `Acting COO` during a logged `Claude Code` `Quota Pause`, while `Codex` `P2` retains CPM/TD veto and cross-family verification) coordinates active work on the [MOBAflow GitHub Kanban](KANBAN.md)
    and `MOBAflow` issues/Draft PRs, cuts an issue into small slices and records each slice's risk class (`H`, `M`
    or `L`; review-fix rounds keep their slice's class and dependency updates take the class of the affected
    area), cross-model slice team and locked code areas. At most three code slices are open at once.
@@ -21,12 +21,12 @@ explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main` a
    Claude `P1` or Codex `P2` when writer is Antigravity) and, for UI/TrackPlan/editorial work, the `P3` Head of
    UI/UX. The developer posts a short design note (class `L` slices and review-fix rounds state intent in the PR
    body/commit instead); the companion reviewer (and `P3` for UI/TrackPlan/editorial slices) checks it, and code
-   starts after the COO's or Solution Architect's Go. New features write their acceptance tests first.
+   starts after the COO's (or Acting COO's / Solution Architect's) Go. New features write their acceptance tests first.
 3. Before handing work on, the developer merges the current `main` into the branch and resolves conflicts locally.
 4. While a class `H` or `M` slice grows, the companion reviewer comments read-only on every pushed commit on the
-   PR. At Ready every slice (`H`, `M` and `L`) receives a separate fresh `P1` Claude review (Opus 5.5 or higher)
+   PR. At Ready every slice (`H`, `M` and `L`) receives a separate fresh `P1` Claude review (`Claude Opus 5.5` — exact required tier and ceiling)
    plus independent cross-family `P2`/`P3` verification on the exact head and base (neither may be the writer's or
-   companion's session); with a clean review and all gates green, the COO arms head-bound auto-merge.
+   companion's session); during a `Claude Code` `Quota Pause`, the isolated `Claude Opus 5.5` review runs via Antigravity's built-in Opus pool. With a clean review and all gates green, the COO (or Acting COO) arms head-bound auto-merge.
 5. Two failed fix attempts on the same finding (in companion or final review) or more than ten agent messages on
    one topic stop the loop and go to the user.
 
@@ -44,10 +44,10 @@ assigns tasks by capability profile (`P1`–`P4`) so rules remain stable when mo
 
 | Profile | Active models and clients | Strengths and typical assignments |
 | --- | --- | --- |
-| `P1` Depth, Architecture & Safety | **Claude Opus 5.5** (`Claude Code`, CLI model `claude-opus-5-5`) | Deep architecture, concurrency (`async/await`, `UiThreadEventBusDecorator`), Z21 protocol safety, COO steering, companion/final independent review |
-| `P2` Repo, Build & Fact Precision | **GPT-6 Astra** (`ChatGPT Codex`) | Solution/build graph (`Moba.slnx`), Spec Kit consistency, CI/Sonar/mutation verification, CPM/TD steering, cross-model companion/final review, non-GitHub Sites publication |
-| `P3` System Context, Product & UI/UX | **Gemini 4 Argon** (`Antigravity`, CLI model `gemini-4-argon-high`) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
-| `P4` Cadence, Triage & Fast Delivery | **Claude Fable 5.2 / Sonnet-class** (`Claude Code`), **Gemini 4 Hydrogen** (`Antigravity` desktop selector) | Fast routine slices, portable/doc tasks, triage, pre-checks, status and timer monitoring (verify actual runtime model ID in review records) |
+| `P1` Depth, Architecture & Safety | **Claude Opus 5.5** (`Claude Code`, CLI model `claude-opus-5-5`, or `Antigravity` multi-model failover; maximum Claude tier) | Deep architecture, concurrency (`async/await`, `UiThreadEventBusDecorator`), Z21 protocol safety, COO steering, companion/final independent review |
+| `P2` Repo, Build & Fact Precision | **Sol 6.2 / GPT-6 Astra** (`ChatGPT Codex`, or **GPT-OSS 120B** failover in `Antigravity`) | Solution/build graph (`Moba.slnx`), Spec Kit consistency, CI/Sonar/mutation verification, CPM/TD steering, cross-model companion/final review, non-GitHub Sites publication |
+| `P3` System Context, Product & UI/UX | **Gemini 4 Argon / Neon** (`Antigravity`, CLI model `gemini-4-argon-high`) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
+| `P4` Cadence, Triage & Fast Delivery | **Claude Sonnet 5.5** (`Claude Code` / `Antigravity`; `Claude Fable 5.2` prohibited), **Gemini 4 Hydrogen** (`Antigravity` desktop selector) | Fast routine slices, portable/doc tasks, triage, pre-checks, status and timer monitoring (verify actual runtime model ID in review records) |
 
 ## Start in the correct checkout
 Use Git, PowerShell 7 (`pwsh`), Python 3.11+ and `rg` for development checks.
@@ -153,7 +153,7 @@ issue/PR through existing Codex delivery, independent Claude review and actual-m
 verification. No separate documentation API or App bot is activated.
 See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
-Create Draft PRs, one per slice. The COO verifies current CI, current-commit SonarCloud success with zero
+Create Draft PRs, one per slice. The COO (or single-writer `Acting COO` during a logged `Claude Code` `Quota Pause`) verifies current CI, current-commit SonarCloud success with zero
 OPEN/CONFIRMED issues and the documentation impact, dispatches the independent review and arms head-bound
 auto-merge under [master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow).
 Main, local checks and prior PR commits are separate evidence. Non-GitHub work, including separately authorized Sites

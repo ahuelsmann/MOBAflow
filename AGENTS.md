@@ -30,19 +30,19 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
 [master coordination](.github/instructions/master-coordination.instructions.md). In short:
 
 - **Role != single model.** Roles define domain responsibilities and draw on four capability profiles across Claude
-  Code (`P1` Opus 5.5, `P4` Fable 5.2), ChatGPT Codex (`P2` GPT-6 Astra) and Antigravity (`P3` Gemini 4 Argon,
-  `P4` Hydrogen). Slices are classified by risk (`H` safety/runtime/protocol, `M` features/UI/audio, `L` docs/small
+  Code (`P1` Opus 5.5 ceiling, `P4` Sonnet 5.5; `Fable 5.2` prohibited), ChatGPT Codex (`P2` Sol 6.2 / GPT-6 Astra) and Antigravity (`P3` Gemini 4 Argon / Neon,
+  `P4` Hydrogen, plus built-in failover models `P1` `Claude Opus 5.5`, `P4` `Claude Sonnet 5.5`, `P2` `GPT-OSS 120B`). Slices are classified by risk (`H` safety/runtime/protocol, `M` features/UI/audio, `L` docs/small
   non-behavioral fixes); review-fix rounds retain their slice's risk class and dependency updates take the class of
   the affected area.
 - **Small slices.** Work is cut into slices of one concern, about 25 files or 400 changed lines at most, each with
   its own Draft PR that merges on its own. An issue may need several slices; no long-running branches.
-- **Board, locks, WIP limit.** The COO (Claude) coordinates open work on the [MOBAflow GitHub Kanban](docs/KANBAN.md)
+- **Board, locks, WIP limit.** The COO (Claude; during a verified `Claude Code` `Quota Pause`, `Antigravity` `P3` serves as sole single-writer **`Acting COO`** under `2/3 Acting COO` governance with `Codex` `P2` retaining CPM/TD veto) coordinates open work on the [MOBAflow GitHub Kanban](docs/KANBAN.md)
   and records each open slice, its risk class, writer and locked areas in the Kanban item fields and the Draft PR
   slice header. Refactoring and feature work never run in the same locked area at once. At most three code
   slices (Kanban items with Risk class set, docs-only excluded) are open, at most two local agents build at once.
   One writer per branch.
 - **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests); code
-  starts after cross-model companion/UX review and the COO's or Solution Architect's Go (class `L` slices and
+  starts after cross-model companion/UX review and the COO's (or Acting COO's / Solution Architect's) Go (class `L` slices and
   review-fix rounds on an approved design state their intent in the PR body/commit instead, while keeping their
   risk class). New features write their acceptance tests first.
 - **Pull from main.** Before every push that hands work on, merge the current `main` of the configured GitHub remote
@@ -54,10 +54,10 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   and `M` slice together: the companion checks the design note and reviews every pushed commit with PR review
   comments while the slice grows.
 - **Independent final review and auto-merge.** At Ready every slice (`H`, `M` and `L`) receives a separate fresh
-  `P1` Claude review (Opus 5.5 or higher) plus independent cross-family `P2`/`P3` verification on the exact head
-  and base (neither may be the writer's or companion's session). With no open Blocker/High/Medium, zero SonarCloud
-  issues and green non-required mutation lanes, the COO arms head-bound GitHub auto-merge; it merges when the
-  required checks pass. Before any push to an armed PR the COO disarms it.
+  `P1` Claude review (`Claude Opus 5.5` — exact required tier and ceiling) plus independent cross-family `P2`/`P3` verification on the exact head
+  and base (neither may be the writer's or companion's session). During a `Claude Code` `Quota Pause` (logged with UTC reset time on the PR), `Antigravity` (`Acting COO`) + `Codex` (`P2`) route the fresh `P1` (`Claude Opus 5.5`) final review via an isolated Antigravity sub-agent alongside cross-family `P2`/`P3` verification (`Codex` / `GPT-OSS 120B` / `Gemini 4`). With no open Blocker/High/Medium, zero SonarCloud
+  issues and green non-required mutation lanes, the COO (or Acting COO) arms head-bound GitHub auto-merge; it merges when the
+  required checks pass. Before any push to an armed PR the COO (or Acting COO) disarms it.
 - **Guard rails.** Two failed fix attempts on the same finding (in companion or final review), or more than ten
   agent messages on one topic, stop the loop and go to the user. Locks, design gos, handovers and merges are logged
   as UTC-timed comments on the slice's Draft PR; the [Kanban](docs/KANBAN.md) holds the current state. Multi-slice
