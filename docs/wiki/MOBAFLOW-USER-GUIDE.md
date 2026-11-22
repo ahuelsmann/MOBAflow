@@ -85,7 +85,7 @@ what it waits for, for example **Waiting for the REST API to start...** or
 **Connecting...**. The REST API and **RuntimeHub host** rows also show how long
 they have waited. When the REST API answers, MOBAflow connects the sync and checks
 again within seconds, so the rows usually reach **Connected** shortly after
-**Running on port 5001**. If the REST API still does not answer after 30 seconds,
+**Port 5001**. If the REST API still does not answer after 30 seconds,
 the row says **REST API is slow to start, still checking...**. If the RuntimeHub
 host cannot connect, its row says **Host client disconnected, retrying**.
 MOBAflow keeps retrying in both cases.

@@ -35,7 +35,7 @@ public sealed partial class JourneyCounterProjectionTests
             HasSeenSuccessfulConnection = true,
             StatusText = "Connected"
         });
-        fixture.ViewModel.SystemStatus.UpdateRestApiStatus("Running on port 5001", isReachable: true, clients: null);
+        fixture.ViewModel.SystemStatus.UpdateRestApiStatus("Port 5001", isReachable: true, clients: null);
         Assert.That(fixture.ViewModel.OperatingState, Is.EqualTo(OperatingStateKind.Normal));
 
         fixture.ViewModel.SystemStatus.UpdateHealthStatus("Failed");
@@ -54,7 +54,7 @@ public sealed partial class JourneyCounterProjectionTests
             Assert.That(fixture.ViewModel.ShowOperatingStateInfoBar, Is.True);
         }
 
-        fixture.ViewModel.SystemStatus.UpdateRestApiStatus("Running on port 5001", isReachable: true, clients: null);
+        fixture.ViewModel.SystemStatus.UpdateRestApiStatus("Port 5001", isReachable: true, clients: null);
         Assert.That(fixture.ViewModel.OperatingState, Is.EqualTo(OperatingStateKind.Normal));
 
         await fixture.ViewModel.PrepareForShutdownAsync().ConfigureAwait(false);

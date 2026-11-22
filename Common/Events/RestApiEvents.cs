@@ -9,7 +9,7 @@ namespace Moba.Common.Events;
 public sealed record RestApiStatusChangedEvent : EventBase
 {
     /// <summary>
-    /// Status text description (e.g., "Running on port 5001" or "Waiting for the REST API to start...").
+    /// Status text description (e.g., "Port 5001" or "Waiting for the REST API to start...").
     /// </summary>
     public string Status { get; init; } = string.Empty;
 

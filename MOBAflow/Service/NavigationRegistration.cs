@@ -71,7 +71,7 @@ internal static class NavigationRegistration
         pages.Add(new PageMetadata("overview", "Overview", "\uE80F", typeof(OverviewPage), NavigationCategory.Core, 10, FeatureTogglePages.Overview, null, false));
 
         services.AddSingleton<WorkflowsPage>();
-        pages.Add(new PageMetadata("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), NavigationCategory.Solution, 20, FeatureTogglePages.Workflows, null, false));
+        pages.Add(new PageMetadata("workflows", "Workflows", "\uEF90", typeof(WorkflowsPage), NavigationCategory.Journey, 14, FeatureTogglePages.Workflows, null, false));
 
         services.AddSingleton<StationsPage>();
         pages.Add(new PageMetadata("stations", "Stations", "\uEC06", typeof(StationsPage), NavigationCategory.Solution, 21, FeatureTogglePages.Stations, null, false));

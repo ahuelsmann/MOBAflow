@@ -147,7 +147,7 @@ public sealed partial class SystemStatusViewModel : ObservableObject, IDisposabl
 
     #region REST API
 
-    /// <summary>Human-readable REST API status (e.g. "Running on port 5001" or "Not reachable").</summary>
+    /// <summary>Human-readable REST API status (e.g. "Port 5001" or "Not reachable").</summary>
     [ObservableProperty]
     public partial string RestApiStatusText { get; private set; } = "Checking the REST API...";
 
