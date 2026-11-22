@@ -30,6 +30,7 @@ changes need an app restart. Train Control and Journeys are shown in bold.
 | --- | --- |
 | **Journeys** | Define journeys as an ordered list of stations and switch a journey active or inactive. |
 | **Timetable** (Preview) | Plan services and manage the current operating session: services with their station stops, and recording of arrivals and departures. |
+| **Workflows** | Author reusable workflows as a list of actions, as a list or a graph, and validate, dry-run and trace them. |
 | **Event Manager** (Preview) | Assign workflows to a journey's events by InPort and trigger count, and reset the saved InPort counters. |
 | **Journey Map** | Show the route and progress of the active journey. |
 
@@ -38,7 +39,6 @@ changes need an app restart. Train Control and Journeys are shown in bold.
 | Page | What it is for |
 | --- | --- |
 | **Solution** | Manage the projects of the solution and assign each project its Z21, with the Z21 Finder. |
-| **Workflows** | Author reusable workflows as a list of actions, as a list or a graph, and validate, dry-run and trace them. |
 | **Stations** | Maintain the reusable stations with their platforms and optional city data. |
 | **Locomotives** | Maintain locomotives: name, digital address, photo, functions, decoder/CV snapshots and printable passports; show where a locomotive is used. |
 | **Passenger Wagons** | Maintain the passenger wagon library. |

@@ -133,12 +133,12 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         _eventBus.Publish(starting);
         Assert.That(viewModel.RestApiWaitingTime, Is.EqualTo("(1 min 15 s)"));
 
-        _eventBus.Publish(new RestApiStatusChangedEvent("Running on port 5001", true));
+        _eventBus.Publish(new RestApiStatusChangedEvent("Port 5001", true));
         using (Assert.EnterMultipleScope())
         {
             Assert.That(viewModel.RestApiIsPending, Is.False);
             Assert.That(viewModel.RestApiIsReachable, Is.True);
-            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Running on port 5001"));
+            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Port 5001"));
             Assert.That(viewModel.RestApiWaitingTime, Is.Empty);
         }
 
@@ -187,7 +187,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
         }
 
         clock.Advance(TimeSpan.FromSeconds(4));
-        _eventBus.Publish(new RestApiStatusChangedEvent("Running on port 5001", true));
+        _eventBus.Publish(new RestApiStatusChangedEvent("Port 5001", true));
         _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics
         {
             RestApiReachable = true,
@@ -259,7 +259,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
     public void HostThatStillDoesNotConnectAfterTheStartPhaseSaysThatItRetries()
     {
         var viewModel = CreateViewModel();
-        _eventBus.Publish(new RestApiStatusChangedEvent("Running on port 5001", true));
+        _eventBus.Publish(new RestApiStatusChangedEvent("Port 5001", true));
 
         _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics
         {
@@ -378,10 +378,10 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
             new() { ClientId = "b", DeviceName = "Tablet" }
         };
 
-        _eventBus.Publish(new RestApiStatusChangedEvent("Running on port 5001", true, clients));
+        _eventBus.Publish(new RestApiStatusChangedEvent("Port 5001", true, clients));
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Running on port 5001"));
+            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Port 5001"));
             Assert.That(viewModel.RestApiIsReachable, Is.True);
             Assert.That(viewModel.RestApiConnectedClients.Select(client => client.DeviceName), Is.EqualTo(["Phone", "Tablet"]));
             Assert.That(viewModel.RestApiConnectedClientsEmpty, Is.False);
@@ -583,7 +583,7 @@ internal sealed partial class SystemStatusViewModelTests : IDisposable
 
         viewModel.Dispose();
         viewModel.Dispose();
-        _eventBus.Publish(new RestApiStatusChangedEvent("Running on port 5001", true));
+        _eventBus.Publish(new RestApiStatusChangedEvent("Port 5001", true));
         _eventBus.Publish(new PostStartupStatusEvent(true, "Late"));
         _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics { RestApiReachable = true, HostClientConnected = true, ServerHasHost = true }));
         _settingsPage.SelectedSpeechProviderId = "piper";
