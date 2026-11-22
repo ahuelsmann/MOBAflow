@@ -532,11 +532,9 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         var sharedStation = new Station { Name = "Shared" };
         project.Model.Journeys[0].Stations.Add(new Station { Id = sharedStation.Id, Name = "Shared" });
         project.Model.Journeys[1].Stations.Add(new Station { Id = sharedStation.Id, Name = "Shared" });
-        project.Model.Stations.AddRange([
-            new Station { Id = project.Model.Journeys[0].Stations[0].Id, Name = "Central" },
-            sharedStation,
-            new Station { Name = "East" }
-        ]);
+        project.Model.Stations.Add(new Station { Id = project.Model.Journeys[0].Stations[0].Id, Name = "Central" });
+        project.Model.Stations.Add(sharedStation);
+        project.Model.Stations.Add(new Station { Name = "East" });
         project.Refresh();
         _session.SelectedJourney = project.Journeys[0];
 
@@ -564,10 +562,8 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
     public void DeleteStationRemovesOrphanedProjectStationOnlyWhenLastJourneyReferenceIsDeleted()
     {
         var project = _page.SelectedProject!;
-        project.Model.Stations.AddRange([
-            new Station { Name = "Central" },
-            new Station { Name = "East" }
-        ]);
+        project.Model.Stations.Add(new Station { Name = "Central" });
+        project.Model.Stations.Add(new Station { Name = "East" });
         project.Refresh();
         _session.SelectedJourney = project.Journeys[0];
 
