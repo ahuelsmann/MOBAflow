@@ -50,6 +50,24 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
             Assert.That(toggleablePages.Select(page => page.Title), Does.Contain("Recorder"));
         }
     }
+
+    [Test]
+    public void RegisterPages_Should_PlaceWorkflowsBeforeEventManager()
+    {
+        var pages = NavigationRegistration.RegisterPages(new ServiceCollection());
+        var tags = pages.Select(p => p.Tag).ToList();
+
+        var workflowsIndex = tags.IndexOf("workflows");
+        var eventManagerIndex = tags.IndexOf("eventmanager");
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(workflowsIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(eventManagerIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(workflowsIndex, Is.LessThan(eventManagerIndex));
+        }
+    }
+
     [Test]
     public async Task RefreshAsync_Should_DisplayEffectivePort_WhenStatusOmitsPort()
     {
@@ -69,7 +87,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
 
         // Assert
         Assert.That(publishedStatus, Is.Not.Null);
-        Assert.That(publishedStatus!.Status, Is.EqualTo("Running on port 5001"));
+        Assert.That(publishedStatus!.Status, Is.EqualTo("Port 5001"));
         await dependencies.DisposeAsync().ConfigureAwait(true);
     }
 
