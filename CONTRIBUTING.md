@@ -8,7 +8,7 @@ User documentation is available in `docs/wiki/`.
 ## 1. Getting Started
 
 For AI-assisted work, first read [AGENTS.md](AGENTS.md) and the
-[AI development guide](docs/AI-DEVELOPMENT.md). They explain how to select a worktree,
+[AI development guide](docs/developer/AI-DEVELOPMENT.md). They explain how to select a worktree,
 which project skills apply, which tools are required, and which checks to run.
 
 ### Clone and build the repository
@@ -29,7 +29,7 @@ dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore /p:BuildMOBApiDe
 ```
 
 This configuration is intended for edit/build cycles. Use the normal build for
-full app launches and release validation. See `docs/BUILD-PERFORMANCE.md` for details.
+full app launches and release validation. See `docs/developer/BUILD-PERFORMANCE.md` for details.
 
 ### Consistent line endings
 
@@ -107,7 +107,7 @@ The Common configuration limits parallel Stryker test processes to four.
 The Backend group mutates the `Backend` assembly with all tests under `Test/Backend/`, the workflow
 end-to-end fixture and `Test/Z21DccCommandDecoderTests.cs`; new tests under `Test/Backend/` are
 included automatically. Methods that Stryker puts into Safe Mode are excluded from the score; see
-[Safe Mode and methods outside the gate](docs/BUILD-PERFORMANCE.md#safe-mode-and-methods-outside-the-gate).
+[Safe Mode and methods outside the gate](docs/developer/BUILD-PERFORMANCE.md#safe-mode-and-methods-outside-the-gate).
 It runs on Linux and takes about 35 minutes.
 The portable Speech.Base group runs `AudioCacheTests.cs`, `CachedSpeechOutputTests.cs`,
 `SpeechOutputTests.cs` and `WaveAudioTests.cs` against the entire `Speech.Base` assembly.
@@ -123,9 +123,9 @@ and 63 minutes locally with four Stryker processes) and runs on Linux.
 The Contracts group mutates `Contracts` with every fixture under `Test/Contracts/` and runs on Linux in under a minute.
 Other groups are still marked as planned in [mutation-lanes.json](MutationTest/mutation-lanes.json)
 and are not currently protected by Stryker;
-[BUILD-PERFORMANCE.md](docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons) records why for the RF-09 candidates.
+[BUILD-PERFORMANCE.md](docs/developer/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons) records why for the RF-09 candidates.
 Triage rules for surviving mutants are in
-[Working with surviving mutants](docs/BUILD-PERFORMANCE.md#working-with-surviving-mutants).
+[Working with surviving mutants](docs/developer/BUILD-PERFORMANCE.md#working-with-surviving-mutants).
 
 ```powershell
 dotnet tool restore
@@ -148,7 +148,7 @@ JSON report for the correct production project, all registered test files, the s
 the baseline, and completed mutant statuses with at least one mutant executed against tests.
 Missing files, filters, stale reports and unexecuted mutations fail the job. A test that does not
 cover a particular mutant is not forced to run against it; Stryker keeps its coverage-based selection.
-See [Build Performance](docs/BUILD-PERFORMANCE.md#active-mutation-lanes) for job selection.
+See [Build Performance](docs/developer/BUILD-PERFORMANCE.md#active-mutation-lanes) for job selection.
 The quality pipeline runs selected groups and archives the HTML/JSON reports. The minimum scores
 are 90% for `Domain`, initially 65% for `Speech.Base`, 63% for `Common`, 68% for `Contracts`, 47% for `Backend`, 74% for `MOBApi` and 46% for
 `SharedUI`. A `Contracts` score below its design floor of 70% is a finding to investigate, not a reason to lower a
@@ -163,13 +163,13 @@ reference files are missing.
 
 ## 2. Project overview and key documentation
 
-- Architecture and layers: `docs/ARCHITECTURE.md`
-- JSON validation and solution format: `docs/JSON-VALIDATION.md`
-- Hardware and liability notices: `docs/HARDWARE-DISCLAIMER.md`
-- Third-party licenses: `docs/THIRD-PARTY-NOTICES.md`
+- Architecture and layers: `docs/developer/ARCHITECTURE.md`
+- JSON validation and solution format: `docs/developer/JSON-VALIDATION.md`
+- Hardware and liability notices: `docs/user/HARDWARE-DISCLAIMER.md`
+- Third-party licenses: `docs/user/THIRD-PARTY-NOTICES.md`
 - User wiki: `docs/wiki/INDEX.md`
 
-Read at least `README.md` and `docs/ARCHITECTURE.md` before making larger changes.
+Read at least `README.md` and `docs/developer/ARCHITECTURE.md` before making larger changes.
 
 **Repository:** Code, issues, and pull requests are hosted on [GitHub](https://github.com/ahuelsmann/MOBAflow).
 GitHub Actions hosts the public quality and release workflows.
@@ -215,7 +215,7 @@ The full rules are available in:
 In brief:
 
 - **Architecture**
-  - Follow the tested [project dependency table](docs/ARCHITECTURE.md#project-dependency-rules); `MOBApi` references only `Contracts` and `Common`
+  - Follow the tested [project dependency table](docs/developer/ARCHITECTURE.md#project-dependency-rules); `MOBApi` references only `Contracts` and `Common`
   - Use MVVM with `CommunityToolkit.Mvvm` (`[ObservableProperty]`, `[RelayCommand]`)
   - Use constructor injection only, not a service locator
 
@@ -241,13 +241,13 @@ in its intended language.
 - User-facing changes:
   - Update `README.md` and/or the relevant page under `docs/wiki/`
 - Technical changes:
-  - Update `docs/ARCHITECTURE.md`, `docs/JSON-VALIDATION.md`, etc. as needed
+  - Update `docs/developer/ARCHITECTURE.md`, `docs/developer/JSON-VALIDATION.md`, etc. as needed
 - Standalone project, quality, refactoring, and roadmap plans:
   - Store them as Markdown files under `plans/`, not `docs/`
   - Delete completed plans; Git history and closed GitHub issues preserve the record
   - GitHub issues, milestones, and Kanban remain the source of truth for status and progress
 - Third-party dependencies / new packages:
-  - Update `docs/THIRD-PARTY-NOTICES.md` with license information
+  - Update `docs/user/THIRD-PARTY-NOTICES.md` with license information
 
 ## 6. Contributor License Agreement (CLA)
 

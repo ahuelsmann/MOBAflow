@@ -64,7 +64,7 @@ class StructureTests(unittest.TestCase):
             target = self.root / source.relative_to(ROOT)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.touch()
-        for name in ("docs/AI-DEVELOPMENT.md", "docs/SPEC-KIT.md"):
+        for name in ("docs/developer/AI-DEVELOPMENT.md", "docs/developer/SPEC-KIT.md"):
             shutil.copyfile(ROOT / name, self.root / name)
         (self.root / "skills").mkdir(exist_ok=True)
         (self.root / "skills/README.md").touch()

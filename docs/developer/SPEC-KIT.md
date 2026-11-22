@@ -75,7 +75,7 @@ Ordinary source files, tests, Markdown documentation, schemas, and templates do
 not require an individual pre-read scan unless their context indicates that they
 may contain secrets. Before a commit or pull request, every changed file must pass
 the deterministic secrets scan. Cloud sessions without a local scanner follow the
-[cloud rule](../.github/instructions/sonarqube-pre-pr.instructions.md#cloud-sessions-without-a-local-scanner):
+[cloud rule](../../.github/instructions/sonarqube-pre-pr.instructions.md#cloud-sessions-without-a-local-scanner):
 they do not open such files and record the missing scan in the pull request.
 
 ## Validate the installation

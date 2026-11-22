@@ -1,14 +1,14 @@
 # AI-assisted development
 
-Open the dedicated task worktree, then read [AGENTS.md](../AGENTS.md). It owns the shared workflow
-and validation policy. [The instruction index](../.github/instructions/instructions-index.md) links
+Open the dedicated task worktree, then read [AGENTS.md](../../AGENTS.md). It owns the shared workflow
+and validation policy. [The instruction index](../../.github/instructions/instructions-index.md) links
 technical guidance by task. Use [Spec Kit](SPEC-KIT.md) for cross-cutting features.
 
 ## Work through the master chats
 
 The user discusses goals and results with the responsible masters. An implementation assignment includes
 delivery through merge under the flow in
-[master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow), unless
+[master coordination](../../.github/instructions/master-coordination.instructions.md#delivery-flow), unless
 explicitly limited. Since 2026-11-16 MOBAflow works in small batches on `main` across a multi-model agent network
 (Claude Code, ChatGPT Codex and Antigravity):
 
@@ -35,11 +35,11 @@ device or hardware action, and does not relay messages, inspect code or administ
 user's personal acceptance is no merge gate; feedback from real use arrives as ordinary issues. Every slice
 records its documentation and `docs/wiki/` impact. Any role may consult or include the Head of UI/UX (`Gemini 4
 Argon` via Antigravity CLI) under the
-[Head of UI/UX rules](../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
+[Head of UI/UX rules](../../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
 
 ## Capability profiles and models
 
-[Master coordination](../.github/instructions/master-coordination.instructions.md#capability-profiles-and-roles)
+[Master coordination](../../.github/instructions/master-coordination.instructions.md#capability-profiles-and-roles)
 assigns tasks by capability profile (`P1`–`P4`) so rules remain stable when models change. Current model mapping:
 
 | Profile | Active models and clients | Strengths and typical assignments |
@@ -114,8 +114,8 @@ Claude Code loads the two MOBAflow skills from `.claude/skills/`. Those folders 
 `python scripts/Test-AiRepositorySetup.py` fails when they differ. Spec Kit and audit skills are not mirrored.
 Personal skills are separate. A globally installed `audit-code-quality` may duplicate the repository name;
 check which source the client loads. This repo does not remove personal installations.
-The [source registry](../.agents/skills/sources.json) records active origins and adaptations.
-The [reference collection](../skills/README.md) is not another active skill directory;
+The [source registry](../../.agents/skills/sources.json) records active origins and adaptations.
+The [reference collection](../../skills/README.md) is not another active skill directory;
 `.agents/references/` holds reference pages for that external collection, not active skills.
 
 ## Validation and GitHub
@@ -146,16 +146,16 @@ and firmware steps also depend on input paths. Android Release AAB runs on PRs t
 `validate_android=true`; shared-project changes do not start it.
 Main pushes and manual runs enable the remaining scopes. See
 [Build Performance](BUILD-PERFORMANCE.md#ci-note) and
-[`Get-QualityChangeScope.ps1`](../scripts/Get-QualityChangeScope.ps1) for the exact selection.
+[`Get-QualityChangeScope.ps1`](../../scripts/Get-QualityChangeScope.ps1) for the exact selection.
 [Documentation consistency](DOCUMENTATION-CONSISTENCY.md) describes the always-on
 generated-fact checks and source-grounded developer/wiki maintenance in the same
 issue/PR through existing Codex delivery, independent Claude review and actual-main
 verification. No separate documentation API or App bot is activated.
-See the [pipeline review](../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
+See the [pipeline review](../../specs/005-ai-repo-setup/pipeline-review.md) for observed runs and follow-ups.
 
 Create Draft PRs, one per slice. The COO (or single-writer `Acting COO` during a logged `Claude Code` `Quota Pause`) verifies current CI, current-commit SonarCloud success with zero
 OPEN/CONFIRMED issues and the documentation impact, dispatches the independent review and arms head-bound
-auto-merge under [master coordination](../.github/instructions/master-coordination.instructions.md#delivery-flow).
+auto-merge under [master coordination](../../.github/instructions/master-coordination.instructions.md#delivery-flow).
 Main, local checks and prior PR commits are separate evidence. Non-GitHub work, including separately authorized Sites
 review/publication and independent live verification, retains its own assigned route.
 

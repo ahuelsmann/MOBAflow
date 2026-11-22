@@ -179,7 +179,7 @@ Complete since 2026-11-20 ([#360](https://github.com/ahuelsmann/MOBAflow/issues/
 automatically on PRs that change `MOBAsmart/**` or the Android analyzer baseline, as decided by the maintainer on
 2026-11-08; slice 3 recorded the RF-09 mutation lanes and the RF-10 formatting gate and removed the child plan.
 The inventory of deliverables, local commands, CI lanes and required checks is in
-[Build Performance](../docs/BUILD-PERFORMANCE.md#deliverables-lanes-and-required-checks).
+[Build Performance](../docs/developer/BUILD-PERFORMANCE.md#deliverables-lanes-and-required-checks).
 
 ### RF-08: Compile MAUI XAML bindings
 
@@ -200,7 +200,7 @@ design decision is on PR #486). Outcome: seven active mutation lanes (`domain`, 
 `backend`, `api`, `shared-ui`), each with a measured floor that is never lowered automatically; the Backend,
 MOBApi and SharedUI lanes have no Safe-Mode site left. The `contracts` lane was added on a measured probe (264 mutants,
 38 s, 76.85%). `track-plan-renderer` and `display` stay `planned` and `sound` stays `planned` without ever getting an active lane; the measurements and
-reasons are in [Build Performance](../docs/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons), and renderer
+reasons are in [Build Performance](../docs/developer/BUILD-PERFORMANCE.md#planned-lanes-with-measured-reasons), and renderer
 assertions continue in [#497](https://github.com/ahuelsmann/MOBAflow/issues/497). The coverage thresholds in
 `Test/coverage-thresholds.json` keep gating the Windows `desktop` lane.
 
@@ -217,14 +217,14 @@ command; #500 applied the mechanical whitespace and final-newline baseline (444 
 
 Child issue [#269](https://github.com/ahuelsmann/MOBAflow/issues/269) owned this package; its child plan
 took over the provisional anchor and was removed when the slices were delivered. The resulting
-collaborators are described in [the architecture overview](../docs/ARCHITECTURE.md#train-control).
+collaborators are described in [the architecture overview](../docs/developer/ARCHITECTURE.md#train-control).
 
 ### RF-12: Decompose `MauiViewModel`
 
 Child issue [#242](https://github.com/ahuelsmann/MOBAflow/issues/242) owned this package; its child plan
 took over the provisional anchor and was removed when the slices were delivered. The resulting
 collaborators are described in
-[the architecture overview](../docs/ARCHITECTURE.md#mobasmart-session-and-projection).
+[the architecture overview](../docs/developer/ARCHITECTURE.md#mobasmart-session-and-projection).
 
 ### RF-15: Remove or harden latent legacy services
 
@@ -272,7 +272,7 @@ Sequence:
 
 1. record the intended project dependency direction, the namespace-to-project
    rule and the purpose of each notification mechanism in
-   `docs/ARCHITECTURE.md`;
+   `docs/developer/ARCHITECTURE.md`;
 2. extend the existing `TrackLayoutArchitectureTests` approach to all projects;
 3. start with rules the current code satisfies, and add every further rule in
    the package that makes it pass.
@@ -342,7 +342,7 @@ on 2026-11-14 after its slices were delivered (slice 1 Settings #248, 2a locomot
 audit #442); its child plan, added in #221, was removed at closure. Outcome: every page area has its own
 platform-neutral ViewModel registered through the host composition, `LayoutPersistenceService` is the one path that
 persists the saved layout, and the superseded shell partials are deleted (see
-[the runtime boundary](../docs/ARCHITECTURE.md#runtime-boundary-current-refactoring-state)). The final shell audit
+[the runtime boundary](../docs/developer/ARCHITECTURE.md#runtime-boundary-current-refactoring-state)). The final shell audit
 kept these in `MainWindowViewModel`: solution new/open/save, the stop-trains confirmation and shutdown as host
 actions delegating to `ISolutionSession`; the Z21 status, telemetry and journey runtime projections; connect,
 disconnect, track power and feedback simulation as command forwarding through the gateway or connection runtime;
@@ -392,7 +392,7 @@ Outcome: the new
 `Common` it uses, UI settings live in the `SharedUI` root `UiSettings` with one keyed feature-toggle collection
 (old flat toggle values load as defaults), appearance and mobile helpers live in `SharedUI` and the navigation
 category in MOBAflow. `Common` keeps neutral infrastructure only; the namespaces it may declare are listed in
-[the Common and Contracts boundary](../docs/ARCHITECTURE.md#common-and-contracts-boundary) and enforced by
+[the Common and Contracts boundary](../docs/developer/ARCHITECTURE.md#common-and-contracts-boundary) and enforced by
 `SolutionArchitectureTests`.
 
 ### RF-27: Move domain rules into the domain model
@@ -402,7 +402,7 @@ after its moves were delivered (slice 1 #341, slice 2 #346, `Backend`/`SharedUI`
 move 4 #424); its child plan, added in #341 and restored in #364, was removed at closure. Outcome: `Journey`,
 `Station`, `Workflow`, `Project`, `LocomotiveWhistleRule` and `Locomotive` own the rules that need only their own
 data, and their Backend and SharedUI callers delegate to them (see
-[the Domain layer](../docs/ARCHITECTURE.md#1-domain-layer-domain)). The audit kept these in place: cross-entity
+[the Domain layer](../docs/developer/ARCHITECTURE.md#1-domain-layer-domain)). The audit kept these in place: cross-entity
 validators with user-facing findings in `Backend/Service`, `DecoderCvService.Validate` (checks an input list
 against the protocol before it becomes part of a snapshot), `WorkflowEffectPlanner.Plan` (builds Backend effect
 requests) and the ViewModel ID lookups for navigation and selection.
@@ -412,7 +412,7 @@ requests) and the ViewModel ID lookups for navigation and selection.
 Child issue [#298](https://github.com/ahuelsmann/MOBAflow/issues/298) owned this package; its child plan was removed
 when the slices were delivered (#300, #305, #307). `TrackPlanDocument` is the one persisted model, the
 catalogue-neutral `TrackPlan.Editor` project reaches Piko A only through `ITrackCatalog`, and the WinUI page
-adapts input and drawing (see [the track-plan dependency rule](../docs/ARCHITECTURE.md#track-plan-dependency-rule)).
+adapts input and drawing (see [the track-plan dependency rule](../docs/developer/ARCHITECTURE.md#track-plan-dependency-rule)).
 Since RF-24 slice 6 the page and `TrackPlanViewModel` persist the layout through `LayoutPersistenceService`; restoring the column widths stays in the page.
 
 ### RF-29: Platform adapters for sound and files
@@ -422,7 +422,7 @@ closed on 2026-11-08 after its slices were delivered (slice 1 #315, slice 2 #317
 plan, added in #314, was removed by #427 after closure. Outcome: `Sound` holds only the platform-neutral contract
 and its null object, MOBAflow owns the WAV player, and each file role has its own interface and implementation
 class (see
-[the platform adapter rule](../docs/ARCHITECTURE.md#platform-adapter-rule)). The manual desktop dialog check
+[the platform adapter rule](../docs/developer/ARCHITECTURE.md#platform-adapter-rule)). The manual desktop dialog check
 that the child plan requested was never performed; since 2026-11-06 personal acceptance no longer gates
 closure (#417), so any dialog problem found in everyday use is reported as a bug.
 

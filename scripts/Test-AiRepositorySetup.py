@@ -183,7 +183,7 @@ def check_guidance(root, errors):
     index = root / ".github/instructions/instructions-index.md"
     index_text = index.read_text(encoding="utf-8-sig").split("## Further references")[0]
     guidance = {root / "AGENTS.md", root / "CLAUDE.md", root / ".github/copilot-instructions.md", index,
-                root / "docs/AI-DEVELOPMENT.md", root / "docs/SPEC-KIT.md"}
+                root / "docs/developer/AI-DEVELOPMENT.md", root / "docs/developer/SPEC-KIT.md"}
     for link in re.findall(r"\]\(([^)]+\.instructions\.md)\)", index_text):
         guidance.add((index.parent / link).resolve())
     for path in guidance:

@@ -271,9 +271,9 @@ public async Task<(Solution? solution, string? path, string? error)> LoadAsync()
 
 ### In `SolutionSession`
 
-[`SolutionSession`](../SharedUI/Service/SolutionSession.cs) coordinates loading through
-[`ISolutionIoService`](../SharedUI/Interface/ISolutionIoService.cs). The WinUI host binds
-that contract to [`SolutionFileService`](../MOBAflow/Service/SolutionFileService.cs),
+[`SolutionSession`](../../SharedUI/Service/SolutionSession.cs) coordinates loading through
+[`ISolutionIoService`](../../SharedUI/Interface/ISolutionIoService.cs). The WinUI host binds
+that contract to [`SolutionFileService`](../../MOBAflow/Service/SolutionFileService.cs),
 which owns the picker, file read, validation and deserialization. The session then
 handles errors and applies a successful result on the UI thread:
 

@@ -35,7 +35,7 @@ its analysis or first slice can start and moves it to In progress at once. Issue
 open product, UX or architecture decision start with a Decision & Steering Triad analysis and a concise
 recommendation, not with code, even when the WIP limit is reached. Slices cut from an issue follow the WIP limit,
 locks, design Go and veto rules in
-[master coordination](../.github/instructions/master-coordination.instructions.md#board-locks-and-wip-limit).
+[master coordination](../../.github/instructions/master-coordination.instructions.md#board-locks-and-wip-limit).
 
 ## Views
 
@@ -51,7 +51,7 @@ appear together in **Quality & maintenance**.
 
 ## Slices, locks and WIP limit
 
-The flow in [master coordination](../.github/instructions/master-coordination.instructions.md#board-locks-and-wip-limit)
+The flow in [master coordination](../../.github/instructions/master-coordination.instructions.md#board-locks-and-wip-limit)
 uses the open slices (items with Risk class set) for its checks: a new slice may start only in an area that no
 open item lists under Locked areas, and at most three code slices (documentation-only slices excluded) are open.
 Locks, design Go, handovers and merges are logged as comments on the Draft PR; the item fields hold only the

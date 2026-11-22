@@ -20,7 +20,7 @@ LAN specification. The specification is not redistributed in this repository.
 
 Broadcast flags are set **per client** (IP + port) via `LAN_SET_BROADCASTFLAGS` and must be
 re-applied after every connect. Constants live in `Z21Protocol.BroadcastFlags`
-([`Backend/Protocol/Z21Protocol.cs`](../Backend/Protocol/Z21Protocol.cs)).
+([`Backend/Protocol/Z21Protocol.cs`](../../Backend/Protocol/Z21Protocol.cs)).
 
 MOBAflow subscribes with `Driving | Rbus | SystemState` (not `AllLocoInfo`).
 
@@ -36,7 +36,7 @@ Turnout feedback does **not** carry KS signal aspects (`Hp0`, `Vr0`, …). Viess
 signals are mapped in MOBAflow from `SignalAspect` to several `SetTurnout` commands.
 
 Protocol behaviour is verified in
-[`Test/Backend/Z21BroadcastProtocolTests.cs`](../Test/Backend/Z21BroadcastProtocolTests.cs).
+[`Test/Backend/Z21BroadcastProtocolTests.cs`](../../Test/Backend/Z21BroadcastProtocolTests.cs).
 
 ## MOBAflow sync layers
 
@@ -54,13 +54,13 @@ MOBAsmart                    MOBApi                     MOBAflow
 
 ### 1. Solution sync
 
-[`SolutionRemoteLoader`](../SharedUI/Service/SolutionRemoteLoader.cs) downloads the active
+[`SolutionRemoteLoader`](../../SharedUI/Service/SolutionRemoteLoader.cs) downloads the active
 project: signal GUIDs, names, fleet metadata, stellwerk layout. The Z21 has no knowledge of
 this domain model.
 
 ### 2. Runtime command forwarding
 
-[`MobileRuntimeCoordinator`](../SharedUI/Service/MobileRuntimeCoordinator.cs) routes
+[`MobileRuntimeCoordinator`](../../SharedUI/Service/MobileRuntimeCoordinator.cs) routes
 signal-aspect commands to MOBAflow when a MOBApi session is active. MOBAflow
 performs multiplexer resolution and Z21 I/O. Locomotive drive/function commands
 prefer the local Z21 connection and use MOBAflow only as a fallback when the
@@ -74,10 +74,10 @@ solution does not contain; MOBAflow runs it in that project's runtime only.
 
 ### 3. Runtime snapshot sync (slim profile)
 
-[`RuntimeSnapshotRemoteFilter`](../Contracts/Runtime/RuntimeSnapshotRemoteFilter.cs) strips
+[`RuntimeSnapshotRemoteFilter`](../../Contracts/Runtime/RuntimeSnapshotRemoteFilter.cs) strips
 `LocomotiveStates` before MOBApi / SignalR transport. Mobile clients read locomotive feedback
 from their **local Z21 connection** when connected
-([`TrainControlViewModel`](../SharedUI/TrainControl/TrainControlViewModel.cs), hybrid mode).
+([`TrainControlViewModel`](../../SharedUI/TrainControl/TrainControlViewModel.cs), hybrid mode).
 
 Each snapshot names its project (`ProjectId`). MOBApi keeps the latest snapshot of every
 project and sends a remote only the snapshots of the project it registered for
@@ -93,7 +93,7 @@ Snapshots still carry:
 ### RuntimeHub wire contract
 
 Both clients connect to `/runtime-hub`. The shared
-[`RuntimeHubContract`](../Contracts/Runtime/RuntimeHubContract.cs) separates calls by role:
+[`RuntimeHubContract`](../../Contracts/Runtime/RuntimeHubContract.cs) separates calls by role:
 
 | Caller and contract | Wire methods |
 | --- | --- |
@@ -104,13 +104,13 @@ Both clients connect to `/runtime-hub`. The shared
 
 `IRuntimeHubCallbacks` combines the two callback roles for the typed server hub;
 each client handles its own role. The
-[`host client`](../MOBAflow/Service/RuntimeHubHostClient.cs) and
-[`remote client`](../MOBAsmart/Service/RuntimeHubRemoteClient.cs) use `nameof` on
+[`host client`](../../MOBAflow/Service/RuntimeHubHostClient.cs) and
+[`remote client`](../../MOBAsmart/Service/RuntimeHubRemoteClient.cs) use `nameof` on
 these contract members when invoking methods or registering callbacks, so those
 names are wire-relevant. The server's cancellation-token overload of
 `SolutionUpdated` still sends only the timestamp argument to the remote.
 
-[`RuntimeHub`](../MOBApi/Hubs/RuntimeHub.cs) records the connection calling
+[`RuntimeHub`](../../MOBApi/Hubs/RuntimeHub.cs) records the connection calling
 `RegisterHost` as the current host and joins it to `runtime-host`. Validated remote
 commands target that recorded connection; without a host, admission can queue them.
 `RegisterRemote` requires a client id and joins `runtime-remote`; a selected project
@@ -126,7 +126,7 @@ registered host.
 ### Platform discovery addresses
 
 Z21 discovery and MOBAsmart's MOBApi discovery obtain their local LAN candidates
-through [`ILocalIpv4AddressSource`](../Common/Discovery/ILocalIpv4AddressSource.cs).
+through [`ILocalIpv4AddressSource`](../../Common/Discovery/ILocalIpv4AddressSource.cs).
 The shared default reads network interfaces; MAUI's Android adapter also merges
 addresses from the active Android network. This keeps Android network APIs in
 the host while both discovery services use the same platform-selected address
@@ -143,7 +143,7 @@ source. See the [platform adapter rule](ARCHITECTURE.md#platform-adapter-rule).
 ## Observability
 
 `GET /api/status` exposes runtime sync diagnostics via
-[`RuntimeStatusBuilder`](../MOBApi/Service/RuntimeStatusBuilder.cs):
+[`RuntimeStatusBuilder`](../../MOBApi/Service/RuntimeStatusBuilder.cs):
 
 - `lastSnapshotPayloadBytes`
 - `totalSnapshotBroadcastCount`

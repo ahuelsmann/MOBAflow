@@ -25,12 +25,12 @@ relevant files explicitly. Examples illustrate patterns; current source code def
 | Independent repository write tasks | [Worktree isolation](git-worktree-isolation.instructions.md) |
 | Commits and pull requests | [Secrets and Sonar gates](sonarqube-pre-pr.instructions.md) |
 | Roles, small-batch delivery flow, board and locks, review, auto-merge and specialist CLI contact | [Master coordination](master-coordination.instructions.md) |
-| Feature specifications and plans | [Spec Kit workflow](../../docs/SPEC-KIT.md), [governance](spec-kit-governance.instructions.md) |
+| Feature specifications and plans | [Spec Kit workflow](../../docs/developer/SPEC-KIT.md), [governance](spec-kit-governance.instructions.md) |
 
 ## Further references
 
-- [Project overview](../../README.md), [architecture documentation](../../docs/ARCHITECTURE.md),
-  [project reference](../../docs/PROJECT-REFERENCE.md), [build performance](../../docs/BUILD-PERFORMANCE.md)
+- [Project overview](../../README.md), [architecture documentation](../../docs/developer/ARCHITECTURE.md),
+  [project reference](../../docs/developer/PROJECT-REFERENCE.md), [build performance](../../docs/developer/BUILD-PERFORMANCE.md)
 - [Validation entry points](quick-reference.md), [GitHub CI](../workflows/quality.yml).
 - [Visual Studio setup](vs-setup.instructions.md) is optional environment guidance.
 - `copilot-tips.instructions.md`, `future-enhancements.instructions.md`, `visual-summary.md` and

@@ -2,8 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/452
 **Spec Kit**: Not applicable - repository and project layout without product behavior or persisted-format change; reclassify before implementation if a renamed namespace is part of a persisted or wire format
-**Status**: Slice 1 delivered; slice 2 and the code slices remain. The documentation slice can start;
-the code slices wait for RF-26
+**Status**: Slices 1 and 2 delivered; the code slices remain and wait for RF-26
 
 ## Purpose and scope
 
@@ -22,7 +21,7 @@ Recorded on main `4ae44d75` (2026-11-14).
 | --- | --- | --- |
 | Agent tooling inside `docs/` | Resolved by slice 1: `docs/engineering/` (17 files) and `docs/productivity/` (5 files) moved to `.agents/references/` | 1 |
 | Office files in `docs/` | Resolved by slice 1: `FeedbackWorkflow.pptx`, `Journey-Editor.xlsx`, `MOBAnews.docx` moved to `assets/office/` | 1 |
-| `docs/` top level | 16 Markdown files that mix developer topics (architecture, build, release, Spec Kit, AI development) with user-facing or legal topics; the user wiki is `docs/wiki/` (9 files); `docs/index.html` with `docs/assets/` is a site entry page | 2 |
+| `docs/` top level | Resolved by slice 2: 14 developer Markdown files moved to `docs/developer/` and 2 user/legal Markdown files (`HARDWARE-DISCLAIMER.md`, `THIRD-PARTY-NOTICES.md`) to `docs/user/`; `docs/wiki/` (9 files) remains the canonical user wiki; `docs/index.html` with `docs/assets/` remains the site entry page; `README.md` links architecture, build and test entry points | 2 |
 | Test project | one `Test/Test.csproj` that targets `net10.0` and `net10.0-windows10.0.22621.0`, removes files per target with `Compile Remove`, references MOBAflow only for Windows and MOBAsmart only with `IncludeMobaSmartTests=true` | 3 |
 | Test folders (tracked files) | `SharedUI` 83, `Backend` 73, `MOBAdisplay` 22, `Domain` 22, `Common` 21, `Helpers` 19, `MOBAflow` 14, `Speech` 11, `MOBApi` 11, `TrackPlanRenderer` 10, `WinUI` 7, `Contracts` 7, `Architecture` 5, `Unit` 4, `Integration` 4, others 11 | 3 |
 | `Test/Analysis` | `FadrEncodingAnalysis.csproj` with its `Program.cs`, excluded from the test project with `Compile Remove` | 3 |
@@ -65,9 +64,12 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
    product documentation and move the three Office files to a non-documentation folder
    (or remove those that are obsolete, by the maintainer's decision); fix every link and the checks that read
    these paths (`scripts/Test-AiRepositorySetup.py`, documentation link check).
-2. **Developer and user documentation.** Group the top-level files of `docs/` into developer and user sections,
-   keep `docs/wiki/` as the canonical user wiki, and make `README.md` the entry point to architecture, build and
-   tests. Links, `docs/index.html` and the documentation consistency facts follow.
+2. **Developer and user documentation.** Delivered 2026-11-22: the 14 developer Markdown files now live in
+   `docs/developer/` and `HARDWARE-DISCLAIMER.md` and `THIRD-PARTY-NOTICES.md` in `docs/user/`; `docs/wiki/`
+   remains the canonical user wiki, and `README.md` links to architecture, build and tests. Scope was: group the
+   top-level files of `docs/` into developer and user sections, keep `docs/wiki/` as the canonical user wiki, and
+   make `README.md` the entry point to architecture, build and tests. Links, `docs/index.html` and the
+   documentation consistency facts follow.
 3. **Test projects by target.** Split `Test/Test.csproj` as decided, move `Test/Analysis` out, update Quality CI,
    the change-scope script, coverage thresholds and mutation lanes. One pull request per moved group if the diff
    becomes too large to review.
@@ -76,7 +78,7 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
 5. **Single-host types in `SharedUI`.** Move desktop-only and mobile-only ViewModels and services into `Desktop`
    and `Mobile` folders with matching namespaces; add an RF-20 architecture rule that MOBAsmart does not use
    `Desktop` types and MOBAflow does not use `Mobile` types.
-6. **Documentation and completion.** Repository map in [AGENTS.md](../AGENTS.md), `docs/ARCHITECTURE.md`,
+6. **Documentation and completion.** Repository map in [AGENTS.md](../AGENTS.md), `docs/developer/ARCHITECTURE.md`,
    instruction `applyTo` patterns, the delivery note in the umbrella plan, removal of this plan.
 
 ## Validation strategy
@@ -98,7 +100,7 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
 - RF-10 ([#451](https://github.com/ahuelsmann/MOBAflow/issues/451)) is complete; its whitespace gate in
   `Portable tests on Linux` also checks the files that the code slices of this package move.
 - RF-07 ([#360](https://github.com/ahuelsmann/MOBAflow/issues/360)) is complete; when slice 3 changes the CI lanes, it
-  updates the deliverable inventory in [Build Performance](../docs/BUILD-PERFORMANCE.md#deliverables-lanes-and-required-checks).
+  updates the deliverable inventory in [Build Performance](../docs/developer/BUILD-PERFORMANCE.md#deliverables-lanes-and-required-checks).
 - RF-09 ([#366](https://github.com/ahuelsmann/MOBAflow/issues/366)) added tests and mutation lanes and is complete.
 - Slices 3 and later edit workflow files. A cloud session cannot push workflow changes; those slices need a local
   session.

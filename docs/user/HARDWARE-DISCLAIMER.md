@@ -18,7 +18,7 @@ guarantee safe wiring, protection against hardware damage, or the integrity of
 a command station's configuration. Hardware installation and repair require the
 manufacturer's guidance and appropriate expertise.
 
-The software is supplied under the [MIT License](../LICENSE). This additional
+The software is supplied under the [MIT License](../../LICENSE). This additional
 hardware guidance does not exclude or limit liability where applicable law
 prohibits doing so. In particular, it does not exclude liability for intentional
 acts, gross negligence, culpable injury to life, body or health, or other mandatory
@@ -75,8 +75,8 @@ of the legal outcome of an individual case.
 MOBApi uses HTTP without sign-in or transport encryption. Devices on the trusted
 home network can read layout data and send commands. Uploaded photos and
 user-entered content can contain personal or sensitive information; their
-sensitivity depends on what the user supplies. See the [security policy](../SECURITY.md)
-and the [MOBAsmart privacy notes](wiki/MOBASMART-USER-GUIDE.md#privacy-and-safety).
+sensitivity depends on what the user supplies. See the [security policy](../../SECURITY.md)
+and the [MOBAsmart privacy notes](../wiki/MOBASMART-USER-GUIDE.md#privacy-and-safety).
 
 ---
 
@@ -147,7 +147,7 @@ The following points **MUST** be checked by the user before use:
 
 ## 📜 Licensing Notice
 
-MOBAflow itself is published under the **MIT License** (see [`LICENSE`](../LICENSE)).
+MOBAflow itself is published under the **MIT License** (see [`LICENSE`](../../LICENSE)).
 
 Z21 hardware and software by Roco are subject to **Roco's own license terms**.
 
@@ -161,7 +161,7 @@ information on dependencies and third-party software.
 If you:
 
 - **Find bugs in MOBAflow** → Create GitHub Issue
-- **Discover security issues** → See [`SECURITY.md`](../SECURITY.md)
+- **Discover security issues** → See [`SECURITY.md`](../../SECURITY.md)
 - **Test Z21 compatibility** → Please test and report!
 - **Improve documentation** → Pull requests welcome!
 

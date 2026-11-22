@@ -1,6 +1,6 @@
 ---
 description: 'Multi-model agent network, capability profiles, risk classes, small-batch delivery flow, domain locks, design-first, cross-model review and auto-merge for all MOBAflow agents.'
-applyTo: 'AGENTS.md,CLAUDE.md,docs/AI-DEVELOPMENT.md,.agents/skills/mobaflow-code-review/**,.claude/skills/mobaflow-code-review/**'
+applyTo: 'AGENTS.md,CLAUDE.md,docs/developer/AI-DEVELOPMENT.md,.agents/skills/mobaflow-code-review/**,.claude/skills/mobaflow-code-review/**'
 ---
 
 # Master coordination
@@ -20,7 +20,7 @@ assignment includes the flow below through merge unless explicitly limited ("dra
 
 Roles define responsibilities and survive model updates. Every role and slice team draws on four capability
 profiles across **Claude Code**, **ChatGPT Codex** and **Antigravity** under the maxim **quality first** (concrete
-model mappings live in [AI-assisted development](../../docs/AI-DEVELOPMENT.md#capability-profiles-and-models); **`Claude Fable 5.2` is prohibited** — the maximum Claude tier is `Claude Opus 5.5`, with `Claude Sonnet 5.5` for `P4`):
+model mappings live in [AI-assisted development](../../docs/developer/AI-DEVELOPMENT.md#capability-profiles-and-models); **`Claude Fable 5.2` is prohibited** — the maximum Claude tier is `Claude Opus 5.5`, with `Claude Sonnet 5.5` for `P4`):
 
 | Profile | Core strength | Typical duties |
 | --- | --- | --- |
@@ -110,7 +110,7 @@ stated reason in the PR. The COO never reviews its own coordination fixes.
 
 ## Board, locks and WIP limit
 
-The board is the [MOBAflow GitHub Project Kanban](../../docs/KANBAN.md)
+The board is the [MOBAflow GitHub Project Kanban](../../docs/developer/KANBAN.md)
 (`https://github.com/users/ahuelsmann/projects/1`). Each open slice is one Kanban item (its Draft PR) with the
 slice fields **Risk class**, **Locked areas**, **Writer** and **Status** described there. The same facts sit in
 the slice header block at the top of the Draft PR body (`.github/PULL_REQUEST_TEMPLATE.md`): issue, risk class,
