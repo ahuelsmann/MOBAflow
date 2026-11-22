@@ -209,7 +209,7 @@ next at the end:
   Claude session (Opus 5.5 maximum tier, verified by actual model output) without implementation history,
   complemented by an independent cross-family `P2` (Codex) or `P3` (Antigravity, for UI/editorial work)
   verification. During a standalone `Claude Code` quota pause, `Codex` (`P2`) + `Antigravity` (`P3`) run `2/3 Acting COO` failover and route the fresh independent `P1` (`Claude Opus 5.5`) review through an isolated Antigravity sub-agent alongside cross-family `P2`/`P3` checks. Neither the `P1` reviewer nor the `P2`/`P3` verifier may be the writer's or companion's session.
-  This guarantees both the mandatory `P1` Opus 5.5+ gate and independent verification across at least two model
+  This guarantees both the mandatory `P1` (`Claude Opus 5.5`) gate and independent verification across at least two model
   families for every slice. An incomplete or failed review does not pass. Reviews report findings ranked by
   severity with file, line, trigger, consequence and evidence, separating introduced defects from existing debt.
   The COO posts the review on the PR. Companion comments follow the

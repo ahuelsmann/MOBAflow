@@ -54,7 +54,7 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   and `M` slice together: the companion checks the design note and reviews every pushed commit with PR review
   comments while the slice grows.
 - **Independent final review and auto-merge.** At Ready every slice (`H`, `M` and `L`) receives a separate fresh
-  `P1` Claude review (Opus 5.5 or higher, maximum tier) plus independent cross-family `P2`/`P3` verification on the exact head
+  `P1` Claude review (`Claude Opus 5.5` — exact required tier and ceiling) plus independent cross-family `P2`/`P3` verification on the exact head
   and base (neither may be the writer's or companion's session). During a `Claude Code` usage/spend limit (`Quota Pause`), `Codex` (`P2`) and `Antigravity` (`P3`) run `2/3 Acting COO` failover and execute the fresh `P1` (`Claude Opus 5.5`) final review via an isolated Antigravity sub-agent alongside cross-family `P2`/`P3` verification (`Codex` / `GPT-OSS 120B` / `Gemini 4`). With no open Blocker/High/Medium, zero SonarCloud
   issues and green non-required mutation lanes, the COO (or Acting COO) arms head-bound GitHub auto-merge; it merges when the
   required checks pass. Before any push to an armed PR the COO disarms it.
