@@ -137,7 +137,7 @@ Review the full document diff, references/links and command arguments; run Spec 
 
 ## Documentation and wiki impact
 
-This planning PR adds only feature plans, so existing user-facing availability statements remain accurate and unchanged. The future implementation must update `docs/wiki/MOBAFLOW-USER-GUIDE.md` ("Rolling stock and trains"), `docs/PROJECT-REFERENCE.md` (desktop surfaces/edited data) and `docs/ARCHITECTURE.md` (presentation/runtime and Windows service boundaries). State source, timestamp, reference diagnostics, keyboard flow and print limitations without runtime/physical certification. Reassess after behavior-changing review fixes and verify against actual integrated main. Do not publish an external wiki or announce availability during planning.
+This planning PR adds only feature plans, so existing user-facing availability statements remain accurate and unchanged. The future implementation must update `docs/wiki/MOBAFLOW-USER-GUIDE.md` ("Rolling stock and trains"), `docs/developer/PROJECT-REFERENCE.md` (desktop surfaces/edited data) and `docs/developer/ARCHITECTURE.md` (presentation/runtime and Windows service boundaries). State source, timestamp, reference diagnostics, keyboard flow and print limitations without runtime/physical certification. Reassess after behavior-changing review fixes and verify against actual integrated main. Do not publish an external wiki or announce availability during planning.
 
 ## Risks and remaining technical verification
 

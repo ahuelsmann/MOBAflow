@@ -111,6 +111,6 @@ in later slices; no desktop application, hardware or paid cloud synthesis was st
 
 ## Slice 6 - Documentation and closure
 
-- [ ] T026 Update `docs/wiki/PIPER-TTS-SETUP.md`, the user guide speech section and `docs/ARCHITECTURE.md`; add a short "add a provider" guide
+- [ ] T026 Update `docs/wiki/PIPER-TTS-SETUP.md`, the user guide speech section and `docs/developer/ARCHITECTURE.md`; add a short "add a provider" guide
 - [ ] T027 Maintainer acceptance on the PC: test message per provider and one fallback run with the network off; comment on #47 that RF-29 lost its speech part
 - [ ] T028 Final PR with the Sonar quality gate (SonarCloud) green and zero open issues; close #136

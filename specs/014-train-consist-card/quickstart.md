@@ -61,4 +61,4 @@ Record commit/comparison, date/time+zone, configuration, fixture, executed comma
 
 ## Documentation and integration
 
-Update docs/wiki/MOBAFLOW-USER-GUIDE.md, docs/PROJECT-REFERENCE.md and docs/ARCHITECTURE.md when the feature actually exists. Preserve the edited-data and non-certification boundary, and reassess after review fixes against integrated main. Follow the existing Chief Project Manager Ready and Claude review/fix/re-review/integration route.
+Update docs/wiki/MOBAFLOW-USER-GUIDE.md, docs/developer/PROJECT-REFERENCE.md and docs/developer/ARCHITECTURE.md when the feature actually exists. Preserve the edited-data and non-certification boundary, and reassess after review fixes against integrated main. Follow the existing Chief Project Manager Ready and Claude review/fix/re-review/integration route.
