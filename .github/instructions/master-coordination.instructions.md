@@ -32,8 +32,8 @@ model mappings live in [AI-assisted development](../../docs/AI-DEVELOPMENT.md#ca
 | Role | Primary profile(s) | Responsibility |
 | --- | --- | --- |
 | Human (maintainer) | user | Product goals, priorities, material UX decisions, fundamental architecture changes, new costs, app/device/hardware authorizations, feedback from real use |
-| Decision & Steering Triad | `P1` (COO) + `P2` (CPM/TD) + `P3` (Product/UX) | Cross-model steering for slice cutting, risk classification, design Go and escalations; the COO is the sole technical writer of the [Kanban slice fields](#board-locks-and-wip-limit) and arms auto-merge |
-| Chief Operating Officer (COO) | `P1` (Claude) | Overall operational lead: maintains the [Kanban and slice headers](#board-locks-and-wip-limit), forms slice teams, posts the design Go, dispatches reviews, arms auto-merge, escalates to the human |
+| Decision & Steering Triad | `P1` (COO) + `P2` (CPM/TD) + `P3` (Product/UX) | Cross-model steering for slice cutting, risk classification, design Go and escalations; the COO (or single-writer **`Acting COO`** when `Claude Code` is in `Quota Pause`) writes [Kanban slice fields](#board-locks-and-wip-limit) and manages auto-merge |
+| Chief Operating Officer (COO) | `P1` (Claude); **`Acting COO` failover:** `P3` (`Antigravity`) | Overall operational lead: sole technical writer on the [Kanban and slice headers](#board-locks-and-wip-limit), forms slice teams, posts the design Go, dispatches reviews, manages `gh pr update-branch` and auto-merge, escalates to the human. When a verified `Claude Code` `Quota Pause` is logged on the active thread/PR with its reset timestamp, **`Antigravity`** (`P3`) assumes sole single-writer `Acting COO` duties alongside `Codex` (`P2`) CPM/TD (`2/3 Acting COO` quorum) until `Claude Code` resets |
 | Chief Project Manager (CPM) & Technical Director (TD) | `P2` (Codex) | Prioritizes the backlog with the COO, checks repo/Spec Kit/build-graph consistency and may veto a slice or lock through the CLI channel and a PR comment as described [below](#board-locks-and-wip-limit) |
 | Head of Product Experience & UI/UX | `P3` (Antigravity) | Co-designs UI, TrackPlan, interaction and editorial slices from the design note on; checks visual hierarchy, themes, accessibility and user-facing clarity ([CLI contract](#head-of-uiux-gemini-argon-via-antigravity)) |
 | Solution Architect | `P1` + `P2` / `P3` | Technical design within scope; one recommendation with trade-offs; prepares fundamental decisions for the human |
@@ -85,22 +85,22 @@ test/analyzer/build-only tooling):
    checks. Never rebase or force-push a shared branch.
 6. **Review.** The companion reviewer accompanies class `H` and `M` slices from the design note on (see
    [slice team](#slice-team-and-review-from-the-start)). When the Draft is green locally and on CI and SonarCloud
-   reports zero OPEN/CONFIRMED issues on its head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO
+   reports zero OPEN/CONFIRMED issues on its head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO (or Acting COO)
    marks it Ready and dispatches the final [independent review](#independent-review). Fixes go to the writer;
    changed code gets a fresh re-review of the changed comparison.
 7. **Auto-merge.** When no Blocker, High or Medium finding is open and SonarCloud still reports zero issues, the
-   COO arms GitHub auto-merge bound to the reviewed head
+   COO (or Acting COO) arms GitHub auto-merge bound to the reviewed head
    (`gh pr merge <n> --squash --auto --match-head-commit <sha>`). The non-required mutation lanes (Common,
    Contracts, Speech.Base, Backend, MOBApi, SharedUI) must be green, or skipped by the change filter, on that head first; the
    required checks gate the merge itself. A finding counts as resolved only when it is fixed, or when a fresh
-   independent review or the human accepts the evidence that it does not apply; the writer, the COO or the merger
+   independent review or the human accepts the evidence that it does not apply; the writer, the COO (or Acting COO) or the merger
    never dismisses it alone.
 8. **Armed PRs and new commits.** `main` has the strict up-to-date rule and no merge queue, so a merge makes the
-   other armed PRs BEHIND. Before anyone pushes to an armed PR, the COO disarms it
-   (`gh pr merge <n> --disable-auto`); every new head counts as unarmed. The COO brings BEHIND branches up to date
+   other armed PRs BEHIND. Before anyone pushes to an armed PR, the COO (or Acting COO) disarms it
+   (`gh pr merge <n> --disable-auto`); every new head counts as unarmed. The COO (or Acting COO) brings BEHIND branches up to date
    with `gh pr update-branch <n>`; when GitHub reports a conflict, the writer merges `main` and resolves it. A
    head whose only change is a conflict-free merge of `main` needs fresh checks but no new review; a resolved
-   conflict or any other change needs a fresh review of that delta. Then the COO re-arms with the new head.
+   conflict or any other change needs a fresh review of that delta. Then the COO (or Acting COO) re-arms with the new head.
 9. **Close the loop.** After merge the Kanban item moves to Done and its locks are released.
    Documentation and `docs/wiki/` impact is part of the slice (corrections or a concrete no-change reason in the
    PR body).
@@ -136,8 +136,8 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
   implementation and review fixes; `In review` = PR marked ready for review, final review, and auto-merge armed;
   `Done` = merged. Status messages that arrive late never overwrite a newer state.
 - **Issue intake.** Issue items have no Risk class. `Planned` = accepted backlog; `Ready` = the maintainer's pull
-  trigger: the maintainer moved the issue there so that the COO takes it in. Only the COO claims `Ready` issues; its
-  scheduled monitoring session (Claude Monitor) does this on the COO's behalf. The COO claims an issue when its
+  trigger: the maintainer moved the issue there so that the COO takes it in. Only the COO (or `Antigravity` as single-writer `Acting COO` during a logged `Claude Code` `Quota Pause`) claims `Ready` issues; its
+  scheduled monitoring session (`Claude Monitor`, or `Antigravity Monitor` during failover) does this on the COO's behalf. The COO claims an issue when its
   analysis or its first slice can start, and then moves it to `In progress` at once, so it is not picked up twice.
   A claimed issue stays in `In progress` during analysis, while it waits for a maintainer decision and while its
   slices are delivered, also when a later slice has to wait. `Done` = closed, delivered or decided against.
