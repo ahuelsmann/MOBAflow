@@ -188,15 +188,15 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
 
         var removedStations = journey.Model.Stations.ToList();
         journey.Model.Stations.Clear();
-        journey.RefreshStations();
-
         project.Model.Journeys.Remove(journey.Model);
+
         var orphanedProjectStations = FindOrphanedProjectStations(project, removedStations);
         foreach (var orphan in orphanedProjectStations)
         {
             project.Model.Stations.Remove(orphan.Model);
         }
 
+        journey.RefreshStations();
         project.Journeys.Remove(journey);
         foreach (var orphan in orphanedProjectStations)
         {
@@ -248,7 +248,7 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
 
     private static List<StationViewModel> FindOrphanedProjectStations(
         ProjectViewModel project,
-        IReadOnlyCollection<Station> removedStations)
+        List<Station> removedStations)
     {
         if (removedStations.Count == 0 || project.Stations.Count == 0)
         {
