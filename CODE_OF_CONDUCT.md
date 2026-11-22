@@ -59,7 +59,7 @@ presenting MOBAflow or demonstrating it on a model railroad layout).
 
 Because MOBAflow interacts with real model railroad hardware, community members are also
 expected not to encourage unsafe wiring, operation, or bypassing of safety mechanisms and
-to respect the safety principles documented in [`HARDWARE-DISCLAIMER.md`](docs/HARDWARE-DISCLAIMER.md).
+to respect the safety principles documented in [`HARDWARE-DISCLAIMER.md`](docs/user/HARDWARE-DISCLAIMER.md).
 
 ## Enforcement
 

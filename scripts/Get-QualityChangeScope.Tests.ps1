@@ -35,7 +35,7 @@ function Assert-Scope(
 }
 
 # Documentation only: nothing runs.
-Assert-Scope @('docs/ARCHITECTURE.md') $false $false $false 'documentation page'
+Assert-Scope @('docs/developer/ARCHITECTURE.md') $false $false $false 'documentation page'
 Assert-Scope @('.agents/references/engineering/tdd.md', 'assets/office/MOBAnews.docx') $false $false $false 'reference pages and Office files'
 Assert-Scope @('plans/QUALITY-AND-REFACTORING-PLAN.md', 'specs/007-x/spec.md', '.specify/memory/constitution.md') $false $false $false 'plans and specifications'
 Assert-Scope @('README.md', 'AGENTS.md', 'CHANGELOG.md', 'LICENSE') $false $false $false 'root documentation'
@@ -53,7 +53,7 @@ Assert-Scope @('Docs/README.md') $true $true $true 'case-sensitive directory mat
 Assert-Scope @('Sound/Resources/Sounds/Station/README.md') $true $false $false 'Markdown packaged by a project'
 
 # .NET areas outside the firmware and the Domain mutation graph.
-Assert-Scope @('docs/ARCHITECTURE.md', 'Backend/Service/Z21.cs') $true $false $false 'mixed documentation and backend code'
+Assert-Scope @('docs/developer/ARCHITECTURE.md', 'Backend/Service/Z21.cs') $true $false $false 'mixed documentation and backend code'
 Assert-Scope @('SharedUI/ViewModel/MainWindowViewModel.cs', 'MOBAflow/View/SolutionPage.xaml') $true $false $false 'desktop code'
 Assert-Scope @('MOBAdisplay/Protocol/DisplayPayloadCodec.cs') $true $false $false 'display host code'
 Assert-Scope @('Contracts/Runtime/MobaRuntimeSnapshot.cs', 'TrackPlan.Editor/EditableTrackPlan.cs') $true $false $false 'wire contracts and track-plan editor code'
@@ -73,10 +73,10 @@ function Assert-Android([string[]] $Paths, [bool] $Android, [string] $Scenario) 
 Assert-Android @('MOBAsmart/View/ControlPage.xaml') $true 'MOBAsmart source'
 Assert-Android @('MOBAsmart\MOBAsmart.csproj') $true 'MOBAsmart project with Windows path separators'
 Assert-Android @('quality/analyzer-baseline.android.json') $true 'Android analyzer baseline'
-Assert-Android @('docs/ARCHITECTURE.md', 'Backend/Z21.cs', 'MOBAsmart/MauiProgram.cs') $true 'MOBAsmart among other changes'
+Assert-Android @('docs/developer/ARCHITECTURE.md', 'Backend/Z21.cs', 'MOBAsmart/MauiProgram.cs') $true 'MOBAsmart among other changes'
 Assert-Android @('SharedUI/ViewModel/MainWindowViewModel.cs') $false 'SharedUI only'
 Assert-Android @('MOBAflow/View/SolutionPage.xaml', 'Test/MOBAflow/SomeTests.cs') $false 'desktop only'
-Assert-Android @('docs/BUILD-PERFORMANCE.md', 'plans/360-ci-platform-matrix.md') $false 'documentation only'
+Assert-Android @('docs/developer/BUILD-PERFORMANCE.md', 'plans/360-ci-platform-matrix.md') $false 'documentation only'
 Assert-Android @('quality/analyzer-baseline.json') $false 'desktop analyzer baseline'
 Assert-Android @('Test/MOBAsmart/SomeTests.cs') $false 'MOBAsmart tests outside the project folder'
 Assert-Android @('Directory.Packages.props', 'global.json') $false 'repository-wide build inputs'

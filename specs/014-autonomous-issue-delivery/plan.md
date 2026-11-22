@@ -50,7 +50,7 @@ Proposed later source paths, conditional on approved .NET architecture:
 
 - Automation/IssueDelivery/: Authority, State, Admission, Ownership, Operations, Recovery, Providers, Evidence, Notifications, Costs and Migration modules.
 - Automation/IssueDelivery.Tests/: isolated contract/functional/negative fixtures.
-- docs/AI-DEVELOPMENT.md, docs/PROJECT-REFERENCE.md and docs/ARCHITECTURE.md: later workflow/tool boundary documentation.
+- docs/developer/AI-DEVELOPMENT.md, docs/developer/PROJECT-REFERENCE.md and docs/developer/ARCHITECTURE.md: later workflow/tool boundary documentation.
 - docs/wiki/: only pages whose user-facing acceptance/workflow actually changes.
 - Existing CI/gate/baseline files remain unchanged until a specifically allocated, evidence-backed task.
 
@@ -118,7 +118,7 @@ Senior independently verifies pilot integration and documentation against main. 
 
 Planning-only NoChange: no product/runtime/contributor process has been activated, so current user wiki and architecture descriptions are not rewritten to claim cloud operation. This feature folder explicitly records proposed behavior and limitations.
 
-Later implementation owner + Documentation Manager must assess docs/AI-DEVELOPMENT.md, docs/PROJECT-REFERENCE.md, docs/ARCHITECTURE.md, docs/SPEC-KIT.md and canonical docs/wiki/INSTALLATION.md / docs/wiki/MOBAFLOW-USER-GUIDE.md where affected. Developer recovery/cost/authority runbook belongs with tooling documentation; no speculative end-user instructions. Record exact affected pages or concrete NoChange per integrated slice; reassess after behavior-changing fixes and Senior checks actual main. Any remaining drift needs named owner and concrete follow-up through the same queue. No external wiki/site publication is implied.
+Later implementation owner + Documentation Manager must assess docs/developer/AI-DEVELOPMENT.md, docs/developer/PROJECT-REFERENCE.md, docs/developer/ARCHITECTURE.md, docs/developer/SPEC-KIT.md and canonical docs/wiki/INSTALLATION.md / docs/wiki/MOBAFLOW-USER-GUIDE.md where affected. Developer recovery/cost/authority runbook belongs with tooling documentation; no speculative end-user instructions. Record exact affected pages or concrete NoChange per integrated slice; reassess after behavior-changing fixes and Senior checks actual main. Any remaining drift needs named owner and concrete follow-up through the same queue. No external wiki/site publication is implied.
 
 ## Later governance delta inventory (no edits now)
 
@@ -127,8 +127,8 @@ Later implementation owner + Documentation Manager must assess docs/AI-DEVELOPME
 | AGENTS.md and master-coordination: role/responsibility table | Document current Senior/PM delegation and restricted cloud component roles | Current human mapping already governs; no authority invented |
 | master-coordination: local codex queue callback and synchronous Argon path | Supported cloud receipt/serialization route after qualification | No new advisor session or installation now |
 | master-coordination: existing heartbeats and queue state | Record accepted single-scheduler cutover/recovery | Preserve cadence/monitoring unless separately instructed |
-| AGENTS.md, Sonar policy, docs/SPEC-KIT.md, constitution principle VI: balanced examples | Reflect already-binding strict per-read instruction when centrally assigned | Not a strict-versus-balanced decision |
-| docs/AI-DEVELOPMENT.md and operational runbook | Accepted identity/recovery/budget/evidence rules | No reopening completed leadership consultation |
+| AGENTS.md, Sonar policy, docs/developer/SPEC-KIT.md, constitution principle VI: balanced examples | Reflect already-binding strict per-read instruction when centrally assigned | Not a strict-versus-balanced decision |
+| docs/developer/AI-DEVELOPMENT.md and operational runbook | Accepted identity/recovery/budget/evidence rules | No reopening completed leadership consultation |
 
 Routine wording alignment can be centrally assigned without a new blanket human approval. Material authority, architecture, risk, cost or operational-scope changes still require their proper recorded decisions.
 

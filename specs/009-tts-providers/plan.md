@@ -222,7 +222,7 @@ completion applies only to the current session, guarded across host-player insta
 5. **Settings and diagnostics**: extend the local-provider controls from slice 2 with capabilities, Azure and
    fallback configuration, cache size display and "Clear cache", and diagnostics for fallback and skipped
    announcements. Immediate local-provider switching is already delivered and tested in slice 2.
-6. **Documentation**: `docs/wiki/PIPER-TTS-SETUP.md`, user guide speech section, `docs/ARCHITECTURE.md`, and a
+6. **Documentation**: `docs/wiki/PIPER-TTS-SETUP.md`, user guide speech section, `docs/developer/ARCHITECTURE.md`, and a
    short "add a provider" guide.
 
 Each slice is one draft PR from its own worktree.

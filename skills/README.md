@@ -10,5 +10,5 @@ instruction to overwrite or activate the collection. Only focused review and dia
 were adapted into uniquely named MOBAflow skills for Issue145.
 
 The inactive windows-app-developer reference copy was removed because its origin and redistribution rights could not be established. It was not an active repository skill.
-Personal/global skills are independent installations. Consult [AI development](../docs/AI-DEVELOPMENT.md)
+Personal/global skills are independent installations. Consult [AI development](../docs/developer/AI-DEVELOPMENT.md)
 before importing/updating a skill, retaining license and necessary supporting resources.

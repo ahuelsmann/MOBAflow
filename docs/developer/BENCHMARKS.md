@@ -1,8 +1,8 @@
 # Benchmarks
 
 Repeatable performance measurements for RF-18 ([issue #382](https://github.com/ahuelsmann/MOBAflow/issues/382),
-[plan](../plans/382-operational-verification.md)). The benchmarks use [BenchmarkDotNet](https://benchmarkdotnet.org/)
-in the separate project [`Benchmarks/Moba.Benchmarks`](../Benchmarks/Moba.Benchmarks/Moba.Benchmarks.csproj). It is not
+[plan](../../plans/382-operational-verification.md)). The benchmarks use [BenchmarkDotNet](https://benchmarkdotnet.org/)
+in the separate project [`Benchmarks/Moba.Benchmarks`](../../Benchmarks/Moba.Benchmarks/Moba.Benchmarks.csproj). It is not
 part of the test suite, the solution file or the mandatory CI gates.
 
 ## What is measured
@@ -28,7 +28,7 @@ runs; dry timings are not measurements. Reports (Markdown, HTML and CSV) land in
 
 ## Run in CI
 
-The [Benchmarks workflow](../.github/workflows/benchmarks.yml) runs only on manual dispatch (**Actions > Benchmarks >
+The [Benchmarks workflow](../../.github/workflows/benchmarks.yml) runs only on manual dispatch (**Actions > Benchmarks >
 Run workflow**) and archives the reports for 90 days. Shared runners vary strongly, so CI results are evidence, not a
 pass/fail gate.
 

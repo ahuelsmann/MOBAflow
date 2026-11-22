@@ -149,10 +149,10 @@ implementations belong in the host that uses the role.
 - **Sound:** `Sound` contains `ISoundPlayer` and `NullSoundPlayer` and has no Windows API or package. MOBAflow
   plays WAV files through its internal `WindowsSoundPlayer`; MOBAsmart registers `NullSoundPlayer`. Every host
   registers a sound player and an `ISpeechOutput`: the shared `ActionExecutionContext` registration requires both.
-- **Discovery addresses:** [`ILocalIpv4AddressSource`](../Common/Discovery/ILocalIpv4AddressSource.cs) supplies
+- **Discovery addresses:** [`ILocalIpv4AddressSource`](../../Common/Discovery/ILocalIpv4AddressSource.cs) supplies
   private LAN addresses for the /24 candidate scans used by Z21 and MOBApi discovery. Shared backend registration
-  defaults to [`NetworkInterfaceIpv4AddressSource`](../Common/Discovery/NetworkInterfaceIpv4AddressSource.cs).
-  MAUI registers [`AndroidLocalIpv4AddressSource`](../MOBAsmart/Service/AndroidLocalIpv4AddressSource.cs), which
+  defaults to [`NetworkInterfaceIpv4AddressSource`](../../Common/Discovery/NetworkInterfaceIpv4AddressSource.cs).
+  MAUI registers [`AndroidLocalIpv4AddressSource`](../../MOBAsmart/Service/AndroidLocalIpv4AddressSource.cs), which
   merges those interface addresses with Android's active-network addresses from `ConnectivityManager`.
   Both `Z21DiscoveryService` and MOBAsmart's `RestApiDiscoveryService` consume the platform-selected source.
 - **Files:** `SharedUI/Interface` defines one interface per file role: `ISolutionIoService` (solution
@@ -306,9 +306,9 @@ public interface IWorkflowService
 | Inspect traffic | `ITrafficMonitor` |
 | Send an operator command | `IRuntimeCommandGateway` |
 
-See the actual [runtime roles](../Backend/Interface/IMobaRuntime.cs),
-[command gateway](../SharedUI/Interface/IRuntimeCommandGateway.cs), and
-[MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs).
+See the actual [runtime roles](../../Backend/Interface/IMobaRuntime.cs),
+[command gateway](../../SharedUI/Interface/IRuntimeCommandGateway.cs), and
+[MainWindowViewModel constructor](../../SharedUI/ViewModel/MainWindowViewModel.cs).
 ViewModels do not receive the complete `IMobaRuntime` or create their own gateway.
 
 **Characteristics:**
@@ -388,9 +388,9 @@ runtime services.
 - Shared ViewModels and host services reach solution ownership through those
   contracts. Only the shell, the main window that hosts it, OverviewPage (Z21 status
   and telemetry) and the composition root remain explicitly named in
-  [SolutionSessionArchitectureTests](../Test/Architecture/SolutionSessionArchitectureTests.cs).
+  [SolutionSessionArchitectureTests](../../Test/Architecture/SolutionSessionArchitectureTests.cs).
   RF-24 removed the page, layout and shell-state dependencies.
-- The [RF-23 acceptance record](../specs/008-project-runtimes/acceptance.md)
+- The [RF-23 acceptance record](../../specs/008-project-runtimes/acceptance.md)
   maps the feature criteria to tests and distinguishes automated evidence from
   app/device and live-hardware checks.
 
@@ -412,11 +412,11 @@ runtime services.
 
 **Read-only locomotive/train usage (#306):**
 
-- The pure [ILocomotiveTrainReferenceAnalyzer](../Backend/Interface/ILocomotiveTrainReferenceAnalyzer.cs)
+- The pure [ILocomotiveTrainReferenceAnalyzer](../../Backend/Interface/ILocomotiveTrainReferenceAnalyzer.cs)
   scans explicit project-local locomotive vehicle entries. Its immutable locations preserve repeated
   positions and distinguish rule identity from finding identity. ProjectDiagnosticsService uses the
   same traversal for missing-reference errors; valid uses appear only in an explicit usage query.
-- [ILocomotiveTrainRuntimeUsageReader](../Backend/Interface/ILocomotiveTrainRuntimeUsageReader.cs)
+- [ILocomotiveTrainRuntimeUsageReader](../../Backend/Interface/ILocomotiveTrainRuntimeUsageReader.cs)
   is an alias of the existing Windows ProjectRuntimeHost singleton, not a new owner. Shared Backend DI
   registers only the analyzer. The reader captures the actual ActiveProjectContext clone under the
   existing host-gate then activation-lock ordering, without I/O, lifecycle calls or queued RequestFactory execution.
@@ -761,7 +761,7 @@ a workflow does not own its triggers and can be reused by multiple assignments.
   execution until the operator recreates them. No automatic graph flattening is performed.
 
 See [issue #132](https://github.com/ahuelsmann/MOBAflow/issues/132) and the
-[specification](../specs/002-workflow-action-sequences/spec.md).
+[specification](../../specs/002-workflow-action-sequences/spec.md).
 
 **Planned refactoring (`MainWindowViewModel` decomposition):**
 
@@ -780,9 +780,9 @@ The undecorated EventBus invokes subscribers synchronously on the publishing
 thread. Updating WinUI-bound state from that thread can cause UI-thread violations.
 
 Both UI hosts register `AddEventBusWithUiDispatch()` together with the backend services. The registered
-`IEventBus` is the [RecordingEventBusDecorator](../Backend/Service/Recording/RecordingEventBusDecorator.cs)
+`IEventBus` is the [RecordingEventBusDecorator](../../Backend/Service/Recording/RecordingEventBusDecorator.cs)
 around the UI decorator and requires the recording session and mapper registry. The
-[UiThreadEventBusDecorator](../SharedUI/Service/UiThreadEventBusDecorator.cs)
+[UiThreadEventBusDecorator](../../SharedUI/Service/UiThreadEventBusDecorator.cs)
 forwards publication through `IUiDispatcher.InvokeOnUiLowPriority`: publication
 on the UI thread invokes handlers immediately; background publication queues
 them and returns. Handlers using this decorated bus update UI state directly
@@ -852,7 +852,7 @@ flowchart TD
 
 `MobaRuntimeService` updates `IRuntimeSnapshotProvider.Current` and publishes
 `RuntimeSnapshotChangedEvent`; `IMobaRuntime` has no `SnapshotChanged` event.
-[`ProjectRuntimeHost`](../Backend/Service/ProjectRuntimes/ProjectRuntimeHost.cs)
+[`ProjectRuntimeHost`](../../Backend/Service/ProjectRuntimes/ProjectRuntimeHost.cs)
 subscribes to every project's bus and exposes all-project snapshot updates through
 `IProjectRuntimeSnapshots`. Only the selected project's bus forwards feedback to
 the application bus. Selecting another project publishes its current snapshot
@@ -862,7 +862,7 @@ MOBAsmart instead reads its local runtime and combines local, remote and cached
 state through the mobile components below.
 
 The pipeline holds at most 1,024 events. Its failure paths are logged and counted on the meter
-`Moba.Backend` ([`BackendTelemetry`](../Backend/Service/BackendTelemetry.cs)):
+`Moba.Backend` ([`BackendTelemetry`](../../Backend/Service/BackendTelemetry.cs)):
 
 - `moba.z21.events.rejected`: events rejected while the pipeline is full or stopped, tagged `event_type`;
 - `moba.z21.events.dispatch_failed`: events whose publication failed, tagged `event_type`;
@@ -898,46 +898,46 @@ through that workflow pipeline. Resulting runtime snapshots refresh the UI.
 
 ### Train control
 
-[`TrainControlViewModel`](../SharedUI/TrainControl/TrainControlViewModel.cs) binds the MOBAflow Train
+[`TrainControlViewModel`](../../SharedUI/TrainControl/TrainControlViewModel.cs) binds the MOBAflow Train
 Control page and the MOBAsmart Engines/Control tabs. It coordinates platform-neutral collaborators in
-[`SharedUI/TrainControl`](../SharedUI/TrainControl), which take `TimeProvider` where timing matters:
+[`SharedUI/TrainControl`](../../SharedUI/TrainControl), which take `TimeProvider` where timing matters:
 
 | Component | Responsibility |
 | --- | --- |
-| [`LocomotiveRoster`](../SharedUI/TrainControl/LocomotiveRoster.cs) | Locomotive list source (live fleet, runtime fleet, project), in-place fleet merge, paused updates and selection restore. |
-| [`SpeedController`](../SharedUI/TrainControl/SpeedController.cs) | 75 ms drive debounce, speed ramp and the grace period in which a local drive command wins over snapshots. |
-| [`FunctionPanel`](../SharedUI/TrainControl/FunctionPanel.cs) | Function bits per address, local function grace period, snapshot merge and all-functions-off. |
-| [`BrakeAndDoorState`](../SharedUI/TrainControl/BrakeAndDoorState.cs) | Parking brake and door release rules and the timed door transition. |
-| [`JourneyStationProjection`](../SharedUI/TrainControl/JourneyStationProjection.cs) | Previous, current and next stop of the selected journey. |
-| [`TelemetryProjection`](../SharedUI/TrainControl/TelemetryProjection.cs) | Command station readings and peaks. |
-| [`TrainControlSettingsStore`](../SharedUI/TrainControl/TrainControlSettingsStore.cs) | Ramp, speed steps, series/Vmax and the per-host (WinUI/MAUI) selected locomotive. |
+| [`LocomotiveRoster`](../../SharedUI/TrainControl/LocomotiveRoster.cs) | Locomotive list source (live fleet, runtime fleet, project), in-place fleet merge, paused updates and selection restore. |
+| [`SpeedController`](../../SharedUI/TrainControl/SpeedController.cs) | 75 ms drive debounce, speed ramp and the grace period in which a local drive command wins over snapshots. |
+| [`FunctionPanel`](../../SharedUI/TrainControl/FunctionPanel.cs) | Function bits per address, local function grace period, snapshot merge and all-functions-off. |
+| [`BrakeAndDoorState`](../../SharedUI/TrainControl/BrakeAndDoorState.cs) | Parking brake and door release rules and the timed door transition. |
+| [`JourneyStationProjection`](../../SharedUI/TrainControl/JourneyStationProjection.cs) | Previous, current and next stop of the selected journey. |
+| [`TelemetryProjection`](../../SharedUI/TrainControl/TelemetryProjection.cs) | Command station readings and peaks. |
+| [`TrainControlSettingsStore`](../../SharedUI/TrainControl/TrainControlSettingsStore.cs) | Ramp, speed steps, series/Vmax and the per-host (WinUI/MAUI) selected locomotive. |
 
 The ViewModel keeps the bound properties, commands and the UI-thread continuations of ramps and the
 door transition; host differences stay explicit through `TrainControlViewModelOptions` and the required
-[`IRuntimeRoutingState`](../SharedUI/Interface/IRuntimeRoutingState.cs): MOBAsmart registers its
+[`IRuntimeRoutingState`](../../SharedUI/Interface/IRuntimeRoutingState.cs): MOBAsmart registers its
 `MobileRuntimeCoordinator` for the hybrid local/remote routing, MOBAflow registers `NullRuntimeRoutingState`.
 
 ### MOBAsmart session and projection
 
-These platform-neutral components live in [`SharedUI/Mobile`](../SharedUI/Mobile)
+These platform-neutral components live in [`SharedUI/Mobile`](../../SharedUI/Mobile)
 and are registered as singletons by `AddMobaMobileServices` in
-[`MobileServiceCollectionExtensions`](../SharedUI/Extensions/MobileServiceCollectionExtensions.cs), the
+[`MobileServiceCollectionExtensions`](../../SharedUI/Extensions/MobileServiceCollectionExtensions.cs), the
 platform-neutral part of the MOBAsmart composition. The Android app
-([`MobaMauiServiceCollectionExtensions`](../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs)) adds only
+([`MobaMauiServiceCollectionExtensions`](../../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs)) adds only
 its platform implementations and pages, so the portable test target resolves every shared registration:
 
 | Component | Responsibility and owned state |
 | --- | --- |
-| [`MobaflowEndpointLocator`](../SharedUI/Mobile/MobaflowEndpointLocator.cs) | Finds MOBApi on the LAN, anchored on the subnet of the selected project's Z21: startup retries, periodic rediscovery cadence and health-check delays. Remembers found and reachable addresses in the settings. |
-| [`MobaflowHubSession`](../SharedUI/Mobile/MobaflowHubSession.cs) | REST health checks, client registration cadence and SignalR connect retries/forced reconnect. Returns connection outcomes; the caller applies UI state. A failed REST check alone does not close an already connected hub. |
-| [`MobileRuntimeProjection`](../SharedUI/Mobile/MobileRuntimeProjection.cs) | Holds the latest remote fleet and signal-box snapshots, including restored cache data. Filters to the selected project and chooses/merges live remote, synchronized project, cached and local runtime data. Persists remote snapshots through `IMobileSolutionStore`; restored fleet data starts as stale. |
-| [`MobileSolutionSynchronizer`](../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog imports, tracks whether the current session's catalog was applied, and delegates push, periodic and on-demand solution refresh to `ISolutionRemoteLoader`. On-demand refresh can load the phone's cache first. |
-| [`MobilePhotoUploader`](../SharedUI/Mobile/MobilePhotoUploader.cs) | Takes a photo, uploads it to the known or discovered MOBApi endpoint and returns the result with its status text. |
-| [`MobileAppLifecycle`](../SharedUI/Mobile/MobileAppLifecycle.cs) | Android foreground-service keep-alive (syncs run in order), network-change debounce and the stopping state. Created and disposed by `MauiViewModel`. |
-| [`MauiViewModel`](../SharedUI/Mobile/MauiViewModel.cs) | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
+| [`MobaflowEndpointLocator`](../../SharedUI/Mobile/MobaflowEndpointLocator.cs) | Finds MOBApi on the LAN, anchored on the subnet of the selected project's Z21: startup retries, periodic rediscovery cadence and health-check delays. Remembers found and reachable addresses in the settings. |
+| [`MobaflowHubSession`](../../SharedUI/Mobile/MobaflowHubSession.cs) | REST health checks, client registration cadence and SignalR connect retries/forced reconnect. Returns connection outcomes; the caller applies UI state. A failed REST check alone does not close an already connected hub. |
+| [`MobileRuntimeProjection`](../../SharedUI/Mobile/MobileRuntimeProjection.cs) | Holds the latest remote fleet and signal-box snapshots, including restored cache data. Filters to the selected project and chooses/merges live remote, synchronized project, cached and local runtime data. Persists remote snapshots through `IMobileSolutionStore`; restored fleet data starts as stale. |
+| [`MobileSolutionSynchronizer`](../../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog imports, tracks whether the current session's catalog was applied, and delegates push, periodic and on-demand solution refresh to `ISolutionRemoteLoader`. On-demand refresh can load the phone's cache first. |
+| [`MobilePhotoUploader`](../../SharedUI/Mobile/MobilePhotoUploader.cs) | Takes a photo, uploads it to the known or discovered MOBApi endpoint and returns the result with its status text. |
+| [`MobileAppLifecycle`](../../SharedUI/Mobile/MobileAppLifecycle.cs) | Android foreground-service keep-alive (syncs run in order), network-change debounce and the stopping state. Created and disposed by `MauiViewModel`. |
+| [`MauiViewModel`](../../SharedUI/Mobile/MauiViewModel.cs) | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
 
-[`MobileSolutionStore`](../SharedUI/Service/MobileSolutionStore.cs) owns mobile cache persistence;
-[`MobileSolutionContext`](../SharedUI/Service/MobileSolutionContext.cs) owns the phone's loaded
+[`MobileSolutionStore`](../../SharedUI/Service/MobileSolutionStore.cs) owns mobile cache persistence;
+[`MobileSolutionContext`](../../SharedUI/Service/MobileSolutionContext.cs) owns the phone's loaded
 solution and project selection. MAUI registers it as `IProjectContext`; `SolutionRemoteLoader`
 applies synchronized or cached solutions to it, and the mobile project picker updates its selection.
 The desktop's `SolutionSession` is a separate owner. Projection data does not become a second editable
@@ -956,7 +956,7 @@ heart of the architecture:
 ### Registration Structure
 
 Selected registrations from
-[MobaWinUiServiceCollectionExtensions](../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs);
+[MobaWinUiServiceCollectionExtensions](../../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs);
 its host composition also supplies the required factories and platform services:
 
 ```csharp
@@ -977,14 +977,14 @@ services.AddSingleton<IRuntimeCommandGateway>(sp =>
 ```
 
 Desktop pages are registered in
-[`NavigationRegistration`](../MOBAflow/Service/NavigationRegistration.cs).
+[`NavigationRegistration`](../../MOBAflow/Service/NavigationRegistration.cs).
 External DLL discovery and plugin loading are not implemented.
 `PostStartupInitializationService.InitializePluginsAsync` currently publishes
 status messages only; it does not load or initialize external plugins.
 
 ### Resolution Example
 
-The [MainWindowViewModel constructor](../SharedUI/ViewModel/MainWindowViewModel.cs)
+The [MainWindowViewModel constructor](../../SharedUI/ViewModel/MainWindowViewModel.cs)
 receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `JourneysPageViewModel`,
 `ProjectDiagnosticsViewModel`, `SystemStatusViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`,
 `IConnectionRuntime` and `IRuntimeCommandGateway`, together with its other shell and platform services;

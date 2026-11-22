@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 /// <summary>
-/// Enforces the single runtime command path documented in docs/ARCHITECTURE.md ("Runtime command path"):
+/// Enforces the single runtime command path documented in docs/developer/ARCHITECTURE.md ("Runtime command path"):
 /// ViewModels send operator commands only through <c>IRuntimeCommandGateway</c>, which the hosts register.
 /// </summary>
 [TestFixture]

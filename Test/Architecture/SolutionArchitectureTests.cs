@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 /// <summary>
-/// Enforces the solution-wide architecture rules in docs/ARCHITECTURE.md ("Project dependency rules").
+/// Enforces the solution-wide architecture rules in docs/developer/ARCHITECTURE.md ("Project dependency rules").
 /// The documented table is the single source of the allowed dependencies and root namespaces. The checks
 /// read project and build files and parse the C# sources, so they cover MOBAflow and MOBAsmart on every
 /// platform without loading their assemblies.
@@ -15,7 +15,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 [TestFixture]
 internal sealed partial class SolutionArchitectureTests
 {
-    private const string ArchitectureDocument = "docs/ARCHITECTURE.md";
+    private const string ArchitectureDocument = "docs/developer/ARCHITECTURE.md";
     private const string DependencySection = "### Project dependency rules";
     private const string CommonBoundarySection = "### Common and Contracts boundary";
 

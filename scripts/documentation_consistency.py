@@ -7,8 +7,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path, PurePosixPath
 
 
-PACKAGE_DOC = "docs/THIRD-PARTY-NOTICES.md"
-MUTATION_DOC = "docs/BUILD-PERFORMANCE.md"
+PACKAGE_DOC = "docs/user/THIRD-PARTY-NOTICES.md"
+MUTATION_DOC = "docs/developer/BUILD-PERFORMANCE.md"
 PACKAGE_CATALOG = "Directory.Packages.props"
 MUTATION_REGISTRY = "MutationTest/mutation-lanes.json"
 PROJECT_SUFFIX = ".csproj"
@@ -150,7 +150,7 @@ def mutation_table(root):
         name, config = matches[0]
         tests = ", ".join("`MutationTest/" + item.replace("\\", "/") + "`" for item in config["test-projects"])
         projects = ", ".join("`" + item + "`" for item in production)
-        rows.append(f"| {lane['name']} | {projects} | {tests} | [`{PurePosixPath(name).name}`](../{name}) | {config['thresholds']['break']}% |")
+        rows.append(f"| {lane['name']} | {projects} | {tests} | [`{PurePosixPath(name).name}`](../../{name}) | {config['thresholds']['break']}% |")
     return "\n".join(rows)
 
 

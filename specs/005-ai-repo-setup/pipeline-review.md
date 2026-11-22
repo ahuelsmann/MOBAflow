@@ -21,7 +21,7 @@ current selection rule. As of 2026-10-13, documentation-only PRs run repository
 consistency checks and skip product/mutation jobs; code-relevant PRs run desktop,
 display and Common mutation checks, with path selection for Domain mutation and
 ESP32 firmware. Android AAB is manual-only (`validate_android=true`). See the
-[current CI reference](../../docs/BUILD-PERFORMANCE.md#ci-note).
+[current CI reference](../../docs/developer/BUILD-PERFORMANCE.md#ci-note).
 Governance runs only for its configured PR paths; a successful issues-event run is not PR artifact validation.
 
 ## Observed runs

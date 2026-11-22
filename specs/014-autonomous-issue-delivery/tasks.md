@@ -89,8 +89,8 @@ T task IDs are Markdown plan identifiers, not GitHub issues. Zero taskstoissues 
 
 ## Final Phase: Validation and Documentation
 
-- [ ] T038 Write the qualified authority/recovery/escalation/budget/acceptance runbook in docs/AI-DEVELOPMENT.md and update docs/PROJECT-REFERENCE.md and docs/ARCHITECTURE.md where actual implemented boundaries change.
-- [ ] T039 Assess canonical docs/wiki/INSTALLATION.md and docs/wiki/MOBAFLOW-USER-GUIDE.md plus docs/SPEC-KIT.md per integrated slice; record exact corrections or concrete NoChange, named remaining drift and recheck after behavior fixes against actual main.
+- [ ] T038 Write the qualified authority/recovery/escalation/budget/acceptance runbook in docs/developer/AI-DEVELOPMENT.md and update docs/developer/PROJECT-REFERENCE.md and docs/developer/ARCHITECTURE.md where actual implemented boundaries change.
+- [ ] T039 Assess canonical docs/wiki/INSTALLATION.md and docs/wiki/MOBAFLOW-USER-GUIDE.md plus docs/developer/SPEC-KIT.md per integrated slice; record exact corrections or concrete NoChange, named remaining drift and recheck after behavior fixes against actual main.
 - [ ] T040 Run allocated meaningful functional/contract/negative tests in Automation/IssueDelivery.Tests/ and affected consumers/CI on matching platforms; zero intended tests is not validation; retain configuration/evidence map in specs/014-autonomous-issue-delivery/qualification.md.
 - [ ] T041 Run changed-file secrets, applicable structural/link/line-ending and staged checks for future Automation/IssueDelivery/ and specs/014-autonomous-issue-delivery/ changes; create Draft PR, verify current-head CI and Sonar success with zero OPEN/CONFIRMED issues before Senior Ready, no local Sonar code analysis.
 - [ ] T042 Re-evaluate Constitution Check in specs/014-autonomous-issue-delivery/plan.md and hand exact scope/head/base/actual checks/provenance/options/limits/dirty status/writer-end to PM; Senior alone Ready and independent integration verification, existing Claude plan alone review/fix/fresh-review/SHA squash.

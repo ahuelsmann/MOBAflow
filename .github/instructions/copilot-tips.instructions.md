@@ -55,7 +55,7 @@ Do not start MOBAflow or operate hardware without explicit approval.
 ```
 
 For repository-specific diagnosis and review, see the
-[AI development guide](../../docs/AI-DEVELOPMENT.md).
+[AI development guide](../../docs/developer/AI-DEVELOPMENT.md).
 
 ## Request evidence, not arbitrary style changes
 

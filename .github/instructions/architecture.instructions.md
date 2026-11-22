@@ -6,7 +6,7 @@ applyTo: '**/*.cs'
 # MOBAflow architecture
 
 Layer constraints and the project map are in [AGENTS.md](../../AGENTS.md).
-Use [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for broader context and verify details in these entry points.
+Use [docs/developer/ARCHITECTURE.md](../../docs/developer/ARCHITECTURE.md) for broader context and verify details in these entry points.
 
 ## Runtime and events
 

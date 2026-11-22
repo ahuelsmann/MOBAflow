@@ -124,7 +124,7 @@ currently skips output when no display service is configured, and no production
 service is wired into the default handler yet. The older Arduino sketch is a
 standalone hardware color test.
 
-[Display architecture and current limitations](docs/PROJECT-REFERENCE.md#display-pipeline)
+[Display architecture and current limitations](docs/developer/PROJECT-REFERENCE.md#display-pipeline)
 
 ## Screenshots
 
@@ -176,16 +176,27 @@ dotnet restore MOBAflow/MOBAflow.csproj
 dotnet build MOBAflow/MOBAflow.csproj
 ```
 
-The normal desktop build also builds and copies MOBApi. When you are ready to
+The normal desktop build also builds and copies MOBApi. For faster local iteration, Android builds, CI lanes and mutation testing, see [Build performance](docs/developer/BUILD-PERFORMANCE.md). When you are ready to
 start the app:
 
 ```powershell
 dotnet run --project MOBAflow/MOBAflow.csproj
 ```
 
+### Run tests
+
+Run the portable test suite on Windows or Linux, or the full Windows desktop test suite:
+
+```powershell
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
+dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#run-tests) and [Build performance](docs/developer/BUILD-PERFORMANCE.md#deliverables-lanes-and-required-checks) for coverage and mutation lanes.
+
 ### Connect your layout
 
-1. Read the [hardware and liability notes](docs/HARDWARE-DISCLAIMER.md).
+1. Read the [hardware and liability notes](docs/user/HARDWARE-DISCLAIMER.md).
 2. Create a solution or open the included sample, then select a project.
 3. On **Solution**, use **Z21 Finder** to assign a Z21 to that project and confirm
    its IP address and UDP port (`21105` by default).
@@ -203,7 +214,8 @@ client isolation and firewall rules can prevent discovery or communication.
 | Installation and troubleshooting | [Setup guide](docs/wiki/INSTALLATION.md) |
 | App instructions | [User documentation](docs/wiki/INDEX.md) |
 | Local speech synthesis | [Piper TTS setup](docs/wiki/PIPER-TTS-SETUP.md) |
-| Architecture and implementation details | [Architecture](docs/ARCHITECTURE.md) · [Project reference](docs/PROJECT-REFERENCE.md) |
+| Architecture and implementation details | [Architecture](docs/developer/ARCHITECTURE.md) · [Project reference](docs/developer/PROJECT-REFERENCE.md) |
+| Build, test and CI lanes | [Build performance](docs/developer/BUILD-PERFORMANCE.md) · [Contributing](CONTRIBUTING.md) |
 | Planned work and current status | [Roadmap](plans/ROADMAP.md) · [Public Kanban](https://github.com/users/ahuelsmann/projects/1) · [Issues](https://github.com/ahuelsmann/MOBAflow/issues) |
 | Version history | [Tags](https://github.com/ahuelsmann/MOBAflow/tags) · [Changelog](CHANGELOG.md) |
 | A quick look at recent development | [MOBAnews](https://mobaflow-fortschritt.ahuelsmann1177.chatgpt.site) |
@@ -217,13 +229,13 @@ validation requirements and contributor agreement. Submit changes through a
 pull request.
 
 For AI-assisted development, also read [AGENTS.md](AGENTS.md) and the
-[AI development guide](docs/AI-DEVELOPMENT.md). Build and test instructions,
+[AI development guide](docs/developer/AI-DEVELOPMENT.md). Build and test instructions,
 repository skills and task-specific guidance live there.
 
 ## Safety and network scope
 
 MOBAflow sends commands to real model railroad hardware. Read the
-[hardware and liability notes](docs/HARDWARE-DISCLAIMER.md) before operating
+[hardware and liability notes](docs/user/HARDWARE-DISCLAIMER.md) before operating
 your layout.
 
 MOBAflow, MOBAsmart and MOBApi are intended for a private household on a
@@ -237,4 +249,4 @@ the repository and add it there. See the [security policy](SECURITY.md#operating
 
 MOBAflow is available under the [MIT License](LICENSE). It is an independent
 open-source project; product names and trademarks belong to their respective
-owners. See the [third-party notices](docs/THIRD-PARTY-NOTICES.md).
+owners. See the [third-party notices](docs/user/THIRD-PARTY-NOTICES.md).

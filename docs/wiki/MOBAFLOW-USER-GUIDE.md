@@ -6,7 +6,7 @@ by MOBAsmart and MOBApi.
 
 > [!CAUTION]
 > MOBAflow sends commands to real hardware. Read the
-> [hardware and liability notes](../HARDWARE-DISCLAIMER.md) before operating a
+> [hardware and liability notes](../user/HARDWARE-DISCLAIMER.md) before operating a
 > layout.
 
 ## First session
@@ -335,7 +335,7 @@ The bridge supports solution synchronization, runtime state, remote commands,
 journey progress, client registration and rolling-stock
 photos. It needs no pairing or sign-in: every device in the home network can
 connect, and MOBApi rejects remote commands with invalid values. See the
-[project reference](../PROJECT-REFERENCE.md#mobapi-endpoints). The bridge is
+[project reference](../developer/PROJECT-REFERENCE.md#mobapi-endpoints). The bridge is
 designed for a trusted private LAN and must not be exposed to the public
 internet.
 
@@ -419,5 +419,5 @@ unavailable, for example without a Z21 connection or a selected locomotive.
 - [Pages at a glance](PAGE-OVERVIEW.md)
 - [MOBAsmart guide](MOBASMART-USER-GUIDE.md)
 - [Viessmann signal mapping](VIESSMANN-SIGNAL-MAPPING.md)
-- [Project reference](../PROJECT-REFERENCE.md)
-- [Third-party notices](../THIRD-PARTY-NOTICES.md)
+- [Project reference](../developer/PROJECT-REFERENCE.md)
+- [Third-party notices](../user/THIRD-PARTY-NOTICES.md)
