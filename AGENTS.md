@@ -30,8 +30,8 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
 [master coordination](.github/instructions/master-coordination.instructions.md). In short:
 
 - **Role != single model.** Roles define domain responsibilities and draw on four capability profiles across Claude
-  Code (`P1` Opus 5.5, `P4` Fable 5.2), ChatGPT Codex (`P2` GPT-6 Astra) and Antigravity (`P3` Gemini 4 Argon,
-  `P4` Hydrogen). Slices are classified by risk (`H` safety/runtime/protocol, `M` features/UI/audio, `L` docs/small
+  Code (`P1` Opus 5.5 ceiling, `P4` Sonnet 5.5; `Fable 5.2` prohibited), ChatGPT Codex (`P2` Sol 6.2 / GPT-6 Astra) and Antigravity (`P3` Gemini 4 Argon / Neon,
+  `P4` Hydrogen, plus built-in failover models `Claude Opus 5.5`, `Claude Sonnet 5.5`, `GPT-OSS 120B`). Slices are classified by risk (`H` safety/runtime/protocol, `M` features/UI/audio, `L` docs/small
   non-behavioral fixes); review-fix rounds retain their slice's risk class and dependency updates take the class of
   the affected area.
 - **Small slices.** Work is cut into slices of one concern, about 25 files or 400 changed lines at most, each with
@@ -54,9 +54,9 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   and `M` slice together: the companion checks the design note and reviews every pushed commit with PR review
   comments while the slice grows.
 - **Independent final review and auto-merge.** At Ready every slice (`H`, `M` and `L`) receives a separate fresh
-  `P1` Claude review (Opus 5.5 or higher) plus independent cross-family `P2`/`P3` verification on the exact head
-  and base (neither may be the writer's or companion's session). With no open Blocker/High/Medium, zero SonarCloud
-  issues and green non-required mutation lanes, the COO arms head-bound GitHub auto-merge; it merges when the
+  `P1` Claude review (Opus 5.5 or higher, maximum tier) plus independent cross-family `P2`/`P3` verification on the exact head
+  and base (neither may be the writer's or companion's session). During a `Claude Code` usage/spend limit (`Quota Pause`), `Codex` (`P2`) and `Antigravity` (`P3`) run `2/3 Acting COO` failover and execute the fresh `P1` (`Claude Opus 5.5`) final review via an isolated Antigravity sub-agent alongside cross-family `P2`/`P3` verification (`Codex` / `GPT-OSS 120B` / `Gemini 4`). With no open Blocker/High/Medium, zero SonarCloud
+  issues and green non-required mutation lanes, the COO (or Acting COO) arms head-bound GitHub auto-merge; it merges when the
   required checks pass. Before any push to an armed PR the COO disarms it.
 - **Guard rails.** Two failed fix attempts on the same finding (in companion or final review), or more than ten
   agent messages on one topic, stop the loop and go to the user. Locks, design gos, handovers and merges are logged

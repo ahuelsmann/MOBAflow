@@ -44,10 +44,10 @@ assigns tasks by capability profile (`P1`–`P4`) so rules remain stable when mo
 
 | Profile | Active models and clients | Strengths and typical assignments |
 | --- | --- | --- |
-| `P1` Depth, Architecture & Safety | **Claude Opus 5.5** (`Claude Code`, CLI model `claude-opus-5-5`) | Deep architecture, concurrency (`async/await`, `UiThreadEventBusDecorator`), Z21 protocol safety, COO steering, companion/final independent review |
-| `P2` Repo, Build & Fact Precision | **GPT-6 Astra** (`ChatGPT Codex`) | Solution/build graph (`Moba.slnx`), Spec Kit consistency, CI/Sonar/mutation verification, CPM/TD steering, cross-model companion/final review, non-GitHub Sites publication |
-| `P3` System Context, Product & UI/UX | **Gemini 4 Argon** (`Antigravity`, CLI model `gemini-4-argon-high`) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
-| `P4` Cadence, Triage & Fast Delivery | **Claude Fable 5.2 / Sonnet-class** (`Claude Code`), **Gemini 4 Hydrogen** (`Antigravity` desktop selector) | Fast routine slices, portable/doc tasks, triage, pre-checks, status and timer monitoring (verify actual runtime model ID in review records) |
+| `P1` Depth, Architecture & Safety | **Claude Opus 5.5** (`Claude Code`, CLI model `claude-opus-5-5`, or `Antigravity` multi-model failover; maximum Claude tier) | Deep architecture, concurrency (`async/await`, `UiThreadEventBusDecorator`), Z21 protocol safety, COO steering, companion/final independent review |
+| `P2` Repo, Build & Fact Precision | **Sol 6.2 / GPT-6 Astra** (`ChatGPT Codex`, or **GPT-OSS 120B** failover in `Antigravity`) | Solution/build graph (`Moba.slnx`), Spec Kit consistency, CI/Sonar/mutation verification, CPM/TD steering, cross-model companion/final review, non-GitHub Sites publication |
+| `P3` System Context, Product & UI/UX | **Gemini 4 Argon / Neon** (`Antigravity`, CLI model `gemini-4-argon-high`) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
+| `P4` Cadence, Triage & Fast Delivery | **Claude Sonnet 5.5** (`Claude Code` / `Antigravity`; `Claude Fable 5.2` prohibited), **Gemini 4 Hydrogen** (`Antigravity` desktop selector) | Fast routine slices, portable/doc tasks, triage, pre-checks, status and timer monitoring (verify actual runtime model ID in review records) |
 
 ## Start in the correct checkout
 Use Git, PowerShell 7 (`pwsh`), Python 3.11+ and `rg` for development checks.
