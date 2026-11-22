@@ -107,8 +107,16 @@ public sealed partial class StationsPageViewModel : ObservableObject, IDisposabl
 
     private void OnStationsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (SelectedProjectStation is { } station && _observedProject?.Stations.Contains(station) != true)
+        if (_observedProject?.Stations.Count == 0
+            || (SelectedProjectStation is { } station && _observedProject?.Stations.Contains(station) != true))
+        {
             SelectedProjectStation = null;
+            SelectedProjectStationPlatform = null;
+            StationsPageSelectedObject = null;
+            DeleteProjectStationCommand.NotifyCanExecuteChanged();
+            AddPlatformToProjectStationCommand.NotifyCanExecuteChanged();
+            DeleteProjectStationPlatformCommand.NotifyCanExecuteChanged();
+        }
     }
 
     private void OnSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -220,6 +228,7 @@ public sealed partial class StationsPageViewModel : ObservableObject, IDisposabl
         SelectedProject.Stations.Remove(SelectedProjectStation);
         SelectedProjectStation = null;
         SelectedProjectStationPlatform = null;
+        StationsPageSelectedObject = null;
         RefreshProjectRuntimeSnapshot();
     }
 

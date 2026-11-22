@@ -521,6 +521,70 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         Assert.That(notifications, Is.Empty);
     }
 
+    [Test]
+    public void DeleteJourney_ClearsJourneyStationsAndRemovesOnlyUnreferencedProjectStations()
+    {
+        var project = _page.SelectedProject!;
+        var sharedStation = new Station { Name = "Shared" };
+        project.Model.Journeys[0].Stations.Add(new Station { Id = sharedStation.Id, Name = "Shared" });
+        project.Model.Journeys[1].Stations.Add(new Station { Id = sharedStation.Id, Name = "Shared" });
+        project.Model.Stations.AddRange([
+            new Station { Id = project.Model.Journeys[0].Stations[0].Id, Name = "Central" },
+            sharedStation,
+            new Station { Name = "East" }
+        ]);
+        project.Refresh();
+        _session.SelectedJourney = project.Journeys[0];
+
+        var deletedJourney = _page.SelectedJourney!;
+        _page.SelectedStation = deletedJourney.Stations[0];
+        _page.JourneysPageItemClickedCommand.Execute(_page.SelectedStation);
+        ClearInvocations();
+
+        _page.DeleteJourneyCommand.Execute(null);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(deletedJourney.Model.Stations, Is.Empty);
+        Assert.That(deletedJourney.Stations, Is.Empty);
+        Assert.That(deletedJourney.FilteredStations, Is.Empty);
+        Assert.That(_page.SelectedJourney, Is.Null);
+        Assert.That(_page.SelectedStation, Is.Null);
+        Assert.That(_page.JourneysPageSelectedObject, Is.Null);
+        Assert.That(project.Stations.Select(station => station.Name), Is.EqualTo(new[] { "Shared", "East" }));
+        Assert.That(project.Model.Stations.Select(station => station.Name), Is.EqualTo(new[] { "Shared", "East" }));
+        Assert.That(SavedProject().Stations.Select(station => station.Name), Is.EqualTo(new[] { "Shared", "East" }));
+    }
+
+    [Test]
+    public void DeleteStation_RemovesOrphanedProjectStationOnlyWhenLastJourneyReferenceIsDeleted()
+    {
+        var project = _page.SelectedProject!;
+        project.Model.Stations.AddRange([
+            new Station { Name = "Central" },
+            new Station { Name = "East" }
+        ]);
+        project.Refresh();
+        _session.SelectedJourney = project.Journeys[0];
+
+        var journey = _page.SelectedJourney!;
+        journey.Model.Stations.Add(new Station { Name = "Central" });
+        journey.RefreshStations();
+
+        _page.SelectedStation = journey.Stations[0];
+        _page.DeleteStationCommand.Execute(null);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(project.Stations.Select(station => station.Name), Is.EqualTo(new[] { "Central", "East" }));
+
+        _page.SelectedStation = journey.Stations[0];
+        _page.DeleteStationCommand.Execute(null);
+
+        Assert.That(journey.Stations, Is.Empty);
+        Assert.That(project.Stations.Select(station => station.Name), Is.EqualTo(new[] { "East" }));
+        Assert.That(project.Model.Stations.Select(station => station.Name), Is.EqualTo(new[] { "East" }));
+        Assert.That(SavedProject().Stations.Select(station => station.Name), Is.EqualTo(new[] { "East" }));
+    }
+
     private Project SavedProject() => JsonSerializer.Deserialize<Solution>(_lastSaved)!.Projects[0];
 
     private void ClearInvocations()

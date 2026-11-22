@@ -183,9 +183,27 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     private void DeleteJourney()
     {
         var project = SelectedProject;
-        if (project is null) return;
-        EntityEditorHelper.DeleteEntity(SelectedJourney, project.Model.Journeys, project.Journeys,
-            () => SelectedJourney = null);
+        var journey = SelectedJourney;
+        if (project is null || journey is null) return;
+
+        var removedStations = journey.Model.Stations.ToList();
+        journey.Model.Stations.Clear();
+        journey.RefreshStations();
+
+        project.Model.Journeys.Remove(journey.Model);
+        var orphanedProjectStations = FindOrphanedProjectStations(project, removedStations);
+        foreach (var orphan in orphanedProjectStations)
+        {
+            project.Model.Stations.Remove(orphan.Model);
+        }
+
+        project.Journeys.Remove(journey);
+        foreach (var orphan in orphanedProjectStations)
+        {
+            project.Stations.Remove(orphan);
+        }
+
+        SelectedJourney = null;
     }
 
     private bool CanDeleteJourney() => SelectedJourney != null;
@@ -200,13 +218,59 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     [RelayCommand(CanExecute = nameof(CanDeleteStation))]
     private void DeleteStation()
     {
+        var project = SelectedProject;
         var journey = SelectedJourney;
         var station = SelectedStation;
         if (journey is null || station is null) return;
+
         journey.Model.Stations.Remove(station.Model);
-        journey.RefreshStations();
+        if (project is not null)
+        {
+            var orphanedProjectStations = FindOrphanedProjectStations(project, [station.Model]);
+            foreach (var orphan in orphanedProjectStations)
+            {
+                project.Model.Stations.Remove(orphan.Model);
+            }
+
+            journey.RefreshStations();
+            foreach (var orphan in orphanedProjectStations)
+            {
+                project.Stations.Remove(orphan);
+            }
+        }
+        else
+        {
+            journey.RefreshStations();
+        }
+
         SelectedStation = null;
     }
+
+    private static List<StationViewModel> FindOrphanedProjectStations(
+        ProjectViewModel project,
+        IReadOnlyCollection<Station> removedStations)
+    {
+        if (removedStations.Count == 0 || project.Stations.Count == 0)
+        {
+            return [];
+        }
+
+        var remainingJourneyStations = project.Model.Journeys
+            .SelectMany(journey => journey.Stations)
+            .ToList();
+
+        return
+        [
+            .. project.Stations.Where(projectStation =>
+                removedStations.Any(removed => MatchesStation(projectStation.Model, removed))
+                && !remainingJourneyStations.Any(remaining => MatchesStation(projectStation.Model, remaining)))
+        ];
+    }
+
+    private static bool MatchesStation(Station left, Station right) =>
+        left.Id == right.Id
+        || (!string.IsNullOrWhiteSpace(left.Name)
+            && string.Equals(left.Name, right.Name, StringComparison.OrdinalIgnoreCase));
 
     private bool CanAddStation() => SelectedJourney != null;
     private bool CanDeleteStation() => SelectedStation != null;
