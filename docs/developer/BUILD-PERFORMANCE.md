@@ -289,7 +289,7 @@ Run the same checks locally after producing a Release Cobertura report:
 
 Every supported deliverable has a documented local command and a CI lane (RF-07,
 [#360](https://github.com/ahuelsmann/MOBAflow/issues/360), complete since 2026-11-20). The lanes are jobs of
-[Quality CI](../.github/workflows/quality.yml) unless noted.
+[Quality CI](../../.github/workflows/quality.yml) unless noted.
 
 | Deliverable | Local command | CI lane |
 | --- | --- | --- |
@@ -301,14 +301,14 @@ Every supported deliverable has a documented local command and a CI lane (RF-07,
 | Mutation lanes | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | one `mutation-<lane>` job per active lane (below) |
 | C# formatting | `dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32` | step of `portable-linux` |
 | Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule |
-| Release package | [Release Studio](../.github/workflows/release-studio.yml) (`MOBAflow` and `MOBApi` only) | manual release workflow |
+| Release package | [Release Studio](../../.github/workflows/release-studio.yml) (`MOBAflow` and `MOBApi` only) | manual release workflow |
 
 The `main` ruleset requires these checks and an up-to-date branch: Repository instruction consistency; Windows
 desktop build, tests, and coverage; Display protocol host, parser, and firmware; Android Release AAB; Domain
 mutation testing; SonarCloud Code Analysis; Portable tests on Linux. A skipped scoped job satisfies its required
 check but is no evidence of a build. The other mutation lanes (Common, Contracts, Speech.Base, Backend, MOBApi,
 SharedUI) do not block a merge in GitHub; the [master
-coordination](../.github/instructions/master-coordination.instructions.md) rules still require them to be green, or
+coordination](../../.github/instructions/master-coordination.instructions.md) rules still require them to be green, or
 skipped by the change filter, on the reviewed head before auto-merge is armed. The desktop and Linux jobs archive
 their test results (the desktop job also its coverage), the mutation jobs their reports, `android-release` the AAB
 and `display-protocol` the ESP32 bundle as workflow artifacts; the MOBApi integration results of `display-protocol`
@@ -316,7 +316,7 @@ are checked but not archived.
 
 ### Active mutation lanes
 
-[`mutation-lanes.json`](../MutationTest/mutation-lanes.json) registers every test
+[`mutation-lanes.json`](../../MutationTest/mutation-lanes.json) registers every test
 fixture. Lanes marked `planned` do not claim mutation coverage. The `architecture`
 lane has no production project: its tests read project files and sources, so
 production-code mutations do not exercise them. Active lanes additionally declare their Stryker
@@ -327,13 +327,13 @@ test-case filters. Planned lanes remain explicitly outside the mutation guarante
 <!-- documentation-facts:mutation:start -->
 | Active lane | Production project | Test project | Stryker configuration | Break threshold |
 | --- | --- | --- | --- | --- |
-| domain | `Domain/Domain.csproj` | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../MutationTest/stryker-config.json) | 90% |
-| backend | `Backend/Backend.csproj` | `MutationTest/Backend/Backend.MutationTests.csproj` | [`stryker-backend-config.json`](../MutationTest/stryker-backend-config.json) | 47% |
-| common | `Common/Common.csproj` | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../MutationTest/stryker-common-config.json) | 63% |
-| contracts | `Contracts/Contracts.csproj` | `MutationTest/Contracts/Contracts.MutationTests.csproj` | [`stryker-contracts-config.json`](../MutationTest/stryker-contracts-config.json) | 68% |
-| shared-ui | `SharedUI/SharedUI.csproj` | `MutationTest/SharedUI/SharedUI.MutationTests.csproj` | [`stryker-shared-ui-config.json`](../MutationTest/stryker-shared-ui-config.json) | 46% |
-| api | `MOBApi/MOBApi.csproj` | `MutationTest/Api/Api.MutationTests.csproj` | [`stryker-api-config.json`](../MutationTest/stryker-api-config.json) | 74% |
-| speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../MutationTest/stryker-speech-base-config.json) | 65% |
+| domain | `Domain/Domain.csproj` | `MutationTest/Domain.MutationTests.csproj` | [`stryker-config.json`](../../MutationTest/stryker-config.json) | 90% |
+| backend | `Backend/Backend.csproj` | `MutationTest/Backend/Backend.MutationTests.csproj` | [`stryker-backend-config.json`](../../MutationTest/stryker-backend-config.json) | 47% |
+| common | `Common/Common.csproj` | `MutationTest/Common/Common.MutationTests.csproj` | [`stryker-common-config.json`](../../MutationTest/stryker-common-config.json) | 63% |
+| contracts | `Contracts/Contracts.csproj` | `MutationTest/Contracts/Contracts.MutationTests.csproj` | [`stryker-contracts-config.json`](../../MutationTest/stryker-contracts-config.json) | 68% |
+| shared-ui | `SharedUI/SharedUI.csproj` | `MutationTest/SharedUI/SharedUI.MutationTests.csproj` | [`stryker-shared-ui-config.json`](../../MutationTest/stryker-shared-ui-config.json) | 46% |
+| api | `MOBApi/MOBApi.csproj` | `MutationTest/Api/Api.MutationTests.csproj` | [`stryker-api-config.json`](../../MutationTest/stryker-api-config.json) | 74% |
+| speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../../MutationTest/stryker-speech-base-config.json) | 65% |
 <!-- documentation-facts:mutation:end -->
 
 Domain runs when its inputs change; Common, Contracts, Speech.Base, Backend, SharedUI and MOBApi run for every code-relevant PR.

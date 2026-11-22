@@ -186,7 +186,7 @@
                             AutomationProperties.Name="Open the hardware and liability notes"
                             Content="Hardware and liability notes"
                             HorizontalAlignment="Left"
-                            NavigateUri="https://github.com/ahuelsmann/MOBAflow/blob/main/docs/HARDWARE-DISCLAIMER.md" />
+                            NavigateUri="https://github.com/ahuelsmann/MOBAflow/blob/main/docs/user/HARDWARE-DISCLAIMER.md" />
                         <HyperlinkButton
                             AutomationProperties.Name="Open the MIT license"
                             Content="MIT License"

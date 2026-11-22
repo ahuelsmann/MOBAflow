@@ -68,4 +68,4 @@ reset these desktop counters. Edit journey events in the desktop Event Manager.
 
 - [MOBAflow Desktop guide](MOBAFLOW-USER-GUIDE.md)
 - [MOBAsmart guide](MOBASMART-USER-GUIDE.md)
-- [JSON validation](../JSON-VALIDATION.md)
+- [JSON validation](../developer/JSON-VALIDATION.md)

@@ -115,17 +115,17 @@ The mobile responsibilities are split into:
 | Component | Current responsibility |
 | --- | --- |
 | `MobileRuntimeCoordinator` | Routes operator commands to the local Z21 or the remote desktop runtime. |
-| [`MobaflowEndpointLocator`](../SharedUI/Mobile/MobaflowEndpointLocator.cs) | Discovers MOBApi on the LAN, paces rediscovery and health checks, and remembers working addresses. |
-| [`MobaflowHubSession`](../SharedUI/Mobile/MobaflowHubSession.cs) | Checks REST health, registers the phone and manages hub connection retries/reconnect outcomes. |
-| [`MobileRuntimeProjection`](../SharedUI/Mobile/MobileRuntimeProjection.cs) | Owns the last remote fleet/signal-box data, filters it to the selected project and combines live, synchronized, cached and local sources. |
-| [`MobileSolutionSynchronizer`](../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog import and coordinates push, periodic and on-demand solution refresh, including cache fallback. |
-| [`MobilePhotoUploader`](../SharedUI/Mobile/MobilePhotoUploader.cs) | Captures and uploads a photo and reports the status text. |
+| [`MobaflowEndpointLocator`](../../SharedUI/Mobile/MobaflowEndpointLocator.cs) | Discovers MOBApi on the LAN, paces rediscovery and health checks, and remembers working addresses. |
+| [`MobaflowHubSession`](../../SharedUI/Mobile/MobaflowHubSession.cs) | Checks REST health, registers the phone and manages hub connection retries/reconnect outcomes. |
+| [`MobileRuntimeProjection`](../../SharedUI/Mobile/MobileRuntimeProjection.cs) | Owns the last remote fleet/signal-box data, filters it to the selected project and combines live, synchronized, cached and local sources. |
+| [`MobileSolutionSynchronizer`](../../SharedUI/Mobile/MobileSolutionSynchronizer.cs) | Serializes initial catalog import and coordinates push, periodic and on-demand solution refresh, including cache fallback. |
+| [`MobilePhotoUploader`](../../SharedUI/Mobile/MobilePhotoUploader.cs) | Captures and uploads a photo and reports the status text. |
 | `RuntimeHubRemoteClient`, `SolutionRemoteLoader`, `MobileSolutionStore` | Provide SignalR transport, REST solution loading and persistent mobile cache respectively. |
 
-These services are application singletons. [`MauiViewModel`](../SharedUI/Mobile/MauiViewModel.cs) creates its
-[`MobileAppLifecycle`](../SharedUI/Mobile/MobileAppLifecycle.cs) and keeps UI projection,
+These services are application singletons. [`MauiViewModel`](../../SharedUI/Mobile/MauiViewModel.cs) creates its
+[`MobileAppLifecycle`](../../SharedUI/Mobile/MobileAppLifecycle.cs) and keeps UI projection,
 subscriptions, the health-check loop and cancellation ownership.
-[`MobileSolutionContext`](../SharedUI/Service/MobileSolutionContext.cs), registered by MAUI as `IProjectContext`,
+[`MobileSolutionContext`](../../SharedUI/Service/MobileSolutionContext.cs), registered by MAUI as `IProjectContext`,
 owns the phone's loaded solution and project selection. `SolutionRemoteLoader` applies imported or cached
 solutions to that context. The desktop registers its separate `SolutionSession` as `ISolutionSession`,
 `IProjectContext` and `IJourneySelectionContext`. Session loss or a
@@ -350,7 +350,7 @@ directly and do not automatically follow HTTP redirects.
 
 MOBApi has no authentication: every REST and SignalR operation is available over
 plain HTTP to every device in the home network, as described in the
-[operating model](../SECURITY.md#operating-model). Every remote command passes one
+[operating model](../../SECURITY.md#operating-model). Every remote command passes one
 admission step that validates its values before it is forwarded to MOBAflow or
 queued; the fallback queue holds at most 128 commands. Every command that this
 admission step rejects (failed validation or full queue) increments the counter
@@ -410,7 +410,7 @@ dotnet test Test/Test.csproj
 
 The WinUI project requires Windows tooling and MOBAsmart requires the Android
 MAUI workload. Cross-platform projects and most tests can be built separately.
-See `docs/BUILD-PERFORMANCE.md` for the clean Android Release AAB workflow,
+See `docs/developer/BUILD-PERFORMANCE.md` for the clean Android Release AAB workflow,
 fast local configurations, and coverage commands. For `dotnet restore`, `-f`
 means `--force`; use `--framework` with `dotnet build` or `dotnet publish` when
 framework selection is required.
@@ -422,6 +422,6 @@ integrations without a workflow file in the repository.
 ## Legal and third-party surface
 
 MOBAflow is MIT licensed. Direct package versions are managed centrally and
-their license surface is summarized in `docs/THIRD-PARTY-NOTICES.md`. External
+their license surface is summarized in `docs/user/THIRD-PARTY-NOTICES.md`. External
 product names such as Roco Z21, Piko A, AnyRail and ESP32 identify compatibility
 only; MOBAflow is independent from their vendors.

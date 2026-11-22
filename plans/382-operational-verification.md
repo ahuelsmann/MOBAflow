@@ -35,7 +35,7 @@ Recorded on main `f37541d9`.
   `Benchmarks/Moba.Benchmarks`, outside the solution, the test suite and the mandatory CI gates. The manual-only
   [Benchmarks workflow](../.github/workflows/benchmarks.yml) archives the reports; the maintainer's machine records the
   baseline. Telemetry uses the built-in `System.Diagnostics.Metrics`, readable with `dotnet-counters`; `dotnet-trace`
-  or the Visual Studio profiler investigate a measured regression. [Benchmarks](../docs/BENCHMARKS.md) explains how to run
+  or the Visual Studio profiler investigate a measured regression. [Benchmarks](../docs/developer/BENCHMARKS.md) explains how to run
   them.
 - **Load tests:** deterministic NUnit tests where the bound itself is the contract (queue capacity, rejection, order);
   timing-based load (SignalR clients) runs as a benchmark or a manual scenario, never as a flaky mandatory test.

@@ -19,4 +19,4 @@ Any role may consult or include the Head of UI/UX (`Gemini 4 Argon` via Antigrav
 guide's synchronous CLI contract. Claude Code loads the MOBAflow review and diagnosis skills from `.claude/skills/`,
 which mirror `.agents/skills/`; change both copies together (`python scripts/Test-AiRepositorySetup.py` checks that
 they match). The prompt secrets hook in `.claude/settings.json` shares its script with Codex. See
-[AI-assisted development](docs/AI-DEVELOPMENT.md).
+[AI-assisted development](docs/developer/AI-DEVELOPMENT.md).

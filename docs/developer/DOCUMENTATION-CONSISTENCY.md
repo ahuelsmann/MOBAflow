@@ -7,7 +7,7 @@ structural check alone does not establish semantic accuracy.
 
 ## Source-derived facts
 
-The [Quality workflow](../.github/workflows/quality.yml) continues to check
+The [Quality workflow](../../.github/workflows/quality.yml) continues to check
 package references, central versions and active mutation configuration facts.
 Run from the task worktree root:
 
@@ -47,9 +47,9 @@ surrounding-prose preservation, malformed-input and path protections.
    claim overall currency or completion while an accepted requirement remains
    open.
 
-The [PR template](../.github/PULL_REQUEST_TEMPLATE.md) captures the documentation
-impact. [AGENTS.md](../AGENTS.md#completion) and
-[master coordination](../.github/instructions/master-coordination.instructions.md)
+The [PR template](../../.github/PULL_REQUEST_TEMPLATE.md) captures the documentation
+impact. [AGENTS.md](../../AGENTS.md#completion) and
+[master coordination](../../.github/instructions/master-coordination.instructions.md)
 define the existing ownership, review and integration boundaries.
 
 ## Subscription usage and removed activation
@@ -85,6 +85,6 @@ live API acceptance. The former API/App activation and bot-loop acceptance were
 superseded, not performed successfully. Historical private-review audit items
 remain separately identified; they are not silently treated as closed.
 
-See [the feature specification](../specs/011-documentation-consistency/spec.md)
+See [the feature specification](../../specs/011-documentation-consistency/spec.md)
 and [Issue #266](https://github.com/ahuelsmann/MOBAflow/issues/266) for the
 requirements, current acceptance evidence and overall completion status.

@@ -196,11 +196,11 @@ a cloud account. Photos are transferred to the MOBApi host selected on the LAN.
 
 Track-power, locomotive and signal controls affect physical hardware. Keep an
 emergency-stop option within reach and follow the
-[hardware safety guidance](../HARDWARE-DISCLAIMER.md).
+[hardware safety guidance](../user/HARDWARE-DISCLAIMER.md).
 
 ## More documentation
 
 - [MOBAflow Desktop guide](MOBAFLOW-USER-GUIDE.md)
 - [Installation](INSTALLATION.md)
 - [Track statistics quick start](QUICK-START-TRACK-STATISTICS.md)
-- [Project reference](../PROJECT-REFERENCE.md)
+- [Project reference](../developer/PROJECT-REFERENCE.md)

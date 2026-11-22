@@ -5,7 +5,7 @@ repository does not yet publish ready-to-install GitHub release packages.
 
 ## Before you start
 
-- Read the [hardware and liability notes](../HARDWARE-DISCLAIMER.md).
+- Read the [hardware and liability notes](../user/HARDWARE-DISCLAIMER.md).
 - Keep the Z21, PC and Android device on a trusted private LAN.
 - Do not forward MOBApi or Z21 ports to the public internet.
 
@@ -20,7 +20,7 @@ repository does not yet publish ready-to-install GitHub release packages.
 
 The Windows SDK targeting pack is `10.0.28000.87`; the desktop minimum remains
 `10.0.22621.0`. The newer targeting pack does not require the same Windows build
-on the user's PC. See [Windows SDK versions](../BUILD-PERFORMANCE.md#windows-sdk-versions)
+on the user's PC. See [Windows SDK versions](../developer/BUILD-PERFORMANCE.md#windows-sdk-versions)
 for the separate .NET SDK, Windows App SDK and native SDK/tool versions.
 
 ### MOBAsmart
@@ -71,7 +71,7 @@ MOBApi listens on all network interfaces, using HTTP port `5001` by default.
 Discovery announces a reachable LAN address and the configured port so
 MOBAsmart can find it. `0.0.0.0` is a listen address, not an address to enter
 on the phone. If you change the port, adjust the private-network firewall rule
-as well. See the [project reference](../PROJECT-REFERENCE.md#mobapi-endpoints).
+as well. See the [project reference](../developer/PROJECT-REFERENCE.md#mobapi-endpoints).
 
 ## First desktop start
 
@@ -192,4 +192,4 @@ are unavailable.
 - [MOBAflow Desktop](MOBAFLOW-USER-GUIDE.md)
 - [MOBAsmart](MOBASMART-USER-GUIDE.md)
 - [Piper TTS](PIPER-TTS-SETUP.md)
-- [Build performance](../BUILD-PERFORMANCE.md)
+- [Build performance](../developer/BUILD-PERFORMANCE.md)

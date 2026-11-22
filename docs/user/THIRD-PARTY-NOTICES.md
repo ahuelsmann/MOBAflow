@@ -2,7 +2,7 @@
 
 MOBAflow uses third-party software, frameworks, protocols, and media sources.
 This document tracks the direct dependency surface currently referenced by the repository's project files.
-Package versions are centrally managed in [`Directory.Packages.props`](../Directory.Packages.props), with build-wide references added in [`Directory.Build.props`](../Directory.Build.props) and [`Directory.Build.targets`](../Directory.Build.targets).
+Package versions are centrally managed in [`Directory.Packages.props`](../../Directory.Packages.props), with build-wide references added in [`Directory.Build.props`](../../Directory.Build.props) and [`Directory.Build.targets`](../../Directory.Build.targets).
 
 For a complete dependency tree including transitive packages, run:
 
@@ -28,7 +28,7 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 - **Website:** [Freesound.org](https://freesound.org/)
 - **Licenses:** CC BY 4.0 for the two gollamar announcement recordings; CC0 1.0 for the Prague Metro Line A chime
 - **Usage:** Workflow announcement intros (Announcement-04.wav and Announcement-06.wav) and the Prague Metro Line A chime.
-- **Attribution:** Individual sound attributions are listed in [`Sound/Resources/Sounds/ATTRIBUTION.md`](../Sound/Resources/Sounds/ATTRIBUTION.md)
+- **Attribution:** Individual sound attributions are listed in [`Sound/Resources/Sounds/ATTRIBUTION.md`](../../Sound/Resources/Sounds/ATTRIBUTION.md)
 - **Redistribution:** Keep the file-specific attribution and license links with the bundled recordings. The repository's MIT license does not relicense these audio files.
 
 ---
@@ -68,21 +68,21 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 ### GitHub Spec Kit
 
 - **Source:** [GitHub Spec Kit v1.4.0](https://github.com/github/spec-kit/tree/v1.4.0), plus the retained `speckit-taskstoissues` skill from [v1.1.3](https://github.com/github/spec-kit/tree/v1.1.3) (removed upstream in 1.4.0)
-- **License:** MIT; the complete original GitHub, Inc. notice is retained in [`.specify/LICENSE`](../.specify/LICENSE).
+- **License:** MIT; the complete original GitHub, Inc. notice is retained in [`.specify/LICENSE`](../../.specify/LICENSE).
 - **Scope:** Imported scripts and templates under `.specify/` the nine managed `.agents/skills/speckit-*/` skills and the retained 1.1.3 `speckit-taskstoissues` skill. Local adaptations retain that notice.
-- **Traceability:** The [source registry](../.agents/skills/sources.json) and integration manifests under `.specify/integrations/` record the imported version and adaptations.
+- **Traceability:** The [source registry](../../.agents/skills/sources.json) and integration manifests under `.specify/integrations/` record the imported version and adaptations.
 
 ### Adapted Matt Pocock Skills
 
 - **Source:** [Matt Pocock skills at the recorded revision](https://github.com/mattpocock/skills/tree/c55ee46073ed923f86ce59a5eb3b6d895095d1b7)
-- **License:** MIT; original notices are retained with [code review](../.agents/skills/mobaflow-code-review/LICENSE) and [bug diagnosis](../.agents/skills/mobaflow-diagnosing-bugs/LICENSE), including their `.claude/skills/` mirrors.
+- **License:** MIT; original notices are retained with [code review](../../.agents/skills/mobaflow-code-review/LICENSE) and [bug diagnosis](../../.agents/skills/mobaflow-diagnosing-bugs/LICENSE), including their `.claude/skills/` mirrors.
 - **Scope:** These adapted workflows and the Matt Pocock material in the inactive `skills/` reference snapshot. The repository's own license does not replace upstream copyright notices.
 
 ---
 
 ## Direct Package Inventory
 
-The following table is generated from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and the `PackageReference` entries in tracked project files and build-wide props/targets.
+The following table is generated from the centrally managed versions in [`Directory.Packages.props`](../../Directory.Packages.props) and the `PackageReference` entries in tracked project files and build-wide props/targets.
 Conditional references and every mutation test host under `MutationTest/` are included; this is a source inventory,
 not a resolved per-platform restore graph. Each package has its own row so its version and
 usage can be compared directly with those XML entries. Versions in this section must not be edited independently of the central package catalog.
@@ -198,4 +198,4 @@ We are grateful to the open-source maintainers and standards authors whose work 
 
 **Last Updated:** 2026-10-21
 **Scope:** Current direct dependencies and external interoperability surface  
-**License:** MIT License (see [LICENSE](../LICENSE))
+**License:** MIT License (see [LICENSE](../../LICENSE))

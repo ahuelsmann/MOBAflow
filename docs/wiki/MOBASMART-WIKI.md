@@ -63,6 +63,6 @@ session is active; they do not change the desktop counter file.
 ## Related documentation
 
 - [MOBAsmart user guide](MOBASMART-USER-GUIDE.md)
-- [MOBAflow/Z21 synchronization](../Z21-MOBAFLOW-SYNC.md)
-- [Project reference](../PROJECT-REFERENCE.md)
-- [Architecture](../ARCHITECTURE.md)
+- [MOBAflow/Z21 synchronization](../developer/Z21-MOBAFLOW-SYNC.md)
+- [Project reference](../developer/PROJECT-REFERENCE.md)
+- [Architecture](../developer/ARCHITECTURE.md)

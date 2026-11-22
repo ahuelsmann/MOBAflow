@@ -89,7 +89,7 @@
       "source": "https://github.com/github/spec-kit",
       "revision": "v1.1.3",
       "license": ".specify/LICENSE",
-      "localChanges": "Retained locally after upstream removal in 1.4.0; deprecation notice reworded to say it was removed upstream in 1.4.0; uses scripts/Resolve-GitHubRepository.ps1; see docs/SPEC-KIT.md."
+      "localChanges": "Retained locally after upstream removal in 1.4.0; deprecation notice reworded to say it was removed upstream in 1.4.0; uses scripts/Resolve-GitHubRepository.ps1; see docs/developer/SPEC-KIT.md."
     },
     {
       "name": "audit-code-quality",

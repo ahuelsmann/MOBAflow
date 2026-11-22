@@ -1,7 +1,7 @@
 # Observational dependency review
 
 [Issue #342](https://github.com/ahuelsmann/MOBAflow/issues/342) adds
-[dependency-review.yml](../.github/workflows/dependency-review.yml) for normal pull requests,
+[dependency-review.yml](../../.github/workflows/dependency-review.yml) for normal pull requests,
 including drafts and new fix commits. It is not a required merge check. The existing Quality
 workflow, resolved transitive NuGet audit, analyzer baselines and branch rules are unchanged.
 

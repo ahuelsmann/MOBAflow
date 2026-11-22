@@ -1,6 +1,6 @@
 ## Slice header
 
-<!-- Mirrors the Kanban fields; keep both in sync. Details: docs/KANBAN.md. -->
+<!-- Mirrors the Kanban fields; keep both in sync. Details: docs/developer/KANBAN.md. -->
 
 - Issue:
 - Risk class (H/M/L):

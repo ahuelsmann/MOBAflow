@@ -4,6 +4,6 @@ paths:
     ignore:
       # The Android Release AAB job runs on pull requests that change MOBAsmart/** or
       # quality/analyzer-baseline.android.json, fails open when change detection fails, and otherwise runs only
-      # through the manual validate_android dispatch (see docs/BUILD-PERFORMANCE.md). Its condition is not
+      # through the manual validate_android dispatch (see docs/developer/BUILD-PERFORMANCE.md). Its condition is not
       # constant, so no workflow currently needs this entry; removing it is a separate cleanup.
       - 'constant expression "false" in condition'
