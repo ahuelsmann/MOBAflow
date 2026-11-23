@@ -135,7 +135,7 @@ internal sealed class SettingsPageViewModelTests
     {
         var provider = new Mock<IFeatureTogglePageProvider>();
         provider.Setup(candidate => candidate.GetToggleablePages())
-            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", FeatureTogglePages.Overview, null)]);
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Monitor", FeatureTogglePages.Monitor, "Preview")]);
         var (viewModel, settings, persistence, _) = Create(provider: provider.Object);
         var toggle = viewModel.FeatureToggleItems.Single();
         toggle.IsChecked = false;
@@ -143,10 +143,67 @@ internal sealed class SettingsPageViewModelTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(toggle.CheckBoxContent, Is.EqualTo("Overview"));
-            Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings.FeatureToggles, FeatureTogglePages.Overview), Is.False);
+            Assert.That(toggle.CheckBoxContent, Is.EqualTo("Monitor (Preview)"));
+            Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings.FeatureToggles, FeatureTogglePages.Monitor), Is.False);
         }
         persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Once);
+    }
+
+    [Test]
+    public void OverviewIsExcludedFromFeatureToggleItemsAndCannotBeDisabled()
+    {
+        var settings = new UiSettings();
+        settings.FeatureToggles.Pages[FeatureTogglePages.Overview] = new FeatureTogglePageSettings { IsAvailable = false };
+        var provider = new Mock<IFeatureTogglePageProvider>();
+        provider.Setup(candidate => candidate.GetToggleablePages())
+            .Returns((FeatureTogglePageInfo[])[
+                new FeatureTogglePageInfo("Overview", FeatureTogglePages.Overview, null),
+                new FeatureTogglePageInfo("Monitor", FeatureTogglePages.Monitor, "Preview")
+            ]);
+        var persistence = new Mock<ISettingsService>();
+        persistence.Setup(service => service.GetSettings()).Returns(settings);
+        persistence.Setup(service => service.SaveSettingsAsync(settings)).Returns(Task.CompletedTask);
+        var dispatcher = new Mock<IUiDispatcher>();
+        dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
+        var viewModel = new SettingsPageViewModel(
+            settings,
+            persistence.Object,
+            TestLayouts.Create(persistence.Object),
+            dispatcher.Object,
+            NullLogger<SettingsPageViewModel>.Instance,
+            provider.Object,
+            new NullSpeechOutput());
+        var toggleEvents = 0;
+        viewModel.FeatureTogglesChanged += (_, _) => toggleEvents++;
+
+        viewModel.SetFeatureToggleValue(FeatureTogglePages.Overview, false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.FeatureToggleItems.Select(item => item.FeatureToggleKey), Is.EqualTo((string[])[FeatureTogglePages.Monitor]));
+            Assert.That(settings.FeatureToggles.Pages[FeatureTogglePages.Overview].IsAvailable, Is.True);
+            Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings.FeatureToggles, FeatureTogglePages.Overview), Is.True);
+            Assert.That(toggleEvents, Is.Zero);
+        }
+        persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<UiSettings>()), Times.Never);
+    }
+
+    [Test]
+    public void FeatureToggleChangeRaisesFeatureTogglesChangedOnlyWhenAvailabilityChanges()
+    {
+        var provider = new Mock<IFeatureTogglePageProvider>();
+        provider.Setup(candidate => candidate.GetToggleablePages())
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Monitor", FeatureTogglePages.Monitor, "Preview")]);
+        var (viewModel, _, _, _) = Create(provider: provider.Object);
+        var toggleEvents = 0;
+        viewModel.FeatureTogglesChanged += (_, _) => toggleEvents++;
+        var toggle = viewModel.FeatureToggleItems.Single();
+
+        toggle.IsChecked = false;
+        toggle.IsChecked = false;
+        toggle.IsChecked = true;
+
+        Assert.That(toggleEvents, Is.EqualTo(2));
     }
 
     [Test]
@@ -261,10 +318,12 @@ internal sealed class SettingsPageViewModelTests
     {
         var provider = new Mock<IFeatureTogglePageProvider>();
         provider.Setup(candidate => candidate.GetToggleablePages())
-            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Overview", FeatureTogglePages.Overview, null)]);
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Monitor", FeatureTogglePages.Monitor, "Preview")]);
         var (viewModel, settings, persistence, _) = Create(provider: provider.Object);
         viewModel.DisplayPort = 12345;
         viewModel.FeatureToggleItems.Single().IsChecked = false;
+        var toggleEvents = 0;
+        viewModel.FeatureTogglesChanged += (_, _) => toggleEvents++;
         var notifications = new List<string?>();
         viewModel.PropertyChanged += (_, e) => notifications.Add(e.PropertyName);
         persistence.Invocations.Clear();
@@ -281,11 +340,28 @@ internal sealed class SettingsPageViewModelTests
         {
             Assert.That(viewModel.DisplayPort, Is.EqualTo(new UiSettings().Display.Port));
             Assert.That(viewModel.FeatureToggleItems.Single().IsChecked, Is.True);
+            Assert.That(toggleEvents, Is.EqualTo(1));
             Assert.That(viewModel.ShowSuccessMessage, Is.False);
             Assert.That(viewModel.ShowErrorMessage, Is.False);
             Assert.That(notifications, Does.Contain(nameof(SettingsPageViewModel.DisplayPort)));
         }
         persistence.Verify(service => service.SaveSettingsAsync(It.IsAny<UiSettings>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ResetDefaultsDoesNotRaiseFeatureTogglesChangedWhenAlreadyAtDefaults()
+    {
+        var provider = new Mock<IFeatureTogglePageProvider>();
+        provider.Setup(candidate => candidate.GetToggleablePages())
+            .Returns((FeatureTogglePageInfo[])[new FeatureTogglePageInfo("Monitor", FeatureTogglePages.Monitor, "Preview")]);
+        var (viewModel, _, persistence, _) = Create(provider: provider.Object);
+        var toggleEvents = 0;
+        viewModel.FeatureTogglesChanged += (_, _) => toggleEvents++;
+        persistence.Setup(service => service.ResetToDefaultsAsync()).Returns(Task.CompletedTask);
+
+        await viewModel.ResetToDefaultsCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+        Assert.That(toggleEvents, Is.Zero);
     }
 
     [Test]

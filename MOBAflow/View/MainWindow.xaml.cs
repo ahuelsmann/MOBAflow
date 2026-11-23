@@ -84,7 +84,8 @@ public sealed partial class MainWindow
             _navigationBootstrapper = new MainWindowNavigationBootstrapper(
                 _navigationService,
                 _pages,
-                navigationItemFactory);
+                navigationItemFactory,
+                appSettings);
 
             InitializeComponent();
             _logger.LogInformation("[Startup] MainWindow XAML initialized in {ElapsedMs}ms", timer.ElapsedMilliseconds);
@@ -200,6 +201,7 @@ public sealed partial class MainWindow
     {
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         ViewModel.SettingsPage.PropertyChanged += SettingsPage_PropertyChanged;
+        ViewModel.SettingsPage.FeatureTogglesChanged += SettingsPage_FeatureTogglesChanged;
         _navigationService.Navigated += OnNavigationServiceNavigated;
 
         if (AppWindow is not null)
@@ -267,6 +269,42 @@ public sealed partial class MainWindow
         }
     }
 
+    private void SettingsPage_FeatureTogglesChanged(object? sender, EventArgs e)
+    {
+        if (_isClosing)
+        {
+            return;
+        }
+
+        if (DispatcherQueue is { HasThreadAccess: false })
+        {
+            DispatcherQueue.TryEnqueue(ApplyFeatureTogglesToNavigation);
+            return;
+        }
+
+        ApplyFeatureTogglesToNavigation();
+    }
+
+    private void ApplyFeatureTogglesToNavigation()
+    {
+        if (_isClosing)
+        {
+            return;
+        }
+
+        _navigationBootstrapper.RefreshMenuVisibility();
+
+        var fallbackTag = _navigationBootstrapper.GetFallbackPageTagIfCurrentDisabled();
+        if (!string.IsNullOrEmpty(fallbackTag))
+        {
+            _navigationService.NavigateToAsync(fallbackTag)
+                .Observe(ex => LogFallbackNavigationFailed(_logger, fallbackTag, ex));
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Fallback navigation to {PageTag} failed")]
+    private static partial void LogFallbackNavigationFailed(ILogger logger, string pageTag, Exception exception);
+
     private void ApplyTheme(bool isDarkMode)
     {
         if (_isClosing)
@@ -305,6 +343,7 @@ public sealed partial class MainWindow
     {
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.SettingsPage.PropertyChanged -= SettingsPage_PropertyChanged;
+        ViewModel.SettingsPage.FeatureTogglesChanged -= SettingsPage_FeatureTogglesChanged;
         _navigationService.Navigated -= OnNavigationServiceNavigated;
 
         if (AppWindow is not null)
@@ -320,6 +359,7 @@ public sealed partial class MainWindow
     {
         _ = sender;
         ViewModel.UpdateActivePhotoAssignmentPageTag(e.PageTag);
+        _navigationBootstrapper.TrySelectNavigationItem(MainNavigation, e.PageTag);
     }
 
     private void DetachWindowBindings()

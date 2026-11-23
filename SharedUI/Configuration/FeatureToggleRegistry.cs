@@ -54,6 +54,11 @@ public static class FeatureToggleRegistry
 {
     private const string Preview = "Preview";
 
+    private static readonly HashSet<string> AlwaysAvailablePages = new(StringComparer.Ordinal)
+    {
+        FeatureTogglePages.Overview,
+    };
+
     private static readonly Dictionary<string, string> DefaultLabels = new(StringComparer.Ordinal)
     {
         [FeatureTogglePages.Overview] = string.Empty,
@@ -83,12 +88,42 @@ public static class FeatureToggleRegistry
     public static IReadOnlyCollection<string> PageKeys => DefaultLabels.Keys;
 
     /// <summary>
+    /// Keys of registered pages that users can switch on or off in Settings.
+    /// </summary>
+    public static IReadOnlyCollection<string> ToggleablePageKeys { get; } = BuildToggleablePageKeys();
+
+    private static string[] BuildToggleablePageKeys()
+    {
+        var keys = new List<string>(DefaultLabels.Count);
+        foreach (var key in DefaultLabels.Keys)
+        {
+            if (!AlwaysAvailablePages.Contains(key))
+            {
+                keys.Add(key);
+            }
+        }
+
+        return [.. keys];
+    }
+
+    /// <summary>
     /// Returns whether <paramref name="key"/> is a registered feature-toggle page.
     /// </summary>
     public static bool IsRegistered(string? key) => key is not null && DefaultLabels.ContainsKey(key);
 
     /// <summary>
+    /// Returns whether <paramref name="key"/> is a registered page that stays permanently available.
+    /// </summary>
+    public static bool IsAlwaysAvailable(string? key) => key is not null && AlwaysAvailablePages.Contains(key);
+
+    /// <summary>
+    /// Returns whether <paramref name="key"/> is a registered page that users can switch on or off.
+    /// </summary>
+    public static bool IsToggleable(string? key) => IsRegistered(key) && !IsAlwaysAvailable(key);
+
+    /// <summary>
     /// Reads a registered page toggle; a page without a stored entry is available.
+    /// Always-available pages (such as Overview) always read as true.
     /// Returns false when <paramref name="key"/> is not a registered page.
     /// </summary>
     public static bool TryGetPageAvailability(FeatureToggleSettings settings, string key, out bool value)
@@ -98,6 +133,12 @@ public static class FeatureToggleRegistry
         {
             value = false;
             return false;
+        }
+
+        if (IsAlwaysAvailable(key))
+        {
+            value = true;
+            return true;
         }
 
         value = !settings.Pages.TryGetValue(key, out var page) || page is null || page.IsAvailable;
@@ -111,7 +152,8 @@ public static class FeatureToggleRegistry
         TryGetPageAvailability(settings, key, out var value) ? value : defaultIfUnknown;
 
     /// <summary>
-    /// Writes a registered page toggle. Returns false when <paramref name="key"/> is not a registered page.
+    /// Writes a registered page toggle. Always-available pages (such as Overview) cannot be disabled;
+    /// returns false when <paramref name="key"/> is unknown or when trying to disable an always-available page.
     /// </summary>
     public static bool TrySetPageAvailability(FeatureToggleSettings settings, string key, bool value)
     {
@@ -119,6 +161,16 @@ public static class FeatureToggleRegistry
         if (!IsRegistered(key))
         {
             return false;
+        }
+
+        if (IsAlwaysAvailable(key))
+        {
+            if (settings.Pages.TryGetValue(key, out var alwaysAvailablePage) && alwaysAvailablePage is not null)
+            {
+                alwaysAvailablePage.IsAvailable = true;
+            }
+
+            return value;
         }
 
         if (settings.Pages.TryGetValue(key, out var page) && page is not null)
@@ -131,6 +183,22 @@ public static class FeatureToggleRegistry
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Normalizes persisted feature-toggle settings so always-available pages (such as Overview)
+    /// are never kept as disabled from legacy configuration files.
+    /// </summary>
+    public static void Normalize(FeatureToggleSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        foreach (var key in AlwaysAvailablePages)
+        {
+            if (settings.Pages.TryGetValue(key, out var page) && page is not null && !page.IsAvailable)
+            {
+                page.IsAvailable = true;
+            }
+        }
     }
 
     /// <summary>

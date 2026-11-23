@@ -7,7 +7,7 @@ using Configuration;
 /// Information for a page with a feature toggle, used in the dynamic Settings UI.
 /// </summary>
 /// <param name="Title">Display name of the page</param>
-/// <param name="FeatureToggleKey">Page key in <see cref="FeatureToggleRegistry"/> (e.g. Overview)</param>
+/// <param name="FeatureToggleKey">Page key in <see cref="FeatureToggleRegistry"/> (e.g. TrainControl)</param>
 /// <param name="BadgeLabel">Optional badge label (e.g. Preview)</param>
 public record FeatureTogglePageInfo(
     string Title,
@@ -22,7 +22,7 @@ public interface IFeatureTogglePageProvider
 {
     /// <summary>
     /// Returns all pages that have a feature toggle and should be shown in Settings.
-    /// Only pages whose key is registered in <see cref="FeatureToggleRegistry"/> are included.
+    /// Only pages whose key is toggleable in <see cref="FeatureToggleRegistry"/> are included.
     /// </summary>
     IReadOnlyList<FeatureTogglePageInfo> GetToggleablePages();
 }
