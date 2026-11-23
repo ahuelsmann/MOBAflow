@@ -109,7 +109,7 @@ internal sealed class FeatureToggleRegistryTests
     {
         var settings = new FeatureToggleSettings();
 
-        foreach (var key in FeatureToggleRegistry.PageKeys)
+        foreach (var key in FeatureToggleRegistry.ToggleablePageKeys)
         {
             FeatureToggleRegistry.TrySetPageAvailability(settings, key, value: false);
             FeatureToggleRegistry.TryGetPageAvailability(settings, key, out var afterFalse);
@@ -122,6 +122,49 @@ internal sealed class FeatureToggleRegistryTests
                 Assert.That(afterFalse, Is.False, $"Key '{key}' did not store false.");
                 Assert.That(afterTrue, Is.True, $"Key '{key}' did not store true.");
             }
+        }
+    }
+
+    [Test]
+    public void OverviewIsAlwaysAvailableAndCannotBeDisabled()
+    {
+        var settings = new FeatureToggleSettings();
+
+        var disabled = FeatureToggleRegistry.TrySetPageAvailability(settings, FeatureTogglePages.Overview, value: false);
+        var found = FeatureToggleRegistry.TryGetPageAvailability(settings, FeatureTogglePages.Overview, out var available);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(FeatureToggleRegistry.IsRegistered(FeatureTogglePages.Overview), Is.True);
+            Assert.That(FeatureToggleRegistry.IsAlwaysAvailable(FeatureTogglePages.Overview), Is.True);
+            Assert.That(FeatureToggleRegistry.IsToggleable(FeatureTogglePages.Overview), Is.False);
+            Assert.That(FeatureToggleRegistry.ToggleablePageKeys, Has.Count.EqualTo(18));
+            Assert.That(FeatureToggleRegistry.ToggleablePageKeys, Does.Not.Contain(FeatureTogglePages.Overview));
+            Assert.That(disabled, Is.False);
+            Assert.That(found, Is.True);
+            Assert.That(available, Is.True);
+            Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings, FeatureTogglePages.Overview, defaultIfUnknown: false), Is.True);
+        }
+    }
+
+    [Test]
+    public void NormalizeReEnablesLegacyDisabledOverviewWithoutAffectingOtherToggles()
+    {
+        const string json = """
+            {"pages":{"Overview":{"isAvailable":false,"label":"Home"},"Monitor":{"isAvailable":false}}}
+            """;
+
+        var settings = JsonSerializer.Deserialize<FeatureToggleSettings>(json, JsonOptions.Default)!;
+        var beforeNormalizeAvailable = FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings, FeatureTogglePages.Overview);
+
+        FeatureToggleRegistry.Normalize(settings);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(beforeNormalizeAvailable, Is.True);
+            Assert.That(settings.Pages[FeatureTogglePages.Overview].IsAvailable, Is.True);
+            Assert.That(FeatureToggleRegistry.GetBadgeLabel(settings, FeatureTogglePages.Overview), Is.EqualTo("Home"));
+            Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings, FeatureTogglePages.Monitor), Is.False);
         }
     }
 

@@ -145,6 +145,42 @@ internal sealed class SettingsServiceTests
     }
 
     [Test]
+    public async Task FeatureToggles_LegacyDisabledOverviewIsNormalizedOnLoadAndSave()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "mobaflow-overview-toggle-" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            await File.WriteAllTextAsync(path, """
+                {"featureToggles":{"pages":{"Overview":{"isAvailable":false,"label":""},"Monitor":{"isAvailable":false}}}}
+                """).ConfigureAwait(false);
+
+            var settings = new UiSettings();
+            var service = new SettingsService(settings, NullLogger<SettingsService>.Instance, path);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(settings.FeatureToggles.Pages[FeatureTogglePages.Overview].IsAvailable, Is.True);
+                Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings.FeatureToggles, FeatureTogglePages.Overview), Is.True);
+                Assert.That(FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings.FeatureToggles, FeatureTogglePages.Monitor), Is.False);
+            }
+
+            await service.SaveSettingsAsync(settings).ConfigureAwait(false);
+            using var saved = JsonDocument.Parse(await File.ReadAllTextAsync(path).ConfigureAwait(false));
+            var pages = saved.RootElement.GetProperty("featureToggles").GetProperty("pages");
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(pages.GetProperty(FeatureTogglePages.Overview).GetProperty("isAvailable").GetBoolean(), Is.True);
+                Assert.That(pages.GetProperty(FeatureTogglePages.Monitor).GetProperty("isAvailable").GetBoolean(), Is.False);
+            }
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
     public async Task SpeechSettings_RemovedFieldsAreIgnoredByProductionLoader()
     {
         var path = Path.Combine(Path.GetTempPath(), "mobaflow-old-speech-" + Guid.NewGuid().ToString("N") + ".json");

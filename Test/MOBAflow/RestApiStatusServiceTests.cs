@@ -46,6 +46,7 @@ internal sealed partial class RestApiStatusServiceTests : IDisposable
         using (Assert.EnterMultipleScope())
         {
             Assert.That(pagesWithoutToggle, Is.EquivalentTo(alwaysAvailablePageTags));
+            Assert.That(toggleablePages.Select(page => page.FeatureToggleKey), Does.Not.Contain(FeatureTogglePages.Overview));
             Assert.That(toggleablePages.Select(page => page.Title), Does.Contain("Stations"));
             Assert.That(toggleablePages.Select(page => page.Title), Does.Contain("Recorder"));
         }
