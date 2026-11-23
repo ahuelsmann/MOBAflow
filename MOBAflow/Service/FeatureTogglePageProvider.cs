@@ -6,7 +6,7 @@ using SharedUI.Interface;
 
 /// <summary>
 /// Provides the list of feature-toggle pages based on NavigationRegistration, ordered by navigation category.
-/// Filters to only pages whose FeatureToggleKey is registered in <see cref="FeatureToggleRegistry"/>.
+/// Filters to only pages whose FeatureToggleKey is toggleable in <see cref="FeatureToggleRegistry"/>.
 /// </summary>
 internal sealed class FeatureTogglePageProvider : IFeatureTogglePageProvider
 {
@@ -29,7 +29,7 @@ internal sealed class FeatureTogglePageProvider : IFeatureTogglePageProvider
     private IReadOnlyList<FeatureTogglePageInfo> BuildToggleablePages()
     {
         return _pages
-            .Where(p => FeatureToggleRegistry.IsRegistered(p.FeatureToggleKey))
+            .Where(p => FeatureToggleRegistry.IsToggleable(p.FeatureToggleKey))
             .OrderBy(p => (int)p.Category)
             .ThenBy(p => p.Order)
             .Select(p => new FeatureTogglePageInfo(
