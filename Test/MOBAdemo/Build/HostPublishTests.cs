@@ -32,7 +32,23 @@ internal sealed class HostPublishTests
     {
         if (Directory.Exists(_root))
         {
+            DeleteReparsePoints(_root);
             Directory.Delete(_root, recursive: true);
+        }
+    }
+
+    private static void DeleteReparsePoints(string directory)
+    {
+        foreach (var child in Directory.EnumerateDirectories(directory))
+        {
+            if (new DirectoryInfo(child).LinkTarget != null)
+            {
+                Directory.Delete(child);
+            }
+            else
+            {
+                DeleteReparsePoints(child);
+            }
         }
     }
 
@@ -131,75 +147,152 @@ internal sealed class HostPublishTests
     }
 
     [Test]
-    public async Task BuildAndPublish_WhenOutDirOrPublishDirOverlapsHostDirectory_PreservesTrackedWebRoot()
+    public async Task BuildAndPublish_WhenOutDirOrPublishDirOverlapsHostDirectory_FailsAndPreservesTrackedWebRoot()
     {
-        var cases = new (string Command, string Option, bool UseSlashSuffix, bool BuildFirst)[]
+        var cases = new OverlapCase[]
         {
-            ("build", "-p:OutDir=.", false, false),
-            ("build", "-p:OutDir=", true, false),
-            ("publish", "-p:PublishDir=.", false, false),
-            ("publish", "-p:PublishDir=", true, true),
+            new("build", "-p:OutDir=.", false, false, false),
+            new("build", "-p:OutDir=", true, false, false),
+            new("build", "-o", false, false, false),
+            new("build", "-p:OutDir=", false, false, true),
+            new("publish", "-p:PublishDir=.", false, false, false),
+            new("publish", "-p:PublishDir=", true, true, false),
+            new("publish", "-o", false, false, false),
         };
 
         for (var i = 0; i < cases.Length; i++)
         {
-            var (command, option, useSlashSuffix, buildFirst) = cases[i];
+            var overlapCase = cases[i];
             var caseHost = Path.Combine(_root, "overlap-" + i);
             BuildScript.CopyDirectory(_host, caseHost);
-            var projectFile = Path.Combine(caseHost, "MOBAdemo.csproj");
-            var indexPath = Path.Combine(caseHost, "wwwroot", "index.html");
-            var expectedIndex = await File.ReadAllTextAsync(indexPath).ConfigureAwait(false);
+            WriteBuiltAppTo(caseHost, "built-999.js", "built-should-not-overwrite");
+            var destination = overlapCase.SubWwwroot
+                ? Path.Combine(caseHost, "wwwroot", "sub") + Path.DirectorySeparatorChar
+                : caseHost;
+            await AssertOverlapRejectedAsync(caseHost, destination, overlapCase).ConfigureAwait(false);
+        }
+    }
 
-            if (buildFirst)
+    [Test]
+    public async Task BuildAndPublish_WhenOutDirOrPublishDirOverlapsHostViaLink_FailsAndPreservesTrackedWebRoot()
+    {
+        var cases = new OverlapCase[]
+        {
+            new("build", "-p:OutDir=", true, false, false),
+            new("build", "-o", false, false, false),
+            new("publish", "-p:PublishDir=", true, false, false),
+            new("publish", "-p:PublishDir=", true, true, false),
+            new("publish", "-o", false, false, false),
+        };
+
+        for (var i = 0; i < cases.Length; i++)
+        {
+            var overlapCase = cases[i];
+            var caseHost = Path.Combine(_root, "link-host-" + i);
+            BuildScript.CopyDirectory(_host, caseHost);
+            WriteBuiltAppTo(caseHost, "built-999.js", "built-should-not-overwrite");
+            var alias = Path.Combine(_root, "host-alias-" + i);
+            await BuildScript.CreateDirectoryLinkOrIgnoreAsync(alias, caseHost).ConfigureAwait(false);
+            try
             {
-                var buildResult = await BuildScript.RunProcessAsync(
-                    "dotnet",
-                    ["build", projectFile, "-c", "Release", "-nologo", "-v", "q"],
-                    PublishTimeout,
-                    caseHost).ConfigureAwait(false);
-                Assert.That(
-                    buildResult.ExitCode,
-                    Is.Zero,
-                    "Pre-build failed:" + Environment.NewLine + buildResult.Output);
+                await AssertOverlapRejectedAsync(caseHost, alias, overlapCase).ConfigureAwait(false);
             }
-
-            string[] arguments = useSlashSuffix
-                ? [
-                    command,
-                    projectFile,
-                    "-c",
-                    "Release",
-                    .. buildFirst ? new[] { "--no-build" } : Array.Empty<string>(),
-                    option + caseHost + Path.DirectorySeparatorChar,
-                    "-nologo",
-                    "-v",
-                    "q",
-                ]
-                : [command, projectFile, "-c", "Release", option, "-nologo", "-v", "q"];
-
-            var result = await BuildScript.RunProcessAsync("dotnet", arguments, PublishTimeout, caseHost)
-                .ConfigureAwait(false);
-            var label = string.Join(' ', arguments);
-            using (Assert.EnterMultipleScope())
+            finally
             {
-                Assert.That(result.ExitCode, Is.Zero, label + " failed:" + Environment.NewLine + result.Output);
-                Assert.That(File.Exists(indexPath), Is.True, "Tracked wwwroot/index.html was deleted by: " + label);
-                Assert.That(
-                    await File.ReadAllTextAsync(indexPath).ConfigureAwait(false),
-                    Is.EqualTo(expectedIndex),
-                    "Tracked wwwroot/index.html changed on: " + label);
+                if (new DirectoryInfo(alias).LinkTarget != null)
+                {
+                    Directory.Delete(alias);
+                }
             }
         }
     }
 
-    private void WriteBuiltApp(string assetName, string marker)
+    private static async Task AssertOverlapRejectedAsync(
+        string caseHost,
+        string destination,
+        OverlapCase overlapCase)
     {
-        var web = Path.Combine(_host, "wwwroot-build");
+        var projectFile = Path.Combine(caseHost, "MOBAdemo.csproj");
+        var indexPath = Path.Combine(caseHost, "wwwroot", "index.html");
+        var expectedIndex = await File.ReadAllTextAsync(indexPath).ConfigureAwait(false);
+
+        if (overlapCase.BuildFirst)
+        {
+            var buildResult = await BuildScript.RunProcessAsync(
+                "dotnet",
+                ["build", projectFile, "-c", "Release", "-nologo", "-v", "q"],
+                PublishTimeout,
+                caseHost).ConfigureAwait(false);
+            Assert.That(
+                buildResult.ExitCode,
+                Is.Zero,
+                "Pre-build failed:" + Environment.NewLine + buildResult.Output);
+        }
+
+        string[] arguments;
+        if (overlapCase.Option == "-o")
+        {
+            arguments = [overlapCase.Command, projectFile, "-c", "Release", "-o", destination, "-nologo", "-v", "q"];
+        }
+        else if (overlapCase.UseSlashSuffix || overlapCase.SubWwwroot)
+        {
+            var targetValue = overlapCase.SubWwwroot
+                ? destination
+                : destination + Path.DirectorySeparatorChar;
+            arguments =
+            [
+                overlapCase.Command,
+                projectFile,
+                "-c",
+                "Release",
+                .. overlapCase.BuildFirst ? new[] { "--no-build" } : Array.Empty<string>(),
+                overlapCase.Option + targetValue,
+                "-nologo",
+                "-v",
+                "q",
+            ];
+        }
+        else
+        {
+            arguments = [overlapCase.Command, projectFile, "-c", "Release", overlapCase.Option, "-nologo", "-v", "q"];
+        }
+
+        var result = await BuildScript.RunProcessAsync("dotnet", arguments, PublishTimeout, caseHost)
+            .ConfigureAwait(false);
+        var label = string.Join(' ', arguments);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.ExitCode, Is.Not.Zero, "Expected overlap rejection for: " + label);
+            Assert.That(result.Output, Does.Contain("Refusing"), label);
+            Assert.That(File.Exists(indexPath), Is.True, "Tracked wwwroot/index.html was deleted by: " + label);
+            Assert.That(
+                await File.ReadAllTextAsync(indexPath).ConfigureAwait(false),
+                Is.EqualTo(expectedIndex),
+                "Tracked wwwroot/index.html was overwritten by: " + label);
+            Assert.That(
+                Directory.Exists(Path.Combine(caseHost, "wwwroot", "assets")),
+                Is.False,
+                "Staged assets were copied into tracked wwwroot by: " + label);
+        }
+    }
+
+    private void WriteBuiltApp(string assetName, string marker) => WriteBuiltAppTo(_host, assetName, marker);
+
+    private static void WriteBuiltAppTo(string hostRoot, string assetName, string marker)
+    {
+        var web = Path.Combine(hostRoot, "wwwroot-build");
         Directory.CreateDirectory(Path.Combine(web, "assets"));
         File.WriteAllText(Path.Combine(web, "assets", assetName), "export default 1;");
         File.WriteAllText(Path.Combine(web, "index.html"), "<!doctype html><title>" + marker + "</title>");
         File.WriteAllText(Path.Combine(web, ".mobademo-build-owned"), "MOBAdemo build output\n");
     }
+
+    private sealed record OverlapCase(
+        string Command,
+        string Option,
+        bool UseSlashSuffix,
+        bool BuildFirst,
+        bool SubWwwroot);
 
     private Task PublishAsync() => DotNetAsync("publish", _publish);
 

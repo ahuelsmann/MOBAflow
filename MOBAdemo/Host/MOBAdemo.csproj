@@ -34,30 +34,206 @@
       A reused output or publish folder keeps no web root of an earlier build: PreserveNewest alone would leave
       hashed assets of an older build behind, and a built index.html that is newer than the placeholder would win
       after the built app was removed. The web root folder is therefore recreated on every build and publish,
-      except when OutDir or PublishDir is empty or overlaps the project directory itself.
+      and builds/publishes whose OutDir, OutputPath, or PublishDir resolves (even across symlinks or junctions)
+      to the project directory or its tracked wwwroot are rejected before cleanup or copying.
     -->
+    <UsingTask TaskName="ResolveCanonicalPathTask"
+               TaskFactory="RoslynCodeTaskFactory"
+               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <BaseDirectory ParameterType="System.String" Required="true" />
+            <TargetPath ParameterType="System.String" Required="true" />
+            <ProjectDirectory ParameterType="System.String" Required="true" />
+            <CanonicalPath ParameterType="System.String" Output="true" />
+            <OverlapsProjectOrWebRoot ParameterType="System.Boolean" Output="true" />
+        </ParameterGroup>
+        <Task>
+            <Code Type="Class" Language="cs">
+                <![CDATA[
+                using System;
+                using System.IO;
+                using System.Reflection;
+                using Microsoft.Build.Framework;
+                using Microsoft.Build.Utilities;
+
+                public sealed class ResolveCanonicalPathTask : Task
+                {
+                    private static readonly MethodInfo ResolveDirLink =
+                        typeof(Directory).GetMethod("ResolveLinkTarget", new[] { typeof(string), typeof(bool) });
+
+                    private static readonly MethodInfo ResolveFileLink =
+                        typeof(File).GetMethod("ResolveLinkTarget", new[] { typeof(string), typeof(bool) });
+
+                    [Required]
+                    public string BaseDirectory { get; set; } = string.Empty;
+
+                    [Required]
+                    public string TargetPath { get; set; } = string.Empty;
+
+                    [Required]
+                    public string ProjectDirectory { get; set; } = string.Empty;
+
+                    [Output]
+                    public string CanonicalPath { get; set; } = string.Empty;
+
+                    [Output]
+                    public bool OverlapsProjectOrWebRoot { get; set; }
+
+                    public override bool Execute()
+                    {
+                        CanonicalPath = ResolveCanonical(BaseDirectory, TargetPath, 0);
+                        string canonProject = ResolveCanonical(ProjectDirectory, ".", 0);
+                        string canonProjectWebRoot = ResolveCanonical(canonProject, "wwwroot", 0);
+                        string canonTargetWebRoot = ResolveCanonical(CanonicalPath, "wwwroot", 0);
+
+                        StringComparison comparison = Path.DirectorySeparatorChar == '\\'
+                            ? StringComparison.OrdinalIgnoreCase
+                            : StringComparison.Ordinal;
+
+                        OverlapsProjectOrWebRoot =
+                            string.Equals(CanonicalPath, canonProject, comparison)
+                            || IsSameOrChild(CanonicalPath, canonProjectWebRoot, comparison)
+                            || IsSameOrChild(canonTargetWebRoot, canonProjectWebRoot, comparison);
+
+                        return true;
+                    }
+
+                    private static bool IsSameOrChild(string candidate, string parent, StringComparison comparison)
+                    {
+                        if (string.Equals(candidate, parent, comparison))
+                        {
+                            return true;
+                        }
+
+                        string sep = Path.DirectorySeparatorChar.ToString();
+                        string prefix = parent.EndsWith(sep, StringComparison.Ordinal) ? parent : parent + sep;
+                        return candidate.StartsWith(prefix, comparison);
+                    }
+
+                    private static string ResolveCanonical(string baseDir, string target, int depth)
+                    {
+                        string combined = Path.IsPathRooted(target) ? target : Path.Combine(baseDir, target);
+                        string full = TrimTrailingSeparator(Path.GetFullPath(combined));
+                        if (depth > 16)
+                        {
+                            return full;
+                        }
+
+                        string root = Path.GetPathRoot(full) ?? string.Empty;
+                        string current = root;
+                        string suffix = full.Length > root.Length ? full.Substring(root.Length) : string.Empty;
+                        string[] segments = suffix.Split(
+                            new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar },
+                            StringSplitOptions.RemoveEmptyEntries);
+
+                        foreach (string segment in segments)
+                        {
+                            current = string.IsNullOrEmpty(current) ? segment : Path.Combine(current, segment);
+                            string linkTarget = TryResolveLink(current);
+                            if (!string.IsNullOrEmpty(linkTarget))
+                            {
+                                string linkBase = Path.GetDirectoryName(current) ?? baseDir;
+                                current = ResolveCanonical(linkBase, linkTarget, depth + 1);
+                            }
+                        }
+
+                        return TrimTrailingSeparator(Path.GetFullPath(current));
+                    }
+
+                    private static string TryResolveLink(string path)
+                    {
+                        try
+                        {
+                            if (Directory.Exists(path) && ResolveDirLink != null)
+                            {
+                                var info = ResolveDirLink.Invoke(null, new object[] { path, true }) as FileSystemInfo;
+                                return info == null ? null : info.FullName;
+                            }
+
+                            if (File.Exists(path) && ResolveFileLink != null)
+                            {
+                                var info = ResolveFileLink.Invoke(null, new object[] { path, true }) as FileSystemInfo;
+                                return info == null ? null : info.FullName;
+                            }
+                        }
+                        catch (IOException)
+                        {
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                        }
+                        catch (TargetInvocationException)
+                        {
+                        }
+
+                        return null;
+                    }
+
+                    private static string TrimTrailingSeparator(string path)
+                    {
+                        string root = Path.GetPathRoot(path) ?? string.Empty;
+                        if (path.Length <= root.Length)
+                        {
+                            return path;
+                        }
+
+                        return path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    }
+                }
+                ]]>
+            </Code>
+        </Task>
+    </UsingTask>
+    <Target Name="ValidateDemoOutputDirectories"
+            BeforeTargets="BeforeBuild;AssignTargetPaths;RemoveStaleWebRootFromOutput;RemoveStaleWebRootFromPublish;PrepareForPublish">
+        <ResolveCanonicalPathTask BaseDirectory="$(MSBuildProjectDirectory)"
+                                  TargetPath="$(OutDir)"
+                                  ProjectDirectory="$(MSBuildProjectDirectory)"
+                                  Condition="'$(OutDir)' != '' and '$([System.String]::IsNullOrWhiteSpace(&quot;$(OutDir)&quot;))' == 'false'">
+            <Output TaskParameter="CanonicalPath" PropertyName="_CanonicalOutDir" />
+            <Output TaskParameter="OverlapsProjectOrWebRoot" PropertyName="_OutDirOverlapsSource" />
+        </ResolveCanonicalPathTask>
+        <Error Condition="'$(_OutDirOverlapsSource)' == 'true'"
+               Text="Refusing to build MOBAdemo into OutDir '$(OutDir)' because it resolves to '$(_CanonicalOutDir)', overlapping the project directory or tracked wwwroot." />
+
+        <ResolveCanonicalPathTask BaseDirectory="$(MSBuildProjectDirectory)"
+                                  TargetPath="$(OutputPath)"
+                                  ProjectDirectory="$(MSBuildProjectDirectory)"
+                                  Condition="'$(OutputPath)' != '' and '$([System.String]::IsNullOrWhiteSpace(&quot;$(OutputPath)&quot;))' == 'false'">
+            <Output TaskParameter="CanonicalPath" PropertyName="_CanonicalOutputPath" />
+            <Output TaskParameter="OverlapsProjectOrWebRoot" PropertyName="_OutputPathOverlapsSource" />
+        </ResolveCanonicalPathTask>
+        <Error Condition="'$(_OutputPathOverlapsSource)' == 'true'"
+               Text="Refusing to build MOBAdemo into OutputPath '$(OutputPath)' because it resolves to '$(_CanonicalOutputPath)', overlapping the project directory or tracked wwwroot." />
+
+        <ResolveCanonicalPathTask BaseDirectory="$(MSBuildProjectDirectory)"
+                                  TargetPath="$(PublishDir)"
+                                  ProjectDirectory="$(MSBuildProjectDirectory)"
+                                  Condition="'$(PublishDir)' != '' and '$([System.String]::IsNullOrWhiteSpace(&quot;$(PublishDir)&quot;))' == 'false'">
+            <Output TaskParameter="CanonicalPath" PropertyName="_CanonicalPublishDir" />
+            <Output TaskParameter="OverlapsProjectOrWebRoot" PropertyName="_PublishDirOverlapsSource" />
+        </ResolveCanonicalPathTask>
+        <Error Condition="'$(_PublishDirOverlapsSource)' == 'true'"
+               Text="Refusing to publish MOBAdemo into PublishDir '$(PublishDir)' because it resolves to '$(_CanonicalPublishDir)', overlapping the project directory or tracked wwwroot." />
+    </Target>
     <Target Name="RemoveStaleWebRootFromOutput"
+            DependsOnTargets="ValidateDemoOutputDirectories"
             BeforeTargets="BeforeBuild"
             Condition="'$(OutDir)' != '' and '$([System.String]::IsNullOrWhiteSpace(&quot;$(OutDir)&quot;))' == 'false'">
         <PropertyGroup>
-            <_NormalizedProjectDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)'))</_NormalizedProjectDir>
-            <_NormalizedProjectWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', 'wwwroot'))</_NormalizedProjectWebRoot>
-            <_NormalizedOutDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(OutDir)'))</_NormalizedOutDir>
             <_NormalizedOutWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(OutDir)', 'wwwroot'))</_NormalizedOutWebRoot>
         </PropertyGroup>
         <RemoveDir Directories="$(_NormalizedOutWebRoot)"
-                   Condition="'$(_NormalizedOutDir)' != '$(_NormalizedProjectDir)' and '$(_NormalizedOutWebRoot)' != '$(_NormalizedProjectWebRoot)'" />
+                   Condition="'$(_OutDirOverlapsSource)' != 'true'" />
     </Target>
     <Target Name="RemoveStaleWebRootFromPublish"
+            DependsOnTargets="ValidateDemoOutputDirectories"
             BeforeTargets="PrepareForPublish"
             Condition="'$(PublishDir)' != '' and '$([System.String]::IsNullOrWhiteSpace(&quot;$(PublishDir)&quot;))' == 'false'">
         <PropertyGroup>
-            <_NormalizedProjectDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)'))</_NormalizedProjectDir>
-            <_NormalizedProjectWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', 'wwwroot'))</_NormalizedProjectWebRoot>
-            <_NormalizedPublishDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(PublishDir)'))</_NormalizedPublishDir>
             <_NormalizedPublishWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(PublishDir)', 'wwwroot'))</_NormalizedPublishWebRoot>
         </PropertyGroup>
         <RemoveDir Directories="$(_NormalizedPublishWebRoot)"
-                   Condition="'$(_NormalizedPublishDir)' != '$(_NormalizedProjectDir)' and '$(_NormalizedPublishWebRoot)' != '$(_NormalizedProjectWebRoot)'" />
+                   Condition="'$(_PublishDirOverlapsSource)' != 'true'" />
     </Target>
 </Project>
