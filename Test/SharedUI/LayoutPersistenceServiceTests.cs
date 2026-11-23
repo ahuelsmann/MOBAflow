@@ -167,6 +167,40 @@ internal sealed class LayoutPersistenceServiceTests
     }
 
     [Test]
+    public async Task ResetAsyncReloadsObservableColumnWidthsToDefaultsIncludingZeroDefaults()
+    {
+        _settings.Layout.ColumnWidths["JourneysPage:0"] = 320;
+        _settings.Layout.ColumnWidths["JourneysPage:1"] = 145;
+        _settings.Layout.ColumnWidths["LocomotivesPage:2"] = 420;
+        _settings.Layout.LocomotivesPage.ListColumnWidth = 375;
+        var layout = Create();
+        layout.ColumnWidths.SetColumnWidth("GoodsWagonPage", 0, 390);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(layout.ColumnWidths.GetColumnWidth("JourneysPage", 0), Is.EqualTo(320));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("JourneysPage", 1), Is.EqualTo(145));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("LocomotivesPage", 0), Is.EqualTo(375));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("LocomotivesPage", 2), Is.EqualTo(420));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("GoodsWagonPage", 0), Is.EqualTo(390));
+        }
+
+        await layout.ResetAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_settings.Layout.ColumnWidths, Is.Empty);
+            Assert.That(_settings.Layout.LocomotivesPage.ListColumnWidth, Is.EqualTo(250));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("JourneysPage", 0), Is.EqualTo(250));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("JourneysPage", 1), Is.Zero);
+            Assert.That(layout.ColumnWidths.GetColumnWidth("LocomotivesPage", 0), Is.EqualTo(250));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("LocomotivesPage", 2), Is.Zero);
+            Assert.That(layout.ColumnWidths.GetColumnWidth("GoodsWagonPage", 0), Is.EqualTo(250));
+        }
+        _persistence.Verify(service => service.SaveSettingsAsync(_settings), Times.Once);
+    }
+
+    [Test]
     public async Task ResetAsync_ReportsAFailedWriteToTheCaller()
     {
         _persistence.Setup(service => service.SaveSettingsAsync(_settings))

@@ -590,9 +590,10 @@ runtime services.
 
 - `LayoutPersistenceService` (`SharedUI/Service/`) is the only path that persists the saved layout; pages still
   set their visual widths on the layout object before they save through it. It reads the shared
-  `UiSettings` through `ISettingsService`, loads `LayoutColumnWidthsViewModel` once, applies a change under its
-  existing key and persists it with one logged-failure path, offers an awaited save, resets the layouts while
-  keeping the tab visibility and owns the Settings page section state (sort mode, expansion, usage, order).
+  `UiSettings` through `ISettingsService`, loads `LayoutColumnWidthsViewModel` on construction and reloads it
+  on reset, applies a change under its existing key and persists it with one logged-failure path, offers an
+  awaited save, resets the layouts while keeping the tab visibility and owns the Settings page section state
+  (sort mode, expansion, usage, order).
 - The locomotive, wagon, train, station, journey, workflow, monitor and track-plan page ViewModels persist their
   panel expansion through it. The page code-behinds keep the visual part: they restore the column widths on load
   (`*ColumnStarValue` stars, intentionally fixed pixels) and save them through the service on unload.

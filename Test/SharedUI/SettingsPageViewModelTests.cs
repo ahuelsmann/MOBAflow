@@ -4,6 +4,7 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moba.Speech.Base;
 using Moba.Test.Helpers;
@@ -298,6 +299,33 @@ internal sealed class SettingsPageViewModelTests
     }
 
     [Test]
+    public async Task ResetLayoutsReloadsObservableColumnWidthsToDefaultsImmediately()
+    {
+        var (viewModel, settings, persistence, _, layout) = CreateWithLayout();
+        settings.Layout.ColumnWidths["JourneysPage:0"] = 390;
+        settings.Layout.ColumnWidths["LocomotivesPage:2"] = 430;
+        settings.Layout.LocomotivesPage.ListColumnWidth = 360;
+        layout.ColumnWidths.LoadFrom(settings.Layout);
+        layout.ColumnWidths.SetColumnWidth("GoodsWagonPage", 0, 410);
+        layout.ColumnWidths.SetColumnWidth("SignalBoxPage", 1, 175);
+
+        await viewModel.ResetLayoutsCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.IsLayoutResetSuccessful, Is.True);
+            Assert.That(settings.Layout.ColumnWidths, Is.Empty);
+            Assert.That(settings.Layout.LocomotivesPage.ListColumnWidth, Is.EqualTo(250));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("JourneysPage", 0), Is.EqualTo(250));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("LocomotivesPage", 0), Is.EqualTo(250));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("LocomotivesPage", 2), Is.Zero);
+            Assert.That(layout.ColumnWidths.GetColumnWidth("GoodsWagonPage", 0), Is.EqualTo(250));
+            Assert.That(layout.ColumnWidths.GetColumnWidth("SignalBoxPage", 1), Is.Zero);
+        }
+        persistence.Verify(service => service.SaveSettingsAsync(settings), Times.Once);
+    }
+
+    [Test]
     public async Task ResetLayoutsFailurePreservesExistingErrorMessage()
     {
         var (viewModel, settings, persistence, _) = Create();
@@ -399,14 +427,28 @@ internal sealed class SettingsPageViewModelTests
     private static (SettingsPageViewModel ViewModel, UiSettings Settings, Mock<ISettingsService> Persistence, Mock<IUiDispatcher> Dispatcher)
         Create(ISpeechOutput? speech = null, IFeatureTogglePageProvider? provider = null)
     {
+        var (viewModel, settings, persistence, dispatcher, _) = CreateWithLayout(speech, provider);
+        return (viewModel, settings, persistence, dispatcher);
+    }
+
+    private static (
+        SettingsPageViewModel ViewModel,
+        UiSettings Settings,
+        Mock<ISettingsService> Persistence,
+        Mock<IUiDispatcher> Dispatcher,
+        LayoutPersistenceService Layout)
+        CreateWithLayout(ISpeechOutput? speech = null, IFeatureTogglePageProvider? provider = null)
+    {
         var settings = new UiSettings();
         var persistence = new Mock<ISettingsService>();
         persistence.Setup(service => service.GetSettings()).Returns(settings);
         persistence.Setup(service => service.SaveSettingsAsync(settings)).Returns(Task.CompletedTask);
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        return (new SettingsPageViewModel(settings, persistence.Object, TestLayouts.Create(persistence.Object), dispatcher.Object,
+        var layout = TestLayouts.Create(persistence.Object);
+        var viewModel = new SettingsPageViewModel(settings, persistence.Object, layout, dispatcher.Object,
             NullLogger<SettingsPageViewModel>.Instance, provider ?? TestSettingsPages.NoFeatureToggles(),
-            speech ?? new NullSpeechOutput()), settings, persistence, dispatcher);
+            speech ?? new NullSpeechOutput());
+        return (viewModel, settings, persistence, dispatcher, layout);
     }
 }
