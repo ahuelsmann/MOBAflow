@@ -110,7 +110,7 @@ usage can be compared directly with those XML entries. Versions in this section 
 | `Microsoft.Maui.Controls` | `10.0.120` | `MOBAsmart` | Android MAUI UI framework. |
 | `Microsoft.NET.Test.Sdk` | `18.12.0` | `MutationTest`, `MutationTest/Api`, `MutationTest/Backend`, `MutationTest/Common`, `MutationTest/Contracts`, `MutationTest/SharedUI`, `MutationTest/Speech.Base`, `Test` | Test execution host. |
 | `Microsoft.Windows.SDK.BuildTools` | `10.0.28000.2957` | `MOBAflow` | Windows SDK build tools under Microsoft's SDK license; development only. |
-| `Microsoft.Windows.SDK.BuildTools.MSIX` | `1.7.261102100` | `MOBAflow` | Windows packaging build tools under Microsoft's SDK license; development only. |
+| `Microsoft.Windows.SDK.BuildTools.MSIX` | `1.7.261119100` | `MOBAflow` | Windows packaging build tools under Microsoft's SDK license; development only. |
 | `Microsoft.WindowsAppSDK` | `2.7.0` | `MOBAflow` | Windows desktop UI and runtime. |
 | `Microsoft.Xaml.Behaviors.WinUI.Managed` | `3.0.1` | `MOBAflow` | WinUI XAML behaviors. |
 | `MinVer` | `8.0.0` | Build-wide via `Directory.Build.props` | Build-time versions from Git tags. |
