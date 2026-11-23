@@ -16,4 +16,16 @@
         <!-- A local run from the build output serves the same files as the published host. -->
         <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
+    <!--
+      MOBAdemo\build.ps1 writes the built app to wwwroot-build (ignored by Git). When that folder exists it
+      replaces the committed placeholder wwwroot: the output and the publish folder get it as wwwroot.
+    -->
+    <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\wwwroot-build\index.html')">
+        <Content Remove="wwwroot\**" />
+        <None Remove="wwwroot-build\**" />
+        <Content Include="wwwroot-build\**"
+                 Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)"
+                 CopyToOutputDirectory="PreserveNewest"
+                 CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
 </Project>

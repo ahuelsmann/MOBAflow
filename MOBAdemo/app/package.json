@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "compress": "node scripts/compress-assets.mjs",
     "test": "vitest run",
     "lint": "eslint ."
   },

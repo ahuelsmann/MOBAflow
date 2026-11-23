@@ -30,9 +30,13 @@ internal sealed class MobaDemoHostTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(reply.Status, Is.EqualTo(HttpStatusCode.OK));
-            Assert.That(reply.Body, Does.Contain("MOBAdemo is being built"));
+            // A developer who ran MOBAdemo/build.ps1 has the built app as the web root instead of the placeholder.
+            Assert.That(reply.Body, Does.Contain(BuiltAppPresent() ? "<div id=\"root\">" : "MOBAdemo is being built"));
         }
     }
+
+    private static bool BuiltAppPresent() =>
+        Directory.Exists(Path.Combine(AppContext.BaseDirectory, "wwwroot", "assets"));
 
     [Test]
     public async Task Health_ReturnsOk()
