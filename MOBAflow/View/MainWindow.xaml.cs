@@ -271,14 +271,14 @@ public sealed partial class MainWindow
 
     private void SettingsPage_FeatureTogglesChanged(object? sender, EventArgs e)
     {
-        if (_isClosing)
+        if (_isClosing || DispatcherQueue is not { } dispatcherQueue)
         {
             return;
         }
 
-        if (DispatcherQueue is { HasThreadAccess: false })
+        if (!dispatcherQueue.HasThreadAccess)
         {
-            DispatcherQueue.TryEnqueue(ApplyFeatureTogglesToNavigation);
+            dispatcherQueue.TryEnqueue(ApplyFeatureTogglesToNavigation);
             return;
         }
 

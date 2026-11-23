@@ -92,19 +92,8 @@ public static class FeatureToggleRegistry
     /// </summary>
     public static IReadOnlyCollection<string> ToggleablePageKeys { get; } = BuildToggleablePageKeys();
 
-    private static string[] BuildToggleablePageKeys()
-    {
-        var keys = new List<string>(DefaultLabels.Count);
-        foreach (var key in DefaultLabels.Keys)
-        {
-            if (!AlwaysAvailablePages.Contains(key))
-            {
-                keys.Add(key);
-            }
-        }
-
-        return [.. keys];
-    }
+    private static string[] BuildToggleablePageKeys() =>
+        [.. DefaultLabels.Keys.Except(AlwaysAvailablePages, StringComparer.Ordinal)];
 
     /// <summary>
     /// Returns whether <paramref name="key"/> is a registered feature-toggle page.
