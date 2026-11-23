@@ -15,9 +15,7 @@ using System.Text.Json;
 /// <summary>Journey page editing and subscription regressions for the shared journey fixture.</summary>
 public sealed partial class JourneyCounterProjectionTests : IDisposable
 {
-    private static readonly string[] SharedAndEastStations = ["Shared", "East"];
-    private static readonly string[] CentralAndEastStations = ["Central", "East"];
-    private static readonly string[] EastOnlyStations = ["East"];
+    private static readonly string[] ExpectedProjectStationNames = ["Central", "Shared", "East"];
 
     private SolutionSession _session = null!;
     private Mock<IMobaRuntime> _runtime = null!;
@@ -526,12 +524,11 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
     }
 
     [Test]
-    public void DeleteJourneyClearsJourneyStationsAndRemovesOnlyUnreferencedProjectStations()
+    public void DeleteJourneyClearsJourneyStationsAndPreservesProjectStations()
     {
         var project = _page.SelectedProject!;
         var sharedStation = new Station { Name = "Shared" };
         project.Model.Journeys[0].Stations.Add(new Station { Id = sharedStation.Id, Name = "Shared" });
-        project.Model.Journeys[1].Stations.Add(new Station { Id = sharedStation.Id, Name = "Shared" });
         project.Model.Stations.Add(new Station { Id = project.Model.Journeys[0].Stations[0].Id, Name = "Central" });
         project.Model.Stations.Add(sharedStation);
         project.Model.Stations.Add(new Station { Name = "East" });
@@ -552,39 +549,9 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         Assert.That(_page.SelectedJourney, Is.Null);
         Assert.That(_page.SelectedStation, Is.Null);
         Assert.That(_page.JourneysPageSelectedObject, Is.Null);
-        Assert.That(project.Stations.Select(station => station.Name), Is.EqualTo(SharedAndEastStations));
-        Assert.That(project.Model.Stations.Select(station => station.Name), Is.EqualTo(SharedAndEastStations));
-        Assert.That(SavedProject().Stations.Select(station => station.Name), Is.EqualTo(SharedAndEastStations));
-        _runtime.Verify(value => value.UpdateProjectAsync(project.Model, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-    }
-
-    [Test]
-    public void DeleteStationRemovesOrphanedProjectStationOnlyWhenLastJourneyReferenceIsDeleted()
-    {
-        var project = _page.SelectedProject!;
-        project.Model.Stations.Add(new Station { Name = "Central" });
-        project.Model.Stations.Add(new Station { Name = "East" });
-        project.Refresh();
-        _session.SelectedJourney = project.Journeys[0];
-
-        var journey = _page.SelectedJourney!;
-        journey.Model.Stations.Add(new Station { Name = "Central" });
-        journey.RefreshStations();
-
-        _page.SelectedStation = journey.Stations[0];
-        _page.DeleteStationCommand.Execute(null);
-
-        Assert.That(project.Stations.Select(station => station.Name), Is.EqualTo(CentralAndEastStations));
-
-        ClearInvocations();
-        _page.SelectedStation = journey.Stations[0];
-        _page.DeleteStationCommand.Execute(null);
-
-        using var assertions = Assert.EnterMultipleScope();
-        Assert.That(journey.Stations, Is.Empty);
-        Assert.That(project.Stations.Select(station => station.Name), Is.EqualTo(EastOnlyStations));
-        Assert.That(project.Model.Stations.Select(station => station.Name), Is.EqualTo(EastOnlyStations));
-        Assert.That(SavedProject().Stations.Select(station => station.Name), Is.EqualTo(EastOnlyStations));
+        Assert.That(project.Stations.Select(station => station.Name), Is.EqualTo(ExpectedProjectStationNames));
+        Assert.That(project.Model.Stations.Select(station => station.Name), Is.EqualTo(ExpectedProjectStationNames));
+        Assert.That(SavedProject().Stations.Select(station => station.Name), Is.EqualTo(ExpectedProjectStationNames));
         _runtime.Verify(value => value.UpdateProjectAsync(project.Model, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 

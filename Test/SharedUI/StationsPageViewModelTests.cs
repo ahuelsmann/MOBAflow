@@ -320,33 +320,35 @@ internal sealed partial class StationsPageViewModelTests : IDisposable
     }
 
     [Test]
-    public void DeletingAllStationsFromJourneysPage_RefreshesStationsPageAndClearsSelectionAndCommands()
+    public void DeleteProjectStation_WhenLastStationRemoved_ClearsSelectionPropertiesAndCommands()
     {
         var project = _page.SelectedProject!;
-        var stationModel = project.Model.Stations[0];
-        project.Model.Journeys.Add(new Journey
-        {
-            Name = "Morning",
-            Stations = [new Station { Id = stationModel.Id, Name = stationModel.Name }]
-        });
-        project.Refresh();
-
         SelectFirstStation();
         _page.SelectedProjectStationPlatform = _page.SelectedProjectStation!.Platforms[0];
 
-        var gateway = new Mock<IRuntimeCommandGateway>();
-        var dispatcher = new Mock<IUiDispatcher>();
-        dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        var cities = new Mock<ICityService>();
-        using var journeysPage = new JourneysPageViewModel(
-            _session,
-            gateway.Object,
-            dispatcher.Object,
-            cities.Object,
-            TestLayouts.Create(_persistence.Object));
+        _page.DeleteProjectStationCommand.Execute(null);
 
-        journeysPage.SelectedStation = journeysPage.SelectedJourney!.Stations[0];
-        journeysPage.DeleteStationCommand.Execute(null);
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(project.Stations, Is.Empty);
+        Assert.That(project.Model.Stations, Is.Empty);
+        Assert.That(_page.SelectedProjectStation, Is.Null);
+        Assert.That(_page.SelectedProjectStationPlatform, Is.Null);
+        Assert.That(_page.StationsPageSelectedObject, Is.Null);
+        Assert.That(_page.StationsPagePropertiesTitle, Is.EqualTo("Properties"));
+        Assert.That(_page.DeleteProjectStationCommand.CanExecute(null), Is.False);
+        Assert.That(_page.AddPlatformToProjectStationCommand.CanExecute(null), Is.False);
+        Assert.That(_page.DeleteProjectStationPlatformCommand.CanExecute(null), Is.False);
+    }
+
+    [Test]
+    public void ExternalStationRemoval_WhenLastStationRemoved_ClearsSelectionPropertiesAndCommands()
+    {
+        var project = _page.SelectedProject!;
+        SelectFirstStation();
+        _page.SelectedProjectStationPlatform = _page.SelectedProjectStation!.Platforms[0];
+
+        project.Model.Stations.Clear();
+        project.Stations.Clear();
 
         using var assertions = Assert.EnterMultipleScope();
         Assert.That(project.Stations, Is.Empty);

@@ -157,9 +157,7 @@ recording of every UI interaction.
 ### Stations, journeys and events
 
 **Stations** are reusable project entities with platforms and optional city
-metadata. **Journeys** reference an ordered list of those stations. Deleting a
-journey or removing a station from a journey also removes any matching project
-station that is no longer used by any journey.
+metadata. **Journeys** reference an ordered list of those stations.
 
 A journey is either **active** or inactive. When feedback arrives, MOBAflow
 evaluates the events of every active journey. Each event assigns a workflow to an
