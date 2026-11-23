@@ -28,4 +28,15 @@
                  CopyToOutputDirectory="PreserveNewest"
                  CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
+    <!--
+      A reused output or publish folder keeps no web root of an earlier build: PreserveNewest alone would leave
+      hashed assets of an older build behind, and a built index.html that is newer than the placeholder would win
+      after the built app was removed. The web root folder is therefore recreated on every build and publish.
+    -->
+    <Target Name="RemoveStaleWebRootFromOutput" BeforeTargets="BeforeBuild">
+        <RemoveDir Directories="$(OutDir)wwwroot" />
+    </Target>
+    <Target Name="RemoveStaleWebRootFromPublish" BeforeTargets="PrepareForPublish">
+        <RemoveDir Directories="$(PublishDir)wwwroot" />
+    </Target>
 </Project>

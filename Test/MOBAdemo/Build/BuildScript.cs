@@ -28,20 +28,29 @@ internal static class BuildScript
         }
     }
 
-    /// <summary>Runs the script with <c>-OutputPath</c> and fails with the script output when it does not succeed.</summary>
-    internal static async Task RunAsync(string outputPath)
+    /// <summary>
+    /// Runs the script with <c>-OutputPath</c> (plus any <paramref name="extraArguments"/>) and fails with the
+    /// script output when it does not succeed.
+    /// </summary>
+    internal static async Task RunAsync(string outputPath, params string[] extraArguments)
     {
-        var result = await RunProcessAsync(
-            "pwsh",
-            ["-NoProfile", "-NonInteractive", "-File", ScriptPath, "-OutputPath", outputPath],
-            BuildTimeout).ConfigureAwait(false);
+        var result = await TryRunAsync(outputPath, extraArguments).ConfigureAwait(false);
         Assert.That(result.ExitCode, Is.Zero, "build.ps1 failed:" + Environment.NewLine + result.Output);
     }
 
-    private static async Task<(int ExitCode, string Output)> RunProcessAsync(
+    /// <summary>Runs the script like <see cref="RunAsync"/> but returns the exit code and output.</summary>
+    internal static Task<(int ExitCode, string Output)> TryRunAsync(string outputPath, params string[] extraArguments) =>
+        RunProcessAsync(
+            "pwsh",
+            ["-NoProfile", "-NonInteractive", "-File", ScriptPath, "-OutputPath", outputPath, .. extraArguments],
+            BuildTimeout);
+
+    /// <summary>Starts a process, collects its output and kills it when <paramref name="timeout"/> elapses.</summary>
+    internal static async Task<(int ExitCode, string Output)> RunProcessAsync(
         string fileName,
         string[] arguments,
-        TimeSpan timeout)
+        TimeSpan timeout,
+        string? workingDirectory = null)
     {
         var startInfo = new ProcessStartInfo(fileName)
         {
@@ -49,7 +58,7 @@ internal static class BuildScript
             RedirectStandardError = true,
             RedirectStandardInput = true,
             UseShellExecute = false,
-            WorkingDirectory = RepositoryRoot,
+            WorkingDirectory = workingDirectory ?? RepositoryRoot,
         };
         foreach (var argument in arguments)
         {
@@ -100,11 +109,64 @@ internal static class BuildScript
                 return (-2, "Timed out after " + timeout + "." + Environment.NewLine + output);
             }
 
-            // WaitForExitAsync also waits until the redirected output streams are drained.
+            // With redirected streams the token-free wait returns only after the asynchronous output handlers saw
+            // end of stream, so the tail of a large output is not lost.
+            await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
             lock (gate)
             {
                 return (process.ExitCode, output.ToString());
             }
+        }
+    }
+
+    /// <summary>Copies a folder tree; <paramref name="skip"/> may leave out entries by relative path.</summary>
+    internal static void CopyDirectory(string source, string target, Func<string, bool>? skip = null)
+    {
+        Directory.CreateDirectory(target);
+        foreach (var directory in Directory.EnumerateDirectories(source, "*", SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(source, directory);
+            if (skip?.Invoke(relative) != true)
+            {
+                Directory.CreateDirectory(Path.Combine(target, relative));
+            }
+        }
+
+        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(source, file);
+            if (skip?.Invoke(relative) != true)
+            {
+                File.Copy(file, Path.Combine(target, relative), overwrite: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Creates a directory link (a junction on Windows, which needs no administrator rights; a symbolic link
+    /// elsewhere). Ignores the calling test with a reason when the operating system refuses the link.
+    /// </summary>
+    internal static async Task CreateDirectoryLinkOrIgnoreAsync(string link, string target)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            var result = await RunProcessAsync("cmd", ["/c", "mklink", "/J", link, target], TimeSpan.FromMinutes(1))
+                .ConfigureAwait(false);
+            if (result.ExitCode != 0)
+            {
+                Assert.Ignore("Windows refused to create a directory junction: " + result.Output.Trim());
+            }
+
+            return;
+        }
+
+        try
+        {
+            Directory.CreateSymbolicLink(link, target);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            Assert.Ignore("The operating system refused to create a symbolic link: " + exception.Message);
         }
     }
 

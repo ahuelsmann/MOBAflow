@@ -109,3 +109,4 @@ docs/api/latex/
 
 # MOBAdemo build script output (MOBAdemo/build.ps1)
 MOBAdemo/Host/wwwroot-build/
+MOBAdemo/Host/.wwwroot-build.*/

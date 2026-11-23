@@ -20,11 +20,14 @@ The script:
 1. runs `npm ci` and `npm run build` in `MOBAdemo/app` (Vite gives every file under `assets/` a content-hashed name),
 2. writes a Brotli (quality 11) and a gzip sibling (`app.js.br`, `app.js.gz`) next to every `.js`, `.css`, `.html`
    and `.svg` file, with the small script `app/scripts/compress-assets.mjs` (Node's built-in `zlib`),
-3. deletes the output folder and fills it with the result, so no file of an older build stays behind. A failed
-   build leaves the old output untouched.
+3. stages the complete result in a sibling folder and then swaps it for the output folder (old folder aside, new
+   folder in, old folder deleted), so no file of an older build stays behind. A failed build or copy leaves the old
+   output untouched; the swap restores it when it fails half way.
 
 The default output is `MOBAdemo/Host/wwwroot-build/`, which Git ignores. `-OutputPath` chooses another folder
-(tests and CI use it); inside the repository only the default folder may be replaced. The committed placeholder
+(tests and CI use it). Inside the repository only the default folder may be replaced, and a path that is or
+runs through a symbolic link or junction into the repository is refused, so the script cannot delete repository
+files through a link. `-AppPath` builds another copy of the frontend folder (tests use it). The committed placeholder
 `Host/wwwroot/index.html` is never changed.
 
 ## Run or publish the host
@@ -38,7 +41,9 @@ dotnet run --project MOBAdemo/Host/MOBAdemo.csproj
 dotnet publish MOBAdemo/Host/MOBAdemo.csproj -c Release -o <folder>
 ```
 
-Delete `MOBAdemo/Host/wwwroot-build/` to go back to the placeholder.
+Delete `MOBAdemo/Host/wwwroot-build/` to go back to the placeholder. Every build and publish recreates the `wwwroot`
+folder of its output folder, so a reused folder never keeps hashed assets of an older build or a built
+`index.html` after you went back to the placeholder.
 
 ## Tests
 

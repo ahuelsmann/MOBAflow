@@ -121,9 +121,9 @@ internal sealed class BuildScriptTests
                 @"(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|\.local|\.internal|\.lan):\d{2,5}|:(?:5000|5001|5173|8080)\b",
                 RegexOptions.IgnoreCase),
         };
-        foreach (var word in new[] { Environment.UserName, Environment.MachineName }.Where(word => word.Length >= 3))
+        foreach (var name in new[] { Environment.UserName, Environment.MachineName })
         {
-            patterns.Add(Compile(@"(?<![A-Za-z0-9])" + Regex.Escape(word) + @"(?![A-Za-z0-9])", RegexOptions.IgnoreCase));
+            patterns.AddRange(HostDetail.NamePatterns(name));
         }
 
         var findings = new List<string>();
@@ -149,29 +149,38 @@ internal sealed class BuildScriptTests
     }
 
     [Test]
-    public async Task Rebuild_ReplacesOutputAndOldAssetReturnsNotFound()
+    public async Task Rebuild_AfterRealSourceChange_ServesNewAssetAndOldAssetReturnsNotFound()
     {
-        var second = Path.Combine(_root, "second");
-        CopyDirectory(_output, second);
-        var staleAsset = Path.Combine(second, "assets", "index-stale0001.js");
-        var staleFiles = new[] { staleAsset, staleAsset + ".br", staleAsset + ".gz", Path.Combine(second, "old.txt") };
-        foreach (var path in staleFiles)
-        {
-            await File.WriteAllTextAsync(path, "stale").ConfigureAwait(false);
-        }
+        // The app is copied so the repository sources stay untouched; the change alters the bundle content,
+        // so Vite emits a different content hash.
+        var app = Path.Combine(_root, "app-copy");
+        var web = Path.Combine(_root, "rebuilt");
+        BuildScript.CopyDirectory(
+            Path.Combine(BuildScript.RepositoryRoot, "MOBAdemo", "app"),
+            app,
+            relative => relative.Split(Path.DirectorySeparatorChar)[0] is "node_modules" or "dist");
+        await BuildScript.RunAsync(web, "-AppPath", app).ConfigureAwait(false);
+        var oldAsset = Directory.EnumerateFiles(Path.Combine(web, "assets"), "*.js").Select(Path.GetFileName).Single()!;
+        var plantedFile = Path.Combine(web, "old.txt");
+        await File.WriteAllTextAsync(plantedFile, "stale").ConfigureAwait(false);
 
-        await BuildScript.RunAsync(second).ConfigureAwait(false);
-        var staleReply = await FetchAsync(second, "/assets/index-stale0001.js").ConfigureAwait(false);
-        var indexReply = await FetchAsync(second, "/").ConfigureAwait(false);
+        var main = Path.Combine(app, "src", "main.tsx");
+        await File.AppendAllTextAsync(main, "\nconsole.info(\"mobademo-hash-change-marker\");\n").ConfigureAwait(false);
+        await BuildScript.RunAsync(web, "-AppPath", app).ConfigureAwait(false);
+
+        var newAsset = Directory.EnumerateFiles(Path.Combine(web, "assets"), "*.js").Select(Path.GetFileName).Single()!;
+        var oldReply = await FetchAsync(web, "/assets/" + oldAsset).ConfigureAwait(false);
+        var newReply = await FetchAsync(web, "/assets/" + newAsset).ConfigureAwait(false);
+        var indexReply = await FetchAsync(web, "/").ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(staleFiles.Where(File.Exists), Is.Empty, "The rebuild must delete files of the earlier output.");
-            Assert.That(staleReply.Status, Is.EqualTo(HttpStatusCode.NotFound));
-            Assert.That(indexReply.Status, Is.EqualTo(HttpStatusCode.OK));
-            Assert.That(
-                Directory.EnumerateFiles(Path.Combine(second, "assets"), "*.js").Select(Path.GetFileName),
-                Is.EquivalentTo(Directory.EnumerateFiles(Path.Combine(_output, "assets"), "*.js").Select(Path.GetFileName)));
+            Assert.That(newAsset, Is.Not.EqualTo(oldAsset), "A real change must produce a new content hash.");
+            Assert.That(File.Exists(plantedFile), Is.False, "The rebuild must delete files of the earlier output.");
+            Assert.That(oldReply.Status, Is.EqualTo(HttpStatusCode.NotFound));
+            Assert.That(newReply.Status, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(Encoding.UTF8.GetString(indexReply.Body), Does.Contain(newAsset));
+            Assert.That(Encoding.UTF8.GetString(indexReply.Body), Does.Not.Contain(oldAsset));
         }
     }
 
@@ -221,19 +230,7 @@ internal sealed class BuildScriptTests
         }
     }
 
-    private static void CopyDirectory(string source, string target)
-    {
-        Directory.CreateDirectory(target);
-        foreach (var directory in Directory.EnumerateDirectories(source, "*", SearchOption.AllDirectories))
-        {
-            Directory.CreateDirectory(Path.Combine(target, Path.GetRelativePath(source, directory)));
-        }
-
-        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
-        {
-            File.Copy(file, Path.Combine(target, Path.GetRelativePath(source, file)), overwrite: true);
-        }
-    }
+    private static void CopyDirectory(string source, string target) => BuildScript.CopyDirectory(source, target);
 
     private sealed record Reply(HttpStatusCode Status, byte[] Body, string ContentEncoding, string? CacheControl);
 }
