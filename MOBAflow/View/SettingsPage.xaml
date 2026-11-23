@@ -522,8 +522,6 @@
                                     <Run Text="How many feedback points (InPorts) are in your track layout?" />
                                     <LineBreak />
                                     <Run Text="Example: 3 → Monitor will show InPorts 1, 2, 3" />
-                                    <LineBreak />
-                                    <Run FontStyle="Italic" Text="Note: Restart required to apply changes" />
                                 </TextBlock>
                             </NumberBox.Description>
                         </NumberBox>
@@ -587,7 +585,7 @@
                         <TextBlock
                             Margin="0,0,0,8"
                             Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Control which features are available in the application. Changes require app restart."
+                            Text="Control which features are available in the application. Changes apply immediately."
                             TextWrapping="Wrap" />
 
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.FeatureToggleItems, Mode=OneWay}">

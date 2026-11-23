@@ -24,7 +24,7 @@ public sealed partial class FeatureToggleItemViewModel : ObservableObject
     private bool _isChecked;
 
     /// <summary>
-    /// Feature toggle page key (e.g. Overview).
+    /// Feature toggle page key (e.g. TrainControl).
     /// </summary>
     public string FeatureToggleKey { get; }
 

@@ -67,6 +67,9 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// <summary>Raised only after the configured feedback point count actually changes.</summary>
     public event EventHandler? FeedbackPointCountChanged;
 
+    /// <summary>Raised when one or more toggleable pages change availability.</summary>
+    public event EventHandler? FeatureTogglesChanged;
+
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
 
@@ -769,9 +772,15 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     internal void InitializeFeatureToggleItems()
     {
+        FeatureToggleRegistry.Normalize(_settings.FeatureToggles);
         FeatureToggleItems.Clear();
         foreach (var info in _featureTogglePageProvider.GetToggleablePages())
         {
+            if (!FeatureToggleRegistry.IsToggleable(info.FeatureToggleKey))
+            {
+                continue;
+            }
+
             var initial = GetFeatureToggleValue(info.FeatureToggleKey);
             var item = new FeatureToggleItemViewModel(info, initial);
             item.OnIsCheckedChangedCallback = OnFeatureToggleItemChanged;
@@ -799,13 +808,18 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     internal void SetFeatureToggleValue(string key, bool value)
     {
+        if (!FeatureToggleRegistry.IsToggleable(key))
+            return;
         if (!FeatureToggleRegistry.TryGetPageAvailability(_settings.FeatureToggles, key, out var previous))
             return;
         if (previous == value)
             return;
 
-        FeatureToggleRegistry.TrySetPageAvailability(_settings.FeatureToggles, key, value);
+        if (!FeatureToggleRegistry.TrySetPageAvailability(_settings.FeatureToggles, key, value))
+            return;
+
         PersistSettings();
+        FeatureTogglesChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -818,6 +832,11 @@ public sealed partial class SettingsPageViewModel : ObservableObject
             item.SetChecked(GetFeatureToggleValue(item.FeatureToggleKey));
         }
     }
+
+    private bool[] CaptureToggleablePageAvailabilities() =>
+        FeatureToggleRegistry.ToggleablePageKeys
+            .Select(GetFeatureToggleValue)
+            .ToArray();
 
     #endregion
 
@@ -887,6 +906,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
         try
         {
             ShowErrorMessage = false;
+            var availabilityBeforeReset = CaptureToggleablePageAvailabilities();
             await _settingsService.ResetToDefaultsAsync().ConfigureAwait(true);
 
             // Notify all settings properties changed
@@ -915,7 +935,12 @@ public sealed partial class SettingsPageViewModel : ObservableObject
             OnPropertyChanged(nameof(HealthCheckIntervalSeconds));
             OnPropertyChanged(nameof(CountOfFeedbackPoints));
 
+            FeatureToggleRegistry.Normalize(_settings.FeatureToggles);
             RefreshFeatureToggleItems();
+            if (!availabilityBeforeReset.SequenceEqual(CaptureToggleablePageAvailabilities()))
+            {
+                FeatureTogglesChanged?.Invoke(this, EventArgs.Empty);
+            }
 
             ShowSuccessMessage = true;
             await Task.Delay(3000).ConfigureAwait(true);

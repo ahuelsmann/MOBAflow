@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 
+using SharedUI.Configuration;
 using SharedUI.Shell;
 
 /// <summary>
@@ -19,15 +20,21 @@ internal sealed class NavigationService : INavigationService
     #region Fields
     private readonly IServiceProvider _serviceProvider;
     private readonly List<PageMetadata> _pages;
+    private readonly UiSettings _settings;
     private readonly ILogger<NavigationService> _logger;
     private readonly Stack<string> _navigationHistory = new();
     private Frame? _contentFrame;
     #endregion
 
-    public NavigationService(IServiceProvider serviceProvider, List<PageMetadata> pages, ILogger<NavigationService> logger)
+    public NavigationService(
+        IServiceProvider serviceProvider,
+        List<PageMetadata> pages,
+        UiSettings settings,
+        ILogger<NavigationService> logger)
     {
         _serviceProvider = serviceProvider;
         _pages = pages;
+        _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _logger = logger;
     }
 
@@ -35,7 +42,7 @@ internal sealed class NavigationService : INavigationService
     public string? CurrentPageTag { get; private set; }
 
     /// <inheritdoc />
-    public bool CanGoBack => _navigationHistory.Count > 0;
+    public bool CanGoBack => HasAvailableHistoryEntry(_navigationHistory, _pages, _settings.FeatureToggles);
 
     /// <inheritdoc />
     public event EventHandler<NavigationEventArgs>? Navigated;
@@ -62,14 +69,13 @@ internal sealed class NavigationService : INavigationService
 
         try
         {
-            var page = _pages.FirstOrDefault(p => p.Tag == tag);
-            if (page == null)
-            {
-                throw new ArgumentException($"Unknown navigation tag: {tag}", nameof(tag));
-            }
+            var page = ResolveAvailablePage(_pages, _settings.FeatureToggles, tag);
 
             var previousTag = CurrentPageTag;
-            if (previousTag is not null)
+            if (previousTag is not null
+                && !string.Equals(previousTag, tag, StringComparison.Ordinal)
+                && _pages.FirstOrDefault(p => p.Tag == previousTag) is { } previousPage
+                && MainWindowNavigationBootstrapper.IsPageVisible(previousPage, _settings.FeatureToggles))
             {
                 _navigationHistory.Push(previousTag);
             }
@@ -118,38 +124,94 @@ internal sealed class NavigationService : INavigationService
     /// <inheritdoc />
     public async Task<bool> GoBackAsync()
     {
-        if (!CanGoBack) return false;
+        var page = PopNextAvailableHistoryPage(_navigationHistory, _pages, _settings.FeatureToggles);
+        if (page is null)
+        {
+            return false;
+        }
 
-        var previousTag = _navigationHistory.Pop();
         try
         {
-            // Navigate without adding to history
-            var page = _pages.FirstOrDefault(p => p.Tag == previousTag);
-            if (page != null)
+            var pageInstance = _serviceProvider.GetRequiredService(page.PageType);
+            _contentFrame!.Content = pageInstance;
+
+            var oldTag = CurrentPageTag;
+            CurrentPageTag = page.Tag;
+
+            // Raise navigation event
+            Navigated?.Invoke(this, new NavigationEventArgs
             {
-                var pageInstance = _serviceProvider.GetRequiredService(page.PageType);
-                _contentFrame!.Content = pageInstance;
+                PageTag = page.Tag,
+                PreviousPageTag = oldTag
+            });
 
-                var oldTag = CurrentPageTag;
-                CurrentPageTag = previousTag;
-
-                // Raise navigation event
-                Navigated?.Invoke(this, new NavigationEventArgs
-                {
-                    PageTag = previousTag,
-                    PreviousPageTag = oldTag
-                });
-
-                return true;
-            }
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GoBack navigation to '{PreviousTag}' failed", previousTag);
-            _navigationHistory.Push(previousTag);
+            _logger.LogError(ex, "GoBack navigation to '{PreviousTag}' failed", page.Tag);
+            _navigationHistory.Push(page.Tag);
         }
 
         return false;
+    }
+
+    internal static PageMetadata ResolveAvailablePage(
+        IReadOnlyList<PageMetadata> pages,
+        FeatureToggleSettings toggles,
+        string tag)
+    {
+        ArgumentNullException.ThrowIfNull(pages);
+        ArgumentNullException.ThrowIfNull(toggles);
+
+        var page = pages.FirstOrDefault(p => p.Tag == tag);
+        if (page is null)
+        {
+            throw new ArgumentException($"Unknown navigation tag: {tag}", nameof(tag));
+        }
+
+        if (!MainWindowNavigationBootstrapper.IsPageVisible(page, toggles))
+        {
+            throw new InvalidOperationException($"Navigation page '{tag}' is disabled by feature toggles.");
+        }
+
+        return page;
+    }
+
+    internal static PageMetadata? PopNextAvailableHistoryPage(
+        Stack<string> history,
+        IReadOnlyList<PageMetadata> pages,
+        FeatureToggleSettings toggles)
+    {
+        ArgumentNullException.ThrowIfNull(history);
+        ArgumentNullException.ThrowIfNull(pages);
+        ArgumentNullException.ThrowIfNull(toggles);
+
+        while (history.Count > 0)
+        {
+            var previousTag = history.Pop();
+            var page = pages.FirstOrDefault(p => p.Tag == previousTag);
+            if (page is not null && MainWindowNavigationBootstrapper.IsPageVisible(page, toggles))
+            {
+                return page;
+            }
+        }
+
+        return null;
+    }
+
+    internal static bool HasAvailableHistoryEntry(
+        IEnumerable<string> history,
+        IReadOnlyList<PageMetadata> pages,
+        FeatureToggleSettings toggles)
+    {
+        ArgumentNullException.ThrowIfNull(history);
+        ArgumentNullException.ThrowIfNull(pages);
+        ArgumentNullException.ThrowIfNull(toggles);
+
+        return history.Any(tag =>
+            pages.FirstOrDefault(p => p.Tag == tag) is { } page
+            && MainWindowNavigationBootstrapper.IsPageVisible(page, toggles));
     }
 
     /// <summary>

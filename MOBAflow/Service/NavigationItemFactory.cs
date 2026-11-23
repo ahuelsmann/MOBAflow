@@ -42,12 +42,7 @@ internal sealed class NavigationItemFactory
         // Bold or badged items show a panel as content, which gives Narrator no name; name every item explicitly.
         AutomationProperties.SetName(item, ComposeAccessibleName(page.Title, badgeLabel));
 
-        // Apply visibility based on Feature Toggle
-        if (!string.IsNullOrEmpty(page.FeatureToggleKey))
-        {
-            var isVisible = GetFeatureToggleValue(page.FeatureToggleKey);
-            item.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
-        }
+        ApplyVisibility(item, page);
 
         // Add tooltip for PathIcon pages
         if (!string.IsNullOrEmpty(page.PathIconData))
@@ -62,6 +57,28 @@ internal sealed class NavigationItemFactory
     /// Creates a NavigationViewItemSeparator.
     /// </summary>
     public NavigationViewItemSeparator CreateSeparator() => new();
+
+    /// <summary>
+    /// Updates the visibility of <paramref name="item"/> based on the current Feature Toggle state of <paramref name="page"/>.
+    /// </summary>
+    public void ApplyVisibility(NavigationViewItem item, PageMetadata page)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        ArgumentNullException.ThrowIfNull(page);
+
+        var isVisible = IsPageVisible(page);
+        item.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Returns whether <paramref name="page"/> should be visible in the navigation pane.
+    /// </summary>
+    public bool IsPageVisible(PageMetadata page)
+    {
+        ArgumentNullException.ThrowIfNull(page);
+        return string.IsNullOrEmpty(page.FeatureToggleKey)
+            || GetFeatureToggleValue(page.FeatureToggleKey);
+    }
 
     /// <summary>
     /// Composes the accessible name of a navigation item: the page title, followed by the badge when one is shown

@@ -111,8 +111,7 @@ public sealed class LayoutColumnWidthsViewModel
             var key = BuildColumnWidthKey(keyPrefix, i);
             var defaultVal = i < defaults.Length ? defaults[i] : 0;
             var value = columnWidths.TryGetValue(key, out var w) && w > 0 ? w : defaultVal;
-            if (value > 0)
-                page[i] = value;
+            page[i] = value;
         }
     }
 

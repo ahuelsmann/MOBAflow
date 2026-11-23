@@ -7,8 +7,9 @@ end. Details are in the [MOBAflow user guide](MOBAFLOW-USER-GUIDE.md) and the
 
 A **Preview** badge in the navigation marks a page that is usable but may still
 change. In the shipped settings, **Timetable** and **Event Manager** carry it.
-**Settings > Feature Toggles** can show or hide each page and change its badge;
-changes need an app restart. Train Control and Journeys are shown in bold.
+**Settings > Feature Toggles** can show or hide feature pages (except **Overview**,
+which is always available); changes apply immediately without restarting the app.
+Train Control and Journeys are shown in bold.
 
 ## MOBAflow Desktop
 
