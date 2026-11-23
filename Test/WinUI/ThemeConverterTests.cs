@@ -23,6 +23,7 @@ internal sealed class ThemeConverterTests
 
     [TestCase(true, null, "AccentFillColorDefaultBrush")]
     [TestCase(true, "", "AccentFillColorDefaultBrush")]
+    [TestCase(true, "   ", "AccentFillColorDefaultBrush")]
     [TestCase(true, "SystemFillColorSuccessBrush", "SystemFillColorSuccessBrush")]
     [TestCase(false, "SystemFillColorSuccessBrush", "TextFillColorSecondaryBrush")]
     [TestCase(false, null, "TextFillColorSecondaryBrush")]
