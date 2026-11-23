@@ -90,7 +90,7 @@ function parseLocomotives(raw: unknown, photos: Readonly<Record<string, string>>
     check(typeof locomotive['selected'] === 'boolean', `${where}.selected must be true or false`);
 
     const photo = locomotive['photo'];
-    check(isText(photo) && photo in photos, `${where}.photo "${String(photo)}" is not an imported photo`);
+    check(isText(photo) && Object.hasOwn(photos, photo) && isNonEmptyText(photos[photo]), `${where}.photo "${String(photo)}" is not an imported photo`);
 
     const functions = arrayOf(check, locomotive['functions'], `${where}.functions`).map((fn, fnIndex) => {
       const fnWhere = `${where}.functions[${fnIndex}]`;
@@ -181,10 +181,24 @@ function parseWorkflow(raw: unknown): WorkflowFile {
   const ids = new Set(nodes.map((node) => node['id']));
   check(ids.size === nodes.length, 'node ids must be unique');
   check(nodes.filter((node) => node['type'] === 'trigger').length === 1, 'exactly one trigger node is required');
-  for (const [index, edge] of arrayOf(check, file['edges'], 'edges').entries()) {
+  const edges = arrayOf(check, file['edges'], 'edges').map((edge, index) => {
     const item = objectOf(check, edge, `edges[${index}]`);
     check(ids.has(item['from']) && ids.has(item['to']), `edges[${index}] refers to an unknown node`);
+    return item;
+  });
+  check(edges.length > 0, 'edges must not be empty');
+  const trigger = nodes.find((node) => node['type'] === 'trigger');
+  const reached = new Set<unknown>([trigger?.['id']]);
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const edge of edges) {
+      if (reached.has(edge['from']) && !reached.has(edge['to'])) {
+        reached.add(edge['to']);
+        grew = true;
+      }
+    }
   }
+  check(reached.size === nodes.length, 'every node must be reachable from the trigger node');
   for (const [index, property] of arrayOf(check, file['properties'], 'properties').entries()) {
     const item = objectOf(check, property, `properties[${index}]`);
     check(isNonEmptyText(item['label']) && isText(item['value']), `properties[${index}] needs label and value`);
@@ -192,7 +206,7 @@ function parseWorkflow(raw: unknown): WorkflowFile {
   return file as unknown as WorkflowFile;
 }
 
-const ELEMENT_TYPES = ['TrackStraight', 'TrackCurve', 'Turnout', 'Detector', 'Signal'];
+const ELEMENT_TYPES = new Set(['TrackStraight', 'TrackCurve', 'Turnout', 'Detector', 'Signal']);
 
 function parseSignalBox(raw: unknown): SignalBoxFile {
   const check: Check = checker('signal-box.json');
@@ -204,7 +218,7 @@ function parseSignalBox(raw: unknown): SignalBoxFile {
     const where = `elements[${index}]`;
     const entry = objectOf(check, element, where);
     check(isNonEmptyText(entry['id']), `${where}.id is missing`);
-    check(ELEMENT_TYPES.includes(entry['type'] as string), `${where}.type is invalid`);
+    check(ELEMENT_TYPES.has(entry['type'] as string), `${where}.type is invalid`);
     check(isNumber(entry['x']) && isNumber(entry['y']) && isNumber(entry['rotation']), `${where} needs x, y and rotation`);
     check(isText(entry['name']), `${where}.name must be text`);
     if (entry['type'] === 'Turnout') {
@@ -228,7 +242,10 @@ function parseSignalBox(raw: unknown): SignalBoxFile {
   check(aspects.includes(signal['preparedAspect']), 'signal.preparedAspect must be one of the signal aspects');
   const multiplexer = objectOf(check, signal['multiplexer'], 'signal.multiplexer');
   check(isNonEmptyText(multiplexer['articleNumber']) && isNumber(multiplexer['baseAddress']), 'signal.multiplexer needs articleNumber and baseAddress');
-  arrayOf(check, multiplexer['outputs'], 'signal.multiplexer.outputs');
+  arrayOf(check, multiplexer['outputs'], 'signal.multiplexer.outputs').forEach((output, index) => {
+    const entry = objectOf(check, output, `signal.multiplexer.outputs[${index}]`);
+    check(isNonEmptyText(entry['label']) && isText(entry['value']), `signal.multiplexer.outputs[${index}] needs label and value`);
+  });
   return file as unknown as SignalBoxFile;
 }
 
@@ -258,6 +275,6 @@ export function parseExamples(raw: RawExamples, photos: Readonly<Record<string, 
 }
 
 /** Loads the committed example data; a malformed file rejects, which the app shows as its failed-load state. */
-export async function loadExamples(sources: RawExamples = defaultSources): Promise<ExampleData> {
-  return parseExamples(sources);
+export function loadExamples(sources: RawExamples = defaultSources): Promise<ExampleData> {
+  return Promise.resolve().then(() => parseExamples(sources));
 }
