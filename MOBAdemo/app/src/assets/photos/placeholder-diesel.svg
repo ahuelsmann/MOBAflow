@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" role="img" aria-label="Diesel shunting locomotive (placeholder drawing)">
+  <rect x="0" y="108" width="320" height="4" fill="#8a8f98"/>
+  <rect x="30" y="86" width="260" height="14" rx="3" fill="#4a4f57"/>
+  <rect x="40" y="46" width="130" height="42" rx="3" fill="#9aa3ad"/>
+  <rect x="170" y="62" width="110" height="26" rx="3" fill="#9aa3ad"/>
+  <rect x="62" y="22" width="76" height="26" rx="3" fill="#aeb6bf"/>
+  <rect x="70" y="28" width="26" height="14" rx="2" fill="#dbe3ea"/>
+  <rect x="104" y="28" width="26" height="14" rx="2" fill="#dbe3ea"/>
+  <rect x="190" y="68" width="60" height="10" rx="2" fill="#7c858f"/>
+  <rect x="48" y="60" width="6" height="22" fill="#7c858f"/>
+  <circle cx="70" cy="104" r="9" fill="#2f333a"/>
+  <circle cx="110" cy="104" r="9" fill="#2f333a"/>
+  <circle cx="210" cy="104" r="9" fill="#2f333a"/>
+  <circle cx="250" cy="104" r="9" fill="#2f333a"/>
+  <rect x="22" y="92" width="8" height="6" fill="#2f333a"/>
+  <rect x="290" y="92" width="8" height="6" fill="#2f333a"/>
+</svg>

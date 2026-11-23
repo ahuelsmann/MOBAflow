@@ -1,4 +1,5 @@
-import { readdirSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
@@ -141,23 +142,52 @@ describe('example signal box (FR-039)', () => {
   });
 });
 
-describe('example photos (FR-058)', () => {
+describe('example locomotive images (FR-010, FR-058)', () => {
   // Vitest runs from the app folder (the folder of package.json).
   const photoDirectory = join(process.cwd(), 'src', 'assets', 'photos');
-  const files = readdirSync(photoDirectory).filter((name) => name.endsWith('.webp'));
+  const files = readdirSync(photoDirectory);
 
-  it('keeps every photo file at 60 KB or less', () => {
+  it('keeps every image file at 60 KB or less', () => {
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
       expect(statSync(join(photoDirectory, file)).size, file).toBeLessThanOrEqual(PHOTO_LIMIT_BYTES);
     }
   });
 
-  it('references at most three photos on the first visit', () => {
+  it('references at most three images on the first visit', () => {
     const referenced = new Set(freshExamples().locomotives.map((locomotive) => locomotive.photoUrl));
     expect(referenced.size).toBeGreaterThan(0);
     expect(referenced.size).toBeLessThanOrEqual(FIRST_VISIT_PHOTO_LIMIT);
     expect(files.length).toBeLessThanOrEqual(FIRST_VISIT_PHOTO_LIMIT);
+  });
+
+  it('uses only the self-drawn SVG placeholders, no raster image', () => {
+    expect([...files].sort()).toEqual(['placeholder-diesel.svg', 'placeholder-electric.svg']);
+    for (const locomotive of freshExamples().locomotives) {
+      expect(locomotive.photoUrl, locomotive.name).toMatch(/placeholder-(diesel|electric)[^/]*\.svg$/);
+    }
+  });
+
+  it('carries no style attribute, style element or script in the SVGs (style-src self)', () => {
+    for (const file of files) {
+      const svg = readFileSync(join(photoDirectory, file), 'utf-8');
+      expect(svg, file).not.toMatch(/\sstyle\s*=|<style|<script|<image|data:/i);
+    }
+  });
+
+  it('contains no file copied from the MOBAflow sample photos', () => {
+    const sampleDirectory = join(process.cwd(), '..', '..', 'MOBAflow', 'photos');
+    const hash = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
+    const sampleHashes = new Set(
+      readdirSync(sampleDirectory, { recursive: true, encoding: 'utf-8' })
+        .map((name) => join(sampleDirectory, name))
+        .filter((path) => statSync(path).isFile())
+        .map(hash),
+    );
+    expect(sampleHashes.size).toBeGreaterThan(0);
+    for (const file of files) {
+      expect(sampleHashes.has(hash(join(photoDirectory, file))), file).toBe(false);
+    }
   });
 });
 

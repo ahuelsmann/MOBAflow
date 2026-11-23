@@ -36,7 +36,7 @@ export interface ExampleLocomotive {
   /** Series shown by the series search, for example "BR 211". */
   series: string;
   address: number;
-  /** Key into the imported photo modules (see photos.ts). */
+  /** Key into the imported image modules (see photos.ts). */
   photo: string;
   selected: boolean;
   functions: LocomotiveFunction[];

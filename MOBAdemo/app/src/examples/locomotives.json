@@ -5,7 +5,7 @@
       "name": "BR 211",
       "series": "BR 211",
       "address": 211,
-      "photo": "br-211",
+      "photo": "placeholder-diesel",
       "selected": true,
       "functions": [
         {
@@ -220,7 +220,7 @@
       "name": "BR 110",
       "series": "BR 110",
       "address": 7,
-      "photo": "br-110",
+      "photo": "placeholder-electric",
       "selected": false,
       "functions": [
         {
