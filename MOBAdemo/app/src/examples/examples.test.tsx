@@ -77,6 +77,11 @@ describe('example locomotives (FR-036)', () => {
     expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
   });
 
+  it.each([0, 10240, 1.5])('rejects the DCC address %s', (address) => {
+    const raw = changed(['locomotives', 'locomotives', 0, 'address'], address);
+    expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
+  });
+
   it('rejects a photo key inherited from Object.prototype', () => {
     const raw = changed(['locomotives', 'locomotives', 0, 'photo'], 'toString');
     expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
@@ -127,6 +132,18 @@ describe('example workflow (FR-037)', () => {
     const { workflow } = freshExamples();
     const nodeIds = new Set(workflow.nodes.map((node) => node.id));
     expect(workflow.nodes.filter((node) => node.type === 'trigger')).toHaveLength(1);
+    const trigger = workflow.nodes.find((node) => node.type === 'trigger')!;
+    const reached = new Set([trigger.id]);
+    for (let grew = true; grew; ) {
+      grew = false;
+      for (const edge of workflow.edges) {
+        if (reached.has(edge.from) && !reached.has(edge.to)) {
+          reached.add(edge.to);
+          grew = true;
+        }
+      }
+    }
+    expect(reached).toEqual(nodeIds);
     for (const edge of workflow.edges) {
       expect(nodeIds.has(edge.from)).toBe(true);
       expect(nodeIds.has(edge.to)).toBe(true);

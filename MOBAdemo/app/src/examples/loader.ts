@@ -82,11 +82,14 @@ function parseLocomotives(raw: unknown, photos: Readonly<Record<string, string>>
 
   const locomotives = list.map((item, index) => {
     const where = `locomotives[${index}]`;
-    const locomotive = objectOf(check, item, where) as unknown as Obj;
+    const locomotive = objectOf(check, item, where);
     check(isNonEmptyText(locomotive['id']), `${where}.id is missing`);
     check(isNonEmptyText(locomotive['name']), `${where}.name is missing`);
     check(isNonEmptyText(locomotive['series']), `${where}.series is missing`);
-    check(isNumber(locomotive['address']), `${where}.address must be a number`);
+    check(
+      isNumberIn(locomotive['address'], 1, 10239) && Number.isInteger(locomotive['address']),
+      `${where}.address must be a whole number from 1 to 10239`,
+    );
     check(typeof locomotive['selected'] === 'boolean', `${where}.selected must be true or false`);
 
     const photo = locomotive['photo'];
