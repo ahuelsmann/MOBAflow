@@ -64,12 +64,13 @@ public sealed partial class LayoutPersistenceService
     public Task SaveAsync() => _settingsService.SaveSettingsAsync(_settings);
 
     /// <summary>
-    /// Replaces every saved layout with its defaults, keeps the tab visibility and persists the result.
-    /// A failed write is reported to the caller.
+    /// Replaces every saved layout with its defaults, reloads the observable column widths, keeps the tab visibility
+    /// and persists the result. A failed write is reported to the caller.
     /// </summary>
     public Task ResetAsync()
     {
         _settings.Layout = new LayoutSettings { TabVisibility = Layout.TabVisibility };
+        ColumnWidths.LoadFrom(_settings.Layout);
         return SaveAsync();
     }
 
