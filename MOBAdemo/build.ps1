@@ -15,9 +15,10 @@
 
 .PARAMETER OutputPath
     Folder that receives the web root. Default: MOBAdemo/Host/wwwroot-build (ignored by Git). The host project
-    publishes and runs from that folder when it exists. The folder is replaced. Inside the repository only the
-    default folder may be used, and a path that is or runs through a link (symbolic link, junction) into the
-    repository is refused.
+    publishes and runs from that folder when it exists. The folder is replaced when it does not exist, is empty, or
+    carries the .mobademo-build-owned marker written by this script; any pre-existing non-empty directory or file
+    without that marker is refused. Inside the repository only the default folder may be used, and any path that is
+    or traverses a symbolic link, junction, or reparse point (including the default folder or any parent) is refused.
 
 .PARAMETER AppPath
     Frontend folder to build. Default: MOBAdemo/app. Tests build a copy of the app with it.
@@ -44,18 +45,67 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+if (Test-Path -LiteralPath 'Variable:\PSNativeCommandUseErrorActionPreference') {
+    $PSNativeCommandUseErrorActionPreference = $false
+}
 
 $demoRoot = $PSScriptRoot
 $repositoryRoot = Split-Path -Parent $demoRoot
 $appRoot = if ([string]::IsNullOrWhiteSpace($AppPath)) { Join-Path $demoRoot 'app' } else { Resolve-Path -LiteralPath $AppPath | Select-Object -ExpandProperty ProviderPath }
 $hostRoot = Join-Path $demoRoot 'Host'
+$defaultOutputPath = Join-Path $hostRoot 'wwwroot-build'
+$ownershipMarkerName = '.mobademo-build-owned'
 
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
-    $OutputPath = Join-Path $hostRoot 'wwwroot-build'
+    $OutputPath = $defaultOutputPath
 }
 
-$output = [IO.Path]::GetFullPath($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath))
-$output = $output.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+$rawOutput = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
+$output = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($rawOutput))
+$defaultOutput = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($defaultOutputPath))
+$repositoryFull = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($repositoryRoot))
+
+# Checks whether an existing filesystem segment is a symbolic link, junction, or other reparse point.
+function Test-SegmentIsReparsePoint([string] $SegmentPath) {
+    $item = Get-Item -LiteralPath $SegmentPath -Force -ErrorAction SilentlyContinue
+    if ($null -ne $item) {
+        if ($null -ne $item.LinkTarget) {
+            return $true
+        }
+
+        return (([int] $item.Attributes) -band ([int] [IO.FileAttributes]::ReparsePoint)) -ne 0
+    }
+
+    # Dangling links may return $null from Get-Item on some platforms; inspect DirectoryInfo metadata directly.
+    $dirInfo = [IO.DirectoryInfo]::new($SegmentPath)
+    if ($null -ne $dirInfo.LinkTarget) {
+        return $true
+    }
+
+    $attrs = [int] $dirInfo.Attributes
+    return ($attrs -ne -1) -and (($attrs -band ([int] [IO.FileAttributes]::ReparsePoint)) -ne 0)
+}
+
+# Walks every segment from the path root/anchor to the leaf so links anywhere in the path are rejected.
+function Test-PathHasReparsePoint([string] $Path) {
+    $full = [IO.Path]::GetFullPath($Path)
+    $root = [IO.Path]::GetPathRoot($full)
+    if (-not [string]::IsNullOrEmpty($root) -and (Test-SegmentIsReparsePoint $root)) {
+        return $true
+    }
+
+    $current = $root
+    $separators = [char[]] @([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    $suffix = if ([string]::IsNullOrEmpty($root)) { $full } else { $full.Substring($root.Length) }
+    foreach ($part in $suffix.Split($separators, [StringSplitOptions]::RemoveEmptyEntries)) {
+        $current = if ([string]::IsNullOrEmpty($current)) { $part } else { [IO.Path]::Combine($current, $part) }
+        if (Test-SegmentIsReparsePoint $current) {
+            return $true
+        }
+    }
+
+    return $false
+}
 
 # Returns the path with every symbolic link and junction on it resolved, so the guard compares real locations.
 function Resolve-RealPath([string] $Path, [int] $Depth = 0) {
@@ -66,37 +116,76 @@ function Resolve-RealPath([string] $Path, [int] $Depth = 0) {
     $full = [IO.Path]::GetFullPath($Path)
     $current = [IO.Path]::GetPathRoot($full)
     $separators = [char[]] @([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
-    foreach ($part in $full.Substring($current.Length).Split($separators, [StringSplitOptions]::RemoveEmptyEntries)) {
-        $current = [IO.Path]::Combine($current, $part)
+    $suffix = if ([string]::IsNullOrEmpty($current)) { $full } else { $full.Substring($current.Length) }
+    foreach ($part in $suffix.Split($separators, [StringSplitOptions]::RemoveEmptyEntries)) {
+        $current = if ([string]::IsNullOrEmpty($current)) { $part } else { [IO.Path]::Combine($current, $part) }
         $info = [IO.DirectoryInfo] $current
         if ($null -ne $info.LinkTarget) {
-            $current = Resolve-RealPath $info.ResolveLinkTarget($true).FullName ($Depth + 1)
+            $target = $info.ResolveLinkTarget($true)
+            if ($null -ne $target) {
+                $current = Resolve-RealPath $target.FullName ($Depth + 1)
+            }
         }
     }
 
-    return $current.TrimEnd($separators)
+    return [IO.Path]::TrimEndingDirectorySeparator($current)
 }
 
 function Test-IsSameOrParent([string] $Candidate, [string] $Path) {
     $separator = [IO.Path]::DirectorySeparatorChar
     $comparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
-    $candidatePath = $Candidate.TrimEnd($separator, [IO.Path]::AltDirectorySeparatorChar)
-    $fullPath = $Path.TrimEnd($separator, [IO.Path]::AltDirectorySeparatorChar)
+    $candidatePath = [IO.Path]::TrimEndingDirectorySeparator($Candidate)
+    $fullPath = [IO.Path]::TrimEndingDirectorySeparator($Path)
     return $fullPath.Equals($candidatePath, $comparison) -or
         $fullPath.StartsWith($candidatePath + $separator, $comparison)
 }
 
-# The output folder is replaced, so inside the repository only the ignored default folder is allowed. The check
-# runs on resolved paths: a link outside the repository that points into it must not pass, and a link as the
-# output folder itself is never replaced.
+function Test-OutputDirectorySafe([string] $TargetPath, [string] $MarkerName) {
+    $existing = Get-Item -LiteralPath $TargetPath -Force -ErrorAction SilentlyContinue
+    if ($null -eq $existing) {
+        return $true
+    }
+
+    if (-not $existing.PSIsContainer) {
+        return $false
+    }
+
+    if (-not [System.Linq.Enumerable]::Any([IO.Directory]::EnumerateFileSystemEntries($TargetPath))) {
+        return $true
+    }
+
+    $markerPath = Join-Path $TargetPath $MarkerName
+    $markerItem = Get-Item -LiteralPath $markerPath -Force -ErrorAction SilentlyContinue
+    return ($null -ne $markerItem) -and
+        (-not $markerItem.PSIsContainer) -and
+        ($null -eq $markerItem.LinkTarget) -and
+        ((([int] $markerItem.Attributes) -band ([int] [IO.FileAttributes]::ReparsePoint)) -eq 0)
+}
+
+# The output folder is replaced, so:
+# 1. Any path segment that is a link, junction, or reparse point (including the default folder or any parent) is refused.
+# 2. Inside the repository only the unlinked default folder MOBAdemo/Host/wwwroot-build may be replaced.
+# 3. Any pre-existing target must be either an empty directory or carry our ownership marker file.
+$parentDirectory = Split-Path -Parent $output
+if ([string]::IsNullOrWhiteSpace($parentDirectory)) {
+    throw "Refusing to use '$output' as the output folder: root paths cannot be replaced."
+}
+
+$outputHasLink = Test-PathHasReparsePoint $output
+$defaultHasLink = Test-PathHasReparsePoint $defaultOutput
 $realOutput = Resolve-RealPath $output
-$realRepository = Resolve-RealPath $repositoryRoot
-$realDefault = Resolve-RealPath (Join-Path $hostRoot 'wwwroot-build')
-$outputIsLink = $null -ne ([IO.DirectoryInfo] $output).LinkTarget
-if ($outputIsLink -or
+$realRepository = Resolve-RealPath $repositoryFull
+$comparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+$isAllowedDefault = (-not $defaultHasLink) -and $realOutput.Equals((Resolve-RealPath $defaultOutput), $comparison)
+
+if ($outputHasLink -or
     (Test-IsSameOrParent $realOutput $realRepository) -or
-    ((Test-IsSameOrParent $realRepository $realOutput) -and -not (Test-IsSameOrParent $realDefault $realOutput))) {
+    ((Test-IsSameOrParent $realRepository $realOutput) -and -not $isAllowedDefault)) {
     throw "Refusing to use '$output' as the output folder: it is or runs through a link, or lies inside the repository where only MOBAdemo/Host/wwwroot-build may be replaced."
+}
+
+if (-not (Test-OutputDirectorySafe -TargetPath $output -MarkerName $ownershipMarkerName)) {
+    throw "Refusing to use '$output' as the output folder: existing non-empty directory or file lacks the '$ownershipMarkerName' ownership marker."
 }
 foreach ($tool in 'node', 'npm') {
     if ($null -eq (Get-Command $tool -ErrorAction SilentlyContinue)) {
@@ -139,6 +228,10 @@ try {
     try {
         New-Item -ItemType Directory -Path $staging -Force | Out-Null
         Copy-Item -Path (Join-Path $distPath '*') -Destination $staging -Recurse -Force
+        [IO.File]::WriteAllText(
+            (Join-Path $staging $ownershipMarkerName),
+            "MOBAdemo build output$([Environment]::NewLine)",
+            [Text.UTF8Encoding]::new($false))
 
         if (Test-Path -LiteralPath $output) {
             Move-Item -LiteralPath $output -Destination $backup

@@ -26,14 +26,23 @@ internal sealed class BuildScriptSafetyTests
     {
         if (Directory.Exists(_root))
         {
-            // A link is removed without following it, so the target survives until the test deletes it.
-            foreach (var link in Directory.EnumerateDirectories(_root)
-                         .Where(path => new DirectoryInfo(path).LinkTarget != null))
-            {
-                Directory.Delete(link);
-            }
-
+            DeleteReparsePoints(_root);
             Directory.Delete(_root, recursive: true);
+        }
+    }
+
+    private static void DeleteReparsePoints(string directory)
+    {
+        foreach (var child in Directory.EnumerateDirectories(directory))
+        {
+            if (new DirectoryInfo(child).LinkTarget != null)
+            {
+                Directory.Delete(child);
+            }
+            else
+            {
+                DeleteReparsePoints(child);
+            }
         }
     }
 
@@ -41,6 +50,8 @@ internal sealed class BuildScriptSafetyTests
     [TestCase("child")]
     public async Task Output_ThroughLinkIntoRepository_IsRefusedAndTargetSurvives(string subFolder)
     {
+        await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
+
         // The victim is a throw-away folder inside the repository, so a missing guard cannot destroy real files.
         var victim = Path.Combine(
             BuildScript.RepositoryRoot, "MOBAdemo", "Host", "link-guard-victim-" + Guid.NewGuid().ToString("N"));
@@ -68,6 +79,199 @@ internal sealed class BuildScriptSafetyTests
         }
     }
 
+    [TestCase("")]
+    [TestCase("child")]
+    public async Task Output_ThroughExternalLinkedParent_IsRefusedAndTargetSurvives(string subFolder)
+    {
+        await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
+        var target = Path.Combine(_root, "external-target");
+        Directory.CreateDirectory(target);
+        var sentinel = Path.Combine(target, "sentinel.txt");
+        await File.WriteAllTextAsync(sentinel, "keep-external").ConfigureAwait(false);
+        var link = Path.Combine(_root, "external-link");
+        await BuildScript.CreateDirectoryLinkOrIgnoreAsync(link, target).ConfigureAwait(false);
+        var output = subFolder.Length == 0 ? link : Path.Combine(link, subFolder);
+
+        var result = await BuildScript.TryRunAsync(output).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
+            Assert.That(result.Output, Does.Contain("Refusing"));
+            Assert.That(File.Exists(sentinel), Is.True);
+            Assert.That(await File.ReadAllTextAsync(sentinel).ConfigureAwait(false), Is.EqualTo("keep-external"));
+        }
+    }
+
+    [Test]
+    public async Task Output_LinkedDefaultWwwrootBuild_IsRefusedAndTargetSurvives()
+    {
+        await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
+        var fakeRepo = Path.Combine(_root, "repo-default-link");
+        var demoDir = Path.Combine(fakeRepo, "MOBAdemo");
+        var hostDir = Path.Combine(demoDir, "Host");
+        var wwwrootDir = Path.Combine(hostDir, "wwwroot");
+        Directory.CreateDirectory(wwwrootDir);
+        Directory.CreateDirectory(Path.Combine(demoDir, "app"));
+        var copiedScript = Path.Combine(demoDir, "build.ps1");
+        File.Copy(BuildScript.ScriptPath, copiedScript);
+
+        var target = Path.Combine(_root, "default-link-target");
+        Directory.CreateDirectory(target);
+        var sentinel = Path.Combine(target, "sentinel.txt");
+        await File.WriteAllTextAsync(sentinel, "keep-default-target").ConfigureAwait(false);
+
+        var defaultOutput = Path.Combine(hostDir, "wwwroot-build");
+        await BuildScript.CreateDirectoryLinkOrIgnoreAsync(defaultOutput, target).ConfigureAwait(false);
+        try
+        {
+            var result = await BuildScript.RunProcessAsync(
+                "pwsh",
+                ["-NoProfile", "-NonInteractive", "-File", copiedScript],
+                TimeSpan.FromMinutes(1),
+                fakeRepo).ConfigureAwait(false);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
+                Assert.That(result.Output, Does.Contain("Refusing"));
+                Assert.That(File.Exists(sentinel), Is.True);
+                Assert.That(await File.ReadAllTextAsync(sentinel).ConfigureAwait(false), Is.EqualTo("keep-default-target"));
+            }
+        }
+        finally
+        {
+            if (new DirectoryInfo(defaultOutput).LinkTarget != null)
+            {
+                Directory.Delete(defaultOutput);
+            }
+        }
+    }
+
+    [Test]
+    public async Task Output_LinkedParentOfDefaultWwwrootBuild_IsRefusedAndTargetSurvives()
+    {
+        await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
+        var fakeRepo = Path.Combine(_root, "repo-parent-link");
+        var demoDir = Path.Combine(fakeRepo, "MOBAdemo");
+        Directory.CreateDirectory(Path.Combine(demoDir, "app"));
+        var copiedScript = Path.Combine(demoDir, "build.ps1");
+        File.Copy(BuildScript.ScriptPath, copiedScript);
+
+        var target = Path.Combine(_root, "host-link-target");
+        var targetBuildDir = Path.Combine(target, "wwwroot-build");
+        Directory.CreateDirectory(targetBuildDir);
+        var sentinel = Path.Combine(targetBuildDir, "sentinel.txt");
+        await File.WriteAllTextAsync(sentinel, "keep-parent-target").ConfigureAwait(false);
+
+        var hostLink = Path.Combine(demoDir, "Host");
+        await BuildScript.CreateDirectoryLinkOrIgnoreAsync(hostLink, target).ConfigureAwait(false);
+        try
+        {
+            var result = await BuildScript.RunProcessAsync(
+                "pwsh",
+                ["-NoProfile", "-NonInteractive", "-File", copiedScript],
+                TimeSpan.FromMinutes(1),
+                fakeRepo).ConfigureAwait(false);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
+                Assert.That(result.Output, Does.Contain("Refusing"));
+                Assert.That(File.Exists(sentinel), Is.True);
+                Assert.That(await File.ReadAllTextAsync(sentinel).ConfigureAwait(false), Is.EqualTo("keep-parent-target"));
+            }
+        }
+        finally
+        {
+            if (new DirectoryInfo(hostLink).LinkTarget != null)
+            {
+                Directory.Delete(hostLink);
+            }
+        }
+    }
+
+    [Test]
+    public async Task Output_WhenDefaultWwwrootBuildLinksToWwwroot_RefusesWwwroot()
+    {
+        await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
+        var fakeRepo = Path.Combine(_root, "repo-exempt-link");
+        var demoDir = Path.Combine(fakeRepo, "MOBAdemo");
+        var hostDir = Path.Combine(demoDir, "Host");
+        var wwwrootDir = Path.Combine(hostDir, "wwwroot");
+        Directory.CreateDirectory(wwwrootDir);
+        Directory.CreateDirectory(Path.Combine(demoDir, "app"));
+        var copiedScript = Path.Combine(demoDir, "build.ps1");
+        File.Copy(BuildScript.ScriptPath, copiedScript);
+
+        var placeholder = Path.Combine(wwwrootDir, "index.html");
+        await File.WriteAllTextAsync(placeholder, "keep-placeholder").ConfigureAwait(false);
+
+        var defaultOutput = Path.Combine(hostDir, "wwwroot-build");
+        await BuildScript.CreateDirectoryLinkOrIgnoreAsync(defaultOutput, wwwrootDir).ConfigureAwait(false);
+        try
+        {
+            var result = await BuildScript.RunProcessAsync(
+                "pwsh",
+                ["-NoProfile", "-NonInteractive", "-File", copiedScript, "-OutputPath", "MOBAdemo/Host/wwwroot"],
+                TimeSpan.FromMinutes(1),
+                fakeRepo).ConfigureAwait(false);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
+                Assert.That(result.Output, Does.Contain("Refusing"));
+                Assert.That(File.Exists(placeholder), Is.True);
+                Assert.That(await File.ReadAllTextAsync(placeholder).ConfigureAwait(false), Is.EqualTo("keep-placeholder"));
+            }
+        }
+        finally
+        {
+            if (new DirectoryInfo(defaultOutput).LinkTarget != null)
+            {
+                Directory.Delete(defaultOutput);
+            }
+        }
+    }
+
+    [Test]
+    public async Task Output_NonEmptyExternalDirectoryWithoutMarker_IsRefusedAndSentinelSurvives()
+    {
+        await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
+        var output = Path.Combine(_root, "external-non-empty");
+        Directory.CreateDirectory(output);
+        var sentinel = Path.Combine(output, "sentinel.txt");
+        await File.WriteAllTextAsync(sentinel, "do-not-delete").ConfigureAwait(false);
+
+        var result = await BuildScript.TryRunAsync(output).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
+            Assert.That(result.Output, Does.Contain("Refusing"));
+            Assert.That(File.Exists(sentinel), Is.True);
+            Assert.That(await File.ReadAllTextAsync(sentinel).ConfigureAwait(false), Is.EqualTo("do-not-delete"));
+        }
+    }
+
+    [Test]
+    public async Task Output_ExistingFile_IsRefusedAndFileSurvives()
+    {
+        await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
+        var output = Path.Combine(_root, "existing-file.txt");
+        await File.WriteAllTextAsync(output, "keep-file").ConfigureAwait(false);
+
+        var result = await BuildScript.TryRunAsync(output).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
+            Assert.That(result.Output, Does.Contain("Refusing"));
+            Assert.That(File.Exists(output), Is.True);
+            Assert.That(await File.ReadAllTextAsync(output).ConfigureAwait(false), Is.EqualTo("keep-file"));
+        }
+    }
+
     [TestCase(".")]
     [TestCase("MOBAdemo")]
     [TestCase("MOBAdemo/app")]
@@ -77,6 +281,8 @@ internal sealed class BuildScriptSafetyTests
     [TestCase("MOBAdemo/Host/wwwroot-build/../wwwroot")]
     public async Task Output_InsideRepositoryOtherThanDefault_IsRefusedAndRepositoryFilesSurvive(string outputPath)
     {
+        await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
+
         // The script runs with the repository root as working directory, so a relative path points into the repository.
         var placeholder = Path.Combine(BuildScript.RepositoryRoot, "MOBAdemo", "Host", "wwwroot", "index.html");
         var source = Path.Combine(BuildScript.RepositoryRoot, "MOBAdemo", "app", "src", "main.tsx");
@@ -102,6 +308,8 @@ internal sealed class BuildScriptSafetyTests
         Directory.CreateDirectory(Path.Combine(output, "assets"));
         await File.WriteAllTextAsync(Path.Combine(output, "index.html"), "previous").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Combine(output, "assets", "previous-abc123.js"), "previous asset")
+            .ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(output, ".mobademo-build-owned"), "MOBAdemo build output\n")
             .ConfigureAwait(false);
         var before = Snapshot(output);
 

@@ -40,17 +40,27 @@ internal static class BuildScript
 
     /// <summary>Runs the script like <see cref="RunAsync"/> but returns the exit code and output.</summary>
     internal static Task<(int ExitCode, string Output)> TryRunAsync(string outputPath, params string[] extraArguments) =>
+        TryRunWithEnvironmentAsync(outputPath, environmentVariables: null, extraArguments);
+
+    /// <summary>Runs the script like <see cref="TryRunAsync"/> with custom process environment variables.</summary>
+    internal static Task<(int ExitCode, string Output)> TryRunWithEnvironmentAsync(
+        string outputPath,
+        IReadOnlyDictionary<string, string?>? environmentVariables,
+        params string[] extraArguments) =>
         RunProcessAsync(
             "pwsh",
             ["-NoProfile", "-NonInteractive", "-File", ScriptPath, "-OutputPath", outputPath, .. extraArguments],
-            BuildTimeout);
+            BuildTimeout,
+            workingDirectory: null,
+            environmentVariables);
 
     /// <summary>Starts a process, collects its output and kills it when <paramref name="timeout"/> elapses.</summary>
     internal static async Task<(int ExitCode, string Output)> RunProcessAsync(
         string fileName,
         string[] arguments,
         TimeSpan timeout,
-        string? workingDirectory = null)
+        string? workingDirectory = null,
+        IReadOnlyDictionary<string, string?>? environmentVariables = null)
     {
         var startInfo = new ProcessStartInfo(fileName)
         {
@@ -63,6 +73,21 @@ internal static class BuildScript
         foreach (var argument in arguments)
         {
             startInfo.ArgumentList.Add(argument);
+        }
+
+        if (environmentVariables != null)
+        {
+            foreach (var (key, value) in environmentVariables)
+            {
+                if (value == null)
+                {
+                    startInfo.Environment.Remove(key);
+                }
+                else
+                {
+                    startInfo.Environment[key] = value;
+                }
+            }
         }
 
         Process? process;
@@ -106,7 +131,13 @@ internal static class BuildScript
             catch (OperationCanceledException)
             {
                 process.Kill(entireProcessTree: true);
-                return (-2, "Timed out after " + timeout + "." + Environment.NewLine + output);
+                string partialOutput;
+                lock (gate)
+                {
+                    partialOutput = output.ToString();
+                }
+
+                return (-2, "Timed out after " + timeout + "." + Environment.NewLine + partialOutput);
             }
 
             // With redirected streams the token-free wait returns only after the asynchronous output handlers saw

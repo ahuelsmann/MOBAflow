@@ -15,6 +15,7 @@
     <ItemGroup>
         <!-- A local run from the build output serves the same files as the published host. -->
         <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+        <Content Remove="wwwroot\.mobademo-build-owned;wwwroot\**\.mobademo-build-owned" />
     </ItemGroup>
     <!--
       MOBAdemo\build.ps1 writes the built app to wwwroot-build (ignored by Git). When that folder exists it
@@ -24,6 +25,7 @@
         <Content Remove="wwwroot\**" />
         <None Remove="wwwroot-build\**" />
         <Content Include="wwwroot-build\**"
+                 Exclude="wwwroot-build\.mobademo-build-owned;wwwroot-build\**\.mobademo-build-owned"
                  Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)"
                  CopyToOutputDirectory="PreserveNewest"
                  CopyToPublishDirectory="PreserveNewest" />
@@ -31,12 +33,31 @@
     <!--
       A reused output or publish folder keeps no web root of an earlier build: PreserveNewest alone would leave
       hashed assets of an older build behind, and a built index.html that is newer than the placeholder would win
-      after the built app was removed. The web root folder is therefore recreated on every build and publish.
+      after the built app was removed. The web root folder is therefore recreated on every build and publish,
+      except when OutDir or PublishDir is empty or overlaps the project directory itself.
     -->
-    <Target Name="RemoveStaleWebRootFromOutput" BeforeTargets="BeforeBuild">
-        <RemoveDir Directories="$(OutDir)wwwroot" />
+    <Target Name="RemoveStaleWebRootFromOutput"
+            BeforeTargets="BeforeBuild"
+            Condition="'$(OutDir)' != '' and '$([System.String]::IsNullOrWhiteSpace(&quot;$(OutDir)&quot;))' == 'false'">
+        <PropertyGroup>
+            <_NormalizedProjectDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)'))</_NormalizedProjectDir>
+            <_NormalizedProjectWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', 'wwwroot'))</_NormalizedProjectWebRoot>
+            <_NormalizedOutDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(OutDir)'))</_NormalizedOutDir>
+            <_NormalizedOutWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(OutDir)', 'wwwroot'))</_NormalizedOutWebRoot>
+        </PropertyGroup>
+        <RemoveDir Directories="$(_NormalizedOutWebRoot)"
+                   Condition="'$(_NormalizedOutDir)' != '$(_NormalizedProjectDir)' and '$(_NormalizedOutWebRoot)' != '$(_NormalizedProjectWebRoot)'" />
     </Target>
-    <Target Name="RemoveStaleWebRootFromPublish" BeforeTargets="PrepareForPublish">
-        <RemoveDir Directories="$(PublishDir)wwwroot" />
+    <Target Name="RemoveStaleWebRootFromPublish"
+            BeforeTargets="PrepareForPublish"
+            Condition="'$(PublishDir)' != '' and '$([System.String]::IsNullOrWhiteSpace(&quot;$(PublishDir)&quot;))' == 'false'">
+        <PropertyGroup>
+            <_NormalizedProjectDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)'))</_NormalizedProjectDir>
+            <_NormalizedProjectWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', 'wwwroot'))</_NormalizedProjectWebRoot>
+            <_NormalizedPublishDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(PublishDir)'))</_NormalizedPublishDir>
+            <_NormalizedPublishWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(PublishDir)', 'wwwroot'))</_NormalizedPublishWebRoot>
+        </PropertyGroup>
+        <RemoveDir Directories="$(_NormalizedPublishWebRoot)"
+                   Condition="'$(_NormalizedPublishDir)' != '$(_NormalizedProjectDir)' and '$(_NormalizedPublishWebRoot)' != '$(_NormalizedProjectWebRoot)'" />
     </Target>
 </Project>

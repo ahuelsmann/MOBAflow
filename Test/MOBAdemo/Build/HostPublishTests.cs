@@ -112,12 +112,93 @@ internal sealed class HostPublishTests
         }
     }
 
+    [Test]
+    public async Task PublishAndBuild_ExcludeOwnershipMarkerFromWebRoot()
+    {
+        WriteBuiltApp("app-111.js", "built app");
+        var buildOutput = Path.Combine(_root, "bin-marker-out");
+
+        await PublishAsync().ConfigureAwait(false);
+        await DotNetAsync("build", buildOutput).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(File.Exists(Path.Combine(_publish, "wwwroot", "index.html")), Is.True);
+            Assert.That(File.Exists(Path.Combine(_publish, "wwwroot", ".mobademo-build-owned")), Is.False);
+            Assert.That(File.Exists(Path.Combine(buildOutput, "wwwroot", "index.html")), Is.True);
+            Assert.That(File.Exists(Path.Combine(buildOutput, "wwwroot", ".mobademo-build-owned")), Is.False);
+        }
+    }
+
+    [Test]
+    public async Task BuildAndPublish_WhenOutDirOrPublishDirOverlapsHostDirectory_PreservesTrackedWebRoot()
+    {
+        var cases = new (string Command, string Option, bool UseSlashSuffix, bool BuildFirst)[]
+        {
+            ("build", "-p:OutDir=.", false, false),
+            ("build", "-p:OutDir=", true, false),
+            ("publish", "-p:PublishDir=.", false, false),
+            ("publish", "-p:PublishDir=", true, true),
+        };
+
+        for (var i = 0; i < cases.Length; i++)
+        {
+            var (command, option, useSlashSuffix, buildFirst) = cases[i];
+            var caseHost = Path.Combine(_root, "overlap-" + i);
+            BuildScript.CopyDirectory(_host, caseHost);
+            var projectFile = Path.Combine(caseHost, "MOBAdemo.csproj");
+            var indexPath = Path.Combine(caseHost, "wwwroot", "index.html");
+            var expectedIndex = await File.ReadAllTextAsync(indexPath).ConfigureAwait(false);
+
+            if (buildFirst)
+            {
+                var buildResult = await BuildScript.RunProcessAsync(
+                    "dotnet",
+                    ["build", projectFile, "-c", "Release", "-nologo", "-v", "q"],
+                    PublishTimeout,
+                    caseHost).ConfigureAwait(false);
+                Assert.That(
+                    buildResult.ExitCode,
+                    Is.Zero,
+                    "Pre-build failed:" + Environment.NewLine + buildResult.Output);
+            }
+
+            string[] arguments = useSlashSuffix
+                ? [
+                    command,
+                    projectFile,
+                    "-c",
+                    "Release",
+                    .. buildFirst ? new[] { "--no-build" } : Array.Empty<string>(),
+                    option + caseHost + Path.DirectorySeparatorChar,
+                    "-nologo",
+                    "-v",
+                    "q",
+                ]
+                : [command, projectFile, "-c", "Release", option, "-nologo", "-v", "q"];
+
+            var result = await BuildScript.RunProcessAsync("dotnet", arguments, PublishTimeout, caseHost)
+                .ConfigureAwait(false);
+            var label = string.Join(' ', arguments);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(result.ExitCode, Is.Zero, label + " failed:" + Environment.NewLine + result.Output);
+                Assert.That(File.Exists(indexPath), Is.True, "Tracked wwwroot/index.html was deleted by: " + label);
+                Assert.That(
+                    await File.ReadAllTextAsync(indexPath).ConfigureAwait(false),
+                    Is.EqualTo(expectedIndex),
+                    "Tracked wwwroot/index.html changed on: " + label);
+            }
+        }
+    }
+
     private void WriteBuiltApp(string assetName, string marker)
     {
         var web = Path.Combine(_host, "wwwroot-build");
         Directory.CreateDirectory(Path.Combine(web, "assets"));
         File.WriteAllText(Path.Combine(web, "assets", assetName), "export default 1;");
         File.WriteAllText(Path.Combine(web, "index.html"), "<!doctype html><title>" + marker + "</title>");
+        File.WriteAllText(Path.Combine(web, ".mobademo-build-owned"), "MOBAdemo build output\n");
     }
 
     private Task PublishAsync() => DotNetAsync("publish", _publish);

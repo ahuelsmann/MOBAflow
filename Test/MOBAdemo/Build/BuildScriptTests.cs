@@ -184,6 +184,113 @@ internal sealed class BuildScriptTests
         }
     }
 
+    [Test]
+    public async Task Build_WithDebugConfiguration_BuildsDevelopmentBundleWithCompressedSiblings()
+    {
+        var debugOutput = Path.Combine(_root, "debug-web");
+        Directory.CreateDirectory(debugOutput);
+        var result = await BuildScript.TryRunAsync(debugOutput, "-Configuration", "Debug").ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.ExitCode, Is.Zero, "Debug build failed:" + Environment.NewLine + result.Output);
+            Assert.That(result.Output, Does.Contain("npm run build (development mode)"));
+            Assert.That(result.Output, Does.Contain("--mode development"));
+            Assert.That(File.Exists(Path.Combine(debugOutput, ".mobademo-build-owned")), Is.True);
+            Assert.That(File.Exists(Path.Combine(debugOutput, "index.html")), Is.True);
+            Assert.That(File.Exists(Path.Combine(debugOutput, "index.html.br")), Is.True);
+            Assert.That(File.Exists(Path.Combine(debugOutput, "index.html.gz")), Is.True);
+            Assert.That(Directory.EnumerateFiles(Path.Combine(debugOutput, "assets"), "*.js"), Is.Not.Empty);
+        }
+
+        var reply = await FetchAsync(debugOutput, "/").ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(reply.Status, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(Encoding.UTF8.GetString(reply.Body), Does.Contain("<div id=\"root\"></div>"));
+        }
+    }
+
+    [Test]
+    public async Task Build_WithDebugConfiguration_WhenNpmFails_PreservesErrorOutputAndPreviousOutput()
+    {
+        var fixtureRoot = Path.Combine(_root, "fake-npm-debug-" + Guid.NewGuid().ToString("N"));
+        var fakeBin = Path.Combine(fixtureRoot, "bin");
+        var fakeApp = Path.Combine(fixtureRoot, "app");
+        var previousOutput = Path.Combine(fixtureRoot, "web");
+        var argsLog = Path.Combine(fixtureRoot, "npm-args.log");
+        Directory.CreateDirectory(fakeBin);
+        Directory.CreateDirectory(fakeApp);
+        Directory.CreateDirectory(previousOutput);
+        await File.WriteAllTextAsync(Path.Combine(previousOutput, ".mobademo-build-owned"), "MOBAdemo build output\n")
+            .ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(previousOutput, "index.html"), "keep-previous-debug")
+            .ConfigureAwait(false);
+
+        if (OperatingSystem.IsWindows())
+        {
+            await File.WriteAllTextAsync(Path.Combine(fakeBin, "node.cmd"), "@echo off\r\nexit /b 0\r\n")
+                .ConfigureAwait(false);
+            var npmScript = string.Join(
+                "\r\n",
+                "@echo off",
+                $"echo %*>>\"{argsLog}\"",
+                "if \"%1\"==\"ci\" exit /b 0",
+                "echo fake-npm-stdout-error",
+                "echo fake-npm-stderr-error 1>&2",
+                "exit /b 42",
+                string.Empty);
+            await File.WriteAllTextAsync(Path.Combine(fakeBin, "npm.cmd"), npmScript).ConfigureAwait(false);
+        }
+        else
+        {
+            var nodePath = Path.Combine(fakeBin, "node");
+            var npmPath = Path.Combine(fakeBin, "npm");
+            await File.WriteAllTextAsync(nodePath, "#!/usr/bin/env sh\nexit 0\n").ConfigureAwait(false);
+            var npmScript = string.Join(
+                "\n",
+                "#!/usr/bin/env sh",
+                $"printf '%s\\n' \"$*\" >> \"{argsLog}\"",
+                "if [ \"$1\" = \"ci\" ]; then",
+                "  exit 0",
+                "fi",
+                "echo \"fake-npm-stdout-error\"",
+                "echo \"fake-npm-stderr-error\" >&2",
+                "exit 42",
+                string.Empty);
+            await File.WriteAllTextAsync(npmPath, npmScript).ConfigureAwait(false);
+            var executableMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+                | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute;
+            File.SetUnixFileMode(nodePath, executableMode);
+            File.SetUnixFileMode(npmPath, executableMode);
+        }
+
+        var pathValue = fakeBin + Path.PathSeparator + Environment.GetEnvironmentVariable("PATH");
+        var env = new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["PATH"] = pathValue,
+        };
+        var result = await BuildScript.TryRunWithEnvironmentAsync(
+            previousOutput,
+            env,
+            "-Configuration",
+            "Debug",
+            "-AppPath",
+            fakeApp).ConfigureAwait(false);
+
+        var loggedArgs = await File.ReadAllTextAsync(argsLog).ConfigureAwait(false);
+        var preservedIndex = await File.ReadAllTextAsync(Path.Combine(previousOutput, "index.html")).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
+            Assert.That(result.Output, Does.Contain("npm run build (development mode) failed with exit code 42."));
+            Assert.That(result.Output, Does.Contain("fake-npm-stdout-error"));
+            Assert.That(result.Output, Does.Contain("fake-npm-stderr-error"));
+            Assert.That(loggedArgs, Does.Contain("run build -- --mode development"));
+            Assert.That(preservedIndex, Is.EqualTo("keep-previous-debug"));
+        }
+    }
+
     private static string HashPlaceholder() => Convert.ToHexString(SHA256.HashData(
         File.ReadAllBytes(Path.Combine(BuildScript.RepositoryRoot, "MOBAdemo", "Host", "wwwroot", "index.html"))));
 

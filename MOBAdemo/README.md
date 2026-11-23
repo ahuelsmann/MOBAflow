@@ -25,10 +25,12 @@ The script:
    output untouched; the swap restores it when it fails half way.
 
 The default output is `MOBAdemo/Host/wwwroot-build/`, which Git ignores. `-OutputPath` chooses another folder
-(tests and CI use it). Inside the repository only the default folder may be replaced, and a path that is or
-runs through a symbolic link or junction into the repository is refused, so the script cannot delete repository
-files through a link. `-AppPath` builds another copy of the frontend folder (tests use it). The committed placeholder
-`Host/wwwroot/index.html` is never changed.
+(tests and CI use it). Any pre-existing target is replaced only when it is empty or carries the
+`.mobademo-build-owned` marker written by this script (which `Host/MOBAdemo.csproj` excludes from build and publish
+output); non-empty folders or files without that marker are refused. Inside the repository only the default folder
+may be replaced, and any path that is or runs through a symbolic link, junction, or reparse point (including
+`wwwroot-build` or any parent) is refused. `-AppPath` builds another copy of the frontend folder (tests use it).
+The committed placeholder `Host/wwwroot/index.html` is never changed.
 
 ## Run or publish the host
 
