@@ -1,0 +1,120 @@
+{
+  "list": [
+    {
+      "id": "wf-arrival",
+      "name": "Arrival Main Station"
+    },
+    {
+      "id": "wf-departure",
+      "name": "Departure Main Station"
+    },
+    {
+      "id": "wf-shunting",
+      "name": "Shunting Announcement"
+    }
+  ],
+  "selectedId": "wf-arrival",
+  "description": "Plays an announcement on station arrival",
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Arrival Main Station",
+      "type": "trigger",
+      "summary": "Feedback point 1 occupied",
+      "step": 0,
+      "state": "idle",
+      "position": {
+        "x": 40,
+        "y": 120
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Aspect Red",
+      "type": "action",
+      "summary": "Signal G2HBFA1: set aspect Hp0",
+      "step": 1,
+      "state": "idle",
+      "position": {
+        "x": 330,
+        "y": 40
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Arrival Announcement",
+      "type": "action",
+      "summary": "Announce: We are now arriving at the station.",
+      "step": 2,
+      "state": "idle",
+      "position": {
+        "x": 330,
+        "y": 200
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Aspect Proceed",
+      "type": "action",
+      "summary": "Signal G2HBFA1: set aspect Ks1",
+      "step": 3,
+      "state": "idle",
+      "position": {
+        "x": 620,
+        "y": 120
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Completed",
+      "type": "terminate",
+      "summary": "Workflow ends successfully",
+      "step": 4,
+      "state": "idle",
+      "position": {
+        "x": 900,
+        "y": 120
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "n1",
+      "to": "n2"
+    },
+    {
+      "from": "n1",
+      "to": "n3"
+    },
+    {
+      "from": "n2",
+      "to": "n4"
+    },
+    {
+      "from": "n3",
+      "to": "n4"
+    },
+    {
+      "from": "n4",
+      "to": "n5"
+    }
+  ],
+  "properties": [
+    {
+      "label": "Name",
+      "value": "Arrival Main Station"
+    },
+    {
+      "label": "Description",
+      "value": "Plays an announcement on station arrival"
+    },
+    {
+      "label": "Steps",
+      "value": "5"
+    },
+    {
+      "label": "Error policy",
+      "value": "Stop on error"
+    }
+  ]
+}

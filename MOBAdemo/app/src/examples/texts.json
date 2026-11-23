@@ -1,0 +1,16 @@
+{
+  "statusBar": {
+    "solution": "Solution: MOBAflow demo layout",
+    "z21": "Z21: Not connected (web demo)",
+    "trackPowerLabel": "Track Power",
+    "trackPowerOn": false,
+    "restApi": "REST API: Not available in the web demo",
+    "speech": "Speech: Not available in the web demo"
+  },
+  "firstVisitMessage": {
+    "severity": "info",
+    "text": "Visual web demo: prepared example views, no hardware connected. Switch between the pages and the theme and try the speed slider; the other controls work in the MOBAflow desktop app."
+  },
+  "inertHint": "Available in the MOBAflow desktop app",
+  "fixedProjectHint": "Fixed example project in the web demo"
+}
