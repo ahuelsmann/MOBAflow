@@ -15,6 +15,8 @@ using System.Text.Json;
 /// <summary>Journey page editing and subscription regressions for the shared journey fixture.</summary>
 public sealed partial class JourneyCounterProjectionTests : IDisposable
 {
+    private static readonly string[] ExpectedProjectStationNames = ["Central", "Shared", "East"];
+
     private SolutionSession _session = null!;
     private Mock<IMobaRuntime> _runtime = null!;
     private Mock<IRuntimeCommandGateway> _gateway = null!;
@@ -519,6 +521,38 @@ public sealed partial class JourneyCounterProjectionTests : IDisposable
         notifications.Clear();
         _page.JourneyCommandStatus = string.Empty;
         Assert.That(notifications, Is.Empty);
+    }
+
+    [Test]
+    public void DeleteJourneyClearsJourneyStationsAndPreservesProjectStations()
+    {
+        var project = _page.SelectedProject!;
+        var sharedStation = new Station { Name = "Shared" };
+        project.Model.Journeys[0].Stations.Add(new Station { Id = sharedStation.Id, Name = "Shared" });
+        project.Model.Stations.Add(new Station { Id = project.Model.Journeys[0].Stations[0].Id, Name = "Central" });
+        project.Model.Stations.Add(sharedStation);
+        project.Model.Stations.Add(new Station { Name = "East" });
+        project.Refresh();
+        _session.SelectedJourney = project.Journeys[0];
+
+        var deletedJourney = _page.SelectedJourney!;
+        _page.SelectedStation = deletedJourney.Stations[0];
+        _page.JourneysPageItemClickedCommand.Execute(_page.SelectedStation);
+        ClearInvocations();
+
+        _page.DeleteJourneyCommand.Execute(null);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(deletedJourney.Model.Stations, Is.Empty);
+        Assert.That(deletedJourney.Stations, Is.Empty);
+        Assert.That(deletedJourney.FilteredStations, Is.Empty);
+        Assert.That(_page.SelectedJourney, Is.Null);
+        Assert.That(_page.SelectedStation, Is.Null);
+        Assert.That(_page.JourneysPageSelectedObject, Is.Null);
+        Assert.That(project.Stations.Select(station => station.Name), Is.EqualTo(ExpectedProjectStationNames));
+        Assert.That(project.Model.Stations.Select(station => station.Name), Is.EqualTo(ExpectedProjectStationNames));
+        Assert.That(SavedProject().Stations.Select(station => station.Name), Is.EqualTo(ExpectedProjectStationNames));
+        _runtime.Verify(value => value.UpdateProjectAsync(project.Model, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     private Project SavedProject() => JsonSerializer.Deserialize<Solution>(_lastSaved)!.Projects[0];

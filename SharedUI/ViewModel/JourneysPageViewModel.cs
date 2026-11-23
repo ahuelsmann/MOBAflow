@@ -183,9 +183,16 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
     private void DeleteJourney()
     {
         var project = SelectedProject;
-        if (project is null) return;
-        EntityEditorHelper.DeleteEntity(SelectedJourney, project.Model.Journeys, project.Journeys,
-            () => SelectedJourney = null);
+        var journey = SelectedJourney;
+        if (project is null || journey is null) return;
+
+        journey.Model.Stations.Clear();
+        project.Model.Journeys.Remove(journey.Model);
+
+        journey.RefreshStations();
+        project.Journeys.Remove(journey);
+
+        SelectedJourney = null;
     }
 
     private bool CanDeleteJourney() => SelectedJourney != null;
@@ -203,8 +210,10 @@ public sealed partial class JourneysPageViewModel : ObservableObject, IDisposabl
         var journey = SelectedJourney;
         var station = SelectedStation;
         if (journey is null || station is null) return;
+
         journey.Model.Stations.Remove(station.Model);
         journey.RefreshStations();
+
         SelectedStation = null;
     }
 
