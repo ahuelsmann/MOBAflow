@@ -3,7 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Moba.WinUI.Controls">
 
-    <!--  Style for CollapsibleColumnHelper (e.g. City/Workflow Library)  -->
+    <!--  Style for CollapsibleColumnHelper (e.g. City/Workflow/Wagon/Track Library)  -->
     <Style TargetType="controls:CollapsibleColumnHelper">
         <Setter Property="Template">
             <Setter.Value>
@@ -12,23 +12,44 @@
                         <Border
                             x:Name="CollapsedTab"
                             Width="32"
-                            Height="32"
+                            MinHeight="48"
+                            Padding="0,6"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
+                            AutomationProperties.Name="{TemplateBinding Header}"
                             Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
+                            ToolTipService.ToolTip="{TemplateBinding Header}"
                             Visibility="Collapsed">
-                            <StackPanel
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Spacing="8">
-                                <FontIcon
-                                    FontSize="14"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Glyph="{TemplateBinding Glyph}" />
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border
+                                    Grid.Column="0"
+                                    Width="3"
+                                    Margin="2,4,0,4"
+                                    Background="{ThemeResource MobaColumnHelperAccentBrush}"
+                                    CornerRadius="2" />
+                                <Border
+                                    Grid.Column="1"
+                                    Width="22"
+                                    Height="22"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource MobaColumnHelperBadgeBackgroundBrush}"
+                                    BorderBrush="{ThemeResource MobaColumnHelperBadgeBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                    <FontIcon
+                                        FontSize="12"
+                                        Foreground="{ThemeResource MobaColumnHelperAccentBrush}"
+                                        Glyph="{TemplateBinding Glyph}" />
+                                </Border>
+                            </Grid>
                         </Border>
 
                         <Grid
@@ -38,14 +59,13 @@
                             BorderThickness="1"
                             CornerRadius="8">
 
-                            <!--  Subtle accent bar on the left  -->
+                            <!--  Semantic Warm Amber Gold accent bar on the left for Helper/Library columns  -->
                             <Border
-                                Width="3"
+                                Width="3.5"
                                 Margin="0,8,0,8"
                                 HorizontalAlignment="Left"
-                                Background="{ThemeResource MobaPanelAccentHelperBrush}"
-                                CornerRadius="2"
-                                Opacity="0.16" />
+                                Background="{ThemeResource MobaColumnHelperAccentBrush}"
+                                CornerRadius="2" />
 
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -62,12 +82,20 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
-                                        <FontIcon
+                                        <Border
                                             Grid.Column="0"
+                                            Width="26"
+                                            Height="26"
                                             Margin="0,0,8,0"
-                                            FontSize="14"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Glyph="{TemplateBinding Glyph}" />
+                                            Background="{ThemeResource MobaColumnHelperBadgeBackgroundBrush}"
+                                            BorderBrush="{ThemeResource MobaColumnHelperBadgeBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6">
+                                            <FontIcon
+                                                FontSize="13"
+                                                Foreground="{ThemeResource MobaColumnHelperAccentBrush}"
+                                                Glyph="{TemplateBinding Glyph}" />
+                                        </Border>
 
                                         <TextBlock
                                             Grid.Column="1"
@@ -128,7 +156,7 @@
         </Setter>
     </Style>
 
-    <!--  Style for CollapsibleColumnCollection (e.g. Journeys/Stations lists)  -->
+    <!--  Style for CollapsibleColumnCollection (e.g. Journeys/Locomotives/Trains/Workflows lists)  -->
     <Style TargetType="controls:CollapsibleColumnCollection">
         <Setter Property="Template">
             <Setter.Value>
@@ -137,23 +165,44 @@
                         <Border
                             x:Name="CollapsedTab"
                             Width="32"
-                            Height="32"
+                            MinHeight="48"
+                            Padding="0,6"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
+                            AutomationProperties.Name="{TemplateBinding Header}"
                             Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
+                            ToolTipService.ToolTip="{TemplateBinding Header}"
                             Visibility="Collapsed">
-                            <StackPanel
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Spacing="8">
-                                <FontIcon
-                                    FontSize="14"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Glyph="{TemplateBinding Glyph}" />
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border
+                                    Grid.Column="0"
+                                    Width="3"
+                                    Margin="2,4,0,4"
+                                    Background="{ThemeResource MobaColumnCollectionAccentBrush}"
+                                    CornerRadius="2" />
+                                <Border
+                                    Grid.Column="1"
+                                    Width="22"
+                                    Height="22"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource MobaColumnCollectionBadgeBackgroundBrush}"
+                                    BorderBrush="{ThemeResource MobaColumnCollectionBadgeBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                    <FontIcon
+                                        FontSize="12"
+                                        Foreground="{ThemeResource MobaColumnCollectionAccentBrush}"
+                                        Glyph="{TemplateBinding Glyph}" />
+                                </Border>
+                            </Grid>
                         </Border>
 
                         <Grid
@@ -163,14 +212,13 @@
                             BorderThickness="1"
                             CornerRadius="8">
 
-                            <!--  Subtle accent bar on the left  -->
+                            <!--  Semantic Signal Blue accent bar on the left for Primary Collection columns  -->
                             <Border
-                                Width="3"
+                                Width="3.5"
                                 Margin="0,8,0,8"
                                 HorizontalAlignment="Left"
-                                Background="{ThemeResource MobaPanelAccentCollectionBrush}"
-                                CornerRadius="2"
-                                Opacity="0.16" />
+                                Background="{ThemeResource MobaColumnCollectionAccentBrush}"
+                                CornerRadius="2" />
 
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -187,12 +235,20 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
-                                        <FontIcon
+                                        <Border
                                             Grid.Column="0"
+                                            Width="26"
+                                            Height="26"
                                             Margin="0,0,8,0"
-                                            FontSize="14"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Glyph="{TemplateBinding Glyph}" />
+                                            Background="{ThemeResource MobaColumnCollectionBadgeBackgroundBrush}"
+                                            BorderBrush="{ThemeResource MobaColumnCollectionBadgeBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6">
+                                            <FontIcon
+                                                FontSize="13"
+                                                Foreground="{ThemeResource MobaColumnCollectionAccentBrush}"
+                                                Glyph="{TemplateBinding Glyph}" />
+                                        </Border>
 
                                         <TextBlock
                                             Grid.Column="1"
@@ -263,23 +319,44 @@
                         <Border
                             x:Name="CollapsedTab"
                             Width="32"
-                            Height="32"
+                            MinHeight="48"
+                            Padding="0,6"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
+                            AutomationProperties.Name="{TemplateBinding Header}"
                             Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
+                            ToolTipService.ToolTip="{TemplateBinding Header}"
                             Visibility="Collapsed">
-                            <StackPanel
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Spacing="8">
-                                <FontIcon
-                                    FontSize="14"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Glyph="{TemplateBinding Glyph}" />
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border
+                                    Grid.Column="0"
+                                    Width="3"
+                                    Margin="2,4,0,4"
+                                    Background="{ThemeResource MobaColumnPropertiesAccentBrush}"
+                                    CornerRadius="2" />
+                                <Border
+                                    Grid.Column="1"
+                                    Width="22"
+                                    Height="22"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource MobaColumnPropertiesBadgeBackgroundBrush}"
+                                    BorderBrush="{ThemeResource MobaColumnPropertiesBadgeBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                    <FontIcon
+                                        FontSize="12"
+                                        Foreground="{ThemeResource MobaColumnPropertiesAccentBrush}"
+                                        Glyph="{TemplateBinding Glyph}" />
+                                </Border>
+                            </Grid>
                         </Border>
 
                         <Grid
@@ -289,14 +366,13 @@
                             BorderThickness="1"
                             CornerRadius="8">
 
-                            <!--  Subtle accent bar on the left to show it's the active properties panel  -->
+                            <!--  Semantic Copper Mandarin accent bar on the left for Inspector/Properties columns  -->
                             <Border
-                                Width="3"
+                                Width="3.5"
                                 Margin="0,8,0,8"
                                 HorizontalAlignment="Left"
-                                Background="{ThemeResource MobaPanelAccentPropertiesBrush}"
-                                CornerRadius="2"
-                                Opacity="0.16" />
+                                Background="{ThemeResource MobaColumnPropertiesAccentBrush}"
+                                CornerRadius="2" />
 
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -313,12 +389,20 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
-                                        <FontIcon
+                                        <Border
                                             Grid.Column="0"
+                                            Width="26"
+                                            Height="26"
                                             Margin="0,0,8,0"
-                                            FontSize="14"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Glyph="{TemplateBinding Glyph}" />
+                                            Background="{ThemeResource MobaColumnPropertiesBadgeBackgroundBrush}"
+                                            BorderBrush="{ThemeResource MobaColumnPropertiesBadgeBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6">
+                                            <FontIcon
+                                                FontSize="13"
+                                                Foreground="{ThemeResource MobaColumnPropertiesAccentBrush}"
+                                                Glyph="{TemplateBinding Glyph}" />
+                                        </Border>
 
                                         <TextBlock
                                             Grid.Column="1"

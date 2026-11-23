@@ -21,6 +21,27 @@ internal sealed class ThemeConverterTests
         Assert.That(BoolToPickerStateBrushConverter.ResolveResourceKey(role, isSelected), Is.EqualTo(expectedKey));
     }
 
+    [TestCase(true, null, "AccentFillColorDefaultBrush")]
+    [TestCase(true, "", "AccentFillColorDefaultBrush")]
+    [TestCase(true, "SystemFillColorSuccessBrush", "SystemFillColorSuccessBrush")]
+    [TestCase(false, "SystemFillColorSuccessBrush", "TextFillColorSecondaryBrush")]
+    [TestCase(false, null, "TextFillColorSecondaryBrush")]
+    public void BoolToAccentBrushConverter_ResolveResourceKey_UsesConfiguredTrueKey(
+        bool isTrue,
+        string? trueResourceKey,
+        string expectedKey)
+    {
+        Assert.That(BoolToAccentBrushConverter.ResolveResourceKey(isTrue, trueResourceKey), Is.EqualTo(expectedKey));
+    }
+
+    [Test]
+    public void BoolToAccentBrushConverter_DefaultTrueResourceKey_PreservesAccentDefault()
+    {
+        var converter = new BoolToAccentBrushConverter();
+
+        Assert.That(converter.TrueResourceKey, Is.EqualTo("AccentFillColorDefaultBrush"));
+    }
+
     [Test]
     public void GetAppearanceTheme_WithNullElement_UsesApplicationThemeFallback()
     {
