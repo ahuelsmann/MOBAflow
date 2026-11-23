@@ -57,7 +57,7 @@ automatic suppression, exception file, follow-up task, Ready transition or merge
   PR-comment write permission or privileged target/follow-up event is used.
 - The exact PR head supplies reporter and fixtures in an unprivileged disposable runner.
   No write token or application/environment secret is supplied to that code.
-- The official GitHub action is pinned to its upstream v5.0.0 commit in warning-only mode,
+- The official GitHub action is pinned to its upstream v5.0.1 commit in warning-only mode,
   covering runtime, development and unknown scopes. License policy and external scorecards
   are outside this vulnerability task. Official API failures remain visible even when their
   failed step outcome is tolerated for observational delivery.
@@ -82,7 +82,7 @@ unchanged; the canonical user wiki requires no correction for this integration.
 ## Primary references
 
 - [Dependency review availability and semantics](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependency-review)
-- [Official pinned action and warning-only configuration](https://github.com/actions/dependency-review-action/tree/a1d282b36b6f3519aa1f3fc636f609c47dddb294)
+- [Official pinned action and warning-only configuration](https://github.com/actions/dependency-review-action/tree/bbc44d14a204704ccc493733616cd1e93a0321ec)
 - [Dependency-graph ecosystems](https://docs.github.com/en/code-security/reference/supply-chain-security/dependency-graph-supported-package-ecosystems)
 - [Dependency-review API and read permission](https://docs.github.com/en/rest/dependency-graph/dependency-review)
 - [Standard public runner and storage billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)

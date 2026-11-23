@@ -59,7 +59,7 @@
             <controls:CollapsibleColumnCollection.PanelContent>
                 <ListView
                     IsItemClickEnabled="True"
-                    ItemsSource="{x:Bind ViewModel.SelectedProject.Stations, Mode=OneWay}"
+                    ItemsSource="{x:Bind ViewModel.SelectedProject.Stations, Mode=OneWay, FallbackValue={x:Null}}"
                     SelectedItem="{x:Bind ViewModel.SelectedProjectStation, Mode=TwoWay}"
                     SelectionMode="Single">
                     <ListView.ItemTemplate>
@@ -107,7 +107,7 @@
             <controls:CollapsibleColumnCollection.PanelContent>
                 <ListView
                     IsItemClickEnabled="True"
-                    ItemsSource="{x:Bind ViewModel.SelectedProjectStation.Platforms, Mode=OneWay}"
+                    ItemsSource="{x:Bind ViewModel.SelectedProjectStation.Platforms, Mode=OneWay, FallbackValue={x:Null}}"
                     SelectedItem="{x:Bind ViewModel.SelectedProjectStationPlatform, Mode=TwoWay}"
                     SelectionMode="Single">
                     <ListView.ItemTemplate>
