@@ -9,7 +9,7 @@ using Moba.WinUI.Service;
 /// so these tests cover the name composition used by <see cref="NavigationItemFactory"/>.
 /// </summary>
 [TestFixture]
-internal sealed class NavigationItemFactoryTests
+internal sealed partial class NavigationItemFactoryTests
 {
     [Test]
     public void ComposeAccessibleName_WithBadge_AppendsBadgeAfterTitle()
