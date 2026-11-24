@@ -57,7 +57,7 @@ internal static class HostHardening
             || (System.Net.IPAddress.TryParse(name, out var address) && System.Net.IPAddress.IsLoopback(address)));
     }
 
-    /// <summary>Adds the security headers, the default cache policy and the neutral 404 and 405 bodies to every response.</summary>
+    /// <summary>Adds the security headers, the default cache policy and the neutral bodies of error answers to every response.</summary>
     internal static void UseResponsePolicy(this WebApplication app)
     {
         app.Use(async (context, next) =>
@@ -83,7 +83,11 @@ internal static class HostHardening
             response.ContentType = "text/plain";
             return response.WriteAsync(ReasonPhrases.GetReasonPhrase(response.StatusCode));
         });
+    }
 
+    /// <summary>Answers every method other than GET and HEAD with the neutral 405; runs after the request limiter, so such requests are counted.</summary>
+    internal static void UseReadOnlyMethods(this WebApplication app)
+    {
         app.Use(async (context, next) =>
         {
             if (HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))

@@ -234,7 +234,7 @@ internal sealed class MobaDemoHostRateLimitTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(await response.Content.ReadAsStringAsync().ConfigureAwait(false), Is.EqualTo("https|10.0.0.2"));
-            Assert.That(response.Headers.GetValues("Strict-Transport-Security"), Is.EqualTo(new[] { "max-age=31536000" }));
+            Assert.That(response.Headers.GetValues("Strict-Transport-Security").Single(), Is.EqualTo("max-age=31536000"));
         }
     }
 
@@ -283,7 +283,7 @@ internal sealed class MobaDemoHostRateLimitTests
             Assert.That(response.Content.Headers.ContentType?.MediaType, Is.EqualTo("text/plain"));
             Assert.That(response.Headers.CacheControl?.ToString(), Is.EqualTo("no-cache"));
             Assert.That(response.Headers.RetryAfter?.Delta?.TotalSeconds, Is.GreaterThanOrEqualTo(1));
-            Assert.That(response.Headers.RetryAfter?.Delta?.TotalSeconds % 1, Is.EqualTo(0));
+            Assert.That(response.Headers.RetryAfter?.Delta?.TotalSeconds % 1, Is.Zero);
             foreach (var name in SecurityHeaders)
             {
                 Assert.That(response.Headers.Contains(name), Is.True, name);

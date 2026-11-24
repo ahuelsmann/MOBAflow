@@ -27,7 +27,10 @@ internal static class MobaDemoHost
 
         builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
+        builder.AddClientLimits(limits ?? new HostLimits());
         var app = builder.Build();
+
+        app.UseForwardedHeaders();
 
         // A neutral answer in every environment: no exception message, stack trace or path leaves the host.
         app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
@@ -37,6 +40,8 @@ internal static class MobaDemoHost
             await context.Response.WriteAsync("Internal Server Error", context.RequestAborted).ConfigureAwait(false);
         }));
         app.UseResponsePolicy();
+        app.UseRateLimiter();
+        app.UseReadOnlyMethods();
         app.UseDefaultFiles();
         app.UsePrecompressedFiles();
         app.UseStaticFiles(HostHardening.CreateStaticFileOptions());
