@@ -126,6 +126,7 @@ internal class SettingsService : ISettingsService
         _settings.Display.Esp32IpAddress = source.Display.Esp32IpAddress;
         _settings.Display.Port = source.Display.Port;
         _settings.FeatureToggles = source.FeatureToggles;
+        FeatureToggleRegistry.Normalize(_settings.FeatureToggles);
     }
 
     /// <summary>
@@ -212,6 +213,7 @@ internal class SettingsService : ISettingsService
                 ApplyLoadedSettings(settings);
             }
 
+            FeatureToggleRegistry.Normalize(_settings.FeatureToggles);
             var json = JsonSerializer.Serialize(_settings, JsonOptions.Default);
             await File.WriteAllTextAsync(_settingsFilePath, json);
             _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);
