@@ -718,11 +718,20 @@ jobs:
             $valid = $null -ne $candidate -and
               $null -eq $candidate.PSObject.Properties['error'] -and
               $candidate.PSObject.Properties['auditReportVersion'] -and $candidate.auditReportVersion -eq 2 -and
-              $candidate.PSObject.Properties['metadata'] -and $candidate.metadata.PSObject.Properties['vulnerabilities']
+              $candidate.PSObject.Properties['metadata'] -and $candidate.metadata.PSObject.Properties['vulnerabilities'] -and
+              $candidate.PSObject.Properties['vulnerabilities']
             if ($valid) {
               foreach ($severity in $severities) {
                 $count = $candidate.metadata.vulnerabilities.PSObject.Properties[$severity]
                 if ($null -eq $count -or (($count.Value -isnot [int]) -and ($count.Value -isnot [long])) -or $count.Value -lt 0) { $valid = $false }
+              }
+            }
+            if ($valid) {
+              # The counts must match the findings: an empty or inconsistent report is not accepted.
+              $entries = @($candidate.vulnerabilities.PSObject.Properties)
+              foreach ($severity in $severities) {
+                $listed = @($entries | Where-Object { $_.Value.severity -eq $severity }).Count
+                if ($listed -ne $candidate.metadata.vulnerabilities.PSObject.Properties[$severity].Value) { $valid = $false }
               }
             }
             if ($valid) {

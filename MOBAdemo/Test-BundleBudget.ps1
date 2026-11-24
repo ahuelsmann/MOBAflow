@@ -74,13 +74,13 @@ try {
 
     # Every script, style sheet and module preload that index.html references must exist inside the web root, and
     # at least one local script must be an entry point.
-    $html = Get-Content -Raw -LiteralPath $indexPath
+    $html = [regex]::Replace((Get-Content -Raw -LiteralPath $indexPath), '<!--.*?-->', '', 'Singleline')
     $references = [Collections.Generic.List[string]]::new()
     $scriptEntries = 0
     foreach ($tag in [regex]::Matches($html, '<(script|link)\b[^>]*>', 'IgnoreCase')) {
         $isScript = $tag.Groups[1].Value -ieq 'script'
         $attribute = if ($isScript) { 'src' } else { 'href' }
-        $match = [regex]::Match($tag.Value, "\b$attribute\s*=\s*(?:`"([^`"]*)`"|'([^']*)'|([^\s>]+))", 'IgnoreCase')
+        $match = [regex]::Match($tag.Value, "(?<![\w-])$attribute\s*=\s*(?:`"([^`"]*)`"|'([^']*)'|([^\s>]+))", 'IgnoreCase')
         if (-not $match.Success) {
             continue
         }
@@ -117,9 +117,18 @@ try {
         }
     }
 
-    $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Force |
-        Where-Object { $_.Extension -in '.js', '.mjs', '.css' } |
-        Sort-Object FullName)
+    # The measured files are every script and style sheet by extension (lazy chunks, nested folders, hidden files)
+    # plus every file index.html references, whatever its extension.
+    $measured = [Collections.Generic.Dictionary[string, IO.FileInfo]]::new([StringComparer]::Ordinal)
+    foreach ($file in Get-ChildItem -LiteralPath $root -Recurse -File -Force | Where-Object { $_.Extension -in '.js', '.mjs', '.css' }) {
+        $measured[$file.FullName] = $file
+    }
+    foreach ($reference in $references) {
+        $referenced = [IO.FileInfo]::new([IO.Path]::GetFullPath((Join-Path $root (($reference -split '[?#]')[0].TrimStart('/')))))
+        $measured[$referenced.FullName] = $referenced
+    }
+
+    $files = @($measured.Values | Sort-Object FullName)
     if ($files.Count -eq 0) {
         throw "No script or style sheet found below '$Path'."
     }

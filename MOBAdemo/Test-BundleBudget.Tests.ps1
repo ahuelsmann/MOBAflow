@@ -121,8 +121,15 @@ try {
     Assert-Result 'referenced style sheet that is missing fails' (Invoke-Budget @('-Path', $missingRef)) 1 'app-1.css'
     $noScripts = New-WebRoot 'no-scripts' '<!doctype html><html><body>x</body></html>' @{ 'assets/readme.txt' = 'x' }
     Assert-Result 'index.html without a script tag fails' (Invoke-Budget @('-Path', $noScripts)) 1 'entry point'
-    $unmeasurable = New-WebRoot 'unmeasurable' '<html><body><script src="./assets/loader"></script></body></html>' @{ 'assets/loader' = 'console.log(1);' }
-    Assert-Result 'entry script without a measurable extension fails' (Invoke-Budget @('-Path', $unmeasurable)) 1 'No script or style sheet'
+    $extensionlessEntry = New-WebRoot 'extensionless-entry' '<html><body><script src="./assets/loader"></script></body></html>' @{
+        'assets/loader' = New-IncompressibleText 300000 12
+        'assets/small.js' = 'console.log(1);'
+    }
+    Assert-Result 'oversized extensionless entry script is measured' (Invoke-Budget @('-Path', $extensionlessEntry)) 1 'exceeds'
+    $dataSrc = New-WebRoot 'data-src' '<html><body><script data-src="./assets/app-1.js"></script></body></html>' @{ 'assets/app-1.js' = 'console.log(1);' }
+    Assert-Result 'data-src is not a script entry point' (Invoke-Budget @('-Path', $dataSrc)) 1 'entry point'
+    $commented = New-WebRoot 'commented' '<html><body><!-- <script src="./assets/app-1.js"></script> --></body></html>' @{ 'assets/app-1.js' = 'console.log(1);' }
+    Assert-Result 'script tag inside an HTML comment is not an entry point' (Invoke-Budget @('-Path', $commented)) 1 'entry point'
     $external = New-WebRoot 'external' '<html><body><script src="https://cdn.example.test/lib.js"></script></body></html>' @{ 'assets/app-1.js' = 'console.log("demo");' }
     Assert-Result 'external script fails' (Invoke-Budget @('-Path', $external)) 1 'external'
     $outside = New-WebRoot 'outside' '<html><body><script src="../secret.js"></script></body></html>' @{ 'assets/app-1.js' = 'console.log("demo");' }
