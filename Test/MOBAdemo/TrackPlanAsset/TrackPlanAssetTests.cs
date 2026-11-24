@@ -35,6 +35,21 @@ internal sealed class TrackPlanAssetTests
         }
     }
 
+    [Test]
+    public void CommittedLayout_EqualsTheRenderingOfTheShippedSample()
+    {
+        var samplePath = Path.Combine(RepoRoot, "MOBAflow", "track-plan.json");
+        var rendering = DemoTrackPlanAsset.Render(samplePath);
+
+        if (Environment.GetEnvironmentVariable("MOBADEMO_UPDATE_TRACK_PLAN_ASSET") == "1")
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(AssetPath)!);
+            File.WriteAllText(AssetPath, rendering);
+        }
+
+        Assert.That(File.ReadAllText(AssetPath).ReplaceLineEndings("\n"), Is.EqualTo(rendering));
+    }
+
     private static string FindRepoRoot()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
