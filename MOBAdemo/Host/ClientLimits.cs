@@ -25,6 +25,8 @@ internal static class ClientLimits
     private const string UnknownAddress = "unknown";
     private const int StaticSegments = 6;
 
+    private static readonly HostHardening.OriginalTypeProvider ContentTypes = new();
+
     /// <summary>
     /// Registers the forwarded-headers options and the limiter. Forwarding runs once, from the explicit
     /// <c>UseForwardedHeaders</c> call: the platform's own startup filter (<c>ASPNETCORE_FORWARDEDHEADERS_ENABLED</c>)
@@ -60,7 +62,7 @@ internal static class ClientLimits
                 // The body comes from the status-code pages of the response policy.
                 var seconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
                     ? Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds))
-                    : 60;
+                    : (IsStaticRequest(context.HttpContext) ? 3600 : 60);
                 context.HttpContext.Response.Headers.RetryAfter = seconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 return ValueTask.CompletedTask;
             };
@@ -97,8 +99,8 @@ internal static class ClientLimits
             : (address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address).ToString();
 
     // Static means: the file provider that serves the request has the file, or, for a directory path such as "/",
-    // the entry document that UseDefaultFiles serves in its place. Everything else, including 404s and rejected
-    // methods, is not static.
+    // the entry document that UseDefaultFiles serves in its place, and the static-file middleware would serve it
+    // (known content type). Everything else, including 404s and rejected methods, is not static.
     private static bool IsStaticRequest(HttpContext context)
     {
         if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
@@ -111,7 +113,8 @@ internal static class ClientLimits
         var file = files.GetFileInfo(path);
         if (file.Exists && !file.IsDirectory)
         {
-            return true;
+            // The static-file middleware answers 404 for an extension without a known content type.
+            return ContentTypes.TryGetContentType(path, out _);
         }
 
         if (path.EndsWith('/') || file.IsDirectory)

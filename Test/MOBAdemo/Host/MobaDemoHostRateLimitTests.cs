@@ -16,6 +16,7 @@ internal sealed class MobaDemoHostRateLimitTests
     private const string ScriptPath = "/assets/app.js";
     private const string Script = "console.log('mobademo');\n";
     private const string PlatformSwitch = "--ForwardedHeaders_Enabled=true";
+    private const string NoPlatformSwitch = "--ForwardedHeaders_Enabled=false";
 
     private static readonly HostLimits SmallLimits = new(NonStaticLimit, StaticLimit);
     private static readonly string[] SecurityHeaders =
@@ -66,7 +67,29 @@ internal sealed class MobaDemoHostRateLimitTests
         }
 
         using var rejected = await GetAsync(ScriptPath, "10.0.0.1").ConfigureAwait(false);
+        using var otherClient = await GetAsync(ScriptPath, "10.0.0.2").ConfigureAwait(false);
         await AssertNeutralTooManyRequestsAsync(rejected).ConfigureAwait(false);
+        Assert.That(otherClient.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    [Test]
+    public async Task FileWithUnknownContentType_IsNotFoundAndCountsAsNonStatic()
+    {
+        await StartAsync(SmallLimits).ConfigureAwait(false);
+        for (var i = 0; i < NonStaticLimit; i++)
+        {
+            using var notFound = await GetAsync("/assets/data.unknownext", "10.0.0.1").ConfigureAwait(false);
+            Assert.That(notFound.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), "request " + (i + 1));
+        }
+
+        using var rejected = await GetAsync("/assets/data.unknownext", "10.0.0.1").ConfigureAwait(false);
+        using var script = await GetAsync(ScriptPath, "10.0.0.1").ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(rejected.StatusCode, Is.EqualTo(HttpStatusCode.TooManyRequests));
+            Assert.That(script.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        }
     }
 
     [Test]
@@ -209,7 +232,7 @@ internal sealed class MobaDemoHostRateLimitTests
     [TestCase(true)]
     public async Task ForwardedAddress_IsTheRightMostEntry_ForEveryStateOfThePlatformSwitch(bool platformSwitch)
     {
-        await StartAsync(null, platformSwitch ? [PlatformSwitch] : null).ConfigureAwait(false);
+        await StartAsync(null, [platformSwitch ? PlatformSwitch : NoPlatformSwitch]).ConfigureAwait(false);
 
         // The front end appends the visitor's address; an entry the caller put in front of it is ignored once,
         // not twice (one forwarding pass).
@@ -222,7 +245,7 @@ internal sealed class MobaDemoHostRateLimitTests
     [TestCase(true)]
     public async Task ForwardedProtoHttps_SetsTheSchemeAndHsts_ForANonLoopbackHost(bool platformSwitch)
     {
-        await StartAsync(null, platformSwitch ? [PlatformSwitch] : null).ConfigureAwait(false);
+        await StartAsync(null, [platformSwitch ? PlatformSwitch : NoPlatformSwitch]).ConfigureAwait(false);
 
         using var response = await SendAsync(
             HttpMethod.Get,
@@ -304,6 +327,7 @@ internal sealed class MobaDemoHostRateLimitTests
     {
         var assets = Directory.CreateDirectory(Path.Combine(webRoot, "assets")).FullName;
         File.WriteAllText(Path.Combine(assets, "app.js"), Script);
+        File.WriteAllText(Path.Combine(assets, "data.unknownext"), Script);
     }
 
     private Task<HttpResponseMessage> GetAsync(string path, string forwardedFor) =>
