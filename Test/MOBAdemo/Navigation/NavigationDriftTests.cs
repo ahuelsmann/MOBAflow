@@ -86,6 +86,24 @@ internal sealed class NavigationDriftTests
     }
 
     [Test]
+    public void ConditionalCompilationSpacedAddOrUnsupportedEscape_FailsLoudly()
+    {
+        var registration = NavigationSource.RegistrationText;
+        var info = "pages.Add(new PageMetadata(\"info\", \"Info\", \"\\uE946\", typeof(InfoPage), NavigationCategory.Help, 20, null, null, false));";
+        Assert.That(registration, Does.Contain(info));
+
+        Assert.That(
+            () => App(registration.Replace(info, "#if false\n" + info + "\n#endif", StringComparison.Ordinal)),
+            Throws.InvalidOperationException);
+        Assert.That(
+            () => App(registration.Replace(info, info + "\n        pages.Add (pages[0]);", StringComparison.Ordinal)),
+            Throws.InvalidOperationException.With.Message.Contains("not understood"));
+        Assert.That(
+            () => App(registration.Replace("\"Info\", \"\\uE946\"", "\"Info\\t\", \"\\uE946\"", StringComparison.Ordinal)),
+            Throws.InvalidOperationException.With.Message.Contains("escape"));
+    }
+
+    [Test]
     public void JsonWithMissingOrMistypedField_FailsLoudly()
     {
         var json = File.ReadAllText(NavigationSource.NavigationJsonPath);

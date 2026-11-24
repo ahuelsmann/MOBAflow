@@ -45,13 +45,18 @@ internal static class NavigationSource
     internal static IReadOnlyList<NavigationEntryData> FromApp(string registration, string categories, string appSettings)
     {
         registration = StripComments(registration);
+        if (Regex.IsMatch(registration, @"^\s*#", RegexOptions.Multiline))
+        {
+            throw new InvalidOperationException("Registration shape not understood: preprocessor directives are not supported.");
+        }
+
         var categoryValues = ParseCategories(categories);
         var settings = ParseSettings(appSettings);
         var entries = ParseRegistration(registration, categoryValues, settings);
 
         // Guard against registrations the parser cannot see: every Add call and every use of the record
         // must be one of the parsed entries.
-        var addCalls = Regex.Matches(registration, @"\bpages\.Add\(").Count;
+        var addCalls = Regex.Matches(registration, @"\bpages\s*\.\s*Add\s*\(").Count;
         var constructions = Regex.Matches(registration, @"\bnew\s+PageMetadata\s*\(").Count;
         var otherUses = Regex.Matches(registration, @"(?<!record\s)(?<!<)\bPageMetadata\b(?!>)").Count;
         if (addCalls != entries.Count || constructions != entries.Count || otherUses != entries.Count)
@@ -308,8 +313,16 @@ internal static class NavigationSource
             throw new InvalidOperationException($"Not a string literal: {value}");
         }
 
+        var body = value[1..^1];
+
+        // Only \uXXXX is decoded; any other escape (such as \t) would compare differently in JSON, so it fails loudly.
+        if (Regex.IsMatch(body, @"\\(?!u[0-9A-Fa-f]{4})"))
+        {
+            throw new InvalidOperationException($"Unsupported escape sequence in {value}");
+        }
+
         return Regex.Replace(
-            value[1..^1],
+            body,
             @"\\u([0-9A-Fa-f]{4})",
             m => ((char)int.Parse(m.Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToString());
     }
