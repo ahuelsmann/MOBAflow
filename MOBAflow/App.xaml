@@ -65,6 +65,16 @@
                     <SolidColorBrush x:Key="MobaPanelAccentHelperBrush" Color="#FFFFE666" />
                     <SolidColorBrush x:Key="MobaPanelAccentCollectionBrush" Color="#FF0078D4" />
                     <SolidColorBrush x:Key="MobaPanelAccentPropertiesBrush" Color="#FFFF8C00" />
+                    <!--  Semantic column role chrome (Generic.xaml): collection, helper, properties  -->
+                    <SolidColorBrush x:Key="MobaColumnCollectionAccentBrush" Color="#FF0078D4" />
+                    <SolidColorBrush x:Key="MobaColumnCollectionBadgeBackgroundBrush" Color="#1A0078D4" />
+                    <SolidColorBrush x:Key="MobaColumnCollectionBadgeBorderBrush" Color="#400078D4" />
+                    <SolidColorBrush x:Key="MobaColumnHelperAccentBrush" Color="#FF9E6B00" />
+                    <SolidColorBrush x:Key="MobaColumnHelperBadgeBackgroundBrush" Color="#1A9E6B00" />
+                    <SolidColorBrush x:Key="MobaColumnHelperBadgeBorderBrush" Color="#4D9E6B00" />
+                    <SolidColorBrush x:Key="MobaColumnPropertiesAccentBrush" Color="#FFC24600" />
+                    <SolidColorBrush x:Key="MobaColumnPropertiesBadgeBackgroundBrush" Color="#1AC24600" />
+                    <SolidColorBrush x:Key="MobaColumnPropertiesBadgeBorderBrush" Color="#4DC24600" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FF1F1F1F" />
@@ -115,6 +125,16 @@
                     <SolidColorBrush x:Key="MobaPanelAccentHelperBrush" Color="#FFFFE666" />
                     <SolidColorBrush x:Key="MobaPanelAccentCollectionBrush" Color="#FF0078D4" />
                     <SolidColorBrush x:Key="MobaPanelAccentPropertiesBrush" Color="#FFFF8C00" />
+                    <!--  Semantic column role chrome (Generic.xaml): collection, helper, properties  -->
+                    <SolidColorBrush x:Key="MobaColumnCollectionAccentBrush" Color="#FF4CC2FF" />
+                    <SolidColorBrush x:Key="MobaColumnCollectionBadgeBackgroundBrush" Color="#244CC2FF" />
+                    <SolidColorBrush x:Key="MobaColumnCollectionBadgeBorderBrush" Color="#4D4CC2FF" />
+                    <SolidColorBrush x:Key="MobaColumnHelperAccentBrush" Color="#FFFFCA28" />
+                    <SolidColorBrush x:Key="MobaColumnHelperBadgeBackgroundBrush" Color="#24FFCA28" />
+                    <SolidColorBrush x:Key="MobaColumnHelperBadgeBorderBrush" Color="#4DFFCA28" />
+                    <SolidColorBrush x:Key="MobaColumnPropertiesAccentBrush" Color="#FFFF8C3A" />
+                    <SolidColorBrush x:Key="MobaColumnPropertiesBadgeBackgroundBrush" Color="#24FF8C3A" />
+                    <SolidColorBrush x:Key="MobaColumnPropertiesBadgeBorderBrush" Color="#4DFF8C3A" />
                 </ResourceDictionary>
                 <!--  High Contrast: Windows contrast theme colors only, so the user's chosen theme decides every color  -->
                 <ResourceDictionary x:Key="HighContrast">
@@ -161,6 +181,15 @@
                     <SolidColorBrush x:Key="MobaPanelAccentHelperBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="MobaPanelAccentCollectionBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="MobaPanelAccentPropertiesBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaColumnCollectionAccentBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaColumnCollectionBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="MobaColumnCollectionBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaColumnHelperAccentBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaColumnHelperBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="MobaColumnHelperBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaColumnPropertiesAccentBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="MobaColumnPropertiesBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="MobaColumnPropertiesBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
