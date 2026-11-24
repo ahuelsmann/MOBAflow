@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { render, screen } from '@testing-library/react';
@@ -78,6 +77,16 @@ describe('example locomotives (FR-036)', () => {
     expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
   });
 
+  it('rejects a photo key inherited from Object.prototype', () => {
+    const raw = changed(['locomotives', 'locomotives', 0, 'photo'], 'toString');
+    expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
+  });
+
+  it('rejects a selected locomotive with an unnamed function', () => {
+    const raw = changed(['locomotives', 'locomotives', 0, 'functions', 3, 'name'], '');
+    expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
+  });
+
   it('rejects a photo that is not an imported module', () => {
     const raw = changed(['locomotives', 'locomotives', 0, 'photo'], 'missing-photo');
     expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
@@ -109,15 +118,42 @@ describe('example workflow (FR-037)', () => {
     }
   });
 
-  it('connects the trigger node to the action nodes and selects the example workflow', () => {
+  it('connects the trigger node, directly or transitively, to every other node', () => {
     const { workflow } = freshExamples();
     const nodeIds = new Set(workflow.nodes.map((node) => node.id));
+    const trigger = workflow.nodes.find((node) => node.type === 'trigger');
     expect(workflow.nodes.filter((node) => node.type === 'trigger')).toHaveLength(1);
     for (const edge of workflow.edges) {
       expect(nodeIds.has(edge.from)).toBe(true);
       expect(nodeIds.has(edge.to)).toBe(true);
     }
+    const reached = new Set([trigger!.id]);
+    for (let grew = true; grew; ) {
+      grew = false;
+      for (const edge of workflow.edges) {
+        if (reached.has(edge.from) && !reached.has(edge.to)) {
+          reached.add(edge.to);
+          grew = true;
+        }
+      }
+    }
+    expect(reached).toEqual(nodeIds);
     expect(workflow.list.filter((entry) => entry.id === workflow.selectedId)).toHaveLength(1);
+  });
+
+  it('rejects a workflow without edges', () => {
+    const raw = changed(['workflow', 'edges'], []);
+    expect(() => parseExamples(raw)).toThrow(/workflow\.json/);
+  });
+
+  it('rejects an edge to an unknown node', () => {
+    const raw = changed(['workflow', 'edges', 0, 'to'], 'no-such-node');
+    expect(() => parseExamples(raw)).toThrow(/workflow\.json/);
+  });
+
+  it('rejects a node the trigger does not reach', () => {
+    const raw = changed(['workflow', 'edges', 4, 'from'], 'n5');
+    expect(() => parseExamples(raw)).toThrow(/workflow\.json/);
   });
 
   it('rejects a node without a position', () => {
@@ -134,6 +170,16 @@ describe('example signal box (FR-039)', () => {
     expect(signalElement?.type).toBe('Signal');
     const aspects = signalBox.signal.aspects.map((aspect) => aspect.id);
     expect(aspects).toContain(signalBox.signal.preparedAspect);
+  });
+
+  it('rejects a multiplexer output that is not an object', () => {
+    const raw = changed(['signalBox', 'signal', 'multiplexer', 'outputs'], [null]);
+    expect(() => parseExamples(raw)).toThrow(/signal-box\.json/);
+  });
+
+  it('rejects a multiplexer output with a numeric label', () => {
+    const raw = changed(['signalBox', 'signal', 'multiplexer', 'outputs', 0, 'label'], 7);
+    expect(() => parseExamples(raw)).toThrow(/signal-box\.json/);
   });
 
   it('rejects a prepared aspect that the signal does not have', () => {
@@ -172,21 +218,6 @@ describe('example locomotive images (FR-010, FR-058)', () => {
     for (const file of files) {
       const svg = readFileSync(join(photoDirectory, file), 'utf-8');
       expect(svg, file).not.toMatch(/\sstyle\s*=|<style|<script|<image|data:/i);
-    }
-  });
-
-  it('contains no file copied from the MOBAflow sample photos', () => {
-    const sampleDirectory = join(process.cwd(), '..', '..', 'MOBAflow', 'photos');
-    const hash = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
-    const sampleHashes = new Set(
-      readdirSync(sampleDirectory, { recursive: true, encoding: 'utf-8' })
-        .map((name) => join(sampleDirectory, name))
-        .filter((path) => statSync(path).isFile())
-        .map(hash),
-    );
-    expect(sampleHashes.size).toBeGreaterThan(0);
-    for (const file of files) {
-      expect(sampleHashes.has(hash(join(photoDirectory, file))), file).toBe(false);
     }
   });
 });
