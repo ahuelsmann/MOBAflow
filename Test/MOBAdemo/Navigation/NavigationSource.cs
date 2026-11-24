@@ -1,0 +1,271 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+namespace Moba.Test.MOBAdemo.Navigation;
+
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using Moba.SharedUI.Configuration;
+using Moba.Test.MOBAdemo.Build;
+
+/// <summary>One navigation entry as the WinUI app registers it, or as <c>navigation.json</c> lists it.</summary>
+internal sealed record NavigationEntryData(
+    string Key,
+    string Title,
+    string? Icon,
+    string Category,
+    int Order,
+    bool IsBold,
+    string? PathIconData,
+    string? FeatureToggleKey,
+    string? Badge);
+
+/// <summary>
+/// Reads the navigation of the WinUI app without the Windows build: the page registration is parsed as text,
+/// badges come from the portable <see cref="FeatureToggleRegistry"/> with the labels of the shipped appsettings.
+/// </summary>
+internal static class NavigationSource
+{
+    private static readonly string[] Fields =
+        ["Tag", "Title", "Icon", "PageType", "Category", "Order", "FeatureToggleKey", "PathIconData", "IsBold"];
+
+    private static string ServiceFile(string name) => Path.Combine(BuildScript.RepositoryRoot, "MOBAflow", "Service", name);
+
+    internal static string RegistrationText => File.ReadAllText(ServiceFile("NavigationRegistration.cs"));
+
+    internal static string CategoryText => File.ReadAllText(ServiceFile("NavigationCategory.cs"));
+
+    internal static string AppSettingsText =>
+        File.ReadAllText(Path.Combine(BuildScript.RepositoryRoot, "MOBAflow", "appsettings.json"));
+
+    internal static string NavigationJsonPath =>
+        Path.Combine(BuildScript.RepositoryRoot, "MOBAdemo", "app", "src", "examples", "navigation.json");
+
+    /// <summary>All entries of the registration in navigation order (category, then order).</summary>
+    internal static IReadOnlyList<NavigationEntryData> FromApp(string registration, string categories, string appSettings)
+    {
+        var categoryValues = ParseCategories(categories);
+        var settings = ParseSettings(appSettings);
+        var entries = ParseRegistration(registration, categoryValues, settings);
+
+        // Guard against registrations the parser cannot see: every Add call and every use of the record
+        // must be one of the parsed entries.
+        var addCalls = Regex.Matches(registration, @"\bpages\.Add\(").Count;
+        var constructions = Regex.Matches(registration, @"\bnew\s+PageMetadata\s*\(").Count;
+        var otherUses = Regex.Matches(registration, @"(?<!record\s)(?<!<)\bPageMetadata\b(?!>)").Count;
+        if (addCalls != entries.Count || constructions != entries.Count || otherUses != entries.Count)
+        {
+            throw new InvalidOperationException(
+                $"Registration shape not understood: parsed {entries.Count} entries, but found {addCalls} 'pages.Add(' calls, " +
+                $"{constructions} 'new PageMetadata(' constructions and {otherUses} other 'PageMetadata' uses.");
+        }
+
+        return [.. entries
+            .OrderBy(e => categoryValues[e.Category])
+            .ThenBy(e => e.Order)];
+    }
+
+    /// <summary>Entries of <c>navigation.json</c> in file order, with the demo flag read separately.</summary>
+    internal static (IReadOnlyList<NavigationEntryData> Entries, IReadOnlyList<string> DemoKeys) FromJson(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        var entries = new List<NavigationEntryData>();
+        var demo = new List<string>();
+        foreach (var item in document.RootElement.GetProperty("entries").EnumerateArray())
+        {
+            var key = item.GetProperty("key").GetString()!;
+            entries.Add(new NavigationEntryData(
+                key,
+                item.GetProperty("title").GetString()!,
+                OptionalString(item, "icon"),
+                item.GetProperty("category").GetString()!,
+                item.GetProperty("order").GetInt32(),
+                item.GetProperty("isBold").GetBoolean(),
+                OptionalString(item, "pathIconData"),
+                OptionalString(item, "featureToggleKey"),
+                OptionalString(item, "badge")));
+            if (item.GetProperty("demoPage").GetBoolean())
+            {
+                demo.Add(key);
+            }
+        }
+
+        return (entries, demo);
+    }
+
+    private static string? OptionalString(JsonElement item, string name) =>
+        item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    private static Dictionary<string, int> ParseCategories(string text)
+    {
+        var values = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (Match match in Regex.Matches(text, @"^\s*(\w+)\s*=\s*(\d+)\s*,?\s*$", RegexOptions.Multiline))
+        {
+            values[match.Groups[1].Value] = int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
+        }
+
+        return values;
+    }
+
+    private static FeatureToggleSettings ParseSettings(string appSettings)
+    {
+        var settings = new FeatureToggleSettings();
+        using var document = JsonDocument.Parse(appSettings);
+        foreach (var page in document.RootElement.GetProperty("FeatureToggles").GetProperty("Pages").EnumerateObject())
+        {
+            settings.Pages[page.Name] = new FeatureTogglePageSettings
+            {
+                IsAvailable = page.Value.GetProperty("IsAvailable").GetBoolean(),
+                Label = page.Value.TryGetProperty("Label", out var label) ? label.GetString() : null,
+            };
+        }
+
+        return settings;
+    }
+
+    private static List<NavigationEntryData> ParseRegistration(
+        string text, Dictionary<string, int> categoryValues, FeatureToggleSettings settings)
+    {
+        var entries = new List<NavigationEntryData>();
+        foreach (Match start in Regex.Matches(text, @"\bnew\s+PageMetadata\s*\("))
+        {
+            var arguments = SplitArguments(text, start.Index + start.Length);
+            var values = BindArguments(arguments);
+            var category = values["Category"].Split('.')[^1];
+            if (!categoryValues.ContainsKey(category))
+            {
+                throw new InvalidOperationException($"Unknown navigation category '{category}'.");
+            }
+
+            var toggle = Reference(values["FeatureToggleKey"]);
+            entries.Add(new NavigationEntryData(
+                Literal(values["Tag"])!,
+                Literal(values["Title"])!,
+                Literal(values["Icon"]),
+                category,
+                int.Parse(values["Order"], CultureInfo.InvariantCulture),
+                bool.Parse(values["IsBold"]),
+                Literal(values["PathIconData"]),
+                toggle,
+                FeatureToggleRegistry.GetBadgeLabel(settings, toggle)));
+        }
+
+        return entries;
+    }
+
+    private static Dictionary<string, string> BindArguments(List<string> arguments)
+    {
+        if (arguments.Count != Fields.Length)
+        {
+            throw new InvalidOperationException($"PageMetadata call has {arguments.Count} arguments, expected {Fields.Length}.");
+        }
+
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        for (var index = 0; index < arguments.Count; index++)
+        {
+            var named = Regex.Match(arguments[index], @"^(\w+)\s*:\s*(.+)$", RegexOptions.Singleline);
+            var name = named.Success ? named.Groups[1].Value : Fields[index];
+            values[name] = (named.Success ? named.Groups[2].Value : arguments[index]).Trim();
+        }
+
+        foreach (var field in Fields)
+        {
+            if (!values.ContainsKey(field))
+            {
+                throw new InvalidOperationException($"PageMetadata call lacks the argument '{field}'.");
+            }
+        }
+
+        return values;
+    }
+
+    /// <summary>Splits the arguments of a call at top-level commas, up to its closing parenthesis.</summary>
+    private static List<string> SplitArguments(string text, int index)
+    {
+        var arguments = new List<string>();
+        var current = new StringBuilder();
+        var depth = 0;
+        var inString = false;
+        for (; index < text.Length; index++)
+        {
+            var c = text[index];
+            if (inString)
+            {
+                current.Append(c);
+                if (c == '\\')
+                {
+                    current.Append(text[++index]);
+                }
+                else if (c == '"')
+                {
+                    inString = false;
+                }
+
+                continue;
+            }
+
+            switch (c)
+            {
+                case '"':
+                    inString = true;
+                    current.Append(c);
+                    break;
+                case '(':
+                    depth++;
+                    current.Append(c);
+                    break;
+                case ')' when depth == 0:
+                    arguments.Add(current.ToString().Trim());
+                    return arguments;
+                case ')':
+                    depth--;
+                    current.Append(c);
+                    break;
+                case ',' when depth == 0:
+                    arguments.Add(current.ToString().Trim());
+                    current.Clear();
+                    break;
+                default:
+                    current.Append(c);
+                    break;
+            }
+        }
+
+        throw new InvalidOperationException("Unterminated PageMetadata call.");
+    }
+
+    private static string? Literal(string value)
+    {
+        if (value == "null")
+        {
+            return null;
+        }
+
+        if (value.Length < 2 || value[0] != '"' || value[^1] != '"')
+        {
+            throw new InvalidOperationException($"Not a string literal: {value}");
+        }
+
+        return Regex.Replace(
+            value[1..^1],
+            @"\\u([0-9A-Fa-f]{4})",
+            m => ((char)int.Parse(m.Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToString());
+    }
+
+    /// <summary>The page key behind <c>FeatureTogglePages.Name</c> (the constants are <c>nameof</c> of themselves).</summary>
+    private static string? Reference(string value)
+    {
+        if (value == "null")
+        {
+            return null;
+        }
+
+        var match = Regex.Match(value, @"^FeatureTogglePages\.(\w+)$");
+        if (!match.Success)
+        {
+            throw new InvalidOperationException($"Not a FeatureTogglePages reference: {value}");
+        }
+
+        return match.Groups[1].Value;
+    }
+}
