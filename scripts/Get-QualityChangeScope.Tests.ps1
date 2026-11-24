@@ -97,7 +97,8 @@ function Assert-MobaDemo([string[]] $Paths, [bool] $MobaDemo, [string] $Scenario
 
 Assert-MobaDemo @('MOBAdemo/app/src/main.tsx') $true 'frontend source'
 Assert-MobaDemo @('MOBAdemo/Host/MobaDemoHost.cs') $true 'host source'
-Assert-MobaDemo @('MOBAdemouild.ps1') $true 'build script with Windows path separators'
+Assert-MobaDemo @('MOBAdemo\build.ps1') $true 'build script with Windows path separators'
+Assert-Scope @('MOBAdemo\build.ps1') $true $false $false 'Windows separators keep MOBAdemo a .NET area (no unknown-path fallback)'
 Assert-MobaDemo @('Test/MOBAdemo/Build/BuildScriptTests.cs') $true 'MOBAdemo tests'
 Assert-MobaDemo @('Test/Test.csproj', 'Moba.slnx') $true 'test project and solution'
 Assert-MobaDemo @('global.json') $true 'SDK pin'

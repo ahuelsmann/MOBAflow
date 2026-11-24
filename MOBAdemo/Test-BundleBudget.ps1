@@ -65,11 +65,43 @@ try {
         throw "The web root '$Path' has no index.html; build it with MOBAdemo/build.ps1 first."
     }
 
-    # Every script and style sheet that index.html references must exist inside the web root.
+    # A symbolic link or junction anywhere below the web root could point outside it: refuse them all.
+    $links = @(Get-ChildItem -LiteralPath $root -Recurse -Force |
+        Where-Object { $null -ne $_.LinkTarget -or ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) })
+    if ($links.Count -gt 0) {
+        throw "The web root contains the symbolic link or reparse point '$($links[0].FullName)'; the budget measures plain files only."
+    }
+
+    # Every script, style sheet and module preload that index.html references must exist inside the web root, and
+    # at least one local script must be an entry point.
     $html = Get-Content -Raw -LiteralPath $indexPath
-    $references = @([regex]::Matches($html, '(?:src|href)\s*=\s*["'']([^"'']+)["'']', 'IgnoreCase') |
-        ForEach-Object { $_.Groups[1].Value } |
-        Where-Object { ($_ -split '[?#]')[0] -match '\.(js|mjs|css)$' })
+    $references = [Collections.Generic.List[string]]::new()
+    $scriptEntries = 0
+    foreach ($tag in [regex]::Matches($html, '<(script|link)\b[^>]*>', 'IgnoreCase')) {
+        $isScript = $tag.Groups[1].Value -ieq 'script'
+        $attribute = if ($isScript) { 'src' } else { 'href' }
+        $match = [regex]::Match($tag.Value, "\b$attribute\s*=\s*(?:`"([^`"]*)`"|'([^']*)'|([^\s>]+))", 'IgnoreCase')
+        if (-not $match.Success) {
+            continue
+        }
+
+        $value = ($match.Groups[1].Value + $match.Groups[2].Value + $match.Groups[3].Value).Trim()
+        if (-not $isScript) {
+            $rel = [regex]::Match($tag.Value, '\brel\s*=\s*["'']?([\w\s-]+)', 'IgnoreCase').Groups[1].Value
+            if ($rel -notmatch '(?i)\b(stylesheet|modulepreload|preload)\b') {
+                continue
+            }
+        }
+
+        $references.Add($value)
+        if ($isScript) {
+            $scriptEntries++
+        }
+    }
+    if ($scriptEntries -eq 0) {
+        throw 'index.html references no local script entry point (script tag with src).'
+    }
+
     foreach ($reference in $references) {
         if ($reference -match '^(?:[a-z][a-z0-9+.-]*:)?//' -or $reference -match '^[a-z][a-z0-9+.-]*:') {
             throw "index.html references the external script or style sheet '$reference'."
@@ -85,7 +117,7 @@ try {
         }
     }
 
-    $files = @(Get-ChildItem -LiteralPath $root -Recurse -File |
+    $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Force |
         Where-Object { $_.Extension -in '.js', '.mjs', '.css' } |
         Sort-Object FullName)
     if ($files.Count -eq 0) {
