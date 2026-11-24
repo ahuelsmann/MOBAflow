@@ -3610,6 +3610,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAdemo/TrackPlanAsset/TrackPlanAssetTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Architecture/AccessibleNameArchitectureTests.cs",
       "count": 1
     },
