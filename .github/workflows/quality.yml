@@ -29,7 +29,8 @@ jobs:
   # owns the path rules. GitHub reports a job skipped by its condition as successful, so the required checks
   # stay satisfied. Job conditions read every output with != 'false', so a detection failure (empty outputs)
   # runs every scoped job, Android included. An unknown path or a non-PR event runs every job except Android,
-  # which outside pull requests runs only through the manual validate_android dispatch.
+  # which outside pull requests runs only through the manual validate_android dispatch. The MOBAdemo job follows
+  # the same rule: it runs for MOBAdemo, its tests and the shared build inputs, and for unknown paths.
   changes:
     name: Detect code changes
     runs-on: ubuntu-latest
@@ -39,6 +40,7 @@ jobs:
       firmware: ${{ steps.scope.outputs.firmware }}
       mutation: ${{ steps.scope.outputs.mutation }}
       android: ${{ steps.scope.outputs.android }}
+      mobademo: ${{ steps.scope.outputs.mobademo }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,7 +52,7 @@ jobs:
         shell: pwsh
         run: |
           if ('${{ github.event_name }}' -ne 'pull_request') {
-            Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value 'code=true', 'firmware=true', 'mutation=true', 'android=false' -Encoding utf8NoBOM
+            Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value 'code=true', 'firmware=true', 'mutation=true', 'android=false', 'mobademo=true' -Encoding utf8NoBOM
             exit 0
           }
 
@@ -667,6 +669,122 @@ jobs:
         with:
           name: portable-linux-${{ github.run_number }}
           path: artifacts/TestResults/portable-linux/**
+          if-no-files-found: warn
+          retention-days: 30
+
+  # MOBAdemo web demo (issue #430, FR-053, FR-074, FR-076, SC-010): the frontend lint, unit tests and production build
+  # (the same MOBAdemo/build.ps1 the deployment uses), the dependency audit and the Brotli budget of the scripts and
+  # style sheets, plus the MOBAdemo host and build-script tests. It needs Node and the .NET SDK only; no WinUI or
+  # Android workload. The audit reads the committed lockfile before any dependency is installed, so no package code
+  # has run when it decides.
+  mobademo:
+    name: MOBAdemo frontend, audit and bundle budget
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.mobademo != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: MOBAdemo/app/.nvmrc
+          cache: npm
+          cache-dependency-path: MOBAdemo/app/package-lock.json
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+
+      # FR-074: fail on known high or critical vulnerabilities, development dependencies included because they
+      # build what ships. Only the lockfile is audited (no install yet). A registry or transport error is retried
+      # once and then fails: only a valid report counts. A new advisory turns this red on the next run that
+      # starts the job, with or without a change to the lockfile.
+      - name: Audit npm dependencies
+        shell: pwsh
+        working-directory: MOBAdemo/app
+        run: |
+          $report = $null
+          foreach ($attempt in 1..2) {
+            $raw = npm audit --package-lock-only --include=prod --include=dev --registry https://registry.npmjs.org/ --json 2>$null | Out-String
+            try { $candidate = $raw | ConvertFrom-Json } catch { $candidate = $null }
+            if ($null -ne $candidate -and $null -ne $candidate.PSObject.Properties['metadata']) {
+              $report = $candidate
+              break
+            }
+            Write-Host "Attempt ${attempt}: no valid audit report."
+            Start-Sleep -Seconds 10
+          }
+          if ($null -eq $report) {
+            Write-Host '::error title=npm audit::No valid audit report; the registry or the audit endpoint did not answer.'
+            exit 1
+          }
+          $counts = $report.metadata.vulnerabilities
+          Write-Host "Vulnerabilities: critical=$($counts.critical) high=$($counts.high) moderate=$($counts.moderate) low=$($counts.low) info=$($counts.info)"
+          $blocking = @($report.vulnerabilities.PSObject.Properties | Where-Object { $_.Value.severity -in 'high', 'critical' })
+          foreach ($entry in $blocking) { Write-Host "  $($entry.Value.severity): $($entry.Name)" }
+          if (([int] $counts.critical + [int] $counts.high) -gt 0) {
+            Write-Host '::error title=npm audit::Known high or critical vulnerabilities in the lockfile (FR-074).'
+            exit 1
+          }
+
+      - name: Test bundle budget script
+        shell: pwsh
+        run: ./MOBAdemo/Test-BundleBudget.Tests.ps1
+
+      - name: Install frontend dependencies
+        working-directory: MOBAdemo/app
+        run: npm ci
+
+      - name: Lint frontend
+        working-directory: MOBAdemo/app
+        run: npm run lint
+
+      - name: Run frontend unit tests
+        working-directory: MOBAdemo/app
+        run: npm test
+
+      # Runs `npm ci`, `tsc --noEmit`, the Vite production build and the Brotli and gzip precompression, and
+      # writes the web root of the host to MOBAdemo/Host/wwwroot-build.
+      - name: Build the MOBAdemo web root
+        shell: pwsh
+        run: ./MOBAdemo/build.ps1
+
+      # FR-076: scripts and style sheets together at most 200 KB with Brotli.
+      - name: Check the bundle budget
+        shell: pwsh
+        run: ./MOBAdemo/Test-BundleBudget.ps1 -Path MOBAdemo/Host/wwwroot-build
+
+      # Builds the host through the test project reference (the .NET build of this job) and runs the host and
+      # build-script tests. The guard fails when fewer tests than expected ran or any selected test did not run.
+      - name: Run MOBAdemo .NET tests
+        shell: pwsh
+        run: |
+          $results = 'artifacts/TestResults/mobademo'
+          dotnet test Test/Test.csproj `
+            -p:TargetFrameworks=net10.0 `
+            --framework net10.0 `
+            --configuration Release `
+            --filter 'FullyQualifiedName~Moba.Test.MOBAdemo' `
+            --logger trx `
+            --results-directory $results
+          $testExitCode = $LASTEXITCODE
+
+          $trx = @(Get-ChildItem $results -Recurse -Filter *.trx | ForEach-Object FullName)
+          ./scripts/Test-TestRunResults.ps1 -Path $trx -MinimumPassed 150
+          exit $testExitCode
+
+      - name: Archive MOBAdemo test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mobademo-${{ github.run_number }}
+          path: artifacts/TestResults/mobademo/**
           if-no-files-found: warn
           retention-days: 30
 

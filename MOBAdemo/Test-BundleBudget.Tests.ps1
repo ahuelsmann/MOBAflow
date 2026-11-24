@@ -25,7 +25,7 @@ function New-IncompressibleText([int] $Bytes, [int] $Seed) {
 function New-WebRoot([string] $Name, [string] $IndexHtml, [hashtable] $Files) {
     $root = Join-Path $workRoot $Name
     New-Item -ItemType Directory -Path $root -Force | Out-Null
-    if ($null -ne $IndexHtml) {
+    if (-not [string]::IsNullOrEmpty($IndexHtml)) {
         Set-Content -LiteralPath (Join-Path $root 'index.html') -Value $IndexHtml -Encoding utf8NoBOM
     }
     foreach ($relativePath in $Files.Keys) {
@@ -79,9 +79,9 @@ try {
     Assert-Result 'total equal to the limit passes' (Invoke-Budget @('-Path', $small, '-LimitBytes', $total)) 0 'within'
     Assert-Result 'total one byte over the limit fails' (Invoke-Budget @('-Path', $small, '-LimitBytes', ($total - 1))) 1 'exceeds'
 
-    # The default limit is 200,000 bytes: a 250 KB incompressible script fails, 150 KB passes.
+    # The default limit is 200,000 bytes: a 300 KB incompressible script (about 225 KB compressed) fails, 150 KB (about 112 KB) passes.
     $oversized = New-WebRoot 'oversized' $index @{
-        'assets/app-1.js' = New-IncompressibleText 250000 1
+        'assets/app-1.js' = New-IncompressibleText 300000 1
         'assets/app-1.css' = 'body{margin:0}'
     }
     Assert-Result 'oversized bundle fails' (Invoke-Budget @('-Path', $oversized)) 1 'exceeds'
@@ -95,7 +95,7 @@ try {
     $lazy = New-WebRoot 'lazy' $index @{
         'assets/app-1.js' = 'console.log("demo");' * 50
         'assets/app-1.css' = 'body{margin:0}' * 50
-        'assets/pages/signal-box-2.js' = New-IncompressibleText 250000 3
+        'assets/pages/signal-box-2.js' = New-IncompressibleText 300000 3
     }
     Assert-Result 'lazy chunk counts toward the budget' (Invoke-Budget @('-Path', $lazy)) 1 'exceeds'
 
