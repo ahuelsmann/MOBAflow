@@ -762,7 +762,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: MOBAdemo/app
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Lint frontend
         working-directory: MOBAdemo/app
