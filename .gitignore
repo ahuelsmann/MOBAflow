@@ -106,3 +106,7 @@ docs/api/latex/
 
 # Personal Claude Code settings
 .claude/settings.local.json
+
+# MOBAdemo build script output (MOBAdemo/build.ps1)
+MOBAdemo/Host/wwwroot-build/
+MOBAdemo/Host/.wwwroot-build.*/

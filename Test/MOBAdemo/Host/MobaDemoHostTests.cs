@@ -23,14 +23,21 @@ internal sealed class MobaDemoHostTests
     }
 
     [Test]
-    public async Task Root_WithoutWebRootOverride_ServesPlaceholderFromBuildOutput()
+    public async Task Root_WithoutWebRootOverride_ServesTheEntryDocumentOfTheBuildOutput()
     {
+        // The default web root is the wwwroot folder next to the test assemblies. Whatever it holds (the placeholder,
+        // or a built app after MOBAdemo/build.ps1) is exactly what the host must serve; the test does not guess
+        // from folders a former local build may have left behind.
+        var expected = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "wwwroot", "index.html"))
+            .ConfigureAwait(false);
+
         var reply = await FetchAsync("/", useDefaultWebRoot: true).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(reply.Status, Is.EqualTo(HttpStatusCode.OK));
-            Assert.That(reply.Body, Does.Contain("MOBAdemo is being built"));
+            Assert.That(reply.Body, Is.EqualTo(expected));
+            Assert.That(reply.Body, Does.Contain("MOBAdemo is being built").Or.Contain("<div id=\"root\">"));
         }
     }
 
