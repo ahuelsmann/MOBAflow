@@ -1,5 +1,33 @@
 /** Types of the demo-authored example data files (spec FR-010). Not a MOBAflow file format. */
 
+/**
+ * One entry of the WinUI navigation (spec FR-022). Transcribed from `NavigationRegistration.cs`; the portable
+ * test `Test/MOBAdemo/Navigation` fails when this file drifts from the app.
+ */
+export interface NavigationEntry {
+  /** Page tag of the registration, for example "traincontrol". */
+  key: string;
+  title: string;
+  /** Segoe MDL2 Assets glyph; null when the entry uses `pathIconData`. */
+  icon: string | null;
+  /** NavigationCategory name; the entries are listed in category, then order. */
+  category: string;
+  order: number;
+  isBold: boolean;
+  /** SVG path of the custom icon (Signal Box only). */
+  pathIconData: string | null;
+  /** Feature toggle page key; null for Help, Info and Settings. */
+  featureToggleKey: string | null;
+  /** Preview badge label, null for no badge. */
+  badge: string | null;
+  /** True for the four pages the demo shows; every other entry is disabled (FR-027). */
+  demoPage: boolean;
+}
+
+export interface NavigationFile {
+  entries: NavigationEntry[];
+}
+
 export type Direction = 'forward' | 'reverse';
 export type DccSpeedSteps = 14 | 28 | 126;
 
