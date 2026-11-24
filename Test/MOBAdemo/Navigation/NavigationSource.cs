@@ -23,9 +23,38 @@ internal sealed record NavigationEntryData(
 /// <summary>
 /// Reads the navigation of the WinUI app without the Windows build: the page registration is parsed as text,
 /// badges come from the portable <see cref="FeatureToggleRegistry"/> with the labels of the shipped appsettings.
+/// The guards catch accidental drift of ordinary registrations, not deliberately unusual code
+/// (a duplicate <c>Add</c>, <c>AddRange</c>, <c>RemoveAll</c> or <c>Where</c> over the list).
 /// </summary>
-internal static class NavigationSource
+internal static partial class NavigationSource
 {
+    [GeneratedRegex(@"^\s*#", RegexOptions.Multiline)]
+    private static partial Regex PreprocessorDirective();
+
+    [GeneratedRegex(@"\bpages\s*\.\s*Add\s*\(")]
+    private static partial Regex AddCall();
+
+    [GeneratedRegex(@"\bnew\s+PageMetadata\s*\(")]
+    private static partial Regex Construction();
+
+    [GeneratedRegex(@"(?<!record\s)(?<!<)\bPageMetadata\b(?!>)")]
+    private static partial Regex OtherUse();
+
+    [GeneratedRegex(@"^\s*(\w+)\s*=\s*(\d+)\s*,?\s*$", RegexOptions.Multiline)]
+    private static partial Regex CategoryValue();
+
+    [GeneratedRegex(@"^(\w+)\s*:\s*(.+)$", RegexOptions.Singleline)]
+    private static partial Regex NamedArgument();
+
+    [GeneratedRegex(@"\\(?!u[0-9A-Fa-f]{4})")]
+    private static partial Regex UnsupportedEscape();
+
+    [GeneratedRegex(@"\\u([0-9A-Fa-f]{4})")]
+    private static partial Regex UnicodeEscape();
+
+    [GeneratedRegex(@"^FeatureTogglePages\.(\w+)$")]
+    private static partial Regex ToggleReference();
+
     private static readonly string[] Fields =
         ["Tag", "Title", "Icon", "PageType", "Category", "Order", "FeatureToggleKey", "PathIconData", "IsBold"];
 
@@ -45,7 +74,7 @@ internal static class NavigationSource
     internal static IReadOnlyList<NavigationEntryData> FromApp(string registration, string categories, string appSettings)
     {
         registration = StripComments(registration);
-        if (Regex.IsMatch(registration, @"^\s*#", RegexOptions.Multiline))
+        if (PreprocessorDirective().IsMatch(registration))
         {
             throw new InvalidOperationException("Registration shape not understood: preprocessor directives are not supported.");
         }
@@ -56,9 +85,9 @@ internal static class NavigationSource
 
         // Guard against registrations the parser cannot see: every Add call and every use of the record
         // must be one of the parsed entries.
-        var addCalls = Regex.Matches(registration, @"\bpages\s*\.\s*Add\s*\(").Count;
-        var constructions = Regex.Matches(registration, @"\bnew\s+PageMetadata\s*\(").Count;
-        var otherUses = Regex.Matches(registration, @"(?<!record\s)(?<!<)\bPageMetadata\b(?!>)").Count;
+        var addCalls = AddCall().Count(registration);
+        var constructions = Construction().Count(registration);
+        var otherUses = OtherUse().Count(registration);
         if (addCalls != entries.Count || constructions != entries.Count || otherUses != entries.Count)
         {
             throw new InvalidOperationException(
@@ -66,7 +95,10 @@ internal static class NavigationSource
                 $"{constructions} 'new PageMetadata(' constructions and {otherUses} other 'PageMetadata' uses.");
         }
 
+        // Pages the shipped appsettings switch off are hidden, as MainWindowNavigationBootstrapper.IsPageVisible does.
         return [.. entries
+            .Where(e => e.FeatureToggleKey is null
+                || FeatureToggleRegistry.GetPageAvailabilityOrDefault(settings, e.FeatureToggleKey))
             .OrderBy(e => categoryValues[e.Category])
             .ThenBy(e => e.Order)];
     }
@@ -166,7 +198,7 @@ internal static class NavigationSource
     private static Dictionary<string, int> ParseCategories(string text)
     {
         var values = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (Match match in Regex.Matches(text, @"^\s*(\w+)\s*=\s*(\d+)\s*,?\s*$", RegexOptions.Multiline))
+        foreach (Match match in CategoryValue().Matches(text))
         {
             values[match.Groups[1].Value] = int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
         }
@@ -194,7 +226,7 @@ internal static class NavigationSource
         string text, Dictionary<string, int> categoryValues, FeatureToggleSettings settings)
     {
         var entries = new List<NavigationEntryData>();
-        foreach (Match start in Regex.Matches(text, @"\bnew\s+PageMetadata\s*\("))
+        foreach (Match start in Construction().Matches(text))
         {
             var arguments = SplitArguments(text, start.Index + start.Length);
             var values = BindArguments(arguments);
@@ -230,7 +262,7 @@ internal static class NavigationSource
         var values = new Dictionary<string, string>(StringComparer.Ordinal);
         for (var index = 0; index < arguments.Count; index++)
         {
-            var named = Regex.Match(arguments[index], @"^(\w+)\s*:\s*(.+)$", RegexOptions.Singleline);
+            var named = NamedArgument().Match(arguments[index]);
             var name = named.Success ? named.Groups[1].Value : Fields[index];
             values[name] = (named.Success ? named.Groups[2].Value : arguments[index]).Trim();
         }
@@ -316,14 +348,13 @@ internal static class NavigationSource
         var body = value[1..^1];
 
         // Only \uXXXX is decoded; any other escape (such as \t) would compare differently in JSON, so it fails loudly.
-        if (Regex.IsMatch(body, @"\\(?!u[0-9A-Fa-f]{4})"))
+        if (UnsupportedEscape().IsMatch(body))
         {
             throw new InvalidOperationException($"Unsupported escape sequence in {value}");
         }
 
-        return Regex.Replace(
+        return UnicodeEscape().Replace(
             body,
-            @"\\u([0-9A-Fa-f]{4})",
             m => ((char)int.Parse(m.Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToString());
     }
 
@@ -335,7 +366,7 @@ internal static class NavigationSource
             return null;
         }
 
-        var match = Regex.Match(value, @"^FeatureTogglePages\.(\w+)$");
+        var match = ToggleReference().Match(value);
         if (!match.Success)
         {
             throw new InvalidOperationException($"Not a FeatureTogglePages reference: {value}");

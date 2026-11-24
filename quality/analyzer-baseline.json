@@ -4821,6 +4821,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAdemo/Navigation/NavigationDriftTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/BrakeAndDoorStateTests.cs",
       "count": 1
     },

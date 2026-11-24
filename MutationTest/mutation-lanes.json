@@ -73,7 +73,7 @@
     {
       "name": "demo-host",
       "status": "planned",
-      "test-directories": ["Test/MOBAdemo/Host", "Test/MOBAdemo/Build"],
+      "test-directories": ["Test/MOBAdemo/Host", "Test/MOBAdemo/Build", "Test/MOBAdemo/Navigation"],
       "production-projects": ["MOBAdemo/Host/MOBAdemo.csproj"]
     },
     {
