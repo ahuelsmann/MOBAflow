@@ -84,6 +84,41 @@ Assert-Android @('.github/workflows/quality.yml', 'scripts/Get-QualityChangeScop
 Assert-Android @() $false 'empty change set'
 Assert-Scope @('MOBAsmart/View/ControlPage.xaml') $true $false $false 'MOBAsmart keeps the other scopes unchanged'
 
+# MOBAdemo CI job (issue #430): the frontend, its tests and the shared build inputs select it; unknown paths and an
+# empty change set fail open like every other scope. Documentation-only, firmware, Android and other .NET areas do not.
+function Assert-MobaDemo([string[]] $Paths, [bool] $MobaDemo, [string] $Scenario) {
+    $actual = Get-Scope $Paths
+    if ($actual.MobaDemo -ne $MobaDemo) {
+        throw "Expected mobademo=$MobaDemo for '$Scenario', but got mobademo=$($actual.MobaDemo)."
+    }
+
+    $script:checks++
+}
+
+Assert-MobaDemo @('MOBAdemo/app/src/main.tsx') $true 'frontend source'
+Assert-MobaDemo @('MOBAdemo/Host/MobaDemoHost.cs') $true 'host source'
+Assert-MobaDemo @('MOBAdemouild.ps1') $true 'build script with Windows path separators'
+Assert-MobaDemo @('Test/MOBAdemo/Build/BuildScriptTests.cs') $true 'MOBAdemo tests'
+Assert-MobaDemo @('Test/Test.csproj', 'Moba.slnx') $true 'test project and solution'
+Assert-MobaDemo @('global.json') $true 'SDK pin'
+Assert-MobaDemo @('Directory.Packages.props') $true 'central package versions'
+Assert-MobaDemo @('NuGet.Config') $true 'NuGet configuration'
+Assert-MobaDemo @('version.json') $true 'version file'
+Assert-MobaDemo @('.editorconfig') $true 'editor configuration'
+Assert-MobaDemo @('.github/workflows/quality.yml') $true 'workflow change'
+Assert-MobaDemo @('scripts/Get-QualityChangeScope.ps1') $true 'change-scope rules change'
+Assert-MobaDemo @('NewTopLevel/Feature.cs') $true 'unknown path fails open'
+Assert-MobaDemo @() $true 'empty change set fails open'
+Assert-MobaDemo @('docs/developer/ARCHITECTURE.md', 'MOBAdemo/app/src/App.tsx') $true 'MOBAdemo among documentation'
+Assert-MobaDemo @('docs/developer/ARCHITECTURE.md', 'specs/020-web-demo/spec.md') $false 'documentation only'
+Assert-MobaDemo @('Backend/Service/Z21.cs', 'SharedUI/ViewModel/MainWindowViewModel.cs') $false 'other .NET areas'
+Assert-MobaDemo @('MOBAdisplay/esp32/src/main.cpp') $false 'firmware only'
+Assert-MobaDemo @('MOBAsmart/View/ControlPage.xaml') $false 'Android only'
+Assert-MobaDemo @('Domain/Project.cs', 'Test/Domain/ProjectTests.cs') $false 'Domain mutation inputs only'
+Assert-MobaDemo @('Test/SharedUI/SolutionSessionTests.cs') $false 'tests of other areas'
+# MOBAdemo is a .NET area of its own: it must not wake the firmware or the Domain mutation job.
+Assert-Scope @('MOBAdemo/app/src/main.tsx', 'Test/MOBAdemo/Build/BuildScriptTests.cs') $true $false $false 'MOBAdemo wakes neither firmware nor mutation'
+
 # Firmware inputs.
 Assert-Scope @('MOBAdisplay/esp32/src/main.cpp') $true $true $false 'firmware source'
 Assert-Scope @('MOBAdisplay/esp32/platformio.ini') $true $true $false 'firmware build configuration'
@@ -123,7 +158,7 @@ if ($failClosedReads.Count -gt 0) {
     throw "quality.yml must read change-scope outputs with != 'false'; found: $(($failClosedReads | ForEach-Object Value) -join ', ')."
 }
 $readOutputs = @($scopeReads | ForEach-Object { $_.Groups[1].Value })
-foreach ($output in 'code', 'firmware', 'mutation', 'android') {
+foreach ($output in 'code', 'firmware', 'mutation', 'android', 'mobademo') {
     if ($readOutputs -notcontains $output) {
         throw "Expected quality.yml to read the '$output' change-scope output."
     }
@@ -191,7 +226,7 @@ foreach ($job in $jobs.Keys) {
     $guardedJobs += $job
     $checks++
 }
-foreach ($job in 'desktop', 'android-release') {
+foreach ($job in 'desktop', 'android-release', 'mobademo') {
     if ($guardedJobs -notcontains $job) {
         throw "Expected quality.yml job '$job' to read the change scope with a fail-open condition."
     }
@@ -203,7 +238,7 @@ try {
     $env:GITHUB_OUTPUT = $outputFile
     & $scriptPath -Path @('MOBAdisplay/esp32/src/main.cpp') 6> $null | Out-Null
     $written = (Get-Content -Raw -LiteralPath $outputFile).Trim() -replace "`r`n", "`n"
-    if ($written -ne "code=true`nfirmware=true`nmutation=false`nandroid=false") {
+    if ($written -ne "code=true`nfirmware=true`nmutation=false`nandroid=false`nmobademo=false") {
         throw "Unexpected GITHUB_OUTPUT content '$written'."
     }
     $checks++
