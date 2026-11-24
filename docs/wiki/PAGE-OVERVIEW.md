@@ -23,7 +23,7 @@ Train Control and Journeys are shown in bold.
 
 | Page | What it is for |
 | --- | --- |
-| **Train Control** | Drive one project locomotive: speed slider and presets, direction, acceleration ramp, functions F0-F31, emergency stop, and the timetable stops of the current journey. |
+| **Train Control** | Drive one project locomotive: speed slider (14, 28, or 128 DCC steps), direction, acceleration ramp, functions F0-F31, emergency stop, and the timetable stops of the current journey. |
 
 ### Journeys
 
@@ -50,7 +50,7 @@ Train Control and Journeys are shown in bold.
 
 | Page | What it is for |
 | --- | --- |
-| **Track Plan** | Edit the track plan with Piko A pieces: place, connect, assign feedback points, validate, import AnyRail XML and export SVG. |
+| **Track Plan** | Edit the track plan with Piko A pieces: place, connect, assign feedback points, validate and export SVG. |
 | **Signal Box** | Lay out and operate signals and switches against the connected Z21, including Viessmann multiplex mappings. |
 | **ESP32 Display** | Connect to one network display, read its capabilities and send test patterns. |
 | **Matrix Images** | Draw 5x5 color images that are stored in the project. |
