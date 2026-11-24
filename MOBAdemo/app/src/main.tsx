@@ -1,11 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { probe } from './budget-probe';
 import './tokens/dark.css';
 import './tokens/base.css';
 
 // No example data files exist yet (slice 6 adds them); the loader resolves at once.
 const loadData = async (): Promise<void> => {};
+
+document.title = String(probe.length);
 
 const container = document.getElementById('root');
 if (container === null) {
