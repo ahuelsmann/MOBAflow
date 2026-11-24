@@ -44,6 +44,7 @@ internal static class NavigationSource
     /// <summary>All entries of the registration in navigation order (category, then order).</summary>
     internal static IReadOnlyList<NavigationEntryData> FromApp(string registration, string categories, string appSettings)
     {
+        registration = StripComments(registration);
         var categoryValues = ParseCategories(categories);
         var settings = ParseSettings(appSettings);
         var entries = ParseRegistration(registration, categoryValues, settings);
@@ -93,8 +94,69 @@ internal static class NavigationSource
         return (entries, demo);
     }
 
-    private static string? OptionalString(JsonElement item, string name) =>
-        item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+    /// <summary>A string or an explicit null; a missing property or any other kind is a drift, not a null.</summary>
+    private static string? OptionalString(JsonElement item, string name)
+    {
+        if (!item.TryGetProperty(name, out var value))
+        {
+            throw new InvalidOperationException($"navigation.json entry lacks '{name}'.");
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString(),
+            JsonValueKind.Null => null,
+            _ => throw new InvalidOperationException($"navigation.json '{name}' must be a string or null."),
+        };
+    }
+
+    /// <summary>Removes line and block comments outside string literals, so a commented-out registration does not count.</summary>
+    internal static string StripComments(string text)
+    {
+        var result = new StringBuilder(text.Length);
+        var inString = false;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (inString)
+            {
+                result.Append(c);
+                if (c == '\\' && i + 1 < text.Length)
+                {
+                    result.Append(text[++i]);
+                }
+                else if (c == '"')
+                {
+                    inString = false;
+                }
+            }
+            else if (c == '"')
+            {
+                inString = true;
+                result.Append(c);
+            }
+            else if (c == '/' && i + 1 < text.Length && text[i + 1] == '/')
+            {
+                while (i < text.Length && text[i] != '\n')
+                {
+                    i++;
+                }
+
+                result.Append('\n');
+            }
+            else if (c == '/' && i + 1 < text.Length && text[i + 1] == '*')
+            {
+                var end = text.IndexOf("*/", i + 2, StringComparison.Ordinal);
+                i = end < 0 ? text.Length : end + 1;
+            }
+            else
+            {
+                result.Append(c);
+            }
+        }
+
+        return result.ToString();
+    }
 
     private static Dictionary<string, int> ParseCategories(string text)
     {
@@ -266,6 +328,9 @@ internal static class NavigationSource
             throw new InvalidOperationException($"Not a FeatureTogglePages reference: {value}");
         }
 
-        return match.Groups[1].Value;
+        // The registry and the settings use the constant's value, which is not necessarily its name.
+        var field = typeof(FeatureTogglePages).GetField(match.Groups[1].Value)
+            ?? throw new InvalidOperationException($"Unknown FeatureTogglePages constant: {value}");
+        return (string)field.GetRawConstantValue()!;
     }
 }

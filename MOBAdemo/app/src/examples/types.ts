@@ -28,7 +28,7 @@ export interface NavigationFile {
   entries: NavigationEntry[];
 }
 
-export type Direction ='forward' | 'reverse';
+export type Direction = 'forward' | 'reverse';
 export type DccSpeedSteps = 14 | 28 | 126;
 
 export interface LocomotiveFunction {

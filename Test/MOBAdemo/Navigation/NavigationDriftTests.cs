@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.MOBAdemo.Navigation;
 
+using System.Text.RegularExpressions;
+
 /// <summary>
 /// The demo's <c>navigation.json</c> must equal the WinUI navigation: the page registration, the feature toggle
 /// registry and the labels of the shipped appsettings (issue #430 slice 5, spec FR-022, plan T4).
@@ -66,6 +68,33 @@ internal sealed class NavigationDriftTests
         var registration = NavigationSource.RegistrationText;
         Assert.That(registration, Does.Contain(find));
         Assert.That(App(registration.Replace(find, replace, StringComparison.Ordinal)), Is.Not.EqualTo(Json().Entries));
+    }
+
+    [Test]
+    public void CommentedOutRegistration_NoLongerEqualsNavigationJson()
+    {
+        var registration = NavigationSource.RegistrationText;
+        var info = "pages.Add(new PageMetadata(\"info\", \"Info\", \"\\uE946\", typeof(InfoPage), NavigationCategory.Help, 20, null, null, false));";
+        Assert.That(registration, Does.Contain(info));
+
+        Assert.That(
+            App(registration.Replace(info, "// " + info, StringComparison.Ordinal)),
+            Is.Not.EqualTo(Json().Entries));
+        Assert.That(
+            App(registration.Replace(info, "/* " + info + " */", StringComparison.Ordinal)),
+            Is.Not.EqualTo(Json().Entries));
+    }
+
+    [Test]
+    public void JsonWithMissingOrMistypedField_FailsLoudly()
+    {
+        var json = File.ReadAllText(NavigationSource.NavigationJsonPath);
+        Assert.That(
+            () => NavigationSource.FromJson(json.Replace("\"badge\"", "\"badges\"", StringComparison.Ordinal)),
+            Throws.InvalidOperationException);
+        Assert.That(
+            () => NavigationSource.FromJson(Regex.Replace(json, "\"badge\": null", "\"badge\": false")),
+            Throws.InvalidOperationException);
     }
 
     [Test]
