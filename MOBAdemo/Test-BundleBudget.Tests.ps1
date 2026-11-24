@@ -131,4 +131,6 @@ finally {
     Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+# The failing child runs leave $LASTEXITCODE at 1; a CI step that dot-sources this file would report it.
+$global:LASTEXITCODE = 0
 Write-Host "MOBAdemo bundle budget self-tests passed ($checks checks)."
