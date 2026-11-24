@@ -9,11 +9,13 @@ internal static class MobaDemoHost
     /// <summary>Creates the host. <paramref name="webRootPath"/> overrides the web root (used by tests).</summary>
     /// <param name="args">Command-line arguments.</param>
     /// <param name="webRootPath">Optional web root; the default is <c>wwwroot</c> next to the application.</param>
+    /// <param name="limits">Per-client limits; the production values when <see langword="null"/>.</param>
     /// <param name="configure">Test hook that may add endpoints after the host pipeline is set up.</param>
     internal static WebApplication Build(
         string[] args,
         string? webRootPath = null,
-        Action<WebApplication>? configure = null)
+        Action<WebApplication>? configure = null,
+        HostLimits? limits = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
