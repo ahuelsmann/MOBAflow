@@ -1,0 +1,148 @@
+{
+  "grid": {
+    "width": 20,
+    "height": 12,
+    "cellSize": 60
+  },
+  "elements": [
+    {
+      "id": "e1",
+      "type": "TrackCurve",
+      "x": 2,
+      "y": 3,
+      "rotation": 270,
+      "name": ""
+    },
+    {
+      "id": "e2",
+      "type": "TrackStraight",
+      "x": 3,
+      "y": 3,
+      "rotation": 0,
+      "name": ""
+    },
+    {
+      "id": "e3",
+      "type": "Turnout",
+      "x": 4,
+      "y": 3,
+      "rotation": 0,
+      "name": "W1",
+      "position": "straight"
+    },
+    {
+      "id": "e4",
+      "type": "TrackCurve",
+      "x": 5,
+      "y": 3,
+      "rotation": 0,
+      "name": ""
+    },
+    {
+      "id": "e5",
+      "type": "Detector",
+      "x": 2,
+      "y": 4,
+      "rotation": 90,
+      "name": "Block 1"
+    },
+    {
+      "id": "e6",
+      "type": "TrackStraight",
+      "x": 5,
+      "y": 4,
+      "rotation": 90,
+      "name": ""
+    },
+    {
+      "id": "e7",
+      "type": "TrackCurve",
+      "x": 5,
+      "y": 5,
+      "rotation": 90,
+      "name": ""
+    },
+    {
+      "id": "e8",
+      "type": "Turnout",
+      "x": 4,
+      "y": 5,
+      "rotation": 180,
+      "name": "W2",
+      "position": "diverging"
+    },
+    {
+      "id": "e9",
+      "type": "TrackStraight",
+      "x": 3,
+      "y": 5,
+      "rotation": 0,
+      "name": ""
+    },
+    {
+      "id": "e10",
+      "type": "TrackCurve",
+      "x": 2,
+      "y": 5,
+      "rotation": 180,
+      "name": ""
+    },
+    {
+      "id": "e11",
+      "type": "TrackStraight",
+      "x": 4,
+      "y": 4,
+      "rotation": 90,
+      "name": ""
+    },
+    {
+      "id": "e12",
+      "type": "Signal",
+      "x": 6,
+      "y": 4,
+      "rotation": 0,
+      "name": "G2HBFA1"
+    }
+  ],
+  "signal": {
+    "elementId": "e12",
+    "system": "Ks",
+    "aspects": [
+      {
+        "id": "Hp0",
+        "name": "Hp 0",
+        "description": "Stop"
+      },
+      {
+        "id": "Ks1",
+        "name": "Ks 1",
+        "description": "Proceed"
+      },
+      {
+        "id": "Ks2",
+        "name": "Ks 2",
+        "description": "Proceed, expect stop at the next signal"
+      },
+      {
+        "id": "Sh1",
+        "name": "Sh 1",
+        "description": "Shunting permitted"
+      }
+    ],
+    "preparedAspect": "Ks1",
+    "multiplexer": {
+      "articleNumber": "5229",
+      "baseAddress": 201,
+      "outputs": [
+        {
+          "label": "Main signal",
+          "value": "4046"
+        },
+        {
+          "label": "Distant signal",
+          "value": "4040"
+        }
+      ]
+    }
+  }
+}

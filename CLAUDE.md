@@ -15,7 +15,7 @@ fresh independent `P1` (Opus 5.5 or higher, never the writer's or companion's se
 review at Ready for every slice, and head-bound auto-merge once all gates are green. Two failed fix attempts on the
 same finding or more than ten agent messages on one topic go to the user.
 
-Any role may consult or include the Head of UI/UX (`Gemini 4 Argon` via Antigravity) within assigned work under that
+Any role may consult or include the Head of UI/UX (`Gemini 4 Carbon` via Antigravity) within assigned work under that
 guide's synchronous CLI contract. Claude Code loads the MOBAflow review and diagnosis skills from `.claude/skills/`,
 which mirror `.agents/skills/`; change both copies together (`python scripts/Test-AiRepositorySetup.py` checks that
 they match). The prompt secrets hook in `.claude/settings.json` shares its script with Codex. See

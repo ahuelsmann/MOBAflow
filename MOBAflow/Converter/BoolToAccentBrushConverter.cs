@@ -12,17 +12,33 @@ using Windows.UI;
 
 /// <summary>
 /// Converter that converts a boolean value to a Brush.
-/// True → AccentFillColorDefaultBrush, False → TextFillColorSecondaryBrush
+/// True → <see cref="TrueResourceKey"/> (defaults to <c>AccentFillColorDefaultBrush</c>), False → <c>TextFillColorSecondaryBrush</c>.
 /// Pass a <see cref="FrameworkElement"/> as <c>ConverterParameter</c> for runtime theme resolution.
 /// </summary>
 public partial class BoolToAccentBrushConverter : IValueConverter
 {
+    public string TrueResourceKey { get; set; } = "AccentFillColorDefaultBrush";
+
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         var element = parameter as FrameworkElement ?? ThemeResourceResolver.GetDefaultThemeRoot();
-        return value is bool { } boolValue && boolValue
-            ? ThemeResourceResolver.ResolveBrush(element, "AccentFillColorDefaultBrush", Colors.Blue)
-            : ThemeResourceResolver.ResolveBrush(element, "TextFillColorSecondaryBrush", Colors.Gray);
+        var isTrue = value is bool { } boolValue && boolValue;
+        return ThemeResourceResolver.ResolveBrush(
+            element,
+            ResolveResourceKey(isTrue, TrueResourceKey),
+            isTrue ? Colors.Blue : Colors.Gray);
+    }
+
+    internal static string ResolveResourceKey(bool isTrue, string? trueResourceKey = null)
+    {
+        if (!isTrue)
+        {
+            return "TextFillColorSecondaryBrush";
+        }
+
+        return string.IsNullOrWhiteSpace(trueResourceKey)
+            ? "AccentFillColorDefaultBrush"
+            : trueResourceKey;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)

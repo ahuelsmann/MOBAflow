@@ -30,7 +30,7 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
 [master coordination](.github/instructions/master-coordination.instructions.md). In short:
 
 - **Role != single model.** Roles define domain responsibilities and draw on four capability profiles across Claude
-  Code (`P1` Opus 5.5 ceiling, `P4` Sonnet 5.5; `Fable 5.2` prohibited), ChatGPT Codex (`P2` Sol 6.2 / GPT-6 Astra) and Antigravity (`P3` Gemini 4 Argon / Neon,
+  Code (`P1` Opus 5.5 ceiling, `P4` Sonnet 5.5; `Fable 5.2` prohibited), ChatGPT Codex (`P2` Sol 6.2 / GPT-6 Astra) and Antigravity (`P3` Gemini 4 Carbon / Neon,
   `P4` Hydrogen, plus built-in failover models `P1` `Claude Opus 5.5`, `P4` `Claude Sonnet 5.5`, `P2` `GPT-OSS 120B`). Slices are classified by risk (`H` safety/runtime/protocol, `M` features/UI/audio, `L` docs/small
   non-behavioral fixes); review-fix rounds retain their slice's risk class and dependency updates take the class of
   the affected area.
@@ -50,7 +50,7 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   shared branch.
 - **Multi-model team and review from the start.** Writer, a companion reviewer from a different model family (Codex
   `P2` when writer is Claude; Claude `P1` when writer is Codex; Claude `P1` or Codex `P2` when writer is
-  Antigravity) and, for UI/TrackPlan/editorial work, the `P3` Head of UI/UX (`Gemini 4 Argon`) work each class `H`
+  Antigravity) and, for UI/TrackPlan/editorial work, the `P3` Head of UI/UX (`Gemini 4 Carbon`) work each class `H`
   and `M` slice together: the companion checks the design note and reviews every pushed commit with PR review
   comments while the slice grows.
 - **Independent final review and auto-merge.** At Ready every slice (`H`, `M` and `L`) receives a separate fresh
@@ -64,7 +64,7 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   features stay behind feature toggles until complete.
 - **People.** The user decides product goals, priorities, material UX, fundamental architecture, new costs and every
   app, device or hardware action. Since 2026-11-06 the user's personal acceptance is no merge gate. The user does
-  not relay messages, inspect code or administer PRs. Any role may consult the Head of UI/UX (`Gemini 4 Argon` via
+  not relay messages, inspect code or administer PRs. Any role may consult the Head of UI/UX (`Gemini 4 Carbon` via
   Antigravity CLI) under the contract in master coordination.
 - An explicit narrower assignment, pause or no-merge instruction stays binding; do not infer new product work.
 

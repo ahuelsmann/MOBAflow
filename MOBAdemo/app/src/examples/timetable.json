@@ -1,0 +1,28 @@
+{
+  "trainName": "Regional service RB 21",
+  "currentStopIndex": 1,
+  "stops": [
+    {
+      "station": "Central Station",
+      "platform": "1",
+      "departure": "10:05"
+    },
+    {
+      "station": "Riverside",
+      "platform": "2",
+      "arrival": "10:14",
+      "departure": "10:15"
+    },
+    {
+      "station": "Mill Creek",
+      "platform": "1",
+      "arrival": "10:26",
+      "departure": "10:27"
+    },
+    {
+      "station": "Lakeview",
+      "platform": "3",
+      "arrival": "10:41"
+    }
+  ]
+}

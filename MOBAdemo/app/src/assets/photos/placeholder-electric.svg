@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" role="img" aria-label="Electric locomotive with pantograph (placeholder drawing)">
+  <rect x="0" y="108" width="320" height="4" fill="#8a8f98"/>
+  <rect x="24" y="84" width="272" height="14" rx="3" fill="#4a4f57"/>
+  <rect x="34" y="40" width="252" height="46" rx="8" fill="#a1a9b2"/>
+  <rect x="44" y="48" width="30" height="18" rx="3" fill="#dbe3ea"/>
+  <rect x="96" y="50" width="22" height="22" rx="2" fill="#7c858f"/>
+  <rect x="130" y="50" width="22" height="22" rx="2" fill="#7c858f"/>
+  <rect x="164" y="50" width="22" height="22" rx="2" fill="#7c858f"/>
+  <rect x="198" y="50" width="22" height="22" rx="2" fill="#7c858f"/>
+  <rect x="246" y="48" width="30" height="18" rx="3" fill="#dbe3ea"/>
+  <rect x="120" y="34" width="80" height="8" rx="2" fill="#7c858f"/>
+  <path d="M130 34 L160 12 L190 34" fill="none" stroke="#2f333a" stroke-width="3"/>
+  <path d="M140 34 L160 18 L180 34" fill="none" stroke="#2f333a" stroke-width="3"/>
+  <rect x="146" y="8" width="28" height="4" rx="1" fill="#2f333a"/>
+  <circle cx="60" cy="104" r="9" fill="#2f333a"/>
+  <circle cx="100" cy="104" r="9" fill="#2f333a"/>
+  <circle cx="220" cy="104" r="9" fill="#2f333a"/>
+  <circle cx="260" cy="104" r="9" fill="#2f333a"/>
+</svg>

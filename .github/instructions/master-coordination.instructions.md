@@ -35,7 +35,7 @@ model mappings live in [AI-assisted development](../../docs/developer/AI-DEVELOP
 | Decision & Steering Triad | `P1` (COO) + `P2` (CPM/TD) + `P3` (Product/UX) | Cross-model steering for slice cutting, risk classification, design Go and escalations; the COO (or single-writer **`Acting COO`** when `Claude Code` is in `Quota Pause`) writes [Kanban slice fields](#board-locks-and-wip-limit) and manages auto-merge |
 | Chief Operating Officer (COO) | `P1` (Claude); **`Acting COO` failover:** `P3` (`Antigravity`) | Overall operational lead: sole technical writer on the [Kanban and slice headers](#board-locks-and-wip-limit), forms slice teams, posts the design Go, dispatches reviews, manages `gh pr update-branch` and auto-merge, escalates to the human. When a verified `Claude Code` `Quota Pause` is logged on the active thread/PR with its reset timestamp, **`Antigravity`** (`P3`) assumes sole single-writer `Acting COO` duties alongside `Codex` (`P2`) CPM/TD (`2/3 Acting COO` quorum) until `Claude Code` resets |
 | Chief Project Manager (CPM) & Technical Director (TD) | `P2` (Codex) | Prioritizes the backlog with the COO, checks repo/Spec Kit/build-graph consistency and may veto a slice or lock through the CLI channel and a PR comment as described [below](#board-locks-and-wip-limit) |
-| Head of Product Experience & UI/UX | `P3` (Antigravity) | Co-designs UI, TrackPlan, interaction and editorial slices from the design note on; checks visual hierarchy, themes, accessibility and user-facing clarity ([CLI contract](#head-of-uiux-gemini-argon-via-antigravity)) |
+| Head of Product Experience & UI/UX | `P3` (Antigravity) | Co-designs UI, TrackPlan, interaction and editorial slices from the design note on; checks visual hierarchy, themes, accessibility and user-facing clarity ([CLI contract](#head-of-uiux-gemini-carbon-via-antigravity)) |
 | Solution Architect | `P1` + `P2` / `P3` | Technical design within scope; one recommendation with trade-offs; prepares fundamental decisions for the human |
 | Senior Developer (Slice Writer) | `P1`, `P2` or `P4` (one named writer per slice) | Design note, test-first implementation, local checks, Draft PR, review fixes |
 | Companion Reviewer | `P1`, `P2` or `P3` (different model family from writer) | Reviews the design note and every pushed commit read-only on the PR while the slice grows |
@@ -166,7 +166,7 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
   credential files). No command delivers a message into a Claude desktop session, so Codex raises its own
   requests to Claude in its thread (the outcome is logged as a PR comment). Claude sessions use their session
   messaging or invoke a fresh `claude.exe --print` call; Antigravity roles use the
-  [CLI contract](#head-of-uiux-gemini-argon-via-antigravity).
+  [CLI contract](#head-of-uiux-gemini-carbon-via-antigravity).
   PR design notes, the design Go, slice locks and review posts stay on the `MOBAflow` issue and Draft PR.
 - **Log.** Every lock, design go, handover, merge and escalation is a short comment on the slice's Draft PR with
   UTC time and role; the Kanban fields carry only the current state. Agent IDs and thread IDs
@@ -189,7 +189,7 @@ next at the end:
   from a **different model family** (if the writer is Claude `P1`/`P4`, the companion is Codex `P2`; if the writer
   is Codex `P2`, the companion is a fresh Claude `P1` session; if the writer is Antigravity `P3`/`P4`, the
   companion is Claude `P1` or Codex `P2`) and, for class `M` UI, TrackPlan and editorial slices, the `P3` Head of
-  UI/UX (`Gemini 4 Argon`). The COO forms the team when the slice starts and records it in the PR slice header.
+  UI/UX (`Gemini 4 Carbon`). The COO forms the team when the slice starts and records it in the PR slice header.
 - **Design review.** Before the Go, the companion reviewer checks the design note (plus `P3` for UI, TrackPlan and
   editorial slices: requirements, architecture, risks and planned tests), and the COO or Solution Architect (`P1`)
   gives the **Go** or corrects it, so at least two complementary profiles assess every design.
@@ -225,7 +225,7 @@ next at the end:
   a quality gate.
 - Do not ask the human to inspect code, administer PRs or relay messages.
 
-## Head of UI/UX (Gemini Argon via Antigravity)
+## Head of UI/UX (Gemini Carbon via Antigravity)
 
 Head of UI/UX (`P3` in Antigravity) is the specialist for product experience, navigation, interaction, visual
 hierarchy, accessibility, UI states and reader-facing clarity. It participates in class `M` UI, TrackPlan and
@@ -233,13 +233,14 @@ editorial slice teams from the design note on, and any role may consult it withi
 human approval. It does not implement product code, commit or push, and grants no product, merge or hardware
 authority.
 
-Verified contact (2026-10-16): CLI conversation `1d8313f7-1f6f-42c8-b32c-f0b422653677`, project
-MOBAflow UI/UX Team, model `gemini-4-argon-high`. Do not use the separate desktop-app conversation.
+Verified contact (2026-11-24): CLI conversation `1d8313f7-1f6f-42c8-b32c-f0b422653677`, project
+MOBAflow UI/UX Team, model `gemini-4-carbon-high`. The conversation keeps its history from the former
+`Gemini 4 Argon` period; Argon leaves Antigravity on 2026-11-30. Do not use the separate desktop-app conversation.
 
 ```powershell
 & "$env:LOCALAPPDATA\agy\bin\agy.exe" `
   --conversation 1d8313f7-1f6f-42c8-b32c-f0b422653677 `
-  --model gemini-4-argon-high `
+  --model gemini-4-carbon-high `
   --mode plan `
   --output-format json `
   --print-timeout 330s `
@@ -250,7 +251,7 @@ MOBAflow UI/UX Team, model `gemini-4-argon-high`. Do not use the separate deskto
   the asking role, and read `response`; check `status`, `denied_actions` and that the response is not empty.
 - Headless mode denies shell commands. Pass long content as a file path the CLI can read, not inline (the
   argument length is limited), and never pass credentials or unrelated sensitive files.
-- Plan mode is not a file-access boundary: Argon may read any file the process can reach and send its content to
+- Plan mode is not a file-access boundary: Carbon may read any file the process can reach and send its content to
   Google. Treat the whole accessible host context as exposed and apply the secrets-before-read policy to what it
   may read. Run it from your own clean worktree and check `git status` afterwards; that detects only changes there.
 - Give the outer process more than 330 seconds. After a timeout, check whether the call is still running before any
