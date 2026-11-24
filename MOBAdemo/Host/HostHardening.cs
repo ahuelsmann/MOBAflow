@@ -57,6 +57,10 @@ internal static class HostHardening
             || (System.Net.IPAddress.TryParse(name, out var address) && System.Net.IPAddress.IsLoopback(address)));
     }
 
+    /// <summary>Whether the path names a precompressed variant, which is never a resource of its own (404).</summary>
+    internal static bool IsCompressedVariantPath(string? path) =>
+        Variants.Any(v => (path ?? string.Empty).EndsWith(v.Extension, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Adds the security headers, the default cache policy and the neutral bodies of error answers to every response.</summary>
     internal static void UseResponsePolicy(this WebApplication app)
     {
@@ -147,7 +151,7 @@ internal static class HostHardening
         app.Use(async (context, next) =>
         {
             var path = context.Request.Path;
-            if (Variants.Any(v => (path.Value ?? string.Empty).EndsWith(v.Extension, StringComparison.OrdinalIgnoreCase)))
+            if (IsCompressedVariantPath(path.Value))
             {
                 // A compressed sibling is not a resource of its own.
                 context.Response.StatusCode = StatusCodes.Status404NotFound;

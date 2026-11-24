@@ -24,6 +24,8 @@ internal static class ClientLimits
     private const string EntryDocument = "index.html";
     private const string UnknownAddress = "unknown";
     private const int StaticSegments = 6;
+    private const int StaticFallbackRetryAfterSeconds = 3600;
+    private const int NonStaticFallbackRetryAfterSeconds = 60;
 
     private static readonly HostHardening.OriginalTypeProvider ContentTypes = new();
 
@@ -62,7 +64,7 @@ internal static class ClientLimits
                 // The body comes from the status-code pages of the response policy.
                 var seconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
                     ? Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds))
-                    : (IsStaticRequest(context.HttpContext) ? 3600 : 60);
+                    : FallbackRetryAfterSeconds(context.HttpContext);
                 context.HttpContext.Response.Headers.RetryAfter = seconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 return ValueTask.CompletedTask;
             };
@@ -93,10 +95,30 @@ internal static class ClientLimits
         });
     }
 
-    private static string Normalize(IPAddress? address) =>
-        address is null
-            ? UnknownAddress
-            : (address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address).ToString();
+    private static int FallbackRetryAfterSeconds(HttpContext context)
+    {
+        if (IsStaticRequest(context))
+        {
+            return StaticFallbackRetryAfterSeconds;
+        }
+
+        return NonStaticFallbackRetryAfterSeconds;
+    }
+
+    private static string Normalize(IPAddress? address)
+    {
+        if (address is null)
+        {
+            return UnknownAddress;
+        }
+
+        if (address.IsIPv4MappedToIPv6)
+        {
+            address = address.MapToIPv4();
+        }
+
+        return address.ToString();
+    }
 
     // Static means: the file provider that serves the request has the file, or, for a directory path such as "/",
     // the entry document that UseDefaultFiles serves in its place, and the static-file middleware would serve it
@@ -110,6 +132,12 @@ internal static class ClientLimits
 
         var files = context.RequestServices.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
         var path = context.Request.Path.Value ?? "/";
+        if (HostHardening.IsCompressedVariantPath(path))
+        {
+            // UsePrecompressedFiles answers 404 for a variant requested by its own name.
+            return false;
+        }
+
         var file = files.GetFileInfo(path);
         if (file.Exists && !file.IsDirectory)
         {
@@ -117,7 +145,7 @@ internal static class ClientLimits
             return ContentTypes.TryGetContentType(path, out _);
         }
 
-        if (path.EndsWith('/') || file.IsDirectory)
+        if (path.EndsWith('/'))
         {
             return files.GetFileInfo(path.TrimEnd('/') + "/" + EntryDocument).Exists;
         }

@@ -113,6 +113,27 @@ internal sealed class MobaDemoHostRateLimitTests
         }
     }
 
+    [TestCase("/assets/app.js.br")]
+    [TestCase("/assets/app.js.gz")]
+    public async Task CompressedVariantRequestedByItsOwnName_IsNotFoundAndCountsAsNonStatic(string path)
+    {
+        await StartAsync(SmallLimits).ConfigureAwait(false);
+        for (var i = 0; i < NonStaticLimit; i++)
+        {
+            using var notFound = await GetAsync(path, "10.0.0.1").ConfigureAwait(false);
+            Assert.That(notFound.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), "request " + (i + 1));
+        }
+
+        using var rejected = await GetAsync(path, "10.0.0.1").ConfigureAwait(false);
+        using var script = await GetAsync(ScriptPath, "10.0.0.1").ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(rejected.StatusCode, Is.EqualTo(HttpStatusCode.TooManyRequests));
+            Assert.That(script.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        }
+    }
+
     [Test]
     public async Task StaticAndNonStaticBudgets_AreIndependent()
     {
@@ -328,6 +349,8 @@ internal sealed class MobaDemoHostRateLimitTests
         var assets = Directory.CreateDirectory(Path.Combine(webRoot, "assets")).FullName;
         File.WriteAllText(Path.Combine(assets, "app.js"), Script);
         File.WriteAllText(Path.Combine(assets, "data.unknownext"), Script);
+        File.WriteAllBytes(Path.Combine(assets, "app.js.br"), [1, 2, 3]);
+        File.WriteAllBytes(Path.Combine(assets, "app.js.gz"), [1, 2, 3]);
     }
 
     private Task<HttpResponseMessage> GetAsync(string path, string forwardedFor) =>
