@@ -77,13 +77,23 @@ describe('example locomotives (FR-036)', () => {
     expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
   });
 
+  it.each([0, 10240, 1.5])('rejects the DCC address %s', (address) => {
+    const raw = changed(['locomotives', 'locomotives', 0, 'address'], address);
+    expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
+  });
+
   it('rejects a photo key inherited from Object.prototype', () => {
     const raw = changed(['locomotives', 'locomotives', 0, 'photo'], 'toString');
     expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
   });
 
+  it('rejects a photo whose URL is not a non-empty string', () => {
+    expect(() => parseExamples(structuredClone(defaultSources) as RawExamples, Object.fromEntries(Object.keys(examplePhotos).map((key) => [key, ''])))).toThrow(/locomotives\.json/);
+  });
+
   it('rejects a selected locomotive with an unnamed function', () => {
-    const raw = changed(['locomotives', 'locomotives', 0, 'functions', 3, 'name'], '');
+    const selectedIndex = freshExamples().locomotives.findIndex((locomotive) => locomotive.selected);
+    const raw = changed(['locomotives', 'locomotives', selectedIndex, 'functions', 3, 'name'], '');
     expect(() => parseExamples(raw)).toThrow(/locomotives\.json/);
   });
 
@@ -118,16 +128,12 @@ describe('example workflow (FR-037)', () => {
     }
   });
 
-  it('connects the trigger node, directly or transitively, to every other node', () => {
+  it('connects the trigger node, directly or transitively, to every other node and selects the example workflow', () => {
     const { workflow } = freshExamples();
     const nodeIds = new Set(workflow.nodes.map((node) => node.id));
-    const trigger = workflow.nodes.find((node) => node.type === 'trigger');
     expect(workflow.nodes.filter((node) => node.type === 'trigger')).toHaveLength(1);
-    for (const edge of workflow.edges) {
-      expect(nodeIds.has(edge.from)).toBe(true);
-      expect(nodeIds.has(edge.to)).toBe(true);
-    }
-    const reached = new Set([trigger!.id]);
+    const trigger = workflow.nodes.find((node) => node.type === 'trigger')!;
+    const reached = new Set([trigger.id]);
     for (let grew = true; grew; ) {
       grew = false;
       for (const edge of workflow.edges) {
@@ -138,6 +144,10 @@ describe('example workflow (FR-037)', () => {
       }
     }
     expect(reached).toEqual(nodeIds);
+    for (const edge of workflow.edges) {
+      expect(nodeIds.has(edge.from)).toBe(true);
+      expect(nodeIds.has(edge.to)).toBe(true);
+    }
     expect(workflow.list.filter((entry) => entry.id === workflow.selectedId)).toHaveLength(1);
   });
 
@@ -178,7 +188,7 @@ describe('example signal box (FR-039)', () => {
   });
 
   it('rejects a multiplexer output with a numeric label', () => {
-    const raw = changed(['signalBox', 'signal', 'multiplexer', 'outputs', 0, 'label'], 7);
+    const raw = changed(['signalBox', 'signal', 'multiplexer', 'outputs'], [{ label: 5, value: 'x' }]);
     expect(() => parseExamples(raw)).toThrow(/signal-box\.json/);
   });
 
@@ -220,6 +230,7 @@ describe('example locomotive images (FR-010, FR-058)', () => {
       expect(svg, file).not.toMatch(/\sstyle\s*=|<style|<script|<image|data:/i);
     }
   });
+
 });
 
 describe('example texts (FR-029, FR-030, FR-031)', () => {

@@ -82,11 +82,14 @@ function parseLocomotives(raw: unknown, photos: Readonly<Record<string, string>>
 
   const locomotives = list.map((item, index) => {
     const where = `locomotives[${index}]`;
-    const locomotive = objectOf(check, item, where) as unknown as Obj;
+    const locomotive = objectOf(check, item, where);
     check(isNonEmptyText(locomotive['id']), `${where}.id is missing`);
     check(isNonEmptyText(locomotive['name']), `${where}.name is missing`);
     check(isNonEmptyText(locomotive['series']), `${where}.series is missing`);
-    check(isNumber(locomotive['address']), `${where}.address must be a number`);
+    check(
+      isNumberIn(locomotive['address'], 1, 10239) && Number.isInteger(locomotive['address']),
+      `${where}.address must be a whole number from 1 to 10239`,
+    );
     check(typeof locomotive['selected'] === 'boolean', `${where}.selected must be true or false`);
 
     const photo = locomotive['photo'];
@@ -181,20 +184,20 @@ function parseWorkflow(raw: unknown): WorkflowFile {
   const ids = new Set(nodes.map((node) => node['id']));
   check(ids.size === nodes.length, 'node ids must be unique');
   check(nodes.filter((node) => node['type'] === 'trigger').length === 1, 'exactly one trigger node is required');
-  const successors = new Map<unknown, unknown[]>();
-  for (const [index, edge] of arrayOf(check, file['edges'], 'edges').entries()) {
+  const edges = arrayOf(check, file['edges'], 'edges').map((edge, index) => {
     const item = objectOf(check, edge, `edges[${index}]`);
     check(ids.has(item['from']) && ids.has(item['to']), `edges[${index}] refers to an unknown node`);
-    successors.set(item['from'], [...(successors.get(item['from']) ?? []), item['to']]);
-  }
+    return item;
+  });
+  check(edges.length > 0, 'edges must not be empty');
   const trigger = nodes.find((node) => node['type'] === 'trigger');
   const reached = new Set<unknown>([trigger?.['id']]);
-  const pending: unknown[] = [trigger?.['id']];
-  for (let next = pending.pop(); next !== undefined; next = pending.pop()) {
-    for (const target of successors.get(next) ?? []) {
-      if (!reached.has(target)) {
-        reached.add(target);
-        pending.push(target);
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const edge of edges) {
+      if (reached.has(edge['from']) && !reached.has(edge['to'])) {
+        reached.add(edge['to']);
+        grew = true;
       }
     }
   }
@@ -242,11 +245,10 @@ function parseSignalBox(raw: unknown): SignalBoxFile {
   check(aspects.includes(signal['preparedAspect']), 'signal.preparedAspect must be one of the signal aspects');
   const multiplexer = objectOf(check, signal['multiplexer'], 'signal.multiplexer');
   check(isNonEmptyText(multiplexer['articleNumber']) && isNumber(multiplexer['baseAddress']), 'signal.multiplexer needs articleNumber and baseAddress');
-  for (const [index, output] of arrayOf(check, multiplexer['outputs'], 'signal.multiplexer.outputs').entries()) {
-    const where = `signal.multiplexer.outputs[${index}]`;
-    const entry = objectOf(check, output, where);
-    check(isText(entry['label']) && (isText(entry['value']) || isNumber(entry['value'])), `${where} needs a text label and a text or number value`);
-  }
+  arrayOf(check, multiplexer['outputs'], 'signal.multiplexer.outputs').forEach((output, index) => {
+    const entry = objectOf(check, output, `signal.multiplexer.outputs[${index}]`);
+    check(isNonEmptyText(entry['label']) && isText(entry['value']), `signal.multiplexer.outputs[${index}] needs label and value`);
+  });
   return file as unknown as SignalBoxFile;
 }
 
