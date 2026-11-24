@@ -1,9 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
 import navigation from '../../examples/navigation.json';
-import dark from '../../tokens/dark.css?raw';
-import light from '../../tokens/light.css?raw';
 
 vi.mock('../../config/enabledPages', () => ({
   enabledPages: { 'train-control': true, workflows: true, 'track-plan': false, 'signal-box': false },
@@ -70,7 +69,8 @@ describe('shell navigation', () => {
     }
   });
 
-  it.each([dark, light])('keeps disabled navigation contrast at or above 3:1', (css) => {
+  it.each(['dark', 'light'])('keeps disabled navigation contrast at or above 3:1 in %s', (theme) => {
+    const css = readFileSync(import.meta.dirname + '/../../tokens/' + theme + '.css', 'utf8');
     function luminance(token: string) {
       const hex = new RegExp('--' + token + ': #([0-9a-f]{6});').exec(css)?.[1];
       if (!hex) throw new Error('Missing color token ' + token);

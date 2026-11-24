@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DemoShell } from './shell/navigation/DemoShell';
 
 export interface AppProps {
   /** Loads the data files the app needs. Injected so the start-up states can be tested. */
@@ -44,9 +45,5 @@ export function App({ load }: Readonly<AppProps>) {
     );
   }
 
-  return (
-    <main className="app-shell">
-      <h1>MOBAdemo</h1>
-    </main>
-  );
+  return <DemoShell />;
 }
