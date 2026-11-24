@@ -710,15 +710,27 @@ jobs:
         working-directory: MOBAdemo/app
         run: |
           $report = $null
+          $severities = 'critical', 'high', 'moderate', 'low', 'info'
           foreach ($attempt in 1..2) {
-            $raw = npm audit --package-lock-only --include=prod --include=dev --registry https://registry.npmjs.org/ --json 2>$null | Out-String
+            $raw = npm audit --package-lock-only --include=prod --include=dev --audit-level=high --registry https://registry.npmjs.org/ --json 2>$null | Out-String
             try { $candidate = $raw | ConvertFrom-Json } catch { $candidate = $null }
-            if ($null -ne $candidate -and $null -ne $candidate.PSObject.Properties['metadata']) {
+            # A valid report has the v2 format, no error object and a non-negative integer count per severity.
+            $valid = $null -ne $candidate -and
+              $null -eq $candidate.PSObject.Properties['error'] -and
+              $candidate.PSObject.Properties['auditReportVersion'] -and $candidate.auditReportVersion -eq 2 -and
+              $candidate.PSObject.Properties['metadata'] -and $candidate.metadata.PSObject.Properties['vulnerabilities']
+            if ($valid) {
+              foreach ($severity in $severities) {
+                $count = $candidate.metadata.vulnerabilities.PSObject.Properties[$severity]
+                if ($null -eq $count -or (($count.Value -isnot [int]) -and ($count.Value -isnot [long])) -or $count.Value -lt 0) { $valid = $false }
+              }
+            }
+            if ($valid) {
               $report = $candidate
               break
             }
             Write-Host "Attempt ${attempt}: no valid audit report."
-            Start-Sleep -Seconds 10
+            if ($attempt -lt 2) { Start-Sleep -Seconds 10 }
           }
           if ($null -eq $report) {
             Write-Host '::error title=npm audit::No valid audit report; the registry or the audit endpoint did not answer.'
@@ -732,6 +744,8 @@ jobs:
             Write-Host '::error title=npm audit::Known high or critical vulnerabilities in the lockfile (FR-074).'
             exit 1
           }
+          # npm exits non-zero for findings below the threshold too; an accepted report must not fail the step.
+          exit 0
 
       - name: Test bundle budget script
         shell: pwsh

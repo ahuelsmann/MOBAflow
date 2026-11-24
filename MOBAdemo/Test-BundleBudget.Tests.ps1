@@ -120,12 +120,89 @@ try {
     $missingRef = New-WebRoot 'missing-reference' $index @{ 'assets/app-1.js' = 'console.log("demo");' }
     Assert-Result 'referenced style sheet that is missing fails' (Invoke-Budget @('-Path', $missingRef)) 1 'app-1.css'
     $noScripts = New-WebRoot 'no-scripts' '<!doctype html><html><body>x</body></html>' @{ 'assets/readme.txt' = 'x' }
-    Assert-Result 'no script or style sheet fails' (Invoke-Budget @('-Path', $noScripts)) 1 'No script or style sheet'
+    Assert-Result 'index.html without a script tag fails' (Invoke-Budget @('-Path', $noScripts)) 1 'entry point'
+    $unmeasurable = New-WebRoot 'unmeasurable' '<html><body><script src="./assets/loader"></script></body></html>' @{ 'assets/loader' = 'console.log(1);' }
+    Assert-Result 'entry script without a measurable extension fails' (Invoke-Budget @('-Path', $unmeasurable)) 1 'No script or style sheet'
     $external = New-WebRoot 'external' '<html><body><script src="https://cdn.example.test/lib.js"></script></body></html>' @{ 'assets/app-1.js' = 'console.log("demo");' }
     Assert-Result 'external script fails' (Invoke-Budget @('-Path', $external)) 1 'external'
     $outside = New-WebRoot 'outside' '<html><body><script src="../secret.js"></script></body></html>' @{ 'assets/app-1.js' = 'console.log("demo");' }
     Assert-Result 'reference leaving the web root fails' (Invoke-Budget @('-Path', $outside)) 1 'outside'
     Assert-Result 'non-positive limit fails' (Invoke-Budget @('-Path', $small, '-LimitBytes', 0)) 1 'LimitBytes'
+
+    # Entry point and tag parsing: unquoted attributes count, an orphan asset without a script tag does not pass.
+    $unquoted = New-WebRoot 'unquoted' '<html><head><link rel=stylesheet href=./assets/app-1.css></head><body><script type=module src=./assets/app-1.js></script></body></html>' @{
+        'assets/app-1.js' = New-IncompressibleText 300000 8
+        'assets/app-1.css' = 'body{margin:0}'
+    }
+    Assert-Result 'unquoted references are measured' (Invoke-Budget @('-Path', $unquoted)) 1 'exceeds'
+    $noEntry = New-WebRoot 'no-entry' '<html><body>no script tag</body></html>' @{ 'assets/orphan.js' = 'console.log("demo");' }
+    Assert-Result 'orphan asset without a script entry point fails' (Invoke-Budget @('-Path', $noEntry)) 1 'entry point'
+    $extensionless = New-WebRoot 'extensionless' '<html><body><script src="./assets/app-1.js"></script><script src="./assets/loader"></script></body></html>' @{ 'assets/app-1.js' = 'console.log("demo");' }
+    Assert-Result 'extensionless script reference that is missing fails' (Invoke-Budget @('-Path', $extensionless)) 1 'loader'
+
+    # Hidden assets count.
+    $hidden = New-WebRoot 'hidden' $index @{
+        'assets/app-1.js' = 'console.log("demo");' * 50
+        'assets/app-1.css' = 'body{margin:0}' * 50
+        'assets/.hidden-chunk.js' = New-IncompressibleText 300000 9
+    }
+    Assert-Result 'hidden chunk counts toward the budget' (Invoke-Budget @('-Path', $hidden)) 1 'exceeds'
+
+    # A symbolic link in the web root is refused (skipped when the platform does not allow creating one).
+    $linked = New-WebRoot 'linked' $index @{
+        'assets/app-1.js' = 'console.log("demo");'
+        'assets/app-1.css' = 'body{margin:0}'
+    }
+    $outsideFile = Join-Path $workRoot 'outside-target.js'
+    Set-Content -LiteralPath $outsideFile -Value 'console.log("outside");' -Encoding utf8NoBOM
+    $linkCreated = $false
+    try {
+        New-Item -ItemType SymbolicLink -Path (Join-Path $linked 'assets/linked.js') -Target $outsideFile -ErrorAction Stop | Out-Null
+        $linkCreated = $true
+    }
+    catch {
+        Write-Host "Symbolic link case skipped: $($_.Exception.Message)"
+    }
+    if ($linkCreated) {
+        Assert-Result 'symbolic link in the web root fails' (Invoke-Budget @('-Path', $linked)) 1 'symbolic link'
+    }
+
+    # Exact boundary with the default limit: build a script whose Brotli size is exactly 200,000 bytes, then one more.
+    function Get-BrotliLength([byte[]] $Bytes) {
+        $buffer = [IO.MemoryStream]::new()
+        $brotli = [IO.Compression.BrotliStream]::new($buffer, [IO.Compression.CompressionLevel]::SmallestSize, $true)
+        $brotli.Write($Bytes, 0, $Bytes.Length)
+        $brotli.Dispose()
+        $length = $buffer.Length
+        $buffer.Dispose()
+        return $length
+    }
+
+    function Find-ScriptBytes([long] $TargetSize) {
+        $random = [Random]::new(11)
+        $pool = [byte[]]::new(260000)
+        $random.NextBytes($pool)
+        $length = [int] $TargetSize - 10
+        for ($attempt = 0; $attempt -lt 60; $attempt++) {
+            $candidate = [byte[]]::new($length)
+            [Array]::Copy($pool, $candidate, $length)
+            $size = Get-BrotliLength $candidate
+            if ($size -eq $TargetSize) {
+                return $candidate
+            }
+
+            $length += [int] ($TargetSize - $size)
+        }
+
+        throw "Could not build a script with a Brotli size of exactly $TargetSize bytes."
+    }
+
+    foreach ($case in @(@{ Size = 200000; ExitCode = 0; Text = 'within' }, @{ Size = 200001; ExitCode = 1; Text = 'exceeds' })) {
+        $boundary = New-WebRoot "boundary-$($case.Size)" '<html><body><script src="./assets/app-1.js"></script></body></html>' @{}
+        New-Item -ItemType Directory -Path (Join-Path $boundary 'assets') -Force | Out-Null
+        [IO.File]::WriteAllBytes((Join-Path $boundary 'assets/app-1.js'), (Find-ScriptBytes $case.Size))
+        Assert-Result "default limit with exactly $($case.Size) Brotli bytes" (Invoke-Budget @('-Path', $boundary)) $case.ExitCode $case.Text
+    }
 }
 finally {
     Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction SilentlyContinue
