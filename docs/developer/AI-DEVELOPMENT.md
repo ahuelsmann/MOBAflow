@@ -34,8 +34,8 @@ The user decides product goals, priorities, material UX, fundamental architectur
 device or hardware action, and does not relay messages, inspect code or administer PRs. Since 2026-11-06 the
 user's personal acceptance is no merge gate; feedback from real use arrives as ordinary issues. Every slice
 records its documentation and `docs/wiki/` impact. Any role may consult or include the Head of UI/UX (`Gemini 4
-Argon` via Antigravity CLI) under the
-[Head of UI/UX rules](../../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-argon-via-antigravity).
+Carbon` via Antigravity CLI) under the
+[Head of UI/UX rules](../../.github/instructions/master-coordination.instructions.md#head-of-uiux-gemini-carbon-via-antigravity).
 
 ## Capability profiles and models
 
@@ -46,7 +46,7 @@ assigns tasks by capability profile (`P1`–`P4`) so rules remain stable when mo
 | --- | --- | --- |
 | `P1` Depth, Architecture & Safety | **Claude Opus 5.5** (`Claude Code`, CLI model `claude-opus-5-5`, or `Antigravity` multi-model failover; maximum Claude tier) | Deep architecture, concurrency (`async/await`, `UiThreadEventBusDecorator`), Z21 protocol safety, COO steering, companion/final independent review |
 | `P2` Repo, Build & Fact Precision | **Sol 6.2 / GPT-6 Astra** (`ChatGPT Codex`, or **GPT-OSS 120B** failover in `Antigravity`) | Solution/build graph (`Moba.slnx`), Spec Kit consistency, CI/Sonar/mutation verification, CPM/TD steering, cross-model companion/final review, non-GitHub Sites publication |
-| `P3` System Context, Product & UI/UX | **Gemini 4 Argon / Neon** (`Antigravity`, CLI model `gemini-4-argon-high`) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
+| `P3` System Context, Product & UI/UX | **Gemini 4 Carbon / Neon** (`Antigravity`, CLI model `gemini-4-carbon-high`; `Gemini 4 Argon` leaves Antigravity on 2026-11-30) | Large multi-file context, WinUI 3 and MAUI UX/interaction, Light/Dark themes, TrackPlan visuals, reader-focused copy (`MOBAnews` and `docs/wiki/`) |
 | `P4` Cadence, Triage & Fast Delivery | **Claude Sonnet 5.5** (`Claude Code` / `Antigravity`; `Claude Fable 5.2` prohibited), **Gemini 4 Hydrogen** (`Antigravity` desktop selector) | Fast routine slices, portable/doc tasks, triage, pre-checks, status and timer monitoring (verify actual runtime model ID in review records) |
 
 ## Start in the correct checkout

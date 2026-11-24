@@ -39,4 +39,4 @@ Write failing portable NUnit tests in `SettingsInputValidatorTests` and `Setting
 - Produce this spec-only Draft PR first. It locks only `specs/021-settings-input-validation/` and consumes no code WIP slot.
 - Cut three sequential class M code slices. Start Slice 1 after spec integration, free locks and an available slot under the code WIP cap. Merge each slice before starting the next. #471 is integrated and its Settings locks have been cleared.
 - Code slices may lock `SharedUI/Validation`, the affected settings view-model or view files, and the related tests. Name their exact scopes in the PR header and have the COO mirror them in Kanban at dispatch.
-- P2 is the writer. P1 Opus Head accompanies the slices and provides a fresh independent final review, with P3 Argon Head for UI/UX and accessibility and cross-family verification as required. Keep final checks tied to the reviewed head.
+- P2 is the writer. P1 Opus Head accompanies the slices and provides a fresh independent final review, with P3 Carbon Head for UI/UX and accessibility and cross-family verification as required. Keep final checks tied to the reviewed head.
