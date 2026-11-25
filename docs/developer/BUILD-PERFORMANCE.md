@@ -219,6 +219,18 @@ steps also depend on their input paths. Android runs on PRs that change
 itself fails on a PR, every scoped job, Android included, runs rather than being
 skipped. A skipped check is not evidence that tests ran.
 
+The `mobademo` job (check `MOBAdemo frontend, audit and bundle budget`, issue
+[#430](https://github.com/ahuelsmann/MOBAflow/issues/430)) builds and tests the browser demo with Node 24 and the .NET
+SDK only, without the WinUI or Android workloads. It runs when `MOBAdemo/`, `Test/MOBAdemo/` or a shared build input
+(`Test/Test.csproj`, `Moba.slnx`, `global.json`, `version.json`, `NuGet.Config`, `.editorconfig`,
+`Directory.Build.*`, `Directory.Packages.props`) changes, and for unknown paths such as the workflow or the scope
+script; documentation-only, firmware, Android and other .NET changes skip it. It audits the committed
+`package-lock.json` for high or critical npm vulnerabilities before installing anything, runs lint, the frontend unit
+tests and `MOBAdemo/build.ps1`, checks that scripts and style sheets stay within 200,000 bytes of Brotli
+(`MOBAdemo/Test-BundleBudget.ps1`, self-tested by `MOBAdemo/Test-BundleBudget.Tests.ps1`), and runs the
+`Moba.Test.MOBAdemo` NUnit tests through the result guard. Since 2026-11-24 it is not a required check yet; a new
+npm advisory turns it red on the next run without a change to the lockfile.
+
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
 when `MOBAdisplay/esp32/` changes or an unknown input path requires them. The
@@ -299,6 +311,7 @@ Every supported deliverable has a documented local command and a CI lane (RF-07,
 | Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (firmware when firmware paths change) |
 | Android Release AAB | the Release AAB steps above; `scripts/Test-AndroidAppBundle.ps1` | `android-release` on PRs that change `MOBAsmart/**` or the Android analyzer baseline, or by manual dispatch (maintainer decision of 2026-11-08); the AAB artifact is kept 30 days |
 | Mutation lanes | `scripts/Invoke-MutationLane.ps1 -LaneName <lane>` | one `mutation-<lane>` job per active lane (below) |
+| MOBAdemo web demo (frontend, audit, 200 KB budget, host tests) | `pwsh MOBAdemo/build.ps1`, then `pwsh MOBAdemo/Test-BundleBudget.ps1 -Path MOBAdemo/Host/wwwroot-build` | `mobademo` (not required yet) |
 | C# formatting | `dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32` | step of `portable-linux` |
 | Documentation and repository instructions | `scripts/Test-DocumentationLinks.ps1`, `scripts/Test-InstructionConsistency.ps1` | `instruction-consistency`; external links on a schedule |
 | Release package | [Release Studio](../../.github/workflows/release-studio.yml) (`MOBAflow` and `MOBApi` only) | manual release workflow |

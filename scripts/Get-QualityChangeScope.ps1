@@ -65,6 +65,7 @@ $otherDotNetPatterns = @(
     '^TrackLibrary\.PikoA/',
     '^TrackPlan\.Editor/',
     '^TrackPlan\.Renderer/',
+    '^MOBAdemo/',
     '^Test/',
     '^quality/',
     '^Moba\.slnx$',
@@ -79,6 +80,21 @@ $otherDotNetPatterns = @(
 $androidInputPatterns = @(
     '^MOBAsmart/',
     '^quality/analyzer-baseline\.android\.json$'
+)
+
+# The MOBAdemo CI job (issue #430) builds the frontend and the host and runs the MOBAdemo tests. It runs for the
+# demo itself and for the shared inputs of that build; documentation, firmware, Android and the other .NET areas
+# do not select it. A path outside every known area runs it too (fail open, like the other scopes).
+$mobaDemoInputPatterns = @(
+    '^MOBAdemo/',
+    '^Test/MOBAdemo/',
+    '^Test/Test\.csproj$',
+    '^Moba\.slnx$',
+    '^global\.json$',
+    '^version\.json$',
+    '^NuGet\.Config$',
+    '^\.editorconfig$',
+    '^Directory\.(Build|Packages|Solution)\.(props|targets)$'
 )
 
 function Test-MatchesAny([string] $RelativePath, [string[]] $Patterns) {
@@ -96,23 +112,24 @@ function Test-MatchesAny([string] $RelativePath, [string[]] $Patterns) {
 function Get-PathScope([string] $RelativePath) {
     $normalizedPath = $RelativePath.Trim().Replace('\', '/')
     $android = Test-MatchesAny $normalizedPath $androidInputPatterns
+    $mobaDemo = Test-MatchesAny $normalizedPath $mobaDemoInputPatterns
     if (Test-MatchesAny $normalizedPath $documentationOnlyPatterns) {
-        return [pscustomobject] @{ Code = $false; Firmware = $false; Mutation = $false; Android = $android }
+        return [pscustomobject] @{ Code = $false; Firmware = $false; Mutation = $false; Android = $android; MobaDemo = $false }
     }
 
     if (Test-MatchesAny $normalizedPath $firmwareInputPatterns) {
-        return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $false; Android = $android }
+        return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $false; Android = $android; MobaDemo = $mobaDemo }
     }
 
     if (Test-MatchesAny $normalizedPath $mutationInputPatterns) {
-        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $true; Android = $android }
+        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $true; Android = $android; MobaDemo = $mobaDemo }
     }
 
     if (Test-MatchesAny $normalizedPath $otherDotNetPatterns) {
-        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $false; Android = $android }
+        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $false; Android = $android; MobaDemo = $mobaDemo }
     }
 
-    return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $true; Android = $android }
+    return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $true; Android = $android; MobaDemo = $true }
 }
 
 function Get-ChangedPaths([string] $Base, [string] $Head) {
@@ -142,10 +159,11 @@ $scope = [pscustomobject] @{
     Firmware = $empty -or @($pathScopes | Where-Object Firmware).Count -gt 0
     Mutation = $empty -or @($pathScopes | Where-Object Mutation).Count -gt 0
     Android = @($pathScopes | Where-Object Android).Count -gt 0
+    MobaDemo = $empty -or @($pathScopes | Where-Object MobaDemo).Count -gt 0
 }
 
 if ($scope.Code) {
-    Write-Host "Code-relevant changes found; firmware=$($scope.Firmware), mutation=$($scope.Mutation), android=$($scope.Android)."
+    Write-Host "Code-relevant changes found; firmware=$($scope.Firmware), mutation=$($scope.Mutation), android=$($scope.Android), mobademo=$($scope.MobaDemo)."
     @($changedPaths | Where-Object { (Get-PathScope $_).Code }) | Select-Object -First 20 | ForEach-Object { Write-Host "  $_" }
 }
 else {
@@ -158,6 +176,7 @@ if (-not [string]::IsNullOrEmpty($env:GITHUB_OUTPUT)) {
         "firmware=$($scope.Firmware.ToString().ToLowerInvariant())"
         "mutation=$($scope.Mutation.ToString().ToLowerInvariant())"
         "android=$($scope.Android.ToString().ToLowerInvariant())"
+        "mobademo=$($scope.MobaDemo.ToString().ToLowerInvariant())"
     )
 }
 
