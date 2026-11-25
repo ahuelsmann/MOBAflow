@@ -24,7 +24,11 @@ describe('shell navigation', () => {
       expect(row).toHaveAccessibleName(entry.title);
       expect(row.closest('ul')).toHaveAccessibleName(entry.category);
       expect(row.querySelector('strong')?.textContent ?? null).toBe(entry.isBold ? entry.title : null);
-      if (entry.badge) expect(within(row).getByText(entry.badge)).toBeVisible();
+      if (entry.badge) {
+        expect(within(row).getByText(entry.badge)).toBeVisible();
+        expect(row).toHaveAccessibleDescription(expect.stringContaining(entry.badge));
+      }
+      expect(row.querySelector('svg path')?.getAttribute('d')).toBeTruthy();
       if (entry.pathIconData) expect(row.querySelector('path')).toHaveAttribute('d', entry.pathIconData);
     });
   });
@@ -52,6 +56,15 @@ describe('shell navigation', () => {
     view.unmount();
     render(<App load={load} />);
     expect(await screen.findByRole('heading', { name: 'Train Control' })).toBeVisible();
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light');
+  });
+
+  it('applies stored Light to loading and error states', async () => {
+    localStorage.setItem('mobademo-theme', 'light');
+    render(<App load={() => Promise.reject(new Error('Unavailable'))} />);
+    expect(screen.getByRole('status')).toBeVisible();
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light');
+    expect(await screen.findByRole('alert')).toBeVisible();
     expect(document.documentElement).toHaveAttribute('data-theme', 'light');
   });
 

@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { enabledPages } from '../../config/enabledPages';
 import navigation from '../../examples/navigation.json';
 import type { NavigationEntry } from '../../examples/types';
-import { useDemoTheme } from '../theme/useDemoTheme';
+import { NavigationIcon } from './NavigationIcon';
 import './navigation.css';
 
 const landingPage = 'traincontrol';
@@ -22,28 +22,20 @@ for (const entry of navigation.entries) {
   else groups.set(entry.category, [entry]);
 }
 
-function NavigationIcon({ entry }: { entry: NavigationEntry }) {
-  if (entry.pathIconData) {
-    return (
-      <svg aria-hidden="true" className="demo-nav-icon" viewBox="0 0 18 20" fill="currentColor">
-        <path d={entry.pathIconData} />
-      </svg>
-    );
-  }
-
-  return <span aria-hidden="true" className="demo-nav-icon">{entry.icon}</span>;
+interface DemoShellProps {
+  lightTheme: boolean;
+  onToggleTheme: () => void;
 }
 
-export function DemoShell() {
+export function DemoShell({ lightTheme, onToggleTheme }: Readonly<DemoShellProps>) {
   const [page, setPage] = useState(landingPage);
-  const { theme, toggleTheme } = useDemoTheme();
   const hintId = useId();
   const title = flagsByKey[page] ? navigation.entries.find((entry) => entry.key === page)?.title : null;
 
   return (
     <div className="demo-nav-shell">
       <aside className="demo-nav-sidebar">
-        <button className="demo-theme-toggle" type="button" aria-pressed={theme === 'light'} onClick={toggleTheme}>
+        <button className="demo-theme-toggle" type="button" aria-pressed={lightTheme} onClick={onToggleTheme}>
           Light theme
         </button>
         <p hidden id={hintId}>{disabledHint}</p>
@@ -52,6 +44,8 @@ export function DemoShell() {
             <ul key={category} aria-label={category}>
               {entries.map((entry) => {
                 const available = entry.demoPage && flagsByKey[entry.key] === true;
+                const badgeId = entry.badge ? hintId + '-' + entry.key : undefined;
+                const description = [badgeId, available ? undefined : hintId].filter(Boolean).join(' ');
                 return (
                   <li key={entry.key}>
                     <button
@@ -60,14 +54,14 @@ export function DemoShell() {
                       aria-label={entry.title}
                       aria-current={available && entry.key === page ? 'page' : undefined}
                       aria-disabled={!available || undefined}
-                      aria-describedby={available ? undefined : hintId}
+                      aria-describedby={description || undefined}
                       title={available ? undefined : disabledHint}
                       tabIndex={available ? undefined : -1}
                       onClick={available ? () => setPage(entry.key) : undefined}
                     >
                       <NavigationIcon entry={entry} />
                       {entry.isBold ? <strong>{entry.title}</strong> : <span>{entry.title}</span>}
-                      {entry.badge && <span className="demo-nav-badge">{entry.badge}</span>}
+                      {entry.badge && <span className="demo-nav-badge" id={badgeId}>{entry.badge}</span>}
                     </button>
                   </li>
                 );

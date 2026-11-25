@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DemoShell } from './shell/navigation/DemoShell';
+import { useDemoTheme } from './shell/theme/useDemoTheme';
 
 export interface AppProps {
   /** Loads the data files the app needs. Injected so the start-up states can be tested. */
@@ -10,6 +11,7 @@ type LoadState = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; mess
 
 export function App({ load }: Readonly<AppProps>) {
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
+  const { theme, toggleTheme } = useDemoTheme();
 
   useEffect(() => {
     let cancelled = false;
@@ -45,5 +47,5 @@ export function App({ load }: Readonly<AppProps>) {
     );
   }
 
-  return <DemoShell />;
+  return <DemoShell lightTheme={theme === 'light'} onToggleTheme={toggleTheme} />;
 }
