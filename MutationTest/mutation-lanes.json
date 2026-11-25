@@ -73,7 +73,7 @@
     {
       "name": "demo-host",
       "status": "planned",
-      "test-directories": ["Test/MOBAdemo/Host", "Test/MOBAdemo/Build", "Test/MOBAdemo/Navigation"],
+      "test-directories": ["Test/MOBAdemo/Host", "Test/MOBAdemo/Build", "Test/MOBAdemo/Navigation", "Test/MOBAdemo/TrackPlanAsset"],
       "production-projects": ["MOBAdemo/Host/MOBAdemo.csproj"]
     },
     {
@@ -91,7 +91,7 @@
     {
       "name": "track-plan-renderer",
       "status": "planned",
-      "test-directories": ["Test/TrackPlanRenderer", "Test/MOBAdemo/TrackPlanAsset"],
+      "test-directories": ["Test/TrackPlanRenderer"],
       "production-projects": [
         "TrackPlan.Renderer/TrackPlan.Renderer.csproj",
         "TrackPlan.Editor/TrackPlan.Editor.csproj"
