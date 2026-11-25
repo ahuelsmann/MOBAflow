@@ -91,7 +91,7 @@
     {
       "name": "track-plan-renderer",
       "status": "planned",
-      "test-directories": ["Test/TrackPlanRenderer"],
+      "test-directories": ["Test/TrackPlanRenderer", "Test/MOBAdemo/TrackPlanAsset"],
       "production-projects": [
         "TrackPlan.Renderer/TrackPlan.Renderer.csproj",
         "TrackPlan.Editor/TrackPlan.Editor.csproj"
