@@ -31,6 +31,8 @@ solution, fleet photos, signal-box data and live desktop runtime state.
 
 - [Architecture](../developer/ARCHITECTURE.md)
 - [Project reference](../developer/PROJECT-REFERENCE.md)
+- [MOBAflow track plan system](MOBATPS.md)
+- [MOBAsmart technical notes](MOBASMART-WIKI.md)
 - [JSON validation](../developer/JSON-VALIDATION.md)
 - [Build performance](../developer/BUILD-PERFORMANCE.md)
 - [Spec Kit workflow](../developer/SPEC-KIT.md)
