@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ShellLayout } from './shell/layout/ShellLayout';
 import { DemoShell } from './shell/navigation/DemoShell';
 import { useDemoTheme } from './shell/theme/useDemoTheme';
 
@@ -47,5 +48,9 @@ export function App({ load }: Readonly<AppProps>) {
     );
   }
 
-  return <DemoShell lightTheme={theme === 'light'} onToggleTheme={toggleTheme} />;
+  return (
+    <ShellLayout>
+      <DemoShell lightTheme={theme === 'light'} onToggleTheme={toggleTheme} />
+    </ShellLayout>
+  );
 }
