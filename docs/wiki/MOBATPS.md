@@ -28,8 +28,7 @@ geometry reaches the editor through `ITrackCatalog`; MOBAflow registers `PikoATr
 - assign feedback inputs;
 - validate topology and segment constraints;
 - Undo/Redo;
-- zoom, fit-to-view and reset zoom;
-- import AnyRail XML; and
+- zoom, fit-to-view and reset zoom; and
 - export SVG.
 
 The currently included catalog is Piko A. Roco Line, Tillig and Märklin
