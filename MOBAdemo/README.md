@@ -52,3 +52,22 @@ folder of its output folder, so a reused folder never keeps hashed assets of an 
 `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~MOBAdemo"` runs the
 host tests and the build tests in `Test/MOBAdemo/Build`, which run the script once into a temporary folder. They are
 ignored with a clear reason when `pwsh`, `node` or `npm` is missing. Frontend unit tests: `npm test` in `MOBAdemo/app`.
+
+## Bundle budget
+
+FR-076 limits the scripts and style sheets together to 200 KB with Brotli. `Test-BundleBudget.ps1` measures every
+`.js`, `.mjs` and `.css` file of a built web root (lazy chunks included; the `.br` and `.gz` siblings are ignored),
+fails above 200,000 bytes and prints the sizes. `Test-BundleBudget.Tests.ps1` proves it on synthetic folders.
+
+```text
+pwsh MOBAdemo/build.ps1
+pwsh MOBAdemo/Test-BundleBudget.ps1 -Path MOBAdemo/Host/wwwroot-build
+```
+
+## CI
+
+The `mobademo` job of `.github/workflows/quality.yml` (check `MOBAdemo frontend, audit and bundle budget`) runs for
+changes below `MOBAdemo/`, `Test/MOBAdemo/` and the shared build inputs. In order: the lockfile audit
+(`npm audit` for high and critical vulnerabilities, before any install), the budget script self-tests, `npm ci`,
+lint, frontend unit tests, `build.ps1`, the budget check and the `Moba.Test.MOBAdemo` NUnit tests. It needs Node and
+the .NET SDK only, no WinUI or Android workload.
