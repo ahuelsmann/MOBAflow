@@ -33,7 +33,9 @@ internal sealed class RunningHost : IAsyncDisposable
         bool useDefaultWebRoot = false,
         string environment = "Production",
         Action<WebApplication>? configure = null,
-        Action<string>? seedWebRoot = null)
+        Action<string>? seedWebRoot = null,
+        HostLimits? limits = null,
+        string[]? extraArgs = null)
     {
         string? webRoot = null;
         WebApplication? app = null;
@@ -49,9 +51,10 @@ internal sealed class RunningHost : IAsyncDisposable
             }
 
             app = MobaDemoHost.Build(
-                ["--urls", "http://127.0.0.1:0", "--environment", environment],
+                ["--urls", "http://127.0.0.1:0", "--environment", environment, .. extraArgs ?? []],
                 webRoot,
-                configure);
+                configure,
+                limits);
             await app.StartAsync().ConfigureAwait(false);
 
             var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!

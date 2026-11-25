@@ -4814,6 +4814,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAdemo/Host/MobaDemoHostRateLimitTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAdemo/Host/MobaDemoHostTests.cs",
       "count": 1
     },

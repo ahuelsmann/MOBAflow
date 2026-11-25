@@ -63,7 +63,9 @@ files for the actual direct references, including conditional entries.
 
 `MOBAdemo` only serves the static MOBAdemo web showcase: the files of its web root (precompressed `.br`/`.gz`
 variants selected by `Accept-Encoding`), `/health` and `/robots.txt`, with security and cache headers, neutral plain-text
-errors and GET/HEAD only. It references no other project and is not part of the runtime, MOBApi or app graph.
+errors and GET/HEAD only. Requests are limited per client address (60 non-static requests per minute, 200 static-file
+requests per hour, then HTTP 429 with `Retry-After`); the client address comes from one forwarded-headers pass.
+It references no other project and is not part of the runtime, MOBApi or app graph.
 
 Further rules:
 
