@@ -49,18 +49,19 @@ internal static class HelpTopics
 
             "Installation" => """
                 System Requirements:
-                - Windows 10/11 (64-bit)
-                - .NET 10 Runtime
+                - Windows 11 22H2 (build 22621) or newer (64-bit)
+                - .NET 10 SDK (as configured in global.json)
                 - Network connection to Z21
 
-                Installation:
-                1. Download MOBAflow from GitHub
-                2. Extract the archive
-                3. Start MOBAflow.exe
-                4. .NET Runtime will be automatically installed on first run
+                Build & Run from Source:
+                1. Clone MOBAflow from GitHub
+                2. Build with: dotnet build MOBAflow/MOBAflow.csproj
+                3. Start with: dotnet run --project MOBAflow/MOBAflow.csproj
+                   (or open Moba.slnx in Visual Studio)
 
                 Updates:
-                MOBAflow automatically checks for updates at startup.
+                MOBAflow does not include an automatic updater; pull new source
+                versions from GitHub when needed.
                 """,
 
             "Z21 Connection" => """
@@ -68,9 +69,11 @@ internal static class HelpTopics
 
                 1. Make sure your Z21 is powered on
                 2. Connect your PC to the same network
-                3. Enter the IP address of the Z21 (default: 192.168.0.111)
-                4. Click "Connect"
+                3. Open the Solution page and expand Z21 Finder to search the network
+                4. Drag an unassigned Z21 onto a project, or double-click to assign it
+                   to the selected project (or enter IP address and UDP port per project)
 
+                Each project runs independently with its own Z21 assignment (default IP: 192.168.0.111).
                 The Z21 uses the UDP port configured in the project's properties (21105 by default).
                 Z21 Finder also probes UDP 21106 as an alternative Z21 port.
                 MOBApi discovery on the PC also uses UDP 21106, with a different protocol.
@@ -78,39 +81,40 @@ internal static class HelpTopics
                 Troubleshooting:
                 - Check your network connection
                 - Make sure no firewall is blocking
+                - Confirm each project uses a unique Z21 address
                 - Terminate Z21 app on smartphone beforehand
                 """,
 
             "First Ride" => """
                 Your first locomotive ride:
 
-                1. Connect to the Z21
+                1. Assign a Z21 to your project on the Solution page
                 2. Go to Train Control
                 3. Select a locomotive or enter the DCC address
-                4. Switch on track power (Track Power)
+                4. Switch on track power (Track Power, Ctrl+P or F10)
                 5. Move the speed slider
 
                 Tips:
                 - F0 usually switches lights
-                - Use the direction switch
-                - Press STOP button in case of emergency
+                - Use the Direction toggle switch
+                - Use EMERGENCY STOP (Pause or Space) in case of emergency
                 """,
 
             // Train Control
             "Speed Control" => """
                 Speed control:
 
-                The speedometer displays the current speed step (0-126).
-                
+                The speedometer displays the current speed step (0-126 in 128-step mode).
+
                 Operation:
                 - Slider for smooth control
                 - Select a project locomotive from the list
                 - Mouse wheel for fine adjustment
 
                 DCC Speed Steps:
-                - 14 steps (older decoders)
-                - 28 steps (standard)
-                - 126 steps (recommended)
+                - 14 steps (older decoders, speed steps 0-13)
+                - 28 steps (standard, speed steps 0-27)
+                - 128 steps (fine control, speed steps 0-126)
                 """,
 
             "Functions F0-F31" => """
@@ -130,9 +134,9 @@ internal static class HelpTopics
             "Direction" => """
                 Change direction:
 
-                - Click on the direction arrow
-                - Or press spacebar
-                - If speed > 0, locomotive will brake first
+                - Use the Direction toggle switch (Forward / Backward) in Train Control
+                - If Acceleration Ramp is enabled and speed > 0, the locomotive ramps down
+                  to 0 before reversing and ramping back up
 
                 Note:
                 The direction depends on the decoder setting.
@@ -142,16 +146,18 @@ internal static class HelpTopics
             "Emergency Stop" => """
                 Emergency stop function:
 
-                STOP button: Immediate stop of all locomotives
-                - Track power is cut off
-                - All speeds set to 0
+                EMERGENCY STOP button: Immediately sets the selected locomotive in Train Control
+                to speed step 0
+                - Only the locomotive selected in Train Control is stopped
+                - Other locomotives and track power are not affected (toggle track power with Ctrl+P or F10)
 
-                Keyboard shortcut: Escape or F12
+                Keyboard shortcuts (available across pages when a Z21 is connected and a locomotive is selected):
+                - Pause
+                - Space (unless a button, toggle switch, list, menu, or text input has focus)
 
                 After emergency stop:
                 1. Fix the cause
-                2. Switch track power back on
-                3. Locomotives will not resume automatically
+                2. The selected locomotive will not resume automatically; raise speed again when safe
                 """,
 
             // Automation
@@ -173,31 +179,34 @@ internal static class HelpTopics
             "Define Stations" => """
                 Stations in a journey:
 
-                Each station has:
-                - Name (e.g., "Hamburg Central")
-                - Feedback point ID (track sensor)
-                - Departure left/right (for announcements)
+                Each station is a reusable project entity with:
+                - Name (e.g., "Hamburg Central") and optional city metadata
+                - Platforms, each with an InPort feedback address
 
-                Workflow trigger:
-                When a train reaches the feedback point:
-                1. Speed is reduced
-                2. Announcement is played
-                3. Optional workflow starts
+                Workflow triggers:
+                Feedback triggers are configured in the Event Manager:
+                1. Add an event to an active journey
+                2. Set the InPort and trigger count
+                3. Assign a workflow to run when the InPort counter reaches that count
                 """,
 
             "Workflows" => """
                 Workflow automation:
 
-                A workflow is a sequence of actions:
-                - Control locomotive (speed, functions)
-                - Wait (time or feedback point)
-                - Play announcement
-                - Switch/control signals
+                A workflow is a reusable, ordered list of actions that run sequentially from top to bottom:
+                - Spoken announcement
+                - WAV audio playback
+                - Raw Z21 command
+                - PowerShell script
+                - Signal aspect selection
+                - Train destination display refresh
+                - Active-journey stop transition
 
-                Execution modes:
-                - Sequential: Actions one after another
-                - Parallel: Actions simultaneously
-                - Loop: Repetition
+                Timing & authoring:
+                - Each action finishes before the next starts
+                - Delay after adds a pause in milliseconds after an action
+                - Edit workflows in List or Graph view, verify with Validate or Dry run,
+                  and assign them to journey events in the Event Manager
                 """,
 
             "Speech Announcements" => """
@@ -219,18 +228,26 @@ internal static class HelpTopics
 
             // Signal Box
             "Track Plan Editor" => """
-                Signal Box - Direct Layout Operation:
+                Track Plan Editor:
 
                 The track plan editor allows:
                 - Graphical display of your layout
-                - Place tracks, signals, switches
-                - Control via mouse click
+                - Place Piko A track pieces, signals, and switches
+                - Snap-to-connect, feedback-point (InPort) assignment, and validation
+                - AnyRail XML import and SVG export
 
                 Operation:
-                - Drag & drop from toolbar
+                - Drag & drop track pieces from the toolbox
+                - Drag the rotation handle to rotate a selected piece
                 - Right-click for context menu
-                - Double-click to control
-                - Right mouse button to move plan
+
+                Keyboard shortcuts:
+                - Delete or Backspace: Delete the selection
+                - Ctrl+Z / Ctrl+Y: Undo / Redo
+                - Ctrl++ / Ctrl+-: Zoom in / out
+                - Ctrl+0: Fit the plan to the viewport
+                - Ctrl+1: Reset zoom to 100%
+                - R: Disconnect the selected track connection
 
                 Block occupancy is an observation only. MOBAflow does not reserve routes,
                 lock turnouts or prevent collisions. The operator is responsible for safe operation.
@@ -305,15 +322,15 @@ internal static class HelpTopics
             "Place Tracks" => """
                 Place tracks in editor:
 
-                1. Select a track from library
+                1. Select a track from the Piko A library
                 2. Drag it onto the track plan
-                3. Rotate with R key or right-click
-                4. Connect with other tracks
+                3. Drag the rotation handle to rotate a selected piece
+                4. Connect with other tracks (press R to disconnect a selected connection)
 
                 Tips:
-                - Grid snapping can be disabled
-                - Multi-select with Ctrl+Click
-                - Copy with Ctrl+C, Paste with Ctrl+V
+                - Undo / Redo with Ctrl+Z / Ctrl+Y
+                - Delete selected pieces with Delete or Backspace
+                - Zoom with Ctrl++ / Ctrl+-, fit with Ctrl+0, or reset to 100% with Ctrl+1
                 """,
 
             "Connections" => """
