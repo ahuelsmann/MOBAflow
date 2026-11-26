@@ -813,6 +813,18 @@ jobs:
           ./scripts/Test-TestRunResults.ps1 -Path $trx -MinimumPassed 150
           exit $testExitCode
 
+      - name: Build MOBAdemo host
+        shell: pwsh
+        run: dotnet build MOBAdemo/Host/MOBAdemo.csproj --configuration Release
+
+      - name: Install Playwright Chromium
+        working-directory: MOBAdemo/app
+        run: npx --no-install playwright install --with-deps chromium
+
+      - name: Run MOBAdemo browser checks
+        working-directory: MOBAdemo/app
+        run: npm run e2e
+
       - name: Archive MOBAdemo test results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -820,6 +832,17 @@ jobs:
           name: mobademo-${{ github.run_number }}
           path: artifacts/TestResults/mobademo/**
           if-no-files-found: warn
+          retention-days: 30
+
+      - name: Archive MOBAdemo browser report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mobademo-playwright-${{ github.run_number }}
+          path: |
+            MOBAdemo/app/playwright-report/**
+            MOBAdemo/app/test-results/**
+          if-no-files-found: ignore
           retention-days: 30
 
   android-release:

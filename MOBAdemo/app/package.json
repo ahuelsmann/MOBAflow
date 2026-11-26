@@ -12,6 +12,7 @@
     "build": "tsc --noEmit && vite build",
     "compress": "node scripts/compress-assets.mjs",
     "test": "vitest run",
+    "e2e": "playwright test",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -19,7 +20,9 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.1",
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.1",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "8.0.0",
     "@testing-library/react": "16.3.3",
