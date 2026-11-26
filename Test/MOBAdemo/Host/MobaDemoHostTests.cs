@@ -54,6 +54,7 @@ internal sealed class MobaDemoHostTests
     }
 
     [Test]
+    [NonParallelizable]
     public async Task SynchronizeDefaultWebRoot_RemovesStaleAssetsAndReplacesNewerStaleIndex()
     {
         var tempRoot = Path.Combine(Path.GetTempPath(), "mobademo-sync-" + Guid.NewGuid().ToString("N"));

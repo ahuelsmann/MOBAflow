@@ -32,23 +32,8 @@ internal sealed class HostPublishTests
     {
         if (Directory.Exists(_root))
         {
-            DeleteReparsePoints(_root);
+            BuildScript.DeleteReparsePoints(_root);
             Directory.Delete(_root, recursive: true);
-        }
-    }
-
-    private static void DeleteReparsePoints(string directory)
-    {
-        foreach (var child in Directory.EnumerateDirectories(directory))
-        {
-            if (new DirectoryInfo(child).LinkTarget != null)
-            {
-                Directory.Delete(child);
-            }
-            else
-            {
-                DeleteReparsePoints(child);
-            }
         }
     }
 
@@ -244,10 +229,7 @@ internal sealed class HostPublishTests
                 }
                 finally
                 {
-                    if (new DirectoryInfo(alias).LinkTarget != null)
-                    {
-                        Directory.Delete(alias);
-                    }
+                    BuildScript.DeleteDirectoryLink(alias);
                 }
             }
         }
@@ -306,10 +288,7 @@ internal sealed class HostPublishTests
             }
             finally
             {
-                if (new DirectoryInfo(alias).LinkTarget != null)
-                {
-                    Directory.Delete(alias);
-                }
+                BuildScript.DeleteDirectoryLink(alias);
             }
         }
     }

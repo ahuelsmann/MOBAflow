@@ -106,13 +106,21 @@
                     [Output]
                     public bool OverlapsProjectOrWebRoot { get; set; }
 
+                    private bool _hasResolutionError;
+
                     public override bool Execute()
                     {
+                        _hasResolutionError = false;
                         CanonicalPath = ResolveCanonical(BaseDirectory, TargetPath, 0);
                         string canonProject = ResolveCanonical(ProjectDirectory, ".", 0);
                         string canonProjectWebRoot = ResolveCanonical(canonProject, "wwwroot", 0);
                         string canonProjectBuildWebRoot = ResolveCanonical(canonProject, "wwwroot-build", 0);
                         string canonTargetWebRoot = ResolveCanonical(CanonicalPath, "wwwroot", 0);
+
+                        if (_hasResolutionError)
+                        {
+                            return false;
+                        }
 
                         StringComparison comparison = Path.DirectorySeparatorChar == '\\'
                             ? StringComparison.OrdinalIgnoreCase
@@ -146,6 +154,8 @@
                         string full = TrimTrailingSeparator(Path.GetFullPath(combined));
                         if (depth > 16)
                         {
+                            _hasResolutionError = true;
+                            Log.LogError("Cannot resolve '{0}': symbolic link nesting depth exceeded 16.", full);
                             return full;
                         }
 
@@ -250,7 +260,7 @@
                                 length = GetFinalPathNameByHandleW(handle, buffer, (uint)buffer.Capacity, 0);
                             }
 
-                            if (length == 0)
+                            if (length == 0 || length >= buffer.Capacity)
                             {
                                 Log.LogWarning(
                                     "Unable to resolve final path for Windows link '{0}' (Win32 error {1}).",
