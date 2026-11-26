@@ -1,1 +1,1 @@
-export const signalBoxEnabled: boolean = false;
+export const signalBoxEnabled: boolean = true;
