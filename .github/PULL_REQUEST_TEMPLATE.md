@@ -5,7 +5,9 @@
 - Issue:
 - Risk class (H/M/L):
 - Locked areas:
+- Writer family: claude|openai|gemini
 - Writer:
+- Orchestrator: <head-name>
 - Companion / review profiles (P1-P4, or none for class L):
 
 ## Summary

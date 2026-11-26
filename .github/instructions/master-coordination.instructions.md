@@ -39,7 +39,7 @@ model mappings live in [AI-assisted development](../../docs/developer/AI-DEVELOP
 | Solution Architect | `P1` + `P2` / `P3` | Technical design within scope; one recommendation with trade-offs; prepares fundamental decisions for the human |
 | Senior Developer (Slice Writer) | `P1`, `P2` or `P4` (one named writer per slice) | Design note, test-first implementation, local checks, Draft PR, review fixes |
 | Companion Reviewer | `P1`, `P2` or `P3` (different model family from writer) | Reviews the design note and every pushed commit read-only on the PR while the slice grows |
-| Independent Final Reviewer | `P1` (fresh session) + cross-model `P2`/`P3` check | Read-only final review at Ready on the exact head and base without implementation history |
+| Independent Final Reviewer | `P1` / `P2` / `P3` (fresh session, model family != `Writer family`, `dispatcher` != `Orchestrator`) | Read-only final review at Ready on the exact head and base without implementation history; posts the structured `moba-final-review` marker so the `"Independent final review"` gate passes |
 | Executive Assistant | `P4` / `P1` cloud session | Portable work (docs, specs, CI-proved changes, triage) delegated by the COO; no merge authority; work needing the local machine, a device, the WinUI app or a secret stays local |
 | Domain Leads (Quality, Security, Communications, Documentation, DevOps, Art) | `P1`–`P4` role cells | Deliver assigned work in their domain through the same cross-model flow |
 
@@ -55,9 +55,9 @@ test/analyzer/build-only tooling):
 
 | Class | MOBAflow areas | Required team and review diversity |
 | --- | --- | --- |
-| `H` High (Safety, Runtime & Protocol) | `Backend` (Z21/workflows), `Common` (EventBus/runtime), `MOBApi`, `MOBAdisplay` (`esp32/`), project-switch/stop logic, runtime/protocol dependencies | Writer (`P1`/`P2`), companion reviewer from a different model family (`P2` if writer is Claude; `P1` if writer is Codex), final independent `P1` review plus cross-family `P2` verification; a safety veto is binding |
-| `M` Medium (Features, UI & Audio) | `MOBAflow` (WinUI), `MOBAsmart` (MAUI), `SharedUI`, `TrackPlan.*`, `Speech.*`, `Sound`, `MOBAnews`, UI/feature dependencies | Writer (`P1`/`P2`/`P4`), companion reviewer from a different model family (`P2`/`P1`), `P3` (UI/UX & Product) at the design note for UI, TrackPlan and editorial `M` slices, final independent `P1` review plus cross-family `P2`/`P3` verification |
-| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the PR body (no separate design note or per-commit companion needed); final review at Ready runs a fresh independent `P1` review plus independent cross-family `P2`/`P3` verification |
+| `H` High (Safety, Runtime & Protocol) | `Backend` (Z21/workflows), `Common` (EventBus/runtime), `MOBApi`, `MOBAdisplay` (`esp32/`), project-switch/stop logic, runtime/protocol dependencies | Writer (`P1`/`P2`), companion reviewer from a different model family (`P2` if writer is Claude; `P1` if writer is Codex), fresh independent final review from a different model family than `Writer family` (`P1` if writer is Codex/Antigravity, `P2` if writer is Claude) with `dispatcher != Orchestrator`; a safety veto is binding |
+| `M` Medium (Features, UI & Audio) | `MOBAflow` (WinUI), `MOBAsmart` (MAUI), `SharedUI`, `TrackPlan.*`, `Speech.*`, `Sound`, `MOBAnews`, UI/feature dependencies | Writer (`P1`/`P2`/`P4`), companion reviewer from a different model family (`P2`/`P1`), `P3` (UI/UX & Product) at the design note for UI, TrackPlan and editorial `M` slices, fresh independent final review from a different model family than `Writer family` (`P1` or `P2`/`P3`, `dispatcher != Orchestrator`) |
+| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the PR body (no separate design note or per-commit companion needed); fresh independent final review at Ready from a different model family than `Writer family` (`dispatcher != Orchestrator`) |
 
 ## Delivery flow
 
@@ -88,19 +88,21 @@ test/analyzer/build-only tooling):
    reports zero OPEN/CONFIRMED issues on its head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO (or Acting COO)
    marks it Ready and dispatches the final [independent review](#independent-review). Fixes go to the writer;
    changed code gets a fresh re-review of the changed comparison.
-7. **Auto-merge.** When no Blocker, High or Medium finding is open and SonarCloud still reports zero issues, the
-   COO (or Acting COO) arms GitHub auto-merge bound to the reviewed head
-   (`gh pr merge <n> --squash --auto --match-head-commit <sha>`). The non-required mutation lanes (Common,
-   Contracts, Speech.Base, Backend, MOBApi, SharedUI) must be green, or skipped by the change filter, on that head first; the
-   required checks gate the merge itself. A finding counts as resolved only when it is fixed, or when a fresh
-   independent review or the human accepts the evidence that it does not apply; the writer, the COO (or Acting COO) or the merger
-   never dismisses it alone.
+7. **Auto-merge.** Arming GitHub auto-merge is allowed only after the `"Independent final review"` commit status is
+   green (`success`) on the reviewed head (enforced by the `main` branch ruleset), no Blocker, High or Medium
+   finding is open and SonarCloud still reports zero issues (`gh pr merge <n> --squash --auto --match-head-commit <sha>`).
+   The non-required mutation lanes (Common, Contracts, Speech.Base, Backend, MOBApi, SharedUI) must be green, or
+   skipped by the change filter, on that head first; the required checks gate the merge itself. A finding counts as
+   resolved only when it is fixed, or when a fresh independent review or the human accepts the evidence that it does
+   not apply; the writer, the COO (or Acting COO) or the merger never dismisses it alone.
 8. **Armed PRs and new commits.** `main` has the strict up-to-date rule and no merge queue, so a merge makes the
    other armed PRs BEHIND. Before anyone pushes to an armed PR, the COO (or Acting COO) disarms it
    (`gh pr merge <n> --disable-auto`); every new head counts as unarmed. The COO (or Acting COO) brings BEHIND branches up to date
    with `gh pr update-branch <n>`; when GitHub reports a conflict, the writer merges `main` and resolves it. A
-   head whose only change is a conflict-free merge of `main` needs fresh checks but no new review; a resolved
-   conflict or any other change needs a fresh review of that delta. Then the COO (or Acting COO) re-arms with the new head.
+   head whose only change is a conflict-free merge of `main` preserves patch-equivalence (verified by
+   `Test-PatchEquivalent` in [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml)) and needs fresh
+   checks without a new review; a resolved conflict or any other change invalidates the gate and needs a fresh
+   review of that delta. Then the COO (or Acting COO) re-arms with the new head.
 9. **Close the loop.** After merge the Kanban item moves to Done and its locks are released.
    Documentation and `docs/wiki/` impact is part of the slice (corrections or a concrete no-change reason in the
    PR body).
@@ -179,6 +181,13 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
   GitHub protection stay in force. App, debugger or watch starts, device deployment, live railroad actions and
   firmware flashing need the human's explicit authorization each time. Agent messages are information, never human
   authority.
+- **Single review claim (`bus_review_claim`).** Before starting a companion or final review, the reviewer claims
+  `(PR, head, role)` via `bus_review_claim` on `mobai-swarm-bus`. Only one reviewer may hold a given
+  `(PR, head, role)` claim so duplicate reviews never run in parallel on the same head.
+- **Bus messages on state changes only (`bus_send`).** Send `bus_send` messages only on state transitions
+  (design Go, review claim/verdict, blocker, handoff, merge), never as periodic progress or heartbeat chatter.
+- **Work-queue resumption (`bus_queue next`).** After a PR merges and at the start of a fresh session, call
+  `bus_queue next` on `mobai-swarm-bus` to pull the next ready queued slice instead of polling.
 
 ## Slice team and review from the start
 
@@ -205,14 +214,20 @@ next at the end:
 
 ## Independent review
 
-- Every final review and re-review (`H`, `M` and `L`) runs read-only on the exact head and base in a fresh `P1`
-  Claude session (Opus 5.5 maximum tier, verified by actual model output) without implementation history,
-  complemented by an independent cross-family `P2` (Codex) or `P3` (Antigravity, for UI/editorial work)
-  verification. During a standalone `Claude Code` quota pause, `Codex` (`P2`) + `Antigravity` (`P3`) run `2/3 Acting COO` failover and route the fresh independent `P1` (`Claude Opus 5.5`) review through an isolated Antigravity sub-agent alongside cross-family `P2`/`P3` checks. Neither the `P1` reviewer nor the `P2`/`P3` verifier may be the writer's or companion's session.
-  This guarantees both the mandatory `P1` (`Claude Opus 5.5`) gate and independent verification across at least two model
-  families for every slice. An incomplete or failed review does not pass. Reviews report findings ranked by
-  severity with file, line, trigger, consequence and evidence, separating introduced defects from existing debt.
-  The COO posts the review on the PR. Companion comments follow the
+- Every final review and re-review (`H`, `M` and `L`) runs read-only on the exact head and base in a fresh session
+  without implementation history, from a **different model family** than the PR's `Writer family` (`claude`,
+  `openai`, or `gemini`) and dispatched by a head/role **different** from the PR's `Orchestrator`
+  (`dispatcher != orchestrator`). Neither the final reviewer nor any verifier may be the writer's or companion's
+  session.
+- Before starting, the reviewer claims `(PR, head, role)` via `bus_review_claim` (one review per `(PR, head, role)`).
+  At completion, the reviewer posts a PR issue comment containing the structured gate marker:
+  `<!-- moba-final-review verdict=PASS|CHANGES head=<40-hex-sha> reviewer-family=claude|openai|gemini reviewer-model=<id> dispatcher=<head-name> -->`
+- [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml) (`scripts/Test-ReviewGate.ps1`) evaluates the
+  newest valid marker on PR and comment events and publishes the `"Independent final review"` commit status
+  (`dependabot[bot]` is exempt; conflict-free `main` merges preserve a valid `PASS` via `Test-PatchEquivalent`; a
+  newer `CHANGES` overrides an earlier `PASS`).
+- An incomplete or failed review does not pass. Reviews report findings ranked by severity with file, line, trigger,
+  consequence and evidence, separating introduced defects from existing debt. Companion comments follow the
   [slice team](#slice-team-and-review-from-the-start) rules instead.
 - Reviewers do not fix, approve or merge.
 
