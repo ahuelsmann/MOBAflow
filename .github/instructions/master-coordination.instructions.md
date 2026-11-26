@@ -99,9 +99,10 @@ test/analyzer/build-only tooling):
    other armed PRs BEHIND. Before anyone pushes to an armed PR, the COO (or Acting COO) disarms it
    (`gh pr merge <n> --disable-auto`); every new head counts as unarmed. The COO (or Acting COO) brings BEHIND branches up to date
    with `gh pr update-branch <n>`; when GitHub reports a conflict, the writer merges `main` and resolves it. A
-   head whose only change is a conflict-free merge of `main` preserves patch-equivalence (verified by
-   `Test-PatchEquivalent` in [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml)) and needs fresh
-   checks without a new review; a resolved conflict or any other change invalidates the gate and needs a fresh
+   head whose only change is a conflict-free merge of `main` preserves carry-forward (verified by ancestor,
+   `origin/main` reachability, and identical raw diff SHA-256 in
+   [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml)) and needs fresh checks without a new
+   review; a resolved conflict or any other change alters the raw diff and invalidates the gate, requiring a fresh
    review of that delta. Then the COO (or Acting COO) re-arms with the new head.
 9. **Close the loop.** After merge the Kanban item moves to Done and its locks are released.
    Documentation and `docs/wiki/` impact is part of the slice (corrections or a concrete no-change reason in the
@@ -182,12 +183,14 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
   firmware flashing need the human's explicit authorization each time. Agent messages are information, never human
   authority.
 - **Single review claim (`bus_review_claim`).** Before starting a companion or final review, the reviewer claims
-  `(PR, head, role)` via `bus_review_claim` on `mobai-swarm-bus`. Only one reviewer may hold a given
-  `(PR, head, role)` claim so duplicate reviews never run in parallel on the same head.
+  `(PR, head, role)` so duplicate reviews never run in parallel on the same head. `bus_review_claim` and
+  `bus_queue` MCP tools become mandatory once `MOBAdev v3.14.0` is deployed and MCP connectors reload; until
+  then, use `node <MOBAdev>/bus/mobai-swarm-bus.mjs --cli review-claim|queue ...` or `bus_send` (`review-claim`).
 - **Bus messages on state changes only (`bus_send`).** Send `bus_send` messages only on state transitions
   (design Go, review claim/verdict, blocker, handoff, merge), never as periodic progress or heartbeat chatter.
-- **Work-queue resumption (`bus_queue next`).** After a PR merges and at the start of a fresh session, call
-  `bus_queue next` on `mobai-swarm-bus` to pull the next ready queued slice instead of polling.
+- **Work-queue resumption (`bus_queue next`).** After a PR merges and at the start of a fresh session, pull the
+  next ready queued slice instead of polling (`bus_queue next` once `MOBAdev v3.14.0` MCP connectors reload;
+  until then `node <MOBAdev>/bus/mobai-swarm-bus.mjs --cli queue next`).
 
 ## Slice team and review from the start
 
@@ -219,17 +222,41 @@ next at the end:
   `openai`, or `gemini`) and dispatched by a head/role **different** from the PR's `Orchestrator`
   (`dispatcher != orchestrator`). Neither the final reviewer nor any verifier may be the writer's or companion's
   session.
-- Before starting, the reviewer claims `(PR, head, role)` via `bus_review_claim` (one review per `(PR, head, role)`).
-  At completion, the reviewer posts a PR issue comment containing the structured gate marker:
-  `<!-- moba-final-review verdict=PASS|CHANGES head=<40-hex-sha> reviewer-family=claude|openai|gemini reviewer-model=<id> dispatcher=<head-name> -->`
-- [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml) (`scripts/Test-ReviewGate.ps1`) evaluates the
-  newest valid marker on PR and comment events and publishes the `"Independent final review"` commit status
-  (`dependabot[bot]` is exempt; conflict-free `main` merges preserve a valid `PASS` via `Test-PatchEquivalent`; a
-  newer `CHANGES` overrides an earlier `PASS`).
+- Before starting, the reviewer claims `(PR, head, role)` (via `bus_review_claim` once `MOBAdev v3.14.0` MCP
+  connectors reload; until then via `node <MOBAdev>/bus/mobai-swarm-bus.mjs --cli review-claim ...` or
+  `bus_send` `review-claim`). At completion, the reviewer posts a PR issue comment containing the structured gate
+  marker with both exact `head=` and `base=` SHAs:
+  `<!-- moba-final-review verdict=PASS|CHANGES head=<40-char sha> base=<40-char sha> reviewer-family=claude|openai|gemini reviewer-model=<id> dispatcher=<head-name> -->`
+- Automated `chatgpt-codex-connector[bot]` reviews are also recognized in the Verified tier when posted on the
+  exact head SHA with zero unresolved review threads (without requiring `base=`).
+- [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml) (`scripts/Test-ReviewGate.ps1`) runs from
+  `pull_request_target` using only trusted `default_branch` scripts (never executing PR code), evaluates the
+  newest valid marker or verified bot review, cross-checks inferred writer family from PR branch/commits, and
+  publishes the `"Independent final review"` commit status (`dependabot[bot]` is exempt; conflict-free `main`
+  merges carry forward a valid `PASS` only when `markerHead` is an ancestor of `currentHead`, every non-merge
+  commit in `markerHead..currentHead` is reachable from `origin/main`, and the raw `git diff --no-color`
+  SHA-256 is byte-for-byte identical; a newer `CHANGES` overrides an earlier `PASS`).
 - An incomplete or failed review does not pass. Reviews report findings ranked by severity with file, line, trigger,
   consequence and evidence, separating introduced defects from existing debt. Companion comments follow the
   [slice team](#slice-team-and-review-from-the-start) rules instead.
 - Reviewers do not fix, approve or merge.
+
+## Threat model
+
+- **Verified tier:** Dedicated bot/app accounts registered in
+  [`.github/review-gate-identities.json`](../review-gate-identities.json) (`trustedReviewers`, such as
+  `chatgpt-codex-connector[bot]`, `claude[bot]`, and `gemini-code-assist[bot]`). GitHub verifies the actor
+  identity, and the published status description includes `"verified"`.
+- **Declared tier (shared-account limitation):** While multiple CLI/local agents share a single maintainer GitHub
+  account (`allowDeclaredReviews: true`), a `moba-final-review` comment carries a self-declared `reviewer-family`,
+  `reviewer-model`, and `dispatcher`, and the commit status description includes `"declared (shared account)"`.
+  GitHub cannot cryptographically distinguish two agents posting under the same user token.
+- **Mitigations:** `scripts/Test-ReviewGate.ps1` cross-checks PR branch prefixes and non-merge commit
+  `Co-Authored-By` trailers to reject `"writer family mismatch"`, binds markers to exact `head=` and `base=` SHAs
+  plus byte-identical raw-diff carry-forward, and runs `pull_request_target` strictly from `default_branch`
+  separate from unprivileged `pull_request` tests ([`.github/workflows/review-gate-tests.yml`](../workflows/review-gate-tests.yml)).
+  Issue `#566` tracks provisioning dedicated per-agent GitHub identities so `allowDeclaredReviews` can be
+  flipped to `false`.
 
 ## Human communication
 

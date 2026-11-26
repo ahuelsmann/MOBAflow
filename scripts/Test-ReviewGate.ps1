@@ -77,7 +77,7 @@ function ConvertTo-ModelFamily {
         return $matched[0]
     }
 
-    # Antigravity can host built-in Claude models (for example "Antigravity Opus"); treat explicit Claude model names as claude unless OpenAI also matched.
+    # Antigravity can host built-in Claude models (for example "Antigravity Opus").
     if ($matched.Count -eq 2 -and $matchesClaude -and $matchesGemini -and -not $matchesOpenAi -and $lower -match '(?:claude|opus|sonnet|haiku)') {
         return 'claude'
     }
@@ -139,13 +139,16 @@ function ConvertFrom-IssueComment {
 
     $userObj = Get-ObjectField -Source $Comment -Names @('user', 'User')
     $author = [string] (Get-ObjectField -Source $userObj -Names @('login', 'Login'))
+    if ([string]::IsNullOrWhiteSpace($author)) {
+        $author = [string] (Get-ObjectField -Source $Comment -Names @('author', 'Author'))
+    }
 
     return [pscustomobject] @{
         Index = $Index
         HasCreatedAt = $hasDate
         CreatedAt = if ($hasDate) { $parsedDate } else { [DateTimeOffset]::MinValue }
         CommentId = (Get-ObjectField -Source $Comment -Names @('id', 'Id'))
-        Author = if ([string]::IsNullOrWhiteSpace($author)) { $null } else { $author }
+        Author = if ([string]::IsNullOrWhiteSpace($author)) { $null } else { $author.Trim() }
         Body = [string] (Get-ObjectField -Source $Comment -Names @('body', 'Body'))
     }
 }
@@ -204,7 +207,7 @@ function ConvertFrom-ReviewMarkerMatch {
         $attrs[$key] = Get-AttributeValue -AttrMatch $attrMatch
     }
 
-    foreach ($requiredKey in @('verdict', 'head', 'reviewer-family', 'reviewer-model', 'dispatcher')) {
+    foreach ($requiredKey in @('verdict', 'head', 'base', 'reviewer-family', 'reviewer-model', 'dispatcher')) {
         if (-not $attrs.ContainsKey($requiredKey) -or [string]::IsNullOrWhiteSpace($attrs[$requiredKey])) {
             return $null
         }
@@ -216,7 +219,8 @@ function ConvertFrom-ReviewMarkerMatch {
     }
 
     $head = $attrs['head'].ToLowerInvariant()
-    if ($head -notmatch '^[0-9a-f]{40}$') {
+    $base = $attrs['base'].ToLowerInvariant()
+    if ($head -notmatch '^[0-9a-f]{40}$' -or $base -notmatch '^[0-9a-f]{40}$') {
         return $null
     }
 
@@ -228,6 +232,7 @@ function ConvertFrom-ReviewMarkerMatch {
     return [pscustomobject] @{
         Verdict = $verdict
         Head = $head
+        Base = $base
         ReviewerFamily = $reviewerFamily
         ReviewerModel = $attrs['reviewer-model']
         Dispatcher = $attrs['dispatcher']
@@ -257,7 +262,7 @@ function Get-FinalReviewMarkers {
         '<!--\s*moba-final-review\b(?<attrs>.*?)-->',
         [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
     $attrRegex = [Text.RegularExpressions.Regex]::new(
-        '\b(?<key>verdict|head|reviewer-family|reviewer-model|dispatcher)\s*=\s*(?:"(?<qval>[^"]*)"|''(?<sval>[^'']*)''|(?<uval>.*?))(?=\s+(?:verdict|head|reviewer-family|reviewer-model|dispatcher)\s*=|\s*$)',
+        '\b(?<key>verdict|head|base|reviewer-family|reviewer-model|dispatcher)\s*=\s*(?:"(?<qval>[^"]*)"|''(?<sval>[^'']*)''|(?<uval>.*?))(?=\s+(?:verdict|head|base|reviewer-family|reviewer-model|dispatcher)\s*=|\s*$)',
         [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
 
     $chronological = [Collections.Generic.List[pscustomobject]]::new()
@@ -313,6 +318,31 @@ function New-CleanGitProcessStartInfo {
     return $start
 }
 
+function Invoke-GitCapture {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RepositoryRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string[]] $Arguments
+    )
+
+    $start = New-CleanGitProcessStartInfo -FileName 'git' -Arguments (@('-C', $RepositoryRoot) + $Arguments)
+    $proc = [Diagnostics.Process]::Start($start)
+    try {
+        $out = $proc.StandardOutput.ReadToEndAsync()
+        $null = $proc.StandardError.ReadToEndAsync()
+        $proc.WaitForExit()
+        return [pscustomobject] @{
+            ExitCode = $proc.ExitCode
+            Output = $out.Result
+        }
+    }
+    finally {
+        $proc.Dispose()
+    }
+}
+
 function Get-GitMergeBase {
     param(
         [Parameter(Mandatory = $true)]
@@ -325,27 +355,59 @@ function Get-GitMergeBase {
         [string] $RepositoryRoot
     )
 
-    $start = New-CleanGitProcessStartInfo -FileName 'git' -Arguments @('-C', $RepositoryRoot, 'merge-base', $BaseRef, $Sha)
-    $proc = [Diagnostics.Process]::Start($start)
-    try {
-        $out = $proc.StandardOutput.ReadToEndAsync()
-        $null = $proc.StandardError.ReadToEndAsync()
-        $proc.WaitForExit()
-        if ($proc.ExitCode -ne 0) {
-            return $null
-        }
-        $value = $out.Result.Trim()
-        if ([string]::IsNullOrWhiteSpace($value)) {
-            return $null
-        }
-        return $value
+    $result = Invoke-GitCapture -RepositoryRoot $RepositoryRoot -Arguments @('merge-base', $BaseRef, $Sha)
+    if ($result.ExitCode -ne 0) {
+        return $null
     }
-    finally {
-        $proc.Dispose()
+
+    $value = $result.Output.Trim()
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return $null
     }
+
+    return $value
 }
 
-function Get-GitDiffPatchId {
+function Test-GitIsAncestor {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Ancestor,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Descendant,
+
+        [Parameter(Mandatory = $true)]
+        [string] $RepositoryRoot
+    )
+
+    $result = Invoke-GitCapture -RepositoryRoot $RepositoryRoot -Arguments @('merge-base', '--is-ancestor', $Ancestor, $Descendant)
+    return ($result.ExitCode -eq 0)
+}
+
+function Test-AllNonMergeCommitsReachable {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $MarkerHead,
+
+        [Parameter(Mandatory = $true)]
+        [string] $CurrentHead,
+
+        [Parameter(Mandatory = $true)]
+        [string] $BaseRef,
+
+        [Parameter(Mandatory = $true)]
+        [string] $RepositoryRoot
+    )
+
+    $result = Invoke-GitCapture -RepositoryRoot $RepositoryRoot -Arguments @('rev-list', '--no-merges', "$MarkerHead..$CurrentHead", '--not', $BaseRef)
+    if ($result.ExitCode -ne 0) {
+        return $false
+    }
+
+    return [string]::IsNullOrWhiteSpace($result.Output)
+}
+
+function Get-GitRawDiffHash {
     param(
         [Parameter(Mandatory = $true)]
         [string] $Sha,
@@ -362,37 +424,23 @@ function Get-GitDiffPatchId {
         return $null
     }
 
-    $diffStart = New-CleanGitProcessStartInfo -FileName 'git' -Arguments @('-C', $RepositoryRoot, 'diff', $mergeBase, $Sha)
-    $patchStart = New-CleanGitProcessStartInfo -FileName 'git' -Arguments @('-C', $RepositoryRoot, 'patch-id', '--stable')
-    $patchStart.RedirectStandardInput = $true
-
+    $diffStart = New-CleanGitProcessStartInfo -FileName 'git' -Arguments @('-C', $RepositoryRoot, 'diff', '--no-color', $mergeBase, $Sha)
     $diffProc = [Diagnostics.Process]::Start($diffStart)
-    $patchProc = [Diagnostics.Process]::Start($patchStart)
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
     try {
         $null = $diffProc.StandardError.ReadToEndAsync()
-        $patchOut = $patchProc.StandardOutput.ReadToEndAsync()
-        $null = $patchProc.StandardError.ReadToEndAsync()
-
-        $diffProc.StandardOutput.BaseStream.CopyTo($patchProc.StandardInput.BaseStream)
-        $patchProc.StandardInput.Close()
-
+        $hashBytes = $sha256.ComputeHash($diffProc.StandardOutput.BaseStream)
         $diffProc.WaitForExit()
-        $patchProc.WaitForExit()
 
-        if ($diffProc.ExitCode -ne 0 -or $patchProc.ExitCode -ne 0) {
+        if ($diffProc.ExitCode -ne 0) {
             return $null
         }
 
-        $patchText = $patchOut.Result.Trim()
-        if ([string]::IsNullOrWhiteSpace($patchText)) {
-            return ''
-        }
-
-        return ($patchText -split '\s+')[0].ToLowerInvariant()
+        return [Convert]::ToHexString($hashBytes).ToLowerInvariant()
     }
     finally {
+        $sha256.Dispose()
         $diffProc.Dispose()
-        $patchProc.Dispose()
     }
 }
 
@@ -418,17 +466,21 @@ function Test-PatchEquivalent {
         return $true
     }
 
-    $markerPatchId = Get-GitDiffPatchId -Sha $MarkerHead -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
-    if ([string]::IsNullOrEmpty($markerPatchId)) {
+    if (-not (Test-GitIsAncestor -Ancestor $MarkerHead -Descendant $CurrentHead -RepositoryRoot $RepositoryRoot)) {
         return $false
     }
 
-    $currentPatchId = Get-GitDiffPatchId -Sha $CurrentHead -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
-    if ([string]::IsNullOrEmpty($currentPatchId)) {
+    if (-not (Test-AllNonMergeCommitsReachable -MarkerHead $MarkerHead -CurrentHead $CurrentHead -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot)) {
         return $false
     }
 
-    return $markerPatchId.Equals($currentPatchId, [StringComparison]::OrdinalIgnoreCase)
+    $markerHash = Get-GitRawDiffHash -Sha $MarkerHead -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
+    $currentHash = Get-GitRawDiffHash -Sha $CurrentHead -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
+    if ([string]::IsNullOrEmpty($markerHash) -or [string]::IsNullOrEmpty($currentHash)) {
+        return $false
+    }
+
+    return $markerHash.Equals($currentHash, [StringComparison]::OrdinalIgnoreCase)
 }
 
 function Format-StatusDescription([string] $Message) {
@@ -461,7 +513,10 @@ function New-GateResult {
         [string] $WriterFamily = $null,
 
         [AllowNull()]
-        [string] $Orchestrator = $null
+        [string] $Orchestrator = $null,
+
+        [AllowNull()]
+        [string] $Tier = $null
     )
 
     return [pscustomobject] @{
@@ -470,7 +525,158 @@ function New-GateResult {
         Marker = $Marker
         WriterFamily = $WriterFamily
         Orchestrator = $Orchestrator
+        Tier = $Tier
     }
+}
+
+function Get-IdentitiesConfig {
+    param(
+        [string] $RepositoryRoot = (Get-Location).Path,
+
+        [string] $IdentitiesPath = '',
+
+        [AllowNull()]
+        [object] $IdentitiesConfig = $null
+    )
+
+    $source = $IdentitiesConfig
+    if ($null -eq $source) {
+        $resolvedPath = if ([string]::IsNullOrWhiteSpace($IdentitiesPath)) {
+            Join-Path $RepositoryRoot '.github/review-gate-identities.json'
+        }
+        else {
+            $IdentitiesPath
+        }
+
+        if (-not (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
+            return [pscustomobject] @{
+                TrustedReviewers = @{}
+                AllowDeclaredReviews = $false
+            }
+        }
+
+        $source = Get-Content -Raw -LiteralPath $resolvedPath | ConvertFrom-Json
+    }
+
+    $trusted = @{}
+    $rawTrusted = Get-ObjectField -Source $source -Names @('trustedReviewers', 'TrustedReviewers')
+    if ($rawTrusted -is [System.Collections.IDictionary]) {
+        foreach ($key in $rawTrusted.Keys) {
+            $trusted[([string] $key).Trim().ToLowerInvariant()] = ([string] $rawTrusted[$key]).Trim().ToLowerInvariant()
+        }
+    }
+    elseif ($null -ne $rawTrusted) {
+        foreach ($prop in $rawTrusted.PSObject.Properties) {
+            $trusted[$prop.Name.Trim().ToLowerInvariant()] = ([string] $prop.Value).Trim().ToLowerInvariant()
+        }
+    }
+
+    $allowRaw = Get-ObjectField -Source $source -Names @('allowDeclaredReviews', 'AllowDeclaredReviews')
+    $allowDeclared = ($null -ne $allowRaw) -and [bool] $allowRaw
+
+    return [pscustomobject] @{
+        TrustedReviewers = $trusted
+        AllowDeclaredReviews = $allowDeclared
+    }
+}
+
+function Get-BranchPrefixFamily([string] $HeadRefName) {
+    if ([string]::IsNullOrWhiteSpace($HeadRefName)) {
+        return $null
+    }
+
+    $lower = $HeadRefName.Trim().ToLowerInvariant()
+    if ($lower -match '^(?:claude|opus|sonnet|haiku)/') {
+        return 'claude'
+    }
+    if ($lower -match '^(?:codex|openai|gpt)/') {
+        return 'openai'
+    }
+    if ($lower -match '^(?:antigravity|gemini|argon)/') {
+        return 'gemini'
+    }
+
+    return $null
+}
+
+function Get-CommitInferredFamily([object] $Commit) {
+    if ($null -eq $Commit) {
+        return $null
+    }
+
+    $parents = Get-ObjectField -Source $Commit -Names @('parents', 'Parents')
+    if ($null -ne $parents -and @($parents).Count -gt 1) {
+        return $null
+    }
+
+    $commitNode = Get-ObjectField -Source $Commit -Names @('commit', 'Commit')
+    $message = [string] (Get-ObjectField -Source $commitNode -Names @('message', 'Message'))
+    if ([string]::IsNullOrWhiteSpace($message)) {
+        $message = [string] (Get-ObjectField -Source $Commit -Names @('message', 'Message'))
+    }
+
+    $families = [Collections.Generic.List[string]]::new()
+    foreach ($line in ($message -split "\r?\n")) {
+        if ($line -match '(?i)^\s*Co-Authored-By\s*:\s*(?<trailer>.+)$') {
+            $family = ConvertTo-ModelFamily -Value $Matches['trailer']
+            if ($null -ne $family -and $families -notcontains $family) {
+                $families.Add($family)
+            }
+        }
+    }
+
+    return @($families)
+}
+
+function Get-InferredWriterFamilies {
+    param(
+        [AllowNull()]
+        [string] $HeadRefName,
+
+        [AllowNull()]
+        [object[]] $Commits = @()
+    )
+
+    $families = [Collections.Generic.List[string]]::new()
+    $branchFamily = Get-BranchPrefixFamily -HeadRefName $HeadRefName
+    if ($null -ne $branchFamily) {
+        $families.Add($branchFamily)
+    }
+
+    foreach ($commit in @($Commits)) {
+        foreach ($commitFamily in @(Get-CommitInferredFamily -Commit $commit)) {
+            if ($null -ne $commitFamily -and $families -notcontains $commitFamily) {
+                $families.Add($commitFamily)
+            }
+        }
+    }
+
+    return @($families)
+}
+
+function Test-WriterCrossCheckError {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $ReviewerFamily,
+
+        [AllowNull()]
+        [string] $HeaderWriterFamily,
+
+        [AllowNull()]
+        [string[]] $InferredWriterFamilies = @()
+    )
+
+    if (@($InferredWriterFamilies) -contains $ReviewerFamily) {
+        return "writer family mismatch: commit or branch provenance identifies '$ReviewerFamily'."
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($HeaderWriterFamily) -and
+        $InferredWriterFamilies.Count -eq 1 -and
+        $InferredWriterFamilies[0] -ne $HeaderWriterFamily) {
+        return "writer family mismatch: header '$HeaderWriterFamily' conflicts with commit/branch '$($InferredWriterFamilies[0])'."
+    }
+
+    return $null
 }
 
 function Test-HasMalformedReviewMarker {
@@ -523,13 +729,164 @@ function Resolve-WriterFamily {
 }
 
 function Get-ShortSha([string] $Sha) {
+    if ([string]::IsNullOrWhiteSpace($Sha)) {
+        return ''
+    }
     if ($Sha.Length -ge 8) {
         return $Sha.Substring(0, 8)
     }
     return $Sha
 }
 
-function Resolve-MarkerHeadMatchResult {
+function Test-MarkerBaseMatches {
+    param(
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $Marker,
+
+        [string] $BaseSha = '',
+
+        [Parameter(Mandatory = $true)]
+        [string] $BaseRef,
+
+        [Parameter(Mandatory = $true)]
+        [string] $RepositoryRoot
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($BaseSha) -and $Marker.Base.Equals($BaseSha, [StringComparison]::OrdinalIgnoreCase)) {
+        return $true
+    }
+
+    $markerMergeBase = Get-GitMergeBase -Sha $Marker.Head -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
+    if ($null -ne $markerMergeBase -and $Marker.Base.Equals($markerMergeBase, [StringComparison]::OrdinalIgnoreCase)) {
+        return $true
+    }
+
+    return $false
+}
+
+function Test-HasUnresolvedReviewThreads {
+    param(
+        [AllowNull()]
+        [object[]] $ReviewThreads = @()
+    )
+
+    foreach ($thread in @($ReviewThreads)) {
+        if ($null -eq $thread) {
+            continue
+        }
+        $resolved = Get-ObjectField -Source $thread -Names @('isResolved', 'IsResolved')
+        if ($null -ne $resolved -and -not [bool] $resolved) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Get-CodexConnectorCandidate {
+    param(
+        [AllowNull()]
+        [object[]] $Reviews = @(),
+
+        [AllowNull()]
+        [object[]] $ReviewThreads = @(),
+
+        [Parameter(Mandatory = $true)]
+        [string] $HeadSha,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable] $TrustedReviewers
+    )
+
+    $botLogin = 'chatgpt-codex-connector[bot]'
+    if (-not $TrustedReviewers.ContainsKey($botLogin)) {
+        return $null
+    }
+
+    $botReviews = [Collections.Generic.List[pscustomobject]]::new()
+    $index = 0
+    foreach ($review in @($Reviews)) {
+        $userObj = Get-ObjectField -Source $review -Names @('user', 'User')
+        $login = [string] (Get-ObjectField -Source $userObj -Names @('login', 'Login'))
+        if ($login.Trim().ToLowerInvariant() -eq $botLogin) {
+            $submittedRaw = [string] (Get-ObjectField -Source $review -Names @('submitted_at', 'submittedAt', 'created_at'))
+            $parsedDate = [DateTimeOffset]::MinValue
+            $hasDate = [DateTimeOffset]::TryParse($submittedRaw, [ref] $parsedDate)
+            $botReviews.Add([pscustomobject] @{
+                Index = $index
+                HasDate = $hasDate
+                SubmittedAt = $parsedDate
+                CommitId = [string] (Get-ObjectField -Source $review -Names @('commit_id', 'commitId'))
+                State = ([string] (Get-ObjectField -Source $review -Names @('state', 'State'))).Trim().ToUpperInvariant()
+            })
+        }
+        $index++
+    }
+
+    if ($botReviews.Count -eq 0) {
+        return $null
+    }
+
+    $newest = @($botReviews | Sort-Object -Property @{ Expression = { $_.SubmittedAt }; Descending = $true }, @{ Expression = { $_.Index }; Descending = $true })[0]
+    $mappedFamily = $TrustedReviewers[$botLogin]
+
+    if ($newest.State -eq 'CHANGES_REQUESTED') {
+        return [pscustomobject] @{ IsPass = $false; FailureReason = "verified review by $botLogin requested changes." }
+    }
+
+    if (-not $newest.CommitId.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
+        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review commit $(Get-ShortSha $newest.CommitId) does not match head $(Get-ShortSha $HeadSha)." }
+    }
+
+    if (Test-HasUnresolvedReviewThreads -ReviewThreads $ReviewThreads) {
+        return [pscustomobject] @{ IsPass = $false; FailureReason = "Unresolved review threads block verified $botLogin review." }
+    }
+
+    if ($newest.State -notin @('APPROVED', 'COMMENTED')) {
+        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review state '$($newest.State)' is not a passing state." }
+    }
+
+    return [pscustomobject] @{
+        IsPass = $true
+        ReviewerFamily = $mappedFamily
+        Login = $botLogin
+    }
+}
+
+function Resolve-MarkerTier {
+    param(
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $Marker,
+
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $Identities
+    )
+
+    $authorKey = if ([string]::IsNullOrWhiteSpace($Marker.Author)) { '' } else { $Marker.Author.Trim().ToLowerInvariant() }
+    if ($Identities.TrustedReviewers.ContainsKey($authorKey)) {
+        $trustedFamily = $Identities.TrustedReviewers[$authorKey]
+        if ($trustedFamily -ne $Marker.ReviewerFamily) {
+            return [pscustomobject] @{
+                IsValid = $false
+                Tier = 'verified'
+                Error = "Trusted reviewer '$($Marker.Author)' is mapped to '$trustedFamily', not '$($Marker.ReviewerFamily)'."
+            }
+        }
+        return [pscustomobject] @{ IsValid = $true; Tier = 'verified'; Error = $null }
+    }
+
+    if (-not $Identities.AllowDeclaredReviews) {
+        return [pscustomobject] @{
+            IsValid = $false
+            Tier = 'declared'
+            Error = 'Declared (shared account) reviews are disabled; a verified bot review is required.'
+        }
+    }
+
+    return [pscustomobject] @{ IsValid = $true; Tier = 'declared'; Error = $null }
+}
+
+function Resolve-MarkerHeadOrCarryForward {
     param(
         [Parameter(Mandatory = $true)]
         [pscustomobject] $Marker,
@@ -544,49 +901,155 @@ function Resolve-MarkerHeadMatchResult {
         [string] $Orchestrator,
 
         [Parameter(Mandatory = $true)]
+        [string] $Tier,
+
+        [Parameter(Mandatory = $true)]
         [string] $BaseRef,
 
         [Parameter(Mandatory = $true)]
         [string] $RepositoryRoot,
 
         [AllowNull()]
-        [scriptblock] $PatchEquivalentEvaluator = $null
+        [scriptblock] $CarryForwardEvaluator = $null
     )
 
     $shortHead = Get-ShortSha $HeadSha
     $shortMarkerHead = Get-ShortSha $Marker.Head
+    $tierLabel = if ($Tier -eq 'verified') { 'verified' } else { 'declared (shared account)' }
 
     if ($Marker.Head.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
-        return New-GateResult `
-            -State 'success' `
-            -Reason "Verified $($Marker.ReviewerFamily) ($($Marker.ReviewerModel)) PASS on $shortHead." `
-            -Marker $Marker `
-            -WriterFamily $WriterFamily `
-            -Orchestrator $Orchestrator
+        return New-GateResult -State 'success' -Reason "Review $tierLabel $($Marker.ReviewerFamily) ($($Marker.ReviewerModel)) PASS on $shortHead." -Marker $Marker -WriterFamily $WriterFamily -Orchestrator $Orchestrator -Tier $Tier
     }
 
-    $isEquivalent = if ($null -ne $PatchEquivalentEvaluator) {
-        [bool] (& $PatchEquivalentEvaluator $Marker.Head $HeadSha $BaseRef $RepositoryRoot)
+    $isEquivalent = if ($null -ne $CarryForwardEvaluator) {
+        [bool] (& $CarryForwardEvaluator $Marker.Head $HeadSha $BaseRef $RepositoryRoot)
     }
     else {
         Test-PatchEquivalent -MarkerHead $Marker.Head -CurrentHead $HeadSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
     }
 
     if ($isEquivalent) {
-        return New-GateResult `
-            -State 'success' `
-            -Reason "Verified $($Marker.ReviewerFamily) PASS (patch-equivalent to $shortMarkerHead)." `
-            -Marker $Marker `
-            -WriterFamily $WriterFamily `
-            -Orchestrator $Orchestrator
+        return New-GateResult -State 'success' -Reason "Review $tierLabel $($Marker.ReviewerFamily) PASS (main-merge carry-forward from $shortMarkerHead)." -Marker $Marker -WriterFamily $WriterFamily -Orchestrator $Orchestrator -Tier $Tier
+    }
+
+    return New-GateResult -State 'failure' -Reason "Review marker for $shortMarkerHead is stale for $shortHead." -Marker $Marker -WriterFamily $WriterFamily -Orchestrator $Orchestrator -Tier $Tier
+}
+
+function Resolve-MarkerGateResult {
+    param(
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $Marker,
+
+        [Parameter(Mandatory = $true)]
+        [string] $HeadSha,
+
+        [string] $BaseSha = '',
+
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string] $PullRequestBody,
+
+        [AllowNull()]
+        [string[]] $InferredWriterFamilies = @(),
+
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $Identities,
+
+        [Parameter(Mandatory = $true)]
+        [string] $BaseRef,
+
+        [Parameter(Mandatory = $true)]
+        [string] $RepositoryRoot,
+
+        [AllowNull()]
+        [scriptblock] $CarryForwardEvaluator = $null
+    )
+
+    if ($Marker.Verdict -eq 'CHANGES') {
+        return New-GateResult -State 'failure' -Reason "Final review verdict is CHANGES for $(Get-ShortSha $Marker.Head)." -Marker $Marker
+    }
+
+    $tierInfo = Resolve-MarkerTier -Marker $Marker -Identities $Identities
+    if (-not $tierInfo.IsValid) {
+        return New-GateResult -State 'failure' -Reason $tierInfo.Error -Marker $Marker -Tier $tierInfo.Tier
+    }
+
+    if (-not (Test-MarkerBaseMatches -Marker $Marker -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot)) {
+        return New-GateResult -State 'failure' -Reason "Review marker base $(Get-ShortSha $Marker.Base) does not match PR base." -Marker $Marker -Tier $tierInfo.Tier
+    }
+
+    $writerResolution = Resolve-WriterFamily -PullRequestBody $PullRequestBody
+    if ($null -eq $writerResolution.Family) {
+        return New-GateResult -State 'failure' -Reason $writerResolution.Error -Marker $Marker -Tier $tierInfo.Tier
+    }
+
+    $writerFamily = $writerResolution.Family
+    $crossCheckError = Test-WriterCrossCheckError -ReviewerFamily $Marker.ReviewerFamily -HeaderWriterFamily $writerFamily -InferredWriterFamilies $InferredWriterFamilies
+    if ($null -ne $crossCheckError) {
+        return New-GateResult -State 'failure' -Reason $crossCheckError -Marker $Marker -WriterFamily $writerFamily -Tier $tierInfo.Tier
+    }
+
+    $orchestrator = Get-SliceHeaderField -Body $PullRequestBody -FieldName 'Orchestrator'
+    if ([string]::IsNullOrWhiteSpace($orchestrator) -or $orchestrator -match '^<.*>$') {
+        return New-GateResult -State 'failure' -Reason 'Missing Orchestrator in PR slice header.' -Marker $Marker -WriterFamily $writerFamily -Orchestrator $orchestrator -Tier $tierInfo.Tier
+    }
+
+    if ($Marker.ReviewerFamily -eq $writerFamily) {
+        return New-GateResult -State 'failure' -Reason "Reviewer family '$($Marker.ReviewerFamily)' matches writer family '$writerFamily'." -Marker $Marker -WriterFamily $writerFamily -Orchestrator $orchestrator -Tier $tierInfo.Tier
+    }
+
+    if ((Get-NormalizedIdentifier $Marker.Dispatcher) -eq (Get-NormalizedIdentifier $orchestrator)) {
+        return New-GateResult -State 'failure' -Reason 'Final review dispatcher must differ from PR Orchestrator.' -Marker $Marker -WriterFamily $writerFamily -Orchestrator $orchestrator -Tier $tierInfo.Tier
+    }
+
+    return Resolve-MarkerHeadOrCarryForward `
+        -Marker $Marker `
+        -HeadSha $HeadSha `
+        -WriterFamily $writerFamily `
+        -Orchestrator $orchestrator `
+        -Tier $tierInfo.Tier `
+        -BaseRef $BaseRef `
+        -RepositoryRoot $RepositoryRoot `
+        -CarryForwardEvaluator $CarryForwardEvaluator
+}
+
+function Resolve-CodexConnectorGateResult {
+    param(
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $CodexCandidate,
+
+        [Parameter(Mandatory = $true)]
+        [string] $HeadSha,
+
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string] $PullRequestBody,
+
+        [AllowNull()]
+        [string[]] $InferredWriterFamilies = @()
+    )
+
+    if (-not $CodexCandidate.IsPass) {
+        return New-GateResult -State 'failure' -Reason $CodexCandidate.FailureReason -Tier 'verified'
+    }
+
+    $writerResolution = Resolve-WriterFamily -PullRequestBody $PullRequestBody
+    $headerWriterFamily = $writerResolution.Family
+
+    $crossCheckError = Test-WriterCrossCheckError -ReviewerFamily $CodexCandidate.ReviewerFamily -HeaderWriterFamily $headerWriterFamily -InferredWriterFamilies $InferredWriterFamilies
+    if ($null -ne $crossCheckError) {
+        return New-GateResult -State 'failure' -Reason $crossCheckError -WriterFamily $headerWriterFamily -Tier 'verified'
+    }
+
+    if ($null -ne $headerWriterFamily -and $CodexCandidate.ReviewerFamily -eq $headerWriterFamily) {
+        return New-GateResult -State 'failure' -Reason "Reviewer family '$($CodexCandidate.ReviewerFamily)' matches writer family '$headerWriterFamily'." -WriterFamily $headerWriterFamily -Tier 'verified'
     }
 
     return New-GateResult `
-        -State 'failure' `
-        -Reason "Review marker for $shortMarkerHead is stale for $shortHead." `
-        -Marker $Marker `
-        -WriterFamily $WriterFamily `
-        -Orchestrator $Orchestrator
+        -State 'success' `
+        -Reason "Review verified ($($CodexCandidate.ReviewerFamily) via $($CodexCandidate.Login)) on $(Get-ShortSha $HeadSha)." `
+        -WriterFamily $headerWriterFamily `
+        -Tier 'verified'
 }
 
 function Get-ReviewGateResult {
@@ -603,15 +1066,33 @@ function Get-ReviewGateResult {
         [Parameter(Mandatory = $true)]
         [string] $HeadSha,
 
+        [string] $BaseSha = '',
+
+        [string] $HeadRefName = '',
+
+        [AllowNull()]
+        [object[]] $Commits = @(),
+
         [AllowNull()]
         [object[]] $Comments = @(),
+
+        [AllowNull()]
+        [object[]] $Reviews = @(),
+
+        [AllowNull()]
+        [object[]] $ReviewThreads = @(),
 
         [string] $BaseRef = 'origin/main',
 
         [string] $RepositoryRoot = (Get-Location).Path,
 
+        [string] $IdentitiesPath = '',
+
         [AllowNull()]
-        [scriptblock] $PatchEquivalentEvaluator = $null
+        [object] $IdentitiesConfig = $null,
+
+        [AllowNull()]
+        [scriptblock] $CarryForwardEvaluator = $null
     )
 
     $authorTrimmed = if ($null -eq $PullRequestAuthor) { '' } else { $PullRequestAuthor.Trim() }
@@ -619,52 +1100,73 @@ function Get-ReviewGateResult {
         return New-GateResult -State 'success' -Reason 'exempt: dependency bot'
     }
 
+    $identities = Get-IdentitiesConfig -RepositoryRoot $RepositoryRoot -IdentitiesPath $IdentitiesPath -IdentitiesConfig $IdentitiesConfig
+    $inferredWriterFamilies = @(Get-InferredWriterFamilies -HeadRefName $HeadRefName -Commits $Commits)
     $markers = @(Get-FinalReviewMarkers -Comments $Comments)
-    if ($markers.Count -eq 0) {
-        $reason = if (Test-HasMalformedReviewMarker -Comments $Comments) {
-            'Invalid moba-final-review marker: check required fields.'
+    $codexCandidate = Get-CodexConnectorCandidate -Reviews $Reviews -ReviewThreads $ReviewThreads -HeadSha $HeadSha -TrustedReviewers $identities.TrustedReviewers
+
+    if ($markers.Count -gt 0) {
+        $markerResult = Resolve-MarkerGateResult `
+            -Marker $markers[0] `
+            -HeadSha $HeadSha `
+            -BaseSha $BaseSha `
+            -PullRequestBody $PullRequestBody `
+            -InferredWriterFamilies $inferredWriterFamilies `
+            -Identities $identities `
+            -BaseRef $BaseRef `
+            -RepositoryRoot $RepositoryRoot `
+            -CarryForwardEvaluator $CarryForwardEvaluator
+
+        if ($markerResult.State -eq 'success' -or $markers[0].Verdict -eq 'CHANGES' -or $null -eq $codexCandidate) {
+            return $markerResult
         }
-        else {
-            'Missing valid moba-final-review marker.'
-        }
-        return New-GateResult -State 'failure' -Reason $reason
     }
 
-    $newest = $markers[0]
-    if ($newest.Verdict -eq 'CHANGES') {
-        return New-GateResult -State 'failure' -Reason "Final review verdict is CHANGES for $(Get-ShortSha $newest.Head)." -Marker $newest
+    if ($null -ne $codexCandidate) {
+        return Resolve-CodexConnectorGateResult `
+            -CodexCandidate $codexCandidate `
+            -HeadSha $HeadSha `
+            -PullRequestBody $PullRequestBody `
+            -InferredWriterFamilies $inferredWriterFamilies
     }
 
-    $writerResolution = Resolve-WriterFamily -PullRequestBody $PullRequestBody
-    if ($null -eq $writerResolution.Family) {
-        return New-GateResult -State 'failure' -Reason $writerResolution.Error -Marker $newest
+    $reason = if (Test-HasMalformedReviewMarker -Comments $Comments) {
+        'Invalid moba-final-review marker: check required fields (including base=).'
     }
-
-    $writerFamily = $writerResolution.Family
-    $orchestrator = Get-SliceHeaderField -Body $PullRequestBody -FieldName 'Orchestrator'
-    if ([string]::IsNullOrWhiteSpace($orchestrator) -or $orchestrator -match '^<.*>$') {
-        return New-GateResult -State 'failure' -Reason 'Missing Orchestrator in PR slice header.' -Marker $newest -WriterFamily $writerFamily -Orchestrator $orchestrator
+    else {
+        'Missing valid moba-final-review marker or verified review.'
     }
-
-    if ($newest.ReviewerFamily -eq $writerFamily) {
-        return New-GateResult -State 'failure' -Reason "Reviewer family '$($newest.ReviewerFamily)' matches writer family '$writerFamily'." -Marker $newest -WriterFamily $writerFamily -Orchestrator $orchestrator
-    }
-
-    if ((Get-NormalizedIdentifier $newest.Dispatcher) -eq (Get-NormalizedIdentifier $orchestrator)) {
-        return New-GateResult -State 'failure' -Reason 'Final review dispatcher must differ from PR Orchestrator.' -Marker $newest -WriterFamily $writerFamily -Orchestrator $orchestrator
-    }
-
-    return Resolve-MarkerHeadMatchResult `
-        -Marker $newest `
-        -HeadSha $HeadSha `
-        -WriterFamily $writerFamily `
-        -Orchestrator $orchestrator `
-        -BaseRef $BaseRef `
-        -RepositoryRoot $RepositoryRoot `
-        -PatchEquivalentEvaluator $PatchEquivalentEvaluator
+    return New-GateResult -State 'failure' -Reason $reason
 }
 
-function Get-GitHubPullRequestComments {
+function Get-GitHubPaginatedList {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Endpoint
+    )
+
+    $rawJson = gh api --paginate --slurp $Endpoint
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to read GitHub API endpoint '$Endpoint'."
+    }
+
+    $pages = $rawJson | ConvertFrom-Json
+    $items = [Collections.Generic.List[object]]::new()
+    foreach ($page in @($pages)) {
+        if ($page -is [System.Collections.IEnumerable] -and $page -isnot [string]) {
+            foreach ($item in $page) {
+                $items.Add($item)
+            }
+        }
+        elseif ($null -ne $page) {
+            $items.Add($page)
+        }
+    }
+
+    return @($items)
+}
+
+function Get-GitHubReviewThreads {
     param(
         [Parameter(Mandatory = $true)]
         [string] $Repository,
@@ -673,25 +1175,19 @@ function Get-GitHubPullRequestComments {
         [int] $PullRequest
     )
 
-    $commentsJson = gh api --paginate --slurp "repos/$Repository/issues/$PullRequest/comments"
+    $parts = $Repository.Split('/', 2)
+    if ($parts.Count -ne 2) {
+        throw "Invalid Repository '$Repository'; expected owner/name."
+    }
+
+    $query = 'query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){reviewThreads(first:100){nodes{isResolved isOutdated}}}}}'
+    $raw = gh api graphql -f "query=$query" -f "owner=$($parts[0])" -f "name=$($parts[1])" -F "number=$PullRequest"
     if ($LASTEXITCODE -ne 0) {
-        throw "Failed to read comments for PR #$PullRequest from $Repository."
+        throw "Failed to query review threads for PR #$PullRequest in $Repository."
     }
 
-    $pages = $commentsJson | ConvertFrom-Json
-    $comments = [Collections.Generic.List[object]]::new()
-    foreach ($page in @($pages)) {
-        if ($page -is [System.Collections.IEnumerable] -and $page -isnot [string]) {
-            foreach ($item in $page) {
-                $comments.Add($item)
-            }
-        }
-        elseif ($null -ne $page) {
-            $comments.Add($page)
-        }
-    }
-
-    return @($comments)
+    $data = $raw | ConvertFrom-Json
+    return @($data.data.repository.pullRequest.reviewThreads.nodes)
 }
 
 if ($MyInvocation.InvocationName -eq '.') {
@@ -710,19 +1206,30 @@ if ($LASTEXITCODE -ne 0) {
     throw "Failed to read PR #$PullRequest from $Repository."
 }
 $pr = $prJson | ConvertFrom-Json
-$comments = Get-GitHubPullRequestComments -Repository $Repository -PullRequest $PullRequest
+
+$comments = Get-GitHubPaginatedList -Endpoint "repos/$Repository/issues/$PullRequest/comments"
+$reviews = Get-GitHubPaginatedList -Endpoint "repos/$Repository/pulls/$PullRequest/reviews"
+$commits = Get-GitHubPaginatedList -Endpoint "repos/$Repository/pulls/$PullRequest/commits"
+$threads = Get-GitHubReviewThreads -Repository $Repository -PullRequest $PullRequest
 
 $headSha = [string] $pr.head.sha
+$baseSha = [string] $pr.base.sha
 $baseRef = "origin/$($pr.base.ref)"
+
 $result = Get-ReviewGateResult `
     -PullRequestAuthor ([string] $pr.user.login) `
     -PullRequestBody ([string] $pr.body) `
     -HeadSha $headSha `
+    -BaseSha $baseSha `
+    -HeadRefName ([string] $pr.head.ref) `
+    -Commits $commits `
     -Comments $comments `
+    -Reviews $reviews `
+    -ReviewThreads $threads `
     -BaseRef $baseRef `
     -RepositoryRoot $RepositoryRoot
 
-Write-Host "Review gate PR #$PullRequest ($headSha): state=$($result.State) description=$($result.Description)"
+Write-Host "Review gate PR #$PullRequest ($headSha): state=$($result.State) tier=$($result.Tier) description=$($result.Description)"
 
 if ($SetStatus) {
     gh api "repos/$Repository/statuses/$headSha" `

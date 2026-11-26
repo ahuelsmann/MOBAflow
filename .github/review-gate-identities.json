@@ -1,0 +1,8 @@
+{
+  "trustedReviewers": {
+    "chatgpt-codex-connector[bot]": "openai",
+    "claude[bot]": "claude",
+    "gemini-code-assist[bot]": "gemini"
+  },
+  "allowDeclaredReviews": true
+}

@@ -1,8 +1,10 @@
 name: Independent final review
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review, edited]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
   issue_comment:
     types: [created, edited, deleted]
 
@@ -10,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: review-gate-${{ github.event.pull_request.number || github.event.issue.number }}
+  group: review-gate-publisher-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
@@ -25,6 +27,7 @@ jobs:
       statuses: write
 
     steps:
+      # Security boundary: check out ONLY the trusted default branch; PR code is never executed, installed, or sourced.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.repository.default_branch }}
@@ -41,37 +44,14 @@ jobs:
           $repository = $env:REPOSITORY
 
           if (-not (Test-Path -LiteralPath 'scripts/Test-ReviewGate.ps1' -PathType Leaf)) {
-            $headSha = (gh api "repos/$repository/pulls/$prNumber" --jq .head.sha).Trim()
-            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($headSha)) {
-              throw "Failed to resolve head SHA for PR #$prNumber."
-            }
-
-            $statusArgs = @('api', "repos/$repository/statuses/$headSha", '-f', 'state=success', '-f', 'context=Independent final review', '-f', 'description=gate not yet installed')
-            gh @statusArgs | Out-Null
-            if ($LASTEXITCODE -ne 0) {
-              throw "Failed to post bootstrap review gate status for PR #$prNumber."
-            }
+            Write-Host "::notice::scripts/Test-ReviewGate.ps1 is not yet installed on default branch; skipping status publication."
             exit 0
           }
 
+          # Fetch PR head git objects strictly for diff comparison; PR files are never checked out or executed.
           git fetch origin "pull/${prNumber}/head"
           if ($LASTEXITCODE -ne 0) {
             throw "Failed to fetch pull/${prNumber}/head."
           }
 
           ./scripts/Test-ReviewGate.ps1 -PullRequest $prNumber -Repository $repository -SetStatus
-
-  review-gate-tests:
-    name: Test review gate script
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Run review gate self-tests
-        shell: pwsh
-        run: ./scripts/Test-ReviewGate.Tests.ps1
