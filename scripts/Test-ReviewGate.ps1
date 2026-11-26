@@ -34,8 +34,7 @@ function Get-SliceHeaderField {
         return $null
     }
 
-    $value = $match.Groups['value'].Value
-    $value = [Text.RegularExpressions.Regex]::Replace($value, '<!--.*?-->', '').Trim()
+    $value = [Text.RegularExpressions.Regex]::Replace($match.Groups['value'].Value, '<!--.*?-->', '').Trim()
     if ([string]::IsNullOrWhiteSpace($value)) {
         return $null
     }
@@ -86,6 +85,158 @@ function ConvertTo-ModelFamily {
     return $null
 }
 
+function Get-ObjectField {
+    param(
+        [AllowNull()]
+        [object] $Source,
+
+        [Parameter(Mandatory = $true)]
+        [string[]] $Names
+    )
+
+    if ($null -eq $Source) {
+        return $null
+    }
+
+    foreach ($name in $Names) {
+        if ($Source -is [System.Collections.IDictionary] -and $Source.Contains($name)) {
+            return $Source[$name]
+        }
+        if ($null -ne $Source.PSObject.Properties[$name]) {
+            return $Source.PSObject.Properties[$name].Value
+        }
+    }
+
+    return $null
+}
+
+function ConvertFrom-IssueComment {
+    param(
+        [AllowNull()]
+        [object] $Comment,
+
+        [int] $Index
+    )
+
+    if ($null -eq $Comment) {
+        return $null
+    }
+
+    if ($Comment -is [string]) {
+        return [pscustomobject] @{
+            Index = $Index
+            HasCreatedAt = $false
+            CreatedAt = [DateTimeOffset]::MinValue
+            CommentId = $null
+            Author = $null
+            Body = $Comment
+        }
+    }
+
+    $rawCreated = [string] (Get-ObjectField -Source $Comment -Names @('created_at', 'CreatedAt'))
+    $parsedDate = [DateTimeOffset]::MinValue
+    $hasDate = (-not [string]::IsNullOrWhiteSpace($rawCreated)) -and ([DateTimeOffset]::TryParse($rawCreated, [ref] $parsedDate))
+
+    $userObj = Get-ObjectField -Source $Comment -Names @('user', 'User')
+    $author = [string] (Get-ObjectField -Source $userObj -Names @('login', 'Login'))
+
+    return [pscustomobject] @{
+        Index = $Index
+        HasCreatedAt = $hasDate
+        CreatedAt = if ($hasDate) { $parsedDate } else { [DateTimeOffset]::MinValue }
+        CommentId = (Get-ObjectField -Source $Comment -Names @('id', 'Id'))
+        Author = if ([string]::IsNullOrWhiteSpace($author)) { $null } else { $author }
+        Body = [string] (Get-ObjectField -Source $Comment -Names @('body', 'Body'))
+    }
+}
+
+function Get-OrderedComments {
+    param(
+        [AllowNull()]
+        [object[]] $Comments = @()
+    )
+
+    $entries = [Collections.Generic.List[pscustomobject]]::new()
+    for ($i = 0; $i -lt $Comments.Count; $i++) {
+        $entry = ConvertFrom-IssueComment -Comment $Comments[$i] -Index $i
+        if ($null -ne $entry) {
+            $entries.Add($entry)
+        }
+    }
+
+    if ($entries.Count -eq 0) {
+        return @()
+    }
+
+    $missingDates = @($entries | Where-Object { -not $_.HasCreatedAt }).Count
+    if ($missingDates -eq 0) {
+        return @($entries | Sort-Object -Property @{ Expression = { $_.CreatedAt }; Descending = $false }, @{ Expression = { $_.Index }; Descending = $false })
+    }
+
+    return @($entries | Sort-Object -Property Index)
+}
+
+function Get-AttributeValue([Text.RegularExpressions.Match] $AttrMatch) {
+    if ($AttrMatch.Groups['qval'].Success) {
+        return $AttrMatch.Groups['qval'].Value.Trim()
+    }
+    if ($AttrMatch.Groups['sval'].Success) {
+        return $AttrMatch.Groups['sval'].Value.Trim()
+    }
+    return $AttrMatch.Groups['uval'].Value.Trim()
+}
+
+function ConvertFrom-ReviewMarkerMatch {
+    param(
+        [Parameter(Mandatory = $true)]
+        [Text.RegularExpressions.Match] $Match,
+
+        [Parameter(Mandatory = $true)]
+        [Text.RegularExpressions.Regex] $AttrRegex,
+
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $CommentEntry
+    )
+
+    $attrs = @{}
+    foreach ($attrMatch in $AttrRegex.Matches($Match.Groups['attrs'].Value.Trim())) {
+        $key = $attrMatch.Groups['key'].Value.ToLowerInvariant()
+        $attrs[$key] = Get-AttributeValue -AttrMatch $attrMatch
+    }
+
+    foreach ($requiredKey in @('verdict', 'head', 'reviewer-family', 'reviewer-model', 'dispatcher')) {
+        if (-not $attrs.ContainsKey($requiredKey) -or [string]::IsNullOrWhiteSpace($attrs[$requiredKey])) {
+            return $null
+        }
+    }
+
+    $verdict = $attrs['verdict'].ToUpperInvariant()
+    if ($verdict -notin @('PASS', 'CHANGES')) {
+        return $null
+    }
+
+    $head = $attrs['head'].ToLowerInvariant()
+    if ($head -notmatch '^[0-9a-f]{40}$') {
+        return $null
+    }
+
+    $reviewerFamily = $attrs['reviewer-family'].ToLowerInvariant()
+    if ($reviewerFamily -notin @('claude', 'openai', 'gemini')) {
+        return $null
+    }
+
+    return [pscustomobject] @{
+        Verdict = $verdict
+        Head = $head
+        ReviewerFamily = $reviewerFamily
+        ReviewerModel = $attrs['reviewer-model']
+        Dispatcher = $attrs['dispatcher']
+        CommentId = $CommentEntry.CommentId
+        CreatedAt = if ($CommentEntry.HasCreatedAt) { $CommentEntry.CreatedAt } else { $null }
+        Author = $CommentEntry.Author
+    }
+}
+
 function Get-FinalReviewMarkers {
     [CmdletBinding()]
     param(
@@ -97,75 +248,9 @@ function Get-FinalReviewMarkers {
         return @()
     }
 
-    $indexed = [Collections.Generic.List[pscustomobject]]::new()
-    $index = 0
-    foreach ($comment in $Comments) {
-        if ($null -eq $comment) {
-            $index++
-            continue
-        }
-
-        $body = $null
-        $createdAt = $null
-        $hasCreatedAt = $false
-        $commentId = $null
-        $author = $null
-
-        if ($comment -is [string]) {
-            $body = $comment
-        }
-        elseif ($comment -is [System.Collections.IDictionary]) {
-            if ($comment.Contains('body')) { $body = [string] $comment['body'] }
-            elseif ($comment.Contains('Body')) { $body = [string] $comment['Body'] }
-            if ($comment.Contains('created_at') -and -not [string]::IsNullOrWhiteSpace([string] $comment['created_at'])) {
-                $parsed = [DateTimeOffset]::MinValue
-                if ([DateTimeOffset]::TryParse([string] $comment['created_at'], [ref] $parsed)) {
-                    $createdAt = $parsed
-                    $hasCreatedAt = $true
-                }
-            }
-            elseif ($comment.Contains('CreatedAt') -and -not [string]::IsNullOrWhiteSpace([string] $comment['CreatedAt'])) {
-                $parsed = [DateTimeOffset]::MinValue
-                if ([DateTimeOffset]::TryParse([string] $comment['CreatedAt'], [ref] $parsed)) {
-                    $createdAt = $parsed
-                    $hasCreatedAt = $true
-                }
-            }
-            if ($comment.Contains('id')) { $commentId = $comment['id'] }
-            if ($comment.Contains('user') -and $null -ne $comment['user']) { $author = [string] $comment['user'].login }
-        }
-        else {
-            if ($null -ne $comment.PSObject.Properties['body']) { $body = [string] $comment.body }
-            if ($null -ne $comment.PSObject.Properties['created_at'] -and -not [string]::IsNullOrWhiteSpace([string] $comment.created_at)) {
-                $parsed = [DateTimeOffset]::MinValue
-                if ([DateTimeOffset]::TryParse([string] $comment.created_at, [ref] $parsed)) {
-                    $createdAt = $parsed
-                    $hasCreatedAt = $true
-                }
-            }
-            if ($null -ne $comment.PSObject.Properties['id']) { $commentId = $comment.id }
-            if ($null -ne $comment.PSObject.Properties['user'] -and $null -ne $comment.user -and $null -ne $comment.user.PSObject.Properties['login']) {
-                $author = [string] $comment.user.login
-            }
-        }
-
-        $indexed.Add([pscustomobject] @{
-            Index = $index
-            HasCreatedAt = $hasCreatedAt
-            CreatedAt = if ($hasCreatedAt) { $createdAt } else { [DateTimeOffset]::MinValue }
-            CommentId = $commentId
-            Author = $author
-            Body = $body
-        })
-        $index++
-    }
-
-    $allHaveTimestamps = $indexed.Count -gt 0 -and (@($indexed | Where-Object { -not $_.HasCreatedAt }).Count -eq 0)
-    $orderedComments = if ($allHaveTimestamps) {
-        @($indexed | Sort-Object -Property @{ Expression = { $_.CreatedAt }; Descending = $false }, @{ Expression = { $_.Index }; Descending = $false })
-    }
-    else {
-        @($indexed | Sort-Object -Property Index)
+    $orderedComments = Get-OrderedComments -Comments $Comments
+    if ($orderedComments.Count -eq 0) {
+        return @()
     }
 
     $markerRegex = [Text.RegularExpressions.Regex]::new(
@@ -175,78 +260,27 @@ function Get-FinalReviewMarkers {
         '\b(?<key>verdict|head|reviewer-family|reviewer-model|dispatcher)\s*=\s*(?:"(?<qval>[^"]*)"|''(?<sval>[^'']*)''|(?<uval>.*?))(?=\s+(?:verdict|head|reviewer-family|reviewer-model|dispatcher)\s*=|\s*$)',
         [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
 
-    $chronologicalMarkers = [Collections.Generic.List[pscustomobject]]::new()
+    $chronological = [Collections.Generic.List[pscustomobject]]::new()
     foreach ($entry in $orderedComments) {
         if ([string]::IsNullOrWhiteSpace($entry.Body)) {
             continue
         }
 
         foreach ($match in $markerRegex.Matches($entry.Body)) {
-            $attrsText = $match.Groups['attrs'].Value.Trim()
-            $attrs = @{}
-            foreach ($attrMatch in $attrRegex.Matches($attrsText)) {
-                $key = $attrMatch.Groups['key'].Value.ToLowerInvariant()
-                $val = if ($attrMatch.Groups['qval'].Success) {
-                    $attrMatch.Groups['qval'].Value
-                }
-                elseif ($attrMatch.Groups['sval'].Success) {
-                    $attrMatch.Groups['sval'].Value
-                }
-                else {
-                    $attrMatch.Groups['uval'].Value
-                }
-                $attrs[$key] = $val.Trim()
+            $parsed = ConvertFrom-ReviewMarkerMatch -Match $match -AttrRegex $attrRegex -CommentEntry $entry
+            if ($null -ne $parsed) {
+                $chronological.Add($parsed)
             }
-
-            if (-not $attrs.ContainsKey('verdict') -or
-                -not $attrs.ContainsKey('head') -or
-                -not $attrs.ContainsKey('reviewer-family') -or
-                -not $attrs.ContainsKey('reviewer-model') -or
-                -not $attrs.ContainsKey('dispatcher')) {
-                continue
-            }
-
-            $verdict = $attrs['verdict'].ToUpperInvariant()
-            if ($verdict -notin @('PASS', 'CHANGES')) {
-                continue
-            }
-
-            $head = $attrs['head'].ToLowerInvariant()
-            if ($head -notmatch '^[0-9a-f]{40}$') {
-                continue
-            }
-
-            $reviewerFamily = $attrs['reviewer-family'].ToLowerInvariant()
-            if ($reviewerFamily -notin @('claude', 'openai', 'gemini')) {
-                continue
-            }
-
-            $reviewerModel = $attrs['reviewer-model']
-            $dispatcher = $attrs['dispatcher']
-            if ([string]::IsNullOrWhiteSpace($reviewerModel) -or [string]::IsNullOrWhiteSpace($dispatcher)) {
-                continue
-            }
-
-            $chronologicalMarkers.Add([pscustomobject] @{
-                Verdict = $verdict
-                Head = $head
-                ReviewerFamily = $reviewerFamily
-                ReviewerModel = $reviewerModel
-                Dispatcher = $dispatcher
-                CommentId = $entry.CommentId
-                CreatedAt = if ($entry.HasCreatedAt) { $entry.CreatedAt } else { $null }
-                Author = $entry.Author
-            })
         }
     }
 
-    if ($chronologicalMarkers.Count -eq 0) {
+    if ($chronological.Count -eq 0) {
         return @()
     }
 
     $newestFirst = [Collections.Generic.List[pscustomobject]]::new()
-    for ($i = $chronologicalMarkers.Count - 1; $i -ge 0; $i--) {
-        $newestFirst.Add($chronologicalMarkers[$i])
+    for ($i = $chronological.Count - 1; $i -ge 0; $i--) {
+        $newestFirst.Add($chronological[$i])
     }
 
     return @($newestFirst)
@@ -279,6 +313,38 @@ function New-CleanGitProcessStartInfo {
     return $start
 }
 
+function Get-GitMergeBase {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Sha,
+
+        [Parameter(Mandatory = $true)]
+        [string] $BaseRef,
+
+        [Parameter(Mandatory = $true)]
+        [string] $RepositoryRoot
+    )
+
+    $start = New-CleanGitProcessStartInfo -FileName 'git' -Arguments @('-C', $RepositoryRoot, 'merge-base', $BaseRef, $Sha)
+    $proc = [Diagnostics.Process]::Start($start)
+    try {
+        $out = $proc.StandardOutput.ReadToEndAsync()
+        $null = $proc.StandardError.ReadToEndAsync()
+        $proc.WaitForExit()
+        if ($proc.ExitCode -ne 0) {
+            return $null
+        }
+        $value = $out.Result.Trim()
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            return $null
+        }
+        return $value
+    }
+    finally {
+        $proc.Dispose()
+    }
+}
+
 function Get-GitDiffPatchId {
     param(
         [Parameter(Mandatory = $true)]
@@ -291,22 +357,8 @@ function Get-GitDiffPatchId {
         [string] $RepositoryRoot
     )
 
-    $mergeBaseStart = New-CleanGitProcessStartInfo -FileName 'git' -Arguments @('-C', $RepositoryRoot, 'merge-base', $BaseRef, $Sha)
-    $mergeBaseProc = [Diagnostics.Process]::Start($mergeBaseStart)
-    try {
-        $mbOut = $mergeBaseProc.StandardOutput.ReadToEndAsync()
-        $mbErr = $mergeBaseProc.StandardError.ReadToEndAsync()
-        $mergeBaseProc.WaitForExit()
-        if ($mergeBaseProc.ExitCode -ne 0) {
-            return $null
-        }
-        $mergeBase = $mbOut.Result.Trim()
-    }
-    finally {
-        $mergeBaseProc.Dispose()
-    }
-
-    if ([string]::IsNullOrWhiteSpace($mergeBase)) {
+    $mergeBase = Get-GitMergeBase -Sha $Sha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
+    if ($null -eq $mergeBase) {
         return $null
     }
 
@@ -317,9 +369,9 @@ function Get-GitDiffPatchId {
     $diffProc = [Diagnostics.Process]::Start($diffStart)
     $patchProc = [Diagnostics.Process]::Start($patchStart)
     try {
-        $diffErr = $diffProc.StandardError.ReadToEndAsync()
+        $null = $diffProc.StandardError.ReadToEndAsync()
         $patchOut = $patchProc.StandardOutput.ReadToEndAsync()
-        $patchErr = $patchProc.StandardError.ReadToEndAsync()
+        $null = $patchProc.StandardError.ReadToEndAsync()
 
         $diffProc.StandardOutput.BaseStream.CopyTo($patchProc.StandardInput.BaseStream)
         $patchProc.StandardInput.Close()
@@ -336,8 +388,7 @@ function Get-GitDiffPatchId {
             return ''
         }
 
-        $firstToken = ($patchText -split '\s+')[0]
-        return $firstToken.ToLowerInvariant()
+        return ($patchText -split '\s+')[0].ToLowerInvariant()
     }
     finally {
         $diffProc.Dispose()
@@ -368,12 +419,12 @@ function Test-PatchEquivalent {
     }
 
     $markerPatchId = Get-GitDiffPatchId -Sha $MarkerHead -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
-    if ($null -eq $markerPatchId -or $markerPatchId -eq '') {
+    if ([string]::IsNullOrEmpty($markerPatchId)) {
         return $false
     }
 
     $currentPatchId = Get-GitDiffPatchId -Sha $CurrentHead -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
-    if ($null -eq $currentPatchId -or $currentPatchId -eq '') {
+    if ([string]::IsNullOrEmpty($currentPatchId)) {
         return $false
     }
 
@@ -393,6 +444,149 @@ function Get-NormalizedIdentifier([string] $Value) {
         return ''
     }
     return ($Value -replace '\s+', '').ToLowerInvariant()
+}
+
+function New-GateResult {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $State,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Reason,
+
+        [AllowNull()]
+        [object] $Marker = $null,
+
+        [AllowNull()]
+        [string] $WriterFamily = $null,
+
+        [AllowNull()]
+        [string] $Orchestrator = $null
+    )
+
+    return [pscustomobject] @{
+        State = $State
+        Description = Format-StatusDescription $Reason
+        Marker = $Marker
+        WriterFamily = $WriterFamily
+        Orchestrator = $Orchestrator
+    }
+}
+
+function Test-HasMalformedReviewMarker {
+    param(
+        [AllowNull()]
+        [object[]] $Comments = @()
+    )
+
+    foreach ($comment in @($Comments)) {
+        $entry = ConvertFrom-IssueComment -Comment $comment -Index 0
+        if ($null -ne $entry -and $entry.Body -match '<!--\s*moba-final-review\b') {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Resolve-WriterFamily {
+    param(
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string] $PullRequestBody
+    )
+
+    $writerFamilyField = Get-SliceHeaderField -Body $PullRequestBody -FieldName 'Writer family'
+    if (-not [string]::IsNullOrWhiteSpace($writerFamilyField) -and $writerFamilyField -notmatch '\|' -and $writerFamilyField -notmatch '^<.*>$') {
+        $resolved = ConvertTo-ModelFamily -Value $writerFamilyField
+        if ($null -eq $resolved) {
+            return [pscustomobject] @{
+                Family = $null
+                Error = "Unresolved Writer family '$writerFamilyField' in PR slice header."
+            }
+        }
+        return [pscustomobject] @{ Family = $resolved; Error = $null }
+    }
+
+    $writerField = Get-SliceHeaderField -Body $PullRequestBody -FieldName 'Writer'
+    if (-not [string]::IsNullOrWhiteSpace($writerField)) {
+        $fallback = ConvertTo-ModelFamily -Value $writerField
+        if ($null -ne $fallback) {
+            return [pscustomobject] @{ Family = $fallback; Error = $null }
+        }
+    }
+
+    return [pscustomobject] @{
+        Family = $null
+        Error = 'Unable to resolve writer model family from PR slice header.'
+    }
+}
+
+function Get-ShortSha([string] $Sha) {
+    if ($Sha.Length -ge 8) {
+        return $Sha.Substring(0, 8)
+    }
+    return $Sha
+}
+
+function Resolve-MarkerHeadMatchResult {
+    param(
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $Marker,
+
+        [Parameter(Mandatory = $true)]
+        [string] $HeadSha,
+
+        [Parameter(Mandatory = $true)]
+        [string] $WriterFamily,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Orchestrator,
+
+        [Parameter(Mandatory = $true)]
+        [string] $BaseRef,
+
+        [Parameter(Mandatory = $true)]
+        [string] $RepositoryRoot,
+
+        [AllowNull()]
+        [scriptblock] $PatchEquivalentEvaluator = $null
+    )
+
+    $shortHead = Get-ShortSha $HeadSha
+    $shortMarkerHead = Get-ShortSha $Marker.Head
+
+    if ($Marker.Head.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
+        return New-GateResult `
+            -State 'success' `
+            -Reason "Verified $($Marker.ReviewerFamily) ($($Marker.ReviewerModel)) PASS on $shortHead." `
+            -Marker $Marker `
+            -WriterFamily $WriterFamily `
+            -Orchestrator $Orchestrator
+    }
+
+    $isEquivalent = if ($null -ne $PatchEquivalentEvaluator) {
+        [bool] (& $PatchEquivalentEvaluator $Marker.Head $HeadSha $BaseRef $RepositoryRoot)
+    }
+    else {
+        Test-PatchEquivalent -MarkerHead $Marker.Head -CurrentHead $HeadSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
+    }
+
+    if ($isEquivalent) {
+        return New-GateResult `
+            -State 'success' `
+            -Reason "Verified $($Marker.ReviewerFamily) PASS (patch-equivalent to $shortMarkerHead)." `
+            -Marker $Marker `
+            -WriterFamily $WriterFamily `
+            -Orchestrator $Orchestrator
+    }
+
+    return New-GateResult `
+        -State 'failure' `
+        -Reason "Review marker for $shortMarkerHead is stale for $shortHead." `
+        -Marker $Marker `
+        -WriterFamily $WriterFamily `
+        -Orchestrator $Orchestrator
 }
 
 function Get-ReviewGateResult {
@@ -422,154 +616,82 @@ function Get-ReviewGateResult {
 
     $authorTrimmed = if ($null -eq $PullRequestAuthor) { '' } else { $PullRequestAuthor.Trim() }
     if ($authorTrimmed -in @('dependabot[bot]', 'app/dependabot')) {
-        return [pscustomobject] @{
-            State = 'success'
-            Description = Format-StatusDescription 'exempt: dependency bot'
-            Marker = $null
-            WriterFamily = $null
-            Orchestrator = $null
-        }
+        return New-GateResult -State 'success' -Reason 'exempt: dependency bot'
     }
 
     $markers = @(Get-FinalReviewMarkers -Comments $Comments)
     if ($markers.Count -eq 0) {
-        $hasRawMarker = $false
-        foreach ($comment in @($Comments)) {
-            $bodyText = if ($comment -is [string]) { $comment }
-                elseif ($comment -is [System.Collections.IDictionary] -and $comment.Contains('body')) { [string] $comment['body'] }
-                elseif ($null -ne $comment -and $null -ne $comment.PSObject.Properties['body']) { [string] $comment.body }
-                else { '' }
-            if ($bodyText -match '<!--\s*moba-final-review\b') {
-                $hasRawMarker = $true
-                break
-            }
-        }
-
-        $reason = if ($hasRawMarker) {
+        $reason = if (Test-HasMalformedReviewMarker -Comments $Comments) {
             'Invalid moba-final-review marker: check required fields.'
         }
         else {
             'Missing valid moba-final-review marker.'
         }
-
-        return [pscustomobject] @{
-            State = 'failure'
-            Description = Format-StatusDescription $reason
-            Marker = $null
-            WriterFamily = $null
-            Orchestrator = $null
-        }
+        return New-GateResult -State 'failure' -Reason $reason
     }
 
     $newest = $markers[0]
-    $shortHead = if ($HeadSha.Length -ge 8) { $HeadSha.Substring(0, 8) } else { $HeadSha }
-    $shortMarkerHead = if ($newest.Head.Length -ge 8) { $newest.Head.Substring(0, 8) } else { $newest.Head }
-
     if ($newest.Verdict -eq 'CHANGES') {
-        return [pscustomobject] @{
-            State = 'failure'
-            Description = Format-StatusDescription "Final review verdict is CHANGES for $shortMarkerHead."
-            Marker = $newest
-            WriterFamily = $null
-            Orchestrator = $null
-        }
+        return New-GateResult -State 'failure' -Reason "Final review verdict is CHANGES for $(Get-ShortSha $newest.Head)." -Marker $newest
     }
 
-    $writerFamilyField = Get-SliceHeaderField -Body $PullRequestBody -FieldName 'Writer family'
-    $writerField = Get-SliceHeaderField -Body $PullRequestBody -FieldName 'Writer'
-
-    $writerFamily = $null
-    if (-not [string]::IsNullOrWhiteSpace($writerFamilyField) -and $writerFamilyField -notmatch '\|' -and $writerFamilyField -notmatch '^<.*>$') {
-        $writerFamily = ConvertTo-ModelFamily -Value $writerFamilyField
-        if ($null -eq $writerFamily) {
-            return [pscustomobject] @{
-                State = 'failure'
-                Description = Format-StatusDescription "Unresolved Writer family '$writerFamilyField' in PR slice header."
-                Marker = $newest
-                WriterFamily = $null
-                Orchestrator = $null
-            }
-        }
-    }
-    elseif (-not [string]::IsNullOrWhiteSpace($writerField)) {
-        $writerFamily = ConvertTo-ModelFamily -Value $writerField
+    $writerResolution = Resolve-WriterFamily -PullRequestBody $PullRequestBody
+    if ($null -eq $writerResolution.Family) {
+        return New-GateResult -State 'failure' -Reason $writerResolution.Error -Marker $newest
     }
 
-    if ($null -eq $writerFamily) {
-        return [pscustomobject] @{
-            State = 'failure'
-            Description = Format-StatusDescription 'Unable to resolve writer model family from PR slice header.'
-            Marker = $newest
-            WriterFamily = $null
-            Orchestrator = $null
-        }
-    }
-
+    $writerFamily = $writerResolution.Family
     $orchestrator = Get-SliceHeaderField -Body $PullRequestBody -FieldName 'Orchestrator'
     if ([string]::IsNullOrWhiteSpace($orchestrator) -or $orchestrator -match '^<.*>$') {
-        return [pscustomobject] @{
-            State = 'failure'
-            Description = Format-StatusDescription 'Missing Orchestrator in PR slice header.'
-            Marker = $newest
-            WriterFamily = $writerFamily
-            Orchestrator = $orchestrator
-        }
+        return New-GateResult -State 'failure' -Reason 'Missing Orchestrator in PR slice header.' -Marker $newest -WriterFamily $writerFamily -Orchestrator $orchestrator
     }
 
     if ($newest.ReviewerFamily -eq $writerFamily) {
-        return [pscustomobject] @{
-            State = 'failure'
-            Description = Format-StatusDescription "Reviewer family '$($newest.ReviewerFamily)' matches writer family '$writerFamily'."
-            Marker = $newest
-            WriterFamily = $writerFamily
-            Orchestrator = $orchestrator
-        }
+        return New-GateResult -State 'failure' -Reason "Reviewer family '$($newest.ReviewerFamily)' matches writer family '$writerFamily'." -Marker $newest -WriterFamily $writerFamily -Orchestrator $orchestrator
     }
 
     if ((Get-NormalizedIdentifier $newest.Dispatcher) -eq (Get-NormalizedIdentifier $orchestrator)) {
-        return [pscustomobject] @{
-            State = 'failure'
-            Description = Format-StatusDescription 'Final review dispatcher must differ from PR Orchestrator.'
-            Marker = $newest
-            WriterFamily = $writerFamily
-            Orchestrator = $orchestrator
+        return New-GateResult -State 'failure' -Reason 'Final review dispatcher must differ from PR Orchestrator.' -Marker $newest -WriterFamily $writerFamily -Orchestrator $orchestrator
+    }
+
+    return Resolve-MarkerHeadMatchResult `
+        -Marker $newest `
+        -HeadSha $HeadSha `
+        -WriterFamily $writerFamily `
+        -Orchestrator $orchestrator `
+        -BaseRef $BaseRef `
+        -RepositoryRoot $RepositoryRoot `
+        -PatchEquivalentEvaluator $PatchEquivalentEvaluator
+}
+
+function Get-GitHubPullRequestComments {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Repository,
+
+        [Parameter(Mandatory = $true)]
+        [int] $PullRequest
+    )
+
+    $commentsJson = gh api --paginate --slurp "repos/$Repository/issues/$PullRequest/comments"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to read comments for PR #$PullRequest from $Repository."
+    }
+
+    $pages = $commentsJson | ConvertFrom-Json
+    $comments = [Collections.Generic.List[object]]::new()
+    foreach ($page in @($pages)) {
+        if ($page -is [System.Collections.IEnumerable] -and $page -isnot [string]) {
+            foreach ($item in $page) {
+                $comments.Add($item)
+            }
+        }
+        elseif ($null -ne $page) {
+            $comments.Add($page)
         }
     }
 
-    if ($newest.Head.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
-        return [pscustomobject] @{
-            State = 'success'
-            Description = Format-StatusDescription "Verified $($newest.ReviewerFamily) ($($newest.ReviewerModel)) PASS on $shortHead."
-            Marker = $newest
-            WriterFamily = $writerFamily
-            Orchestrator = $orchestrator
-        }
-    }
-
-    $isEquivalent = if ($null -ne $PatchEquivalentEvaluator) {
-        [bool] (& $PatchEquivalentEvaluator $newest.Head $HeadSha $BaseRef $RepositoryRoot)
-    }
-    else {
-        Test-PatchEquivalent -MarkerHead $newest.Head -CurrentHead $HeadSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
-    }
-
-    if ($isEquivalent) {
-        return [pscustomobject] @{
-            State = 'success'
-            Description = Format-StatusDescription "Verified $($newest.ReviewerFamily) PASS (patch-equivalent to $shortMarkerHead)."
-            Marker = $newest
-            WriterFamily = $writerFamily
-            Orchestrator = $orchestrator
-        }
-    }
-
-    return [pscustomobject] @{
-        State = 'failure'
-        Description = Format-StatusDescription "Review marker for $shortMarkerHead is stale for $shortHead."
-        Marker = $newest
-        WriterFamily = $writerFamily
-        Orchestrator = $orchestrator
-    }
+    return @($comments)
 }
 
 if ($MyInvocation.InvocationName -eq '.') {
@@ -588,23 +710,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "Failed to read PR #$PullRequest from $Repository."
 }
 $pr = $prJson | ConvertFrom-Json
-
-$commentsJson = gh api --paginate --slurp "repos/$Repository/issues/$PullRequest/comments"
-if ($LASTEXITCODE -ne 0) {
-    throw "Failed to read comments for PR #$PullRequest from $Repository."
-}
-$commentPages = $commentsJson | ConvertFrom-Json
-$comments = [Collections.Generic.List[object]]::new()
-foreach ($page in @($commentPages)) {
-    if ($page -is [System.Collections.IEnumerable] -and $page -isnot [string]) {
-        foreach ($item in $page) {
-            $comments.Add($item)
-        }
-    }
-    elseif ($null -ne $page) {
-        $comments.Add($page)
-    }
-}
+$comments = Get-GitHubPullRequestComments -Repository $Repository -PullRequest $PullRequest
 
 $headSha = [string] $pr.head.sha
 $baseRef = "origin/$($pr.base.ref)"
@@ -612,7 +718,7 @@ $result = Get-ReviewGateResult `
     -PullRequestAuthor ([string] $pr.user.login) `
     -PullRequestBody ([string] $pr.body) `
     -HeadSha $headSha `
-    -Comments @($comments) `
+    -Comments $comments `
     -BaseRef $baseRef `
     -RepositoryRoot $RepositoryRoot
 

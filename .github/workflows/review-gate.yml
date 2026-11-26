@@ -46,10 +46,8 @@ jobs:
               throw "Failed to resolve head SHA for PR #$prNumber."
             }
 
-            gh api "repos/$repository/statuses/$headSha" `
-              -f state=success `
-              -f "context=Independent final review" `
-              -f "description=gate not yet installed" | Out-Null
+            $statusArgs = @('api', "repos/$repository/statuses/$headSha", '-f', 'state=success', '-f', 'context=Independent final review', '-f', 'description=gate not yet installed')
+            gh @statusArgs | Out-Null
             if ($LASTEXITCODE -ne 0) {
               throw "Failed to post bootstrap review gate status for PR #$prNumber."
             }
@@ -61,10 +59,7 @@ jobs:
             throw "Failed to fetch pull/${prNumber}/head."
           }
 
-          ./scripts/Test-ReviewGate.ps1 `
-            -PullRequest $prNumber `
-            -Repository $repository `
-            -SetStatus
+          ./scripts/Test-ReviewGate.ps1 -PullRequest $prNumber -Repository $repository -SetStatus
 
   review-gate-tests:
     name: Test review gate script
