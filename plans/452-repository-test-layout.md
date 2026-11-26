@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/452
 **Spec Kit**: Not applicable - repository and project layout without product behavior or persisted-format change; reclassify before implementation if a renamed namespace is part of a persisted or wire format
-**Status**: Slices 1 and 2 delivered; the code slices remain and wait for RF-26
+**Status**: Slices 1 and 2 delivered; Slice 3A in progress (`tools/FadrEncodingAnalysis/` extracted and pre-split test baseline recorded); remaining Slice 3B+ test-project split and Slices 4–6 follow
 
 ## Purpose and scope
 
@@ -24,7 +24,7 @@ Recorded on main `4ae44d75` (2026-11-14).
 | `docs/` top level | Resolved by slice 2: 14 developer Markdown files moved to `docs/developer/` and 2 user/legal Markdown files (`HARDWARE-DISCLAIMER.md`, `THIRD-PARTY-NOTICES.md`) to `docs/user/`; `docs/wiki/` (10 files) remains the canonical user wiki; `docs/index.html` with `docs/assets/` remains the site entry page; `README.md` links architecture, build and test entry points | 2 |
 | Test project | one `Test/Test.csproj` that targets `net10.0` and `net10.0-windows10.0.22621.0`, removes files per target with `Compile Remove`, references MOBAflow only for Windows and MOBAsmart only with `IncludeMobaSmartTests=true` | 3 |
 | Test folders (tracked files) | `SharedUI` 83, `Backend` 73, `MOBAdisplay` 22, `Domain` 22, `Common` 21, `Helpers` 19, `MOBAflow` 14, `Speech` 11, `MOBApi` 11, `TrackPlanRenderer` 10, `WinUI` 7, `Contracts` 7, `Architecture` 5, `Unit` 4, `Integration` 4, others 11 | 3 |
-| `Test/Analysis` | `FadrEncodingAnalysis.csproj` with its `Program.cs`, excluded from the test project with `Compile Remove` | 3 |
+| `Test/Analysis` | Resolved by slice 3A: `FadrEncodingAnalysis.csproj` and `Program.cs` moved to `tools/FadrEncodingAnalysis/`; `Analysis` exclusions removed from `Test/Test.csproj` | 3 |
 | Root namespaces that differ from the project name | `MOBAflow` uses `Moba.WinUI`, `MOBAsmart` uses `Moba.MAUI`, `MOBAdisplay` uses `Moba.Display`; of the 18 projects in `Moba.slnx`, 3 differ and 15 match | 4 |
 | Folder names | `MOBAflow/Converter` (26 files) but `MOBAsmart/Converters` (9); `Backend/Interface` (25) and `SharedUI/Interface` (27) are consistent with each other | 4 |
 | Single-host types in `SharedUI` | desktop only: `ViewModel/DisplayViewModel.cs`, `ViewModel/RecorderPageViewModel.cs`, `ViewModel/InterlockingControlViewModel*.cs`; mobile: `SharedUI/Mobile/` already holds 20 files; a complete host-usage list is part of slice 5 | 5 |
@@ -47,6 +47,9 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
   closure), are removed here.
 - **No test is lost.** Slice 3 records the discovered and executed test counts per target before the split and
   proves the same totals afterwards; the result guard `scripts/Test-TestRunResults.ps1` keeps its minimum counts.
+  Pre-split baseline recorded on `main` `6e3fe309` (2026-11-26, `-c Release -p:IncludeMobaSmartTests=false`):
+  - `net10.0` (portable + `MOBAdemo` + `MOBApi` integration): `3,723` discovered, `3,722` executed (`3,722` passed, `0` failed; `[Explicit]` `SustainedRefresh_MeetsAcceptanceThresholds` skipped by test runner). Analyzer baseline: `3,135` diagnostics in `1,136` groups.
+  - `net10.0-windows10.0.22621.0` (Windows desktop): `3,686` discovered, `3,685` executed (`3,685` passed, `0` failed; `[Explicit]` `SustainedRefresh_MeetsAcceptanceThresholds` skipped by test runner). Analyzer baseline: `2,426` diagnostics in `965` groups.
 - **Namespaces.** Root namespaces become `Moba.MOBAflow`, `Moba.MOBAsmart` and `Moba.MOBAdisplay` only if slice 4
   confirms that no persisted or wire format carries the old names (type names in JSON, XAML class names in
   resources, SignalR hub or discovery identifiers). If one does, that name is kept and recorded, without a

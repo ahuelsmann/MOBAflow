@@ -37,7 +37,7 @@ Use the validation policy and commands in [AGENTS.md](../../AGENTS.md).
 
 - Inspect actual fixture names/categories before filtering. Confirm that the intended tests ran.
 - Use the portable target for shared changes and the Windows target for desktop integration.
-  `Test/Analysis/` contains separate analysis helpers, not the normal test entry point.
+  Standalone developer calculation helpers live under `tools/` (for example `tools/FadrEncodingAnalysis/`), outside `Test/`.
 - Respect explicitly marked integration/hardware tests and their prerequisites. Automated railroad tests use fakes.
 - Report failed/skipped platform tests precisely. `Test/Speech/LocalSpeechProviderTests.cs` exercises Windows SAPI synthesis into memory;
   an installed voice is required, but no audio device is opened. Report explicit skips and do not dismiss unrelated failures.
