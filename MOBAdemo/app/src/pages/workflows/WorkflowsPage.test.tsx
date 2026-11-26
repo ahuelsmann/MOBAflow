@@ -43,6 +43,8 @@ describe('WorkflowsPage (slice 17)', () => {
 
     const expectedTypeLabels = { trigger: 'Trigger', action: 'Action', terminate: 'End' } as const;
     const css = readFileSync(join(import.meta.dirname, 'workflows.css'), 'utf8');
+    expect(css).toMatch(/\.workflows-graph-canvas\s*\{[^}]*block-size:\s*336px;\s*inline-size:\s*528px;/);
+    expect(css).toMatch(/button\.workflows-node-card\s*\{[^}]*block-size:\s*136px;[^}]*inline-size:\s*156px;/);
     for (const node of workflow.nodes) {
       const slot = nodeItems.find((item) => item.getAttribute('data-node-id') === node.id);
       expect(slot).toBeDefined();

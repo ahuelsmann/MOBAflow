@@ -19,6 +19,7 @@ test.describe('MOBAdemo Workflows page browser checks (slice 17)', () => {
     browser,
   }) => {
     const context = await browser.newContext({
+      viewport: { width: 1280, height: 720 },
       extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.151' },
     });
     try {
@@ -55,11 +56,31 @@ test.describe('MOBAdemo Workflows page browser checks (slice 17)', () => {
 
       const nodeSlots = actionsPane.locator('[data-node-id]');
       for (let i = 0; i < 5; i++) {
-        const nodeBox = await nodeSlots.nth(i).boundingBox();
+        const slot = nodeSlots.nth(i);
+        const nodeBox = await slot.boundingBox();
         expect(nodeBox).not.toBeNull();
         expect(nodeBox!.x).toBeGreaterThanOrEqual(viewportBox!.x);
         expect(nodeBox!.x + nodeBox!.width).toBeLessThanOrEqual(viewportBox!.x + viewportBox!.width);
+        expect(nodeBox!.y).toBeGreaterThanOrEqual(viewportBox!.y);
+        expect(nodeBox!.y + nodeBox!.height).toBeLessThanOrEqual(viewportBox!.y + viewportBox!.height);
+
+        const cardBox = await slot.locator('.workflows-node-card').boundingBox();
+        const stateBox = await slot.locator('.workflows-node-state').boundingBox();
+        expect(cardBox).not.toBeNull();
+        expect(stateBox).not.toBeNull();
+        expect(stateBox!.y).toBeGreaterThanOrEqual(cardBox!.y);
+        expect(stateBox!.y + stateBox!.height).toBeLessThanOrEqual(cardBox!.y + cardBox!.height);
       }
+
+      const newBtnBox = await listPane.getByRole('button', { name: 'New workflow' }).boundingBox();
+      const delBtnBox = await listPane.getByRole('button', { name: 'Delete workflow' }).boundingBox();
+      expect(newBtnBox).not.toBeNull();
+      expect(delBtnBox).not.toBeNull();
+      expect(Math.abs(newBtnBox!.y - delBtnBox!.y)).toBeLessThan(4);
+
+      const descriptionField = propertiesPane.getByRole('textbox', { name: 'Description' });
+      const descriptionClipped = await descriptionField.evaluate((el) => el.scrollHeight > el.clientHeight);
+      expect(descriptionClipped).toBe(false);
 
       await expect(propertiesPane.getByRole('textbox', { name: 'Name' })).toHaveValue('Arrival Main Station');
       await expect(propertiesPane.getByRole('textbox', { name: 'Steps' })).toHaveValue('5');

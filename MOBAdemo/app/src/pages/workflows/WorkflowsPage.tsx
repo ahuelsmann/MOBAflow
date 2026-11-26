@@ -6,9 +6,9 @@ import { InertButton } from '../../shell/inert/InertButton';
 import './workflows.css';
 
 const NODE_WIDTH = 156;
-const NODE_HEIGHT = 116;
+const NODE_HEIGHT = 136;
 const GRAPH_WIDTH = 528;
-const GRAPH_HEIGHT = 296;
+const GRAPH_HEIGHT = 336;
 
 const NODE_TYPE_LABELS: Readonly<Record<WorkflowNodeType, string>> = {
   trigger: 'Trigger',
@@ -281,7 +281,7 @@ export function WorkflowsPage() {
                       id={fieldId}
                       className="workflows-field workflows-property-input workflows-property-textarea"
                       readOnly
-                      rows={2}
+                      rows={3}
                       value={property.value}
                     />
                   ) : (
