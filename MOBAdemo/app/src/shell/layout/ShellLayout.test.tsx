@@ -27,7 +27,9 @@ it('remembers dismissing the narrow-window notice only until reload', async () =
   resize(800);
   const app = render(<App load={load} />);
   expect(await screen.findByText(notice)).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Dismiss narrow-window notice' }));
+  const dismiss = screen.getByRole('button', { name: 'Dismiss narrow-window notice' });
+  expect(dismiss.closest('.demo-shell-viewport')).toBeNull();
+  fireEvent.click(dismiss);
   expect(screen.queryByText(notice)).not.toBeInTheDocument();
   app.unmount();
 

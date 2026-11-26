@@ -38,7 +38,7 @@ describe('shell navigation', () => {
     const overview = await screen.findByRole('button', { name: 'Overview' });
     expect(overview).toHaveAttribute('aria-disabled', 'true');
     expect(overview).toHaveAccessibleDescription(disabledHint);
-    expect(overview).toHaveAttribute('title', disabledHint);
+    expect(overview).toHaveAttribute('title', 'Overview\n' + disabledHint);
     fireEvent.click(overview);
     expect(screen.getByRole('button', { name: 'Train Control' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('button', { name: 'Track Plan' })).toHaveAttribute('aria-disabled', 'true');

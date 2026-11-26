@@ -16,7 +16,7 @@ export function ShellLayout({ children }: Readonly<{ children: ReactNode }>) {
   const [noticeDismissed, setNoticeDismissed] = useState(false);
 
   return (
-    <div className="demo-shell-viewport" data-shell-mode={mode}>
+    <div data-shell-mode={mode}>
       {mode === 'narrow' && !noticeDismissed && (
         <div className="demo-narrow-notice">
           <p>Desktop UI demo - best on a screen at least 1024 px wide</p>
@@ -25,7 +25,9 @@ export function ShellLayout({ children }: Readonly<{ children: ReactNode }>) {
           </button>
         </div>
       )}
-      <div className="demo-desktop-layout">{children}</div>
+      <div className="demo-shell-viewport">
+        <div className="demo-desktop-layout">{children}</div>
+      </div>
     </div>
   );
 }

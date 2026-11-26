@@ -1,6 +1,5 @@
 .demo-inert-control {
   display: inline-block;
-  position: relative;
 }
 
 .demo-inert-control > button:focus-visible {
@@ -11,12 +10,11 @@
   background: var(--background-card);
   border: 1px solid var(--stroke-default);
   border-radius: 0.25rem;
+  box-sizing: border-box;
   color: var(--text-primary);
-  inset-block-start: 100%;
-  inset-inline-start: 0;
+  max-inline-size: min(18rem, calc(100vw - 16px));
+  overflow-wrap: anywhere;
   padding: 0.375rem 0.5rem;
-  pointer-events: none;
-  position: absolute;
-  white-space: nowrap;
-  z-index: 1;
+  position: fixed;
+  z-index: 20;
 }
