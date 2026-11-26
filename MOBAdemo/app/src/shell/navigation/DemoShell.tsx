@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { enabledPages } from '../../config/enabledPages';
 import navigation from '../../examples/navigation.json';
 import type { NavigationEntry } from '../../examples/types';
+import { TrainControlFrame } from '../../pages/train-control/frame/TrainControlFrame';
 import { NavigationIcon } from './NavigationIcon';
 import './navigation.css';
 
@@ -63,7 +64,7 @@ export function DemoShell() {
         </nav>
       </aside>
       <main className="app-shell">
-        <h1>{title ?? 'MOBAdemo'}</h1>
+        {page === landingPage && flagsByKey[page] ? <TrainControlFrame /> : <h1>{title ?? 'MOBAdemo'}</h1>}
       </main>
     </div>
   );
