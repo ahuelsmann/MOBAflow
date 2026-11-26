@@ -18,6 +18,12 @@ it('shows the active theme toggle beside the inert command bar', async () => {
   for (const name of ['New', 'Open']) {
     expect(within(commands).getByRole('button', { name })).toHaveAccessibleDescription('Fixed example project in the web demo');
   }
+  const open = within(commands).getByRole('button', { name: 'Open' });
+  fireEvent.focus(open);
+  expect(screen.getByRole('tooltip')).toBeVisible();
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Fixed example project in the web demo');
+  fireEvent.blur(open);
+
   const inPort = within(commands).getByRole('spinbutton', { name: 'Feedback Point (InPort)' });
   expect(inPort).toHaveAttribute('readonly');
   expect(inPort).toHaveAttribute('aria-disabled', 'true');

@@ -25,6 +25,7 @@
   align-items: center;
   border-block-end: 1px solid var(--stroke-default);
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   padding: 0.5rem 0.75rem;
 }
@@ -36,6 +37,7 @@
 .demo-status-bar li {
   align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
@@ -47,6 +49,10 @@
   color: var(--text-primary);
   font: inherit;
   padding: 0.25rem 0.5rem;
+}
+
+.demo-bar-button {
+  white-space: nowrap;
 }
 
 .demo-bar-button[aria-pressed='true'] {
@@ -61,7 +67,12 @@
 }
 
 .demo-bar-number {
+  appearance: textfield;
   inline-size: 3.5rem;
+}
+
+.demo-bar-number::-webkit-inner-spin-button {
+  appearance: none;
 }
 
 .demo-messages-bar {
@@ -115,6 +126,7 @@
   border: 1px solid var(--stroke-default);
   border-radius: 0.75rem;
   content: '';
+  flex-shrink: 0;
   inline-size: 1.625rem;
 }
 
