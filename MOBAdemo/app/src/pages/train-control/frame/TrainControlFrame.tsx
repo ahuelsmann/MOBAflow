@@ -2,6 +2,10 @@ import { useId, useMemo } from 'react';
 import { defaultSources, parseExamples } from '../../../examples/loader';
 import texts from '../../../examples/texts.json';
 import { InertButton } from '../../../shell/inert/InertButton';
+import { CabControlTiles } from '../gauges/CabControlTiles';
+import { CurrentGauge } from '../gauges/CurrentGauge';
+import { SpeedometerGauge } from '../gauges/SpeedometerGauge';
+import { TimetablePanel } from '../gauges/TimetablePanel';
 import { SpeedSlider } from '../slider/SpeedSlider';
 import './frame.css';
 
@@ -28,7 +32,7 @@ function SeriesSearch() {
 }
 
 export function TrainControlFrame() {
-  const locomotives = useMemo(() => parseExamples(defaultSources).locomotives, []);
+  const { locomotives, timetable } = useMemo(() => parseExamples(defaultSources), []);
   const selected = locomotives.find((locomotive) => locomotive.selected);
   if (!selected) return null;
 
@@ -66,8 +70,25 @@ export function TrainControlFrame() {
             </InertButton>
             <InertButton className="train-control-button" pressed={drive.accelerationRamp}>Acceleration ramp</InertButton>
           </div>
-          <SpeedSlider initialStep={drive.speed} />
         </section>
+        <div className="train-control-center">
+          <TimetablePanel timetable={timetable} />
+          <CabControlTiles
+            brake={drive.brake}
+            doorRelease={drive.doorRelease}
+            doorBlocking={drive.doorBlocking}
+          />
+          <section className="train-control-panel tc-gauge-panel" aria-label="Speedometer">
+            <h2>Speedometer</h2>
+            <SpeedometerGauge speedKmh={drive.speedKmh} />
+            <SpeedSlider initialStep={drive.speed} />
+          </section>
+          <CurrentGauge
+            currentAmps={drive.currentAmps}
+            maxCurrentAmps={drive.maxCurrentAmps}
+            trackVoltage={drive.trackVoltage}
+          />
+        </div>
         <section className="train-control-panel" aria-label="Functions">
           <h2>Functions</h2>
           <ul className="train-control-functions">

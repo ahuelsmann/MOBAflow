@@ -30,7 +30,13 @@
   align-items: start;
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(14rem, 1fr) minmax(17rem, 1.5fr);
+  grid-template-columns: minmax(12rem, 0.9fr) minmax(22rem, 1.8fr) minmax(14rem, 1.1fr);
+}
+
+.train-control-center {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(10rem, 1fr));
 }
 
 .train-control-panel {
@@ -38,6 +44,7 @@
   border: 1px solid var(--stroke-default);
   border-radius: 0.5rem;
   color: var(--text-primary);
+  min-inline-size: 0;
   padding: 0.75rem;
 }
 
@@ -107,6 +114,7 @@
 
 .train-control-function {
   grid-template-columns: 1.25rem 2rem minmax(0, 1fr);
+  overflow-wrap: anywhere;
   text-align: start;
 }
 

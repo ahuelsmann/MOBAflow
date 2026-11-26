@@ -94,6 +94,8 @@ async function inspectHttpResponse(response: Response): Promise<void> {
 }
 
 test.describe('MOBAdemo shell browser checks (slice 10)', () => {
+  test.use({ extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.1' } });
+
   test('cold load shows loading state before rendering the shell (FR-052)', async ({ page }) => {
     const consoleErrors: string[] = [];
     const pageErrors: string[] = [];
@@ -148,7 +150,10 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
   });
 
   test('renders explicit no-JavaScript notice when JavaScript is disabled', async ({ browser }) => {
-    const context = await browser.newContext({ javaScriptEnabled: false });
+    const context = await browser.newContext({
+      javaScriptEnabled: false,
+      extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.2' },
+    });
     try {
       const page = await context.newPage();
       await page.goto('/');
@@ -167,7 +172,9 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
   test('stays within first-visit and repeat-visit compressed transfer budgets (FR-057, FR-076, SC-006)', async ({
     browser,
   }) => {
-    const context = await browser.newContext();
+    const context = await browser.newContext({
+      extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.3' },
+    });
     try {
       const page = await context.newPage();
       const cdp = await context.newCDPSession(page);
@@ -345,7 +352,10 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
     browser,
   }) => {
     // Emulate browser light preference to verify first visit still defaults to Dark (FR-021).
-    const context = await browser.newContext({ colorScheme: 'light' });
+    const context = await browser.newContext({
+      colorScheme: 'light',
+      extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.4' },
+    });
     try {
       const page = await context.newPage();
       await page.goto('/');

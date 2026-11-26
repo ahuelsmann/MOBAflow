@@ -1,24 +1,29 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { expect, it, vi } from 'vitest';
-import { DemoShell } from '../../../shell/navigation/DemoShell';
+import { expect, it } from 'vitest';
+import { App } from '../../../App';
 import { defaultSources, parseExamples } from '../../../examples/loader';
 import { trainControlEnabled } from '../enabled';
 
-vi.mock('../../../config/enabledPages', () => ({
-  enabledPages: { 'train-control': true, workflows: false, 'track-plan': false, 'signal-box': false },
-}));
-
+const load = async () => {};
 const examples = parseExamples(defaultSources);
 const flagship = examples.locomotives.find((locomotive) => locomotive.selected)!;
 const hint = 'Available in the MOBAflow desktop app';
 
-it('keeps the shipped Train Control entry disabled until the page is complete', () => {
-  expect(trainControlEnabled).toBe(false);
+it('switches Train Control on as the landing page with the flagship BR 211 selected (FR-032)', async () => {
+  expect(trainControlEnabled).toBe(true);
+  render(<App load={load} />);
+  const main = await screen.findByRole('main');
+  expect(screen.getByRole('button', { name: 'Train Control' })).toHaveAttribute('aria-current', 'page');
+  expect(within(main).getByRole('heading', { name: 'Train Control' })).toBeVisible();
+  expect(within(main).getByRole('button', { name: 'BR 211' })).toHaveAttribute('aria-pressed', 'true');
+  expect(within(main).getByText('82')).toBeVisible();
+  expect(within(main).getByText('0.42 A')).toBeVisible();
+  expect(within(main).getByText('Regional service RB 21')).toBeVisible();
 });
 
-it('shows the prepared locomotive roster and all 32 named functions of the flagship', () => {
-  render(<DemoShell />);
-  const page = screen.getByRole('main');
+it('shows the prepared locomotive roster and all 32 named functions of the flagship', async () => {
+  render(<App load={load} />);
+  const page = await screen.findByRole('main');
   expect(within(page).getByRole('heading', { name: 'Train Control' })).toBeVisible();
   const roster = within(page).getByRole('region', { name: 'Locomotives' });
   for (const locomotive of examples.locomotives) {
@@ -39,9 +44,9 @@ it('shows the prepared locomotive roster and all 32 named functions of the flags
   }
 });
 
-it('keeps the series search, stop and prepared driving controls inert', () => {
-  render(<DemoShell />);
-  const page = within(screen.getByRole('main'));
+it('keeps the series search, stop, driving settings, and cab tiles inert (FR-035, FR-036)', async () => {
+  render(<App load={load} />);
+  const page = within(await screen.findByRole('main'));
   const search = page.getByRole('searchbox', { name: 'Search by series' });
   expect(search).toHaveAttribute('readonly');
   expect(search).toHaveAttribute('aria-disabled', 'true');
@@ -51,7 +56,9 @@ it('keeps the series search, stop and prepared driving controls inert', () => {
   const direction = page.getByRole('button', { name: 'Direction: Forward' });
   const steps = page.getByRole('button', { name: 'DCC speed steps: 126' });
   const ramp = page.getByRole('button', { name: 'Acceleration ramp' });
-  for (const button of [stop, direction, steps, ramp]) {
+  const brake = page.getByRole('button', { name: /Brake/ });
+  const doorRelease = page.getByRole('button', { name: /Door release/ });
+  for (const button of [stop, direction, steps, ramp, brake, doorRelease]) {
     expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(button).toHaveAccessibleDescription(hint);
     fireEvent.click(button);
@@ -62,6 +69,8 @@ it('keeps the series search, stop and prepared driving controls inert', () => {
   expect(page.getByRole('button', { name: 'BR 211' })).toHaveAttribute('aria-pressed', 'true');
   expect(alternate).toHaveAttribute('aria-pressed', 'false');
   expect(ramp).toHaveAttribute('aria-pressed', 'true');
+  expect(brake).toHaveAttribute('aria-pressed', 'false');
+  expect(doorRelease).toHaveAttribute('aria-pressed', 'false');
   expect(direction).toHaveAccessibleName('Direction: Forward');
   expect(steps).toHaveAccessibleName('DCC speed steps: 126');
 });

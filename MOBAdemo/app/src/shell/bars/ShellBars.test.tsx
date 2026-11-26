@@ -51,10 +51,10 @@ it('shows the first-visit message expanded and keeps all bars unchanged on activ
   expect(power).toHaveAttribute('aria-pressed', 'false');
   expect(within(status).getByRole('button', { name: 'Speech provider' })).toHaveAttribute('aria-disabled', 'true');
 
-  const heading = within(main).getByRole('heading').textContent;
+  const heading = within(main).getByRole('heading', { level: 1 }).textContent;
   const inert = screen.getAllByRole('button').filter(button => button.getAttribute('aria-disabled') === 'true');
   inert.forEach(button => fireEvent.click(button));
-  expect(within(main).getByRole('heading')).toHaveTextContent(heading!);
+  expect(within(main).getByRole('heading', { level: 1 })).toHaveTextContent(heading!);
   expect(expander).toHaveAttribute('aria-expanded', 'true');
   expect(power).toHaveAttribute('aria-pressed', 'false');
   expect(within(messages).getByText(initialInfo)).toBeVisible();

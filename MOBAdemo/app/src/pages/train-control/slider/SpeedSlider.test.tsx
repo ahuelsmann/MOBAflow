@@ -19,8 +19,8 @@ function pageWithoutSlider(page: HTMLElement) {
   return copy.innerHTML;
 }
 
-it('leaves Train Control disabled in the shipped configuration', () => {
-  expect(trainControlEnabled).toBe(false);
+it('enables Train Control in the shipped configuration', () => {
+  expect(trainControlEnabled).toBe(true);
 });
 
 it('changes only the speed control and exposes the full range with Step X text', async () => {
