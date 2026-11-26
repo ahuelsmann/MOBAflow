@@ -2,6 +2,7 @@ import { useId, useMemo } from 'react';
 import { defaultSources, parseExamples } from '../../../examples/loader';
 import texts from '../../../examples/texts.json';
 import { InertButton } from '../../../shell/inert/InertButton';
+import { SpeedSlider } from '../slider/SpeedSlider';
 import './frame.css';
 
 // Desktop light-theme 20px symbols for the shipped flagship, kept inside the standalone app build.
@@ -65,6 +66,7 @@ export function TrainControlFrame() {
             </InertButton>
             <InertButton className="train-control-button" pressed={drive.accelerationRamp}>Acceleration ramp</InertButton>
           </div>
+          <SpeedSlider initialStep={drive.speed} />
         </section>
         <section className="train-control-panel" aria-label="Functions">
           <h2>Functions</h2>
