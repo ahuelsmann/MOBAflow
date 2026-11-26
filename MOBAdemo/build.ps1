@@ -86,12 +86,12 @@ function Test-SegmentIsReparsePoint([string] $SegmentPath) {
     return ($attrs -ne -1) -and (($attrs -band ([int] [IO.FileAttributes]::ReparsePoint)) -ne 0)
 }
 
-# Walks every segment from the path root/anchor to the leaf so links anywhere in the path are rejected.
-function Test-PathHasReparsePoint([string] $Path) {
+# Walks every segment from the path root/anchor to the leaf and returns the first link/reparse point found, or $null.
+function Find-ReparsePointSegment([string] $Path) {
     $full = [IO.Path]::GetFullPath($Path)
     $root = [IO.Path]::GetPathRoot($full)
     if (-not [string]::IsNullOrEmpty($root) -and (Test-SegmentIsReparsePoint $root)) {
-        return $true
+        return $root
     }
 
     $current = $root
@@ -100,11 +100,11 @@ function Test-PathHasReparsePoint([string] $Path) {
     foreach ($part in $suffix.Split($separators, [StringSplitOptions]::RemoveEmptyEntries)) {
         $current = if ([string]::IsNullOrEmpty($current)) { $part } else { [IO.Path]::Combine($current, $part) }
         if (Test-SegmentIsReparsePoint $current) {
-            return $true
+            return $current
         }
     }
 
-    return $false
+    return $null
 }
 
 # Returns the path with every symbolic link and junction on it resolved, so the guard compares real locations.
@@ -171,17 +171,24 @@ if ([string]::IsNullOrWhiteSpace($parentDirectory)) {
     throw "Refusing to use '$output' as the output folder: root paths cannot be replaced."
 }
 
-$outputHasLink = Test-PathHasReparsePoint $output
-$defaultHasLink = Test-PathHasReparsePoint $defaultOutput
+$outputLink = Find-ReparsePointSegment $output
+$defaultLink = Find-ReparsePointSegment $defaultOutput
 $realOutput = Resolve-RealPath $output
 $realRepository = Resolve-RealPath $repositoryFull
 $comparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
-$isAllowedDefault = (-not $defaultHasLink) -and $realOutput.Equals((Resolve-RealPath $defaultOutput), $comparison)
+$isAllowedDefault = ($null -eq $defaultLink) -and $realOutput.Equals((Resolve-RealPath $defaultOutput), $comparison)
 
-if ($outputHasLink -or
-    (Test-IsSameOrParent $realOutput $realRepository) -or
+if ($null -ne $outputLink) {
+    throw "Refusing to use '$output' as the output folder: path traverses link '$outputLink' (only unlinked external folders or unlinked MOBAdemo/Host/wwwroot-build may be replaced)."
+}
+
+if ((Test-IsSameOrParent $realOutput $realRepository) -or
     ((Test-IsSameOrParent $realRepository $realOutput) -and -not $isAllowedDefault)) {
-    throw "Refusing to use '$output' as the output folder: it is or runs through a link, or lies inside the repository where only MOBAdemo/Host/wwwroot-build may be replaced."
+    if ($null -ne $defaultLink) {
+        throw "Refusing to use '$output' as the output folder: repository path '$defaultOutput' traverses link '$defaultLink', so MOBAdemo/Host/wwwroot-build cannot be replaced."
+    }
+
+    throw "Refusing to use '$output' as the output folder: it lies inside the repository ('$realRepository') where only MOBAdemo/Host/wwwroot-build may be replaced."
 }
 
 if (-not (Test-OutputDirectorySafe -TargetPath $output -MarkerName $ownershipMarkerName)) {
@@ -227,7 +234,9 @@ try {
     $movedOld = $false
     try {
         New-Item -ItemType Directory -Path $staging -Force | Out-Null
-        Copy-Item -Path (Join-Path $distPath '*') -Destination $staging -Recurse -Force
+        Get-ChildItem -LiteralPath $distPath -Force | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination $staging -Recurse -Force
+        }
         [IO.File]::WriteAllText(
             (Join-Path $staging $ownershipMarkerName),
             "MOBAdemo build output$([Environment]::NewLine)",

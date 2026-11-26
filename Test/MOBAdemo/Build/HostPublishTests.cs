@@ -32,23 +32,8 @@ internal sealed class HostPublishTests
     {
         if (Directory.Exists(_root))
         {
-            DeleteReparsePoints(_root);
+            BuildScript.DeleteReparsePoints(_root);
             Directory.Delete(_root, recursive: true);
-        }
-    }
-
-    private static void DeleteReparsePoints(string directory)
-    {
-        foreach (var child in Directory.EnumerateDirectories(directory))
-        {
-            if (new DirectoryInfo(child).LinkTarget != null)
-            {
-                Directory.Delete(child);
-            }
-            else
-            {
-                DeleteReparsePoints(child);
-            }
         }
     }
 
@@ -69,10 +54,13 @@ internal sealed class HostPublishTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(files, Does.Contain("index.html"));
+            Assert.That(files, Does.Contain(".mobademo-webroot"));
             Assert.That(
-                files.Where(name => !name.StartsWith("index.html", StringComparison.Ordinal)),
+                files.Where(name =>
+                    !name.Equals(".mobademo-webroot", StringComparison.Ordinal)
+                    && !name.StartsWith("index.html", StringComparison.Ordinal)),
                 Is.Empty,
-                "Only the placeholder and its compressed siblings may remain.");
+                "Only the placeholder, its compressed siblings, and the webroot marker may remain.");
             Assert.That(index, Does.Contain("MOBAdemo is being built"));
         }
     }
@@ -120,10 +108,13 @@ internal sealed class HostPublishTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(files, Does.Contain("index.html"));
+            Assert.That(files, Does.Contain(".mobademo-webroot"));
             Assert.That(
-                files.Where(name => !name.StartsWith("index.html", StringComparison.Ordinal)),
+                files.Where(name =>
+                    !name.Equals(".mobademo-webroot", StringComparison.Ordinal)
+                    && !name.StartsWith("index.html", StringComparison.Ordinal)),
                 Is.Empty,
-                "Only the placeholder and its compressed siblings may remain.");
+                "Only the placeholder, its compressed siblings, and the webroot marker may remain.");
             Assert.That(index, Does.Contain("MOBAdemo is being built"));
         }
     }
@@ -141,8 +132,106 @@ internal sealed class HostPublishTests
         {
             Assert.That(File.Exists(Path.Combine(_publish, "wwwroot", "index.html")), Is.True);
             Assert.That(File.Exists(Path.Combine(_publish, "wwwroot", ".mobademo-build-owned")), Is.False);
+            Assert.That(File.Exists(Path.Combine(_publish, "wwwroot", ".mobademo-webroot")), Is.True);
             Assert.That(File.Exists(Path.Combine(buildOutput, "wwwroot", "index.html")), Is.True);
             Assert.That(File.Exists(Path.Combine(buildOutput, "wwwroot", ".mobademo-build-owned")), Is.False);
+            Assert.That(File.Exists(Path.Combine(buildOutput, "wwwroot", ".mobademo-webroot")), Is.True);
+        }
+    }
+
+    [Test]
+    public async Task BuildAndPublish_WhenTargetWebRootHasForeignContentWithoutMarker_WarnsAndPreservesForeignContent()
+    {
+        var buildOut = Path.Combine(_root, "shared-build");
+        var publishOut = Path.Combine(_root, "shared-publish");
+        foreach (var target in new[] { buildOut, publishOut })
+        {
+            var webRoot = Path.Combine(target, "wwwroot");
+            Directory.CreateDirectory(webRoot);
+            await File.WriteAllTextAsync(Path.Combine(webRoot, "foreign-app.js"), "console.log('foreign');")
+                .ConfigureAwait(false);
+        }
+
+        var buildResult = await BuildScript.RunProcessAsync(
+            "dotnet",
+            ["build", Path.Combine(_host, "MOBAdemo.csproj"), "-c", "Release", "-o", buildOut, "-nologo"],
+            PublishTimeout,
+            _host).ConfigureAwait(false);
+        var publishResult = await BuildScript.RunProcessAsync(
+            "dotnet",
+            ["publish", Path.Combine(_host, "MOBAdemo.csproj"), "-c", "Release", "-o", publishOut, "-nologo"],
+            PublishTimeout,
+            _host).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(buildResult.ExitCode, Is.Zero, buildResult.Output);
+            Assert.That(buildResult.Output, Does.Contain(".mobademo-webroot"));
+            Assert.That(File.Exists(Path.Combine(buildOut, "wwwroot", "foreign-app.js")), Is.True);
+            Assert.That(File.Exists(Path.Combine(buildOut, "wwwroot", ".mobademo-webroot")), Is.False);
+
+            Assert.That(publishResult.ExitCode, Is.Zero, publishResult.Output);
+            Assert.That(publishResult.Output, Does.Contain(".mobademo-webroot"));
+            Assert.That(File.Exists(Path.Combine(publishOut, "wwwroot", "foreign-app.js")), Is.True);
+            Assert.That(File.Exists(Path.Combine(publishOut, "wwwroot", ".mobademo-webroot")), Is.False);
+        }
+    }
+
+    [Test]
+    public async Task BuildAndPublish_WhenTargetWebRootIsEmpty_CleansAndWritesMarker()
+    {
+        var buildOut = Path.Combine(_root, "empty-build");
+        var publishOut = Path.Combine(_root, "empty-publish");
+        Directory.CreateDirectory(Path.Combine(buildOut, "wwwroot"));
+        Directory.CreateDirectory(Path.Combine(publishOut, "wwwroot"));
+
+        await DotNetAsync("build", buildOut).ConfigureAwait(false);
+        await DotNetAsync("publish", publishOut).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(File.Exists(Path.Combine(buildOut, "wwwroot", "index.html")), Is.True);
+            Assert.That(File.Exists(Path.Combine(buildOut, "wwwroot", ".mobademo-webroot")), Is.True);
+            Assert.That(File.Exists(Path.Combine(publishOut, "wwwroot", "index.html")), Is.True);
+            Assert.That(File.Exists(Path.Combine(publishOut, "wwwroot", ".mobademo-webroot")), Is.True);
+        }
+    }
+
+    [Test]
+    public async Task BuildAndPublish_WhenOutDirOrPublishDirOverlapsWwwrootBuild_FailsAndPreservesBuiltWebRoot()
+    {
+        var cases = new OverlapCase[]
+        {
+            new("build", "-p:OutDir=", true, false, false),
+            new("build", "-o", false, false, false),
+            new("publish", "-p:PublishDir=", true, false, false),
+            new("publish", "-o", false, false, false),
+        };
+
+        for (var i = 0; i < cases.Length; i++)
+        {
+            var overlapCase = cases[i];
+            foreach (var subFolder in new[] { false, true })
+            {
+                var caseHost = Path.Combine(_root, $"overlap-build-{i}-{subFolder}");
+                BuildScript.CopyDirectory(_host, caseHost);
+                WriteBuiltAppTo(caseHost, "built-999.js", "built-should-not-overwrite");
+                var target = subFolder
+                    ? Path.Combine(caseHost, "wwwroot-build", "sub")
+                    : Path.Combine(caseHost, "wwwroot-build");
+                await AssertWwwrootBuildOverlapRejectedAsync(caseHost, target, overlapCase).ConfigureAwait(false);
+
+                var alias = Path.Combine(_root, $"build-alias-{i}-{subFolder}");
+                await BuildScript.CreateDirectoryLinkOrIgnoreAsync(alias, target).ConfigureAwait(false);
+                try
+                {
+                    await AssertWwwrootBuildOverlapRejectedAsync(caseHost, alias, overlapCase).ConfigureAwait(false);
+                }
+                finally
+                {
+                    BuildScript.DeleteDirectoryLink(alias);
+                }
+            }
         }
     }
 
@@ -199,10 +288,7 @@ internal sealed class HostPublishTests
             }
             finally
             {
-                if (new DirectoryInfo(alias).LinkTarget != null)
-                {
-                    Directory.Delete(alias);
-                }
+                BuildScript.DeleteDirectoryLink(alias);
             }
         }
     }
@@ -273,6 +359,38 @@ internal sealed class HostPublishTests
                 Directory.Exists(Path.Combine(caseHost, "wwwroot", "assets")),
                 Is.False,
                 "Staged assets were copied into tracked wwwroot by: " + label);
+        }
+    }
+
+    private static async Task AssertWwwrootBuildOverlapRejectedAsync(
+        string caseHost,
+        string destination,
+        OverlapCase overlapCase)
+    {
+        var projectFile = Path.Combine(caseHost, "MOBAdemo.csproj");
+        var builtIndex = Path.Combine(caseHost, "wwwroot-build", "index.html");
+        var builtAsset = Path.Combine(caseHost, "wwwroot-build", "assets", "built-999.js");
+        var expectedIndex = await File.ReadAllTextAsync(builtIndex).ConfigureAwait(false);
+
+        string[] arguments = overlapCase.Option == "-o"
+            ? [overlapCase.Command, projectFile, "-c", "Release", "-o", destination, "-nologo", "-v", "q"]
+            : [overlapCase.Command, projectFile, "-c", "Release", overlapCase.Option + destination + Path.DirectorySeparatorChar, "-nologo", "-v", "q"];
+
+        var result = await BuildScript.RunProcessAsync("dotnet", arguments, PublishTimeout, caseHost)
+            .ConfigureAwait(false);
+        var label = string.Join(' ', arguments);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.ExitCode, Is.Not.Zero, "Expected overlap rejection for: " + label);
+            Assert.That(result.Output, Does.Contain("Refusing"), label);
+            Assert.That(File.Exists(builtIndex), Is.True, label);
+            Assert.That(await File.ReadAllTextAsync(builtIndex).ConfigureAwait(false), Is.EqualTo(expectedIndex), label);
+            Assert.That(File.Exists(builtAsset), Is.True, label);
+            Assert.That(File.Exists(Path.Combine(caseHost, "wwwroot-build", "MOBAdemo.dll")), Is.False, label);
+            Assert.That(
+                File.Exists(Path.Combine(caseHost, "wwwroot-build", "sub", "MOBAdemo.dll")),
+                Is.False,
+                label);
         }
     }
 
