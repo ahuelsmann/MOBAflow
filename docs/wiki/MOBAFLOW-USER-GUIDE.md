@@ -101,8 +101,8 @@ such as invalid references or conflicting data.
   snapshots and printable locomotive passports.
 - **Passenger Wagons** and **Goods Wagons:** maintain the wagon libraries.
 - **Trains:** compose ordered consists from locomotives and both wagon types.
-- **Train Control:** select a project locomotive, set direction and speed, use
-  presets, trigger emergency stop and switch functions F0-F31.
+- **Train Control:** select a project locomotive, set direction, speed and
+  acceleration ramp, trigger emergency stop and switch functions F0-F31.
 
 MOBAflow reports digital-address conflicts in project diagnostics. Resolve them
 before operating the affected locomotives.
@@ -254,8 +254,7 @@ The visual track-plan editor supports:
 - drag and drop, positioning and rotation;
 - snap-to-connect and explicit disconnect;
 - feedback-point assignment and topology validation;
-- Undo/Redo, zoom, fit-to-view and selection tools;
-- AnyRail XML import; and
+- Undo/Redo, zoom, fit-to-view and selection tools; and
 - SVG export.
 
 The currently shipped catalog is Piko A. Other track systems are not yet
@@ -263,9 +262,11 @@ included.
 
 ### Signal Box
 
-The Signal Box editor manages signals, switches and routes. Signal aspects can
-be operated against a connected Z21. Viessmann multiplex mappings and per-output
-polarity are available for supported signal configurations.
+The Signal Box editor places tracks, switches, signals and feedback detectors on
+a grid, and operates signals and switches directly against a connected Z21.
+Occupancy indicators are observational only; MOBAflow does not reserve routes or
+lock turnouts. Viessmann multiplex mappings and per-output polarity are
+available for supported signal configurations.
 
 Without a mouse, press **Tab** to move from element to element on the plan; the
 focused element shows a frame, and Narrator reads its kind, name and state, for

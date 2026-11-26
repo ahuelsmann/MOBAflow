@@ -1,8 +1,9 @@
-:root {
+:root[data-theme="light"] {
   --background-default: #f3f3f3;
   --background-card: #ffffff;
   --text-primary: #1a1a1a;
   --text-secondary: #5c5c5c;
+  --navigation-disabled-text: #737373;
   --stroke-default: #e0e0e0;
   /* Neutral placeholder until slice 20 sets the maintainer's purple (decision 2026-11-20, plan T5). */
   --accent-fill-default: #6e6e6e;

@@ -33,14 +33,8 @@ $firmwareInputPatterns = @(
     '^MOBAdisplay/esp32/'
 )
 
-# Domain mutation testing builds MutationTest/Domain.MutationTests.csproj: Domain, the linked Domain tests and
-# the .NET build configuration. Get-QualityChangeScope.Tests.ps1 checks this list against the project file.
-$mutationInputPatterns = @(
-    '^Domain/',
-    '^Test/Domain/',
-    '^Test/TestFile/',
-    '^Test/Unit/(DomainDefaultsTests|NewSolutionTests|SolutionInstanceTests|SolutionTest)\.cs$',
-    '^MutationTest/',
+# Shared .NET build and Stryker tool inputs: a change here requires the .NET build and all 7 mutation lanes.
+$sharedMutationInputPatterns = @(
     '^\.config/dotnet-tools\.json$',
     '^global\.json$',
     '^version\.json$',
@@ -49,13 +43,113 @@ $mutationInputPatterns = @(
     '^Directory\.(Build|Packages|Solution)\.(props|targets)$'
 )
 
-# .NET areas that neither the firmware build nor Domain mutation testing reads. A path outside every listed
-# area (workflows, scripts, repository configuration, new top-level folders) runs every job.
-$otherDotNetPatterns = @(
+# Transitive ProjectReference groups shared across multiple Stryker mutation hosts.
+$contractsClosurePatterns = @(
+    '^Contracts/',
+    '^Domain/'
+)
+$commonClosurePatterns = @(
+    '^Common/'
+) + $contractsClosurePatterns
+$speechBaseClosurePatterns = @(
+    '^Speech\.Base/'
+) + $commonClosurePatterns
+$backendClosurePatterns = @(
+    '^Backend/',
+    '^Sound/'
+) + $speechBaseClosurePatterns
+$sharedUiClosurePatterns = @(
+    '^SharedUI/',
+    '^MOBAdisplay/(?!esp32/)',
+    '^TrackPlan\.Renderer/',
+    '^TrackPlan\.Editor/',
+    '^TrackLibrary\.Base/'
+) + $backendClosurePatterns
+
+# Per-lane mutation inputs matching each MutationTest/**/*.csproj transitive ProjectReference, <Compile>,
+# <None>/<Content> CopyToOutputDirectory closure, and Stryker/host configuration.
+# Get-QualityChangeScope.Tests.ps1 checks every active lane against the actual project dependency graph.
+$mutationLaneInputPatterns = [ordered] @{
+    Mutation = @(
+        '^Domain/',
+        '^Test/Domain/',
+        '^Test/TestFile/',
+        '^Test/Unit/(DomainDefaultsTests|NewSolutionTests|SolutionInstanceTests|SolutionTest)\.cs$',
+        '^MutationTest/Domain\.MutationTests\.csproj$',
+        '^MutationTest/stryker-config\.json$'
+    )
+    MutationContracts = $contractsClosurePatterns + @(
+        '^Test/Contracts/',
+        '^MutationTest/Contracts/',
+        '^MutationTest/stryker-contracts-config\.json$'
+    )
+    MutationApi = @(
+        '^MOBApi/',
+        '^Test/MOBApi/',
+        '^MutationTest/Api/',
+        '^MutationTest/stryker-api-config\.json$'
+    ) + $commonClosurePatterns
+    MutationSpeechBase = $backendClosurePatterns + @(
+        '^Test/Speech/(AudioCacheTests|CachedSpeechOutputTests|SpeechOutputTests|WaveAudioTests|TestSpeechCache)\.cs$',
+        '^Test/MOBAdisplay/ManualTimeProvider\.cs$',
+        '^MutationTest/Speech\.Base/',
+        '^MutationTest/stryker-speech-base-config\.json$'
+    )
+    MutationCommon = $sharedUiClosurePatterns + @(
+        '^Test/Common/',
+        '^Test/Backend/Recording[^/]*\.cs$',
+        '^Test/Backend/MultiplexerCommandResolverTests\.cs$',
+        '^Test/Speech/SpeechSettingsTests\.cs$',
+        '^Test/TestData/Recording/',
+        '^MutationTest/Common/',
+        '^MutationTest/stryker-common-config\.json$'
+    )
+    MutationBackend = $sharedUiClosurePatterns + @(
+        '^Test/Backend/',
+        '^Test/Integration/WorkflowExecutionEndToEndTests\.cs$',
+        '^Test/Z21DccCommandDecoderTests\.cs$',
+        '^Test/GlobalUsings\.cs$',
+        '^Test/Helpers/(ManualTimeProvider|ServiceRegistrations|TestProjectRuntimeHost|TestRuntimes|TestWorkflowServices)\.cs$',
+        '^Test/MOBAdisplay/ManualTimeProvider\.cs$',
+        '^Test/Mocks/FakeUdpClientWrapper\.cs$',
+        '^Test/TestData/Z21Packets\.cs$',
+        '^Test/TestData/Recording/',
+        '^Test/TestFile/solution\.json$',
+        '^MutationTest/Backend/',
+        '^MutationTest/stryker-backend-config\.json$'
+    )
+    MutationSharedUI = $sharedUiClosurePatterns + @(
+        '^TrackLibrary\.PikoA/',
+        '^Test/SharedUI/',
+        '^Test/TrackPlanRenderer/TrackLayoutArchitectureTests[^/]*\.cs$',
+        '^Test/GlobalUsings\.cs$',
+        '^Test/Helpers/',
+        '^MutationTest/SharedUI/',
+        '^MutationTest/stryker-shared-ui-config\.json$'
+    )
+}
+
+$mutationLaneOutputs = [ordered] @{
+    Mutation           = 'mutation'
+    MutationCommon     = 'mutation_common'
+    MutationContracts  = 'mutation_contracts'
+    MutationSpeechBase = 'mutation_speech_base'
+    MutationBackend    = 'mutation_backend'
+    MutationApi        = 'mutation_api'
+    MutationSharedUI   = 'mutation_shared_ui'
+}
+
+# Known .NET repository areas. A path outside every listed area (workflows, scripts, repository configuration,
+# new top-level folders) fails open and runs every scoped job except Android.
+$knownDotNetPatterns = @(
+    '^Domain/',
     '^Common/',
     '^Contracts/',
     '^Backend/',
     '^SharedUI/',
+    '^Speech\.Base/',
+    '^Speech\.Piper/',
+    '^Speech\.SystemSpeech/',
     '^MOBAflow/',
     '^MOBAsmart/',
     '^MOBApi/',
@@ -66,6 +160,7 @@ $otherDotNetPatterns = @(
     '^TrackPlan\.Editor/',
     '^TrackPlan\.Renderer/',
     '^MOBAdemo/',
+    '^MutationTest/',
     '^Test/',
     '^quality/',
     '^Moba\.slnx$',
@@ -107,29 +202,68 @@ function Test-MatchesAny([string] $RelativePath, [string[]] $Patterns) {
     return $false
 }
 
-# Returns which optional jobs a changed path needs. Order matters: firmware and mutation inputs are checked
-# before the broader .NET areas that contain them.
+function New-PathScope(
+    [bool] $Code,
+    [bool] $Firmware,
+    [bool] $Android,
+    [bool] $MobaDemo,
+    [hashtable] $MutationLanes) {
+    $properties = [ordered] @{
+        Code     = $Code
+        Firmware = $Firmware
+        Mutation = [bool] $MutationLanes['Mutation']
+        Android  = $Android
+        MobaDemo = $MobaDemo
+    }
+    foreach ($laneKey in $mutationLaneOutputs.Keys) {
+        if ($laneKey -eq 'Mutation') { continue }
+        $properties[$laneKey] = [bool] $MutationLanes[$laneKey]
+    }
+    return [pscustomobject] $properties
+}
+
+function New-UniformMutationMap([bool] $Value) {
+    $map = @{}
+    foreach ($laneKey in $mutationLaneOutputs.Keys) {
+        $map[$laneKey] = $Value
+    }
+    return $map
+}
+
+# Returns which optional jobs a changed path needs. Order matters: documentation, firmware and shared build
+# inputs are checked before the broader .NET areas that contain them.
 function Get-PathScope([string] $RelativePath) {
     $normalizedPath = $RelativePath.Trim().Replace('\', '/')
     $android = Test-MatchesAny $normalizedPath $androidInputPatterns
     $mobaDemo = Test-MatchesAny $normalizedPath $mobaDemoInputPatterns
     if (Test-MatchesAny $normalizedPath $documentationOnlyPatterns) {
-        return [pscustomobject] @{ Code = $false; Firmware = $false; Mutation = $false; Android = $android; MobaDemo = $false }
+        return New-PathScope -Code $false -Firmware $false -Android $android -MobaDemo $false -MutationLanes (New-UniformMutationMap $false)
     }
 
     if (Test-MatchesAny $normalizedPath $firmwareInputPatterns) {
-        return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $false; Android = $android; MobaDemo = $mobaDemo }
+        return New-PathScope -Code $true -Firmware $true -Android $android -MobaDemo $mobaDemo -MutationLanes (New-UniformMutationMap $false)
     }
 
-    if (Test-MatchesAny $normalizedPath $mutationInputPatterns) {
-        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $true; Android = $android; MobaDemo = $mobaDemo }
+    if (Test-MatchesAny $normalizedPath $sharedMutationInputPatterns) {
+        return New-PathScope -Code $true -Firmware $false -Android $android -MobaDemo $mobaDemo -MutationLanes (New-UniformMutationMap $true)
     }
 
-    if (Test-MatchesAny $normalizedPath $otherDotNetPatterns) {
-        return [pscustomobject] @{ Code = $true; Firmware = $false; Mutation = $false; Android = $android; MobaDemo = $mobaDemo }
+    if (Test-MatchesAny $normalizedPath $knownDotNetPatterns) {
+        $lanes = @{}
+        $anyMutationMatch = $false
+        foreach ($laneKey in $mutationLaneInputPatterns.Keys) {
+            $matched = Test-MatchesAny $normalizedPath $mutationLaneInputPatterns[$laneKey]
+            $lanes[$laneKey] = $matched
+            if ($matched) { $anyMutationMatch = $true }
+        }
+        # Shared or newly added files under MutationTest/ (such as mutation-lanes.json) fail open for all 7 lanes.
+        if ((-not $anyMutationMatch) -and ($normalizedPath -cmatch '^MutationTest/')) {
+            $lanes = New-UniformMutationMap $true
+        }
+        return New-PathScope -Code $true -Firmware $false -Android $android -MobaDemo $mobaDemo -MutationLanes $lanes
     }
 
-    return [pscustomobject] @{ Code = $true; Firmware = $true; Mutation = $true; Android = $android; MobaDemo = $true }
+    return New-PathScope -Code $true -Firmware $true -Android $android -MobaDemo $true -MutationLanes (New-UniformMutationMap $true)
 }
 
 function Get-ChangedPaths([string] $Base, [string] $Head) {
@@ -154,16 +288,25 @@ $pathScopes = @($changedPaths | ForEach-Object { Get-PathScope $_ })
 
 # An empty change set cannot be classified; run everything.
 $empty = $changedPaths.Count -eq 0
-$scope = [pscustomobject] @{
-    Code = $empty -or @($pathScopes | Where-Object Code).Count -gt 0
+$scopeProperties = [ordered] @{
+    Code     = $empty -or @($pathScopes | Where-Object Code).Count -gt 0
     Firmware = $empty -or @($pathScopes | Where-Object Firmware).Count -gt 0
     Mutation = $empty -or @($pathScopes | Where-Object Mutation).Count -gt 0
-    Android = @($pathScopes | Where-Object Android).Count -gt 0
+    Android  = @($pathScopes | Where-Object Android).Count -gt 0
     MobaDemo = $empty -or @($pathScopes | Where-Object MobaDemo).Count -gt 0
 }
+foreach ($laneKey in $mutationLaneOutputs.Keys) {
+    if ($laneKey -eq 'Mutation') { continue }
+    $scopeProperties[$laneKey] = $empty -or @($pathScopes | Where-Object { $_.$laneKey }).Count -gt 0
+}
+$scope = [pscustomobject] $scopeProperties
 
 if ($scope.Code) {
-    Write-Host "Code-relevant changes found; firmware=$($scope.Firmware), mutation=$($scope.Mutation), android=$($scope.Android), mobademo=$($scope.MobaDemo)."
+    Write-Host ("Code-relevant changes found; firmware=$($scope.Firmware), mutation=$($scope.Mutation), " +
+        "mutation_common=$($scope.MutationCommon), mutation_contracts=$($scope.MutationContracts), " +
+        "mutation_speech_base=$($scope.MutationSpeechBase), mutation_backend=$($scope.MutationBackend), " +
+        "mutation_api=$($scope.MutationApi), mutation_shared_ui=$($scope.MutationSharedUI), " +
+        "android=$($scope.Android), mobademo=$($scope.MobaDemo).")
     @($changedPaths | Where-Object { (Get-PathScope $_).Code }) | Select-Object -First 20 | ForEach-Object { Write-Host "  $_" }
 }
 else {
@@ -171,13 +314,20 @@ else {
 }
 
 if (-not [string]::IsNullOrEmpty($env:GITHUB_OUTPUT)) {
-    Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8NoBOM -Value @(
+    $outputLines = @(
         "code=$($scope.Code.ToString().ToLowerInvariant())"
         "firmware=$($scope.Firmware.ToString().ToLowerInvariant())"
         "mutation=$($scope.Mutation.ToString().ToLowerInvariant())"
+        "mutation_common=$($scope.MutationCommon.ToString().ToLowerInvariant())"
+        "mutation_contracts=$($scope.MutationContracts.ToString().ToLowerInvariant())"
+        "mutation_speech_base=$($scope.MutationSpeechBase.ToString().ToLowerInvariant())"
+        "mutation_backend=$($scope.MutationBackend.ToString().ToLowerInvariant())"
+        "mutation_api=$($scope.MutationApi.ToString().ToLowerInvariant())"
+        "mutation_shared_ui=$($scope.MutationSharedUI.ToString().ToLowerInvariant())"
         "android=$($scope.Android.ToString().ToLowerInvariant())"
         "mobademo=$($scope.MobaDemo.ToString().ToLowerInvariant())"
     )
+    Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8NoBOM -Value $outputLines
 }
 
 return $scope
