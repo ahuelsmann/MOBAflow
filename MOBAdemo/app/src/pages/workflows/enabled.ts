@@ -1,1 +1,1 @@
-export const workflowsEnabled: boolean = false;
+export const workflowsEnabled: boolean = true;

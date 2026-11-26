@@ -48,10 +48,10 @@ describe('shell navigation', () => {
   it('keeps the current page when changing theme and reloads to Train Control', async () => {
     const view = render(<App load={load} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Workflows' }));
-    expect(screen.getByRole('heading', { name: 'Workflows' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 1, name: 'Workflows' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Light theme' }));
     expect(screen.getByRole('button', { name: 'Workflows' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('heading', { name: 'Workflows' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 1, name: 'Workflows' })).toBeVisible();
     expect(document.documentElement).toHaveAttribute('data-theme', 'light');
     expect(Object.entries(localStorage)).toEqual([['mobademo-theme', 'light']]);
     view.unmount();
