@@ -1,1 +1,1 @@
-export const trainControlEnabled: boolean = false;
+export const trainControlEnabled: boolean = true;

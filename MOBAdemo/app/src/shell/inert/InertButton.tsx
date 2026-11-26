@@ -48,6 +48,17 @@ function InertControl({
     return () => document.removeEventListener('keydown', onEscape);
   }, [visible]);
 
+  useEffect(() => {
+    if (!tapped) return;
+    function onOutsidePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && triggerRef.current?.contains(target)) return;
+      setTapped(false);
+    }
+    document.addEventListener('pointerdown', onOutsidePointerDown);
+    return () => document.removeEventListener('pointerdown', onOutsidePointerDown);
+  }, [tapped]);
+
   useLayoutEffect(() => {
     if (!visible) return;
     const button = triggerRef.current;

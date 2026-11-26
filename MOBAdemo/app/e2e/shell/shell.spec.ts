@@ -95,6 +95,7 @@ async function inspectHttpResponse(response: Response): Promise<void> {
 
 test.describe('MOBAdemo shell browser checks (slice 10)', () => {
   test('cold load shows loading state before rendering the shell (FR-052)', async ({ page }) => {
+    await page.setExtraHTTPHeaders({ 'X-Forwarded-For': '198.51.100.1' });
     const consoleErrors: string[] = [];
     const pageErrors: string[] = [];
     page.on('console', (msg) => {
@@ -148,7 +149,10 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
   });
 
   test('renders explicit no-JavaScript notice when JavaScript is disabled', async ({ browser }) => {
-    const context = await browser.newContext({ javaScriptEnabled: false });
+    const context = await browser.newContext({
+      javaScriptEnabled: false,
+      extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.2' },
+    });
     try {
       const page = await context.newPage();
       await page.goto('/');
@@ -167,7 +171,9 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
   test('stays within first-visit and repeat-visit compressed transfer budgets (FR-057, FR-076, SC-006)', async ({
     browser,
   }) => {
-    const context = await browser.newContext();
+    const context = await browser.newContext({
+      extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.3' },
+    });
     try {
       const page = await context.newPage();
       const cdp = await context.newCDPSession(page);
@@ -237,6 +243,8 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
   test('exposes zero host details or Server headers across all HTTP responses (FR-030, FR-072, SC-003)', async ({
     page,
   }) => {
+    const forwardedIp = { 'X-Forwarded-For': '198.51.100.5' };
+    await page.setExtraHTTPHeaders(forwardedIp);
     const responses: Response[] = [];
     page.on('response', (response) => {
       responses.push(response);
@@ -256,7 +264,7 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
       ['/robots.txt', 200],
       ['/api/runtime', 404],
     ] as const) {
-      const apiResponse = await page.request.get(path);
+      const apiResponse = await page.request.get(path, { headers: forwardedIp });
       expect(apiResponse.status()).toBe(expectedStatus);
       const headers = apiResponse.headers();
       expect(headers['server'], `${path} must not send Server header`).toBeUndefined();
@@ -271,6 +279,7 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
   test('renders full, compact, and narrow width modes with dismissible in-tab notice (FR-012, FR-033)', async ({
     page,
   }) => {
+    await page.setExtraHTTPHeaders({ 'X-Forwarded-For': '198.51.100.6' });
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
     await expect(page.getByRole('main')).toBeVisible();
@@ -345,7 +354,10 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
     browser,
   }) => {
     // Emulate browser light preference to verify first visit still defaults to Dark (FR-021).
-    const context = await browser.newContext({ colorScheme: 'light' });
+    const context = await browser.newContext({
+      colorScheme: 'light',
+      extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.4' },
+    });
     try {
       const page = await context.newPage();
       await page.goto('/');

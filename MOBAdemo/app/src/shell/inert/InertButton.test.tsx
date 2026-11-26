@@ -39,6 +39,21 @@ it('toggles a custom hint on tap without changing the pressed state', () => {
   expect(button).toHaveAttribute('aria-pressed', 'true');
 });
 
+it('closes a tapped hint when another element is pressed', () => {
+  render(
+    <>
+      <InertButton>First</InertButton>
+      <InertButton>Second</InertButton>
+    </>,
+  );
+  const first = screen.getByRole('button', { name: 'First' });
+  const second = screen.getByRole('button', { name: 'Second' });
+  fireEvent.click(first);
+  expect(screen.getByRole('tooltip')).toBeVisible();
+  fireEvent.pointerDown(second);
+  expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+});
+
 it('dismisses a hover hint on Escape without moving focus', () => {
   render(<InertButton>Simulate</InertButton>);
   const button = screen.getByRole('button', { name: 'Simulate' });
