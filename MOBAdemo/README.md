@@ -53,6 +53,31 @@ folder of its output folder, so a reused folder never keeps hashed assets of an 
 host tests and the build tests in `Test/MOBAdemo/Build`, which run the script once into a temporary folder. They are
 ignored with a clear reason when `pwsh`, `node` or `npm` is missing. Frontend unit tests: `npm test` in `MOBAdemo/app`.
 
+## Regenerate the example track plan
+
+The committed `app/public/assets/track-plan.svg` is rendered from the shipped
+`MOBAflow/track-plan.json` with the same placed-track renderer used by MOBAflow.
+Display it as a self-contained image in both Light and Dark. Its opaque dark inset surface fills the viewBox
+and provides the contrast background for the opaque rails and labels. The SVG needs no page styles,
+inline stylesheet or external resources. The portable asset tests enforce at least 3:1 for rails, 4.5:1
+for labels and a 30,000-byte limit.
+
+From the repository root in PowerShell, regenerate it only after an intended sample or renderer change:
+
+```powershell
+$env:MOBADEMO_UPDATE_TRACK_PLAN_ASSET = '1'
+try {
+    dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~CommittedLayout_EqualsTheRenderingOfTheShippedSample"
+}
+finally {
+    Remove-Item Env:MOBADEMO_UPDATE_TRACK_PLAN_ASSET
+}
+```
+
+Review the SVG diff and run the portable track-plan asset tests without the switch.
+Without the switch, the tests only read the sample and SVG and fail on drift.
+The app and its build use the committed SVG directly.
+
 ## Bundle budget
 
 FR-076 limits the scripts and style sheets together to 200 KB with Brotli. `Test-BundleBudget.ps1` measures every
