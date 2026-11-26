@@ -9,8 +9,12 @@ const CX = 130;
 const CY = 120;
 const RADIUS = 90;
 
+function clampRatio(ratio: number): number {
+  return Number.isFinite(ratio) ? Math.max(0, Math.min(1, ratio)) : 0;
+}
+
 export function polarArcPoint(ratio: number, radius: number = RADIUS): ArcPoint {
-  const clamped = Math.max(0, Math.min(1, ratio));
+  const clamped = clampRatio(ratio);
   const theta = Math.PI * (1 - clamped);
   return {
     x: Number((CX + radius * Math.cos(theta)).toFixed(2)),
@@ -19,7 +23,7 @@ export function polarArcPoint(ratio: number, radius: number = RADIUS): ArcPoint 
 }
 
 export function buildValueArcPath(ratio: number): string | null {
-  const clamped = Math.max(0, Math.min(1, ratio));
+  const clamped = clampRatio(ratio);
   if (clamped <= 0) return null;
   const start = polarArcPoint(0);
   const end = polarArcPoint(clamped);
@@ -33,7 +37,7 @@ interface GaugeArcSvgProps {
 
 /** Shared semi-circular SVG gauge face without inline styles (CSP style-src 'self'). */
 export function GaugeArcSvg({ ratio, ticks }: Readonly<GaugeArcSvgProps>) {
-  const clamped = Math.max(0, Math.min(1, ratio));
+  const clamped = clampRatio(ratio);
   const start = polarArcPoint(0);
   const end = polarArcPoint(1);
   const trackPath = `M ${start.x} ${start.y} A ${RADIUS} ${RADIUS} 0 0 1 ${end.x} ${end.y}`;
@@ -49,7 +53,7 @@ export function GaugeArcSvg({ ratio, ticks }: Readonly<GaugeArcSvgProps>) {
         const outer = polarArcPoint(tick.ratio, RADIUS + 4);
         const text = polarArcPoint(tick.ratio, RADIUS + 18);
         return (
-          <g key={tick.label}>
+          <g key={tick.ratio}>
             <line
               className="tc-gauge-tick"
               x1={inner.x}

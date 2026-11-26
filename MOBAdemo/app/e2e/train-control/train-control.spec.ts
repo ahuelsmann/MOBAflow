@@ -1,14 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Browser, type BrowserContextOptions, type Page } from '@playwright/test';
 
 const FIRST_VISIT_BUDGET_BYTES = 1_500_000;
+const FIRST_VISIT_MAX_REQUESTS = 40;
 const SCRIPT_STYLE_BUDGET_BYTES = 200_000;
 const INERT_HINT = 'Available in the MOBAflow desktop app';
 
 async function openWithForwardedIp(
-  browser: Parameters<Parameters<typeof test>[2]>[0]['browser'],
+  browser: Browser,
   ip: string,
-  options?: Parameters<Parameters<typeof test>[2]>[0]['browser']['newContext'] extends (arg?: infer O) => unknown ? O : never,
+  options?: BrowserContextOptions,
 ) {
   const context = await browser.newContext({
     ...options,
@@ -113,6 +114,7 @@ test.describe('Train Control browser checks (slice 13)', () => {
         .filter((item) => /\.(?:mjs|js|css)(?:[?#]|$)/i.test(item.url))
         .reduce((sum, item) => sum + item.encodedDataLength, 0);
 
+      expect(transfers.length).toBeLessThanOrEqual(FIRST_VISIT_MAX_REQUESTS);
       expect(scriptAndStyleBytes).toBeGreaterThan(0);
       expect(scriptAndStyleBytes).toBeLessThanOrEqual(SCRIPT_STYLE_BUDGET_BYTES);
       expect(totalBytes).toBeLessThanOrEqual(FIRST_VISIT_BUDGET_BYTES);
@@ -154,6 +156,7 @@ test.describe('Train Control browser checks (slice 13)', () => {
         const button = buttons.nth(i);
         await expect(button).toHaveAttribute('aria-disabled', 'true');
         await expect(button).toHaveAccessibleDescription(INERT_HINT);
+        // FR-035 buttons intentionally carry aria-disabled="true", which blocks Playwright's enabled check without force.
         await button.click({ force: true });
         await expect(page.getByRole('tooltip')).toContainText(INERT_HINT);
         await page.keyboard.press('Escape');
@@ -222,6 +225,16 @@ test.describe('Train Control browser checks (slice 13)', () => {
         { dark: darkAudit.violations, light: lightAudit.violations },
         JSON.stringify({ dark: darkAudit.violations, light: lightAudit.violations }, null, 2),
       ).toEqual({ dark: [], light: [] });
+
+      // Compact width mode (1100 px) must keep Train Control panels legible with zero document horizontal overflow.
+      await page.setViewportSize({ width: 1100, height: 800 });
+      await expect(page.locator('[data-shell-mode]')).toHaveAttribute('data-shell-mode', 'compact');
+      await expect(page.getByRole('region', { name: 'Speedometer' })).toBeVisible();
+      await expect(page.getByRole('region', { name: 'Timetable' })).toBeVisible();
+      const compactNoOverflow = await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      );
+      expect(compactNoOverflow).toBe(true);
     } finally {
       await context.close();
     }

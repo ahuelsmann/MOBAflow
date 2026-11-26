@@ -46,7 +46,7 @@ export function TimetablePanel({ timetable }: Readonly<TimetablePanelProps>) {
 
           return (
             <li
-              key={stop.station}
+              key={`${index}-${stop.station}`}
               className="tc-stop"
               data-state={state}
               aria-current={state === 'current' ? 'step' : undefined}

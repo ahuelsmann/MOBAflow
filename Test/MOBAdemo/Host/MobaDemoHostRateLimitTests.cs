@@ -225,7 +225,7 @@ internal sealed class MobaDemoHostRateLimitTests
     }
 
     [Test]
-    public async Task ProductionDefaults_Allow60NonStaticAnd200StaticRequests()
+    public async Task ProductionDefaults_Allow60NonStaticAnd400StaticRequests()
     {
         await StartAsync(null).ConfigureAwait(false);
 
@@ -235,7 +235,7 @@ internal sealed class MobaDemoHostRateLimitTests
         }
 
         using var nonStatic = await GetAsync("/health", "10.0.0.1").ConfigureAwait(false);
-        for (var i = 0; i < 200; i++)
+        for (var i = 0; i < 400; i++)
         {
             (await GetAsync("/", "10.0.0.1").ConfigureAwait(false)).Dispose();
         }

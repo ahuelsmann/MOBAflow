@@ -15,6 +15,7 @@
   max-inline-size: min(18rem, calc(100vw - 16px));
   overflow-wrap: anywhere;
   padding: 0.375rem 0.5rem;
+  pointer-events: none;
   position: fixed;
   z-index: 20;
 }

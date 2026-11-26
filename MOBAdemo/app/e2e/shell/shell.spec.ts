@@ -94,9 +94,8 @@ async function inspectHttpResponse(response: Response): Promise<void> {
 }
 
 test.describe('MOBAdemo shell browser checks (slice 10)', () => {
-  test.use({ extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.1' } });
-
   test('cold load shows loading state before rendering the shell (FR-052)', async ({ page }) => {
+    await page.setExtraHTTPHeaders({ 'X-Forwarded-For': '198.51.100.1' });
     const consoleErrors: string[] = [];
     const pageErrors: string[] = [];
     page.on('console', (msg) => {
@@ -244,6 +243,8 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
   test('exposes zero host details or Server headers across all HTTP responses (FR-030, FR-072, SC-003)', async ({
     page,
   }) => {
+    const forwardedIp = { 'X-Forwarded-For': '198.51.100.5' };
+    await page.setExtraHTTPHeaders(forwardedIp);
     const responses: Response[] = [];
     page.on('response', (response) => {
       responses.push(response);
@@ -263,7 +264,7 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
       ['/robots.txt', 200],
       ['/api/runtime', 404],
     ] as const) {
-      const apiResponse = await page.request.get(path);
+      const apiResponse = await page.request.get(path, { headers: forwardedIp });
       expect(apiResponse.status()).toBe(expectedStatus);
       const headers = apiResponse.headers();
       expect(headers['server'], `${path} must not send Server header`).toBeUndefined();
@@ -278,6 +279,7 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
   test('renders full, compact, and narrow width modes with dismissible in-tab notice (FR-012, FR-033)', async ({
     page,
   }) => {
+    await page.setExtraHTTPHeaders({ 'X-Forwarded-For': '198.51.100.6' });
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
     await expect(page.getByRole('main')).toBeVisible();

@@ -1,4 +1,3 @@
-import texts from '../../../examples/texts.json';
 import { InertButton } from '../../../shell/inert/InertButton';
 import './gauges.css';
 
@@ -67,11 +66,7 @@ export function CabControlTiles({ brake, doorRelease, doorBlocking }: Readonly<C
           <span className="tc-cab-label">Door release</span>
           <span className="tc-cab-state">{doorReleaseState}</span>
         </InertButton>
-        <div
-          className="tc-cab-tile tc-cab-status"
-          data-active={doorBlocking}
-          title={texts.inertHint}
-        >
+        <div className="tc-cab-tile tc-cab-status" data-active={doorBlocking}>
           <DoorBlockingIcon active={doorBlocking} />
           <span className="tc-cab-label">Door blocking</span>
           <span className="tc-cab-state">{doorBlockingState}</span>

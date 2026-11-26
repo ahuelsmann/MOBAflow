@@ -18,7 +18,7 @@ export function SpeedometerGauge({ speedKmh, maxKmh = DEFAULT_MAX_KMH }: Readonl
     <div className="tc-gauge">
       <GaugeArcSvg ratio={ratio} ticks={ticks} />
       <p className="tc-gauge-readout">
-        <span className="tc-gauge-value">{speedKmh}</span>{' '}
+        <span className="tc-gauge-value">{Math.round(speedKmh)}</span>{' '}
         <span className="tc-gauge-unit">km/h</span>
       </p>
       <p className="tc-gauge-meta">Scale: 0 to {maxKmh} km/h</p>

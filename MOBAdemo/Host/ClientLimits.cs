@@ -8,11 +8,11 @@ namespace Moba.Demo;
 /// <summary>Per-client request budgets of the demo host (FR-056).</summary>
 /// <param name="NonStaticPerMinute">Requests per minute that are not static files.</param>
 /// <param name="StaticPerHour">
-/// Static-file requests per hour: ten first-visit equivalents (FR-056), counted as requests. The value is ten times
-/// the estimated twenty files of a first visit within the 1.5 MB budget (FR-057); it is re-measured against the real
-/// build output in slice 20.
+/// Static-file requests per hour: ten first-visit equivalents (FR-056), counted as requests. Measured against the
+/// Train Control landing page build output (~38-40 static requests per cold first visit within FR-057), so 400 covers
+/// ten first-visit equivalents per hour.
 /// </param>
-internal sealed record HostLimits(int NonStaticPerMinute = 60, int StaticPerHour = 200);
+internal sealed record HostLimits(int NonStaticPerMinute = 60, int StaticPerHour = 400);
 
 /// <summary>
 /// Client address handling and request limits of the demo host (FR-056, FR-078): the address comes from the
