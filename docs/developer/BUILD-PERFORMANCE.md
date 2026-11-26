@@ -212,8 +212,10 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main` and manual runs classify all scopes as enabled. Other PR changes enable
-desktop, display, Common, Contracts, Speech.Base, Backend, MOBApi and SharedUI mutation jobs; Domain mutation and ESP32 firmware
-steps also depend on their input paths. Android runs on PRs that change
+desktop and display; all seven active mutation jobs (`Domain`, `Common`,
+`Contracts`, `Speech.Base`, `Backend`, `MOBApi` and `SharedUI`) and the ESP32
+firmware steps also depend on their transitive input paths. Android runs on PRs
+that change
 `MOBAsmart/` or `quality/analyzer-baseline.android.json` and with the manual
 `validate_android` input; pushes to `main` do not run it. If change detection
 itself fails on a PR, every scoped job, Android included, runs rather than being
@@ -233,17 +235,21 @@ npm advisory turns it red on the next run without a change to the lockfile.
 
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
-when `MOBAdisplay/esp32/` changes or an unknown input path requires them. The
-Common, Contracts, Speech.Base, Backend, MOBApi and SharedUI mutation jobs run for every code-relevant PR. Domain mutation testing runs when
-`Domain/`, its linked tests and fixture data (`Test/TestFile/`), `MutationTest/`
-or the .NET build configuration change. A path outside the known .NET areas,
-such as a workflow, a script or a new top-level folder, enables both firmware
-and Domain mutation testing. The jobs keep their required check names;
-skipped steps and a skipped job count as successful.
-`scripts/Get-QualityChangeScope.Tests.ps1` checks these rules, including every
-source and copied fixture input of the mutation project and that every
-`quality.yml` job reading the scope compares it only with `!= 'false'` and keeps
-`!cancelled()` or `always()` in its condition.
+when `MOBAdisplay/esp32/` changes or an unknown input path requires them. All
+seven active mutation jobs (`Domain`, `Common`, `Contracts`, `Speech.Base`,
+`Backend`, `MOBApi` and `SharedUI`) run only when a path in that lane's
+transitive project, linked test, copied fixture or Stryker configuration
+closure changes, or when a shared `.NET` build/tool config or
+`MutationTest/mutation-lanes.json` changes—so desktop-only, mobile-only or
+`MOBAdemo`-only pull requests skip all seven mutation jobs. A path outside the
+known `.NET` areas, such as `.github/workflows/quality.yml`, `scripts/`, or a
+new top-level folder, fails open and enables both firmware and all seven
+mutation jobs. The jobs keep their required check names; skipped steps and a
+skipped job count as successful.
+`scripts/Get-QualityChangeScope.Tests.ps1` checks these rules dynamically across
+every active lane's transitive project and copied fixture closure and verifies
+that every `quality.yml` job reading the scope compares it only with `!= 'false'`
+and keeps `!cancelled()` or `always()` in its condition.
 
 The repository consistency job also checks source-derived package and mutation
 documentation facts and runs their offline boundary tests. Documentation and
@@ -349,7 +355,7 @@ test-case filters. Planned lanes remain explicitly outside the mutation guarante
 | speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../../MutationTest/stryker-speech-base-config.json) | 65% |
 <!-- documentation-facts:mutation:end -->
 
-Domain runs when its inputs change; Common, Contracts, Speech.Base, Backend, SharedUI and MOBApi run for every code-relevant PR.
+All seven active lanes (`Domain`, `Common`, `Contracts`, `Speech.Base`, `Backend`, `SharedUI` and `MOBApi`) run on pull requests only when their transitive inputs, shared `.NET`/Stryker config, or unknown paths change.
 All seven also run on main pushes and manual Quality runs. Domain, Contracts, Speech.Base, Backend, SharedUI and MOBApi run on
 Linux. Common uses Windows because its existing fixtures include Windows-specific
 photo paths. Its concurrency is limited to four test processes. The Common lane includes selected Backend test
