@@ -1,20 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator, type Page, type Response } from '@playwright/test';
+import { expect, test, type Page, type Response } from '@playwright/test';
+import { assertNoHostLeak, clickAtCenter } from '../helpers';
 
 const INERT_HINT = 'Available in the MOBAflow desktop app';
-
-function assertNoHostTokens(label: string, text: string): void {
-  for (const forbidden of [':\\Users\\', ':\\Repo\\', '/home/', '127.0.0.1:', 'localhost:']) {
-    expect(text, `${label} exposed host token "${forbidden}"`).not.toContain(forbidden);
-  }
-}
-
-async function clickAtCenter(page: Page, locator: Locator): Promise<void> {
-  await locator.scrollIntoViewIfNeeded();
-  const box = await locator.boundingBox();
-  expect(box).not.toBeNull();
-  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-}
 
 async function snapshotMainWithoutHints(page: Page): Promise<string> {
   return page.evaluate(() => {
@@ -91,7 +79,7 @@ test.describe('Track Plan browser checks (slice 15)', () => {
       expect(svgResponse, 'Expected /assets/track-plan.svg HTTP response').toBeDefined();
       expect(svgResponse!.status()).toBe(200);
       expect(svgResponse!.headers()['content-type']).toContain('image/svg+xml');
-      assertNoHostTokens('/assets/track-plan.svg', await svgResponse!.text());
+      assertNoHostLeak('/assets/track-plan.svg', await svgResponse!.text());
 
       const zoomGroup = canvas.getByRole('group', { name: 'Zoom controls' });
       const zoomSlider = zoomGroup.getByRole('slider', { name: 'Zoom' });
@@ -116,7 +104,7 @@ test.describe('Track Plan browser checks (slice 15)', () => {
       const footer = main.getByRole('region', { name: 'Track Plan status' });
       await expect(footer).toContainText('Ready — Example layout loaded');
       await expect(footer).toContainText('X: 0 mm, Y: 0 mm');
-      assertNoHostTokens('Track Plan page text', await main.innerText());
+      assertNoHostLeak('Track Plan page text', await main.innerText());
 
       expect(consoleErrors).toEqual([]);
       expect(pageErrors).toEqual([]);

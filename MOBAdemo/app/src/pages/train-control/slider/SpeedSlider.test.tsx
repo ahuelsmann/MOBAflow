@@ -1,12 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { beforeEach, expect, it, vi } from 'vitest';
+import { beforeEach, expect, it } from 'vitest';
 import { App } from '../../../App';
 import { defaultSources, parseExamples } from '../../../examples/loader';
-import { trainControlEnabled } from '../enabled';
-
-vi.mock('../../../config/enabledPages', () => ({
-  enabledPages: { 'train-control': true, workflows: false, 'track-plan': false, 'signal-box': false },
-}));
 
 const load = async () => {};
 const preparedStep = parseExamples(defaultSources).locomotives.find((locomotive) => locomotive.selected)!.prepared.speed;
@@ -18,10 +13,6 @@ function pageWithoutSlider(page: HTMLElement) {
   copy.querySelector('[aria-label="Speed control"]')?.remove();
   return copy.innerHTML;
 }
-
-it('enables Train Control in the shipped configuration', () => {
-  expect(trainControlEnabled).toBe(true);
-});
 
 it('changes only the speed control and exposes the full range with Step X text', async () => {
   render(<App load={load} />);

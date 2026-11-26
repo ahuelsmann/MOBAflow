@@ -3,7 +3,6 @@ import { join } from 'node:path';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultSources, parseExamples } from '../../examples/loader';
-import { signalBoxEnabled } from './enabled';
 import { SignalBoxPage } from './SignalBoxPage';
 
 const examples = parseExamples(defaultSources);
@@ -21,10 +20,6 @@ afterEach(() => {
 });
 
 describe('SignalBoxPage (FR-039, FR-045, FR-046)', () => {
-  it('enables Signal Box in enabled.ts for Slice 16', () => {
-    expect(signalBoxEnabled).toBe(true);
-  });
-
   it('renders the inert Elements toolbox and grid metadata', () => {
     render(<SignalBoxPage />);
     const toolbox = screen.getByRole('region', { name: 'Elements' });

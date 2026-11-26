@@ -13,7 +13,7 @@
   align-items: stretch;
   display: grid;
   gap: 0.625rem;
-  grid-template-columns: 11.25rem minmax(0, 1fr) 13rem;
+  grid-template-columns: 11.5rem minmax(0, 1fr) 13rem;
 }
 
 .workflows-pane {
@@ -40,16 +40,25 @@
   margin: 0;
 }
 
+.workflows-pane-actions {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
 .workflows-pane-actions,
 .workflows-view-toggle,
 .workflows-toolbar {
   align-items: center;
   border: 0;
   display: flex;
-  flex-wrap: wrap;
   gap: 0.25rem;
   margin: 0;
   padding: 0;
+}
+
+.workflows-view-toggle,
+.workflows-toolbar {
+  flex-wrap: wrap;
 }
 
 .workflows-page :is(.workflows-field, button) {
@@ -341,7 +350,7 @@
 
 @media (max-width: 1279px) {
   .workflows-panes {
-    grid-template-columns: 11.25rem minmax(0, 1fr);
+    grid-template-columns: 11.5rem minmax(0, 1fr);
   }
 
   .workflows-properties-pane {

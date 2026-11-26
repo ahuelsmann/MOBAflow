@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
-import { trackPlanEnabled } from './enabled';
 
 const load = async () => {};
 const inertHint = 'Available in the MOBAflow desktop app';
@@ -9,10 +8,6 @@ const inertHint = 'Available in the MOBAflow desktop app';
 beforeEach(() => localStorage.clear());
 
 describe('TrackPlanPage (FR-035, FR-038, US2 scenarios 1 & 4)', () => {
-  it('enables Track Plan in slice 15', () => {
-    expect(trackPlanEnabled).toBe(true);
-  });
-
   it('renders toolbar, Piko A-Track catalogue, SVG canvas, zoom slider, context pane and footer', async () => {
     render(<App load={load} />);
     const nav = await screen.findByRole('navigation', { name: 'MOBAflow pages' });

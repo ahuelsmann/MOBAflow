@@ -1,6 +1,6 @@
-import { hostname, userInfo } from 'node:os';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Response } from '@playwright/test';
+import { assertNoHostLeak, attachTransferRecorder } from '../helpers';
 
 const FIRST_VISIT_BUDGET_BYTES = 1_500_000;
 const SCRIPT_STYLE_BUDGET_BYTES = 200_000;
@@ -13,49 +13,6 @@ interface LifecycleSnapshot {
   shellRenderedAfterLoading: boolean;
 }
 
-interface TrackedTransfer {
-  url: string;
-  mimeType: string;
-  encodedDataLength: number;
-}
-
-function escapeRegExp(value: string): string {
-  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-}
-
-function buildHostDetailPatterns(): RegExp[] {
-  const patterns: RegExp[] = [
-    /[A-Za-z]:[\\/](?:Users|Repo|Windows|Program Files)/i,
-    /(?:^|[^\w./])\/(?:home|Users|root)\/[\w.-]+/,
-    /\b(?:10\.\d{1,3}|192\.168|172\.(?:1[6-9]|2\d|3[01])|169\.254)\.\d{1,3}\.\d{1,3}\b/,
-    /(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|\.local|\.internal|\.lan):\d{2,5}|:(?:5000|5001|5173|8080)\b/i,
-  ];
-
-  const identityNames = new Set<string>();
-  const machine = hostname();
-  if (machine.length >= 3) identityNames.add(machine);
-  try {
-    const user = userInfo().username;
-    if (user.length >= 3) identityNames.add(user);
-  } catch {
-    // userInfo() may fail in restricted environments.
-  }
-
-  for (const name of identityNames) {
-    const escaped = escapeRegExp(name);
-    patterns.push(
-      new RegExp(String.raw`(?:Users|home)[\\/]${escaped}(?![\w.-])`, 'i'),
-      new RegExp(String.raw`\\\\${escaped}[\\/]`, 'i'),
-      new RegExp(String.raw`://${escaped}(?![\w.-])`, 'i'),
-      new RegExp(String.raw`(?<![\w.-])${escaped}\.(?:local|lan|internal)\b`, 'i'),
-    );
-  }
-
-  return patterns;
-}
-
-const HOST_DETAIL_PATTERNS = buildHostDetailPatterns();
-
 function isTextContentType(contentType: string | undefined): boolean {
   if (!contentType) return false;
   const mediaType = contentType.split(';', 1)[0].trim().toLowerCase();
@@ -65,13 +22,6 @@ function isTextContentType(contentType: string | undefined): boolean {
     mediaType === 'application/json' ||
     mediaType === 'image/svg+xml'
   );
-}
-
-function assertNoHostLeak(label: string, text: string): void {
-  for (const pattern of HOST_DETAIL_PATTERNS) {
-    const match = pattern.exec(text);
-    expect(match, `${label} exposed host detail "${match?.[0] ?? ''}" matching ${pattern}`).toBeNull();
-  }
 }
 
 async function inspectHttpResponse(response: Response): Promise<void> {
@@ -176,38 +126,12 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
     });
     try {
       const page = await context.newPage();
-      const cdp = await context.newCDPSession(page);
-      await cdp.send('Network.enable');
-
-      const responsesByRequest = new Map<string, { url: string; mimeType: string; contentEncoding?: string; status: number }>();
-      let currentTransfers: TrackedTransfer[] = [];
-
-      cdp.on('Network.responseReceived', (event) => {
-        const headerEntry = Object.entries(event.response.headers).find(
-          ([key]) => key.toLowerCase() === 'content-encoding',
-        );
-        responsesByRequest.set(event.requestId, {
-          url: event.response.url,
-          mimeType: event.response.mimeType,
-          contentEncoding: headerEntry?.[1],
-          status: event.response.status,
-        });
-      });
-
-      cdp.on('Network.loadingFinished', (event) => {
-        const meta = responsesByRequest.get(event.requestId);
-        if (!meta) return;
-        currentTransfers.push({
-          url: meta.url,
-          mimeType: meta.mimeType,
-          encodedDataLength: event.encodedDataLength,
-        });
-      });
+      const recorder = await attachTransferRecorder(context, page);
 
       await page.goto('/', { waitUntil: 'networkidle' });
       await expect(page.getByRole('main')).toBeVisible();
 
-      const firstVisitTransfers = currentTransfers;
+      const firstVisitTransfers = recorder.getTransfers();
       expect(firstVisitTransfers.length).toBeGreaterThanOrEqual(2);
 
       const firstVisitTotal = firstVisitTransfers.reduce((sum, item) => sum + item.encodedDataLength, 0);
@@ -219,7 +143,7 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
       expect(scriptAndStyleBytes).toBeLessThanOrEqual(SCRIPT_STYLE_BUDGET_BYTES);
       expect(firstVisitTotal).toBeLessThanOrEqual(FIRST_VISIT_BUDGET_BYTES);
 
-      const encodedAssets = [...responsesByRequest.values()].filter((r) =>
+      const encodedAssets = recorder.getResponses().filter((r) =>
         /\.(?:mjs|js|css)(?:[?#]|$)/i.test(r.url),
       );
       expect(encodedAssets.length).toBeGreaterThan(0);
@@ -229,11 +153,11 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
       }
 
       // Repeat visit with warm browser cache in the same context.
-      currentTransfers = [];
+      recorder.resetTransfers();
       await page.goto('/', { waitUntil: 'networkidle' });
       await expect(page.getByRole('main')).toBeVisible();
 
-      const repeatVisitTotal = currentTransfers.reduce((sum, item) => sum + item.encodedDataLength, 0);
+      const repeatVisitTotal = recorder.getTransfers().reduce((sum, item) => sum + item.encodedDataLength, 0);
       expect(repeatVisitTotal).toBeLessThanOrEqual(REPEAT_VISIT_BUDGET_BYTES);
     } finally {
       await context.close();
