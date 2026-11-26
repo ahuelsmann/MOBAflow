@@ -2,7 +2,6 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { App } from '../../../App';
 import { defaultSources, parseExamples } from '../../../examples/loader';
-import { trainControlEnabled } from '../enabled';
 
 const load = async () => {};
 const examples = parseExamples(defaultSources);
@@ -10,7 +9,6 @@ const flagship = examples.locomotives.find((locomotive) => locomotive.selected)!
 const hint = 'Available in the MOBAflow desktop app';
 
 it('switches Train Control on as the landing page with the flagship BR 211 selected (FR-032)', async () => {
-  expect(trainControlEnabled).toBe(true);
   render(<App load={load} />);
   const main = await screen.findByRole('main');
   expect(screen.getByRole('button', { name: 'Train Control' })).toHaveAttribute('aria-current', 'page');

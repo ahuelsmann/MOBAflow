@@ -1,14 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Browser, type BrowserContext, type BrowserContextOptions, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Browser, type BrowserContext, type BrowserContextOptions, type Page } from '@playwright/test';
+import { clickAtCenter } from '../helpers';
 
 const INERT_HINT = 'Available in the MOBAflow desktop app';
-
-async function clickAtCenter(page: Page, locator: Locator): Promise<void> {
-  await locator.scrollIntoViewIfNeeded();
-  const box = await locator.boundingBox();
-  expect(box).not.toBeNull();
-  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-}
 
 async function newClientContext(
   browser: Browser,

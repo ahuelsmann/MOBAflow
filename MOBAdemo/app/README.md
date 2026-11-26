@@ -1,8 +1,8 @@
 # MOBAdemo frontend
 
 React, TypeScript and Vite frontend of the MOBAdemo browser showcase (issue #430, spec
-`specs/020-web-demo/`). This is the scaffold of slice 2: toolchain, theme tokens, page flags and the
-start-up states. Pages, navigation and example data follow in later slices.
+`specs/020-web-demo/`). Includes the theme tokens, navigation shell, shared inert control wrapper,
+and the four showcase pages (Train Control, Workflows, Track Plan, Signal Box).
 
 ## Requirements
 
@@ -32,7 +32,5 @@ Run them in this folder.
   plain string literal). Single modules (`lodash/debounce`) and type-only imports stay allowed;
   a single Fluent icon is imported from its own module below `@fluentui/react-icons/lib/`. Exotic
   bypasses are left to the byte budget check of slice 10.
-- **Page flags.** `src/config/enabledPages.ts` is composed from one `enabled.ts` per page under
-  `src/pages/`. A page slice flips only its own flag, in the pull request whose browser checks pass.
 - **Accent colour.** Accent colour: purple (maintainer decision 2026-11-20); the value is set in slice 20. Until then the accent tokens hold a neutral placeholder (T5).
 - **Locomotive images.** Locomotive images are placeholders until the maintainer provides own photographs (catalogue images must not be used).

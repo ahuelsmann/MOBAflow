@@ -4,10 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
 import navigation from '../../examples/navigation.json';
 
-vi.mock('../../config/enabledPages', () => ({
-  enabledPages: { 'train-control': true, workflows: true, 'track-plan': false, 'signal-box': false },
-}));
-
 const load = async () => {};
 const disabledHint = 'Available in the MOBAflow desktop app (not included in this web demo)';
 
@@ -42,7 +38,10 @@ describe('shell navigation', () => {
     expect(overview).toHaveAttribute('title', 'Overview\n' + disabledHint);
     fireEvent.click(overview);
     expect(screen.getByRole('button', { name: 'Train Control' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('button', { name: 'Track Plan' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: 'Locomotives' })).toHaveAttribute('aria-disabled', 'true');
+    for (const demoPage of ['Train Control', 'Workflows', 'Track Plan', 'Signal Box']) {
+      expect(screen.getByRole('button', { name: demoPage })).not.toHaveAttribute('aria-disabled');
+    }
   });
 
   it('keeps the current page when changing theme and reloads to Train Control', async () => {

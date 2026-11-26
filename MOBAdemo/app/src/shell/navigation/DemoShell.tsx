@@ -1,5 +1,4 @@
 import { useId, useState } from 'react';
-import { enabledPages } from '../../config/enabledPages';
 import navigation from '../../examples/navigation.json';
 import type { NavigationEntry } from '../../examples/types';
 import { SignalBoxPage } from '../../pages/signal-box/SignalBoxPage';
@@ -12,12 +11,9 @@ import './navigation.css';
 const landingPage = 'traincontrol';
 const disabledHint = 'Available in the MOBAflow desktop app (not included in this web demo)';
 
-const flagsByKey: Readonly<Partial<Record<string, boolean>>> = {
-  traincontrol: enabledPages['train-control'],
-  workflows: enabledPages.workflows,
-  trackplaneditor: enabledPages['track-plan'],
-  signalbox: enabledPages['signal-box'],
-};
+const demoEntriesByKey = new Map<string, NavigationEntry>(
+  navigation.entries.filter((entry) => entry.demoPage).map((entry) => [entry.key, entry]),
+);
 
 const groups = new Map<string, NavigationEntry[]>();
 for (const entry of navigation.entries) {
@@ -27,16 +23,16 @@ for (const entry of navigation.entries) {
 }
 
 function renderPageContent(page: string, title: string | null | undefined) {
-  if (page === landingPage && flagsByKey[page]) {
+  if (page === landingPage) {
     return <TrainControlFrame />;
   }
-  if (page === 'trackplaneditor' && flagsByKey[page]) {
+  if (page === 'trackplaneditor') {
     return <TrackPlanPage />;
   }
-  if (page === 'signalbox' && flagsByKey[page]) {
+  if (page === 'signalbox') {
     return <SignalBoxPage />;
   }
-  if (page === 'workflows' && flagsByKey[page]) {
+  if (page === 'workflows') {
     return <WorkflowsPage />;
   }
   return <h1>{title ?? 'MOBAdemo'}</h1>;
@@ -45,7 +41,7 @@ function renderPageContent(page: string, title: string | null | undefined) {
 export function DemoShell() {
   const [page, setPage] = useState(landingPage);
   const hintId = useId();
-  const title = flagsByKey[page] ? navigation.entries.find((entry) => entry.key === page)?.title : null;
+  const title = demoEntriesByKey.get(page)?.title ?? null;
 
   return (
     <div className="demo-nav-shell">
@@ -55,7 +51,7 @@ export function DemoShell() {
           {Array.from(groups, ([category, entries]) => (
             <ul key={category} aria-label={category}>
               {entries.map((entry) => {
-                const available = entry.demoPage && flagsByKey[entry.key] === true;
+                const available = entry.demoPage;
                 const badgeId = entry.badge ? hintId + '-' + entry.key : undefined;
                 const description = [badgeId, available ? undefined : hintId].filter(Boolean).join(' ');
                 return (

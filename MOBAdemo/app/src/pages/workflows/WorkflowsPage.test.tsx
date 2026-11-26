@@ -3,17 +3,12 @@ import { join } from 'node:path';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { defaultSources, parseExamples } from '../../examples/loader';
-import { workflowsEnabled } from './enabled';
 import { WorkflowsPage } from './WorkflowsPage';
 
 const workflow = parseExamples(defaultSources).workflow;
 const hint = 'Available in the MOBAflow desktop app';
 
 describe('WorkflowsPage (slice 17)', () => {
-  it('switches the Workflows feature flag on', () => {
-    expect(workflowsEnabled).toBe(true);
-  });
-
   it('renders the three panes with the selected workflow, connected graph nodes, and read-only properties (US2 S3, FR-037, FR-045)', () => {
     const { container } = render(<WorkflowsPage />);
 
