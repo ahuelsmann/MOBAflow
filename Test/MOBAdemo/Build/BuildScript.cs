@@ -201,6 +201,48 @@ internal static class BuildScript
         }
     }
 
+    /// <summary>Deletes a directory junction or symbolic link (including dangling links on Unix) without touching its target.</summary>
+    internal static void DeleteDirectoryLink(string path)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            // On Unix, Directory.Delete throws DirectoryNotFoundException for dangling symlinks;
+            // File.Delete unlinks the symlink entry directly without touching any target.
+            if (new FileInfo(path).LinkTarget != null || File.Exists(path))
+            {
+                File.Delete(path);
+                return;
+            }
+        }
+
+        if (Directory.Exists(path) || new DirectoryInfo(path).LinkTarget != null)
+        {
+            Directory.Delete(path);
+        }
+        else if (File.Exists(path) || new FileInfo(path).LinkTarget != null)
+        {
+            File.Delete(path);
+        }
+    }
+
+    /// <summary>Recursively removes directory junctions and symbolic links under <paramref name="directory"/>.</summary>
+    internal static void DeleteReparsePoints(string directory)
+    {
+        foreach (var entry in Directory.EnumerateFileSystemEntries(directory))
+        {
+            var isLink = new FileInfo(entry).LinkTarget != null
+                || (OperatingSystem.IsWindows() && (File.GetAttributes(entry) & FileAttributes.ReparsePoint) != 0);
+            if (isLink)
+            {
+                DeleteDirectoryLink(entry);
+            }
+            else if (Directory.Exists(entry))
+            {
+                DeleteReparsePoints(entry);
+            }
+        }
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

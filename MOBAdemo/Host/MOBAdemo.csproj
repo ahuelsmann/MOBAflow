@@ -15,7 +15,7 @@
     <ItemGroup>
         <!-- A local run from the build output serves the same files as the published host. -->
         <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
-        <Content Remove="wwwroot\.mobademo-build-owned;wwwroot\**\.mobademo-build-owned" />
+        <Content Remove="wwwroot\.mobademo-build-owned;wwwroot\**\.mobademo-build-owned;wwwroot\.mobademo-webroot;wwwroot\**\.mobademo-webroot" />
     </ItemGroup>
     <!--
       MOBAdemo\build.ps1 writes the built app to wwwroot-build (ignored by Git). When that folder exists it
@@ -25,7 +25,7 @@
         <Content Remove="wwwroot\**" />
         <None Remove="wwwroot-build\**" />
         <Content Include="wwwroot-build\**"
-                 Exclude="wwwroot-build\.mobademo-build-owned;wwwroot-build\**\.mobademo-build-owned"
+                 Exclude="wwwroot-build\.mobademo-build-owned;wwwroot-build\**\.mobademo-build-owned;wwwroot-build\.mobademo-webroot;wwwroot-build\**\.mobademo-webroot"
                  Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)"
                  CopyToOutputDirectory="PreserveNewest"
                  CopyToPublishDirectory="PreserveNewest" />
@@ -33,9 +33,12 @@
     <!--
       A reused output or publish folder keeps no web root of an earlier build: PreserveNewest alone would leave
       hashed assets of an older build behind, and a built index.html that is newer than the placeholder would win
-      after the built app was removed. The web root folder is therefore recreated on every build and publish,
-      and builds/publishes whose OutDir, OutputPath, or PublishDir resolves (even across symlinks or junctions)
-      to the project directory or its tracked wwwroot are rejected before cleanup or copying.
+      after the built app was removed. Generated output/publish wwwroot folders carry a .mobademo-webroot marker
+      so cleanup only deletes MOBAdemo-owned or empty wwwroot folders and warns instead of deleting foreign content.
+      Builds/publishes whose OutDir, OutputPath, or PublishDir resolves (even across symlinks or junctions) to the
+      project directory, tracked wwwroot, or wwwroot-build are rejected before cleanup or copying.
+      Link resolution uses Directory.ResolveLinkTarget on .NET 6+ and falls back to Windows GetFinalPathNameByHandleW
+      under Visual Studio's .NET Framework MSBuild so junctions and symlinks are resolved in both hosts.
     -->
     <UsingTask TaskName="ResolveCanonicalPathTask"
                TaskFactory="RoslynCodeTaskFactory"
@@ -53,16 +56,40 @@
                 using System;
                 using System.IO;
                 using System.Reflection;
+                using System.Runtime.InteropServices;
+                using System.Text;
                 using Microsoft.Build.Framework;
                 using Microsoft.Build.Utilities;
+                using Microsoft.Win32.SafeHandles;
 
                 public sealed class ResolveCanonicalPathTask : Task
                 {
+                    private const uint FileFlagBackupSemantics = 0x02000000;
+                    private const uint FileShareAll = 0x00000007;
+                    private const uint OpenExisting = 3;
+
                     private static readonly MethodInfo ResolveDirLink =
                         typeof(Directory).GetMethod("ResolveLinkTarget", new[] { typeof(string), typeof(bool) });
 
                     private static readonly MethodInfo ResolveFileLink =
                         typeof(File).GetMethod("ResolveLinkTarget", new[] { typeof(string), typeof(bool) });
+
+                    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+                    private static extern SafeFileHandle CreateFileW(
+                        string lpFileName,
+                        uint dwDesiredAccess,
+                        uint dwShareMode,
+                        IntPtr lpSecurityAttributes,
+                        uint dwCreationDisposition,
+                        uint dwFlagsAndAttributes,
+                        IntPtr hTemplateFile);
+
+                    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+                    private static extern uint GetFinalPathNameByHandleW(
+                        SafeFileHandle hFile,
+                        StringBuilder lpszFilePath,
+                        uint cchFilePath,
+                        uint dwFlags);
 
                     [Required]
                     public string BaseDirectory { get; set; } = string.Empty;
@@ -79,12 +106,21 @@
                     [Output]
                     public bool OverlapsProjectOrWebRoot { get; set; }
 
+                    private bool _hasResolutionError;
+
                     public override bool Execute()
                     {
+                        _hasResolutionError = false;
                         CanonicalPath = ResolveCanonical(BaseDirectory, TargetPath, 0);
                         string canonProject = ResolveCanonical(ProjectDirectory, ".", 0);
                         string canonProjectWebRoot = ResolveCanonical(canonProject, "wwwroot", 0);
+                        string canonProjectBuildWebRoot = ResolveCanonical(canonProject, "wwwroot-build", 0);
                         string canonTargetWebRoot = ResolveCanonical(CanonicalPath, "wwwroot", 0);
+
+                        if (_hasResolutionError)
+                        {
+                            return false;
+                        }
 
                         StringComparison comparison = Path.DirectorySeparatorChar == '\\'
                             ? StringComparison.OrdinalIgnoreCase
@@ -93,7 +129,9 @@
                         OverlapsProjectOrWebRoot =
                             string.Equals(CanonicalPath, canonProject, comparison)
                             || IsSameOrChild(CanonicalPath, canonProjectWebRoot, comparison)
-                            || IsSameOrChild(canonTargetWebRoot, canonProjectWebRoot, comparison);
+                            || IsSameOrChild(canonTargetWebRoot, canonProjectWebRoot, comparison)
+                            || IsSameOrChild(CanonicalPath, canonProjectBuildWebRoot, comparison)
+                            || IsSameOrChild(canonTargetWebRoot, canonProjectBuildWebRoot, comparison);
 
                         return true;
                     }
@@ -110,12 +148,14 @@
                         return candidate.StartsWith(prefix, comparison);
                     }
 
-                    private static string ResolveCanonical(string baseDir, string target, int depth)
+                    private string ResolveCanonical(string baseDir, string target, int depth)
                     {
                         string combined = Path.IsPathRooted(target) ? target : Path.Combine(baseDir, target);
                         string full = TrimTrailingSeparator(Path.GetFullPath(combined));
                         if (depth > 16)
                         {
+                            _hasResolutionError = true;
+                            Log.LogError("Cannot resolve '{0}': symbolic link nesting depth exceeded 16.", full);
                             return full;
                         }
 
@@ -140,20 +180,30 @@
                         return TrimTrailingSeparator(Path.GetFullPath(current));
                     }
 
-                    private static string TryResolveLink(string path)
+                    private string TryResolveLink(string path)
                     {
                         try
                         {
-                            if (Directory.Exists(path) && ResolveDirLink != null)
+                            if (Directory.Exists(path))
                             {
-                                var info = ResolveDirLink.Invoke(null, new object[] { path, true }) as FileSystemInfo;
-                                return info == null ? null : info.FullName;
+                                if (ResolveDirLink != null)
+                                {
+                                    var info = ResolveDirLink.Invoke(null, new object[] { path, true }) as FileSystemInfo;
+                                    return info == null ? null : info.FullName;
+                                }
+
+                                return TryResolveWindowsReparsePoint(path);
                             }
 
-                            if (File.Exists(path) && ResolveFileLink != null)
+                            if (File.Exists(path))
                             {
-                                var info = ResolveFileLink.Invoke(null, new object[] { path, true }) as FileSystemInfo;
-                                return info == null ? null : info.FullName;
+                                if (ResolveFileLink != null)
+                                {
+                                    var info = ResolveFileLink.Invoke(null, new object[] { path, true }) as FileSystemInfo;
+                                    return info == null ? null : info.FullName;
+                                }
+
+                                return TryResolveWindowsReparsePoint(path);
                             }
                         }
                         catch (IOException)
@@ -167,6 +217,71 @@
                         }
 
                         return null;
+                    }
+
+                    private string TryResolveWindowsReparsePoint(string path)
+                    {
+                        if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) == 0)
+                        {
+                            return null;
+                        }
+
+                        if (Path.DirectorySeparatorChar != '\\')
+                        {
+                            Log.LogWarning(
+                                "Cannot resolve reparse point '{0}' because Directory.ResolveLinkTarget is unavailable on this MSBuild runtime.",
+                                path);
+                            return null;
+                        }
+
+                        using (SafeFileHandle handle = CreateFileW(
+                            path,
+                            0,
+                            FileShareAll,
+                            IntPtr.Zero,
+                            OpenExisting,
+                            FileFlagBackupSemantics,
+                            IntPtr.Zero))
+                        {
+                            if (handle.IsInvalid)
+                            {
+                                Log.LogWarning(
+                                    "Unable to resolve Windows link '{0}' (Win32 error {1}).",
+                                    path,
+                                    Marshal.GetLastWin32Error());
+                                return null;
+                            }
+
+                            var buffer = new StringBuilder(512);
+                            uint length = GetFinalPathNameByHandleW(handle, buffer, (uint)buffer.Capacity, 0);
+                            if (length >= buffer.Capacity)
+                            {
+                                buffer.EnsureCapacity((int)length + 1);
+                                length = GetFinalPathNameByHandleW(handle, buffer, (uint)buffer.Capacity, 0);
+                            }
+
+                            if (length == 0 || length >= buffer.Capacity)
+                            {
+                                Log.LogWarning(
+                                    "Unable to resolve final path for Windows link '{0}' (Win32 error {1}).",
+                                    path,
+                                    Marshal.GetLastWin32Error());
+                                return null;
+                            }
+
+                            string resolved = buffer.ToString();
+                            if (resolved.StartsWith(@"\\?\UNC\", StringComparison.OrdinalIgnoreCase))
+                            {
+                                return @"\\" + resolved.Substring(8);
+                            }
+
+                            if (resolved.StartsWith(@"\\?\", StringComparison.OrdinalIgnoreCase))
+                            {
+                                return resolved.Substring(4);
+                            }
+
+                            return resolved;
+                        }
                     }
 
                     private static string TrimTrailingSeparator(string path)
@@ -184,6 +299,78 @@
             </Code>
         </Task>
     </UsingTask>
+    <UsingTask TaskName="InspectWebRootOwnershipTask"
+               TaskFactory="RoslynCodeTaskFactory"
+               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <WebRootPath ParameterType="System.String" Required="true" />
+            <MarkerFileName ParameterType="System.String" Required="true" />
+            <WebRootExists ParameterType="System.Boolean" Output="true" />
+            <CanClean ParameterType="System.Boolean" Output="true" />
+            <HasForeignContent ParameterType="System.Boolean" Output="true" />
+        </ParameterGroup>
+        <Task>
+            <Code Type="Class" Language="cs">
+                <![CDATA[
+                using System.IO;
+                using System.Linq;
+                using Microsoft.Build.Framework;
+                using Microsoft.Build.Utilities;
+
+                public sealed class InspectWebRootOwnershipTask : Task
+                {
+                    [Required]
+                    public string WebRootPath { get; set; } = string.Empty;
+
+                    [Required]
+                    public string MarkerFileName { get; set; } = string.Empty;
+
+                    [Output]
+                    public bool WebRootExists { get; set; }
+
+                    [Output]
+                    public bool CanClean { get; set; }
+
+                    [Output]
+                    public bool HasForeignContent { get; set; }
+
+                    public override bool Execute()
+                    {
+                        if (!Directory.Exists(WebRootPath))
+                        {
+                            WebRootExists = File.Exists(WebRootPath);
+                            CanClean = false;
+                            HasForeignContent = WebRootExists;
+                            return true;
+                        }
+
+                        WebRootExists = true;
+                        if ((File.GetAttributes(WebRootPath) & FileAttributes.ReparsePoint) != 0)
+                        {
+                            CanClean = false;
+                            HasForeignContent = true;
+                            return true;
+                        }
+
+                        if (!Directory.EnumerateFileSystemEntries(WebRootPath).Any())
+                        {
+                            CanClean = true;
+                            HasForeignContent = false;
+                            return true;
+                        }
+
+                        string markerPath = Path.Combine(WebRootPath, MarkerFileName);
+                        bool hasValidMarker = File.Exists(markerPath)
+                            && (File.GetAttributes(markerPath) & FileAttributes.ReparsePoint) == 0;
+                        CanClean = hasValidMarker;
+                        HasForeignContent = !hasValidMarker;
+                        return true;
+                    }
+                }
+                ]]>
+            </Code>
+        </Task>
+    </UsingTask>
     <Target Name="ValidateDemoOutputDirectories"
             BeforeTargets="BeforeBuild;AssignTargetPaths;RemoveStaleWebRootFromOutput;RemoveStaleWebRootFromPublish;PrepareForPublish">
         <ResolveCanonicalPathTask BaseDirectory="$(MSBuildProjectDirectory)"
@@ -194,7 +381,7 @@
             <Output TaskParameter="OverlapsProjectOrWebRoot" PropertyName="_OutDirOverlapsSource" />
         </ResolveCanonicalPathTask>
         <Error Condition="'$(_OutDirOverlapsSource)' == 'true'"
-               Text="Refusing to build MOBAdemo into OutDir '$(OutDir)' because it resolves to '$(_CanonicalOutDir)', overlapping the project directory or tracked wwwroot." />
+               Text="Refusing to build MOBAdemo into OutDir '$(OutDir)' because it resolves to '$(_CanonicalOutDir)', overlapping the project directory, tracked wwwroot, or wwwroot-build." />
 
         <ResolveCanonicalPathTask BaseDirectory="$(MSBuildProjectDirectory)"
                                   TargetPath="$(OutputPath)"
@@ -204,7 +391,7 @@
             <Output TaskParameter="OverlapsProjectOrWebRoot" PropertyName="_OutputPathOverlapsSource" />
         </ResolveCanonicalPathTask>
         <Error Condition="'$(_OutputPathOverlapsSource)' == 'true'"
-               Text="Refusing to build MOBAdemo into OutputPath '$(OutputPath)' because it resolves to '$(_CanonicalOutputPath)', overlapping the project directory or tracked wwwroot." />
+               Text="Refusing to build MOBAdemo into OutputPath '$(OutputPath)' because it resolves to '$(_CanonicalOutputPath)', overlapping the project directory, tracked wwwroot, or wwwroot-build." />
 
         <ResolveCanonicalPathTask BaseDirectory="$(MSBuildProjectDirectory)"
                                   TargetPath="$(PublishDir)"
@@ -214,7 +401,7 @@
             <Output TaskParameter="OverlapsProjectOrWebRoot" PropertyName="_PublishDirOverlapsSource" />
         </ResolveCanonicalPathTask>
         <Error Condition="'$(_PublishDirOverlapsSource)' == 'true'"
-               Text="Refusing to publish MOBAdemo into PublishDir '$(PublishDir)' because it resolves to '$(_CanonicalPublishDir)', overlapping the project directory or tracked wwwroot." />
+               Text="Refusing to publish MOBAdemo into PublishDir '$(PublishDir)' because it resolves to '$(_CanonicalPublishDir)', overlapping the project directory, tracked wwwroot, or wwwroot-build." />
     </Target>
     <Target Name="RemoveStaleWebRootFromOutput"
             DependsOnTargets="ValidateDemoOutputDirectories"
@@ -223,8 +410,30 @@
         <PropertyGroup>
             <_NormalizedOutWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(OutDir)', 'wwwroot'))</_NormalizedOutWebRoot>
         </PropertyGroup>
+        <InspectWebRootOwnershipTask WebRootPath="$(_NormalizedOutWebRoot)"
+                                     MarkerFileName=".mobademo-webroot"
+                                     Condition="'$(_OutDirOverlapsSource)' != 'true'">
+            <Output TaskParameter="WebRootExists" PropertyName="_OutWebRootExists" />
+            <Output TaskParameter="CanClean" PropertyName="_OutWebRootCanClean" />
+            <Output TaskParameter="HasForeignContent" PropertyName="_OutWebRootHasForeignContent" />
+        </InspectWebRootOwnershipTask>
+        <Warning Condition="'$(_OutDirOverlapsSource)' != 'true' and '$(_OutWebRootHasForeignContent)' == 'true'"
+                 Text="Skipping cleanup of '$(_NormalizedOutWebRoot)' because it contains non-MOBAdemo content (missing '.mobademo-webroot' marker)." />
         <RemoveDir Directories="$(_NormalizedOutWebRoot)"
-                   Condition="'$(_OutDirOverlapsSource)' != 'true'" />
+                   Condition="'$(_OutDirOverlapsSource)' != 'true' and '$(_OutWebRootExists)' == 'true' and '$(_OutWebRootCanClean)' == 'true'" />
+    </Target>
+    <Target Name="WriteWebRootMarkerToOutput"
+            AfterTargets="CopyFilesToOutputDirectory"
+            Condition="'$(OutDir)' != '' and '$([System.String]::IsNullOrWhiteSpace(&quot;$(OutDir)&quot;))' == 'false' and '$(_OutDirOverlapsSource)' != 'true' and '$(_OutWebRootHasForeignContent)' != 'true'">
+        <PropertyGroup>
+            <_NormalizedOutWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(OutDir)', 'wwwroot'))</_NormalizedOutWebRoot>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(_NormalizedOutWebRoot)\.mobademo-webroot"
+                          Lines="MOBAdemo generated web root"
+                          Overwrite="true"
+                          Encoding="utf-8"
+                          WriteOnlyWhenDifferent="true"
+                          Condition="Exists('$(_NormalizedOutWebRoot)')" />
     </Target>
     <Target Name="RemoveStaleWebRootFromPublish"
             DependsOnTargets="ValidateDemoOutputDirectories"
@@ -233,7 +442,29 @@
         <PropertyGroup>
             <_NormalizedPublishWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(PublishDir)', 'wwwroot'))</_NormalizedPublishWebRoot>
         </PropertyGroup>
+        <InspectWebRootOwnershipTask WebRootPath="$(_NormalizedPublishWebRoot)"
+                                     MarkerFileName=".mobademo-webroot"
+                                     Condition="'$(_PublishDirOverlapsSource)' != 'true'">
+            <Output TaskParameter="WebRootExists" PropertyName="_PublishWebRootExists" />
+            <Output TaskParameter="CanClean" PropertyName="_PublishWebRootCanClean" />
+            <Output TaskParameter="HasForeignContent" PropertyName="_PublishWebRootHasForeignContent" />
+        </InspectWebRootOwnershipTask>
+        <Warning Condition="'$(_PublishDirOverlapsSource)' != 'true' and '$(_PublishWebRootHasForeignContent)' == 'true'"
+                 Text="Skipping cleanup of '$(_NormalizedPublishWebRoot)' because it contains non-MOBAdemo content (missing '.mobademo-webroot' marker)." />
         <RemoveDir Directories="$(_NormalizedPublishWebRoot)"
-                   Condition="'$(_PublishDirOverlapsSource)' != 'true'" />
+                   Condition="'$(_PublishDirOverlapsSource)' != 'true' and '$(_PublishWebRootExists)' == 'true' and '$(_PublishWebRootCanClean)' == 'true'" />
+    </Target>
+    <Target Name="WriteWebRootMarkerToPublish"
+            AfterTargets="Publish"
+            Condition="'$(PublishDir)' != '' and '$([System.String]::IsNullOrWhiteSpace(&quot;$(PublishDir)&quot;))' == 'false' and '$(_PublishDirOverlapsSource)' != 'true' and '$(_PublishWebRootHasForeignContent)' != 'true'">
+        <PropertyGroup>
+            <_NormalizedPublishWebRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(PublishDir)', 'wwwroot'))</_NormalizedPublishWebRoot>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(_NormalizedPublishWebRoot)\.mobademo-webroot"
+                          Lines="MOBAdemo generated web root"
+                          Overwrite="true"
+                          Encoding="utf-8"
+                          WriteOnlyWhenDifferent="true"
+                          Condition="Exists('$(_NormalizedPublishWebRoot)')" />
     </Target>
 </Project>

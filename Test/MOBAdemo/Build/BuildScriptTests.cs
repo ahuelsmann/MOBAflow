@@ -19,6 +19,7 @@ internal sealed class BuildScriptTests
     private static readonly string[] TextExtensions = [".js", ".css", ".html", ".svg"];
 
     private string _root = string.Empty;
+    private string _appCopy = string.Empty;
     private string _output = string.Empty;
     private string _placeholderHashBefore = string.Empty;
 
@@ -27,9 +28,14 @@ internal sealed class BuildScriptTests
     {
         await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
         _root = Path.Combine(Path.GetTempPath(), "mobademo-build-" + Guid.NewGuid().ToString("N"));
+        _appCopy = Path.Combine(_root, "app-fixture");
         _output = Path.Combine(_root, "web");
+        BuildScript.CopyDirectory(
+            Path.Combine(BuildScript.RepositoryRoot, "MOBAdemo", "app"),
+            _appCopy,
+            relative => relative.Split(Path.DirectorySeparatorChar)[0] is "node_modules" or "dist");
         _placeholderHashBefore = HashPlaceholder();
-        await BuildScript.RunAsync(_output).ConfigureAwait(false);
+        await BuildScript.RunAsync(_output, "-AppPath", _appCopy).ConfigureAwait(false);
     }
 
     [OneTimeTearDown]
@@ -189,7 +195,8 @@ internal sealed class BuildScriptTests
     {
         var debugOutput = Path.Combine(_root, "debug-web");
         Directory.CreateDirectory(debugOutput);
-        var result = await BuildScript.TryRunAsync(debugOutput, "-Configuration", "Debug").ConfigureAwait(false);
+        var result = await BuildScript.TryRunAsync(debugOutput, "-Configuration", "Debug", "-AppPath", _appCopy)
+            .ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
@@ -288,6 +295,73 @@ internal sealed class BuildScriptTests
             Assert.That(result.Output, Does.Contain("fake-npm-stderr-error"));
             Assert.That(loggedArgs, Does.Contain("run build -- --mode development"));
             Assert.That(preservedIndex, Is.EqualTo("keep-previous-debug"));
+        }
+    }
+
+    [Test]
+    public async Task Build_CopiesTopLevelDotfilesAndDotDirectoriesFromDist()
+    {
+        var fixtureRoot = Path.Combine(_root, "fake-npm-dotfiles-" + Guid.NewGuid().ToString("N"));
+        var fakeBin = Path.Combine(fixtureRoot, "bin");
+        var fakeApp = Path.Combine(fixtureRoot, "app");
+        var output = Path.Combine(fixtureRoot, "web");
+        Directory.CreateDirectory(fakeBin);
+        Directory.CreateDirectory(fakeApp);
+
+        if (OperatingSystem.IsWindows())
+        {
+            await File.WriteAllTextAsync(Path.Combine(fakeBin, "node.cmd"), "@echo off\r\nexit /b 0\r\n")
+                .ConfigureAwait(false);
+            var npmScript = string.Join(
+                "\r\n",
+                "@echo off",
+                "if \"%1\"==\"ci\" exit /b 0",
+                "if \"%1\"==\"run\" if \"%2\"==\"compress\" exit /b 0",
+                "mkdir dist\\.well-known",
+                "echo ok> dist\\index.html",
+                "echo nojekyll> dist\\.nojekyll",
+                "echo security> dist\\.well-known\\security.txt",
+                "exit /b 0",
+                string.Empty);
+            await File.WriteAllTextAsync(Path.Combine(fakeBin, "npm.cmd"), npmScript).ConfigureAwait(false);
+        }
+        else
+        {
+            var nodePath = Path.Combine(fakeBin, "node");
+            var npmPath = Path.Combine(fakeBin, "npm");
+            await File.WriteAllTextAsync(nodePath, "#!/usr/bin/env sh\nexit 0\n").ConfigureAwait(false);
+            var npmScript = string.Join(
+                "\n",
+                "#!/usr/bin/env sh",
+                "if [ \"$1\" = \"ci\" ]; then exit 0; fi",
+                "if [ \"$1\" = \"run\" ] && [ \"$2\" = \"compress\" ]; then exit 0; fi",
+                "mkdir -p dist/.well-known",
+                "printf 'ok\\n' > dist/index.html",
+                "printf 'nojekyll\\n' > dist/.nojekyll",
+                "printf 'security\\n' > dist/.well-known/security.txt",
+                "exit 0",
+                string.Empty);
+            await File.WriteAllTextAsync(npmPath, npmScript).ConfigureAwait(false);
+            var executableMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+                | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute;
+            File.SetUnixFileMode(nodePath, executableMode);
+            File.SetUnixFileMode(npmPath, executableMode);
+        }
+
+        var env = new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["PATH"] = fakeBin + Path.PathSeparator + Environment.GetEnvironmentVariable("PATH"),
+        };
+        var result = await BuildScript.TryRunWithEnvironmentAsync(output, env, "-AppPath", fakeApp)
+            .ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.ExitCode, Is.Zero, result.Output);
+            Assert.That(File.Exists(Path.Combine(output, "index.html")), Is.True);
+            Assert.That(File.Exists(Path.Combine(output, ".nojekyll")), Is.True);
+            Assert.That(File.Exists(Path.Combine(output, ".well-known", "security.txt")), Is.True);
+            Assert.That(File.Exists(Path.Combine(output, ".mobademo-build-owned")), Is.True);
         }
     }
 
