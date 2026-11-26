@@ -244,7 +244,7 @@ next at the end:
 ## Threat model
 
 - **Verified tier:** Dedicated bot/app accounts registered in
-  [`.github/review-gate-identities.json`](../review-gate-identities.json) (`trustedReviewers`, such as
+  `.github/review-gate-identities.json` (`trustedReviewers`, such as
   `chatgpt-codex-connector[bot]`, `claude[bot]`, and `gemini-code-assist[bot]`). GitHub verifies the actor
   identity, and the published status description includes `"verified"`.
 - **Declared tier (shared-account limitation):** While multiple CLI/local agents share a single maintainer GitHub
