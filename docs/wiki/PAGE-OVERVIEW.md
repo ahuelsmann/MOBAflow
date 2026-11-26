@@ -66,7 +66,7 @@ Train Control and Journeys are shown in bold.
 
 | Page | What it is for |
 | --- | --- |
-| **Help** | Built-in help topics for getting started, train control, automation, the signal box, the track plan, configuration and troubleshooting. |
+| **Help** | Built-in help topics for getting started, train control, automation, the signal box, the track plan, monitoring, configuration and troubleshooting. |
 | **Info** | What MOBAflow is, its applications, version and links. |
 | **Settings** | Z21 connection timing, ESP32 display address, speech synthesis, REST API, application behavior, layout reset, feedback points, health check and feature toggles. |
 

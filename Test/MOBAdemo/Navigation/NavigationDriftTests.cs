@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.MOBAdemo.Navigation;
 
+using Moba.Test.MOBAdemo.Build;
+
 /// <summary>
 /// The demo's <c>navigation.json</c> must equal the WinUI navigation: the page registration, the feature toggle
 /// registry and the labels of the shipped appsettings (issue #430 slice 5, spec FR-022, plan T4).
@@ -33,6 +35,50 @@ internal sealed class NavigationDriftTests
 
     private static (IReadOnlyList<NavigationEntryData> Entries, IReadOnlyList<string> DemoKeys) Json() =>
         NavigationSource.FromJson(File.ReadAllText(NavigationSource.NavigationJsonPath));
+
+    private static string PageOverviewMarkdown() =>
+        File.ReadAllText(Path.Combine(BuildScript.RepositoryRoot, "docs", "wiki", "PAGE-OVERVIEW.md"));
+
+    private static IEnumerable<string> ExpectedDesktopCells() =>
+        App().Select(entry => entry.Badge is null ? $"**{entry.Title}**" : $"**{entry.Title}** ({entry.Badge})");
+
+    private static IEnumerable<string> DesktopPageCells(string markdown)
+    {
+        var lines = markdown.ReplaceLineEndings("\n").Split('\n');
+        var desktop = Array.IndexOf(lines, "## MOBAflow Desktop");
+        var mobile = Array.IndexOf(lines, "## MOBAsmart tabs");
+        if (desktop < 0 || mobile <= desktop)
+            throw new InvalidDataException("PAGE-OVERVIEW.md must place the desktop section before the MOBAsmart tabs.");
+
+        return lines.Skip(desktop + 1).Take(mobile - desktop - 1)
+            .Where(line => line.StartsWith("| **", StringComparison.Ordinal))
+            .Select(line => line.Split('|', 3)[1].Trim());
+    }
+
+    [Test]
+    public void WikiDesktopPageCells_EqualAppTitlesAndBadgesInOrder()
+    {
+        Assert.That(DesktopPageCells(PageOverviewMarkdown()), Is.EqualTo(ExpectedDesktopCells()),
+            "Keep the desktop rows in docs/wiki/PAGE-OVERVIEW.md in sync with the application navigation.");
+    }
+
+    [Test]
+    public void RenamedOrMissingWikiPage_NoLongerMatchesAppNavigation()
+    {
+        var markdown = PageOverviewMarkdown();
+        var helpRow = markdown.ReplaceLineEndings("\n").Split('\n')
+            .Single(line => line.StartsWith("| **Help** |", StringComparison.Ordinal));
+        var renamed = markdown.Replace(helpRow, helpRow.Replace("**Help**", "**Renamed Help**", StringComparison.Ordinal), StringComparison.Ordinal);
+        var missing = markdown.Replace(helpRow, string.Empty, StringComparison.Ordinal);
+        var expected = ExpectedDesktopCells().ToArray();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(DesktopPageCells(markdown), Is.EqualTo(expected));
+            Assert.That(DesktopPageCells(renamed), Is.Not.EqualTo(expected));
+            Assert.That(DesktopPageCells(missing), Is.Not.EqualTo(expected));
+        }
+    }
 
     [Test]
     public void NavigationJson_EqualsTheAppNavigation_InKeyOrderAndEveryField()
