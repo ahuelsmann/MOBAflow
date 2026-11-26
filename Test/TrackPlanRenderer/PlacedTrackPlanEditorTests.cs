@@ -17,7 +17,7 @@ internal class PlacedTrackPlanEditorTests
 {
     private static readonly XNamespace SvgNs = "http://www.w3.org/2000/svg";
     private static readonly string[] ExpectedVerticalGridX = ["-100.00", "0.00", "100.00", "200.00", "300.00", "400.00", "500.00"];
-    private static readonly string[] ExpectedHorizontalGridY = ["-100.00", "0.00"];
+    private static readonly string[] ExpectedHorizontalGridY = ["-100.00", "0.00", "100.00", "200.00"];
     private static readonly string[] ExpectedPortColors = ["#000000", "#FF0000", "#00AA00", "#0000FF", "#666666"];
     private static readonly string[] ExpectedPortShortNames = ["A", "B", "C", "D", "X"];
     private static readonly string[] ExpectedEscapedTexts = ["Track <1> & \"Main\" 'A'", "&", "<", "Gap > 2mm & <open> \"Port\" 'B'"];
@@ -190,9 +190,9 @@ internal class PlacedTrackPlanEditorTests
     public void PlacedTrackPlanSvgRenderer_Render_EmptyScene_ReturnsMinimalSvgEvenWithGridAndMarkers()
     {
         var scene = new TrackPlanRenderScene(
-            [],
-            [new TrackPlanValidationMarker(null, 10, 20, "Orphan")],
-            [new TrackPlanPortMarker(30, 40, "PortA")]);
+            Array.Empty<TrackPlanRenderItem>(),
+            new TrackPlanValidationMarker[] { new(null, 10, 20, "Orphan") },
+            new TrackPlanPortMarker[] { new(30, 40, "PortA") });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene, showGrid: true);
 
@@ -203,9 +203,10 @@ internal class PlacedTrackPlanEditorTests
     public void PlacedTrackPlanSvgRenderer_Render_ComputesViewBoxAndDimensionsWithFiftyMmMargin()
     {
         var scene = new TrackPlanRenderScene(
-        [
-            new TrackPlanRenderItem(Guid.NewGuid(), "G100", 10, 20, 0, HorizontalHundredMmPath)
-        ]);
+            new TrackPlanRenderItem[]
+            {
+                new(Guid.NewGuid(), "G100", 10, 20, 0, HorizontalHundredMmPath)
+            });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene);
         var root = XDocument.Parse(svg).Root!;
@@ -248,10 +249,11 @@ internal class PlacedTrackPlanEditorTests
         // Rotated 90 deg around (100, 200): local [0..100, -20..30] maps to world [70..120, 200..300].
         // Combined with second segment at [-10..30, 50..50] -> world bounds [-10..120, 50..300].
         var scene = new TrackPlanRenderScene(
-        [
-            new TrackPlanRenderItem(Guid.NewGuid(), "Turnout", 100, 200, 90, asymmetricPath),
-            new TrackPlanRenderItem(Guid.NewGuid(), "G40", -10, 50, 0, shortPath)
-        ]);
+            new TrackPlanRenderItem[]
+            {
+                new(Guid.NewGuid(), "Turnout", 100, 200, 90, asymmetricPath),
+                new(Guid.NewGuid(), "G40", -10, 50, 0, shortPath)
+            });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene);
         var root = XDocument.Parse(svg).Root!;
@@ -272,9 +274,9 @@ internal class PlacedTrackPlanEditorTests
     public void PlacedTrackPlanSvgRenderer_Render_PortsAndValidationMarkersOutsideTrackBounds_ExpandViewBox()
     {
         var scene = new TrackPlanRenderScene(
-            [new TrackPlanRenderItem(Guid.NewGuid(), "G100", 0, 0, 0, HorizontalHundredMmPath)],
-            [new TrackPlanValidationMarker(null, -30, -40, "Warning")],
-            [new TrackPlanPortMarker(150, 80, "PortB")]);
+            new TrackPlanRenderItem[] { new(Guid.NewGuid(), "G100", 0, 0, 0, HorizontalHundredMmPath) },
+            new TrackPlanValidationMarker[] { new(null, -30, -40, "Warning") },
+            new TrackPlanPortMarker[] { new(150, 80, "PortB") });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene);
         var root = XDocument.Parse(svg).Root!;
@@ -290,15 +292,16 @@ internal class PlacedTrackPlanEditorTests
     [Test]
     public void PlacedTrackPlanSvgRenderer_Render_GridLines_CoverViewBoxWithMajorAndMinorIntervals()
     {
-        SegmentLocalPathBuilder.PathCommand[] fiveHundredPath =
+        SegmentLocalPathBuilder.PathCommand[] diagonalPath =
         [
             new SegmentLocalPathBuilder.MoveTo(0, 0),
-            new SegmentLocalPathBuilder.LineTo(500, 0)
+            new SegmentLocalPathBuilder.LineTo(450, 150)
         ];
         var scene = new TrackPlanRenderScene(
-        [
-            new TrackPlanRenderItem(Guid.NewGuid(), "G500", 0, 0, 0, fiveHundredPath)
-        ]);
+            new TrackPlanRenderItem[]
+            {
+                new(Guid.NewGuid(), "G450", 0, 0, 0, diagonalPath)
+            });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene, showGrid: true);
         var root = XDocument.Parse(svg).Root!;
@@ -308,22 +311,24 @@ internal class PlacedTrackPlanEditorTests
 
         using (Assert.EnterMultipleScope())
         {
-            // ViewBox is [-50..550, -50..50], so X grid lines are -100..500 (7) and Y grid lines are -100, 0 (2).
-            Assert.That(lines, Has.Count.EqualTo(9));
+            // ViewBox is [-50..500, -50..200], so right edge x=500.00 and bottom edge y=200.00 lie on exact grid lines (<= edge).
+            Assert.That(lines, Has.Count.EqualTo(11));
             Assert.That(verticalLines, Has.Count.EqualTo(7));
-            Assert.That(horizontalLines, Has.Count.EqualTo(2));
+            Assert.That(horizontalLines, Has.Count.EqualTo(4));
 
             Assert.That(
                 verticalLines.Select(line => line.Attribute("x1")?.Value),
                 Is.EqualTo(ExpectedVerticalGridX));
+            Assert.That(verticalLines[^1].Attribute("x1")?.Value, Is.EqualTo("500.00"));
             Assert.That(verticalLines.Select(line => line.Attribute("y1")?.Value), Is.All.EqualTo("-50.00"));
-            Assert.That(verticalLines.Select(line => line.Attribute("y2")?.Value), Is.All.EqualTo("50.00"));
+            Assert.That(verticalLines.Select(line => line.Attribute("y2")?.Value), Is.All.EqualTo("200.00"));
 
             Assert.That(
                 horizontalLines.Select(line => line.Attribute("y1")?.Value),
                 Is.EqualTo(ExpectedHorizontalGridY));
+            Assert.That(horizontalLines[^1].Attribute("y1")?.Value, Is.EqualTo("200.00"));
             Assert.That(horizontalLines.Select(line => line.Attribute("x1")?.Value), Is.All.EqualTo("-50.00"));
-            Assert.That(horizontalLines.Select(line => line.Attribute("x2")?.Value), Is.All.EqualTo("550.00"));
+            Assert.That(horizontalLines.Select(line => line.Attribute("x2")?.Value), Is.All.EqualTo("500.00"));
 
             var zeroVertical = verticalLines.Single(line => line.Attribute("x1")?.Value == "0.00");
             var fiveHundredVertical = verticalLines.Single(line => line.Attribute("x1")?.Value == "500.00");
@@ -348,12 +353,13 @@ internal class PlacedTrackPlanEditorTests
     public void PlacedTrackPlanSvgRenderer_Render_SelectionFeedbackAndOpacity_EmitExpectedPathsAndStrokes()
     {
         var scene = new TrackPlanRenderScene(
-        [
-            new TrackPlanRenderItem(Guid.NewGuid(), "Plain", 0, 0, 0, HorizontalHundredMmPath, IsSelected: false, FeedbackIntensity: 0),
-            new TrackPlanRenderItem(Guid.NewGuid(), "Selected", 0, 20, 0, HorizontalHundredMmPath, IsSelected: true, FeedbackIntensity: 0),
-            new TrackPlanRenderItem(Guid.NewGuid(), "SelectedWithFeedback", 0, 40, 0, HorizontalHundredMmPath, IsSelected: true, FeedbackIntensity: 0.75),
-            new TrackPlanRenderItem(Guid.NewGuid(), "NegativeFeedback", 0, 60, 0, HorizontalHundredMmPath, IsSelected: false, FeedbackIntensity: -0.25)
-        ]);
+            new TrackPlanRenderItem[]
+            {
+                new(Guid.NewGuid(), "Plain", 0, 0, 0, HorizontalHundredMmPath, IsSelected: false, FeedbackIntensity: 0),
+                new(Guid.NewGuid(), "Selected", 0, 20, 0, HorizontalHundredMmPath, IsSelected: true, FeedbackIntensity: 0),
+                new(Guid.NewGuid(), "SelectedWithFeedback", 0, 40, 0, HorizontalHundredMmPath, IsSelected: true, FeedbackIntensity: 0.75),
+                new(Guid.NewGuid(), "NegativeFeedback", 0, 60, 0, HorizontalHundredMmPath, IsSelected: false, FeedbackIntensity: -0.25)
+            });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene, trackOpacity: 0.456);
         var paths = XDocument.Parse(svg).Root!.Elements(SvgNs + "path").ToList();
@@ -394,12 +400,13 @@ internal class PlacedTrackPlanEditorTests
     public void PlacedTrackPlanSvgRenderer_Render_Labels_EmitPositionedTextOnlyForNonWhitespace()
     {
         var scene = new TrackPlanRenderScene(
-        [
-            new TrackPlanRenderItem(Guid.NewGuid(), "Station", 10, 40, 0, HorizontalHundredMmPath, Label: "Platform 1"),
-            new TrackPlanRenderItem(Guid.NewGuid(), "Blank", 20, 60, 0, HorizontalHundredMmPath, Label: "   "),
-            new TrackPlanRenderItem(Guid.NewGuid(), "Empty", 30, 80, 0, HorizontalHundredMmPath, Label: string.Empty),
-            new TrackPlanRenderItem(Guid.NewGuid(), "NullLabel", 40, 100, 0, HorizontalHundredMmPath, Label: null)
-        ]);
+            new TrackPlanRenderItem[]
+            {
+                new(Guid.NewGuid(), "Station", 10, 40, 0, HorizontalHundredMmPath, Label: "Platform 1"),
+                new(Guid.NewGuid(), "Blank", 20, 60, 0, HorizontalHundredMmPath, Label: "   "),
+                new(Guid.NewGuid(), "Empty", 30, 80, 0, HorizontalHundredMmPath, Label: string.Empty),
+                new(Guid.NewGuid(), "NullLabel", 40, 100, 0, HorizontalHundredMmPath, Label: null)
+            });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene);
         var texts = XDocument.Parse(svg).Root!.Elements(SvgNs + "text").ToList();
@@ -419,15 +426,16 @@ internal class PlacedTrackPlanEditorTests
     public void PlacedTrackPlanSvgRenderer_Render_PortColorsAndValidationMarkers_EmitExactGeometryAndStyles()
     {
         var scene = new TrackPlanRenderScene(
-            [new TrackPlanRenderItem(Guid.NewGuid(), "G100", 0, 0, 0, HorizontalHundredMmPath)],
-            [new TrackPlanValidationMarker(null, 50, 60, "Loose end")],
-            [
-                new TrackPlanPortMarker(10, 20, "PortA"),
-                new TrackPlanPortMarker(30, 20, "PortB"),
-                new TrackPlanPortMarker(50, 20, "PortC"),
-                new TrackPlanPortMarker(70, 20, "PortD"),
-                new TrackPlanPortMarker(90, 20, "PortX")
-            ]);
+            new TrackPlanRenderItem[] { new(Guid.NewGuid(), "G100", 0, 0, 0, HorizontalHundredMmPath) },
+            new TrackPlanValidationMarker[] { new(null, 50, 60, "Loose end") },
+            new TrackPlanPortMarker[]
+            {
+                new(10, 20, "PortA"),
+                new(30, 20, "PortB"),
+                new(50, 20, "PortC"),
+                new(70, 20, "PortD"),
+                new(90, 20, "PortX")
+            });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene);
         var root = XDocument.Parse(svg).Root!;
@@ -475,9 +483,9 @@ internal class PlacedTrackPlanEditorTests
     public void PlacedTrackPlanSvgRenderer_Render_EnforcesLayerOrder_GridThenTracksThenPortsThenMarkers()
     {
         var scene = new TrackPlanRenderScene(
-            [new TrackPlanRenderItem(Guid.NewGuid(), "G100", 0, 0, 0, HorizontalHundredMmPath, Label: "Track 1", FeedbackIntensity: 0.8)],
-            [new TrackPlanValidationMarker(null, 50, 0, "Open")],
-            [new TrackPlanPortMarker(0, 0, "PortA")]);
+            new TrackPlanRenderItem[] { new(Guid.NewGuid(), "G100", 0, 0, 0, HorizontalHundredMmPath, Label: "Track 1", FeedbackIntensity: 0.8) },
+            new TrackPlanValidationMarker[] { new(null, 50, 0, "Open") },
+            new TrackPlanPortMarker[] { new(0, 0, "PortA") });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene, showGrid: true);
         var elements = XDocument.Parse(svg).Root!.Elements().ToList();
@@ -518,12 +526,13 @@ internal class PlacedTrackPlanEditorTests
         const string specialLabel = "Track <1> & \"Main\" 'A'";
         const string specialMessage = "Gap > 2mm & <open> \"Port\" 'B'";
         var scene = new TrackPlanRenderScene(
-            [new TrackPlanRenderItem(Guid.NewGuid(), "G100", 0, 0, 0, HorizontalHundredMmPath, Label: specialLabel)],
-            [new TrackPlanValidationMarker(null, 50, 0, specialMessage)],
-            [
-                new TrackPlanPortMarker(0, 0, "Port&"),
-                new TrackPlanPortMarker(100, 0, "Port<")
-            ]);
+            new TrackPlanRenderItem[] { new(Guid.NewGuid(), "G100", 0, 0, 0, HorizontalHundredMmPath, Label: specialLabel) },
+            new TrackPlanValidationMarker[] { new(null, 50, 0, specialMessage) },
+            new TrackPlanPortMarker[]
+            {
+                new(0, 0, "Port&"),
+                new(100, 0, "Port<")
+            });
 
         var svg = new PlacedTrackPlanSvgRenderer().Render(scene);
         var texts = XDocument.Parse(svg).Root!.Elements(SvgNs + "text").ToList();
@@ -558,14 +567,15 @@ internal class PlacedTrackPlanEditorTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(paths, Has.Count.EqualTo(2));
-            Assert.That(paths[0].Attribute("d")?.Value, Does.Contain(" A "));
-            Assert.That(paths[1].Attribute("d")?.Value, Does.Contain(" L "));
-            Assert.That(paths[1].Attribute("d")?.Value, Does.Contain(" A "));
+            Assert.That(paths[0].Attribute("d")?.Value, Is.EqualTo("M 0.00,0.00 A 907.97,907.97 0 0,1 235.00,30.94"));
+            Assert.That(paths[1].Attribute("d")?.Value, Is.EqualTo("M 300.00,100.00 L 507.04,219.53 M 300.00,100.00 A 907.97,907.97 0 0,1 488.05,244.29"));
             Assert.That(portCircles, Has.Count.EqualTo(5));
             Assert.That(portCircles.Select(circle => circle.Attribute("fill")?.Value), Does.Contain("#00AA00"));
             Assert.That(viewBox, Has.Length.EqualTo(4));
-            Assert.That(viewBox[2], Is.GreaterThan(100));
-            Assert.That(viewBox[3], Is.GreaterThan(100));
+            Assert.That(viewBox[0], Is.EqualTo(-50.00).Within(0.02));
+            Assert.That(viewBox[1], Is.EqualTo(-50.00).Within(0.02));
+            Assert.That(viewBox[2], Is.EqualTo(607.04).Within(0.02));
+            Assert.That(viewBox[3], Is.EqualTo(346.33).Within(0.02));
         }
     }
 }
