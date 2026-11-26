@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 #if ANDROID
 
-namespace Moba.MAUI.Platforms.Android.Services;
+namespace Moba.MOBAsmart.Platforms.Android.Services;
 
 using AndroidX.Core.App;
 

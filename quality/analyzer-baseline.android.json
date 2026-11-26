@@ -2091,7 +2091,7 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "CA1062",
-      "path": "MOBAsmart/Converters/FunctionBacklightColorConverter.cs",
+      "path": "MOBAsmart/Converter/FunctionBacklightColorConverter.cs",
       "count": 1
     },
     {

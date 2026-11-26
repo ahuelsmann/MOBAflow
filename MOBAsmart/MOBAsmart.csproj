@@ -4,7 +4,7 @@
         <!-- .NET 10 with MAUI 10.0 workload -->
         <TargetFramework>net10.0-android</TargetFramework>
         <OutputType>Exe</OutputType>
-        <RootNamespace>Moba.MAUI</RootNamespace>
+        <RootNamespace>Moba.MOBAsmart</RootNamespace>
         <UseMaui>true</UseMaui>
         <!-- Keep workload-implicit packages aligned with the central Microsoft.Maui.Controls release. -->
         <MauiVersion>10.0.120</MauiVersion>
