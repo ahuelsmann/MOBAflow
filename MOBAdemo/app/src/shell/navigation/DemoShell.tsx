@@ -3,6 +3,7 @@ import { enabledPages } from '../../config/enabledPages';
 import navigation from '../../examples/navigation.json';
 import type { NavigationEntry } from '../../examples/types';
 import { TrainControlFrame } from '../../pages/train-control/frame/TrainControlFrame';
+import { TrackPlanPage } from '../../pages/track-plan/TrackPlanPage';
 import { NavigationIcon } from './NavigationIcon';
 import './navigation.css';
 
@@ -21,6 +22,16 @@ for (const entry of navigation.entries) {
   const existing = groups.get(entry.category);
   if (existing) existing.push(entry);
   else groups.set(entry.category, [entry]);
+}
+
+function renderPageContent(page: string, title: string | null | undefined) {
+  if (page === landingPage && flagsByKey[page]) {
+    return <TrainControlFrame />;
+  }
+  if (page === 'trackplaneditor' && flagsByKey[page]) {
+    return <TrackPlanPage />;
+  }
+  return <h1>{title ?? 'MOBAdemo'}</h1>;
 }
 
 export function DemoShell() {
@@ -68,7 +79,7 @@ export function DemoShell() {
         </nav>
       </aside>
       <main className="app-shell">
-        {page === landingPage && flagsByKey[page] ? <TrainControlFrame /> : <h1>{title ?? 'MOBAdemo'}</h1>}
+        {renderPageContent(page, title)}
       </main>
     </div>
   );
