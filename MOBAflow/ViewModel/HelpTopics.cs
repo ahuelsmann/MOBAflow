@@ -20,10 +20,11 @@ internal static class HelpTopics
     [
         new("Getting Started", true, ["Welcome", "Installation", "Z21 Connection", "First Ride"]),
         new("Train Control", false, ["Speed Control", "Functions F0-F31", "Direction", "Emergency Stop"]),
-        new("Automation", false, ["Create Journey", "Define Stations", "Workflows", "Speech Announcements"]),
-        new("Signal Box", false, ["Track Plan Editor", "Signals", "Switches", "Feedback Points"]),
+        new("Automation", false, ["Create Journey", "Define Stations", "Timetable", "Workflows", "Event Manager", "Journey Map", "Speech Announcements"]),
+        new("Signal Box", false, ["Track Plan Editor", "Signals", "Switches", "Feedback Points", "ESP32 Display", "Matrix Images"]),
         new("Track Plan", false, ["Track Libraries", "Place Tracks", "Connections"]),
-        new("Configuration", false, ["Piper TTS Setup"]),
+        new("Monitoring", false, ["Monitor", "Recorder"]),
+        new("Configuration", false, ["Settings", "Feature Toggles", "REST API", "MOBAsmart", "Piper TTS Setup"]),
         new("Troubleshooting", false, ["No Connection", "Locomotive Not Responding", "Feedback Points Missing"])
     ];
 
@@ -234,7 +235,7 @@ internal static class HelpTopics
                 - Graphical display of your layout
                 - Place Piko A track pieces, signals, and switches
                 - Snap-to-connect, feedback-point (InPort) assignment, and validation
-                - AnyRail XML import and SVG export
+                - SVG export
 
                 Operation:
                 - Drag & drop track pieces from the toolbox
@@ -348,7 +349,132 @@ internal static class HelpTopics
                 Unconnected ends should be closed with buffers.
                 """,
 
+            // Automation & Displays (additional pages)
+            "Timetable" => """
+                Timetable (Preview):
+
+                Plan services and manage the current operating session:
+                - Define services with station stops
+                - Record arrivals and departures during operation
+
+                Note: Timetable is marked with a Preview badge in the shipped settings
+                and can be shown or hidden under Settings -> Feature Toggles.
+                """,
+
+            "Event Manager" => """
+                Event Manager (Preview):
+
+                Assign reusable workflows to the events of an active journey:
+                - Each event links an InPort feedback address and trigger count to a workflow
+                - Use + / - or drag workflows from the Values library onto a row or free area
+                - Keyboard shortcuts: Up/Down/Home/End navigate, Delete removes an event,
+                  Ctrl+Delete removes its workflow, Ctrl+D duplicates, Alt+Up/Down reorder
+                - Persisted InPort counters continue across restarts until reset in
+                  Journey options (Reset all InPort counters)
+
+                Note: Event Manager carries a Preview badge in the shipped settings.
+                """,
+
+            "Journey Map" => """
+                Journey Map:
+
+                Visualizes the route and current station progress of the active journey:
+                - Displays the ordered stations of the selected journey
+                - Active stops advance only through the "Change journey stop" workflow action
+                  without automatic wrap-around
+                """,
+
+            "ESP32 Display" => """
+                ESP32 Display:
+
+                Configure and test networked ESP32-S3 displays over UDP (protocol v1.0):
+                1. Configure the display IP address and UDP port under Settings -> ESP32 Display
+                2. Open ESP32 Display and click "Connect and negotiate"
+                3. Inspect device resolution, protocol capabilities, firmware/adapter identity,
+                   and health telemetry directly from the device
+                4. Send test patterns once capabilities are negotiated
+
+                Privacy note: MOBAflow stores only the IP address and UDP port;
+                it never stores Wi-Fi credentials or session IDs.
+                """,
+
+            "Matrix Images" => """
+                Matrix Images:
+
+                Create and edit 5x5 color LED matrix images stored with the project:
+                - Left-click a pixel to set its color; right-click to clear it
+                - Deleting an image asks for confirmation first (Cancel is default)
+                """,
+
+            // Monitoring
+            "Monitor" => """
+                Monitor:
+
+                Follow live Z21 traffic and runtime activity as it happens:
+                - Observe incoming feedback messages and command activity
+                - Structural project diagnostics are shown in the expandable Messages
+                  area at the bottom of the main window
+                """,
+
+            "Recorder" => """
+                Recorder:
+
+                Capture supported runtime events and operator commands on a timeline:
+                - Use Start, Pause, Resume, and Stop controls
+                - Add markers or notes during a recording session
+                - Export or import recordings as .mobarecording.json files
+
+                Replay safety:
+                - Disconnect the Z21 before using playback, single-step, or seek
+                - Replay runs against separate in-memory state: it never sends commands to hardware
+                  and never triggers audio, announcements, scripts, or display actions
+                """,
+
             // Configuration
+            "Settings" => """
+                Settings:
+
+                Configure application-wide preferences stored locally outside the solution JSON:
+                - Z21 connection timing and timeouts (per-project Z21 IP and port live on Solution)
+                - ESP32 display endpoint (IP address and UDP port)
+                - Speech synthesis engine (Windows Speech API or Piper TTS)
+                - REST API auto-start with MOBAflow and application behavior
+                - Layout reset, feedback point settings, health check, and feature toggles
+                """,
+
+            "Feature Toggles" => """
+                Feature Toggles:
+
+                Under Settings -> Feature Toggles, show or hide optional navigation pages:
+                - Changes take effect immediately without restarting MOBAflow
+                - Overview is always available and cannot be disabled
+                - Pages carrying a Preview badge (Timetable and Event Manager by default)
+                  are usable features that may still change
+                """,
+
+            "REST API" => """
+                REST API (MOBApi):
+
+                Local REST and SignalR bridge connecting MOBAflow and MOBAsmart on the LAN:
+                - Runs on port 5001 by default (optional Auto-start REST API with MOBAflow)
+                - Health and client sync state are visible on Overview and the status bar
+                - Publishes the loaded solution, runtime snapshots, remote drive/signal
+                  commands, journey progress, and locomotive photos
+
+                Security: Designed for a trusted private LAN without cloud accounts;
+                must not be exposed to the public internet.
+                """,
+
+            "MOBAsmart" => """
+                MOBAsmart:
+
+                Android companion app with four tabs (Counter, SignalBox, Engines, Control):
+                - Connects directly to the Roco Z21 for track power and mobile control
+                - Discovers MOBAflow via MOBApi on the local network to select a project,
+                  sync solution data and locomotive photos, operate signals/switches,
+                  and drive locomotives with speed slider and presets
+                """,
+
             "Piper TTS Setup" => """
                 Setting up Piper TTS:
 
