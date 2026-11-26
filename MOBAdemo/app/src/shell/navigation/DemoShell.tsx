@@ -44,7 +44,6 @@ export function DemoShell() {
                     <button
                       type="button"
                       className="demo-nav-entry"
-                      aria-label={entry.title}
                       aria-current={available && entry.key === page ? 'page' : undefined}
                       aria-disabled={!available || undefined}
                       aria-describedby={description || undefined}
@@ -54,7 +53,12 @@ export function DemoShell() {
                     >
                       <NavigationIcon entry={entry} />
                       {entry.isBold ? <strong className="demo-nav-label">{entry.title}</strong> : <span className="demo-nav-label">{entry.title}</span>}
-                      {entry.badge && <span className="demo-nav-badge" id={badgeId}>{entry.badge}</span>}
+                      {entry.badge && (
+                        <>
+                          {' '}
+                          <span className="demo-nav-badge" id={badgeId}>{entry.badge}</span>
+                        </>
+                      )}
                     </button>
                   </li>
                 );

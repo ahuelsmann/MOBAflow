@@ -21,7 +21,8 @@ describe('shell navigation', () => {
     expect(rows).toHaveLength(navigation.entries.length);
     navigation.entries.forEach((entry, index) => {
       const row = rows[index]!;
-      expect(row).toHaveAccessibleName(entry.title);
+      const expectedName = entry.badge ? `${entry.title} ${entry.badge}` : entry.title;
+      expect(row).toHaveAccessibleName(expectedName);
       expect(row.closest('ul')).toHaveAccessibleName(entry.category);
       expect(row.querySelector('strong')?.textContent ?? null).toBe(entry.isBold ? entry.title : null);
       if (entry.badge) {
