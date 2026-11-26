@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ShellBars } from './shell/bars/ShellBars';
 import { ShellLayout } from './shell/layout/ShellLayout';
 import { DemoShell } from './shell/navigation/DemoShell';
 import { useDemoTheme } from './shell/theme/useDemoTheme';
@@ -8,22 +9,20 @@ export interface AppProps {
   load: () => Promise<void>;
 }
 
-type LoadState = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; message: string };
+type LoadState = 'loading' | 'ready' | 'error';
 
 export function App({ load }: Readonly<AppProps>) {
-  const [state, setState] = useState<LoadState>({ kind: 'loading' });
+  const [state, setState] = useState<LoadState>('loading');
   const { theme, toggleTheme } = useDemoTheme();
 
   useEffect(() => {
     let cancelled = false;
     load().then(
       () => {
-        if (!cancelled) setState({ kind: 'ready' });
+        if (!cancelled) setState('ready');
       },
-      (error: unknown) => {
-        if (!cancelled) {
-          setState({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
-        }
+      () => {
+        if (!cancelled) setState('error');
       },
     );
     return () => {
@@ -31,26 +30,17 @@ export function App({ load }: Readonly<AppProps>) {
     };
   }, [load]);
 
-  if (state.kind === 'loading') {
-    return (
-      <output className="app-message">
-        Loading MOBAdemo...
-      </output>
-    );
-  }
-
-  if (state.kind === 'error') {
-    return (
-      <div role="alert" className="app-message app-message-error">
-        <p>The demo data could not be loaded. Please reload the page.</p>
-        <p>{state.message}</p>
-      </div>
-    );
-  }
-
   return (
     <ShellLayout>
-      <DemoShell lightTheme={theme === 'light'} onToggleTheme={toggleTheme} />
+      <ShellBars lightTheme={theme === 'light'} onToggleTheme={toggleTheme} loadFailed={state === 'error'}>
+        {state === 'loading' && <output className="app-message">Loading MOBAdemo...</output>}
+        {state === 'error' && (
+          <div role="alert" className="app-message app-message-error">
+            <p>The demo data could not be loaded. Please reload the page.</p>
+          </div>
+        )}
+        {state === 'ready' && <DemoShell />}
+      </ShellBars>
     </ShellLayout>
   );
 }

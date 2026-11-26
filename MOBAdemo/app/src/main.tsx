@@ -4,8 +4,10 @@ import { App } from './App';
 import './tokens/dark.css';
 import './tokens/base.css';
 
-// No example data files exist yet (slice 6 adds them); the loader resolves at once.
-const loadData = async (): Promise<void> => {};
+const loadData = async (): Promise<void> => {
+  const { loadExamples } = await import('./examples/loader');
+  await loadExamples();
+};
 
 const container = document.getElementById('root');
 if (container === null) {

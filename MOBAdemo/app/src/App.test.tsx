@@ -31,7 +31,7 @@ describe('App start-up states', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('could not be loaded');
-    expect(alert).toHaveTextContent('locomotives.json: 404');
+    expect(alert).not.toHaveTextContent('locomotives.json: 404');
     expect(screen.queryByRole('main')).not.toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });

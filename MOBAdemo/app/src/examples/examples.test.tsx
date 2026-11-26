@@ -300,6 +300,7 @@ describe('example data loader (FR-052 failed-load state)', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('The demo data could not be loaded');
-    expect(alert).toHaveTextContent('workflow.json');
+    expect(alert).not.toHaveTextContent('workflow.json');
+    expect(screen.getByRole('button', { name: 'Warnings 1' })).toBeVisible();
   });
 });
