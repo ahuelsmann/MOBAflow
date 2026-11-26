@@ -1,0 +1,58 @@
+.demo-shell-viewport {
+  overflow-x: auto;
+}
+
+.demo-desktop-layout {
+  min-inline-size: 1024px;
+}
+
+[data-shell-mode]:not([data-shell-mode='full']) .demo-nav-shell {
+  grid-template-columns: 5rem minmax(0, 1fr);
+}
+
+[data-shell-mode]:not([data-shell-mode='full']) .demo-nav-entry {
+  justify-content: center;
+  padding-inline: 0.25rem;
+}
+
+[data-shell-mode]:not([data-shell-mode='full']) .demo-nav-entry > :is(.demo-nav-label, .demo-nav-badge) {
+  block-size: 1px;
+  clip-path: inset(50%);
+  inline-size: 1px;
+  margin: -1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+}
+
+.demo-narrow-notice {
+  align-items: center;
+  background: var(--background-card);
+  border: 1px solid var(--stroke-default);
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+  margin: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+}
+
+.demo-narrow-notice p {
+  margin: 0;
+}
+
+.demo-narrow-notice button {
+  background: var(--background-default);
+  border: 1px solid var(--stroke-default);
+  border-radius: 0.25rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.375rem 0.75rem;
+}
+
+.demo-narrow-notice button:focus-visible {
+  outline: 2px solid var(--accent-text-default);
+}

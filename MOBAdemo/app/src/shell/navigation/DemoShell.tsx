@@ -55,12 +55,12 @@ export function DemoShell({ lightTheme, onToggleTheme }: Readonly<DemoShellProps
                       aria-current={available && entry.key === page ? 'page' : undefined}
                       aria-disabled={!available || undefined}
                       aria-describedby={description || undefined}
-                      title={available ? undefined : disabledHint}
+                      title={available ? entry.title : entry.title + '\n' + disabledHint}
                       tabIndex={available ? undefined : -1}
                       onClick={available ? () => setPage(entry.key) : undefined}
                     >
                       <NavigationIcon entry={entry} />
-                      {entry.isBold ? <strong>{entry.title}</strong> : <span>{entry.title}</span>}
+                      {entry.isBold ? <strong className="demo-nav-label">{entry.title}</strong> : <span className="demo-nav-label">{entry.title}</span>}
                       {entry.badge && <span className="demo-nav-badge" id={badgeId}>{entry.badge}</span>}
                     </button>
                   </li>
