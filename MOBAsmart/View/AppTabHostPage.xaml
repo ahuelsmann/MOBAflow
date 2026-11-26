@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <ContentPage
-    x:Class="Moba.MAUI.View.AppTabHostPage"
+    x:Class="Moba.MOBAsmart.View.AppTabHostPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:controls="clr-namespace:Moba.MAUI.Controls"
+    xmlns:controls="clr-namespace:Moba.MOBAsmart.Controls"
     xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
     Shell.NavBarIsVisible="False"
     Title="MOBAsmart"

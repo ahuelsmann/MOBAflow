@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView
-    x:Class="Moba.MAUI.CounterPage"
+    x:Class="Moba.MOBAsmart.CounterPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Moba.SharedUI.Mobile;assembly=SharedUI"
-    xmlns:controls="clr-namespace:Moba.MAUI.Controls"
+    xmlns:controls="clr-namespace:Moba.MOBAsmart.Controls"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     x:DataType="local:MauiViewModel">
 
