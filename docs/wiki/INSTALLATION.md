@@ -157,7 +157,7 @@ changes need structural checks, not a product build; see [AGENTS.md](../../AGENT
 # Portable tests: limit both the restore graph and the test target.
 dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
 # Windows tests (with the required desktop toolchain):
-dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false
+dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0
 ```
 
 Windows and Android projects require their platform workloads. Cross-platform

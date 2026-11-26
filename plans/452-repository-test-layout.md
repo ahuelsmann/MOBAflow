@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/452
 **Spec Kit**: Not applicable - repository and project layout without product behavior or persisted-format change; reclassify before implementation if a renamed namespace is part of a persisted or wire format
-**Status**: Slices 1 and 2 delivered; Slice 3A in progress (`tools/FadrEncodingAnalysis/` extracted and pre-split test baseline recorded); remaining Slice 3B+ test-project split and Slices 4–6 follow
+**Status**: Slices 1, 2, and 3A delivered; Slice 3B in progress (`IncludeMobaSmartTests` switch, `Test/MOBAsmart/`, and `maui` mutation lane removed); remaining Slice 3C+ test-project split and Slices 4–6 follow
 
 ## Purpose and scope
 
@@ -42,9 +42,9 @@ name `Test`), the architecture tests under `Test/Architecture`, and the reposito
 - **Test split (proposal, confirmed in slice 3).** Three projects: portable tests (`net10.0`: Domain, Contracts,
   Common, Backend, SharedUI, MOBApi unit tests, architecture tests), Windows desktop tests (`net10.0-windows`:
   MOBAflow, WinUI, Speech providers, Skia rendering) and integration tests (owned MOBApi process, live hub). Shared
-  helpers move to one test-support library that all three reference. The `IncludeMobaSmartTests` switch and
-  `Test/MOBAsmart/MobiLanHttpClientFactoryTests.cs`, which describe a graph that cannot build (noted at RF-25
-  closure), are removed here.
+  helpers move to one test-support library that all three reference. The `IncludeMobaSmartTests` switch,
+  `Test/MOBAsmart/MobiLanHttpClientFactoryTests.cs`, and the planned `maui` entry in `MutationTest/mutation-lanes.json`,
+  which described a graph that cannot build (noted at RF-25 closure), are removed in Slice 3B.
 - **No test is lost.** Slice 3 records the discovered and executed test counts per target before the split and
   proves the same totals afterwards; the result guard `scripts/Test-TestRunResults.ps1` keeps its minimum counts.
   Pre-split baseline recorded on `main` `6e3fe309` (2026-11-26, `-c Release -p:IncludeMobaSmartTests=false`):
