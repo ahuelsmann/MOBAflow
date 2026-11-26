@@ -2,8 +2,9 @@ import { useId, useState } from 'react';
 import { enabledPages } from '../../config/enabledPages';
 import navigation from '../../examples/navigation.json';
 import type { NavigationEntry } from '../../examples/types';
-import { TrainControlFrame } from '../../pages/train-control/frame/TrainControlFrame';
+import { SignalBoxPage } from '../../pages/signal-box/SignalBoxPage';
 import { TrackPlanPage } from '../../pages/track-plan/TrackPlanPage';
+import { TrainControlFrame } from '../../pages/train-control/frame/TrainControlFrame';
 import { NavigationIcon } from './NavigationIcon';
 import './navigation.css';
 
@@ -30,6 +31,9 @@ function renderPageContent(page: string, title: string | null | undefined) {
   }
   if (page === 'trackplaneditor' && flagsByKey[page]) {
     return <TrackPlanPage />;
+  }
+  if (page === 'signalbox' && flagsByKey[page]) {
+    return <SignalBoxPage />;
   }
   return <h1>{title ?? 'MOBAdemo'}</h1>;
 }
