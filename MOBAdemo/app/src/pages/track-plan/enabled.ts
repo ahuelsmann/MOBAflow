@@ -1,1 +1,1 @@
-export const trackPlanEnabled: boolean = false;
+export const trackPlanEnabled: boolean = true;
