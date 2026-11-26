@@ -1,11 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { loadExamples } from './examples/loader';
 import './tokens/dark.css';
 import './tokens/base.css';
 
 const loadData = async (): Promise<void> => {
-  const { loadExamples } = await import('./examples/loader');
   await loadExamples();
 };
 
