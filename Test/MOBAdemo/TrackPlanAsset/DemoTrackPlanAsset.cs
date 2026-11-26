@@ -2,6 +2,7 @@
 namespace Moba.Test.MOBAdemo.TrackPlanAsset;
 
 using System.Text.Json;
+using System.Xml.Linq;
 
 using Moba.Domain;
 using Moba.Test.Helpers;
@@ -20,6 +21,37 @@ internal static class DemoTrackPlanAsset
         var document = TrackPlanEditorDocument.FromDomainDocument(sample);
         var (placements, _) = document.ToEditableTrackPlanData(TrackPlanTestGeometry.Catalog);
         var scene = TrackPlanRenderSceneBuilder.Build(TrackPlanTestGeometry.PikoA, placements);
-        return new PlacedTrackPlanSvgRenderer().Render(scene).ReplaceLineEndings("\n");
+        return ApplyDemoPalette(new PlacedTrackPlanSvgRenderer().Render(scene));
+    }
+
+    private static string ApplyDemoPalette(string svg)
+    {
+        var root = XElement.Parse(svg, LoadOptions.PreserveWhitespace);
+        var ns = root.Name.Namespace;
+        var viewBox = root.Attribute("viewBox")?.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                      ?? throw new InvalidDataException("The rendered track plan has no viewBox.");
+
+        root.AddFirst("\n  ", new XElement(ns + "rect",
+            new XAttribute("class", "track-plan-surface"),
+            new XAttribute("x", viewBox[0]),
+            new XAttribute("y", viewBox[1]),
+            new XAttribute("width", viewBox[2]),
+            new XAttribute("height", viewBox[3]),
+            new XAttribute("fill", "#242424")));
+
+        foreach (var path in root.Elements(ns + "path"))
+        {
+            path.SetAttributeValue("class", "track-plan-rail");
+            path.SetAttributeValue("stroke", "#dedede");
+            path.SetAttributeValue("stroke-opacity", null);
+        }
+
+        foreach (var label in root.Elements(ns + "text"))
+        {
+            label.SetAttributeValue("class", "track-plan-label");
+            label.SetAttributeValue("fill", "#f2f2f2");
+        }
+
+        return root.ToString(SaveOptions.DisableFormatting).ReplaceLineEndings("\n") + "\n";
     }
 }

@@ -1,26 +1,27 @@
 <svg width="894.66" height="894.66" viewBox="381.20 114.74 894.66 894.66" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 721.00,218.50 A 360.00,360.00 0 0,1 907.19,210.77" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="721.00" y="206.50" font-size="12" fill="#333333">R1</text>
-  <path d="M 907.19,210.77 A 360.00,360.00 0 0,1 1072.30,297.16" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="907.19" y="198.77" font-size="12" fill="#333333">R1</text>
-  <path d="M 1072.30,297.16 A 360.00,360.00 0 0,1 1172.09,454.54" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="1072.30" y="285.16" font-size="12" fill="#333333">R1</text>
-  <path d="M 1172.09,454.54 A 360.00,360.00 0 0,1 1179.83,640.73" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="1172.09" y="442.54" font-size="12" fill="#333333">R1</text>
-  <path d="M 1179.83,640.73 A 360.00,360.00 0 0,1 1093.43,805.84" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="1179.83" y="628.73" font-size="12" fill="#333333">R1</text>
-  <path d="M 1093.43,805.84 A 360.00,360.00 0 0,1 936.05,905.63" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="1093.43" y="793.84" font-size="12" fill="#333333">R1</text>
-  <path d="M 563.62,318.29 A 360.00,360.00 0 0,1 721.00,218.50" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="563.62" y="306.29" font-size="12" fill="#333333">R1</text>
-  <path d="M 477.23,483.40 A 360.00,360.00 0 0,1 563.62,318.29" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="477.23" y="471.40" font-size="12" fill="#333333">R1</text>
-  <path d="M 484.96,669.59 A 360.00,360.00 0 0,1 477.23,483.40" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="484.96" y="657.59" font-size="12" fill="#333333">R1</text>
-  <path d="M 584.75,826.97 A 360.00,360.00 0 0,1 484.96,669.59" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="584.75" y="814.97" font-size="12" fill="#333333">R1</text>
-  <path d="M 749.86,913.37 A 360.00,360.00 0 0,1 584.75,826.97" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="749.86" y="901.37" font-size="12" fill="#333333">R1</text>
-  <path d="M 936.05,905.63 A 360.00,360.00 0 0,1 749.86,913.37" stroke="#333333" stroke-width="4" stroke-opacity="0.80" fill="none" />
-  <text x="936.05" y="893.63" font-size="12" fill="#333333">R1</text>
+  <rect class="track-plan-surface" x="381.20" y="114.74" width="894.66" height="894.66" fill="#242424" />
+  <path d="M 721.00,218.50 A 360.00,360.00 0 0,1 907.19,210.77" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="721.00" y="206.50" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 907.19,210.77 A 360.00,360.00 0 0,1 1072.30,297.16" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="907.19" y="198.77" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 1072.30,297.16 A 360.00,360.00 0 0,1 1172.09,454.54" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="1072.30" y="285.16" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 1172.09,454.54 A 360.00,360.00 0 0,1 1179.83,640.73" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="1172.09" y="442.54" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 1179.83,640.73 A 360.00,360.00 0 0,1 1093.43,805.84" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="1179.83" y="628.73" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 1093.43,805.84 A 360.00,360.00 0 0,1 936.05,905.63" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="1093.43" y="793.84" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 563.62,318.29 A 360.00,360.00 0 0,1 721.00,218.50" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="563.62" y="306.29" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 477.23,483.40 A 360.00,360.00 0 0,1 563.62,318.29" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="477.23" y="471.40" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 484.96,669.59 A 360.00,360.00 0 0,1 477.23,483.40" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="484.96" y="657.59" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 584.75,826.97 A 360.00,360.00 0 0,1 484.96,669.59" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="584.75" y="814.97" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 749.86,913.37 A 360.00,360.00 0 0,1 584.75,826.97" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="749.86" y="901.37" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
+  <path d="M 936.05,905.63 A 360.00,360.00 0 0,1 749.86,913.37" stroke="#dedede" stroke-width="4" fill="none" class="track-plan-rail" />
+  <text x="936.05" y="893.63" font-size="12" fill="#f2f2f2" class="track-plan-label">R1</text>
 </svg>
