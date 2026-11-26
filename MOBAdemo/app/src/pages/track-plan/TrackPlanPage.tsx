@@ -3,61 +3,35 @@ import texts from '../../examples/texts.json';
 import { InertButton } from '../../shell/inert/InertButton';
 import './track-plan.css';
 
-interface CatalogueItem {
-  code: string;
-  label: string;
+const CATALOGUE_GROUPS: ReadonlyArray<readonly [category: string, items: readonly string[]]> = [
+  ['Straight', ['G62 (61.88 mm)', 'G107 (107.32 mm)', 'G115 (115.46 mm)', 'G119 (119.54 mm)', 'G231 (230.93 mm)', 'G239 (239.07 mm)']],
+  ['Curve', ['R1 (360 mm / 30°)', 'R2 (422 mm / 30°)', 'R3 (484 mm / 30°)', 'R4 (546 mm / 30°)', 'R9 (908 mm / 15°)', 'R175 (360 mm / 7.5°)', 'R275 (422 mm / 7.5°)']],
+  ['Switch', ['WR Right Turnout 15°', 'WL Left Turnout 15°', 'WY Y-Switch 30°', 'W3 Three-Way Turnout', 'BWL Left Curved Turnout', 'BWR Right Curved Turnout', 'BWLR3 Left R3→R4', 'BWRR3 Right R3→R4', 'DKW Double Slip Switch']],
+  ['Crossing', ['K15 Crossing 15°', 'K30 Crossing 30°']],
+];
+
+interface ToolbarItem {
+  text: string;
+  label?: string;
+  pressed?: boolean;
 }
 
-interface CatalogueGroup {
-  category: string;
-  items: readonly CatalogueItem[];
-}
-
-const CATALOGUE_GROUPS: readonly CatalogueGroup[] = [
-  {
-    category: 'Straight',
-    items: [
-      { code: 'G62', label: 'G62 (61.88 mm)' },
-      { code: 'G107', label: 'G107 (107.32 mm)' },
-      { code: 'G115', label: 'G115 (115.46 mm)' },
-      { code: 'G119', label: 'G119 (119.54 mm)' },
-      { code: 'G231', label: 'G231 (230.93 mm)' },
-      { code: 'G239', label: 'G239 (239.07 mm)' },
-    ],
-  },
-  {
-    category: 'Curve',
-    items: [
-      { code: 'R1', label: 'R1 (360 mm / 30°)' },
-      { code: 'R2', label: 'R2 (422 mm / 30°)' },
-      { code: 'R3', label: 'R3 (484 mm / 30°)' },
-      { code: 'R4', label: 'R4 (546 mm / 30°)' },
-      { code: 'R9', label: 'R9 (908 mm / 15°)' },
-      { code: 'R175', label: 'R1/75 (360 mm / 7.5°)' },
-      { code: 'R275', label: 'R2/75 (422 mm / 7.5°)' },
-    ],
-  },
-  {
-    category: 'Switch',
-    items: [
-      { code: 'WR', label: 'WR Right Turnout 15°' },
-      { code: 'WL', label: 'WL Left Turnout 15°' },
-      { code: 'WY', label: 'WY Y-Switch 30°' },
-      { code: 'W3', label: 'W3 Three-Way Turnout' },
-      { code: 'BWL', label: 'BWL Left Curved Turnout' },
-      { code: 'BWR', label: 'BWR Right Curved Turnout' },
-      { code: 'BWLR3', label: 'BWLR3 Left R3→R4' },
-      { code: 'BWRR3', label: 'BWRR3 Right R3→R4' },
-      { code: 'DKW', label: 'DKW Double Slip Switch' },
-    ],
-  },
-  {
-    category: 'Crossing',
-    items: [
-      { code: 'K15', label: 'K15 Crossing 15°' },
-      { code: 'K30', label: 'K30 Crossing 30°' },
-    ],
-  },
+const TOOLBAR_ITEMS: readonly ToolbarItem[] = [
+  { text: 'Undo' },
+  { text: 'Redo' },
+  { text: 'Export' },
+  { text: 'Validate' },
+  { text: 'Fit' },
+  { text: '100%' },
+  { text: 'Context' },
+  { text: 'Snap', pressed: true },
+  { text: 'Disconnect' },
+  { text: 'Delete' },
+  { text: 'Grid', pressed: false },
+  { text: 'Validation Overlay', pressed: true },
+  { text: 'Track Labels', pressed: true },
+  { text: 'Rotate ←', label: 'Rotate left' },
+  { text: 'Rotate →', label: 'Rotate right' },
 ];
 
 const IGNORED_SLIDER_KEYS = new Set([
@@ -160,21 +134,11 @@ export function TrackPlanPage() {
       <div className="track-plan-header">
         <h1>Track Plan</h1>
         <div className="track-plan-toolbar" role="toolbar" aria-label="Track Plan toolbar">
-          <InertButton className="track-plan-tool">Undo</InertButton>
-          <InertButton className="track-plan-tool">Redo</InertButton>
-          <InertButton className="track-plan-tool">Export</InertButton>
-          <InertButton className="track-plan-tool">Validate</InertButton>
-          <InertButton className="track-plan-tool">Fit</InertButton>
-          <InertButton className="track-plan-tool">100%</InertButton>
-          <InertButton className="track-plan-tool">Context</InertButton>
-          <InertButton className="track-plan-tool" pressed={true}>Snap</InertButton>
-          <InertButton className="track-plan-tool">Disconnect</InertButton>
-          <InertButton className="track-plan-tool">Delete</InertButton>
-          <InertButton className="track-plan-tool" pressed={false}>Grid</InertButton>
-          <InertButton className="track-plan-tool" pressed={true}>Validation Overlay</InertButton>
-          <InertButton className="track-plan-tool" pressed={true}>Track Labels</InertButton>
-          <InertButton className="track-plan-tool" label="Rotate left">Rotate ←</InertButton>
-          <InertButton className="track-plan-tool" label="Rotate right">Rotate →</InertButton>
+          {TOOLBAR_ITEMS.map((tool) => (
+            <InertButton key={tool.text} className="track-plan-tool" pressed={tool.pressed} label={tool.label}>
+              {tool.text}
+            </InertButton>
+          ))}
         </div>
       </div>
 
@@ -182,13 +146,13 @@ export function TrackPlanPage() {
         <section className="track-plan-panel track-plan-catalogue" aria-label="Piko A-Track catalogue">
           <h2>Piko A-Track</h2>
           <div className="track-plan-catalogue-groups">
-            {CATALOGUE_GROUPS.map((group) => (
-              <div key={group.category} className="track-plan-catalogue-group">
-                <h3>{group.category}</h3>
+            {CATALOGUE_GROUPS.map(([category, items]) => (
+              <div key={category} className="track-plan-catalogue-group">
+                <h3>{category}</h3>
                 <ul className="track-plan-catalogue-list">
-                  {group.items.map((item) => (
-                    <li key={item.code}>
-                      <InertButton className="track-plan-catalogue-item">{item.label}</InertButton>
+                  {items.map((label) => (
+                    <li key={label}>
+                      <InertButton className="track-plan-catalogue-item">{label}</InertButton>
                     </li>
                   ))}
                 </ul>
