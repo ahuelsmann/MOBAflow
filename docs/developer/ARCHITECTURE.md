@@ -54,7 +54,7 @@ files for the actual direct references, including conditional entries.
 | `TrackPlan.Renderer` | `Moba.TrackPlan.Renderer` | `TrackLibrary.Base` |
 | `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base` |
 | `TrackPlan.Editor` | `Moba.TrackPlan.Editor` | `Domain`, `TrackLibrary.Base`, `TrackPlan.Renderer` |
-| `MOBAdisplay` | `Moba.Display` | `Domain` |
+| `MOBAdisplay` | `Moba.MOBAdisplay` | `Domain` |
 | `MOBApi` | `Moba.MOBApi` | `Common`, `Contracts` |
 | `MOBAdemo` | `Moba.Demo` | none |
 | `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackPlan.Editor` |

@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Display.Transport;
+namespace Moba.MOBAdisplay.Transport;
 
 using System.Net;
 using System.Net.Sockets;

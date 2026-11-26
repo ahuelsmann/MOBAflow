@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Display.Protocol;
+namespace Moba.MOBAdisplay.Protocol;
 
 /// <summary>
 /// Contains the caller-controlled fields in a display protocol envelope.

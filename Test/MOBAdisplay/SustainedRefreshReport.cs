@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.MOBAdisplay;
 
-using Moba.Display.Protocol;
+using Moba.MOBAdisplay.Protocol;
 
 using System.Globalization;
 using System.Text;
