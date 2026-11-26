@@ -5,6 +5,7 @@ import type { NavigationEntry } from '../../examples/types';
 import { SignalBoxPage } from '../../pages/signal-box/SignalBoxPage';
 import { TrackPlanPage } from '../../pages/track-plan/TrackPlanPage';
 import { TrainControlFrame } from '../../pages/train-control/frame/TrainControlFrame';
+import { WorkflowsPage } from '../../pages/workflows/WorkflowsPage';
 import { NavigationIcon } from './NavigationIcon';
 import './navigation.css';
 
@@ -34,6 +35,9 @@ function renderPageContent(page: string, title: string | null | undefined) {
   }
   if (page === 'signalbox' && flagsByKey[page]) {
     return <SignalBoxPage />;
+  }
+  if (page === 'workflows' && flagsByKey[page]) {
+    return <WorkflowsPage />;
   }
   return <h1>{title ?? 'MOBAdemo'}</h1>;
 }
