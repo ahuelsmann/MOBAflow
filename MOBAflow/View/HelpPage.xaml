@@ -28,7 +28,7 @@
             <controls:CollapsibleColumnCollection.PanelContent>
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="16">
-                        <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Dokumentation" />
+                        <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Documentation" />
 
                         <TreeView
                             x:Name="NavigationTreeView"
@@ -60,7 +60,7 @@
                             FontSize="32"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                            Text="Willkommen" />
+                            Text="Welcome" />
                         <RichTextBlock
                             x:Name="ContentRichTextBlock"
                             FontSize="15"
