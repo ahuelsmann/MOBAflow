@@ -2,6 +2,7 @@
 namespace Moba.Test.MOBAdemo.Build;
 
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Safety checks of <c>MOBAdemo/build.ps1</c> (issue #430 slice 3): the script never deletes a repository folder
@@ -52,31 +53,112 @@ internal sealed class BuildScriptSafetyTests
     {
         await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
 
-        // The victim is a throw-away folder inside the repository, so a missing guard cannot destroy real files.
-        var victim = Path.Combine(
-            BuildScript.RepositoryRoot, "MOBAdemo", "Host", "link-guard-victim-" + Guid.NewGuid().ToString("N"));
+        // Use a temporary repository copy so the guard is exercised without mutating the real repository tree.
+        var fakeRepo = Path.Combine(_root, "repo-link-into-" + Guid.NewGuid().ToString("N"));
+        var demoDir = Path.Combine(fakeRepo, "MOBAdemo");
+        var victim = Path.Combine(demoDir, "Host", "link-guard-victim");
         Directory.CreateDirectory(victim);
+        Directory.CreateDirectory(Path.Combine(demoDir, "app"));
+        var copiedScript = Path.Combine(demoDir, "build.ps1");
+        File.Copy(BuildScript.ScriptPath, copiedScript);
+
         var sentinel = Path.Combine(victim, "sentinel.txt");
         await File.WriteAllTextAsync(sentinel, "keep").ConfigureAwait(false);
-        try
+        var link = Path.Combine(_root, "link");
+        await BuildScript.CreateDirectoryLinkOrIgnoreAsync(link, victim).ConfigureAwait(false);
+        var output = subFolder.Length == 0 ? link : Path.Combine(link, subFolder);
+
+        var result = await BuildScript.RunProcessAsync(
+            "pwsh",
+            ["-NoProfile", "-NonInteractive", "-File", copiedScript, "-OutputPath", output],
+            TimeSpan.FromMinutes(1),
+            fakeRepo).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
         {
-            var link = Path.Combine(_root, "link");
-            await BuildScript.CreateDirectoryLinkOrIgnoreAsync(link, victim).ConfigureAwait(false);
-            var output = subFolder.Length == 0 ? link : Path.Combine(link, subFolder);
+            Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
+            Assert.That(result.Output, Does.Contain("Refusing"));
+            Assert.That(result.Output, Does.Contain(link));
+            Assert.That(File.Exists(sentinel), Is.True, "The script deleted a repository folder through a link.");
+        }
+    }
 
-            var result = await BuildScript.TryRunAsync(output).ConfigureAwait(false);
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task Output_WhenRepositorySitsBehindLink_RefusalNamesTheLinkFound(bool passRealDefaultOutput)
+    {
+        await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
 
-            using (Assert.EnterMultipleScope())
+        var realRepo = Path.Combine(_root, "real-repo");
+        var realHostDir = Path.Combine(realRepo, "MOBAdemo", "Host");
+        Directory.CreateDirectory(Path.Combine(realHostDir, "wwwroot"));
+        Directory.CreateDirectory(Path.Combine(realRepo, "MOBAdemo", "app"));
+        File.Copy(BuildScript.ScriptPath, Path.Combine(realRepo, "MOBAdemo", "build.ps1"));
+
+        var repoLink = Path.Combine(_root, "linked-repo");
+        await BuildScript.CreateDirectoryLinkOrIgnoreAsync(repoLink, realRepo).ConfigureAwait(false);
+        var linkedScript = Path.Combine(repoLink, "MOBAdemo", "build.ps1");
+
+        var arguments = passRealDefaultOutput
+            ? new[] { "-NoProfile", "-NonInteractive", "-File", linkedScript, "-OutputPath", Path.Combine(realHostDir, "wwwroot-build") }
+            : new[] { "-NoProfile", "-NonInteractive", "-File", linkedScript };
+
+        var result = await BuildScript.RunProcessAsync(
+            "pwsh",
+            arguments,
+            TimeSpan.FromMinutes(1),
+            repoLink).ConfigureAwait(false);
+
+        var refusalMessage = ExtractRefusalMessage(result.Output);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
+            Assert.That(refusalMessage, Is.Not.Empty, result.Output);
+            Assert.That(refusalMessage, Does.Contain(repoLink));
+        }
+    }
+
+    private static string ExtractRefusalMessage(string output)
+    {
+        var plain = Regex.Replace(
+            output,
+            @"\x1B\[[0-9;]*[mK]",
+            string.Empty,
+            RegexOptions.None,
+            TimeSpan.FromSeconds(5));
+        var lines = plain.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        var messageLines = new List<string>();
+        var collecting = false;
+        foreach (var line in lines)
+        {
+            var pipeIndex = line.IndexOf('|', StringComparison.Ordinal);
+            if (pipeIndex < 0)
             {
-                Assert.That(result.ExitCode, Is.Not.Zero, result.Output);
-                Assert.That(result.Output, Does.Contain("Refusing"));
-                Assert.That(File.Exists(sentinel), Is.True, "The script deleted a repository folder through a link.");
+                if (collecting)
+                {
+                    break;
+                }
+
+                continue;
+            }
+
+            var content = line[(pipeIndex + 1)..].Trim();
+            if (!collecting)
+            {
+                if (content.StartsWith("Refusing to use", StringComparison.Ordinal))
+                {
+                    collecting = true;
+                    messageLines.Add(content);
+                }
+            }
+            else
+            {
+                messageLines.Add(content);
             }
         }
-        finally
-        {
-            Directory.Delete(victim, recursive: true);
-        }
+
+        return string.Join(' ', messageLines);
     }
 
     [TestCase("")]
@@ -305,6 +387,11 @@ internal sealed class BuildScriptSafetyTests
         await BuildScript.RequireToolchainAsync().ConfigureAwait(false);
         var parent = Path.Combine(_root, "parent");
         var output = Path.Combine(parent, "web");
+        var appCopy = Path.Combine(_root, "app-copy");
+        BuildScript.CopyDirectory(
+            Path.Combine(BuildScript.RepositoryRoot, "MOBAdemo", "app"),
+            appCopy,
+            relative => relative.Split(Path.DirectorySeparatorChar)[0] is "node_modules" or "dist");
         Directory.CreateDirectory(Path.Combine(output, "assets"));
         await File.WriteAllTextAsync(Path.Combine(output, "index.html"), "previous").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Combine(output, "assets", "previous-abc123.js"), "previous asset")
@@ -313,7 +400,7 @@ internal sealed class BuildScriptSafetyTests
             .ConfigureAwait(false);
         var before = Snapshot(output);
 
-        var result = await BuildScript.TryRunAsync(output, "-FailBeforePublish").ConfigureAwait(false);
+        var result = await BuildScript.TryRunAsync(output, "-AppPath", appCopy, "-FailBeforePublish").ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
