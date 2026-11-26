@@ -8,11 +8,28 @@ interface InertButtonProps {
   className?: string;
   hint?: string;
   pressed?: boolean;
+  expanded?: boolean;
 }
 
-export function InertButton({ children, label, className, hint = texts.inertHint, pressed }: Readonly<InertButtonProps>) {
+interface InertNumberBoxProps {
+  label: string;
+  className?: string;
+  value: number;
+}
+
+export function InertButton(props: Readonly<InertButtonProps>) {
+  return <InertControl {...props} />;
+}
+
+export function InertNumberBox({ label, className, value }: Readonly<InertNumberBoxProps>) {
+  return <InertControl label={label} className={className} numberValue={value} />;
+}
+
+function InertControl({
+  children, label, className, hint = texts.inertHint, pressed, expanded, numberValue,
+}: Readonly<Omit<InertButtonProps, 'children'> & { children?: ReactNode; numberValue?: number }>) {
   const hintId = useId();
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement>(null);
   const hintRef = useRef<HTMLSpanElement>(null);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -33,11 +50,11 @@ export function InertButton({ children, label, className, hint = texts.inertHint
 
   useLayoutEffect(() => {
     if (!visible) return;
-    const button = buttonRef.current;
+    const button = triggerRef.current;
     const tooltip = hintRef.current;
     if (!button || !tooltip) return;
 
-    function positionHint(trigger: HTMLButtonElement, box: HTMLSpanElement) {
+    function positionHint(trigger: HTMLElement, box: HTMLSpanElement) {
       const gap = 8;
       const bounds = trigger.getBoundingClientRect();
       const width = document.documentElement.clientWidth || window.innerWidth;
@@ -59,26 +76,30 @@ export function InertButton({ children, label, className, hint = texts.inertHint
     };
   }, [hint, visible]);
 
+  const triggerProps = {
+    ref: (node: HTMLElement | null) => { triggerRef.current = node; },
+    className,
+    'aria-label': label,
+    'aria-disabled': true,
+    'aria-describedby': hintId,
+    onFocus: () => { setFocused(true); setDismissed(false); },
+    onBlur: () => { setFocused(false); setTapped(false); },
+    onClick: () => { setDismissed(tapped); setTapped(!tapped); },
+  };
+
   return (
     <span
       className="demo-inert-control"
       onPointerEnter={() => { setHovered(true); setDismissed(false); }}
       onPointerLeave={() => setHovered(false)}
     >
-      <button
-        ref={buttonRef}
-        type="button"
-        className={className}
-        aria-label={label}
-        aria-disabled="true"
-        aria-pressed={pressed}
-        aria-describedby={hintId}
-        onFocus={() => { setFocused(true); setDismissed(false); }}
-        onBlur={() => { setFocused(false); setTapped(false); }}
-        onClick={() => { setDismissed(tapped); setTapped(!tapped); }}
-      >
-        {children}
-      </button>
+      {numberValue === undefined ? (
+        <button {...triggerProps} type="button" aria-pressed={pressed} aria-expanded={expanded}>
+          {children}
+        </button>
+      ) : (
+        <input {...triggerProps} type="number" readOnly value={numberValue} />
+      )}
       <span ref={hintRef} id={hintId} className="demo-inert-hint" role="tooltip" hidden={!visible}>
         {hint}
       </span>

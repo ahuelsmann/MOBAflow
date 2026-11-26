@@ -22,12 +22,7 @@ for (const entry of navigation.entries) {
   else groups.set(entry.category, [entry]);
 }
 
-interface DemoShellProps {
-  lightTheme: boolean;
-  onToggleTheme: () => void;
-}
-
-export function DemoShell({ lightTheme, onToggleTheme }: Readonly<DemoShellProps>) {
+export function DemoShell() {
   const [page, setPage] = useState(landingPage);
   const hintId = useId();
   const title = flagsByKey[page] ? navigation.entries.find((entry) => entry.key === page)?.title : null;
@@ -35,9 +30,6 @@ export function DemoShell({ lightTheme, onToggleTheme }: Readonly<DemoShellProps
   return (
     <div className="demo-nav-shell">
       <aside className="demo-nav-sidebar">
-        <button className="demo-theme-toggle" type="button" aria-pressed={lightTheme} onClick={onToggleTheme}>
-          Light theme
-        </button>
         <p hidden id={hintId}>{disabledHint}</p>
         <nav aria-label="MOBAflow pages">
           {Array.from(groups, ([category, entries]) => (
