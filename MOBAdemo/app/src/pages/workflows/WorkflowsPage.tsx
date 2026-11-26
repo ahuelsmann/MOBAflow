@@ -5,13 +5,15 @@ import type { WorkflowNode, WorkflowNodeState, WorkflowNodeType } from '../../ex
 import { InertButton } from '../../shell/inert/InertButton';
 import './workflows.css';
 
-const NODE_WIDTH = 230;
-const NODE_HEIGHT = 124;
+const NODE_WIDTH = 156;
+const NODE_HEIGHT = 116;
+const GRAPH_WIDTH = 528;
+const GRAPH_HEIGHT = 296;
 
 const NODE_TYPE_LABELS: Readonly<Record<WorkflowNodeType, string>> = {
   trigger: 'Trigger',
   action: 'Action',
-  terminate: 'Completed',
+  terminate: 'End',
 };
 
 const NODE_STATE_LABELS: Readonly<Record<WorkflowNodeState, string>> = {
@@ -59,12 +61,27 @@ function NodeStateIcon({ state }: Readonly<{ state: WorkflowNodeState }>) {
   );
 }
 
+function getEdgeEndpoints(from: WorkflowNode, to: WorkflowNode) {
+  if (to.position.x === from.position.x && to.position.y > from.position.y) {
+    const cx = from.position.x + NODE_WIDTH / 2;
+    return { x1: cx, y1: from.position.y + NODE_HEIGHT, x2: cx, y2: to.position.y, vertical: true };
+  }
+  return {
+    x1: from.position.x + NODE_WIDTH,
+    y1: from.position.y + NODE_HEIGHT / 2,
+    x2: to.position.x,
+    y2: to.position.y + NODE_HEIGHT / 2,
+    vertical: false,
+  };
+}
+
 function buildEdgePath(from: WorkflowNode, to: WorkflowNode): string {
-  const x1 = from.position.x + NODE_WIDTH;
-  const y1 = from.position.y + NODE_HEIGHT / 2;
-  const x2 = to.position.x;
-  const y2 = to.position.y + NODE_HEIGHT / 2;
-  const offset = Math.max(36, Math.abs(x2 - x1) * 0.45);
+  const { x1, y1, x2, y2, vertical } = getEdgeEndpoints(from, to);
+  if (vertical) {
+    const midY = Math.round((y1 + y2) / 2);
+    return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+  }
+  const offset = Math.max(12, Math.round(Math.abs(x2 - x1) * 0.6));
   return `M ${x1} ${y1} C ${x1 + offset} ${y1}, ${x2 - offset} ${y2}, ${x2} ${y2}`;
 }
 
@@ -162,7 +179,7 @@ export function WorkflowsPage() {
 
           <div className="workflows-graph-viewport">
             <section className="workflows-graph-canvas" aria-label="Workflow graph">
-              <svg className="workflows-graph-svg" viewBox="0 0 1170 360" aria-hidden="true">
+              <svg className="workflows-graph-svg" viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`} aria-hidden="true">
                 <defs>
                   <pattern id={dotPatternId} width="24" height="24" patternUnits="userSpaceOnUse">
                     <circle cx="12" cy="12" r="1" className="workflows-grid-dot" />
@@ -172,14 +189,14 @@ export function WorkflowsPage() {
                     viewBox="0 0 10 10"
                     refX="9"
                     refY="5"
-                    markerWidth="7"
-                    markerHeight="7"
+                    markerWidth="6"
+                    markerHeight="6"
                     orient="auto"
                   >
                     <path d="M 0 1.5 L 9 5 L 0 8.5 z" className="workflows-edge-arrow" />
                   </marker>
                 </defs>
-                <rect width="1170" height="360" fill={`url(#${dotPatternId})`} />
+                <rect width={GRAPH_WIDTH} height={GRAPH_HEIGHT} fill={`url(#${dotPatternId})`} />
                 {workflow.edges.map((edge) => {
                   const fromNode = nodesById.get(edge.from);
                   const toNode = nodesById.get(edge.to);
@@ -195,16 +212,15 @@ export function WorkflowsPage() {
                     />
                   );
                 })}
-                {workflow.nodes.map((node) => {
-                  const cy = node.position.y + NODE_HEIGHT / 2;
+                {workflow.edges.map((edge) => {
+                  const fromNode = nodesById.get(edge.from);
+                  const toNode = nodesById.get(edge.to);
+                  if (!fromNode || !toNode) return null;
+                  const { x1, y1, x2, y2 } = getEdgeEndpoints(fromNode, toNode);
                   return (
-                    <g key={`ports-${node.id}`}>
-                      {node.type !== 'trigger' && (
-                        <circle className="workflows-port-dot" cx={node.position.x} cy={cy} r="4.5" />
-                      )}
-                      {node.type !== 'terminate' && (
-                        <circle className="workflows-port-dot" cx={node.position.x + NODE_WIDTH} cy={cy} r="4.5" />
-                      )}
+                    <g key={`ports-${edge.from}->${edge.to}`}>
+                      <circle className="workflows-port-dot" cx={x1} cy={y1} r="4" />
+                      <circle className="workflows-port-dot" cx={x2} cy={y2} r="4" />
                     </g>
                   );
                 })}

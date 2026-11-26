@@ -47,6 +47,20 @@ test.describe('MOBAdemo Workflows page browser checks (slice 17)', () => {
       await expect(actionsPane.getByRole('list', { name: 'Workflow nodes' }).getByRole('listitem')).toHaveCount(5);
       await expect(actionsPane.locator('svg.workflows-graph-svg path.workflows-edge-path')).toHaveCount(5);
 
+      const viewport = actionsPane.locator('.workflows-graph-viewport');
+      const viewportBox = await viewport.boundingBox();
+      expect(viewportBox).not.toBeNull();
+      const graphHasHorizontalScroll = await viewport.evaluate((el) => el.scrollWidth > el.clientWidth);
+      expect(graphHasHorizontalScroll).toBe(false);
+
+      const nodeSlots = actionsPane.locator('[data-node-id]');
+      for (let i = 0; i < 5; i++) {
+        const nodeBox = await nodeSlots.nth(i).boundingBox();
+        expect(nodeBox).not.toBeNull();
+        expect(nodeBox!.x).toBeGreaterThanOrEqual(viewportBox!.x);
+        expect(nodeBox!.x + nodeBox!.width).toBeLessThanOrEqual(viewportBox!.x + viewportBox!.width);
+      }
+
       await expect(propertiesPane.getByRole('textbox', { name: 'Name' })).toHaveValue('Arrival Main Station');
       await expect(propertiesPane.getByRole('textbox', { name: 'Steps' })).toHaveValue('5');
       await expect(propertiesPane.getByRole('textbox', { name: 'Error policy' })).toHaveValue('Stop on error');
@@ -90,6 +104,16 @@ test.describe('MOBAdemo Workflows page browser checks (slice 17)', () => {
         await expect(page.locator(`#${tooltipId}`)).toBeVisible();
         await page.keyboard.press('Escape');
       }
+
+      const searchBox = main.getByRole('searchbox', { name: 'Search workflows' });
+      await searchBox.focus();
+      await page.keyboard.type('Arrival');
+      await expect(searchBox).toHaveValue('');
+
+      const nameField = main.getByRole('textbox', { name: 'Name' });
+      await nameField.focus();
+      await page.keyboard.type('Edited');
+      await expect(nameField).toHaveValue('Arrival Main Station');
 
       await expect(main.getByRole('heading', { level: 1, name: 'Workflows' })).toBeVisible();
       await expect(main.getByRole('button', { name: 'Arrival Main Station', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -139,13 +163,23 @@ test.describe('MOBAdemo Workflows page browser checks (slice 17)', () => {
     });
     try {
       const page = await context.newPage();
-      await openWorkflows(page);
+      const main = await openWorkflows(page);
       await expect(page.locator('[data-shell-mode]')).toHaveAttribute('data-shell-mode', 'compact');
 
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
       );
       expect(overflow).toBe(true);
+
+      const listBox = await main.getByRole('region', { name: 'Workflows list' }).boundingBox();
+      const propBox = await main.getByRole('region', { name: 'Properties' }).boundingBox();
+      expect(listBox).not.toBeNull();
+      expect(propBox).not.toBeNull();
+      expect(propBox!.y).toBeGreaterThan(listBox!.y + listBox!.height);
+
+      for (const id of ['n1', 'n2', 'n3', 'n4', 'n5']) {
+        await expect(main.locator(`[data-node-id="${id}"]`)).toBeVisible();
+      }
     } finally {
       await context.close();
     }

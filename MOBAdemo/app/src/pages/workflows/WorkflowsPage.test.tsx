@@ -41,11 +41,18 @@ describe('WorkflowsPage (slice 17)', () => {
     const nodeItems = within(nodesList).getAllByRole('listitem');
     expect(nodeItems).toHaveLength(workflow.nodes.length);
 
-    const expectedTypeLabels = { trigger: 'Trigger', action: 'Action', terminate: 'Completed' } as const;
+    const expectedTypeLabels = { trigger: 'Trigger', action: 'Action', terminate: 'End' } as const;
+    const css = readFileSync(join(import.meta.dirname, 'workflows.css'), 'utf8');
     for (const node of workflow.nodes) {
       const slot = nodeItems.find((item) => item.getAttribute('data-node-id') === node.id);
       expect(slot).toBeDefined();
       expect(slot).toHaveClass(`workflows-node-pos-${node.id}`);
+      const posMatch = new RegExp(
+        String.raw`\.workflows-node-pos-${node.id}\s*\{[^}]*inset-block-start:\s*(\d+)px;\s*inset-inline-start:\s*(\d+)px;`,
+      ).exec(css);
+      expect(posMatch, node.id).not.toBeNull();
+      expect(Number(posMatch![1])).toBe(node.position.y);
+      expect(Number(posMatch![2])).toBe(node.position.x);
       expect(within(slot!).getByText(`Step ${node.step}`)).toBeVisible();
       const typeLabels = within(slot!).getAllByText(expectedTypeLabels[node.type]);
       expect(typeLabels[0]).toBeVisible();
