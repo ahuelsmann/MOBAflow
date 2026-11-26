@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.MAUI.View;
+namespace Moba.MOBAsmart.View;
 
 using SharedUI.Mobile;
 using SharedUI.TrainControl;

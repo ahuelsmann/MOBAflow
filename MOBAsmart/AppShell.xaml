@@ -2,7 +2,7 @@
 
 <Shell
 
-    x:Class="Moba.MAUI.AppShell"
+    x:Class="Moba.MOBAsmart.AppShell"
 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
 
