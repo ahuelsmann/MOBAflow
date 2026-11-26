@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import texts from '../../examples/texts.json';
 import { InertButton } from '../../shell/inert/InertButton';
 import './track-plan.css';
@@ -72,13 +72,35 @@ const IGNORED_SLIDER_KEYS = new Set([
 ]);
 
 function InertZoomSlider() {
-  const sliderId = useId();
   const hintId = useId();
+  const sliderRef = useRef<HTMLInputElement>(null);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [tapped, setTapped] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const visible = !dismissed && (hovered || focused || tapped);
+
+  useEffect(() => {
+    if (!visible) return;
+    function onDocumentKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      setTapped(false);
+      setDismissed(true);
+    }
+    document.addEventListener('keydown', onDocumentKeyDown);
+    return () => document.removeEventListener('keydown', onDocumentKeyDown);
+  }, [visible]);
+
+  useEffect(() => {
+    if (!tapped) return;
+    function onOutsidePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && sliderRef.current?.contains(target)) return;
+      setTapped(false);
+    }
+    document.addEventListener('pointerdown', onOutsidePointerDown);
+    return () => document.removeEventListener('pointerdown', onOutsidePointerDown);
+  }, [tapped]);
 
   return (
     <span
@@ -90,7 +112,7 @@ function InertZoomSlider() {
       onPointerLeave={() => setHovered(false)}
     >
       <input
-        id={sliderId}
+        ref={sliderRef}
         className="track-plan-zoom-slider"
         type="range"
         min={10}
@@ -114,11 +136,6 @@ function InertZoomSlider() {
           setTapped(!tapped);
         }}
         onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            setTapped(false);
-            setDismissed(true);
-            return;
-          }
           if (IGNORED_SLIDER_KEYS.has(event.key)) {
             event.preventDefault();
           }
@@ -187,13 +204,13 @@ export function TrackPlanPage() {
               src="/assets/track-plan.svg"
               alt="Example model railway layout on Track Plan canvas"
             />
-            <div className="track-plan-zoom-bar" role="group" aria-label="Zoom controls">
-              <InertButton className="track-plan-zoom-button" label="Zoom out">−</InertButton>
-              <InertZoomSlider />
-              <InertButton className="track-plan-zoom-button" label="Zoom in">+</InertButton>
-              <span className="track-plan-zoom-value">100%</span>
-            </div>
           </div>
+          <fieldset className="track-plan-zoom-bar" aria-label="Zoom controls">
+            <InertButton className="track-plan-zoom-button" label="Zoom out">−</InertButton>
+            <InertZoomSlider />
+            <InertButton className="track-plan-zoom-button" label="Zoom in">+</InertButton>
+            <span className="track-plan-zoom-value">100%</span>
+          </fieldset>
         </section>
 
         <aside className="track-plan-panel track-plan-context" aria-label="Context properties">
@@ -240,15 +257,15 @@ export function TrackPlanPage() {
             <h3>Validation Overlay</h3>
             <ul className="track-plan-legend">
               <li>
-                <span className="track-plan-legend-marker track-plan-legend-open" aria-hidden="true">○</span>
+                <span className="track-plan-legend-marker" aria-hidden="true">○</span>
                 <span>Open ends</span>
               </li>
               <li>
-                <span className="track-plan-legend-marker track-plan-legend-overlap" aria-hidden="true">◎</span>
+                <span className="track-plan-legend-marker" aria-hidden="true">◎</span>
                 <span>Disconnected, overlapping ports</span>
               </li>
               <li>
-                <span className="track-plan-legend-marker track-plan-legend-group" aria-hidden="true">□</span>
+                <span className="track-plan-legend-marker" aria-hidden="true">□</span>
                 <span>Disconnected groups</span>
               </li>
             </ul>
@@ -256,13 +273,13 @@ export function TrackPlanPage() {
         </aside>
       </div>
 
-      <div className="track-plan-footer" role="region" aria-label="Track Plan status">
+      <section className="track-plan-footer" aria-label="Track Plan status">
         <span className="track-plan-status">
           <span className="track-plan-status-badge" aria-hidden="true">✓</span>
           <span>Ready — Example layout loaded</span>
         </span>
         <span className="track-plan-coordinates">X: 0 mm, Y: 0 mm</span>
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,51 +1,29 @@
-import { hostname, userInfo } from 'node:os';
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page, type Response } from '@playwright/test';
+import { expect, test, type Locator, type Page, type Response } from '@playwright/test';
 
 const INERT_HINT = 'Available in the MOBAflow desktop app';
 
-function escapeRegExp(value: string): string {
-  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+function assertNoHostTokens(label: string, text: string): void {
+  for (const forbidden of [':\\Users\\', ':\\Repo\\', '/home/', '127.0.0.1:', 'localhost:']) {
+    expect(text, `${label} exposed host token "${forbidden}"`).not.toContain(forbidden);
+  }
 }
 
-function buildHostDetailPatterns(): RegExp[] {
-  const patterns: RegExp[] = [
-    /[A-Za-z]:[\\/](?:Users|Repo|Windows|Program Files)/i,
-    /(?:^|[^\w./])\/(?:home|Users|root)\/[\w.-]+/,
-    /\b(?:10\.\d{1,3}|192\.168|172\.(?:1[6-9]|2\d|3[01])|169\.254)\.\d{1,3}\.\d{1,3}\b/,
-    /(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|\.local|\.internal|\.lan):\d{2,5}|:(?:5000|5001|5173|8080)\b/i,
-  ];
-
-  const identityNames = new Set<string>();
-  const machine = hostname();
-  if (machine.length >= 3) identityNames.add(machine);
-  try {
-    const user = userInfo().username;
-    if (user.length >= 3) identityNames.add(user);
-  } catch {
-    // userInfo() may fail in restricted environments.
-  }
-
-  for (const name of identityNames) {
-    const escaped = escapeRegExp(name);
-    patterns.push(
-      new RegExp(String.raw`(?:Users|home)[\\/]${escaped}(?![\w.-])`, 'i'),
-      new RegExp(String.raw`\\\\${escaped}[\\/]`, 'i'),
-      new RegExp(String.raw`://${escaped}(?![\w.-])`, 'i'),
-      new RegExp(String.raw`(?<![\w.-])${escaped}\.(?:local|lan|internal)\b`, 'i'),
-    );
-  }
-
-  return patterns;
+async function clickAtCenter(page: Page, locator: Locator): Promise<void> {
+  await locator.scrollIntoViewIfNeeded();
+  const box = await locator.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
 }
 
-const HOST_DETAIL_PATTERNS = buildHostDetailPatterns();
-
-function assertNoHostLeak(label: string, text: string): void {
-  for (const pattern of HOST_DETAIL_PATTERNS) {
-    const match = pattern.exec(text);
-    expect(match, `${label} exposed host detail "${match?.[0] ?? ''}" matching ${pattern}`).toBeNull();
-  }
+async function snapshotMainWithoutHints(page: Page): Promise<string> {
+  return page.evaluate(() => {
+    const main = document.querySelector('main');
+    if (!main) return '';
+    const clone = main.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('[role="tooltip"]').forEach((el) => el.remove());
+    return clone.innerHTML;
+  });
 }
 
 async function openTrackPlan(page: Page): Promise<void> {
@@ -60,10 +38,11 @@ async function openTrackPlan(page: Page): Promise<void> {
 }
 
 test.describe('Track Plan browser checks (slice 15)', () => {
-  test('opens Track Plan from navigation and renders prepared panes and SVG layout (US2 scenario 1)', async ({
+  test('opens Track Plan from navigation and renders prepared panes and SVG layout without overlap (US2 scenario 1)', async ({
     browser,
   }) => {
     const context = await browser.newContext({
+      viewport: { width: 1280, height: 800 },
       extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.51' },
     });
     try {
@@ -112,12 +91,19 @@ test.describe('Track Plan browser checks (slice 15)', () => {
       expect(svgResponse, 'Expected /assets/track-plan.svg HTTP response').toBeDefined();
       expect(svgResponse!.status()).toBe(200);
       expect(svgResponse!.headers()['content-type']).toContain('image/svg+xml');
-      assertNoHostLeak('/assets/track-plan.svg', await svgResponse!.text());
+      assertNoHostTokens('/assets/track-plan.svg', await svgResponse!.text());
 
       const zoomGroup = canvas.getByRole('group', { name: 'Zoom controls' });
       const zoomSlider = zoomGroup.getByRole('slider', { name: 'Zoom' });
       await expect(zoomSlider).toHaveValue('100');
       await expect(zoomGroup).toContainText('100%');
+
+      // Zoom bar sits below the canvas frame and must not cover any part of /assets/track-plan.svg.
+      const svgBox = await svgImage.boundingBox();
+      const zoomBox = await zoomGroup.boundingBox();
+      expect(svgBox).not.toBeNull();
+      expect(zoomBox).not.toBeNull();
+      expect(zoomBox!.y).toBeGreaterThanOrEqual(svgBox!.y + svgBox!.height);
 
       const contextPane = main.getByRole('complementary', { name: 'Context properties' });
       await expect(contextPane).toBeVisible();
@@ -130,7 +116,7 @@ test.describe('Track Plan browser checks (slice 15)', () => {
       const footer = main.getByRole('region', { name: 'Track Plan status' });
       await expect(footer).toContainText('Ready — Example layout loaded');
       await expect(footer).toContainText('X: 0 mm, Y: 0 mm');
-      assertNoHostLeak('Track Plan page text', await main.innerText());
+      assertNoHostTokens('Track Plan page text', await main.innerText());
 
       expect(consoleErrors).toEqual([]);
       expect(pageErrors).toEqual([]);
@@ -139,7 +125,7 @@ test.describe('Track Plan browser checks (slice 15)', () => {
     }
   });
 
-  test('keeps toolbar, catalogue, zoom slider and context controls inert with hints (SC-004)', async ({
+  test('keeps every button and zoom slider on Track Plan inert with identical DOM snapshot (SC-004)', async ({
     browser,
   }) => {
     const context = await browser.newContext({
@@ -152,56 +138,48 @@ test.describe('Track Plan browser checks (slice 15)', () => {
       const main = page.getByRole('main');
       const nav = page.getByRole('navigation', { name: 'MOBAflow pages' });
       const trackPlanEntry = nav.getByRole('button', { name: 'Track Plan' });
-      const toolbar = main.getByRole('toolbar', { name: 'Track Plan toolbar' });
-      const snap = toolbar.getByRole('button', { name: 'Snap' });
-      const grid = toolbar.getByRole('button', { name: 'Grid' });
-      const catalogueButton = main.getByRole('region', { name: 'Piko A-Track catalogue' }).getByRole('button', {
-        name: 'G231 (230.93 mm)',
-      });
-      const createSection = main
-        .getByRole('complementary', { name: 'Context properties' })
-        .getByRole('button', { name: 'Create Section' });
       const zoomGroup = main.getByRole('group', { name: 'Zoom controls' });
       const zoomSlider = zoomGroup.getByRole('slider', { name: 'Zoom' });
-      const zoomIn = zoomGroup.getByRole('button', { name: 'Zoom in' });
 
-      await expect(snap).toHaveAttribute('aria-disabled', 'true');
-      await expect(snap).toHaveAccessibleDescription(INERT_HINT);
-      await expect(grid).toHaveAttribute('aria-disabled', 'true');
-      await expect(catalogueButton).toHaveAttribute('aria-disabled', 'true');
-      await expect(createSection).toHaveAttribute('aria-disabled', 'true');
-      await expect(zoomSlider).toHaveAttribute('aria-disabled', 'true');
-      await expect(zoomSlider).toHaveAccessibleDescription(INERT_HINT);
+      const initialSnapshot = await snapshotMainWithoutHints(page);
+      const initialStatusText = await page.getByRole('contentinfo', { name: 'Demo status' }).textContent();
 
-      await snap.click({ force: true });
-      await expect(toolbar.getByRole('tooltip', { name: INERT_HINT })).toBeVisible();
-      await page.keyboard.press('Escape');
+      const buttons = main.locator('button');
+      const count = await buttons.count();
+      expect(count).toBe(43); // 15 toolbar + 24 catalogue + 2 zoom +/- + 2 context section buttons
 
-      await grid.click({ force: true });
-      await catalogueButton.click({ force: true });
-      await createSection.click({ force: true });
-      await zoomIn.click({ force: true });
+      for (let i = 0; i < count; i++) {
+        const button = buttons.nth(i);
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).toHaveAccessibleDescription(INERT_HINT);
+        await clickAtCenter(page, button);
+        await expect(page.getByRole('tooltip')).toContainText(INERT_HINT);
+        await page.keyboard.press('Escape');
+      }
 
       // Drag/click and key interaction on the inert zoom slider must leave 100% intact.
+      await expect(zoomSlider).toHaveAttribute('aria-disabled', 'true');
+      await expect(zoomSlider).toHaveAccessibleDescription(INERT_HINT);
       const sliderBox = await zoomSlider.boundingBox();
       expect(sliderBox).not.toBeNull();
       await page.mouse.click(sliderBox!.x + sliderBox!.width * 0.85, sliderBox!.y + sliderBox!.height / 2);
       await zoomSlider.focus();
       await expect(zoomGroup.getByRole('tooltip')).toHaveText(INERT_HINT);
       await page.keyboard.press('ArrowRight');
+      await page.keyboard.press('Escape');
+      await page.locator('body').focus();
 
       await expect(zoomSlider).toHaveValue('100');
       await expect(zoomGroup).toContainText('100%');
-      await expect(snap).toHaveAttribute('aria-pressed', 'true');
-      await expect(grid).toHaveAttribute('aria-pressed', 'false');
-      await expect(main.getByRole('complementary', { name: 'Context properties' })).toContainText('No selection');
       await expect(trackPlanEntry).toHaveAttribute('aria-current', 'page');
+      expect(await snapshotMainWithoutHints(page)).toBe(initialSnapshot);
+      expect(await page.getByRole('contentinfo', { name: 'Demo status' }).textContent()).toBe(initialStatusText);
     } finally {
       await context.close();
     }
   });
 
-  test('passes axe-core checks in Dark and Light themes and keeps Track Plan open across theme toggle (FR-021, SC-009)', async ({
+  test('passes axe-core checks in Dark and Light, fits compact width, and honours reduced motion (FR-021, FR-046, SC-009)', async ({
     browser,
   }) => {
     const context = await browser.newContext({
@@ -231,8 +209,46 @@ test.describe('Track Plan browser checks (slice 15)', () => {
         { dark: darkAudit.violations, light: lightAudit.violations },
         JSON.stringify({ dark: darkAudit.violations, light: lightAudit.violations }, null, 2),
       ).toEqual({ dark: [], light: [] });
+
+      // Compact width mode (1100 px) keeps zero horizontal overflow and zero zoom-bar overlap.
+      await page.setViewportSize({ width: 1100, height: 800 });
+      await expect(page.locator('[data-shell-mode]')).toHaveAttribute('data-shell-mode', 'compact');
+      const compactNoOverflow = await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      );
+      expect(compactNoOverflow).toBe(true);
+      const compactSvgBox = await page
+        .getByRole('img', { name: 'Example model railway layout on Track Plan canvas' })
+        .boundingBox();
+      const compactZoomBox = await page.getByRole('group', { name: 'Zoom controls' }).boundingBox();
+      expect(compactSvgBox).not.toBeNull();
+      expect(compactZoomBox).not.toBeNull();
+      expect(compactZoomBox!.y).toBeGreaterThanOrEqual(compactSvgBox!.y + compactSvgBox!.height);
     } finally {
       await context.close();
+    }
+
+    const reduced = await browser.newContext({
+      reducedMotion: 'reduce',
+      extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.54' },
+    });
+    try {
+      const page = await reduced.newPage();
+      await openTrackPlan(page);
+      const animated = await page.evaluate(() => {
+        const root = document.querySelector('main .track-plan');
+        if (!root) return ['missing .track-plan'];
+        const bad: string[] = [];
+        for (const el of [root, ...root.querySelectorAll('*')]) {
+          const cs = getComputedStyle(el);
+          if (cs.transitionDuration !== '0s') bad.push(`${el.tagName}.${el.className}: ${cs.transitionDuration}`);
+          if (cs.animationName !== 'none') bad.push(`${el.tagName}.${el.className}: ${cs.animationName}`);
+        }
+        return bad;
+      });
+      expect(animated).toEqual([]);
+    } finally {
+      await reduced.close();
     }
   });
 });

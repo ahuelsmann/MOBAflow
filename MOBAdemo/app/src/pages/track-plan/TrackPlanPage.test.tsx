@@ -66,6 +66,8 @@ describe('TrackPlanPage (FR-035, FR-038, US2 scenarios 1 & 4)', () => {
     expect(within(context).getByText('Open ends')).toBeVisible();
     expect(within(context).getByRole('button', { name: 'Create Section' })).toHaveAttribute('aria-disabled', 'true');
     expect(within(context).getByRole('button', { name: 'Toggle Isolator' })).toHaveAttribute('aria-disabled', 'true');
+    expect(within(zoomGroup).getByRole('button', { name: 'Zoom out' })).toHaveAttribute('aria-disabled', 'true');
+    expect(within(zoomGroup).getByRole('button', { name: 'Zoom in' })).toHaveAttribute('aria-disabled', 'true');
 
     const footer = main.getByRole('region', { name: 'Track Plan status' });
     expect(within(footer).getByText('Ready — Example layout loaded')).toBeVisible();
@@ -82,6 +84,12 @@ describe('TrackPlanPage (FR-035, FR-038, US2 scenarios 1 & 4)', () => {
     const zoomGroup = main.getByRole('group', { name: 'Zoom controls' });
     const zoomSlider = within(zoomGroup).getByRole('slider', { name: 'Zoom' }) as HTMLInputElement;
 
+    fireEvent.pointerEnter(zoomSlider);
+    expect(within(zoomGroup).getByRole('tooltip')).toHaveTextContent(inertHint);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(within(zoomGroup).queryByRole('tooltip')).not.toBeInTheDocument();
+    fireEvent.pointerLeave(zoomSlider);
+
     fireEvent.focus(zoomSlider);
     expect(within(zoomGroup).getByRole('tooltip')).toHaveTextContent(inertHint);
     fireEvent.keyDown(zoomSlider, { key: 'ArrowRight' });
@@ -91,11 +99,14 @@ describe('TrackPlanPage (FR-035, FR-038, US2 scenarios 1 & 4)', () => {
     expect(zoomSlider).toHaveAttribute('aria-valuetext', '100%');
     expect(within(zoomGroup).getByText('100%')).toBeVisible();
 
-    fireEvent.keyDown(zoomSlider, { key: 'Escape' });
+    fireEvent.keyDown(document, { key: 'Escape' });
     expect(within(zoomGroup).queryByRole('tooltip')).not.toBeInTheDocument();
     fireEvent.blur(zoomSlider);
 
     const toolbar = main.getByRole('toolbar', { name: 'Track Plan toolbar' });
+    for (const label of ['Export', 'Validate', 'Disconnect', 'Delete', 'Context']) {
+      fireEvent.click(within(toolbar).getByRole('button', { name: label }));
+    }
     const snap = within(toolbar).getByRole('button', { name: 'Snap' });
     const grid = within(toolbar).getByRole('button', { name: 'Grid' });
     fireEvent.click(snap);
