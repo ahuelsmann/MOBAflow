@@ -42,10 +42,14 @@ describe('SignalBoxPage (FR-039, FR-045, FR-046)', () => {
     const canvas = screen.getByRole('region', { name: 'Signal box canvas' });
     const svg = canvas.querySelector('svg.signal-box-svg');
     expect(svg).not.toBeNull();
-    expect(svg).toHaveAttribute('viewBox', '0 0 1200 720');
+    expect(svg).toHaveAttribute('viewBox', '0 120 600 360');
 
     for (const element of signalBox.elements) {
       expect(svg!.querySelector(`[data-element-id="${element.id}"]`)).not.toBeNull();
+      expect(element.x).toBeGreaterThanOrEqual(0);
+      expect(element.x).toBeLessThan(10);
+      expect(element.y).toBeGreaterThanOrEqual(2);
+      expect(element.y).toBeLessThan(8);
     }
 
     expect(svg!.textContent).toContain('W1');

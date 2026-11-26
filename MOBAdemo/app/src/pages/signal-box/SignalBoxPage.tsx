@@ -19,12 +19,16 @@ const TOOLBOX_ITEMS: readonly ToolboxItem[] = [
 ];
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+const VIEW_COL_START = 0;
+const VIEW_ROW_START = 2;
+const VIEW_COLS = 10;
+const VIEW_ROWS = 6;
 
 function readReducedMotion(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
     return false;
   }
-  return Boolean(window.matchMedia(REDUCED_MOTION_QUERY)?.matches);
+  return Boolean(window.matchMedia(REDUCED_MOTION_QUERY).matches);
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -32,11 +36,9 @@ function usePrefersReducedMotion(): boolean {
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return;
+      return undefined;
     }
     const mediaQuery = window.matchMedia(REDUCED_MOTION_QUERY);
-    if (!mediaQuery) return;
-
     const update = () => setReduced(Boolean(mediaQuery.matches));
     update();
 
@@ -44,6 +46,7 @@ function usePrefersReducedMotion(): boolean {
       mediaQuery.addEventListener('change', update);
       return () => mediaQuery.removeEventListener('change', update);
     }
+    return undefined;
   }, []);
 
   return reduced;
@@ -206,33 +209,45 @@ function CanvasElementGraphic({
               cy="25"
               r="3.5"
             />
+            <circle
+              className={preparedAspectId === 'Sh1' ? 'signal-lamp signal-lamp-white' : 'signal-lamp signal-lamp-off'}
+              cx="23"
+              cy="33"
+              r="2.75"
+            />
+            <circle
+              className={preparedAspectId === 'Sh1' ? 'signal-lamp signal-lamp-white' : 'signal-lamp signal-lamp-off'}
+              cx="32"
+              cy="29"
+              r="2.75"
+            />
           </g>
         )}
       </g>
 
       {element.type === 'Turnout' && (
-        <g transform={element.rotation === 180 ? 'translate(0, 50)' : 'translate(0, -14)'}>
-          <rect className="signal-box-element-tag-bg" x="4" y="2" width="52" height="16" rx="3" />
-          <text className="signal-box-element-label" x={half} y="13">
+        <g data-label-for={element.id} transform={element.rotation === 180 ? 'translate(0, 62)' : 'translate(0, -24)'}>
+          <rect className="signal-box-element-tag-bg" x="2" y="0" width="56" height="20" rx="4" />
+          <text className="signal-box-element-label" x={half} y="14">
             {element.name}
           </text>
         </g>
       )}
       {element.type === 'Detector' && (
-        <g transform="translate(-14, 0)">
-          <rect className="signal-box-element-tag-bg" x="0" y="21" width="46" height="18" rx="3" />
-          <text className="signal-box-element-label" x="23" y="34">
+        <g data-label-for={element.id} transform="translate(-76, 20)">
+          <rect className="signal-box-element-tag-bg" x="0" y="0" width="70" height="20" rx="4" />
+          <text className="signal-box-element-label" x="35" y="14">
             {element.name}
           </text>
         </g>
       )}
       {element.type === 'Signal' && (
-        <g transform="translate(0, 56)">
-          <rect className="signal-box-element-tag-bg" x="0" y="2" width="60" height="28" rx="3" />
-          <text className="signal-box-element-label" x={half} y="14">
+        <g data-label-for={element.id} transform="translate(64, 12)">
+          <rect className="signal-box-element-tag-bg" x="0" y="0" width="84" height="36" rx="4" />
+          <text className="signal-box-element-label" x="42" y="15">
             {element.name}
           </text>
-          <text className="signal-box-element-sublabel" x={half} y="25">
+          <text className="signal-box-element-sublabel" x="42" y="29">
             {preparedAspectName}
           </text>
         </g>
@@ -248,9 +263,16 @@ export function SignalBoxPage() {
   const { width, height, cellSize } = signalBox.grid;
   const viewWidth = width * cellSize;
   const viewHeight = height * cellSize;
+  const cropX = VIEW_COL_START * cellSize;
+  const cropY = VIEW_ROW_START * cellSize;
+  const cropWidth = VIEW_COLS * cellSize;
+  const cropHeight = VIEW_ROWS * cellSize;
 
   const selectedSignalElement = signalBox.elements.find((element) => element.id === signalBox.signal.elementId);
   const preparedAspect = signalBox.signal.aspects.find((aspect) => aspect.id === signalBox.signal.preparedAspect);
+  const straightTurnout = signalBox.elements.find((element) => element.type === 'Turnout' && element.position === 'straight');
+  const divergingTurnout = signalBox.elements.find((element) => element.type === 'Turnout' && element.position === 'diverging');
+  const detectorElement = signalBox.elements.find((element) => element.type === 'Detector');
 
   if (!selectedSignalElement || !preparedAspect) return null;
 
@@ -292,31 +314,31 @@ export function SignalBoxPage() {
         <section className="signal-box-pane" aria-label="Signal box canvas">
           <div className="signal-box-canvas-header">
             <h2>Track Layout</h2>
-            <div className="signal-box-legend" aria-label="Element legend">
-              <span className="signal-box-legend-item">
+            <ul className="signal-box-legend" aria-label="Element legend">
+              <li className="signal-box-legend-item">
                 <span className="signal-box-swatch signal-box-swatch-straight" aria-hidden="true" />
-                W1 Straight
-              </span>
-              <span className="signal-box-legend-item">
+                {straightTurnout?.name ?? 'Turnout'} Straight
+              </li>
+              <li className="signal-box-legend-item">
                 <span className="signal-box-swatch signal-box-swatch-diverging" aria-hidden="true" />
-                W2 Diverging
-              </span>
-              <span className="signal-box-legend-item">
+                {divergingTurnout?.name ?? 'Turnout'} Diverging
+              </li>
+              <li className="signal-box-legend-item">
                 <span className="signal-box-swatch signal-box-swatch-detector" aria-hidden="true" />
-                Block 1 Detector
-              </span>
-              <span className="signal-box-legend-item">
+                {detectorElement?.name ?? 'Block'} Detector
+              </li>
+              <li className="signal-box-legend-item">
                 <span className="signal-box-swatch signal-box-swatch-selected" aria-hidden="true" />
                 Selected ({selectedSignalElement.name})
-              </span>
-            </div>
+              </li>
+            </ul>
           </div>
 
           <div className="signal-box-canvas-stage">
             <svg
               aria-hidden="true"
               className="signal-box-svg"
-              viewBox={`0 0 ${viewWidth} ${viewHeight}`}
+              viewBox={`${cropX} ${cropY} ${cropWidth} ${cropHeight}`}
             >
               {verticalLines.map((x) => (
                 <line key={`v-${x}`} className="signal-box-grid-line" x1={x} y1="0" x2={x} y2={viewHeight} />
@@ -344,8 +366,8 @@ export function SignalBoxPage() {
                     key={element.id}
                     className="signal-box-cell"
                     data-element-id={element.id}
-                    data-grid-x={element.x}
-                    data-grid-y={element.y}
+                    data-grid-x={element.x - VIEW_COL_START}
+                    data-grid-y={element.y - VIEW_ROW_START}
                     data-selected={isSelected ? 'true' : undefined}
                   >
                     <InertButton
@@ -391,22 +413,24 @@ export function SignalBoxPage() {
           </ul>
 
           <h3>Multiplex Signal Configuration</h3>
-          <dl className="signal-box-mux-list" aria-label="Multiplexer configuration">
-            <div className="signal-box-mux-row">
-              <dt>Multiplexer</dt>
-              <dd>{signalBox.signal.multiplexer.articleNumber}</dd>
-            </div>
-            <div className="signal-box-mux-row">
-              <dt>Base DCC address</dt>
-              <dd>{signalBox.signal.multiplexer.baseAddress}</dd>
-            </div>
-            {signalBox.signal.multiplexer.outputs.map((output) => (
-              <div key={output.label} className="signal-box-mux-row">
-                <dt>{output.label}</dt>
-                <dd>{output.value}</dd>
+          <section aria-label="Multiplexer configuration">
+            <dl className="signal-box-mux-list">
+              <div className="signal-box-mux-row">
+                <dt>Multiplexer</dt>
+                <dd>{signalBox.signal.multiplexer.articleNumber}</dd>
               </div>
-            ))}
-          </dl>
+              <div className="signal-box-mux-row">
+                <dt>Base DCC address</dt>
+                <dd>{signalBox.signal.multiplexer.baseAddress}</dd>
+              </div>
+              {signalBox.signal.multiplexer.outputs.map((output) => (
+                <div key={output.label} className="signal-box-mux-row">
+                  <dt>{output.label}</dt>
+                  <dd>{output.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
         </section>
       </div>
 

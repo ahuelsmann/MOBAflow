@@ -60,12 +60,30 @@ test.describe('Signal Box page browser checks (slice 16)', () => {
       const canvas = page.getByRole('region', { name: 'Signal box canvas' });
       const svg = canvas.locator('svg.signal-box-svg');
       await expect(svg).toBeVisible();
-      await expect(svg).toHaveAttribute('viewBox', '0 0 1200 720');
+      await expect(svg).toHaveAttribute('viewBox', '0 120 600 360');
       await expect(svg).toContainText('W1');
       await expect(svg).toContainText('W2');
       await expect(svg).toContainText('Block 1');
       await expect(svg).toContainText('G2HBFA1');
       await expect(svg).toContainText('Ks 1');
+
+      const stageBox = await canvas.locator('.signal-box-canvas-stage').boundingBox();
+      expect(stageBox?.width ?? 0).toBeGreaterThanOrEqual(480);
+
+      const detectorButtonBox = await canvas.locator('[data-element-id="e5"] button').boundingBox();
+      expect(detectorButtonBox?.width ?? 0).toBeGreaterThanOrEqual(24);
+      expect(detectorButtonBox?.height ?? 0).toBeGreaterThanOrEqual(24);
+
+      const labelBox = await svg.locator('[data-label-for="e5"] rect').boundingBox();
+      const nodeBox = await svg.locator('.signal-box-detector-node').boundingBox();
+      expect(labelBox).not.toBeNull();
+      expect(nodeBox).not.toBeNull();
+      const overlapsDetector =
+        labelBox!.x < nodeBox!.x + nodeBox!.width &&
+        labelBox!.x + labelBox!.width > nodeBox!.x &&
+        labelBox!.y < nodeBox!.y + nodeBox!.height &&
+        labelBox!.y + labelBox!.height > nodeBox!.y;
+      expect(overlapsDetector).toBe(false);
 
       const signalButton = canvas.getByRole('button', { name: 'Ks signal G2HBFA1, selected, Ks 1' });
       await expect(signalButton).toHaveAttribute('aria-pressed', 'true');
@@ -129,7 +147,9 @@ test.describe('Signal Box page browser checks (slice 16)', () => {
         await expect(control).toHaveAttribute('aria-disabled', 'true');
         await expect(control).toHaveAccessibleDescription(INERT_HINT);
         await clickAtCenter(page, control);
-        await expect(page.getByRole('tooltip').filter({ hasText: INERT_HINT }).first()).toBeVisible();
+        const tooltipId = await control.getAttribute('aria-describedby');
+        expect(tooltipId).toBeTruthy();
+        await expect(page.locator(`#${tooltipId}`)).toBeVisible();
         await page.keyboard.press('Escape');
       }
 

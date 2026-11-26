@@ -2,14 +2,13 @@ import type { SignalAspect } from '../../examples/types';
 
 interface SignalAspectGlyphProps {
   aspectId: SignalAspect['id'];
-  className?: string;
 }
 
 /**
  * Renders the Ks signal housing and lit LED positions for an aspect code so
  * aspect recognition never relies on color alone (FR-045, FR-046).
  */
-export function SignalAspectGlyph({ aspectId, className }: Readonly<SignalAspectGlyphProps>) {
+export function SignalAspectGlyph({ aspectId }: Readonly<SignalAspectGlyphProps>) {
   const hp0Lit = aspectId === 'Hp0';
   const ks1Lit = aspectId === 'Ks1';
   const ks2Lit = aspectId === 'Ks2';
@@ -18,7 +17,7 @@ export function SignalAspectGlyph({ aspectId, className }: Readonly<SignalAspect
   return (
     <svg
       aria-hidden="true"
-      className={className ? `signal-aspect-glyph ${className}` : 'signal-aspect-glyph'}
+      className="signal-aspect-glyph"
       viewBox="0 0 40 52"
     >
       <rect className="signal-glyph-mast" x="18" y="34" width="4" height="16" rx="1.5" />
