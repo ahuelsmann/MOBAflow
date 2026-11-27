@@ -33,14 +33,14 @@ model mappings live in [AI-assisted development](../../docs/developer/AI-DEVELOP
 | Role | Primary profile(s) | Responsibility |
 | --- | --- | --- |
 | Human (maintainer) | user | Product goals, priorities, material UX decisions, fundamental architecture changes, new costs, app/device/hardware authorizations, feedback from real use |
-| Decision & Steering Triad | `P1` (COO) + `P2` (CPM/TD) + `P3` (Product/UX) | Cross-model steering for slice cutting, risk classification, design Go and escalations; the COO (or single-writer **`Acting COO`** when `Claude Code` is in `Quota Pause`) writes [Kanban slice fields](#board-locks-and-wip-limit) and manages auto-merge |
-| Chief Operating Officer (COO) | `P1` (Claude); **`Acting COO` failover:** `P3` (`Antigravity`) | Overall operational lead: sole technical writer on the [Kanban and slice headers](#board-locks-and-wip-limit), forms slice teams, posts the design Go, dispatches reviews, manages `gh pr update-branch` and auto-merge, escalates to the human. When a verified `Claude Code` `Quota Pause` is logged on the active thread/PR with its reset timestamp, **`Antigravity`** (`P3`) assumes sole single-writer `Acting COO` duties alongside `Codex` (`P2`) CPM/TD (`2/3 Acting COO` quorum) until `Claude Code` resets |
-| Chief Project Manager (CPM) & Technical Director (TD) | `P2` (Codex) | Prioritizes the backlog with the COO, checks repo/Spec Kit/build-graph consistency and may veto a slice or lock through the CLI channel and a PR comment as described [below](#board-locks-and-wip-limit) |
+| Decision & Steering Triad | `P1` (COO) + `P2` (CPM/TD) + `P3` (Product/UX) | Cross-model steering for slice cutting, risk classification, design Go and escalations; the COO (or single-writer **`Acting COO`** when `Claude Code` is in `Quota Pause`) writes [Kanban slice fields](#board-locks-and-wip-limit) and coordinates Master merges |
+| Chief Operating Officer (COO) | `P1` (Claude); **`Acting COO` failover:** `P3` (`Antigravity`) | Overall operational lead: sole technical writer on the [Kanban and slice records](#board-locks-and-wip-limit), forms slice teams, posts the design Go, dispatches reviews, coordinates branch sync and Master merges, escalates to the human. When a verified `Claude Code` `Quota Pause` is logged on the active thread or SwarmBus with its reset timestamp, **`Antigravity`** (`P3`) assumes sole single-writer `Acting COO` duties alongside `Codex` (`P2`) CPM/TD (`2/3 Acting COO` quorum) until `Claude Code` resets |
+| Chief Project Manager (CPM) & Technical Director (TD) | `P2` (Codex) | Prioritizes the backlog with the COO, checks repo/Spec Kit/build-graph consistency and may veto a slice or lock through the CLI channel and a SwarmBus/issue note as described [below](#board-locks-and-wip-limit) |
 | Head of Product Experience & UI/UX | `P3` (Antigravity) | Co-designs UI, TrackPlan, interaction and editorial slices from the design note on; checks visual hierarchy, themes, accessibility and user-facing clarity ([CLI contract](#head-of-uiux-gemini-carbon-via-antigravity)) |
 | Solution Architect | `P1` + `P2` / `P3` | Technical design within scope; one recommendation with trade-offs; prepares fundamental decisions for the human |
-| Senior Developer (Slice Writer) | `P1`, `P2` or `P4` (one named writer per slice) | Design note, test-first implementation, local checks, Draft PR, review fixes |
-| Companion Reviewer | `P1`, `P2` or `P3` (different model family from writer) | Reviews the design note and every pushed commit read-only on the PR while the slice grows |
-| Independent Final Reviewer | `P1` (fresh session) + cross-model `P2`/`P3` check | Read-only final review at Ready on the exact head and base without implementation history |
+| Senior Developer (Slice Writer) | `P1`, `P2` or `P4` (one named writer per slice) | Design note, test-first implementation, local checks, task branch/worktree, review fixes |
+| Companion Reviewer | `P1`, `P2` or `P3` (different model family from writer) | Reviews the design note and every pushed commit read-only on the task branch while the slice grows |
+| Independent Final Reviewer | `P1` (fresh session) + cross-model `P2`/`P3` check | Read-only final review before Master merge on the exact head and base without implementation history |
 | Executive Assistant | `P4` / `P1` cloud session | Portable work (docs, specs, CI-proved changes, triage) delegated by the COO; no merge authority; work needing the local machine, a device, the WinUI app or a secret stays local |
 | Domain Leads (Quality, Security, Communications, Documentation, DevOps, Art) | `P1`–`P4` role cells | Deliver assigned work in their domain through the same cross-model flow |
 
@@ -49,7 +49,7 @@ issues. Checks not run and states not inspected are recorded as limitations, nev
 
 ## Risk classes and domain matrix
 
-Every slice is assigned a risk class (`H`, `M` or `L`) when recorded in the Kanban item and the PR slice header.
+Every slice is assigned a risk class (`H`, `M` or `L`) when recorded in the Kanban item and the slice record (issue note / SwarmBus).
 Review-fix rounds always keep the risk class of their slice. Dependency updates take the risk class of the area
 they affect (`H` for runtime, protocol or transport packages, `M` for UI/feature packages, `L` for
 test/analyzer/build-only tooling):
@@ -58,7 +58,7 @@ test/analyzer/build-only tooling):
 | --- | --- | --- |
 | `H` High (Safety, Runtime & Protocol) | `Backend` (Z21/workflows), `Common` (EventBus/runtime), `MOBApi`, `MOBAdisplay` (`esp32/`), project-switch/stop logic, runtime/protocol dependencies | Writer (`P1`/`P2`), companion reviewer from a different model family (`P2` if writer is Claude; `P1` if writer is Codex), final independent `P1` review plus cross-family `P2` verification; a safety veto is binding |
 | `M` Medium (Features, UI & Audio) | `MOBAflow` (WinUI), `MOBAsmart` (MAUI), `SharedUI`, `TrackPlan.*`, `Speech.*`, `Sound`, `MOBAnews`, UI/feature dependencies | Writer (`P1`/`P2`/`P4`), companion reviewer from a different model family (`P2`/`P1`), `P3` (UI/UX & Product) at the design note for UI, TrackPlan and editorial `M` slices, final independent `P1` review plus cross-family `P2`/`P3` verification |
-| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the PR body (no separate design note or per-commit companion needed); final review at Ready runs a fresh independent `P1` review plus independent cross-family `P2`/`P3` verification |
+| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the commit message / SwarmBus note (no separate design note or per-commit companion needed); final review before Master merge runs a fresh independent `P1` review plus independent cross-family `P2`/`P3` verification |
 
 ## Delivery flow
 
