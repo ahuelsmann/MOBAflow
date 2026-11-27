@@ -795,6 +795,45 @@ function Test-HasUnresolvedReviewThreads {
     return $false
 }
 
+function Test-MarkerEligible {
+    param(
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $Marker,
+
+        [Parameter(Mandatory = $true)]
+        [string] $HeadSha,
+
+        [string] $BaseSha = '',
+
+        [string] $BaseRef = 'origin/main',
+
+        [string] $RepositoryRoot = (Get-Location).Path,
+
+        [AllowNull()]
+        [scriptblock] $CarryForwardEvaluator = $null
+    )
+
+    # Only a verdict naming the PR head with the exact current PR base, or a validated carry-forward
+    # (historical base plus identical patch), takes part in verdict ordering. Anything else is ignored.
+    if ($Marker.Head.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
+        return (Test-MarkerBaseMatches -Marker $Marker -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot)
+    }
+
+    try {
+        if (-not (Test-MarkerBaseMatches -Marker $Marker -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot -AllowHistoricalBase)) {
+            return $false
+        }
+
+        if ($null -ne $CarryForwardEvaluator) {
+            return [bool] (& $CarryForwardEvaluator $Marker.Head $HeadSha $BaseRef $RepositoryRoot)
+        }
+        return [bool] (Test-PatchEquivalent -MarkerHead $Marker.Head -CurrentHead $HeadSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot)
+    }
+    catch {
+        return $false
+    }
+}
+
 function New-ConnectorCandidate {
     param(
         [Parameter(Mandatory = $true)]
@@ -806,6 +845,8 @@ function New-ConnectorCandidate {
         [string] $FailureReason = '',
 
         [bool] $IsChanges = $false,
+
+        [bool] $IsBlocking = $false,
 
         [AllowNull()]
         [object] $Marker = $null,
@@ -819,6 +860,7 @@ function New-ConnectorCandidate {
         IsPass = $IsPass
         FailureReason = $FailureReason
         IsChanges = $IsChanges
+        IsBlocking = $IsBlocking
         HasDate = $Newest.HasDate
         SubmittedAt = $Newest.SubmittedAt
         Marker = $Marker
@@ -845,7 +887,10 @@ function Get-CodexConnectorCandidate {
 
         [string] $BaseRef = 'origin/main',
 
-        [string] $RepositoryRoot = (Get-Location).Path
+        [string] $RepositoryRoot = (Get-Location).Path,
+
+        [AllowNull()]
+        [scriptblock] $CarryForwardEvaluator = $null
     )
 
     $botLogin = 'chatgpt-codex-connector[bot]'
@@ -885,12 +930,25 @@ function Get-CodexConnectorCandidate {
         return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("verified review by $botLogin requested changes.") -IsChanges $true
     }
 
+    # Parse and classify the review marker first: an eligible CHANGES verdict must win over every
+    # later check (unresolved threads, commit mismatch) so it can never degrade into an ordinary failure.
+    $bodyMarkers = @(Get-FinalReviewMarkers -Comments @([pscustomobject] @{ body = $newest.Body }))
+    $marker = if ($bodyMarkers.Count -gt 0) { $bodyMarkers[0] } else { $null }
+    $markerEligible = $false
+    if ($null -ne $marker) {
+        $markerEligible = Test-MarkerEligible -Marker $marker -HeadSha $HeadSha -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot -CarryForwardEvaluator $CarryForwardEvaluator
+        if ($markerEligible -and $marker.Verdict -eq 'CHANGES') {
+            return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review marker verdict is CHANGES for $(Get-ShortSha $marker.Head).") -IsChanges $true -Marker $marker
+        }
+    }
+
     if (-not $newest.CommitId.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
         return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review commit $(Get-ShortSha $newest.CommitId) does not match head $(Get-ShortSha $HeadSha).")
     }
 
+    # Unresolved threads fail the gate outright (blocking): no fallback to an older PASS.
     if (Test-HasUnresolvedReviewThreads -ReviewThreads $ReviewThreads) {
-        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("Unresolved review threads block verified $botLogin review.")
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("Unresolved review threads block verified $botLogin review.") -IsBlocking $true
     }
 
     if ($newest.State -notin @('APPROVED', 'COMMENTED')) {
@@ -899,14 +957,12 @@ function Get-CodexConnectorCandidate {
 
     # A plain COMMENTED/APPROVED review is never a PASS: the review body must carry an explicit
     # moba-final-review PASS marker bound to the exact head and the PR base.
-    $bodyMarkers = @(Get-FinalReviewMarkers -Comments @([pscustomobject] @{ body = $newest.Body }))
-    if ($bodyMarkers.Count -eq 0) {
+    if ($null -eq $marker) {
         return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review has no explicit moba-final-review PASS marker (head= and base=).")
     }
 
-    $marker = $bodyMarkers[0]
     if ($marker.Verdict -ne 'PASS') {
-        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review marker verdict is $($marker.Verdict), not PASS.") -IsChanges ($marker.Verdict -eq 'CHANGES')
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review marker verdict is $($marker.Verdict), not PASS.")
     }
 
     if (-not $marker.Head.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
@@ -917,7 +973,7 @@ function Get-CodexConnectorCandidate {
         return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin is mapped to '$mappedFamily', not '$($marker.ReviewerFamily)'.")
     }
 
-    if (-not (Test-MarkerBaseMatches -Marker $marker -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot)) {
+    if (-not $markerEligible) {
         return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review marker base $(Get-ShortSha $marker.Base) does not match PR base.")
     }
 
@@ -1184,11 +1240,24 @@ function Get-ReviewGateResult {
     $identities = Get-IdentitiesConfig -RepositoryRoot $RepositoryRoot -IdentitiesPath $IdentitiesPath -IdentitiesConfig $IdentitiesConfig
     $inferredWriterFamilies = @(Get-InferredWriterFamilies -HeadRefName $HeadRefName -Commits $Commits)
     $markers = @(Get-FinalReviewMarkers -Comments $Comments)
-    $codexCandidate = Get-CodexConnectorCandidate -Reviews $Reviews -ReviewThreads $ReviewThreads -HeadSha $HeadSha -TrustedReviewers $identities.TrustedReviewers -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
+    $codexCandidate = Get-CodexConnectorCandidate -Reviews $Reviews -ReviewThreads $ReviewThreads -HeadSha $HeadSha -TrustedReviewers $identities.TrustedReviewers -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot -CarryForwardEvaluator $CarryForwardEvaluator
+
+    $leadMarker = $null
+    $leadMarkerEligible = $false
+    foreach ($candidateMarker in $markers) {
+        if (Test-MarkerEligible -Marker $candidateMarker -HeadSha $HeadSha -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot -CarryForwardEvaluator $CarryForwardEvaluator) {
+            $leadMarker = $candidateMarker
+            $leadMarkerEligible = $true
+            break
+        }
+    }
+    if ($null -eq $leadMarker -and $markers.Count -gt 0) {
+        $leadMarker = $markers[0]
+    }
 
     $markerEvaluator = {
         Resolve-MarkerGateResult `
-            -Marker $markers[0] `
+            -Marker $leadMarker `
             -HeadSha $HeadSha `
             -BaseSha $BaseSha `
             -PullRequestBody $PullRequestBody `
@@ -1221,11 +1290,11 @@ function Get-ReviewGateResult {
         # Both sources carry verdicts: the newest one wins regardless of source, so a newer CHANGES
         # (marker or CHANGES_REQUESTED) overrides an earlier PASS. Without usable dates on both, a
         # CHANGES verdict wins (fail closed); otherwise the issue-comment marker leads.
-        $markerIsChanges = $markers[0].Verdict -eq 'CHANGES'
-        $markerHasDate = $null -ne $markers[0].CreatedAt
+        $markerIsChanges = $leadMarkerEligible -and $leadMarker.Verdict -eq 'CHANGES'
+        $markerHasDate = $null -ne $leadMarker.CreatedAt
         $connectorFirst = $false
         if ($markerHasDate -and $codexCandidate.HasDate) {
-            $connectorFirst = $codexCandidate.SubmittedAt -gt $markers[0].CreatedAt
+            $connectorFirst = $codexCandidate.SubmittedAt -gt $leadMarker.CreatedAt
         }
         elseif ($codexCandidate.IsChanges -and -not $markerIsChanges) {
             $connectorFirst = $true
@@ -1233,8 +1302,9 @@ function Get-ReviewGateResult {
 
         $firstIsChanges = if ($connectorFirst) { $codexCandidate.IsChanges } else { $markerIsChanges }
         $secondIsChanges = if ($connectorFirst) { $markerIsChanges } else { $codexCandidate.IsChanges }
+        $firstIsBlocking = $connectorFirst -and $codexCandidate.IsBlocking
         $first = if ($connectorFirst) { & $connectorEvaluator } else { & $markerEvaluator }
-        if ($first.State -eq 'success' -or $firstIsChanges -or $secondIsChanges) {
+        if ($first.State -eq 'success' -or $firstIsChanges -or $secondIsChanges -or $firstIsBlocking) {
             return $first
         }
 

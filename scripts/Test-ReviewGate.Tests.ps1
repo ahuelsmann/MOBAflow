@@ -320,6 +320,109 @@ $resConnectorNoOrchestrator = Get-ReviewGateResult `
     -IdentitiesConfig $strictIdentities
 Assert-Equal 'failure' $resConnectorNoOrchestrator.State 'connector path fails when PR Orchestrator is missing'
 
+# 7f. Eligibility and fail-closed ordering regressions.
+# (a) A newer connector CHANGES marker with unresolved threads must fail, never fall back to an older PASS.
+$newerChangesUnresolved = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headA $baseA 'openai')
+$newerChangesUnresolved.submitted_at = '2026-11-26T10:30:00Z'
+$resChangesUnresolved = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment) `
+    -Reviews @($newerChangesUnresolved) `
+    -ReviewThreads @(@{ isResolved = $false }) `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resChangesUnresolved.State 'newer connector CHANGES with unresolved threads does not fall back to an older PASS'
+
+# (b) A newer connector PASS blocked by unresolved threads must not fall back to an older issue-comment PASS.
+$newerPassUnresolved = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $baseA 'openai')
+$newerPassUnresolved.submitted_at = '2026-11-26T10:30:00Z'
+$resPassUnresolved = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment) `
+    -Reviews @($newerPassUnresolved) `
+    -ReviewThreads @(@{ isResolved = $false }) `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resPassUnresolved.State 'newer connector verdict with unresolved threads does not fall back to an older PASS'
+Assert-True ($resPassUnresolved.Description -like '*Unresolved review threads*') 'unresolved thread blocks instead of falling back'
+
+# (c) A connector CHANGES marker naming another head must not override a valid issue-comment PASS.
+$staleHeadConnector = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headB $baseA 'openai')
+$staleHeadConnector.submitted_at = '2026-11-26T10:30:00Z'
+$resStaleHeadConnector = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment) `
+    -Reviews @($staleHeadConnector) `
+    -ReviewThreads @() `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'success' $resStaleHeadConnector.State 'connector CHANGES marker for another head is ignored for ordering'
+
+$staleBaseConnector = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headA $wrongBase 'openai')
+$staleBaseConnector.submitted_at = '2026-11-26T10:30:00Z'
+$resStaleBaseConnector = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment) `
+    -Reviews @($staleBaseConnector) `
+    -ReviewThreads @() `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'success' $resStaleBaseConnector.State 'connector CHANGES marker with a stale base is ignored for ordering'
+
+# (d) The same eligibility applies to issue-comment CHANGES markers (newer stale-head / stale-base CHANGES is ignored).
+$staleHeadChangesComment = @{
+    id = 51
+    created_at = '2026-11-26T10:20:00Z'
+    user = @{ login = 'ahuelsmann' }
+    body = "<!-- moba-final-review verdict=CHANGES head=$headB base=$baseA reviewer-family=openai reviewer-model=gpt-6.2-sol dispatcher=Codex-TD -->"
+}
+$resStaleHeadComment = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment, $staleHeadChangesComment) `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'success' $resStaleHeadComment.State 'newer issue-comment CHANGES for another head does not override a valid PASS'
+
+$staleBaseChangesComment = @{
+    id = 52
+    created_at = '2026-11-26T10:21:00Z'
+    user = @{ login = 'ahuelsmann' }
+    body = "<!-- moba-final-review verdict=CHANGES head=$headA base=$wrongBase reviewer-family=openai reviewer-model=gpt-6.2-sol dispatcher=Codex-TD -->"
+}
+$resStaleBaseComment = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment, $staleBaseChangesComment) `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'success' $resStaleBaseComment.State 'newer issue-comment CHANGES with a stale base does not override a valid PASS'
+
+# (e) A valid CHANGES on the current head and base still overrides.
+$validChangesComment = @{
+    id = 53
+    created_at = '2026-11-26T10:22:00Z'
+    user = @{ login = 'ahuelsmann' }
+    body = "<!-- moba-final-review verdict=CHANGES head=$headA base=$baseA reviewer-family=openai reviewer-model=gpt-6.2-sol dispatcher=Codex-TD -->"
+}
+Assert-Equal 'failure' (Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment, $validChangesComment) `
+    -IdentitiesConfig $defaultIdentities).State 'valid newer CHANGES on current head and base still overrides a PASS'
+
 # 7e. Review-thread pagination reads every page until an unresolved thread is found.
 $script:pageCalls = 0
 $pagedUnresolved = Read-ReviewThreadPages -FetchPage {
