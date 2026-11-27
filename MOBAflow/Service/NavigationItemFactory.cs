@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.WinUI.Service;
+namespace Moba.MOBAflow.Service;
 
 using SharedUI.Configuration;
 
@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 
-using Moba.WinUI.View;
+using Moba.MOBAflow.View;
 
 /// <summary>
 /// Factory for creating NavigationViewItems from PageMetadata.

@@ -1,4 +1,4 @@
-namespace Moba.WinUI.View;
+namespace Moba.MOBAflow.View;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

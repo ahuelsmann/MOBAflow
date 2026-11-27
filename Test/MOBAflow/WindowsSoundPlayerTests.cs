@@ -3,7 +3,7 @@
 
 namespace Moba.Test.MOBAflow;
 
-using global::Moba.WinUI.Service;
+using global::Moba.MOBAflow.Service;
 
 using Microsoft.Extensions.Logging.Abstractions;
 

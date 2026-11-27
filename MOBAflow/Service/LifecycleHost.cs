@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root.
 
-namespace Moba.WinUI.Service;
+namespace Moba.MOBAflow.Service;
 
 using Microsoft.UI.Xaml;
 

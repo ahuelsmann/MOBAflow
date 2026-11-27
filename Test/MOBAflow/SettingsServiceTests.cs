@@ -4,7 +4,7 @@ namespace Moba.Test.MOBAflow;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.SharedUI.Configuration;
-using Moba.WinUI.Service;
+using Moba.MOBAflow.Service;
 using System.Text.Json;
 
 [TestFixture]

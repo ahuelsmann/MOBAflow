@@ -1,8 +1,8 @@
 <Application
-    x:Class="Moba.WinUI.App"
+    x:Class="Moba.MOBAflow.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converter="using:Moba.WinUI.Converter">
+    xmlns:converter="using:Moba.MOBAflow.Converter">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

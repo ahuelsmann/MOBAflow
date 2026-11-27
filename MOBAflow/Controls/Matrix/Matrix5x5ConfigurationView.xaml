@@ -1,8 +1,8 @@
 <UserControl
-    x:Class="Moba.WinUI.Controls.Matrix.Matrix5x5ConfigurationView"
+    x:Class="Moba.MOBAflow.Controls.Matrix.Matrix5x5ConfigurationView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:matrix="using:Moba.WinUI.Controls.Matrix">
+    xmlns:matrix="using:Moba.MOBAflow.Controls.Matrix">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />

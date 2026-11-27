@@ -1,8 +1,8 @@
 <UserControl
-    x:Class="Moba.WinUI.Controls.TimetableStopsControl"
+    x:Class="Moba.MOBAflow.Controls.TimetableStopsControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converter="using:Moba.WinUI.Converter">
+    xmlns:converter="using:Moba.MOBAflow.Converter">
 
     <UserControl.Resources>
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />

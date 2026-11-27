@@ -2,7 +2,7 @@
 #if WINDOWS
 namespace Moba.Test.WinUI;
 
-using Moba.WinUI.Controls;
+using Moba.MOBAflow.Controls;
 [TestFixture]
 internal sealed class GaugeVisualRulesTests
 {
