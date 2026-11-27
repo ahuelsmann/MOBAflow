@@ -12,6 +12,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Informational until #566 (separate agent identities): this context is NOT a required ruleset check.
+# The declared (shared account) tier may only satisfy this informational context.
+$script:StatusContext = 'Independent final review (informational)'
+
 function Get-SliceHeaderField {
     [CmdletBinding()]
     param(
@@ -795,7 +799,13 @@ function Get-CodexConnectorCandidate {
         [string] $HeadSha,
 
         [Parameter(Mandatory = $true)]
-        [hashtable] $TrustedReviewers
+        [hashtable] $TrustedReviewers,
+
+        [string] $BaseSha = '',
+
+        [string] $BaseRef = 'origin/main',
+
+        [string] $RepositoryRoot = (Get-Location).Path
     )
 
     $botLogin = 'chatgpt-codex-connector[bot]'
@@ -817,6 +827,7 @@ function Get-CodexConnectorCandidate {
                 HasDate = $hasDate
                 SubmittedAt = $parsedDate
                 CommitId = [string] (Get-ObjectField -Source $review -Names @('commit_id', 'commitId'))
+                Body = [string] (Get-ObjectField -Source $review -Names @('body', 'Body'))
                 State = ([string] (Get-ObjectField -Source $review -Names @('state', 'State'))).Trim().ToUpperInvariant()
             })
         }
@@ -844,6 +855,30 @@ function Get-CodexConnectorCandidate {
 
     if ($newest.State -notin @('APPROVED', 'COMMENTED')) {
         return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review state '$($newest.State)' is not a passing state." }
+    }
+
+    # A plain COMMENTED/APPROVED review is never a PASS: the review body must carry an explicit
+    # moba-final-review PASS marker bound to the exact head and the PR base.
+    $bodyMarkers = @(Get-FinalReviewMarkers -Comments @([pscustomobject] @{ body = $newest.Body }))
+    if ($bodyMarkers.Count -eq 0) {
+        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review has no explicit moba-final-review PASS marker (head= and base=)." }
+    }
+
+    $marker = $bodyMarkers[0]
+    if ($marker.Verdict -ne 'PASS') {
+        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review marker verdict is $($marker.Verdict), not PASS." }
+    }
+
+    if (-not $marker.Head.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
+        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review marker head $(Get-ShortSha $marker.Head) does not match head $(Get-ShortSha $HeadSha)." }
+    }
+
+    if ($marker.ReviewerFamily -ne $mappedFamily) {
+        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin is mapped to '$mappedFamily', not '$($marker.ReviewerFamily)'." }
+    }
+
+    if (-not (Test-MarkerBaseMatches -Marker $marker -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot)) {
+        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review marker base $(Get-ShortSha $marker.Base) does not match PR base." }
     }
 
     return [pscustomobject] @{
@@ -1103,7 +1138,7 @@ function Get-ReviewGateResult {
     $identities = Get-IdentitiesConfig -RepositoryRoot $RepositoryRoot -IdentitiesPath $IdentitiesPath -IdentitiesConfig $IdentitiesConfig
     $inferredWriterFamilies = @(Get-InferredWriterFamilies -HeadRefName $HeadRefName -Commits $Commits)
     $markers = @(Get-FinalReviewMarkers -Comments $Comments)
-    $codexCandidate = Get-CodexConnectorCandidate -Reviews $Reviews -ReviewThreads $ReviewThreads -HeadSha $HeadSha -TrustedReviewers $identities.TrustedReviewers
+    $codexCandidate = Get-CodexConnectorCandidate -Reviews $Reviews -ReviewThreads $ReviewThreads -HeadSha $HeadSha -TrustedReviewers $identities.TrustedReviewers -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
 
     if ($markers.Count -gt 0) {
         $markerResult = Resolve-MarkerGateResult `
@@ -1234,7 +1269,7 @@ Write-Host "Review gate PR #$PullRequest ($headSha): state=$($result.State) tier
 if ($SetStatus) {
     gh api "repos/$Repository/statuses/$headSha" `
         -f "state=$($result.State)" `
-        -f "context=Independent final review" `
+        -f "context=$script:StatusContext" `
         -f "description=$($result.Description)" | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to publish commit status for PR #$PullRequest ($headSha)."

@@ -5,6 +5,7 @@
 - Issue:
 - Risk class (H/M/L):
 - Locked areas:
+<!-- Writer family and Orchestrator feed the informational "Independent final review (informational)" status (not a required check until #566). -->
 - Writer family: claude|openai|gemini
 - Writer:
 - Orchestrator: <head-name>

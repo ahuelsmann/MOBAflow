@@ -166,12 +166,14 @@ $resTrustedBotMarker = Get-ReviewGateResult `
 Assert-Equal 'success' $resTrustedBotMarker.State 'trusted bot marker succeeds even when allowDeclaredReviews=false'
 Assert-True ($resTrustedBotMarker.Description.Contains('verified')) 'trusted bot description includes verified'
 
-# 7. chatgpt-codex-connector[bot] review matching on exact head SHA (no base= needed), wrong SHA, and unresolved thread.
+# 7. chatgpt-codex-connector[bot] review: explicit PASS marker bound to head and base, wrong SHA, unresolved thread.
+$codexPassMarker = "<!-- moba-final-review verdict=PASS head=$headA base=$baseA reviewer-family=openai reviewer-model=gpt-6.2 dispatcher=Codex-TD -->"
 $codexPassReview = @{
     user = @{ login = 'chatgpt-codex-connector[bot]' }
     commit_id = $headA
     state = 'COMMENTED'
     submitted_at = '2026-11-26T10:05:00Z'
+    body = "Review summary`n$codexPassMarker"
 }
 $resCodexPass = Get-ReviewGateResult `
     -PullRequestAuthor 'ahuelsmann' `
@@ -189,6 +191,7 @@ $codexWrongShaReview = @{
     commit_id = $headB
     state = 'APPROVED'
     submitted_at = '2026-11-26T10:05:00Z'
+    body = $codexPassMarker
 }
 $resCodexWrongSha = Get-ReviewGateResult `
     -PullRequestAuthor 'ahuelsmann' `
@@ -210,6 +213,50 @@ $resCodexUnresolved = Get-ReviewGateResult `
     -IdentitiesConfig $strictIdentities
 Assert-Equal 'failure' $resCodexUnresolved.State 'chatgpt-codex-connector[bot] with unresolved review thread fails'
 Assert-True ($resCodexUnresolved.Description -like '*Unresolved review threads*') 'unresolved thread failure clear'
+
+function Get-ConnectorResult([hashtable] $Review) {
+    return Get-ReviewGateResult `
+        -PullRequestAuthor 'ahuelsmann' `
+        -PullRequestBody $standardBody `
+        -HeadSha $headA `
+        -BaseSha $baseA `
+        -Reviews @($Review) `
+        -ReviewThreads @() `
+        -IdentitiesConfig $strictIdentities
+}
+
+function New-ConnectorReview([string] $State, [AllowNull()][string] $Body) {
+    $review = @{
+        user = @{ login = 'chatgpt-codex-connector[bot]' }
+        commit_id = $headA
+        state = $State
+        submitted_at = '2026-11-26T10:05:00Z'
+    }
+    if ($null -ne $Body) {
+        $review.body = $Body
+    }
+    return $review
+}
+
+function New-ConnectorMarker([string] $Verdict, [string] $Head, [string] $Base, [string] $Family) {
+    $baseAttr = if ([string]::IsNullOrEmpty($Base)) { '' } else { " base=$Base" }
+    return "<!-- moba-final-review verdict=$Verdict head=$Head$baseAttr reviewer-family=$Family reviewer-model=gpt-6.2 dispatcher=Codex-TD -->"
+}
+
+# 7b. Negative: the connector path never passes without an explicit, head- and base-bound PASS marker.
+$resPlainCommented = Get-ConnectorResult (New-ConnectorReview 'COMMENTED' 'Looks fine.')
+Assert-Equal 'failure' $resPlainCommented.State 'plain COMMENTED connector review is never PASS'
+Assert-True ($resPlainCommented.Description -like '*explicit moba-final-review PASS marker*') 'plain COMMENTED failure names the missing marker'
+Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' $null)).State 'connector review without body is never PASS'
+Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'APPROVED' '')).State 'plain APPROVED connector review without marker is never PASS'
+Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA '' 'openai'))).State 'connector PASS marker without base= fails'
+$resConnWrongBase = Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $wrongBase 'openai'))
+Assert-Equal 'failure' $resConnWrongBase.State 'connector PASS marker with wrong base fails'
+Assert-True ($resConnWrongBase.Description -like '*does not match PR base*') 'connector wrong base explained'
+Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headB $baseA 'openai'))).State 'connector PASS marker for a different head fails'
+Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headA $baseA 'openai'))).State 'connector CHANGES marker fails'
+Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $baseA 'gemini'))).State 'connector marker family differing from the trusted mapping fails'
+Assert-Equal 'success' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $baseA 'openai'))).State 'connector review with explicit head- and base-bound PASS marker succeeds'
 
 # 8. Writer-family cross-check against PR commits / branch prefix ("writer family mismatch").
 $codexBranchBody = @"
@@ -340,10 +387,19 @@ $loadedIdentities = Get-IdentitiesConfig -RepositoryRoot $repositoryRoot
 Assert-Equal 'openai' $loadedIdentities.TrustedReviewers['chatgpt-codex-connector[bot]'] 'repo identities file maps chatgpt-codex-connector[bot]'
 Assert-Equal 'claude' $loadedIdentities.TrustedReviewers['claude[bot]'] 'repo identities file maps claude[bot]'
 Assert-Equal 'gemini' $loadedIdentities.TrustedReviewers['gemini-code-assist[bot]'] 'repo identities file maps gemini-code-assist[bot]'
-Assert-True $loadedIdentities.AllowDeclaredReviews 'repo identities file enables allowDeclaredReviews'
+Assert-True $loadedIdentities.AllowDeclaredReviews 'repo identities file enables allowDeclaredReviews (informational until #566)'
 
 $workflowText = Get-Content -Raw -LiteralPath (Join-Path $repositoryRoot '.github/workflows/review-gate.yml')
-Assert-True ($workflowText.Contains('pull_request_target:')) 'review-gate.yml uses pull_request_target'
+# Trusted publisher: the job with statuses: write must never be triggered by PR-defined workflow events.
+Assert-True ($workflowText -notmatch '(?m)^\s*pull_request(_review|_target)?:') 'publisher workflow has no pull_request, pull_request_review or pull_request_target trigger'
+Assert-True ($workflowText -match '(?m)^\s*issue_comment:') 'publisher workflow listens to issue_comment'
+Assert-True ($workflowText -match '(?m)^\s*workflow_run:') 'publisher workflow listens to workflow_run'
+Assert-True ($workflowText -match 'statuses: write') 'publisher workflow holds statuses: write'
+Assert-True ($workflowText -notmatch 'actions/checkout') 'publisher workflow never uses a PR checkout action'
+$testsWorkflowText = Get-Content -Raw -LiteralPath (Join-Path $repositoryRoot '.github/workflows/review-gate-tests.yml')
+Assert-True ($testsWorkflowText -notmatch 'statuses:\s*write') 'PR-head self-test workflow has no statuses: write'
+Assert-True ($testsWorkflowText -notmatch 'secrets\.') 'PR-head self-test workflow uses no secrets'
+Assert-True ((Get-Content -Raw -LiteralPath $scriptPath).Contains('Independent final review (informational)')) 'status context is the informational name'
 Assert-True ($workflowText -notmatch 'gate not yet installed') 'bootstrap path does not emit success commit status'
 Assert-True ($workflowText -match 'exit 0') 'bootstrap path exits cleanly without posting status'
 

@@ -1,44 +1,72 @@
-name: Independent final review
+name: Independent final review (informational)
 
+# Trusted publisher. Informational until #566 (separate agent identities): the published status context
+# "Independent final review (informational)" is NOT a required check in the main ruleset.
+#
+# Security boundary: this workflow is the only one with statuses: write. It is triggered ONLY by events whose
+# workflow definition comes from the default branch (issue_comment, workflow_run, schedule), never by
+# pull_request, pull_request_target or pull_request_review. It executes the evaluator from a clone of the
+# default branch only; PR-head objects are fetched for git diff comparison and never checked out or executed.
+# The PR-head self-tests run unprivileged in review-gate-tests.yml (contents: read, no secrets).
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review, edited]
-  pull_request_review:
-    types: [submitted, edited, dismissed]
   issue_comment:
     types: [created, edited, deleted]
+  workflow_run:
+    workflows: ["Test review gate"]
+    types: [completed]
+  schedule:
+    - cron: "*/30 * * * *"
 
 permissions:
   contents: read
 
 concurrency:
-  group: review-gate-publisher-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: true
+  group: review-gate-publisher-${{ github.event.issue.number || github.event_name }}
+  cancel-in-progress: false
 
 jobs:
   review-gate:
-    name: Evaluate independent final review gate
+    name: Evaluate independent final review gate (informational)
     if: github.event_name != 'issue_comment' || github.event.issue.pull_request != null
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: read
       statuses: write
 
     steps:
-      # Security boundary: clone ONLY the trusted default branch; PR code is never executed, installed, or sourced.
-      - name: Evaluate final review gate and publish commit status
+      - name: Evaluate final review gate and publish informational commit status
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          EVENT_NAME: ${{ github.event_name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_PR_NUMBERS: ${{ toJSON(github.event.workflow_run.pull_requests.*.number) }}
           REPOSITORY: ${{ github.repository }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          $prNumber = [int] $env:PR_NUMBER
           $repository = $env:REPOSITORY
           $defaultBranch = $env:DEFAULT_BRANCH
+          if ([string]::IsNullOrWhiteSpace($defaultBranch)) {
+            $defaultBranch = (gh api "repos/$repository" --jq .default_branch)
+          }
+
+          $prNumbers = @()
+          switch ($env:EVENT_NAME) {
+            'issue_comment' { $prNumbers = @([int] $env:ISSUE_NUMBER) }
+            'workflow_run' {
+              try { $prNumbers = @(($env:RUN_PR_NUMBERS | ConvertFrom-Json) | ForEach-Object { [int] $_ }) } catch { $prNumbers = @() }
+            }
+            default { $prNumbers = @(gh pr list --repo $repository --state open --json number --jq '.[].number' | ForEach-Object { [int] $_ }) }
+          }
+
+          if ($prNumbers.Count -eq 0) {
+            Write-Host '::notice::No pull request to evaluate for this event.'
+            exit 0
+          }
+
+          # Clone ONLY the trusted default branch; the evaluator never comes from a PR.
           $repoDir = Join-Path $env:RUNNER_TEMP 'review-gate-repo'
           if (Test-Path -LiteralPath $repoDir) {
             Remove-Item -LiteralPath $repoDir -Recurse -Force
@@ -56,10 +84,23 @@ jobs:
             exit 0
           }
 
-          # Fetch PR head git objects strictly for diff comparison; PR files are never checked out or executed.
-          git fetch origin "pull/${prNumber}/head"
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to fetch pull/${prNumber}/head."
+          $failed = @()
+          foreach ($prNumber in $prNumbers) {
+            try {
+              # Fetch PR head git objects strictly for diff comparison; PR files are never checked out or executed.
+              git fetch origin "pull/${prNumber}/head"
+              if ($LASTEXITCODE -ne 0) {
+                throw "Failed to fetch pull/${prNumber}/head."
+              }
+
+              ./scripts/Test-ReviewGate.ps1 -PullRequest $prNumber -Repository $repository -SetStatus
+            }
+            catch {
+              Write-Host "::error::PR #${prNumber}: $($_.Exception.Message)"
+              $failed += $prNumber
+            }
           }
 
-          ./scripts/Test-ReviewGate.ps1 -PullRequest $prNumber -Repository $repository -SetStatus
+          if ($failed.Count -gt 0) {
+            throw "Review gate publication failed for PR(s): $($failed -join ', ')."
+          }

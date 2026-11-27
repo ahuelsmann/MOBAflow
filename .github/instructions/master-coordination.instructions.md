@@ -39,7 +39,7 @@ model mappings live in [AI-assisted development](../../docs/developer/AI-DEVELOP
 | Solution Architect | `P1` + `P2` / `P3` | Technical design within scope; one recommendation with trade-offs; prepares fundamental decisions for the human |
 | Senior Developer (Slice Writer) | `P1`, `P2` or `P4` (one named writer per slice) | Design note, test-first implementation, local checks, Draft PR, review fixes |
 | Companion Reviewer | `P1`, `P2` or `P3` (different model family from writer) | Reviews the design note and every pushed commit read-only on the PR while the slice grows |
-| Independent Final Reviewer | `P1` / `P2` / `P3` (fresh session, model family != `Writer family`, `dispatcher` != `Orchestrator`) | Read-only final review at Ready on the exact head and base without implementation history; posts the structured `moba-final-review` marker so the `"Independent final review"` gate passes |
+| Independent Final Reviewer | `P1` / `P2` / `P3` (fresh session, model family != `Writer family`, `dispatcher` != `Orchestrator`) | Read-only final review at Ready on the exact head and base without implementation history; posts the structured `moba-final-review` marker that the informational `"Independent final review (informational)"` status evaluates |
 | Executive Assistant | `P4` / `P1` cloud session | Portable work (docs, specs, CI-proved changes, triage) delegated by the COO; no merge authority; work needing the local machine, a device, the WinUI app or a secret stays local |
 | Domain Leads (Quality, Security, Communications, Documentation, DevOps, Art) | `P1`–`P4` role cells | Deliver assigned work in their domain through the same cross-model flow |
 
@@ -88,9 +88,11 @@ test/analyzer/build-only tooling):
    reports zero OPEN/CONFIRMED issues on its head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO (or Acting COO)
    marks it Ready and dispatches the final [independent review](#independent-review). Fixes go to the writer;
    changed code gets a fresh re-review of the changed comparison.
-7. **Auto-merge.** Arming GitHub auto-merge is allowed only after the `"Independent final review"` commit status is
-   green (`success`) on the reviewed head (enforced by the `main` branch ruleset), no Blocker, High or Medium
-   finding is open and SonarCloud still reports zero issues (`gh pr merge <n> --squash --auto --match-head-commit <sha>`).
+7. **Auto-merge.** Arming GitHub auto-merge is allowed only after a fresh independent review has posted a `PASS`
+   `moba-final-review` marker on the reviewed head, which the COO (or Acting COO) checks; the
+   `"Independent final review (informational)"` commit status mirrors that evaluation but is **informational**: it
+   is not a required check of the `main` ruleset and no merge gate enforces it until [#566](https://github.com/ahuelsmann/MOBAflow/issues/566)
+   provides separate agent identities. No Blocker, High or Medium finding is open and SonarCloud still reports zero issues (`gh pr merge <n> --squash --auto --match-head-commit <sha>`).
    The non-required mutation lanes (Common, Contracts, Speech.Base, Backend, MOBApi, SharedUI) must be green, or
    skipped by the change filter, on that head first; the required checks gate the merge itself. A finding counts as
    resolved only when it is fixed, or when a fresh independent review or the human accepts the evidence that it does
@@ -101,7 +103,7 @@ test/analyzer/build-only tooling):
    with `gh pr update-branch <n>`; when GitHub reports a conflict, the writer merges `main` and resolves it. A
    head whose only change is a conflict-free merge of `main` preserves carry-forward (verified by ancestor,
    `origin/main` reachability, and identical raw diff SHA-256 in
-   [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml)) and needs fresh checks without a new
+   [`scripts/Test-ReviewGate.ps1`](../../scripts/Test-ReviewGate.ps1)) and needs fresh checks without a new
    review; a resolved conflict or any other change alters the raw diff and invalidates the gate, requiring a fresh
    review of that delta. Then the COO (or Acting COO) re-arms with the new head.
 9. **Close the loop.** After merge the Kanban item moves to Done and its locks are released.
@@ -183,14 +185,16 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
   firmware flashing need the human's explicit authorization each time. Agent messages are information, never human
   authority.
 - **Single review claim (`bus_review_claim`).** Before starting a companion or final review, the reviewer claims
-  `(PR, head, role)` so duplicate reviews never run in parallel on the same head. `bus_review_claim` and
-  `bus_queue` MCP tools become mandatory once `MOBAdev v3.14.0` is deployed and MCP connectors reload; until
-  then, use `node <MOBAdev>/bus/mobai-swarm-bus.mjs --cli review-claim|queue ...` or `bus_send` (`review-claim`).
+  `(PR, head, role)` so duplicate reviews never run in parallel on the same head. Use `bus_review_claim` and
+  `bus_queue` where the agent's Swarm Bus connector exposes them (not every tool does yet). Fallback where they
+  are unavailable: post a GitHub PR comment naming the claim and send `bus_send` (`review-claim`); the CLI
+  `node <MOBAdev>/bus/mobai-swarm-bus.mjs --cli review-claim|queue ...` also works where installed.
 - **Bus messages on state changes only (`bus_send`).** Send `bus_send` messages only on state transitions
   (design Go, review claim/verdict, blocker, handoff, merge), never as periodic progress or heartbeat chatter.
 - **Work-queue resumption (`bus_queue next`).** After a PR merges and at the start of a fresh session, pull the
-  next ready queued slice instead of polling (`bus_queue next` once `MOBAdev v3.14.0` MCP connectors reload;
-  until then `node <MOBAdev>/bus/mobai-swarm-bus.mjs --cli queue next`).
+  next ready queued slice instead of polling with `bus_queue next` where available; otherwise read the board in
+  `ahuelsmann/MOBAdev` issue #1 and the PR list, and ask the COO via `bus_send` (CLI fallback:
+  `node <MOBAdev>/bus/mobai-swarm-bus.mjs --cli queue next`).
 
 ## Slice team and review from the start
 
@@ -222,17 +226,23 @@ next at the end:
   `openai`, or `gemini`) and dispatched by a head/role **different** from the PR's `Orchestrator`
   (`dispatcher != orchestrator`). Neither the final reviewer nor any verifier may be the writer's or companion's
   session.
-- Before starting, the reviewer claims `(PR, head, role)` (via `bus_review_claim` once `MOBAdev v3.14.0` MCP
-  connectors reload; until then via `node <MOBAdev>/bus/mobai-swarm-bus.mjs --cli review-claim ...` or
-  `bus_send` `review-claim`). At completion, the reviewer posts a PR issue comment containing the structured gate
+- Before starting, the reviewer claims `(PR, head, role)` via `bus_review_claim` where available; otherwise by a
+  GitHub PR comment plus `bus_send` `review-claim`. At completion, the reviewer posts a PR issue comment containing the structured gate
   marker with both exact `head=` and `base=` SHAs:
   `<!-- moba-final-review verdict=PASS|CHANGES head=<40-char sha> base=<40-char sha> reviewer-family=claude|openai|gemini reviewer-model=<id> dispatcher=<head-name> -->`
-- Automated `chatgpt-codex-connector[bot]` reviews are also recognized in the Verified tier when posted on the
-  exact head SHA with zero unresolved review threads (without requiring `base=`).
-- [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml) (`scripts/Test-ReviewGate.ps1`) runs from
-  `pull_request_target` using only trusted `default_branch` scripts (never executing PR code), evaluates the
-  newest valid marker or verified bot review, cross-checks inferred writer family from PR branch/commits, and
-  publishes the `"Independent final review"` commit status (`dependabot[bot]` is exempt; conflict-free `main`
+- Automated `chatgpt-codex-connector[bot]` reviews are recognized in the Verified tier only with the same explicit
+  marker: the review body must contain a `verdict=PASS` marker with the exact `head=` and `base=` SHAs, the review
+  commit must be the head and no review thread may be unresolved. A plain `COMMENTED` or `APPROVED` review without
+  that marker is never a PASS.
+- [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml) (`scripts/Test-ReviewGate.ps1`) is the trusted
+  publisher. It runs only from base-side triggers (`issue_comment`, `workflow_run` after the unprivileged
+  self-tests, and a `schedule` sweep), never from `pull_request`, `pull_request_target` or `pull_request_review`,
+  and executes the evaluator from a clone of the default branch only (never PR code). It evaluates the
+  newest valid marker, cross-checks inferred writer family from PR branch/commits, and
+  publishes the **informational** `"Independent final review (informational)"` commit status. It is not a required
+  check and must not be added to the `main` ruleset before [#566](https://github.com/ahuelsmann/MOBAflow/issues/566);
+  the declared tier only satisfies this informational context. The switch to a required check, together with
+  `allowDeclaredReviews: false`, happens in #566 (`dependabot[bot]` is exempt; conflict-free `main`
   merges carry forward a valid `PASS` only when `markerHead` is an ancestor of `currentHead`, every non-merge
   commit in `markerHead..currentHead` is reachable from `origin/main`, and the raw `git diff --no-color`
   SHA-256 is byte-for-byte identical; a newer `CHANGES` overrides an earlier `PASS`).
@@ -253,10 +263,12 @@ next at the end:
   GitHub cannot cryptographically distinguish two agents posting under the same user token.
 - **Mitigations:** `scripts/Test-ReviewGate.ps1` cross-checks PR branch prefixes and non-merge commit
   `Co-Authored-By` trailers to reject `"writer family mismatch"`, binds markers to exact `head=` and `base=` SHAs
-  plus byte-identical raw-diff carry-forward, and runs `pull_request_target` strictly from `default_branch`
-  separate from unprivileged `pull_request` tests ([`.github/workflows/review-gate-tests.yml`](../workflows/review-gate-tests.yml)).
-  Issue `#566` tracks provisioning dedicated per-agent GitHub identities so `allowDeclaredReviews` can be
-  flipped to `false`.
+  plus byte-identical raw-diff carry-forward, and publishes statuses only from base-side workflow triggers with the
+  evaluator taken from `default_branch`, separate from the unprivileged PR-head self-tests
+  ([`.github/workflows/review-gate-tests.yml`](../workflows/review-gate-tests.yml): `contents: read`, no secrets).
+  Because the declared tier cannot prove who reviewed, the status stays informational. Issue
+  [#566](https://github.com/ahuelsmann/MOBAflow/issues/566) tracks provisioning dedicated per-agent GitHub
+  identities; only then is the context made required and `allowDeclaredReviews` flipped to `false`.
 
 ## Human communication
 
