@@ -87,7 +87,7 @@ dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
 To collect coverage for the full Windows test suite, including desktop code:
 
 ```powershell
-dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false --settings Test/coverlet.runsettings --results-directory TestResults/Coverage
+dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 --settings Test/coverlet.runsettings --results-directory TestResults/Coverage
 ```
 
 The report combines unit and integration tests; Android is excluded.

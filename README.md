@@ -189,7 +189,7 @@ Run the portable test suite on Windows or Linux, or the full Windows desktop tes
 
 ```powershell
 dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
-dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false
+dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#run-tests) and [Build performance](docs/developer/BUILD-PERFORMANCE.md#deliverables-lanes-and-required-checks) for coverage and mutation lanes.

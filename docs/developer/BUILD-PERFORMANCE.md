@@ -152,7 +152,7 @@ dependency changes and graph limitations. It adds no required gate and does not 
 resolved NuGet audit described below. A successful job is not a claim of complete graph coverage.
 
 The public, authoritative pull-request check is `.github/workflows/quality.yml`.
-It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
+It builds the Windows desktop graph,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
 and retains the reports and packages. The required `Portable tests on Linux` job
 first runs `dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32`
@@ -179,8 +179,7 @@ The job installs and verifies workload set 10.0.402, publishes the Release AAB,
 enforces the Android analyzer baseline and validates/archives the bundle. It does
 not deploy to a device or publish a GitHub Release. The SDK follows the agreed
 10.0.4xx feature-band policy in `global.json`: patches at least 10.0.402 are allowed,
-so this is a feature-band pin rather than an exact SDK patch pin. Mobile tests
-remain an explicit opt-in graph with `IncludeMobaSmartTests=true`.
+so this is a feature-band pin rather than an exact SDK patch pin.
 
 The Linux display job also runs the MOBApi process integration tests
 (`MobApiProcessTests`, `RuntimeHubLiveE2ETests`) in the `net10.0` target. Each
@@ -312,7 +311,7 @@ Every supported deliverable has a documented local command and a CI lane (RF-07,
 | Deliverable | Local command | CI lane |
 | --- | --- | --- |
 | Portable libraries and tests on Linux | `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0` | `portable-linux`, with the C# whitespace gate |
-| Windows desktop, Windows test suite, coverage, analyzer gates, NuGet audit | `dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false` | `desktop` |
+| Windows desktop, Windows test suite, coverage, analyzer gates, NuGet audit | `dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0` | `desktop` |
 | MOBApi host and its process integration tests | `dotnet build MOBApi/MOBApi.csproj` | `display-protocol` and the `desktop` test graph |
 | Display host, parser and ESP32-S3 firmware | `dotnet build MOBAdisplay/MOBAdisplay.csproj`; PlatformIO in `MOBAdisplay/esp32` | `display-protocol` (firmware when firmware paths change) |
 | Android Release AAB | the Release AAB steps above; `scripts/Test-AndroidAppBundle.ps1` | `android-release` on PRs that change `MOBAsmart/**` or the Android analyzer baseline, or by manual dispatch (maintainer decision of 2026-11-08); the AAB artifact is kept 30 days |
