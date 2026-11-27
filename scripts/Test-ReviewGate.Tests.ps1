@@ -31,7 +31,6 @@ $wrongBase = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 
 $defaultIdentities = @{
     trustedReviewers = @{
-        'chatgpt-codex-connector[bot]' = 'openai'
         'claude[bot]' = 'claude'
         'gemini-code-assist[bot]' = 'gemini'
     }
@@ -40,7 +39,6 @@ $defaultIdentities = @{
 
 $strictIdentities = @{
     trustedReviewers = @{
-        'chatgpt-codex-connector[bot]' = 'openai'
         'claude[bot]' = 'claude'
         'gemini-code-assist[bot]' = 'gemini'
     }
@@ -116,7 +114,7 @@ $resWrongBase = Get-ReviewGateResult `
     -Comments @($wrongBaseComment) `
     -IdentitiesConfig $defaultIdentities
 Assert-Equal 'failure' $resWrongBase.State 'mismatched base= fails gate'
-Assert-True ($resWrongBase.Description -like '*does not match PR base*') 'mismatched base explanation clear'
+Assert-True ($resWrongBase.Description -like '*head and base*') 'mismatched base explanation clear'
 
 # 5. Missing marker -> failure.
 $resMissing = Get-ReviewGateResult `
@@ -153,8 +151,8 @@ Assert-True ($resDeclaredRejected.Description -like '*disabled*') 'strict mode r
 $trustedBotMarker = @{
     id = 13
     created_at = '2026-11-26T10:00:00Z'
-    user = @{ login = 'chatgpt-codex-connector[bot]' }
-    body = "<!-- moba-final-review verdict=PASS head=$headA base=$baseA reviewer-family=openai reviewer-model=gpt-6.2 dispatcher=Codex-TD -->"
+    user = @{ login = 'gemini-code-assist[bot]' }
+    body = "<!-- moba-final-review verdict=PASS head=$headA base=$baseA reviewer-family=gemini reviewer-model=gemini-4 dispatcher=Codex-TD -->"
 }
 $resTrustedBotMarker = Get-ReviewGateResult `
     -PullRequestAuthor 'ahuelsmann' `
@@ -166,217 +164,27 @@ $resTrustedBotMarker = Get-ReviewGateResult `
 Assert-Equal 'success' $resTrustedBotMarker.State 'trusted bot marker succeeds even when allowDeclaredReviews=false'
 Assert-True ($resTrustedBotMarker.Description.Contains('verified')) 'trusted bot description includes verified'
 
-# 7. chatgpt-codex-connector[bot] review: explicit PASS marker bound to head and base, wrong SHA, unresolved thread.
-$codexPassMarker = "<!-- moba-final-review verdict=PASS head=$headA base=$baseA reviewer-family=openai reviewer-model=gpt-6.2 dispatcher=Codex-TD -->"
-$codexPassReview = @{
-    user = @{ login = 'chatgpt-codex-connector[bot]' }
-    commit_id = $headA
-    state = 'COMMENTED'
-    submitted_at = '2026-11-26T10:05:00Z'
-    body = "Review summary`n$codexPassMarker"
-}
-$resCodexPass = Get-ReviewGateResult `
+# 7. Unresolved review threads fail the gate regardless of a valid PASS marker.
+$resUnresolved = Get-ReviewGateResult `
     -PullRequestAuthor 'ahuelsmann' `
     -PullRequestBody $standardBody `
     -HeadSha $headA `
     -BaseSha $baseA `
-    -Reviews @($codexPassReview) `
+    -Comments @($tolerantComment) `
+    -ReviewThreads @(@{ isResolved = $false }) `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resUnresolved.State 'unresolved review thread fails despite a valid PASS marker'
+Assert-True ($resUnresolved.Description -like '*Unresolved review threads*') 'unresolved thread failure clear'
+Assert-Equal 'success' (Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment) `
     -ReviewThreads @(@{ isResolved = $true }) `
-    -IdentitiesConfig $strictIdentities
-Assert-Equal 'success' $resCodexPass.State 'chatgpt-codex-connector[bot] PASS on exact head with resolved threads succeeds'
-Assert-True ($resCodexPass.Description.Contains('verified')) 'codex connector description contains verified'
+    -IdentitiesConfig $defaultIdentities).State 'resolved review threads do not block a valid PASS marker'
 
-$codexWrongShaReview = @{
-    user = @{ login = 'chatgpt-codex-connector[bot]' }
-    commit_id = $headB
-    state = 'APPROVED'
-    submitted_at = '2026-11-26T10:05:00Z'
-    body = $codexPassMarker
-}
-$resCodexWrongSha = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $standardBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Reviews @($codexWrongShaReview) `
-    -ReviewThreads @() `
-    -IdentitiesConfig $strictIdentities
-Assert-Equal 'failure' $resCodexWrongSha.State 'chatgpt-codex-connector[bot] wrong SHA fails'
-
-$resCodexUnresolved = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $standardBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Reviews @($codexPassReview) `
-    -ReviewThreads @(@{ isResolved = $false }) `
-    -IdentitiesConfig $strictIdentities
-Assert-Equal 'failure' $resCodexUnresolved.State 'chatgpt-codex-connector[bot] with unresolved review thread fails'
-Assert-True ($resCodexUnresolved.Description -like '*Unresolved review threads*') 'unresolved thread failure clear'
-
-function Get-ConnectorResult([hashtable] $Review) {
-    return Get-ReviewGateResult `
-        -PullRequestAuthor 'ahuelsmann' `
-        -PullRequestBody $standardBody `
-        -HeadSha $headA `
-        -BaseSha $baseA `
-        -Reviews @($Review) `
-        -ReviewThreads @() `
-        -IdentitiesConfig $strictIdentities
-}
-
-function New-ConnectorReview([string] $State, [AllowNull()][string] $Body) {
-    $review = @{
-        user = @{ login = 'chatgpt-codex-connector[bot]' }
-        commit_id = $headA
-        state = $State
-        submitted_at = '2026-11-26T10:05:00Z'
-    }
-    if ($null -ne $Body) {
-        $review.body = $Body
-    }
-    return $review
-}
-
-function New-ConnectorMarker([string] $Verdict, [string] $Head, [string] $Base, [string] $Family) {
-    $baseAttr = if ([string]::IsNullOrEmpty($Base)) { '' } else { " base=$Base" }
-    return "<!-- moba-final-review verdict=$Verdict head=$Head$baseAttr reviewer-family=$Family reviewer-model=gpt-6.2 dispatcher=Codex-TD -->"
-}
-
-# 7b. Negative: the connector path never passes without an explicit, head- and base-bound PASS marker.
-$resPlainCommented = Get-ConnectorResult (New-ConnectorReview 'COMMENTED' 'Looks fine.')
-Assert-Equal 'failure' $resPlainCommented.State 'plain COMMENTED connector review is never PASS'
-Assert-True ($resPlainCommented.Description -like '*explicit moba-final-review PASS marker*') 'plain COMMENTED failure names the missing marker'
-Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' $null)).State 'connector review without body is never PASS'
-Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'APPROVED' '')).State 'plain APPROVED connector review without marker is never PASS'
-Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA '' 'openai'))).State 'connector PASS marker without base= fails'
-$resConnWrongBase = Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $wrongBase 'openai'))
-Assert-Equal 'failure' $resConnWrongBase.State 'connector PASS marker with wrong base fails'
-Assert-True ($resConnWrongBase.Description -like '*does not match PR base*') 'connector wrong base explained'
-Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headB $baseA 'openai'))).State 'connector PASS marker for a different head fails'
-Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headA $baseA 'openai'))).State 'connector CHANGES marker fails'
-Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $baseA 'gemini'))).State 'connector marker family differing from the trusted mapping fails'
-Assert-Equal 'success' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $baseA 'openai'))).State 'connector review with explicit head- and base-bound PASS marker succeeds'
-
-# 7c. Newest verdict wins across sources: a newer CHANGES (marker or CHANGES_REQUESTED) overrides an earlier PASS.
-$resNewerChangesRequested = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $standardBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Comments @($tolerantComment) `
-    -Reviews @(@{ user = @{ login = 'chatgpt-codex-connector[bot]' }; commit_id = $headA; state = 'CHANGES_REQUESTED'; submitted_at = '2026-11-26T10:30:00Z'; body = '' }) `
-    -ReviewThreads @() `
-    -IdentitiesConfig $defaultIdentities
-Assert-Equal 'failure' $resNewerChangesRequested.State 'newer connector CHANGES_REQUESTED overrides earlier issue-comment PASS'
-
-$newerChangesConnector = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headA $baseA 'openai')
-$newerChangesConnector.submitted_at = '2026-11-26T10:30:00Z'
-$resNewerConnectorChangesMarker = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $standardBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Comments @($tolerantComment) `
-    -Reviews @($newerChangesConnector) `
-    -ReviewThreads @() `
-    -IdentitiesConfig $defaultIdentities
-Assert-Equal 'failure' $resNewerConnectorChangesMarker.State 'newer connector CHANGES marker overrides earlier issue-comment PASS'
-
-$olderChangesConnector = New-ConnectorReview 'CHANGES_REQUESTED' ''
-$olderChangesConnector.submitted_at = '2026-11-26T09:00:00Z'
-$resOlderConnectorChanges = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $standardBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Comments @($tolerantComment) `
-    -Reviews @($olderChangesConnector) `
-    -ReviewThreads @() `
-    -IdentitiesConfig $defaultIdentities
-Assert-Equal 'success' $resOlderConnectorChanges.State 'older connector CHANGES_REQUESTED does not override newer issue-comment PASS'
-
-# 7d. Connector path applies the same dispatcher/orchestrator checks as the issue-comment path.
-$sameDispatcherBody = $standardBody -replace 'Orchestrator: Opus Head', 'Orchestrator: Codex-TD'
-$resConnectorSameDispatcher = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $sameDispatcherBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Reviews @($codexPassReview) `
-    -ReviewThreads @() `
-    -IdentitiesConfig $strictIdentities
-Assert-Equal 'failure' $resConnectorSameDispatcher.State 'connector marker dispatcher equal to PR Orchestrator fails'
-Assert-True ($resConnectorSameDispatcher.Description -like '*dispatcher must differ*') 'connector dispatcher failure explained'
-
-$noOrchestratorBody = ($standardBody -split "`n" | Where-Object { $_ -notmatch 'Orchestrator' }) -join "`n"
-$resConnectorNoOrchestrator = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $noOrchestratorBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Reviews @($codexPassReview) `
-    -ReviewThreads @() `
-    -IdentitiesConfig $strictIdentities
-Assert-Equal 'failure' $resConnectorNoOrchestrator.State 'connector path fails when PR Orchestrator is missing'
-
-# 7f. Eligibility and fail-closed ordering regressions.
-# (a) A newer connector CHANGES marker with unresolved threads must fail, never fall back to an older PASS.
-$newerChangesUnresolved = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headA $baseA 'openai')
-$newerChangesUnresolved.submitted_at = '2026-11-26T10:30:00Z'
-$resChangesUnresolved = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $standardBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Comments @($tolerantComment) `
-    -Reviews @($newerChangesUnresolved) `
-    -ReviewThreads @(@{ isResolved = $false }) `
-    -IdentitiesConfig $defaultIdentities
-Assert-Equal 'failure' $resChangesUnresolved.State 'newer connector CHANGES with unresolved threads does not fall back to an older PASS'
-
-# (b) A newer connector PASS blocked by unresolved threads must not fall back to an older issue-comment PASS.
-$newerPassUnresolved = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $baseA 'openai')
-$newerPassUnresolved.submitted_at = '2026-11-26T10:30:00Z'
-$resPassUnresolved = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $standardBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Comments @($tolerantComment) `
-    -Reviews @($newerPassUnresolved) `
-    -ReviewThreads @(@{ isResolved = $false }) `
-    -IdentitiesConfig $defaultIdentities
-Assert-Equal 'failure' $resPassUnresolved.State 'newer connector verdict with unresolved threads does not fall back to an older PASS'
-Assert-True ($resPassUnresolved.Description -like '*Unresolved review threads*') 'unresolved thread blocks instead of falling back'
-
-# (c) A connector CHANGES marker naming another head must not override a valid issue-comment PASS.
-$staleHeadConnector = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headB $baseA 'openai')
-$staleHeadConnector.submitted_at = '2026-11-26T10:30:00Z'
-$resStaleHeadConnector = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $standardBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Comments @($tolerantComment) `
-    -Reviews @($staleHeadConnector) `
-    -ReviewThreads @() `
-    -IdentitiesConfig $defaultIdentities
-Assert-Equal 'success' $resStaleHeadConnector.State 'connector CHANGES marker for another head is ignored for ordering'
-
-$staleBaseConnector = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headA $wrongBase 'openai')
-$staleBaseConnector.submitted_at = '2026-11-26T10:30:00Z'
-$resStaleBaseConnector = Get-ReviewGateResult `
-    -PullRequestAuthor 'ahuelsmann' `
-    -PullRequestBody $standardBody `
-    -HeadSha $headA `
-    -BaseSha $baseA `
-    -Comments @($tolerantComment) `
-    -Reviews @($staleBaseConnector) `
-    -ReviewThreads @() `
-    -IdentitiesConfig $defaultIdentities
-Assert-Equal 'success' $resStaleBaseConnector.State 'connector CHANGES marker with a stale base is ignored for ordering'
-
+# 7f. Eligibility and ordering of issue-comment markers.
 # (d) The same eligibility applies to issue-comment CHANGES markers (newer stale-head / stale-base CHANGES is ignored).
 $staleHeadChangesComment = @{
     id = 51
@@ -422,6 +230,53 @@ Assert-Equal 'failure' (Get-ReviewGateResult `
     -BaseSha $baseA `
     -Comments @($tolerantComment, $validChangesComment) `
     -IdentitiesConfig $defaultIdentities).State 'valid newer CHANGES on current head and base still overrides a PASS'
+
+# (f) Equal timestamps: CHANGES wins the tie regardless of comment order.
+$tiePass = @{
+    id = 60
+    created_at = '2026-11-26T11:00:00Z'
+    user = @{ login = 'ahuelsmann' }
+    body = "<!-- moba-final-review verdict=PASS head=$headA base=$baseA reviewer-family=openai reviewer-model=gpt-6.2-sol dispatcher=Codex-TD -->"
+}
+$tieChanges = @{
+    id = 61
+    created_at = '2026-11-26T11:00:00Z'
+    user = @{ login = 'ahuelsmann' }
+    body = "<!-- moba-final-review verdict=CHANGES head=$headA base=$baseA reviewer-family=openai reviewer-model=gpt-6.2-sol dispatcher=Codex-TD -->"
+}
+Assert-Equal 'failure' (Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($tiePass, $tieChanges) -IdentitiesConfig $defaultIdentities).State 'CHANGES wins an equal-timestamp tie (PASS first)'
+Assert-Equal 'failure' (Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($tieChanges, $tiePass) -IdentitiesConfig $defaultIdentities).State 'CHANGES wins an equal-timestamp tie (CHANGES first)'
+
+# (g) A newer PASS after an older CHANGES wins.
+$olderChanges = @{
+    id = 62
+    created_at = '2026-11-26T09:00:00Z'
+    user = @{ login = 'ahuelsmann' }
+    body = "<!-- moba-final-review verdict=CHANGES head=$headA base=$baseA reviewer-family=openai reviewer-model=gpt-6.2-sol dispatcher=Codex-TD -->"
+}
+Assert-Equal 'success' (Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($olderChanges, $tolerantComment) -IdentitiesConfig $defaultIdentities).State 'newer PASS overrides an older CHANGES'
+
+# (h) A newer ineligible PASS (stale base / other head) does not hide an eligible older CHANGES or PASS.
+$newerIneligiblePass = @{
+    id = 63
+    created_at = '2026-11-26T12:00:00Z'
+    user = @{ login = 'ahuelsmann' }
+    body = "<!-- moba-final-review verdict=PASS head=$headA base=$wrongBase reviewer-family=openai reviewer-model=gpt-6.2-sol dispatcher=Codex-TD -->"
+}
+$newerOtherHeadPass = @{
+    id = 64
+    created_at = '2026-11-26T12:01:00Z'
+    user = @{ login = 'ahuelsmann' }
+    body = "<!-- moba-final-review verdict=PASS head=$headB base=$baseA reviewer-family=openai reviewer-model=gpt-6.2-sol dispatcher=Codex-TD -->"
+}
+Assert-Equal 'failure' (Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($olderChanges, $newerIneligiblePass, $newerOtherHeadPass) -IdentitiesConfig $defaultIdentities).State 'newer ineligible PASS does not hide an eligible older CHANGES'
+Assert-Equal 'success' (Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($tolerantComment, $newerIneligiblePass, $newerOtherHeadPass) -IdentitiesConfig $defaultIdentities).State 'newer ineligible markers do not hide an eligible older PASS'
+$resOnlyIneligible = Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($newerIneligiblePass) -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resOnlyIneligible.State 'only ineligible markers -> failure'
+Assert-True ($resOnlyIneligible.Description -like '*head and base*') 'ineligible-only failure explained'
+
+# (i) The reviews list is not an input any more: only issue-comment markers count.
+Assert-True (-not (Get-Command Get-ReviewGateResult).Parameters.ContainsKey('Reviews')) 'Get-ReviewGateResult has no connector review input'
 
 # 7e. Review-thread pagination reads every page until an unresolved thread is found.
 $script:pageCalls = 0
@@ -476,10 +331,10 @@ $resCommitMismatch = Get-ReviewGateResult `
     -BaseSha $baseA `
     -HeadRefName 'opus/review-gate' `
     -Commits $coAuthorCommits `
-    -Reviews @($codexPassReview) `
+    -Comments @($tolerantComment) `
     -ReviewThreads @() `
-    -IdentitiesConfig $strictIdentities
-Assert-Equal 'failure' $resCommitMismatch.State 'commit Co-Authored-By openai conflicts with codex connector -> fails'
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resCommitMismatch.State 'commit Co-Authored-By openai conflicts with openai reviewer -> fails'
 Assert-True ($resCommitMismatch.Description -like '*writer family mismatch*') 'commit mismatch reports writer family mismatch'
 
 # 9. Same reviewer-family, dispatcher==orchestrator, CHANGES override, dependabot, and Writer fallback.
@@ -572,7 +427,7 @@ Assert-Equal 'failure' $resFallbackUnknown.State 'unknown Writer without Writer 
 
 # 10. Validate committed .github/review-gate-identities.json and bootstrap behavior in .github/workflows/review-gate.yml.
 $loadedIdentities = Get-IdentitiesConfig -RepositoryRoot $repositoryRoot
-Assert-Equal 'openai' $loadedIdentities.TrustedReviewers['chatgpt-codex-connector[bot]'] 'repo identities file maps chatgpt-codex-connector[bot]'
+Assert-True (-not $loadedIdentities.TrustedReviewers.ContainsKey('chatgpt-codex-connector[bot]')) 'repo identities file has no connector-only entry (returns with #566)'
 Assert-Equal 'claude' $loadedIdentities.TrustedReviewers['claude[bot]'] 'repo identities file maps claude[bot]'
 Assert-Equal 'gemini' $loadedIdentities.TrustedReviewers['gemini-code-assist[bot]'] 'repo identities file maps gemini-code-assist[bot]'
 Assert-True $loadedIdentities.AllowDeclaredReviews 'repo identities file enables allowDeclaredReviews (informational until #566)'
@@ -688,27 +543,7 @@ try {
         -RepositoryRoot $fixture `
         -IdentitiesConfig $defaultIdentities
     Assert-Equal 'failure' $resHistoricalBaseOnCurrentHead.State 'current-head marker with merge-base-only base fails'
-    Assert-True ($resHistoricalBaseOnCurrentHead.Description -like '*does not match PR base*') 'merge-base-only base explained'
-
-    $connectorHistoricalBase = @{
-        user = @{ login = 'chatgpt-codex-connector[bot]' }
-        commit_id = $reviewedHead
-        state = 'COMMENTED'
-        submitted_at = '2026-11-26T10:05:00Z'
-        body = "<!-- moba-final-review verdict=PASS head=$reviewedHead base=$baseMainSha reviewer-family=openai reviewer-model=gpt-6.2 dispatcher=Codex-TD -->"
-    }
-    $resConnectorHistoricalBase = Get-ReviewGateResult `
-        -PullRequestAuthor 'ahuelsmann' `
-        -PullRequestBody $standardBody `
-        -HeadSha $reviewedHead `
-        -BaseSha $newMainSha `
-        -HeadRefName 'opus/slice' `
-        -Reviews @($connectorHistoricalBase) `
-        -ReviewThreads @() `
-        -BaseRef 'origin/main' `
-        -RepositoryRoot $fixture `
-        -IdentitiesConfig $strictIdentities
-    Assert-Equal 'failure' $resConnectorHistoricalBase.State 'connector marker with merge-base-only base fails on current head'
+    Assert-True ($resHistoricalBaseOnCurrentHead.Description -like '*head and base*') 'merge-base-only base explained'
 
     # Extra non-main empty commit (identical diff bytes, but not reachable from origin/main) -> must fail.
     $null = Invoke-FixtureGit @('commit', '--allow-empty', '-m', 'chore: extra non-main commit')

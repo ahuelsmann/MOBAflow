@@ -230,15 +230,17 @@ next at the end:
   GitHub PR comment plus `bus_send` `review-claim`. At completion, the reviewer posts a PR issue comment containing the structured gate
   marker with both exact `head=` and `base=` SHAs:
   `<!-- moba-final-review verdict=PASS|CHANGES head=<40-char sha> base=<40-char sha> reviewer-family=claude|openai|gemini reviewer-model=<id> dispatcher=<head-name> -->`
-- Automated `chatgpt-codex-connector[bot]` reviews are recognized in the Verified tier only with the same explicit
-  marker: the review body must contain a `verdict=PASS` marker with the exact `head=` and `base=` SHAs, the review
-  commit must be the head and no review thread may be unresolved. A plain `COMMENTED` or `APPROVED` review without
-  that marker is never a PASS.
+- Only issue-comment markers count; GitHub review states (`APPROVED`, `COMMENTED`, `CHANGES_REQUESTED`) and
+  review-bot verdicts are not evaluated. A marker is eligible only when its `head=` is the PR head and its `base=`
+  is the exact current PR base, or as a validated carry-forward. The newest eligible marker wins and `CHANGES` wins
+  an equal-timestamp tie; ineligible markers are ignored and never hide an eligible older one. Any unresolved
+  review thread fails the gate. The connector/review-bot verdict path returns with
+  [#566](https://github.com/ahuelsmann/MOBAflow/issues/566).
 - [`.github/workflows/review-gate.yml`](../workflows/review-gate.yml) (`scripts/Test-ReviewGate.ps1`) is the trusted
   publisher. It runs only from base-side triggers (`issue_comment`, `workflow_run` after the unprivileged
   self-tests, and a `schedule` sweep), never from `pull_request`, `pull_request_target` or `pull_request_review`,
   and executes the evaluator from a clone of the default branch only (never PR code). It evaluates the
-  newest valid marker, cross-checks inferred writer family from PR branch/commits, and
+  newest eligible marker, cross-checks inferred writer family from PR branch/commits, and
   publishes the **informational** `"Independent final review (informational)"` commit status. It is not a required
   check and must not be added to the `main` ruleset before [#566](https://github.com/ahuelsmann/MOBAflow/issues/566);
   the declared tier only satisfies this informational context. The switch to a required check, together with
@@ -255,7 +257,7 @@ next at the end:
 
 - **Verified tier:** Dedicated bot/app accounts registered in
   `.github/review-gate-identities.json` (`trustedReviewers`, such as
-  `chatgpt-codex-connector[bot]`, `claude[bot]`, and `gemini-code-assist[bot]`). GitHub verifies the actor
+  `claude[bot]` and `gemini-code-assist[bot]`). GitHub verifies the actor
   identity, and the published status description includes `"verified"`.
 - **Declared tier (shared-account limitation):** While multiple CLI/local agents share a single maintainer GitHub
   account (`allowDeclaredReviews: true`), a `moba-final-review` comment carries a self-declared `reviewer-family`,
