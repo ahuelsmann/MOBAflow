@@ -209,8 +209,8 @@ Pushes to `main` (and pull requests) that change only documentation paths (`docs
 `.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list (comparing `before..sha`
 for `push` events when history contains `before`).
-GitHub reports those skipped jobs as successful checks. Manual `workflow_dispatch` runs (or pushes without
-a reachable `before` commit) classify all scopes except Android as enabled. Other changes enable
+GitHub reports those skipped jobs as successful checks. Manual `workflow_dispatch` runs (unless `validate_android=true`) keep Android disabled and run all other jobs;
+pushes with an unreachable or unknown `before` commit fail open and classify every scope, Android included, as enabled. Other changes enable
 desktop and display; all eight active mutation jobs (`Domain`, `Common`,
 `Contracts`, `Speech.Base`, `Backend`, `MOBApi`, `SharedUI` and `TrackPlan.Renderer`) and the ESP32
 firmware steps also depend on their transitive input paths. Android runs on pushes and PRs

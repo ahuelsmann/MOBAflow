@@ -16,10 +16,9 @@ permissions:
   contents: read
 
 concurrency:
-  # Pull requests cancel superseded runs. Main runs finish; a newer main run waits, and GitHub keeps only the
-  # latest pending one. Each manual dispatch (for example validate_android) gets its own group, so no merge or
-  # later run can cancel or replace it.
-  group: quality-${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}', github.run_id) || github.ref }}
+  # Pull requests cancel superseded runs on the same branch. Main pushes and manual dispatches each get a
+  # run-specific group so an intermediate main push (and its scoped jobs) is never dropped before validation.
+  group: quality-${{ github.event_name == 'pull_request' && github.ref || format('{0}-{1}', github.event_name, github.run_id) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -27,8 +26,9 @@ jobs:
   # neither the ESP32 firmware nor a given mutation lane's transitive inputs skip those parts, and only pushes/pull
   # requests that change MOBAsmart or its analyzer baseline run the Android Release AAB job;
   # scripts/Get-QualityChangeScope.ps1 owns the path rules. GitHub reports a job skipped by its condition as
-  # successful. Job conditions read every output with != 'false', so a detection failure (empty outputs) runs every
-  # scoped job, Android included. Manual workflow_dispatch runs without validate_android run every job except Android.
+  # successful. Job conditions read every output with != 'false', so a detection failure (empty outputs) or a push
+  # with an unreachable/unknown before commit runs every scoped job, Android included. Manual workflow_dispatch runs
+  # without validate_android run every job except Android.
   # The MOBAdemo job runs for MOBAdemo, its tests and the shared build inputs, and for unknown paths.
   changes:
     name: Detect code changes
@@ -77,11 +77,12 @@ jobs:
             }
           }
 
+          $fallbackAndroid = if ($env:EVENT_NAME -eq 'workflow_dispatch') { 'false' } else { 'true' }
           Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value @(
             'code=true', 'firmware=true', 'mutation=true',
             'mutation_common=true', 'mutation_contracts=true', 'mutation_speech_base=true',
             'mutation_backend=true', 'mutation_api=true', 'mutation_shared_ui=true',
-            'mutation_track_plan_renderer=true', 'android=false', 'mobademo=true'
+            'mutation_track_plan_renderer=true', "android=$fallbackAndroid", 'mobademo=true'
           ) -Encoding utf8NoBOM
 
   instruction-consistency:
