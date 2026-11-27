@@ -258,6 +258,91 @@ Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (Ne
 Assert-Equal 'failure' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $baseA 'gemini'))).State 'connector marker family differing from the trusted mapping fails'
 Assert-Equal 'success' (Get-ConnectorResult (New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'PASS' $headA $baseA 'openai'))).State 'connector review with explicit head- and base-bound PASS marker succeeds'
 
+# 7c. Newest verdict wins across sources: a newer CHANGES (marker or CHANGES_REQUESTED) overrides an earlier PASS.
+$resNewerChangesRequested = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment) `
+    -Reviews @(@{ user = @{ login = 'chatgpt-codex-connector[bot]' }; commit_id = $headA; state = 'CHANGES_REQUESTED'; submitted_at = '2026-11-26T10:30:00Z'; body = '' }) `
+    -ReviewThreads @() `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resNewerChangesRequested.State 'newer connector CHANGES_REQUESTED overrides earlier issue-comment PASS'
+
+$newerChangesConnector = New-ConnectorReview 'COMMENTED' (New-ConnectorMarker 'CHANGES' $headA $baseA 'openai')
+$newerChangesConnector.submitted_at = '2026-11-26T10:30:00Z'
+$resNewerConnectorChangesMarker = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment) `
+    -Reviews @($newerChangesConnector) `
+    -ReviewThreads @() `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resNewerConnectorChangesMarker.State 'newer connector CHANGES marker overrides earlier issue-comment PASS'
+
+$olderChangesConnector = New-ConnectorReview 'CHANGES_REQUESTED' ''
+$olderChangesConnector.submitted_at = '2026-11-26T09:00:00Z'
+$resOlderConnectorChanges = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $standardBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Comments @($tolerantComment) `
+    -Reviews @($olderChangesConnector) `
+    -ReviewThreads @() `
+    -IdentitiesConfig $defaultIdentities
+Assert-Equal 'success' $resOlderConnectorChanges.State 'older connector CHANGES_REQUESTED does not override newer issue-comment PASS'
+
+# 7d. Connector path applies the same dispatcher/orchestrator checks as the issue-comment path.
+$sameDispatcherBody = $standardBody -replace 'Orchestrator: Opus Head', 'Orchestrator: Codex-TD'
+$resConnectorSameDispatcher = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $sameDispatcherBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Reviews @($codexPassReview) `
+    -ReviewThreads @() `
+    -IdentitiesConfig $strictIdentities
+Assert-Equal 'failure' $resConnectorSameDispatcher.State 'connector marker dispatcher equal to PR Orchestrator fails'
+Assert-True ($resConnectorSameDispatcher.Description -like '*dispatcher must differ*') 'connector dispatcher failure explained'
+
+$noOrchestratorBody = ($standardBody -split "`n" | Where-Object { $_ -notmatch 'Orchestrator' }) -join "`n"
+$resConnectorNoOrchestrator = Get-ReviewGateResult `
+    -PullRequestAuthor 'ahuelsmann' `
+    -PullRequestBody $noOrchestratorBody `
+    -HeadSha $headA `
+    -BaseSha $baseA `
+    -Reviews @($codexPassReview) `
+    -ReviewThreads @() `
+    -IdentitiesConfig $strictIdentities
+Assert-Equal 'failure' $resConnectorNoOrchestrator.State 'connector path fails when PR Orchestrator is missing'
+
+# 7e. Review-thread pagination reads every page until an unresolved thread is found.
+$script:pageCalls = 0
+$pagedUnresolved = Read-ReviewThreadPages -FetchPage {
+    param($cursor)
+    $script:pageCalls++
+    if ($null -eq $cursor) {
+        return [pscustomobject] @{ nodes = @(1..100 | ForEach-Object { @{ isResolved = $true } }); hasNextPage = $true; endCursor = 'c1' }
+    }
+    return [pscustomobject] @{ nodes = @(@{ isResolved = $false }); hasNextPage = $false; endCursor = $null }
+}
+Assert-Equal 2 $script:pageCalls 'pagination fetches the second page'
+Assert-True (Test-HasUnresolvedReviewThreads -ReviewThreads $pagedUnresolved) 'unresolved thread beyond the first 100 is detected'
+
+$script:pageCalls = 0
+$pagedResolved = Read-ReviewThreadPages -FetchPage {
+    param($cursor)
+    $script:pageCalls++
+    $next = $script:pageCalls -lt 3
+    return [pscustomobject] @{ nodes = @(@{ isResolved = $true }); hasNextPage = $next; endCursor = "c$script:pageCalls" }
+}
+Assert-Equal 3 $script:pageCalls 'pagination reads all pages when every thread is resolved'
+Assert-Equal 3 @($pagedResolved).Count 'pagination returns the threads of every page'
+
 # 8. Writer-family cross-check against PR commits / branch prefix ("writer family mismatch").
 $codexBranchBody = @"
 - Writer family: claude
@@ -487,6 +572,40 @@ try {
         -IdentitiesConfig $defaultIdentities
     Assert-Equal 'success' $resPureMerge.State 'stale head with pure main merge succeeds'
     Assert-True ($resPureMerge.Description -like '*main-merge carry-forward*') 'pure main merge description mentions main-merge carry-forward'
+
+    # Current-head verdict whose base is only the historical merge base (not the exact current PR base) must fail.
+    $resHistoricalBaseOnCurrentHead = Get-ReviewGateResult `
+        -PullRequestAuthor 'ahuelsmann' `
+        -PullRequestBody $standardBody `
+        -HeadSha $reviewedHead `
+        -BaseSha $newMainSha `
+        -HeadRefName 'opus/slice' `
+        -Comments @($reviewedComment) `
+        -BaseRef 'origin/main' `
+        -RepositoryRoot $fixture `
+        -IdentitiesConfig $defaultIdentities
+    Assert-Equal 'failure' $resHistoricalBaseOnCurrentHead.State 'current-head marker with merge-base-only base fails'
+    Assert-True ($resHistoricalBaseOnCurrentHead.Description -like '*does not match PR base*') 'merge-base-only base explained'
+
+    $connectorHistoricalBase = @{
+        user = @{ login = 'chatgpt-codex-connector[bot]' }
+        commit_id = $reviewedHead
+        state = 'COMMENTED'
+        submitted_at = '2026-11-26T10:05:00Z'
+        body = "<!-- moba-final-review verdict=PASS head=$reviewedHead base=$baseMainSha reviewer-family=openai reviewer-model=gpt-6.2 dispatcher=Codex-TD -->"
+    }
+    $resConnectorHistoricalBase = Get-ReviewGateResult `
+        -PullRequestAuthor 'ahuelsmann' `
+        -PullRequestBody $standardBody `
+        -HeadSha $reviewedHead `
+        -BaseSha $newMainSha `
+        -HeadRefName 'opus/slice' `
+        -Reviews @($connectorHistoricalBase) `
+        -ReviewThreads @() `
+        -BaseRef 'origin/main' `
+        -RepositoryRoot $fixture `
+        -IdentitiesConfig $strictIdentities
+    Assert-Equal 'failure' $resConnectorHistoricalBase.State 'connector marker with merge-base-only base fails on current head'
 
     # Extra non-main empty commit (identical diff bytes, but not reachable from origin/main) -> must fail.
     $null = Invoke-FixtureGit @('commit', '--allow-empty', '-m', 'chore: extra non-main commit')

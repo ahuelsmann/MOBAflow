@@ -753,11 +753,19 @@ function Test-MarkerBaseMatches {
         [string] $BaseRef,
 
         [Parameter(Mandatory = $true)]
-        [string] $RepositoryRoot
+        [string] $RepositoryRoot,
+
+        # Current-head verdicts must bind to the exact current PR base SHA. Only carry-forward
+        # (historical marker head) may validate the marker base through the git merge base.
+        [switch] $AllowHistoricalBase
     )
 
     if (-not [string]::IsNullOrWhiteSpace($BaseSha) -and $Marker.Base.Equals($BaseSha, [StringComparison]::OrdinalIgnoreCase)) {
         return $true
+    }
+
+    if (-not $AllowHistoricalBase) {
+        return $false
     }
 
     $markerMergeBase = Get-GitMergeBase -Sha $Marker.Head -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
@@ -785,6 +793,38 @@ function Test-HasUnresolvedReviewThreads {
     }
 
     return $false
+}
+
+function New-ConnectorCandidate {
+    param(
+        [Parameter(Mandatory = $true)]
+        [pscustomobject] $Newest,
+
+        [Parameter(Mandatory = $true)]
+        [bool] $IsPass,
+
+        [string] $FailureReason = '',
+
+        [bool] $IsChanges = $false,
+
+        [AllowNull()]
+        [object] $Marker = $null,
+
+        [string] $ReviewerFamily = '',
+
+        [string] $Login = ''
+    )
+
+    return [pscustomobject] @{
+        IsPass = $IsPass
+        FailureReason = $FailureReason
+        IsChanges = $IsChanges
+        HasDate = $Newest.HasDate
+        SubmittedAt = $Newest.SubmittedAt
+        Marker = $Marker
+        ReviewerFamily = $ReviewerFamily
+        Login = $Login
+    }
 }
 
 function Get-CodexConnectorCandidate {
@@ -842,50 +882,46 @@ function Get-CodexConnectorCandidate {
     $mappedFamily = $TrustedReviewers[$botLogin]
 
     if ($newest.State -eq 'CHANGES_REQUESTED') {
-        return [pscustomobject] @{ IsPass = $false; FailureReason = "verified review by $botLogin requested changes." }
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("verified review by $botLogin requested changes.") -IsChanges $true
     }
 
     if (-not $newest.CommitId.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
-        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review commit $(Get-ShortSha $newest.CommitId) does not match head $(Get-ShortSha $HeadSha)." }
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review commit $(Get-ShortSha $newest.CommitId) does not match head $(Get-ShortSha $HeadSha).")
     }
 
     if (Test-HasUnresolvedReviewThreads -ReviewThreads $ReviewThreads) {
-        return [pscustomobject] @{ IsPass = $false; FailureReason = "Unresolved review threads block verified $botLogin review." }
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("Unresolved review threads block verified $botLogin review.")
     }
 
     if ($newest.State -notin @('APPROVED', 'COMMENTED')) {
-        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review state '$($newest.State)' is not a passing state." }
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review state '$($newest.State)' is not a passing state.")
     }
 
     # A plain COMMENTED/APPROVED review is never a PASS: the review body must carry an explicit
     # moba-final-review PASS marker bound to the exact head and the PR base.
     $bodyMarkers = @(Get-FinalReviewMarkers -Comments @([pscustomobject] @{ body = $newest.Body }))
     if ($bodyMarkers.Count -eq 0) {
-        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review has no explicit moba-final-review PASS marker (head= and base=)." }
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review has no explicit moba-final-review PASS marker (head= and base=).")
     }
 
     $marker = $bodyMarkers[0]
     if ($marker.Verdict -ne 'PASS') {
-        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review marker verdict is $($marker.Verdict), not PASS." }
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review marker verdict is $($marker.Verdict), not PASS.") -IsChanges ($marker.Verdict -eq 'CHANGES')
     }
 
     if (-not $marker.Head.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)) {
-        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review marker head $(Get-ShortSha $marker.Head) does not match head $(Get-ShortSha $HeadSha)." }
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review marker head $(Get-ShortSha $marker.Head) does not match head $(Get-ShortSha $HeadSha).")
     }
 
     if ($marker.ReviewerFamily -ne $mappedFamily) {
-        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin is mapped to '$mappedFamily', not '$($marker.ReviewerFamily)'." }
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin is mapped to '$mappedFamily', not '$($marker.ReviewerFamily)'.")
     }
 
     if (-not (Test-MarkerBaseMatches -Marker $marker -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot)) {
-        return [pscustomobject] @{ IsPass = $false; FailureReason = "$botLogin review marker base $(Get-ShortSha $marker.Base) does not match PR base." }
+        return New-ConnectorCandidate -Newest $newest -IsPass $false -FailureReason ("$botLogin review marker base $(Get-ShortSha $marker.Base) does not match PR base.")
     }
 
-    return [pscustomobject] @{
-        IsPass = $true
-        ReviewerFamily = $mappedFamily
-        Login = $botLogin
-    }
+    return New-ConnectorCandidate -Newest $newest -IsPass $true -Marker $marker -ReviewerFamily $mappedFamily -Login $botLogin
 }
 
 function Resolve-MarkerTier {
@@ -1009,7 +1045,8 @@ function Resolve-MarkerGateResult {
         return New-GateResult -State 'failure' -Reason $tierInfo.Error -Marker $Marker -Tier $tierInfo.Tier
     }
 
-    if (-not (Test-MarkerBaseMatches -Marker $Marker -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot)) {
+    $isCurrentHead = $Marker.Head.Equals($HeadSha, [StringComparison]::OrdinalIgnoreCase)
+    if (-not (Test-MarkerBaseMatches -Marker $Marker -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot -AllowHistoricalBase:(-not $isCurrentHead))) {
         return New-GateResult -State 'failure' -Reason "Review marker base $(Get-ShortSha $Marker.Base) does not match PR base." -Marker $Marker -Tier $tierInfo.Tier
     }
 
@@ -1080,6 +1117,15 @@ function Resolve-CodexConnectorGateResult {
         return New-GateResult -State 'failure' -Reason "Reviewer family '$($CodexCandidate.ReviewerFamily)' matches writer family '$headerWriterFamily'." -WriterFamily $headerWriterFamily -Tier 'verified'
     }
 
+    $orchestrator = Get-SliceHeaderField -Body $PullRequestBody -FieldName 'Orchestrator'
+    if ([string]::IsNullOrWhiteSpace($orchestrator) -or $orchestrator -match '^<.*>$') {
+        return New-GateResult -State 'failure' -Reason 'Missing Orchestrator in PR slice header.' -WriterFamily $headerWriterFamily -Orchestrator $orchestrator -Tier 'verified'
+    }
+
+    if ($null -ne $CodexCandidate.Marker -and (Get-NormalizedIdentifier $CodexCandidate.Marker.Dispatcher) -eq (Get-NormalizedIdentifier $orchestrator)) {
+        return New-GateResult -State 'failure' -Reason 'Final review dispatcher must differ from PR Orchestrator.' -WriterFamily $headerWriterFamily -Orchestrator $orchestrator -Tier 'verified'
+    }
+
     return New-GateResult `
         -State 'success' `
         -Reason "Review verified ($($CodexCandidate.ReviewerFamily) via $($CodexCandidate.Login)) on $(Get-ShortSha $HeadSha)." `
@@ -1140,8 +1186,8 @@ function Get-ReviewGateResult {
     $markers = @(Get-FinalReviewMarkers -Comments $Comments)
     $codexCandidate = Get-CodexConnectorCandidate -Reviews $Reviews -ReviewThreads $ReviewThreads -HeadSha $HeadSha -TrustedReviewers $identities.TrustedReviewers -BaseSha $BaseSha -BaseRef $BaseRef -RepositoryRoot $RepositoryRoot
 
-    if ($markers.Count -gt 0) {
-        $markerResult = Resolve-MarkerGateResult `
+    $markerEvaluator = {
+        Resolve-MarkerGateResult `
             -Marker $markers[0] `
             -HeadSha $HeadSha `
             -BaseSha $BaseSha `
@@ -1151,18 +1197,53 @@ function Get-ReviewGateResult {
             -BaseRef $BaseRef `
             -RepositoryRoot $RepositoryRoot `
             -CarryForwardEvaluator $CarryForwardEvaluator
-
-        if ($markerResult.State -eq 'success' -or $markers[0].Verdict -eq 'CHANGES' -or $null -eq $codexCandidate) {
-            return $markerResult
-        }
     }
-
-    if ($null -ne $codexCandidate) {
-        return Resolve-CodexConnectorGateResult `
+    $connectorEvaluator = {
+        Resolve-CodexConnectorGateResult `
             -CodexCandidate $codexCandidate `
             -HeadSha $HeadSha `
             -PullRequestBody $PullRequestBody `
             -InferredWriterFamilies $inferredWriterFamilies
+    }
+
+    $hasMarker = $markers.Count -gt 0
+    $hasConnector = $null -ne $codexCandidate
+
+    if ($hasMarker -and -not $hasConnector) {
+        return & $markerEvaluator
+    }
+
+    if ($hasConnector -and -not $hasMarker) {
+        return & $connectorEvaluator
+    }
+
+    if ($hasMarker -and $hasConnector) {
+        # Both sources carry verdicts: the newest one wins regardless of source, so a newer CHANGES
+        # (marker or CHANGES_REQUESTED) overrides an earlier PASS. Without usable dates on both, a
+        # CHANGES verdict wins (fail closed); otherwise the issue-comment marker leads.
+        $markerIsChanges = $markers[0].Verdict -eq 'CHANGES'
+        $markerHasDate = $null -ne $markers[0].CreatedAt
+        $connectorFirst = $false
+        if ($markerHasDate -and $codexCandidate.HasDate) {
+            $connectorFirst = $codexCandidate.SubmittedAt -gt $markers[0].CreatedAt
+        }
+        elseif ($codexCandidate.IsChanges -and -not $markerIsChanges) {
+            $connectorFirst = $true
+        }
+
+        $firstIsChanges = if ($connectorFirst) { $codexCandidate.IsChanges } else { $markerIsChanges }
+        $secondIsChanges = if ($connectorFirst) { $markerIsChanges } else { $codexCandidate.IsChanges }
+        $first = if ($connectorFirst) { & $connectorEvaluator } else { & $markerEvaluator }
+        if ($first.State -eq 'success' -or $firstIsChanges -or $secondIsChanges) {
+            return $first
+        }
+
+        # The newest verdict failed for a non-verdict reason; the older source may still qualify.
+        $second = if ($connectorFirst) { & $markerEvaluator } else { & $connectorEvaluator }
+        if ($second.State -eq 'success') {
+            return $second
+        }
+        return $first
     }
 
     $reason = if (Test-HasMalformedReviewMarker -Comments $Comments) {
@@ -1201,6 +1282,34 @@ function Get-GitHubPaginatedList {
     return @($items)
 }
 
+function Read-ReviewThreadPages {
+    param(
+        # Called with the end cursor (or $null for the first page); returns an object with
+        # nodes, hasNextPage and endCursor.
+        [Parameter(Mandatory = $true)]
+        [scriptblock] $FetchPage
+    )
+
+    $threads = [Collections.Generic.List[object]]::new()
+    $cursor = $null
+    do {
+        $page = & $FetchPage $cursor
+        foreach ($node in @($page.nodes)) {
+            $threads.Add($node)
+        }
+
+        # An unresolved thread already blocks the gate; no need to read further pages.
+        if (Test-HasUnresolvedReviewThreads -ReviewThreads @($page.nodes)) {
+            break
+        }
+
+        $hasNext = [bool] $page.hasNextPage
+        $cursor = $page.endCursor
+    } while ($hasNext)
+
+    return @($threads)
+}
+
 function Get-GitHubReviewThreads {
     param(
         [Parameter(Mandatory = $true)]
@@ -1215,14 +1324,27 @@ function Get-GitHubReviewThreads {
         throw "Invalid Repository '$Repository'; expected owner/name."
     }
 
-    $query = 'query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){reviewThreads(first:100){nodes{isResolved isOutdated}}}}}'
-    $raw = gh api graphql -f "query=$query" -f "owner=$($parts[0])" -f "name=$($parts[1])" -F "number=$PullRequest"
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to query review threads for PR #$PullRequest in $Repository."
-    }
+    $query = 'query($owner:String!,$name:String!,$number:Int!,$cursor:String){repository(owner:$owner,name:$name){pullRequest(number:$number){reviewThreads(first:100,after:$cursor){pageInfo{hasNextPage endCursor} nodes{isResolved isOutdated}}}}}'
+    $fetch = {
+        param($cursor)
+        $ghArgs = @('api', 'graphql', '-f', "query=$query", '-f', "owner=$($parts[0])", '-f', "name=$($parts[1])", '-F', "number=$PullRequest")
+        if (-not [string]::IsNullOrEmpty($cursor)) {
+            $ghArgs += @('-f', "cursor=$cursor")
+        }
+        $raw = & gh @ghArgs
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to query review threads for PR #$PullRequest in $Repository."
+        }
+        $data = $raw | ConvertFrom-Json
+        $threadsNode = $data.data.repository.pullRequest.reviewThreads
+        return [pscustomobject] @{
+            nodes = @($threadsNode.nodes)
+            hasNextPage = [bool] $threadsNode.pageInfo.hasNextPage
+            endCursor = $threadsNode.pageInfo.endCursor
+        }
+    }.GetNewClosure()
 
-    $data = $raw | ConvertFrom-Json
-    return @($data.data.repository.pullRequest.reviewThreads.nodes)
+    return Read-ReviewThreadPages -FetchPage $fetch
 }
 
 if ($MyInvocation.InvocationName -eq '.') {
