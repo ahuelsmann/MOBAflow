@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.MOBAdisplay;
 
-using Moba.Display.Runtime;
-using Moba.Display.Transport;
+using Moba.MOBAdisplay.Runtime;
+using Moba.MOBAdisplay.Transport;
 
 using System.Net;
 using System.Net.Sockets;

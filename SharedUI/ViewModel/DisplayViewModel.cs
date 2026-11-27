@@ -4,8 +4,8 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Moba.SharedUI.Configuration;
-using Moba.Display.Protocol;
-using Moba.Display.Transport;
+using Moba.MOBAdisplay.Protocol;
+using Moba.MOBAdisplay.Transport;
 
 /// <summary>Identifies the current connection state for the configured display endpoint.</summary>
 public enum DisplayConnectionState

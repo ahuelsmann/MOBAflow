@@ -2,8 +2,8 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.SharedUI.Configuration;
-using Moba.Display.Protocol;
-using Moba.Display.Transport;
+using Moba.MOBAdisplay.Protocol;
+using Moba.MOBAdisplay.Transport;
 using Moba.SharedUI.ViewModel;
 
 [TestFixture]

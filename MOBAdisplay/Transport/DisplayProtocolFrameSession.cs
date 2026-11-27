@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Display.Transport;
+namespace Moba.MOBAdisplay.Transport;
 
-using Moba.Display.Protocol;
+using Moba.MOBAdisplay.Protocol;
 
 /// <summary>
 /// Transfers complete RGB565 big-endian frames over one negotiated protocol v1.0 session.

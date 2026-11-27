@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.Display.Rendering;
+using Moba.MOBAdisplay.Rendering;
 using SkiaSharp;
 using System.Drawing;
 
-namespace Moba.Display;
+namespace Moba.MOBAdisplay;
 
 [Obsolete("Use Rgb565Converter with SkiaFrameRenderer for runtime performance.")]
 public static class BitmapToRgb565
