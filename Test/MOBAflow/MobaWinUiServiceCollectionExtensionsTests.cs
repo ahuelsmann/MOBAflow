@@ -20,8 +20,8 @@ using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.TrainControl;
 using Moba.SharedUI.ViewModel;
-using Moba.WinUI.Extensions;
-using Moba.WinUI.Service;
+using Moba.MOBAflow.Extensions;
+using Moba.MOBAflow.Service;
 using Moba.Speech.Base;
 using Moba.Speech.Piper;
 using Moba.Sound;
@@ -69,7 +69,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
                 Has.One.Matches<PageMetadata>(page =>
                     page is not null && page.Tag == "recorder"
                     && page.Title == "Recorder"
-                    && page.Category == global::Moba.WinUI.Service.NavigationCategory.Monitoring
+                    && page.Category == global::Moba.MOBAflow.Service.NavigationCategory.Monitoring
                     && page.Order == 20));
         });
     }
@@ -145,7 +145,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     private static bool NeedsTheXamlWindow(Type serviceType) =>
         typeof(Microsoft.UI.Xaml.Window).IsAssignableFrom(serviceType)
         || typeof(Microsoft.UI.Xaml.UIElement).IsAssignableFrom(serviceType)
-        || serviceType == typeof(Moba.WinUI.ViewModel.MatrixPageViewModel);
+        || serviceType == typeof(Moba.MOBAflow.ViewModel.MatrixPageViewModel);
 
     [Test]
     public async Task ShellTrainControlAndLocomotiveManagementResolveTheirRequiredDesktopServices()

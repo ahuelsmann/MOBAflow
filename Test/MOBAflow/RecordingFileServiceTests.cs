@@ -6,7 +6,7 @@ namespace Moba.Test.MOBAflow;
 using global::Moba.Backend.Service.Recording;
 using global::Moba.Common.Recording;
 using global::Moba.SharedUI.Interface;
-using global::Moba.WinUI.Service;
+using global::Moba.MOBAflow.Service;
 
 using Moq;
 

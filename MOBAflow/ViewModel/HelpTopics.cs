@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using System.Collections.Frozen;
 
-namespace Moba.WinUI.ViewModel;
+namespace Moba.MOBAflow.ViewModel;
 
 /// <summary>A help category with its sections, in display order.</summary>
 internal sealed record HelpCategory(string Title, bool IsExpandedByDefault, string[] Sections);

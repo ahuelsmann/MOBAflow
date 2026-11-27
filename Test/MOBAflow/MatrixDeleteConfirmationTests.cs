@@ -7,7 +7,7 @@ using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.Test.Helpers;
-using Moba.WinUI.ViewModel;
+using Moba.MOBAflow.ViewModel;
 
 using Moq;
 

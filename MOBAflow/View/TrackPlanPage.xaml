@@ -1,9 +1,9 @@
 <Page
-    x:Class="Moba.WinUI.View.TrackPlanPage"
+    x:Class="Moba.MOBAflow.View.TrackPlanPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
-    xmlns:controls="using:Moba.WinUI.Controls"
+    xmlns:controls="using:Moba.MOBAflow.Controls"
     xmlns:controls1="using:CommunityToolkit.WinUI.Controls">
     <Page.KeyboardAccelerators>
         <KeyboardAccelerator Key="Delete" Invoked="OnDeleteAccelerator" />

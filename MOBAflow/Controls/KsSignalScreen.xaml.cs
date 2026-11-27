@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.WinUI.Controls;
+namespace Moba.MOBAflow.Controls;
 
 using SharedUI.Appearance;
 
@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
-using Moba.WinUI.View;
+using Moba.MOBAflow.View;
 
 using Windows.UI;
 

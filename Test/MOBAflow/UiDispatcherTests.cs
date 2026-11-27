@@ -4,7 +4,7 @@ namespace Moba.Test.MOBAflow;
 
 using Microsoft.UI.Dispatching;
 
-using Moba.WinUI.Service;
+using Moba.MOBAflow.Service;
 
 [TestFixture]
 internal sealed class UiDispatcherTests

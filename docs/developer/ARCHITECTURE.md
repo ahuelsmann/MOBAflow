@@ -58,7 +58,7 @@ files for the actual direct references, including conditional entries.
 | `MOBApi` | `Moba.MOBApi` | `Common`, `Contracts` |
 | `MOBAdemo` | `Moba.Demo` | none |
 | `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackPlan.Editor` |
-| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `TrackPlan.Editor`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
+| `MOBAflow` (WinUI host) | `Moba.MOBAflow` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `TrackPlan.Editor`, `MOBAdisplay`, `Speech.Piper`, `Speech.SystemSpeech` |
 | `MOBAsmart` (MAUI host) | `Moba.MOBAsmart` | `SharedUI`, `Common`, `Sound`, `Speech.Base` |
 
 `MOBAdemo` only serves the static MOBAdemo web showcase: the files of its web root (precompressed `.br`/`.gz`

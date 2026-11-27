@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.WinUI.Extensions;
+namespace Moba.MOBAflow.Extensions;
 
 using Backend.Data;
 using Backend.Interface;

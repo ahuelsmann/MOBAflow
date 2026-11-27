@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.WinUI.Behavior;
+namespace Moba.MOBAflow.Behavior;
 
 using Microsoft.UI.Xaml;
 using Microsoft.Xaml.Interactivity;
