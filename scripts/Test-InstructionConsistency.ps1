@@ -43,7 +43,7 @@ Assert-Contains $index "git-worktree-isolation.instructions.md" "instructions-in
 Assert-Contains $qualityWorkflow "./scripts/Test-InstructionConsistency.ps1" "quality.yml"
 
 @(
-    "SonarQube before PR review",
+    "SonarQube analysis and review",
     "Balanced secrets scanning",
     "Never launch MOBAflow without explicit user approval",
     "Write answers for junior developers",

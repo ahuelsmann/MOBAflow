@@ -1,18 +1,20 @@
 ---
-description: 'Local secrets scanning and GitHub-only SonarCloud code analysis for pull requests.'
+description: 'Local secrets scanning and GitHub-only SonarCloud code analysis for the PR-free Master-Merge workflow.'
 applyTo: '**'
 ---
 
-# SonarCloud PR Gate
+# SonarCloud Quality Gate
 
-Sonar code analysis runs only through the GitHub PR pipeline. Do not run local
+Sonar code analysis runs only through the GitHub pipeline (`main` automatic analysis and CI). Do not run local
 `sonar analyze` code analysis, `sonar analyze agentic`, or Vortex analysis hooks, and
 do not install or enable those hooks. Repeating that analysis locally adds an
-unnecessary prerequisite to the existing CI gate.
+unnecessary prerequisite to the pipeline.
 
-Every PR starts as a draft and must pass SonarCloud before review. Local builds,
-tests, analyzer baseline checks, and deterministic secrets scans remain required
-as specified in AGENTS.md; cloud sessions without a local scanner follow
+Since Pull Requests were retired on 2026-11-27, slices pass local Release builds,
+analyzer baseline checks (`Test-AnalyzerBaseline.ps1`), test suites, deterministic secrets scans,
+and cross-family SwarmBus review before Master merge onto `main`, and SonarCloud
+Automatic Analysis (`ahuelsmann_MOBAflow2`, `branch=main`) is verified with `0`
+OPEN/CONFIRMED issues post-merge. Cloud sessions without a local scanner follow
 [Cloud sessions without a local scanner](#cloud-sessions-without-a-local-scanner).
 The Sonar CLI may scan secrets and read remote results; neither operation is a
 local Sonar code analysis.

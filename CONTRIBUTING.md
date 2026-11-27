@@ -178,16 +178,14 @@ GitHub Actions hosts the public quality and release workflows.
 
 ## 3. How to contribute
 
-Changes to `main` must always go through a pull request. Implementations, bug fixes, and other
-repository changes must not be committed or pushed directly to `main`.
-Work in a dedicated branch and worktree. Update local `main` only by fast-forwarding to changes
-that have already been merged through GitHub.
+Implementations, bug fixes, and repository changes are developed in dedicated task branches and Git worktrees,
+verified locally (builds, analyzers, tests, formatting, line endings) and cross-reviewed before integration onto
+`main`. Update local `main` only by fast-forwarding to integrated remote `main`.
 
-GitHub requires pull requests even for administrators, requires passing checks before merging
-(all jobs in `.github/workflows/quality.yml` and SonarCloud), and blocks force pushes and deletion
-of `main`. Additional approval by a second person is not currently required.
-Do not bypass branch protection. The Sonar and validation requirements in
-[AGENTS.md](AGENTS.md) still apply.
+GitHub protects `main` via Ruleset `28222022` blocking force pushes and deletion of `main`; mandatory Pull Requests
+were retired on 2026-11-27 in favor of PR-free cross-family review and coordinated Master merges onto `main`, backed by
+post-merge `.github/workflows/quality.yml` and SonarCloud verification. Do not bypass branch protection. The Sonar
+and validation requirements in [AGENTS.md](AGENTS.md) still apply.
 
 - **Report bugs or suggest features**
   - GitHub Issues: `https://github.com/ahuelsmann/MOBAflow/issues`

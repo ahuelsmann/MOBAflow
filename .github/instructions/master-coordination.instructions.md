@@ -7,11 +7,12 @@ applyTo: 'AGENTS.md,CLAUDE.md,docs/developer/AI-DEVELOPMENT.md,.agents/skills/mo
 
 [AGENTS.md](../../AGENTS.md) owns the shared workflow; this guide owns the multi-model agent network, roles and
 the delivery flow. Since 2026-11-16 MOBAflow works in **small batches on `main`**: problems are solved in a short
-design before code, work lands in small pull requests that merge automatically once reviewed and green, and
-parallel work never touches the same code area. On 2026-11-17 the human expanded this into a **multi-model agent
-network**: a role defines a domain responsibility, not a single fixed model or tool. Merge, never rebase, to bring
-`main` into a branch. Use the configured GitHub remote (see [AGENTS.md](../../AGENTS.md)); `<remote>/main` below
-means its `main`.
+design before code, work lands in small isolated slices that merge cleanly once cross-family reviewed and locally green,
+and parallel work never touches the same code area (`bus_locks`). On 2026-11-17 the human expanded this into a **multi-model
+agent network**: a role defines a domain responsibility, not a single fixed model or tool. On 2026-11-27 the human
+retired mandatory GitHub Pull Requests (`has_pull_requests: false`) in favor of the **PR-free Master-Merge workflow** under
+the `main` ruleset (`deletion` + `non_fast_forward` only). Use the configured GitHub remote (see [AGENTS.md](../../AGENTS.md));
+`<remote>/main` below means its `main`.
 
 A request to discuss, research or review alone does not authorize implementation or merge. An implementation
 assignment includes the flow below through merge unless explicitly limited ("draft only", "no merge", pause).
@@ -61,18 +62,14 @@ test/analyzer/build-only tooling):
 
 ## Delivery flow
 
-1. **Slice (micro-batch).** The COO cuts each issue into slices that merge independently: one concern, about
-   25 files or 400 changed lines at most, generated or mechanical changes excepted. One Draft PR per slice; an
+1. **Slice (micro-batch).** The COO cuts each issue into slices that integrate independently: one concern, about
+   25 files or 400 changed lines at most, generated or mechanical changes excepted. One isolated worktree (`artifacts/worktrees/wt-*`) and task branch per slice; an
    issue may have several slices in sequence. No long-running branches: a slice that cannot finish within a day
    is cut again.
-2. **Lock and start.** The COO adds the slice's Draft PR to the Kanban project, sets Risk class, Locked areas and
-   Writer, and fills the slice header of the PR with its team before an agent starts
-   ([fields and header](#board-locks-and-wip-limit)). A slice never starts in an area another open slice has
-   locked.
-3. **Design first.** Before touching code, the Senior Developer posts a design note of 10 to 20 lines as the first
-   PR comment or in the Draft body: goal, files and projects, approach, risks, tests that prove it. Exempt from a
+2. **Lock and start.** Claim affected repository-relative paths via `mobai-swarm-bus` (`bus_locks`) and track active slice status on the Kanban project before editing. A slice never starts in an area another open slice has locked.
+3. **Design first.** Before touching code, the Senior Developer posts a design note of 10 to 20 lines in the linked issue or `SwarmBus` message: goal, files and projects, approach, risks, tests that prove it. Exempt from a
    separate design note: class `L` slices and review-fix rounds on an already approved slice design; they state
-   their intent in the PR body or review-fix commit instead, while review-fix rounds retain their slice's risk
+   their intent in the commit/SwarmBus message instead, while review-fix rounds retain their slice's risk
    class (`H`, `M` or `L`). For class `H` and `M` slices the companion reviewer (and `P3` Head of UI/UX for
    UI/product slices; see [slice team](#slice-team-and-review-from-the-start)) checks the note first; the COO (or
    Solution Architect) answers **Go** or corrects it with those findings. No code before Go. Spec Kit features
@@ -80,30 +77,14 @@ test/analyzer/build-only tooling):
 4. **Test first for features.** For new product behavior, the acceptance tests from the specification are written
    first and fail; the implementation makes them pass. Behavior-preserving refactorings rely on the existing tests
    plus new tests only for an uncovered risk.
-5. **Pull from `main` (the writer's duty).** Before every push that hands work on (review, re-review, merge), the
-   writer merges the current `<remote>/main` into the branch, resolves conflicts locally and reruns the affected
-   checks. Never rebase or force-push a shared branch.
+5. **Sync with `main` (the writer's duty).** Before every push that hands work on (review, re-review, Master merge), the
+   writer merges or cleanly rebases against current `<remote>/main`, resolves conflicts locally and reruns the affected
+   checks. Never force-push a shared branch or rewrite `<remote>/main`.
 6. **Review.** The companion reviewer accompanies class `H` and `M` slices from the design note on (see
-   [slice team](#slice-team-and-review-from-the-start)). When the Draft is green locally and on CI and SonarCloud
-   reports zero OPEN/CONFIRMED issues on its head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO (or Acting COO)
-   marks it Ready and dispatches the final [independent review](#independent-review). Fixes go to the writer;
-   changed code gets a fresh re-review of the changed comparison.
-7. **Auto-merge.** When no Blocker, High or Medium finding is open and SonarCloud still reports zero issues, the
-   COO (or Acting COO) arms GitHub auto-merge bound to the reviewed head
-   (`gh pr merge <n> --squash --auto --match-head-commit <sha>`). The non-required mutation lanes (Common,
-   Contracts, Speech.Base, Backend, MOBApi, SharedUI) must be green, or skipped by the change filter, on that head first; the
-   required checks gate the merge itself. A finding counts as resolved only when it is fixed, or when a fresh
-   independent review or the human accepts the evidence that it does not apply; the writer, the COO (or Acting COO) or the merger
-   never dismisses it alone.
-8. **Armed PRs and new commits.** `main` has the strict up-to-date rule and no merge queue, so a merge makes the
-   other armed PRs BEHIND. Before anyone pushes to an armed PR, the COO (or Acting COO) disarms it
-   (`gh pr merge <n> --disable-auto`); every new head counts as unarmed. The COO (or Acting COO) brings BEHIND branches up to date
-   with `gh pr update-branch <n>`; when GitHub reports a conflict, the writer merges `main` and resolves it. A
-   head whose only change is a conflict-free merge of `main` needs fresh checks but no new review; a resolved
-   conflict or any other change needs a fresh review of that delta. Then the COO (or Acting COO) re-arms with the new head.
-9. **Close the loop.** After merge the Kanban item moves to Done and its locks are released.
-   Documentation and `docs/wiki/` impact is part of the slice (corrections or a concrete no-change reason in the
-   PR body).
+   [slice team](#slice-team-and-review-from-the-start)). When the task branch is green locally (Release builds, analyzer baselines, whitespace/line-ending checks, unit/architecture tests, and applicable Stryker lanes), the branch is pushed to `<remote>/<branch>` and dispatches the final [independent review](#independent-review) via `mobai-swarm-bus`. Fixes go to the writer; changed code gets a fresh re-review of the changed comparison (`base..head`).
+7. **Coordinated Master Merge.** When no Blocker, High or Medium finding is open, a standing Master session verifies the clean `base..head` diff against `<remote>/main`, creates a clean squash commit or fast-forward merge (`Closes #<id>` / `Refs #<id>`), pushes fast-forward to `<remote>/main` (`git push -4 <remote> HEAD:main`), deletes the remote task branch, releases explicit `bus_locks`, and removes the local worktree. The non-required mutation lanes (`Common`, `Contracts`, `Speech.Base`, `Backend`, `MOBApi`, `SharedUI`, `TrackPlan.Renderer`) remain covered locally before merge and by `.github/workflows/quality.yml` on `main`. A finding counts as resolved only when it is fixed, or when a fresh independent review or the human accepts the evidence that it does not apply; the writer, COO or merger never dismisses it alone.
+8. **Post-merge CI and SonarCloud on `main`.** `.github/workflows/quality.yml` (`push: branches: [main]` with `before..sha` scope detection via `Get-QualityChangeScope.ps1`) and SonarCloud Automatic Analysis verify every merged commit on `main`. If `main` CI or SonarCloud flags a finding or regression, an immediate targeted fix slice takes priority over new feature work.
+9. **Close the loop.** After merge and clean `main` verification, update/close the Kanban issue (`Done`) and verify all explicit `bus_locks` are released. Documentation and `docs/wiki/` impact is part of the slice (corrections or a concrete no-change reason in the commit/issue note).
 
 Low and Nit findings may be fixed in the slice or recorded as follow-ups; a Low or Nit that is not fixed needs a
 stated reason in the PR. The COO never reviews its own coordination fixes.

@@ -151,18 +151,17 @@ The separate [observational dependency review](DEPENDENCY-REVIEW.md) reports pul
 dependency changes and graph limitations. It adds no required gate and does not replace the
 resolved NuGet audit described below. A successful job is not a claim of complete graph coverage.
 
-The public, authoritative pull-request check is `.github/workflows/quality.yml`.
+The public, authoritative CI workflow is `.github/workflows/quality.yml` (triggered on every
+`push` to `main`, plus manual `workflow_dispatch`).
 It builds the Windows desktop graph,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
-and retains the reports and packages. The required `Portable tests on Linux` job
+and retains the reports and packages. The `Portable tests on Linux` job
 first runs `dotnet format whitespace --folder . --verify-no-changes --exclude .nuget MOBAdisplay/esp32`
 (about 15 seconds, no restore) and fails on C# whitespace or final-newline drift (RF-10,
-[#451](https://github.com/ahuelsmann/MOBAflow/issues/451)). The Android Release AAB job runs on a
-pull request only when it changes `MOBAsmart/` or
+[#451](https://github.com/ahuelsmann/MOBAflow/issues/451)). The Android Release AAB job runs on
+`push` to `main` (and pull requests, if enabled) only when the diff changes `MOBAsmart/` or
 `quality/analyzer-baseline.android.json` (maintainer decision of 2026-11-08,
-[#360](https://github.com/ahuelsmann/MOBAflow/issues/360)). On all other PR runs
-and on main runs it is skipped; its required check name remains in place, and a
-skipped job is not an AAB build. Changes in the projects MOBAsmart compiles
+[#360](https://github.com/ahuelsmann/MOBAflow/issues/360), extended to `push: main` on 2026-11-27). On all other pushes it is skipped cleanly. Changes in the projects MOBAsmart compiles
 (`SharedUI`, `Common`, `Sound`, `Backend`, `MOBAdisplay`, `TrackPlan.Renderer`,
 `TrackPlan.Editor`, `TrackLibrary.Base`, `Speech.Base`, `Domain`, `Contracts`),
 in repository-wide build inputs (`Directory.*.props`/`.targets`, `global.json`, `NuGet.Config`) and in the
@@ -206,18 +205,17 @@ product code, not excluded, unless the test needs a Windows API. Locally:
 dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --configuration Release --filter "TestCategory!=Hardware&FullyQualifiedName!=Moba.Test.Common.MobaApiRuntimeDeploymentTests.Create_CopyFailureRemovesPartialRuntimeCopyAndPreservesSource&FullyQualifiedName!~ClockRendererTests&FullyQualifiedName!~Rgb565ConverterTests&FullyQualifiedName!~SkiaFrameRendererTests"
 ```
 
-Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
+Pushes to `main` (and pull requests) that change only documentation paths (`docs/`, `plans/`, `specs/`,
 `.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
-Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
-GitHub reports those skipped jobs as successful required checks. Pushes to
-`main` and manual runs classify all scopes as enabled. Other PR changes enable
+Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list (comparing `before..sha`
+for `push` events when history contains `before`).
+GitHub reports those skipped jobs as successful checks. Manual `workflow_dispatch` runs (or pushes without
+a reachable `before` commit) classify all scopes except Android as enabled. Other changes enable
 desktop and display; all eight active mutation jobs (`Domain`, `Common`,
 `Contracts`, `Speech.Base`, `Backend`, `MOBApi`, `SharedUI` and `TrackPlan.Renderer`) and the ESP32
-firmware steps also depend on their transitive input paths. Android runs on PRs
-that change
-`MOBAsmart/` or `quality/analyzer-baseline.android.json` and with the manual
-`validate_android` input; pushes to `main` do not run it. If change detection
-itself fails on a PR, every scoped job, Android included, runs rather than being
+firmware steps also depend on their transitive input paths. Android runs on pushes and PRs
+that change `MOBAsmart/` or `quality/analyzer-baseline.android.json` and with the manual
+`validate_android` input. If change detection itself fails, every scoped job, Android included, runs rather than being
 skipped. A skipped check is not evidence that tests ran.
 
 The `mobademo` job (check `MOBAdemo frontend, audit and bundle budget`, issue
