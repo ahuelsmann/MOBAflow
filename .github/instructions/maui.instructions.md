@@ -35,7 +35,7 @@ Preserve the existing shared runtime and mobile local/remote coordination.
   NavigationPage, TabbedPage or FlyoutPage. Resolve route names from current registration.
 - Keep Android-specific code in platform implementations/conditional sections. Extend the existing
   `MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs` registration for Android implementations and pages;
-  registrations without an Android API belong in `SharedUI/Extensions/MobileServiceCollectionExtensions.cs`.
+  registrations without an Android API belong in `SharedUI/Mobile/MobileServiceCollectionExtensions.cs`.
 
 ## Touch and layout
 

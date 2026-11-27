@@ -8,7 +8,7 @@ using Domain;
 
 using Interface;
 
-using Service;
+using Moba.SharedUI.Service;
 
 using System.Collections.ObjectModel;
 

@@ -7,8 +7,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Desktop.Service;
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
 using Moq;
 using Moba.Backend.Discovery;

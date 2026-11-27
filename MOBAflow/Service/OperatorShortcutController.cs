@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Desktop.Service;
 using System.Windows.Input;
 using Windows.System;
 using Windows.UI.Core;

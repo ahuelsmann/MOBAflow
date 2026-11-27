@@ -22,7 +22,7 @@ internal sealed class SolutionSessionArchitectureTests
     /// </summary>
     private static readonly Dictionary<string, string> AllowedDependents = new(StringComparer.Ordinal)
     {
-        ["SharedUI/ViewModel/MainWindowViewModel"] = "the shell itself (all partial files)",
+        ["SharedUI/Desktop/ViewModel/MainWindowViewModel"] = "the shell itself (all partial files)",
         ["MOBAflow/View/MainWindow.xaml.cs"] = "the main window hosts the shell, its status bar and its shutdown",
         ["MOBAflow/View/OverviewPage.xaml.cs"] = "binds the shell's Z21 status and telemetry projection",
         ["MOBAflow/Extensions/"] = "composition root registers the shell",
@@ -31,7 +31,7 @@ internal sealed class SolutionSessionArchitectureTests
     /// <summary>Files whose constructors may receive the <c>Solution</c> instance.</summary>
     private static readonly HashSet<string> SolutionOwners = new(StringComparer.Ordinal)
     {
-        "SharedUI/Service/SolutionSession.cs",
+        "SharedUI/Desktop/Service/SolutionSession.cs",
         "SharedUI/ViewModel/SolutionViewModel.cs",
     };
 

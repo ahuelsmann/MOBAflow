@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Action;
+using Moba.SharedUI.ViewModel.Action;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Interface;
-using Service;
+using Moba.SharedUI.Service;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;

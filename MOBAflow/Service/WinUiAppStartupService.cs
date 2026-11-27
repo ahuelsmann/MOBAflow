@@ -17,7 +17,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Interface;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Desktop.Service;
 
 using Serilog;
 

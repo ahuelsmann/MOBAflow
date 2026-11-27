@@ -10,8 +10,8 @@ using Microsoft.Windows.Storage.Pickers;
 using Moba.MOBAflow.Service;
 using Moba.MOBAflow.ViewModel;
 using SharedUI.Interface;
-using SharedUI.Service;
-using SharedUI.ViewModel;
+using SharedUI.Desktop.Service;
+using SharedUI.Desktop.ViewModel;
 
 /// <summary>
 /// Settings page for application-wide configuration.

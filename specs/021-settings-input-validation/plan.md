@@ -14,7 +14,7 @@ Use the [Event Manager inline error pattern](../../MOBAflow/View/EventManagerPag
 
 ## Field inventory and delivery order
 
-The WinUI bindings in [SettingsPage.xaml](../../MOBAflow/View/SettingsPage.xaml) and the existing [view model](../../SharedUI/ViewModel/SettingsPageViewModel.cs) are the source for the inventory. Confirm the complete binding list before writing code and update this table if main has changed.
+The WinUI bindings in [SettingsPage.xaml](../../MOBAflow/View/SettingsPage.xaml) and the existing [view model](../../SharedUI/Desktop/ViewModel/SettingsPageViewModel.cs) are the source for the inventory. Confirm the complete binding list before writing code and update this table if main has changed.
 
 | Slice | Fields and validation |
 | --- | --- |

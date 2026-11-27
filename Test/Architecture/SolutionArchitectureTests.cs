@@ -204,6 +204,35 @@ internal sealed partial class SolutionArchitectureTests
             + "Common keeps only neutral AppSettings sections. Violations: " + string.Join("; ", violations));
     }
 
+    [Test]
+    public void HostProjects_DoNotUseTheOtherHostsSharedUiTypes()
+    {
+        var root = FindRepositoryRoot();
+        var desktopTypes = ReadDeclaredTypeNames(Path.Combine(root, "SharedUI/Desktop"));
+        var mobileTypes = ReadDeclaredTypeNames(Path.Combine(root, "SharedUI/Mobile"));
+
+        var violations = new List<string>();
+        violations.AddRange(FindSharedUiCrossHostViolations(
+            root,
+            ["MOBAflow", "SharedUI/Desktop"],
+            "Moba.SharedUI.Mobile",
+            "SharedUI.Mobile",
+            mobileTypes));
+        violations.AddRange(FindSharedUiCrossHostViolations(
+            root,
+            ["MOBAsmart", "SharedUI/Mobile"],
+            "Moba.SharedUI.Desktop",
+            "SharedUI.Desktop",
+            desktopTypes));
+
+        Assert.That(
+            violations,
+            Is.Empty,
+            "Single-host SharedUI rule: MOBAflow and Moba.SharedUI.Desktop never use Moba.SharedUI.Mobile; "
+            + "MOBAsmart and Moba.SharedUI.Mobile never use Moba.SharedUI.Desktop. Violations: "
+            + string.Join("; ", violations));
+    }
+
     private static IEnumerable<(string Framework, string Evidence)> UiFrameworkUsage(BuildDefinition build)
     {
         foreach (var property in build.TrueProperties)
@@ -253,6 +282,164 @@ internal sealed partial class SolutionArchitectureTests
     private static bool IsBelow(string declaredNamespace, string rootNamespace) =>
         string.Equals(declaredNamespace, rootNamespace, StringComparison.Ordinal)
         || declaredNamespace.StartsWith(rootNamespace + ".", StringComparison.Ordinal);
+
+    private static HashSet<string> ReadDeclaredTypeNames(string directory)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var file in EnumerateNonGeneratedFiles(directory, "*.cs"))
+        {
+            var root = CSharpSyntaxTree.ParseText(File.ReadAllText(file)).GetRoot();
+            foreach (var declaration in root.DescendantNodes().OfType<BaseTypeDeclarationSyntax>())
+            {
+                if (!declaration.Modifiers.Any(modifier => modifier.RawKind == (int)SyntaxKind.PrivateKeyword))
+                {
+                    names.Add(declaration.Identifier.ValueText);
+                }
+            }
+
+            foreach (var declaration in root.DescendantNodes().OfType<DelegateDeclarationSyntax>())
+            {
+                if (!declaration.Modifiers.Any(modifier => modifier.RawKind == (int)SyntaxKind.PrivateKeyword))
+                {
+                    names.Add(declaration.Identifier.ValueText);
+                }
+            }
+        }
+
+        return names;
+    }
+
+    private static IEnumerable<string> FindSharedUiCrossHostViolations(
+        string repositoryRoot,
+        string[] folders,
+        string forbiddenFullNamespace,
+        string forbiddenShortNamespace,
+        HashSet<string> forbiddenTypes)
+    {
+        foreach (var folder in folders)
+        {
+            var fullFolder = Path.Combine(repositoryRoot, folder);
+            foreach (var file in EnumerateNonGeneratedFiles(fullFolder, "*.cs"))
+            {
+                var relative = Path.GetRelativePath(repositoryRoot, file).Replace('\\', '/');
+                var root = CSharpSyntaxTree.ParseText(File.ReadAllText(file)).GetRoot();
+
+                foreach (var directive in root.DescendantNodes().OfType<UsingDirectiveSyntax>())
+                {
+                    var name = StripGlobalAlias(directive.Name?.ToString());
+                    if (IsForbiddenNamespace(name, forbiddenFullNamespace, forbiddenShortNamespace))
+                    {
+                        yield return $"{relative}:{LineNumber(directive)} using {name}";
+                    }
+                }
+
+                foreach (var qualified in root.DescendantNodes().OfType<QualifiedNameSyntax>())
+                {
+                    var name = StripGlobalAlias(qualified.ToString());
+                    if (IsForbiddenNamespace(name, forbiddenFullNamespace, forbiddenShortNamespace))
+                    {
+                        yield return $"{relative}:{LineNumber(qualified)} references {name}";
+                    }
+                }
+
+                foreach (var access in root.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
+                {
+                    var expression = StripGlobalAlias(access.Expression.ToString());
+                    if (IsForbiddenNamespace(expression, forbiddenFullNamespace, forbiddenShortNamespace))
+                    {
+                        yield return $"{relative}:{LineNumber(access)} accesses {expression}";
+                    }
+                }
+
+                foreach (var identifier in root.DescendantNodes().OfType<IdentifierNameSyntax>())
+                {
+                    if (identifier.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Name == identifier)
+                    {
+                        continue;
+                    }
+
+                    var value = identifier.Identifier.ValueText;
+                    if (forbiddenTypes.Contains(value))
+                    {
+                        yield return $"{relative}:{LineNumber(identifier)} uses {value}";
+                    }
+                }
+            }
+
+            foreach (var file in EnumerateNonGeneratedFiles(fullFolder, "*.xaml"))
+            {
+                var relative = Path.GetRelativePath(repositoryRoot, file).Replace('\\', '/');
+                var document = XDocument.Load(file, LoadOptions.SetLineInfo);
+                foreach (var attribute in document.Descendants().Attributes())
+                {
+                    var line = ((System.Xml.IXmlLineInfo)attribute).LineNumber;
+                    if (attribute.IsNamespaceDeclaration)
+                    {
+                        var xamlNamespace = ExtractXamlClrNamespace(attribute.Value);
+                        if (xamlNamespace is not null && IsBelow(xamlNamespace, forbiddenFullNamespace))
+                        {
+                            yield return $"{relative}:{line} xmlns {attribute.Value}";
+                        }
+                    }
+                    else if (attribute.Name.LocalName is "DataType" or "Type")
+                    {
+                        var typeName = attribute.Value.Split(':').Last().Trim();
+                        if (forbiddenTypes.Contains(typeName))
+                        {
+                            yield return $"{relative}:{line} {attribute.Name.LocalName}=\"{attribute.Value}\"";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<string> EnumerateNonGeneratedFiles(string directory, string pattern)
+    {
+        if (!Directory.Exists(directory))
+        {
+            yield break;
+        }
+
+        string[] generatedFolders = ["bin", "obj"];
+        foreach (var file in Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(directory, file);
+            var segments = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (segments.Any(segment => generatedFolders.Contains(segment, StringComparer.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            yield return file;
+        }
+    }
+
+    private static string StripGlobalAlias(string? value) =>
+        value is null ? string.Empty : value.Replace("global::", string.Empty, StringComparison.Ordinal).Trim();
+
+    private static bool IsForbiddenNamespace(string candidate, string fullNamespace, string shortNamespace) =>
+        IsBelow(candidate, fullNamespace) || IsBelow(candidate, shortNamespace);
+
+    private static string? ExtractXamlClrNamespace(string value)
+    {
+        if (value.StartsWith("using:", StringComparison.Ordinal))
+        {
+            return value["using:".Length..].Trim();
+        }
+
+        if (value.StartsWith("clr-namespace:", StringComparison.Ordinal))
+        {
+            var rest = value["clr-namespace:".Length..];
+            var semicolon = rest.IndexOf(';', StringComparison.Ordinal);
+            return (semicolon >= 0 ? rest[..semicolon] : rest).Trim();
+        }
+
+        return null;
+    }
+
+    private static int LineNumber(Microsoft.CodeAnalysis.SyntaxNode node) =>
+        node.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
 
     private static IEnumerable<(string File, string Namespace)> ReadNamespaceDeclarations(SolutionProject project)
     {

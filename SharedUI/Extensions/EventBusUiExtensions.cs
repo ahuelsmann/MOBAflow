@@ -11,7 +11,7 @@ using Interface;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-using Service;
+using Moba.SharedUI.Service;
 
 /// <summary>
 /// Extensions for registering the EventBus with UI-thread marshalling.

@@ -7,9 +7,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
-using SharedUI.Service;
+using SharedUI.Desktop.Service;
 
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;

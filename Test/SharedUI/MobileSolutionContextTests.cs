@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.Test.Helpers;
 using Moba.Domain;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Mobile;
 
 namespace Moba.Test.SharedUI;
 

@@ -6,7 +6,7 @@ using Domain;
 
 using System.ComponentModel;
 
-using ViewModel;
+using Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// Owns the loaded solution: its file path, dirty and save state, auto-save, and the selected project and journey.

@@ -12,6 +12,7 @@ using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
 using Moq;
 

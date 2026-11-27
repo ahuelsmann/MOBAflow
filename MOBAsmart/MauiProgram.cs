@@ -5,7 +5,6 @@ using CommunityToolkit.Maui;
 
 using Extensions;
 
-using SharedUI.Extensions;
 using SharedUI.Mobile;
 
 public static class MauiProgram

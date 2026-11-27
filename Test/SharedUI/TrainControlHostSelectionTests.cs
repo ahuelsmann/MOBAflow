@@ -10,6 +10,7 @@ using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.Mobile;
 using Moba.SharedUI.TrainControl;
 
 using Moq;

@@ -15,7 +15,7 @@ Service-provider lookups belong in composition roots/factories, not feature beha
 - [WinUI](../../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs) and
   [MAUI](../../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs) compose their platform-specific services.
   Register shared backend services through the common extension rather than maintaining duplicate lists.
-- [Mobile composition](../../SharedUI/Extensions/MobileServiceCollectionExtensions.cs): `AddMobaMobileServices`
+- [Mobile composition](../../SharedUI/Mobile/MobileServiceCollectionExtensions.cs): `AddMobaMobileServices`
   registers everything of MOBAsmart that needs no Android API (runtime, remote stack, ViewModels, startup service).
   Add such registrations there so the portable container test resolves them; the Android app registers only its
   platform implementations and pages.

@@ -6,6 +6,7 @@
     xmlns:controls1="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:dvm="using:Moba.SharedUI.Desktop.ViewModel"
     xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
@@ -141,7 +142,7 @@
                             ItemsSource="{x:Bind Z21Assignment.UnassignedZ21s, Mode=OneWay}"
                             SelectionMode="Single">
                             <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="viewmodel:Z21AssignmentCandidate">
+                                <DataTemplate x:DataType="dvm:Z21AssignmentCandidate">
                                     <StackPanel Padding="6" Spacing="2">
                                         <TextBlock Text="{x:Bind Title}" />
                                         <TextBlock

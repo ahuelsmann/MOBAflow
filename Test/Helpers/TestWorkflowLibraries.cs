@@ -10,7 +10,7 @@ using Moba.Common.Events;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
 /// <summary>
 /// Creates the shared workflow library with explicit test collaborators: a dialog that confirms nothing, the

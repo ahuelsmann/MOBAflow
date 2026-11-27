@@ -1,0 +1,1019 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+namespace Moba.SharedUI.Desktop.ViewModel;
+
+using Common.Extension;
+
+using Configuration;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+using Interface;
+using Moba.SharedUI.Desktop.Service;
+using CommunityToolkit.Mvvm.Input;
+
+using Microsoft.Extensions.Logging;
+
+using Speech.Base;
+
+using System.Collections.ObjectModel;
+using System.IO;
+
+/// <summary>
+/// Owns application settings presentation, speech testing and immediate persistence.
+/// Automatically saves settings immediately after each change.
+/// </summary>
+public sealed partial class SettingsPageViewModel : ObservableObject
+{
+    private readonly UiSettings _settings;
+    private readonly ISettingsService _settingsService;
+    private readonly LayoutPersistenceService _layout;
+    private readonly IUiDispatcher _uiDispatcher;
+    private readonly ILogger<SettingsPageViewModel> _logger;
+    private readonly IFeatureTogglePageProvider _featureTogglePageProvider;
+    private readonly ISpeechOutput _speechOutput;
+
+    /// <summary>Creates shared settings presentation state with host-provided persistence and speech integration.</summary>
+    /// <param name="settings">The shared application settings this page edits.</param>
+    /// <param name="settingsService">Persists every change immediately.</param>
+    /// <param name="uiDispatcher">Marshals speech test results back to the UI thread.</param>
+    /// <param name="logger">Logger for persistence and speech test failures.</param>
+    /// <param name="featureTogglePageProvider">Pages that can be switched on and off in Settings.</param>
+    /// <param name="speechOutput">Speaks the speech test message with the current provider and options.</param>
+    public SettingsPageViewModel(
+        UiSettings settings,
+        ISettingsService settingsService,
+        LayoutPersistenceService layout,
+        IUiDispatcher uiDispatcher,
+        ILogger<SettingsPageViewModel> logger,
+        IFeatureTogglePageProvider featureTogglePageProvider,
+        ISpeechOutput speechOutput)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(layout);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(featureTogglePageProvider);
+        ArgumentNullException.ThrowIfNull(speechOutput);
+        _settings = settings;
+        _settingsService = settingsService;
+        _layout = layout;
+        _uiDispatcher = uiDispatcher;
+        _logger = logger;
+        _featureTogglePageProvider = featureTogglePageProvider;
+        _speechOutput = speechOutput;
+        InitializeFeatureToggleItems();
+    }
+
+    /// <summary>Raised only after the configured feedback point count actually changes.</summary>
+    public event EventHandler? FeedbackPointCountChanged;
+
+    /// <summary>Raised when one or more toggleable pages change availability.</summary>
+    public event EventHandler? FeatureTogglesChanged;
+
+    [ObservableProperty]
+    public partial string ErrorMessage { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool ShowErrorMessage { get; set; }
+
+    [ObservableProperty]
+    public partial bool ShowSuccessMessage { get; set; }
+
+    [ObservableProperty]
+    public partial int SelectedThemeIndex { get; set; } = 1;
+
+    /// <summary>Gets or sets the persisted shell theme.</summary>
+    public bool IsDarkMode
+    {
+        get => _settings.Application.IsDarkMode;
+        set => UpdateSetting(() => _settings.Application.IsDarkMode,
+            updated => _settings.Application.IsDarkMode = updated, value, nameof(IsDarkMode));
+    }
+
+    private void PersistSettingsSafely()
+    {
+        _settingsService.SaveSettingsAsync(_settings)
+            .Observe(ex => LogPersistSettingsFailed(_logger, ex));
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Persist settings failed")]
+    private static partial void LogPersistSettingsFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Speech test failed")]
+    private static partial void LogSpeechTestFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Speech test failed: {Reason}")]
+    private static partial void LogSpeechTestUnsuccessful(ILogger logger, string reason);
+
+    private readonly List<PiperVoiceOption> _availablePiperVoiceOptions = [];
+    private string _selectedPiperLanguage = string.Empty;
+
+    private void PersistSettings()
+    {
+        PersistSettingsSafely();
+    }
+
+    private bool UpdateSetting<T>(
+        Func<T> currentValue,
+        Action<T> applyValue,
+        T newValue,
+        string propertyName,
+        params string[] additionalPropertyNames)
+    {
+        if (EqualityComparer<T>.Default.Equals(currentValue(), newValue))
+        {
+            return false;
+        }
+
+        applyValue(newValue);
+        OnPropertyChanged(propertyName);
+        foreach (var additionalPropertyName in additionalPropertyNames)
+        {
+            OnPropertyChanged(additionalPropertyName);
+        }
+
+        PersistSettings();
+        return true;
+    }
+
+    // Seconds settings come from sliders; smaller differences are not a change.
+    private const double SecondsSettingTolerance = 0.0001;
+
+    #region Settings Properties
+    /// <summary>
+    /// Application settings - exposed for direct binding.
+    /// Settings are stored in appsettings.json (not in Solution).
+    /// </summary>
+    public UiSettings Settings => _settings;
+
+    // Wrapper properties for Settings page bindings
+    /// <summary>
+    /// Gets or sets the explicitly configured ESP32 display address.
+    /// </summary>
+    public string DisplayIpAddress
+    {
+        get => _settings.Display.Esp32IpAddress;
+        set
+        {
+            var normalized = value?.Trim() ?? string.Empty;
+            if (_settings.Display.Esp32IpAddress != normalized)
+            {
+                _settings.Display.Esp32IpAddress = normalized;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the UDP port for display protocol v1.0.
+    /// </summary>
+    public int DisplayPort
+    {
+        get => _settings.Display.Port;
+        set
+        {
+            if (_settings.Display.Port != value)
+            {
+                _settings.Display.Port = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the retry interval in seconds for the automatic Z21 auto-connect logic.
+    /// </summary>
+    public double Z21AutoConnectRetryInterval
+    {
+        get => _settings.Z21.AutoConnectRetryIntervalSeconds;
+        set
+        {
+            if (_settings.Z21.AutoConnectRetryIntervalSeconds != (int)value)
+            {
+                _settings.Z21.AutoConnectRetryIntervalSeconds = (int)value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the polling interval in seconds for Z21 system state updates.
+    /// </summary>
+    public double Z21SystemStatePollingInterval
+    {
+        get => _settings.Z21.SystemStatePollingIntervalSeconds;
+        set
+        {
+            if (_settings.Z21.SystemStatePollingIntervalSeconds != (int)value)
+            {
+                _settings.Z21.SystemStatePollingIntervalSeconds = (int)value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the path to the local Piper executable.
+    /// </summary>
+    public string PiperExecutablePath
+    {
+        get => _settings.Speech.Piper.ExecutablePath;
+        set
+        {
+            if (_settings.Speech.Piper.ExecutablePath != value)
+            {
+                _settings.Speech.Piper.ExecutablePath = value ?? string.Empty;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(PiperConfigurationStatus));
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the path to the local Piper voice model.
+    /// </summary>
+    public string PiperModelPath
+    {
+        get => _settings.Speech.Piper.ModelPath;
+        set
+        {
+            if (_settings.Speech.Piper.ModelPath != value)
+            {
+                _settings.Speech.Piper.ModelPath = value ?? string.Empty;
+                var configPath = $"{_settings.Speech.Piper.ModelPath}.json";
+                _settings.Speech.Piper.ConfigPath = File.Exists(configPath) ? configPath : string.Empty;
+                _settings.Speech.VoiceName = Path.GetFileNameWithoutExtension(_settings.Speech.Piper.ModelPath);
+                RefreshPiperVoiceOptions();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(PiperConfigPath));
+                OnPropertyChanged(nameof(VoiceName));
+                OnPropertyChanged(nameof(SelectedPiperVoiceName));
+                OnPropertyChanged(nameof(PiperConfigurationStatus));
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the optional path to the Piper model configuration file.
+    /// </summary>
+    public string PiperConfigPath
+    {
+        get => _settings.Speech.Piper.ConfigPath;
+        set
+        {
+            if (_settings.Speech.Piper.ConfigPath != value)
+            {
+                _settings.Speech.Piper.ConfigPath = value ?? string.Empty;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(PiperConfigurationStatus));
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the speech rate used for synthesized announcements.
+    /// </summary>
+    public int SpeechRate
+    {
+        get => _settings.Speech.Rate;
+        set
+        {
+            if (_settings.Speech.Rate != value)
+            {
+                _settings.Speech.Rate = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the optional pause inserted between Piper sentences.
+    /// </summary>
+    public double PiperSentenceSilenceSeconds
+    {
+        get => _settings.Speech.Piper.SentenceSilenceSeconds;
+        set
+        {
+            var clampedValue = Math.Clamp(value, 0, 2);
+            if (Math.Abs(_settings.Speech.Piper.SentenceSilenceSeconds - clampedValue) > SecondsSettingTolerance)
+            {
+                _settings.Speech.Piper.SentenceSilenceSeconds = clampedValue;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the last Piper WAV is preserved for external playback diagnostics.
+    /// </summary>
+    public bool EnablePiperAudioDiagnostics
+    {
+        get => _settings.Speech.Piper.EnableAudioDiagnostics;
+        set
+        {
+            if (_settings.Speech.Piper.EnableAudioDiagnostics != value)
+            {
+                _settings.Speech.Piper.EnableAudioDiagnostics = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Describes whether the Piper executable, voice model, and optional configuration are usable.
+    /// </summary>
+    public string PiperConfigurationStatus
+    {
+        get
+        {
+            if (!File.Exists(PiperExecutablePath))
+            {
+                return "Piper executable path is missing or invalid.";
+            }
+
+            if (!File.Exists(PiperModelPath))
+            {
+                return "Piper voice model path is missing or invalid.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(PiperConfigPath) && !File.Exists(PiperConfigPath))
+            {
+                return "Optional Piper configuration path is invalid.";
+            }
+
+            return $"Piper is ready with voice model '{Path.GetFileNameWithoutExtension(PiperModelPath)}'.";
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the speech output volume as a percentage value.
+    /// </summary>
+    public double SpeechVolume
+    {
+        get => _settings.Speech.Volume;
+        set
+        {
+            if ((uint)value != _settings.Speech.Volume)
+            {
+                _settings.Speech.Volume = (uint)value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the voice/model name used for announcements.
+    /// </summary>
+    public string VoiceName
+    {
+        get => _settings.Speech.VoiceName;
+        set
+        {
+            if (_settings.Speech.VoiceName != value)
+            {
+                _settings.Speech.VoiceName = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Available Piper languages derived from installed voice model file names.
+    /// </summary>
+    public ObservableCollection<string> AvailablePiperLanguages { get; } = [];
+
+    /// <summary>
+    /// Available Piper voices for the selected language.
+    /// </summary>
+    public ObservableCollection<string> AvailablePiperVoices { get; } = [];
+
+    /// <summary>
+    /// Currently selected Piper language, for example de_DE or en_US.
+    /// </summary>
+    public string SelectedPiperLanguage
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_selectedPiperLanguage))
+            {
+                _selectedPiperLanguage = GetLanguageFromVoiceName(VoiceName);
+            }
+
+            return _selectedPiperLanguage;
+        }
+        set
+        {
+            if (_selectedPiperLanguage == value)
+            {
+                return;
+            }
+
+            _selectedPiperLanguage = value ?? string.Empty;
+            OnPropertyChanged();
+            RefreshFilteredPiperVoices();
+        }
+    }
+
+    /// <summary>
+    /// Currently selected Piper voice option.
+    /// </summary>
+    public string SelectedPiperVoiceName
+    {
+        get
+        {
+            RefreshPiperVoiceOptionsIfNeeded();
+            return _availablePiperVoiceOptions.FirstOrDefault(voice =>
+                voice.ModelPath.Equals(PiperModelPath, StringComparison.OrdinalIgnoreCase))?.Name
+                ?? VoiceName;
+        }
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Equals(VoiceName, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var selectedVoice = _availablePiperVoiceOptions.FirstOrDefault(voice =>
+                voice.Name.Equals(value, StringComparison.OrdinalIgnoreCase));
+            if (selectedVoice == null)
+            {
+                return;
+            }
+
+            _settings.Speech.Piper.ModelPath = selectedVoice.ModelPath;
+            _settings.Speech.Piper.ConfigPath = selectedVoice.ConfigPath;
+            _settings.Speech.VoiceName = selectedVoice.Name;
+            _selectedPiperLanguage = selectedVoice.Language;
+
+            RefreshFilteredPiperVoices();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedPiperLanguage));
+            OnPropertyChanged(nameof(PiperModelPath));
+            OnPropertyChanged(nameof(PiperConfigPath));
+            OnPropertyChanged(nameof(VoiceName));
+            PersistSettings();
+        }
+    }
+
+    /// <summary>
+    /// Custom test message for speech synthesis test.
+    /// User can modify this text in Settings UI.
+    /// </summary>
+    public string SpeechTestMessage
+    {
+        get => _settings.Speech.TestMessage;
+        set
+        {
+            if (_settings.Speech.TestMessage != value)
+            {
+                _settings.Speech.TestMessage = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// List of available local speech provider IDs for selection.
+    /// </summary>
+    public ObservableCollection<SpeechProviderOption> AvailableSpeechProviders { get; } =
+    [
+        new("system-speech", "System Speech (Windows SAPI)"),
+        new("piper", "Piper TTS")
+    ];
+
+    /// <summary>
+    /// Currently selected speech provider ID.
+    /// </summary>
+    public string SelectedSpeechProviderId
+    {
+        get => _settings.Speech.ProviderId;
+        set
+        {
+            if (_settings.Speech.ProviderId != value)
+            {
+                _settings.Speech.ProviderId = value;
+                _settings.Speech.VoiceName = string.Empty;
+                OnPropertyChanged(nameof(VoiceName));
+                OnPropertyChanged(nameof(SelectedPiperVoiceName));
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsPiperSpeechProviderSelected));
+                OnPropertyChanged(nameof(IsSystemSpeechProviderSelected));
+                OnPropertyChanged(nameof(SelectedSpeechProviderName));
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>The readable name of the selected local provider.</summary>
+    public string SelectedSpeechProviderName => AvailableSpeechProviders
+        .FirstOrDefault(provider => provider.Id == SelectedSpeechProviderId)?.DisplayName ?? "System Speech (Windows SAPI)";
+
+    /// <summary>
+    /// Returns true if Piper TTS is selected.
+    /// Used to show/hide Piper-specific settings.
+    /// </summary>
+    public bool IsPiperSpeechProviderSelected =>
+        SelectedSpeechProviderId == "piper";
+
+    /// <summary>Whether Windows speech options are displayed.</summary>
+    public bool IsSystemSpeechProviderSelected => !IsPiperSpeechProviderSelected;
+
+    /// <summary>Windows voice used when the shared voice selection is empty.</summary>
+    public string SystemSpeechDefaultVoiceName
+    {
+        get => _settings.Speech.SystemSpeech.DefaultVoiceName;
+        set
+        {
+            if (SetProperty(_settings.Speech.SystemSpeech.DefaultVoiceName, value ?? string.Empty,
+                _settings.Speech.SystemSpeech, static (model, voice) => model.DefaultVoiceName = voice))
+            {
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Refreshes installed Piper voice options from the configured model directory.
+    /// </summary>
+    public void RefreshPiperVoiceOptions()
+    {
+        _availablePiperVoiceOptions.Clear();
+        AvailablePiperLanguages.Clear();
+
+        var modelDirectory = Path.GetDirectoryName(PiperModelPath);
+        if (string.IsNullOrWhiteSpace(modelDirectory) || !Directory.Exists(modelDirectory))
+        {
+            AvailablePiperVoices.Clear();
+            return;
+        }
+
+        foreach (var modelPath in Directory.EnumerateFiles(modelDirectory, "*.onnx").OrderBy(Path.GetFileName))
+        {
+            var name = Path.GetFileNameWithoutExtension(modelPath);
+            var language = GetLanguageFromVoiceName(name);
+            var configPath = $"{modelPath}.json";
+            _availablePiperVoiceOptions.Add(new PiperVoiceOption(
+                name,
+                language,
+                modelPath,
+                File.Exists(configPath) ? configPath : string.Empty));
+        }
+
+        foreach (var language in _availablePiperVoiceOptions
+            .Select(voice => voice.Language)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(language => language))
+        {
+            AvailablePiperLanguages.Add(language);
+        }
+
+        var currentLanguage = GetLanguageFromVoiceName(VoiceName);
+        if (string.IsNullOrWhiteSpace(_selectedPiperLanguage) || !AvailablePiperLanguages.Contains(_selectedPiperLanguage))
+        {
+            _selectedPiperLanguage = AvailablePiperLanguages.Contains(currentLanguage)
+                ? currentLanguage
+                : AvailablePiperLanguages.FirstOrDefault() ?? string.Empty;
+        }
+
+        RefreshFilteredPiperVoices();
+        OnPropertyChanged(nameof(SelectedPiperLanguage));
+        OnPropertyChanged(nameof(SelectedPiperVoiceName));
+    }
+
+    private void RefreshPiperVoiceOptionsIfNeeded()
+    {
+        if (_availablePiperVoiceOptions.Count == 0)
+        {
+            RefreshPiperVoiceOptions();
+        }
+    }
+
+    private void RefreshFilteredPiperVoices()
+    {
+        AvailablePiperVoices.Clear();
+
+        foreach (var voice in _availablePiperVoiceOptions
+            .Where(voice => string.IsNullOrWhiteSpace(_selectedPiperLanguage)
+                || voice.Language.Equals(_selectedPiperLanguage, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(voice => voice.Name))
+        {
+            AvailablePiperVoices.Add(voice.Name);
+        }
+    }
+
+    private static string GetLanguageFromVoiceName(string? voiceName)
+    {
+        if (string.IsNullOrWhiteSpace(voiceName))
+        {
+            return string.Empty;
+        }
+
+        var firstDashIndex = voiceName.IndexOf('-', StringComparison.Ordinal);
+        return firstDashIndex > 0
+            ? voiceName[..firstDashIndex]
+            : voiceName;
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the last used solution is automatically loaded on startup.
+    /// </summary>
+    public bool AutoLoadLastSolution
+    {
+        get => _settings.Application.AutoLoadLastSolution;
+        set
+        {
+            if (_settings.Application.AutoLoadLastSolution != value)
+            {
+                _settings.Application.AutoLoadLastSolution = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the WebApp should be started automatically with the desktop app.
+    /// </summary>
+    public bool AutoStartWebApp
+    {
+        get => _settings.Application.AutoStartWebApp;
+        set
+        {
+            if (_settings.Application.AutoStartWebApp != value)
+            {
+                _settings.Application.AutoStartWebApp = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    // REST API Settings
+    /// <summary>
+    /// Gets or sets the TCP port used by the REST API hosted by the WebApp.
+    /// </summary>
+    public int RestApiPort
+    {
+        get => _settings.RestApi.Port;
+        set
+        {
+            if (_settings.RestApi.Port != value)
+            {
+                _settings.RestApi.Port = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the base folder for MOBAflow photos (e.g. OneDrive path). Empty = My Documents\MOBAflow\Photos.
+    /// </summary>
+    public string PhotoStoragePath
+    {
+        get => _settings.Application.PhotoStoragePath;
+        set
+        {
+            var v = value;
+            if (_settings.Application.PhotoStoragePath != v)
+            {
+                _settings.Application.PhotoStoragePath = v;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the periodic health check is enabled.
+    /// </summary>
+    public bool HealthCheckEnabled
+    {
+        get => _settings.HealthCheck.Enabled;
+        set
+        {
+            if (_settings.HealthCheck.Enabled != value)
+            {
+                _settings.HealthCheck.Enabled = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the interval in seconds between health check executions.
+    /// </summary>
+    public double HealthCheckIntervalSeconds
+    {
+        get => _settings.HealthCheck.IntervalSeconds;
+        set
+        {
+            if (_settings.HealthCheck.IntervalSeconds != (int)value)
+            {
+                _settings.HealthCheck.IntervalSeconds = (int)value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the configured number of feedback points used for lap counting statistics.
+    /// </summary>
+    public double CountOfFeedbackPoints
+    {
+        get => _settings.Counter.CountOfFeedbackPoints;
+        set
+        {
+            // A cleared NumberBox reports NaN, which would convert to zero and remove every saved counter.
+            if (!double.IsFinite(value) || value < 0)
+            {
+                OnPropertyChanged();
+                return;
+            }
+
+            if (_settings.Counter.CountOfFeedbackPoints != (int)value)
+            {
+                _settings.Counter.CountOfFeedbackPoints = (int)value;
+                OnPropertyChanged();
+                PersistSettings();
+
+                FeedbackPointCountChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Feature Toggle Items (dynamisch aus NavigationRegistration)
+
+    /// <summary>
+    /// Collection of feature toggle entries for the dynamic Settings UI.
+    /// Populated from IFeatureTogglePageProvider.
+    /// </summary>
+    public ObservableCollection<FeatureToggleItemViewModel> FeatureToggleItems { get; } = [];
+
+    /// <summary>
+    /// Initializes FeatureToggleItems from the provider. Called by the constructor.
+    /// </summary>
+    internal void InitializeFeatureToggleItems()
+    {
+        FeatureToggleRegistry.Normalize(_settings.FeatureToggles);
+        FeatureToggleItems.Clear();
+        foreach (var info in _featureTogglePageProvider.GetToggleablePages())
+        {
+            if (!FeatureToggleRegistry.IsToggleable(info.FeatureToggleKey))
+            {
+                continue;
+            }
+
+            var initial = GetFeatureToggleValue(info.FeatureToggleKey);
+            var item = new FeatureToggleItemViewModel(info, initial);
+            item.OnIsCheckedChangedCallback = OnFeatureToggleItemChanged;
+            FeatureToggleItems.Add(item);
+        }
+    }
+
+    private void OnFeatureToggleItemChanged(string key, bool value)
+    {
+        SetFeatureToggleValue(key, value);
+    }
+
+    /// <summary>
+    /// Reads the feature toggle value from <see cref="FeatureToggleRegistry"/> (no reflection).
+    /// </summary>
+    internal bool GetFeatureToggleValue(string key)
+    {
+        if (FeatureToggleRegistry.TryGetPageAvailability(_settings.FeatureToggles, key, out var v))
+            return v;
+        return true;
+    }
+
+    /// <summary>
+    /// Writes the feature toggle value via <see cref="FeatureToggleRegistry"/> and saves.
+    /// </summary>
+    internal void SetFeatureToggleValue(string key, bool value)
+    {
+        if (!FeatureToggleRegistry.IsToggleable(key))
+            return;
+        if (!FeatureToggleRegistry.TryGetPageAvailability(_settings.FeatureToggles, key, out var previous))
+            return;
+        if (previous == value)
+            return;
+
+        if (!FeatureToggleRegistry.TrySetPageAvailability(_settings.FeatureToggles, key, value))
+            return;
+
+        PersistSettings();
+        FeatureTogglesChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Updates all FeatureToggleItems after a reset (e.g. Reset to Defaults).
+    /// </summary>
+    internal void RefreshFeatureToggleItems()
+    {
+        foreach (var item in FeatureToggleItems)
+        {
+            item.SetChecked(GetFeatureToggleValue(item.FeatureToggleKey));
+        }
+    }
+
+    private bool[] CaptureToggleablePageAvailabilities() =>
+        FeatureToggleRegistry.ToggleablePageKeys
+            .Select(GetFeatureToggleValue)
+            .ToArray();
+
+    #endregion
+
+    #region Signal Box / Viessmann Multiplex Signals (binding for Settings page)
+
+    /// <summary>Invert polarity for address 1 (e.g. 201).</summary>
+    public bool InvertPolarityOffset0Setting { get => _settings.SignalBox.InvertPolarityOffset0; set => SetSignalBoxInvert(0, value); }
+
+    /// <summary>Invert polarity for address 2 (e.g. 202).</summary>
+    public bool InvertPolarityOffset1Setting { get => _settings.SignalBox.InvertPolarityOffset1; set => SetSignalBoxInvert(1, value); }
+
+    /// <summary>Invert polarity for address 3 (e.g. 203).</summary>
+    public bool InvertPolarityOffset2Setting { get => _settings.SignalBox.InvertPolarityOffset2; set => SetSignalBoxInvert(2, value); }
+
+    /// <summary>Invert polarity for address 4 (e.g. 204).</summary>
+    public bool InvertPolarityOffset3Setting { get => _settings.SignalBox.InvertPolarityOffset3; set => SetSignalBoxInvert(3, value); }
+
+    #endregion
+
+    #region Signal Box / Viessmann Multiplex-Signale
+
+    private void SetSignalBoxInvert(int offset, bool value)
+    {
+        var sb = _settings.SignalBox;
+        bool changed;
+        string? propertyName;
+        switch (offset)
+        {
+            case 0:
+                changed = sb.InvertPolarityOffset0 != value;
+                if (changed) sb.InvertPolarityOffset0 = value;
+                propertyName = nameof(InvertPolarityOffset0Setting);
+                break;
+            case 1:
+                changed = sb.InvertPolarityOffset1 != value;
+                if (changed) sb.InvertPolarityOffset1 = value;
+                propertyName = nameof(InvertPolarityOffset1Setting);
+                break;
+            case 2:
+                changed = sb.InvertPolarityOffset2 != value;
+                if (changed) sb.InvertPolarityOffset2 = value;
+                propertyName = nameof(InvertPolarityOffset2Setting);
+                break;
+            case 3:
+                changed = sb.InvertPolarityOffset3 != value;
+                if (changed) sb.InvertPolarityOffset3 = value;
+                propertyName = nameof(InvertPolarityOffset3Setting);
+                break;
+            default:
+                changed = false;
+                propertyName = null;
+                break;
+        }
+        if (changed)
+        {
+            OnPropertyChanged(propertyName);
+            PersistSettings();
+        }
+    }
+
+    #endregion
+
+    #region Settings Commands
+    [RelayCommand]
+    private async Task ResetToDefaultsAsync()
+    {
+        try
+        {
+            ShowErrorMessage = false;
+            var availabilityBeforeReset = CaptureToggleablePageAvailabilities();
+            await _settingsService.ResetToDefaultsAsync().ConfigureAwait(true);
+
+            // Notify all settings properties changed
+            OnPropertyChanged(nameof(DisplayIpAddress));
+            OnPropertyChanged(nameof(DisplayPort));
+            OnPropertyChanged(nameof(Z21AutoConnectRetryInterval));
+            OnPropertyChanged(nameof(Z21SystemStatePollingInterval));
+            OnPropertyChanged(nameof(PiperExecutablePath));
+            OnPropertyChanged(nameof(PiperModelPath));
+            OnPropertyChanged(nameof(PiperConfigPath));
+            OnPropertyChanged(nameof(SpeechRate));
+            OnPropertyChanged(nameof(SpeechVolume));
+            OnPropertyChanged(nameof(VoiceName));
+            RefreshPiperVoiceOptions();
+            OnPropertyChanged(nameof(SelectedPiperLanguage));
+            OnPropertyChanged(nameof(SelectedPiperVoiceName));
+            OnPropertyChanged(nameof(SelectedSpeechProviderId));
+            OnPropertyChanged(nameof(SelectedSpeechProviderName));
+            OnPropertyChanged(nameof(IsSystemSpeechProviderSelected));
+            OnPropertyChanged(nameof(SystemSpeechDefaultVoiceName));
+            OnPropertyChanged(nameof(IsPiperSpeechProviderSelected));
+            OnPropertyChanged(nameof(AutoLoadLastSolution));
+            OnPropertyChanged(nameof(AutoStartWebApp));
+            OnPropertyChanged(nameof(RestApiPort));
+            OnPropertyChanged(nameof(HealthCheckEnabled));
+            OnPropertyChanged(nameof(HealthCheckIntervalSeconds));
+            OnPropertyChanged(nameof(CountOfFeedbackPoints));
+
+            FeatureToggleRegistry.Normalize(_settings.FeatureToggles);
+            RefreshFeatureToggleItems();
+            if (!availabilityBeforeReset.SequenceEqual(CaptureToggleablePageAvailabilities()))
+            {
+                FeatureTogglesChanged?.Invoke(this, EventArgs.Empty);
+            }
+
+            ShowSuccessMessage = true;
+            await Task.Delay(3000).ConfigureAwait(true);
+            ShowSuccessMessage = false;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+            ShowErrorMessage = true;
+        }
+    }
+
+    /// <summary>
+    /// Command to select a speech provider from the UI.
+    /// </summary>
+    public IRelayCommand<string> SelectSpeechProviderCommand =>
+        field ??= new RelayCommand<string>(engine => SelectedSpeechProviderId = engine ?? string.Empty);
+
+    [RelayCommand]
+    private async Task TestSpeechAsync()
+    {
+        try
+        {
+            // FIX: Reset error state on UI thread
+            _uiDispatcher.InvokeOnUi(() =>
+            {
+                ShowErrorMessage = false;
+                ErrorMessage = string.Empty;
+            });
+
+            // Use custom test message from settings (user can modify in UI)
+            var result = await _speechOutput.SpeakAsync(SpeechTestMessage).ConfigureAwait(false);
+            if (!result.IsSuccess)
+            {
+                LogSpeechTestUnsuccessful(_logger, result.Reason);
+                ShowSpeechTestError(result.Reason);
+                return;
+            }
+
+            _uiDispatcher.InvokeOnUi(() =>
+            {
+                ShowSuccessMessage = true;
+                ShowErrorMessage = false;
+            });
+        }
+        catch (Exception ex)
+        {
+            LogSpeechTestFailed(_logger, ex);
+            ShowSpeechTestError(ex.Message);
+        }
+    }
+
+    private void ShowSpeechTestError(string message) =>
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            ErrorMessage = message;
+            ShowErrorMessage = true;
+        });
+
+    #endregion
+}
+
+/// <summary>
+/// A locally installed Piper voice model.
+/// </summary>
+public sealed record PiperVoiceOption(string Name, string Language, string ModelPath, string ConfigPath)
+{
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        return Name;
+    }
+}
+
+/// <summary>A local provider choice with a stable persisted ID and a readable label.</summary>
+public sealed record SpeechProviderOption(string Id, string DisplayName);

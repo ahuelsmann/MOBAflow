@@ -11,6 +11,7 @@ using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.Mobile;
 using Moba.SharedUI.TrainControl;
 using Moba.SharedUI.ViewModel;
 

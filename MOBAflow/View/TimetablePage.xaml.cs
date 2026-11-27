@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using SharedUI.ViewModel;
-using SharedUI.Service;
+using SharedUI.Desktop.ViewModel;
+using SharedUI.Desktop.Service;
 
 internal sealed partial class TimetablePage
 {

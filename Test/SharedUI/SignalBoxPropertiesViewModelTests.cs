@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 using global::Moba.Common.Multiplex;
 using global::Moba.SharedUI.Interface;
-using global::Moba.SharedUI.ViewModel;
+using global::Moba.SharedUI.Desktop.ViewModel;
 using global::Moq;
 
 internal sealed partial class TrackLayoutArchitectureTests

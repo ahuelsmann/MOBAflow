@@ -4,8 +4,8 @@ namespace Moba.Test.TrackPlanRenderer;
 
 using global::Moba.SharedUI.Configuration;
 using global::Moba.SharedUI.Interface;
-using global::Moba.SharedUI.Service;
-using global::Moba.SharedUI.ViewModel;
+using global::Moba.SharedUI.Desktop.Service;
+using global::Moba.SharedUI.Desktop.ViewModel;
 using global::Moba.TrackLibrary.PikoA;
 using global::Moba.TrackPlan.Editor;
 using global::Moba.Test.Helpers;

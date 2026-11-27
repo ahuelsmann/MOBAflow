@@ -2,8 +2,8 @@
 
 namespace Moba.Test.SharedUI;
 
-using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.Service;
+using Moba.SharedUI.Desktop.ViewModel;
 
 [TestFixture]
 internal sealed class OperatingStateEvaluatorTests

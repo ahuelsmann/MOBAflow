@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 using Moba.SharedUI.ViewModel.Action;
 
 using System.Collections.Specialized;

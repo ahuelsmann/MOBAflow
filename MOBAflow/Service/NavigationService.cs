@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 
 using SharedUI.Configuration;
-using SharedUI.Shell;
+using SharedUI.Desktop.Shell;
 
 /// <summary>
 /// Navigation service for MOBAflow WinUI application.

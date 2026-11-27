@@ -9,7 +9,8 @@ using Moba.SharedUI.Configuration;
 using Moba.Common.Events;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.Service;
+using Moba.SharedUI.Desktop.ViewModel;
 using Moq;
 
 internal sealed partial class TestRollingStockPages : IDisposable

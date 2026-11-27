@@ -6,7 +6,7 @@ using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 
-using SharedUI.Service;
+using SharedUI.Desktop.Service;
 
 using ViewModel;
 

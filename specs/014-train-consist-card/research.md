@@ -10,7 +10,7 @@
 
 **Decision**: Copy `ISolutionSession.SelectedProject.Model` and the actually selected train's `Model.Vehicles`, without I/O or runtime access.
 
-**Evidence**: [Train](../../Domain/Train.cs) owns an ordered List of Vehicle; [Vehicle](../../Domain/Vehicle.cs) carries VehicleId, VehicleKind and IsReversed. [Project](../../Domain/Project.cs) has separate Locomotives, PassengerWagons, GoodsWagons and Trains collections. [TrainsPageViewModel](../../SharedUI/ViewModel/TrainsPageViewModel.cs) gets selection from ISolutionSession and invokes save/runtime update only through editor paths. [TrainViewModel](../../SharedUI/ViewModel/TrainViewModel.cs) rejects new same-kind/ID inserts but existing domain lists can contain repeated entries.
+**Evidence**: [Train](../../Domain/Train.cs) owns an ordered List of Vehicle; [Vehicle](../../Domain/Vehicle.cs) carries VehicleId, VehicleKind and IsReversed. [Project](../../Domain/Project.cs) has separate Locomotives, PassengerWagons, GoodsWagons and Trains collections. [TrainsPageViewModel](../../SharedUI/Desktop/ViewModel/TrainsPageViewModel.cs) gets selection from ISolutionSession and invokes save/runtime update only through editor paths. [TrainViewModel](../../SharedUI/ViewModel/TrainViewModel.cs) rejects new same-kind/ID inserts but existing domain lists can contain repeated entries.
 
 **Rationale**: The existing definition is the source; occurrence index, not distinct vehicle ID, defines a row. A repeat fixture can construct a domain train directly without altering editor duplicate policy.
 

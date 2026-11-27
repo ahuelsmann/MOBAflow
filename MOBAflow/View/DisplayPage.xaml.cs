@@ -2,7 +2,7 @@ namespace Moba.MOBAflow.View;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
 /// <summary>
 /// Displays live diagnostics and capability-gated commands for one configured ESP32 display.

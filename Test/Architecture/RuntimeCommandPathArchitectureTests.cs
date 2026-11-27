@@ -11,7 +11,15 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 [TestFixture]
 internal sealed class RuntimeCommandPathArchitectureTests
 {
-    private static readonly string[] ViewModelFolders = ["SharedUI/ViewModel", "SharedUI/Mobile", "SharedUI/TrainControl", "MOBAflow/ViewModel"];
+    private static readonly string[] ViewModelFolders = ["SharedUI/ViewModel", "SharedUI/Desktop/ViewModel", "SharedUI/Mobile", "SharedUI/TrainControl", "MOBAflow/ViewModel"];
+
+    /// <summary>Non-ViewModel infrastructure files co-located under <c>SharedUI/Mobile</c> (gateway, DI composition, and solution loader).</summary>
+    private static readonly HashSet<string> ExcludedMobileInfrastructureFiles = new(StringComparer.Ordinal)
+    {
+        "SharedUI/Mobile/MobileRuntimeCoordinator.cs",
+        "SharedUI/Mobile/MobileServiceCollectionExtensions.cs",
+        "SharedUI/Mobile/SolutionRemoteLoader.cs",
+    };
 
     /// <summary>Runtime surfaces that expose layout or locomotive commands and therefore bypass the gateway.</summary>
     private static readonly HashSet<string> CommandRuntimeTypes = new(StringComparer.Ordinal)
@@ -55,7 +63,7 @@ internal sealed class RuntimeCommandPathArchitectureTests
     public void MobileHost_InjectsTheRegisteredCommandGateway(string viewModelType, int gatewayArgument)
     {
         // MOBAsmart's ViewModels are registered by the platform-neutral mobile composition in SharedUI.
-        var path = Path.Combine(FindRepositoryRoot(), "SharedUI/Extensions/MobileServiceCollectionExtensions.cs");
+        var path = Path.Combine(FindRepositoryRoot(), "SharedUI/Mobile/MobileServiceCollectionExtensions.cs");
         var root = CSharpSyntaxTree.ParseText(File.ReadAllText(path)).GetRoot();
         var constructor = root.DescendantNodes().OfType<ObjectCreationExpressionSyntax>()
             .Single(creation => TypeName(creation.Type) == viewModelType);
@@ -105,6 +113,11 @@ internal sealed class RuntimeCommandPathArchitectureTests
             foreach (var file in Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories))
             {
                 var relative = Path.GetRelativePath(root, file).Replace('\\', '/');
+                if (ExcludedMobileInfrastructureFiles.Contains(relative))
+                {
+                    continue;
+                }
+
                 yield return (relative, CSharpSyntaxTree.ParseText(File.ReadAllText(file)).GetRoot());
             }
         }

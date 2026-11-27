@@ -2,7 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.SharedUI.Configuration;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
 [TestFixture]
 internal sealed class LayoutColumnWidthsViewModelTests

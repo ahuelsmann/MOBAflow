@@ -8,6 +8,7 @@ using Microsoft.Maui.Storage;
 using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
+using SharedUI.Mobile;
 using View;
 
 /// <summary>

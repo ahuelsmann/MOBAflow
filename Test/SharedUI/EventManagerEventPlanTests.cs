@@ -5,6 +5,7 @@ using Moba.Test.Helpers;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 using System.ComponentModel;
 
 [TestFixture]

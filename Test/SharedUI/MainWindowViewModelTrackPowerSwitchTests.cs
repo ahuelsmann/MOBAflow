@@ -9,7 +9,7 @@ using Moba.Common.Events;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 using Moba.Test.Helpers;
 using Moq;
 

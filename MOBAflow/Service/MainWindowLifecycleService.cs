@@ -4,7 +4,7 @@ namespace Moba.MOBAflow.Service;
 using Microsoft.Extensions.Logging;
 
 using SharedUI.Interface;
-using SharedUI.ViewModel;
+using SharedUI.Desktop.ViewModel;
 
 /// <summary>
 /// The host work behind the main window: REST API status polling, speech health checks, the runtime observers

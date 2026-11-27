@@ -9,7 +9,7 @@ using Domain;
 
 using Interface;
 
-using Service;
+using Moba.SharedUI.Service;
 
 /// <summary>
 /// The locomotive fleet and signal-box elements MOBAsmart shows for the selected project. It keeps the last

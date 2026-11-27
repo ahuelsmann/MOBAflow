@@ -4,7 +4,7 @@ namespace Moba.Test.SharedUI;
 using Moba.SharedUI.Configuration;
 using Moba.MOBAdisplay.Protocol;
 using Moba.MOBAdisplay.Transport;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
 [TestFixture]
 [Category("Unit")]

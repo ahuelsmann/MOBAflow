@@ -54,13 +54,13 @@ MOBAsmart                    MOBApi                     MOBAflow
 
 ### 1. Solution sync
 
-[`SolutionRemoteLoader`](../../SharedUI/Service/SolutionRemoteLoader.cs) downloads the active
+[`SolutionRemoteLoader`](../../SharedUI/Mobile/SolutionRemoteLoader.cs) downloads the active
 project: signal GUIDs, names, fleet metadata, stellwerk layout. The Z21 has no knowledge of
 this domain model.
 
 ### 2. Runtime command forwarding
 
-[`MobileRuntimeCoordinator`](../../SharedUI/Service/MobileRuntimeCoordinator.cs) routes
+[`MobileRuntimeCoordinator`](../../SharedUI/Mobile/MobileRuntimeCoordinator.cs) routes
 signal-aspect commands to MOBAflow when a MOBApi session is active. MOBAflow
 performs multiplexer resolution and Z21 I/O. Locomotive drive/function commands
 prefer the local Z21 connection and use MOBAflow only as a fallback when the

@@ -44,17 +44,9 @@ public static class UiDispatcherServiceCollectionExtensions
     /// </summary>
     private static IUiDispatcher GetPlatformDispatcher()
     {
-#if WINDOWS
-        // WinUI 3 desktop application
-        return new Moba.WinUI.Service.UiDispatcher();
-#elif ANDROID || IOS || MACCATALYST
-        // .NET MAUI mobile/tablet application
-        return new Moba.MAUI.Service.UiDispatcher();
-#else
         // Default fallback (e.g., Blazor, console tests)
-        // Returns a no-op dispatcher that executes immediately
+        // WinUI and MAUI hosts register their platform dispatcher explicitly.
         return new DefaultUiDispatcher();
-#endif
     }
 
     /// <summary>

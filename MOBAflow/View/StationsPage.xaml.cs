@@ -6,7 +6,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using SharedUI.ViewModel;
-using SharedUI.Service;
+using SharedUI.Desktop.ViewModel;
+using SharedUI.Desktop.Service;
 using Windows.ApplicationModel.DataTransfer;
 
 internal sealed partial class StationsPage

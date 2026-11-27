@@ -125,7 +125,7 @@ The mobile responsibilities are split into:
 These services are application singletons. [`MauiViewModel`](../../SharedUI/Mobile/MauiViewModel.cs) creates its
 [`MobileAppLifecycle`](../../SharedUI/Mobile/MobileAppLifecycle.cs) and keeps UI projection,
 subscriptions, the health-check loop and cancellation ownership.
-[`MobileSolutionContext`](../../SharedUI/Service/MobileSolutionContext.cs), registered by MAUI as `IProjectContext`,
+[`MobileSolutionContext`](../../SharedUI/Mobile/MobileSolutionContext.cs), registered by MAUI as `IProjectContext`,
 owns the phone's loaded solution and project selection. `SolutionRemoteLoader` applies imported or cached
 solutions to that context. The desktop registers its separate `SolutionSession` as `ISolutionSession`,
 `IProjectContext` and `IJourneySelectionContext`. Session loss or a
