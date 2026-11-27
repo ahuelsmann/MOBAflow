@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView
-    x:Class="Moba.MAUI.View.EnginePage"
+    x:Class="Moba.MOBAsmart.View.EnginePage"
     x:Name="EngineRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:controls="clr-namespace:Moba.MAUI.Controls"
+    xmlns:controls="clr-namespace:Moba.MOBAsmart.Controls"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
     xmlns:tc="clr-namespace:Moba.SharedUI.TrainControl;assembly=SharedUI"

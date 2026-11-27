@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.MAUI.Service;
+namespace Moba.MOBAsmart.Service;
 
 using Common.Path;
 using Common.Configuration;

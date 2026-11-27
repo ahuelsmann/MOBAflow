@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 #if ANDROID
 
-namespace Moba.MAUI.Service;
+namespace Moba.MOBAsmart.Service;
 
 using global::Android.Content;
 using global::Android.OS;

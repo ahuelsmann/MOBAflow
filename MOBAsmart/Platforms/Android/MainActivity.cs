@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.MAUI.Platforms.Android;
+namespace Moba.MOBAsmart.Platforms.Android;
 
 using global::Android.App;
 using global::Android.Content.PM;
