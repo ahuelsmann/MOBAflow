@@ -1,10 +1,10 @@
 <UserControl
-    x:Class="Moba.WinUI.Controls.SignalBox.SignalBoxCanvasControl"
+    x:Class="Moba.MOBAflow.Controls.SignalBox.SignalBoxCanvasControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Moba.WinUI.Controls"
+    xmlns:controls="using:Moba.MOBAflow.Controls"
     xmlns:domain="using:Moba.Domain"
-    xmlns:local="using:Moba.WinUI.Controls.SignalBox">
+    xmlns:local="using:Moba.MOBAflow.Controls.SignalBox">
 
     <UserControl.Resources>
         <local:GridCoordinateConverter x:Key="GridConverter" />

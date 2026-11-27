@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <!-- Project Identity -->
     <PropertyGroup>
-        <RootNamespace>Moba.WinUI</RootNamespace>
+        <RootNamespace>Moba.MOBAflow</RootNamespace>
         <AssemblyName>MOBAflow</AssemblyName>
         <ApplicationTitle>MOBAflow</ApplicationTitle>
         <ApplicationIcon>Assets\mobaflow-icon.ico</ApplicationIcon>

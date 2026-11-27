@@ -232,8 +232,8 @@ internal sealed class SpeechOutputTests
         var player = new FakePlayer();
         var output = new SpeechOutput(settings, (ISpeechProvider[])[system, piper], player, NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         await using var outputLifetime = output.ConfigureAwait(false);
-        using var health = new Moba.WinUI.Service.HealthCheckService(new SpeechHealthCheck(output),
-            NullLogger<Moba.WinUI.Service.HealthCheckService>.Instance,
+        using var health = new Moba.MOBAflow.Service.HealthCheckService(new SpeechHealthCheck(output),
+            NullLogger<Moba.MOBAflow.Service.HealthCheckService>.Instance,
             new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
         var reported = new List<bool>();
         health.HealthStatusChanged += (_, status) => reported.Add(status.IsHealthy);
@@ -271,8 +271,8 @@ internal sealed class SpeechOutputTests
         var piper = new FakeProvider("piper") { Capabilities = new SpeechCapabilities([], true, true, false) };
         var output = new SpeechOutput(settings, (ISpeechProvider[])[system, piper], new FakePlayer(), NullLogger<SpeechOutput>.Instance, TestSpeechCache.Empty());
         await using var outputLifetime = output.ConfigureAwait(false);
-        using var health = new Moba.WinUI.Service.HealthCheckService(new SpeechHealthCheck(output),
-            NullLogger<Moba.WinUI.Service.HealthCheckService>.Instance,
+        using var health = new Moba.MOBAflow.Service.HealthCheckService(new SpeechHealthCheck(output),
+            NullLogger<Moba.MOBAflow.Service.HealthCheckService>.Instance,
             new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
         var reported = new List<bool>();
         health.HealthStatusChanged += (_, status) => reported.Add(status.IsHealthy);

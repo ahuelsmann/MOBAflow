@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.WinUI.Controls.SignalBox;
+namespace Moba.MOBAflow.Controls.SignalBox;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
-using Moba.WinUI.View;
+using Moba.MOBAflow.View;
 
 using Windows.ApplicationModel.DataTransfer;
 

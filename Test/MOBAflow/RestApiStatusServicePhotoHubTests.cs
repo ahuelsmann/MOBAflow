@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Events;
-using Moba.WinUI.Service;
+using Moba.MOBAflow.Service;
 
 internal sealed partial class RestApiStatusServiceTests
 {

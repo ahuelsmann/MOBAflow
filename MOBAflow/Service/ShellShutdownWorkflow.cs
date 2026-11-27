@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.WinUI.Service;
+namespace Moba.MOBAflow.Service;
 
 /// <summary>
 /// The shell's shutdown workflow together with the runtime observers it releases: host-owned states that follow

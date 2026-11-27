@@ -1,11 +1,11 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:behavior="using:Moba.WinUI.Behavior"
-    xmlns:controls="using:Moba.WinUI.Controls"
-    xmlns:converter="using:Moba.WinUI.Converter"
+    xmlns:behavior="using:Moba.MOBAflow.Behavior"
+    xmlns:controls="using:Moba.MOBAflow.Controls"
+    xmlns:converter="using:Moba.MOBAflow.Converter"
     xmlns:i="using:Microsoft.Xaml.Interactivity"
-    xmlns:selector="using:Moba.WinUI.Selector">
+    xmlns:selector="using:Moba.MOBAflow.Selector">
 
     <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 

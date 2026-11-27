@@ -2,7 +2,7 @@
 #if WINDOWS
 namespace Moba.Test.WinUI;
 
-using Moba.WinUI.Service;
+using Moba.MOBAflow.Service;
 
 /// <summary>
 /// The navigation item name is what Narrator speaks; WinUI items cannot be created without a XAML runtime,

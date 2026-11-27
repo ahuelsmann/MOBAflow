@@ -9,7 +9,7 @@ using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.Speech.Base;
 using Moba.Test.Helpers;
-using Moba.WinUI.Service;
+using Moba.MOBAflow.Service;
 using Moq;
 
 internal sealed partial class NavigationItemFactoryTests

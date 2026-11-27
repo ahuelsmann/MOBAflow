@@ -2,7 +2,7 @@
 
 using Timer = System.Timers.Timer;
 
-namespace Moba.WinUI.Service;
+namespace Moba.MOBAflow.Service;
 
 using Common.Extension;
 
