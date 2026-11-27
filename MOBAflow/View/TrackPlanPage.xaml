@@ -4,7 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     xmlns:controls="using:Moba.MOBAflow.Controls"
-    xmlns:controls1="using:CommunityToolkit.WinUI.Controls">
+    xmlns:controls1="using:CommunityToolkit.WinUI.Controls"
+    xmlns:local="using:Moba.MOBAflow.View">
     <Page.KeyboardAccelerators>
         <KeyboardAccelerator Key="Delete" Invoked="OnDeleteAccelerator" />
         <KeyboardAccelerator Key="Back" Invoked="OnDeleteAccelerator" />
@@ -43,6 +44,7 @@
         <!--  Toolbar  -->
         <CommandBar
             Grid.Row="0"
+            AutomationProperties.Name="Track plan toolbar"
             DefaultLabelPosition="Right"
             OverflowButtonVisibility="Auto">
             <AppBarButton
@@ -60,6 +62,7 @@
                     x:Name="ExportDropDownButton"
                     Padding="8,4"
                     VerticalAlignment="Center"
+                    AutomationProperties.Name="Export options"
                     Background="Transparent"
                     BorderThickness="0"
                     ToolTipService.ToolTip="Export options">
@@ -90,11 +93,13 @@
                 Label="Validate" />
             <AppBarButton
                 x:Name="FitButton"
+                AutomationProperties.Name="Fit track plan to viewport"
                 Icon="FullScreen"
                 Label="Fit"
                 ToolTipService.ToolTip="Fit track plan to viewport (Ctrl+0)" />
             <AppBarButton
                 x:Name="ResetZoomButton"
+                AutomationProperties.Name="Reset zoom to 100%"
                 Icon="Zoom"
                 Label="100%"
                 ToolTipService.ToolTip="Reset zoom to 100% (Ctrl+1)" />
@@ -148,6 +153,7 @@
             </AppBarToggleButton>
             <AppBarButton
                 x:Name="RotateLeftButton"
+                AutomationProperties.Name="Rotate left"
                 Command="{x:Bind ViewModel.RotateSelectedTrackLeftCommand}"
                 Label="Rotate ←">
                 <AppBarButton.Icon>
@@ -156,6 +162,7 @@
             </AppBarButton>
             <AppBarButton
                 x:Name="RotateRightButton"
+                AutomationProperties.Name="Rotate right"
                 Command="{x:Bind ViewModel.RotateSelectedTrackRightCommand}"
                 Label="Rotate →">
                 <AppBarButton.Icon>
@@ -226,6 +233,7 @@
                 <Grid>
                     <ScrollViewer
                         x:Name="CanvasScrollViewer"
+                        AutomationProperties.Name="Track plan viewport"
                         HorizontalScrollBarVisibility="Hidden"
                         HorizontalScrollMode="Enabled"
                         IsScrollInertiaEnabled="False"
@@ -242,14 +250,16 @@
                                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                                 CreateResources="GraphCanvasControl_CreateResources"
                                 Draw="GraphCanvasControl_Draw" />
-                            <Canvas
+                            <local:AccessibleCanvas
                                 x:Name="OverlayCanvas"
                                 Width="2000"
                                 Height="1500"
                                 AllowDrop="True"
+                                AutomationProperties.Name="Track plan canvas"
                                 Background="Transparent"
                                 IsTabStop="True"
-                                ManipulationMode="None" />
+                                ManipulationMode="None"
+                                UseSystemFocusVisuals="True" />
                         </Grid>
                     </ScrollViewer>
                     <!--  Zoom Control Overlay (Bottom-Right)  -->
@@ -268,6 +278,7 @@
                             x:Name="ZoomOutButton"
                             Width="32"
                             Height="32"
+                            AutomationProperties.Name="Zoom out"
                             Content="−"
                             FontSize="16"
                             ToolTipService.ToolTip="Zoom Out (Ctrl+−)" />
@@ -275,6 +286,7 @@
                             x:Name="ZoomSlider"
                             Width="120"
                             VerticalAlignment="Center"
+                            AutomationProperties.Name="Zoom level"
                             Maximum="3.0"
                             Minimum="0.1"
                             StepFrequency="0.05"
@@ -283,6 +295,7 @@
                             x:Name="ZoomInButton"
                             Width="32"
                             Height="32"
+                            AutomationProperties.Name="Zoom in"
                             Content="+"
                             FontSize="16"
                             ToolTipService.ToolTip="Zoom In (Ctrl++)" />
