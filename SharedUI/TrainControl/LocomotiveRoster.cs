@@ -11,7 +11,7 @@ using Interface;
 
 using System.Collections.ObjectModel;
 
-using ViewModel;
+using Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// Result of <see cref="LocomotiveRoster.MergeFleet"/>.

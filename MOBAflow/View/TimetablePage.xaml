@@ -6,7 +6,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:vm="using:Moba.SharedUI.ViewModel"
+    xmlns:vm="using:Moba.SharedUI.Desktop.ViewModel"
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 

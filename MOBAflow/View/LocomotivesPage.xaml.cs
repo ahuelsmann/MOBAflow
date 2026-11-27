@@ -7,9 +7,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
-using SharedUI.Service;
+using SharedUI.Desktop.Service;
 
 internal sealed partial class LocomotivesPage
 {

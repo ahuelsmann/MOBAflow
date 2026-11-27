@@ -15,11 +15,11 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Service;
+using Moba.SharedUI.Service;
 
 using System.Collections.ObjectModel;
 
-using ViewModel;
+using Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.

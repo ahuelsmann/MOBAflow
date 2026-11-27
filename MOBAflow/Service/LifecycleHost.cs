@@ -5,7 +5,7 @@ namespace Moba.MOBAflow.Service;
 
 using Microsoft.UI.Xaml;
 
-using SharedUI.Shell;
+using SharedUI.Desktop.Shell;
 
 /// <summary>
 /// Manages application lifecycle events for WinUI.

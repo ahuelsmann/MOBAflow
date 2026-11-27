@@ -2,7 +2,7 @@
 
 namespace Moba.MOBAflow.View;
 
-using SharedUI.ViewModel;
+using SharedUI.Desktop.ViewModel;
 
 // ReSharper disable once PartialTypeWithSinglePart
 internal sealed partial class RecorderPage

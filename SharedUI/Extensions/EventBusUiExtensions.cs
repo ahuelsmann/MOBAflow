@@ -11,17 +11,19 @@ using Interface;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-using Service;
+using Moba.SharedUI.Service;
 
 /// <summary>
 /// Extensions for registering the EventBus with UI-thread marshalling.
-/// For WinUI/MAUI: Call after AddUiDispatcher() so all EventBus handlers run on the UI thread.
+/// Provide the host's <see cref="IUiDispatcher"/> registration first (for example the WinUI/MAUI dispatcher,
+/// or <c>AddUiDispatcher()</c> in headless tests) so EventBus handlers run on the expected thread.
 /// </summary>
 public static class EventBusUiExtensions
 {
     /// <summary>
     /// Registers the EventBus so that Publish executes all handlers on the UI thread.
-    /// Must be called after AddUiDispatcher(). The registered <see cref="IEventBus"/> records published events,
+    /// Provide the host's <see cref="IUiDispatcher"/> registration first (e.g. WinUI/MAUI dispatcher, or
+    /// <c>AddUiDispatcher()</c> in headless tests). The registered <see cref="IEventBus"/> records published events,
     /// so the host also registers the backend services (recording session and event mapper registry).
     /// </summary>
     public static IServiceCollection AddEventBusWithUiDispatch(this IServiceCollection services)

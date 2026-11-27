@@ -13,7 +13,7 @@ using Service;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
-using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
+using MainWindowViewModel = SharedUI.Desktop.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow
 {
@@ -263,7 +263,7 @@ public sealed partial class MainWindow
 
     private void SettingsPage_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (!_isClosing && e.PropertyName == nameof(SharedUI.ViewModel.SettingsPageViewModel.IsDarkMode))
+        if (!_isClosing && e.PropertyName == nameof(SharedUI.Desktop.ViewModel.SettingsPageViewModel.IsDarkMode))
         {
             ApplyTheme(ViewModel.SettingsPage.IsDarkMode);
         }
@@ -355,7 +355,7 @@ public sealed partial class MainWindow
         _windowActivationService?.Dispose();
     }
 
-    private void OnNavigationServiceNavigated(object? sender, SharedUI.Shell.NavigationEventArgs e)
+    private void OnNavigationServiceNavigated(object? sender, SharedUI.Desktop.Shell.NavigationEventArgs e)
     {
         _ = sender;
         ViewModel.UpdateActivePhotoAssignmentPageTag(e.PageTag);

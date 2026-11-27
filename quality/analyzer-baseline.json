@@ -2308,14 +2308,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1001",
-      "path": "SharedUI/Service/MobileSolutionStore.cs",
+      "path": "SharedUI/Mobile/MobileSolutionStore.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1001",
-      "path": "SharedUI/Service/SolutionSession.cs",
+      "path": "SharedUI/Desktop/Service/SolutionSession.cs",
       "count": 1
     },
     {
@@ -2462,7 +2462,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "path": "SharedUI/Desktop/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 2
     },
     {
@@ -2490,56 +2490,56 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/LocomotiveManagementViewModel.cs",
       "count": 3
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/MainWindowViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.Layout.cs",
+      "path": "SharedUI/Desktop/ViewModel/SettingsPageViewModel.Layout.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/SettingsPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/SettingsPageViewModel.cs",
       "count": 2
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/LocomotivesPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/LocomotivesPageViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/RecorderPageViewModel.cs",
       "count": 4
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/TimetablePageViewModel.cs",
       "count": 2
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/WagonsPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/WagonsPageViewModel.cs",
       "count": 1
     },
     {
@@ -2574,7 +2574,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/Service/OperatingStateEvaluator.cs",
+      "path": "SharedUI/Desktop/Service/OperatingStateEvaluator.cs",
       "count": 1
     },
     {
@@ -2588,21 +2588,21 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/ColumnViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/ColumnViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/EventManagerViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/FeatureToggleItemViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/FeatureToggleItemViewModel.cs",
       "count": 1
     },
     {
@@ -2616,28 +2616,28 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/LayoutColumnWidthsViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/LayoutColumnWidthsViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/PageLayoutViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/SignalBoxPlanViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/TimetablePageViewModel.cs",
       "count": 5
     },
     {
@@ -2665,7 +2665,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1305",
-      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/RecorderPageViewModel.cs",
       "count": 1
     },
     {
@@ -2679,7 +2679,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1305",
-      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/TimetablePageViewModel.cs",
       "count": 5
     },
     {
@@ -2791,21 +2791,21 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/Service/MobileSolutionStore.cs",
+      "path": "SharedUI/Mobile/MobileSolutionStore.cs",
       "count": 10
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/Service/SolutionRemoteLoader.cs",
+      "path": "SharedUI/Mobile/SolutionRemoteLoader.cs",
       "count": 8
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "path": "SharedUI/Desktop/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 2
     },
     {
@@ -2826,49 +2826,49 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/MainWindowViewModel.cs",
       "count": 3
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.OperatingState.cs",
+      "path": "SharedUI/Desktop/ViewModel/MainWindowViewModel.OperatingState.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
+      "path": "SharedUI/Desktop/ViewModel/MainWindowViewModel.Z21.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/MonitorPageViewModel.cs",
       "count": 4
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/RecorderPageViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/TimetablePageViewModel.cs",
       "count": 2
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 1
     },
     {
@@ -2882,7 +2882,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
-      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 1
     },
     {
@@ -2903,14 +2903,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/Service/MobileSolutionStore.cs",
+      "path": "SharedUI/Mobile/MobileSolutionStore.cs",
       "count": 3
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1873",
-      "path": "SharedUI/Service/SolutionRemoteLoader.cs",
+      "path": "SharedUI/Mobile/SolutionRemoteLoader.cs",
       "count": 4
     },
     {
@@ -2924,7 +2924,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/Service/SolutionRemoteLoader.cs",
+      "path": "SharedUI/Mobile/SolutionRemoteLoader.cs",
       "count": 1
     },
     {
@@ -2945,49 +2945,49 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/LocomotiveManagementViewModel.cs",
       "count": 9
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Solution.cs",
+      "path": "SharedUI/Desktop/ViewModel/MainWindowViewModel.Solution.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/MonitorPageViewModel.cs",
       "count": 2
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/RecorderPageViewModel.cs",
       "count": 16
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/TimetablePageViewModel.cs",
       "count": 32
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 6
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2213",
-      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/TimetablePageViewModel.cs",
       "count": 1
     },
     {
@@ -3036,7 +3036,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "path": "SharedUI/Desktop/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 11
     },
     {
@@ -3064,7 +3064,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/PageLayoutViewModel.cs",
       "count": 2
     },
     {
@@ -3078,14 +3078,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/MonitorPageViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0028",
-      "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/PageLayoutViewModel.cs",
       "count": 1
     },
     {
@@ -3113,7 +3113,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "path": "SharedUI/Desktop/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 1
     },
     {
@@ -3127,7 +3127,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "SharedUI/ViewModel/ColumnViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/ColumnViewModel.cs",
       "count": 1
     },
     {
@@ -3141,14 +3141,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/LocomotiveManagementViewModel.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/PageLayoutViewModel.cs",
       "count": 1
     },
     {
@@ -3162,7 +3162,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/TimetablePageViewModel.cs",
       "count": 2
     },
     {
@@ -3176,14 +3176,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0330",
-      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "path": "SharedUI/Desktop/Service/TrackPlanFeedbackHighlighter.cs",
       "count": 1
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0330",
-      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/MonitorPageViewModel.cs",
       "count": 1
     },
     {
@@ -3197,7 +3197,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE2002",
-      "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/SignalBoxPlanViewModel.cs",
       "count": 1
     },
     {
@@ -3232,14 +3232,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/EventManagerViewModel.cs",
       "count": 3
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/FeatureToggleItemViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/FeatureToggleItemViewModel.cs",
       "count": 2
     },
     {
@@ -3260,7 +3260,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/LocomotiveManagementViewModel.cs",
       "count": 4
     },
     {
@@ -3274,28 +3274,28 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/MainWindowViewModel.cs",
       "count": 7
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.OperatingState.cs",
+      "path": "SharedUI/Desktop/ViewModel/MainWindowViewModel.OperatingState.cs",
       "count": 12
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/MonitorPageViewModel.cs",
       "count": 3
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/PageColumnWidthsViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/PageColumnWidthsViewModel.cs",
       "count": 20
     },
     {
@@ -3309,14 +3309,14 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/RecorderPageViewModel.cs",
       "count": 23
     },
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/SignalBoxPlanViewModel.cs",
       "count": 1
     },
     {
@@ -3337,7 +3337,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/TimetablePageViewModel.cs",
       "count": 10
     },
     {
@@ -3358,7 +3358,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
+      "path": "SharedUI/Desktop/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 6
     },
     {

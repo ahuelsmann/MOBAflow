@@ -77,6 +77,7 @@ Further rules:
 - Every namespace declared in a project starts with the root namespace in the
   table.
 - A new project needs a row in this table.
+- Single-host ViewModels, concrete services, shell contracts, and interop in `SharedUI` live below `Moba.SharedUI.Desktop` (for `MOBAflow`) and `Moba.SharedUI.Mobile` (for `MOBAsmart`), while UI service role interfaces remain in `SharedUI/Interface` (`Moba.SharedUI.Interface`). `MOBAsmart` and `Moba.SharedUI.Mobile` never use `Moba.SharedUI.Desktop`; `MOBAflow` and `Moba.SharedUI.Desktop` never use `Moba.SharedUI.Mobile`; and neutral `SharedUI` folders never use either `Moba.SharedUI.Desktop` or `Moba.SharedUI.Mobile`.
 
 `Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from this
 table, the project and build files, and the C# syntax of the sources; a failure
@@ -310,7 +311,7 @@ public interface IWorkflowService
 
 See the actual [runtime roles](../../Backend/Interface/IMobaRuntime.cs),
 [command gateway](../../SharedUI/Interface/IRuntimeCommandGateway.cs), and
-[MainWindowViewModel constructor](../../SharedUI/ViewModel/MainWindowViewModel.cs).
+[MainWindowViewModel constructor](../../SharedUI/Desktop/ViewModel/MainWindowViewModel.cs).
 ViewModels do not receive the complete `IMobaRuntime` or create their own gateway.
 
 **Characteristics:**
@@ -590,7 +591,7 @@ runtime services.
 
 **Layout persistence and final shell audit (RF-24 slice 6):**
 
-- `LayoutPersistenceService` (`SharedUI/Service/`) is the only path that persists the saved layout; pages still
+- `LayoutPersistenceService` (`SharedUI/Desktop/Service/`) is the only path that persists the saved layout; pages still
   set their visual widths on the layout object before they save through it. It reads the shared
   `UiSettings` through `ISettingsService`, loads `LayoutColumnWidthsViewModel` on construction and reloads it
   on reset, applies a change under its existing key and persists it with one logged-failure path, offers an
@@ -924,7 +925,7 @@ door transition; host differences stay explicit through `TrainControlViewModelOp
 
 These platform-neutral components live in [`SharedUI/Mobile`](../../SharedUI/Mobile)
 and are registered as singletons by `AddMobaMobileServices` in
-[`MobileServiceCollectionExtensions`](../../SharedUI/Extensions/MobileServiceCollectionExtensions.cs), the
+[`MobileServiceCollectionExtensions`](../../SharedUI/Mobile/MobileServiceCollectionExtensions.cs), the
 platform-neutral part of the MOBAsmart composition. The Android app
 ([`MobaMauiServiceCollectionExtensions`](../../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs)) adds only
 its platform implementations and pages, so the portable test target resolves every shared registration:
@@ -939,8 +940,8 @@ its platform implementations and pages, so the portable test target resolves eve
 | [`MobileAppLifecycle`](../../SharedUI/Mobile/MobileAppLifecycle.cs) | Android foreground-service keep-alive (syncs run in order), network-change debounce and the stopping state. Created and disposed by `MauiViewModel`. |
 | [`MauiViewModel`](../../SharedUI/Mobile/MauiViewModel.cs) | Coordinates these services, owns EventBus/hub subscriptions, health-check loop and lifetime cancellation, and applies results to tabs and bound state on the UI thread. |
 
-[`MobileSolutionStore`](../../SharedUI/Service/MobileSolutionStore.cs) owns mobile cache persistence;
-[`MobileSolutionContext`](../../SharedUI/Service/MobileSolutionContext.cs) owns the phone's loaded
+[`MobileSolutionStore`](../../SharedUI/Mobile/MobileSolutionStore.cs) owns mobile cache persistence;
+[`MobileSolutionContext`](../../SharedUI/Mobile/MobileSolutionContext.cs) owns the phone's loaded
 solution and project selection. MAUI registers it as `IProjectContext`; `SolutionRemoteLoader`
 applies synchronized or cached solutions to it, and the mobile project picker updates its selection.
 The desktop's `SolutionSession` is a separate owner. Projection data does not become a second editable
@@ -987,7 +988,7 @@ status messages only; it does not load or initialize external plugins.
 
 ### Resolution Example
 
-The [MainWindowViewModel constructor](../../SharedUI/ViewModel/MainWindowViewModel.cs)
+The [MainWindowViewModel constructor](../../SharedUI/Desktop/ViewModel/MainWindowViewModel.cs)
 receives `SettingsPageViewModel`, `TrainsPageViewModel`, `StationsPageViewModel`, `JourneysPageViewModel`,
 `ProjectDiagnosticsViewModel`, `SystemStatusViewModel`, `ISolutionSession`, `IRuntimeSnapshotProvider`,
 `IConnectionRuntime` and `IRuntimeCommandGateway`, together with its other shell and platform services;

@@ -26,9 +26,10 @@ using SharedUI.Configuration;
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Service;
-using SharedUI.Shell;
+using SharedUI.Desktop.Service;
+using SharedUI.Desktop.Shell;
 using SharedUI.TrainControl;
-using SharedUI.ViewModel;
+using SharedUI.Desktop.ViewModel;
 using Sound;
 using Speech.Base;
 using Speech.Piper;
@@ -69,8 +70,8 @@ public static class MobaWinUiServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // SharedUI's AddUiDispatcher() falls back to a no-op dispatcher because SharedUI
-        // is compiled without the WINDOWS symbol. Register the WinUI dispatcher explicitly.
+        // SharedUI's AddUiDispatcher() only registers the synchronous fallback dispatcher.
+        // Register the WinUI dispatcher explicitly.
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
         services.AddEventBusWithUiDispatch();
 

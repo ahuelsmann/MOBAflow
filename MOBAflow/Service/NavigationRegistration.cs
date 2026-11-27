@@ -8,8 +8,8 @@ using Microsoft.Extensions.Logging;
 
 using SharedUI.Configuration;
 using SharedUI.Interface;
-using SharedUI.Service;
-using SharedUI.ViewModel;
+using SharedUI.Desktop.Service;
+using SharedUI.Desktop.ViewModel;
 
 using System;
 using System.Collections.Generic;

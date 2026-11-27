@@ -5,7 +5,7 @@ using Moba.Backend.Interface;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Desktop.Service;
 
 using Moq;
 

@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.TrainControl;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
 /// <summary>
 /// Validates that critical MOBAflow services resolve from the DI container at startup.

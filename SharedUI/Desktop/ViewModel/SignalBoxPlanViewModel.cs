@@ -1,0 +1,256 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+namespace Moba.SharedUI.Desktop.ViewModel;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+
+using Domain;
+
+using Interface;
+
+using System.Collections.ObjectModel;
+
+/// <summary>
+/// ViewModel wrapper for SignalBoxPlan domain model.
+/// Provides observable state for the signal-box presentation.
+/// </summary>
+public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrapper<SignalBoxPlan>
+{
+    private readonly SignalBoxPlan _model;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SignalBoxPlanViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying signal box plan domain model.</param>
+    public SignalBoxPlanViewModel(SignalBoxPlan model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        _model = model;
+        Refresh();
+    }
+
+    /// <summary>
+    /// Gets the underlying domain model (for IViewModelWrapper interface).
+    /// </summary>
+    public SignalBoxPlan Model => _model;
+
+    /// <summary>
+    /// Gets the unique identifier of the plan.
+    /// </summary>
+    public Guid Id => _model.Id;
+
+    /// <summary>
+    /// Gets or sets the name of the signal box plan.
+    /// </summary>
+    public string Name
+    {
+        get => _model.Name;
+        set => SetProperty(_model.Name, value, _model, (m, v) => m.Name = v);
+    }
+
+    /// <summary>
+    /// Gets or sets the grid width in cells.
+    /// </summary>
+    public int GridWidth
+    {
+        get => _model.Grid.Width;
+        set => _model.Grid = _model.Grid with { Width = value };
+    }
+
+    /// <summary>
+    /// Gets or sets the grid height in cells.
+    /// </summary>
+    public int GridHeight
+    {
+        get => _model.Grid.Height;
+        set => _model.Grid = _model.Grid with { Height = value };
+    }
+
+    /// <summary>
+    /// Gets or sets the cell size in pixels.
+    /// </summary>
+    public int CellSize
+    {
+        get => _model.Grid.CellSize;
+        set => _model.Grid = _model.Grid with { CellSize = value };
+    }
+
+    /// <summary>
+    /// Observable collection of elements.
+    /// </summary>
+    public ObservableCollection<SbElement> Elements { get; } = [];
+
+    /// <summary>
+    /// Gets the count of elements.
+    /// </summary>
+    public int ElementCount => Elements.Count;
+
+    /// <summary>
+    /// Refreshes all collections from the underlying model.
+    /// </summary>
+    public void Refresh()
+    {
+        Elements.Clear();
+        foreach (var element in _model.Elements)
+            Elements.Add(element);
+
+        OnPropertyChanged(nameof(ElementCount));
+    }
+
+    /// <summary>
+    /// Currently selected element in the editor.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelection))]
+    private SbElement? _selectedElement;
+
+    /// <summary>
+    /// Whether an element is currently selected.
+    /// </summary>
+    public bool HasSelection => SelectedElement is not null;
+
+    /// <summary>
+    /// Adds a straight track element.
+    /// </summary>
+    public SbTrackStraight AddTrackStraight(int x, int y, int rotation = 0)
+    {
+        var element = new SbTrackStraight { X = x, Y = y, Rotation = rotation };
+        _model.AddElement(element);
+        Elements.Add(element);
+        OnPropertyChanged(nameof(ElementCount));
+        return element;
+    }
+
+    /// <summary>
+    /// Adds a curved track element.
+    /// </summary>
+    public SbTrackCurve AddTrackCurve(int x, int y, int rotation = 0)
+    {
+        var element = new SbTrackCurve { X = x, Y = y, Rotation = rotation };
+        _model.AddElement(element);
+        Elements.Add(element);
+        OnPropertyChanged(nameof(ElementCount));
+        return element;
+    }
+
+    /// <summary>
+    /// Adds a switch element with auto-assigned address.
+    /// </summary>
+    public SbSwitch AddSwitch(int x, int y, int rotation = 0)
+    {
+        var element = new SbSwitch { X = x, Y = y, Rotation = rotation, Address = GetNextSwitchAddress() };
+        _model.AddElement(element);
+        Elements.Add(element);
+        OnPropertyChanged(nameof(ElementCount));
+        return element;
+    }
+
+    /// <summary>
+    /// Adds a signal element with auto-assigned address.
+    /// </summary>
+    public SbSignal AddSignal(int x, int y, int rotation = 0, SignalSystemType system = SignalSystemType.Ks)
+    {
+        var element = new SbSignal { X = x, Y = y, Rotation = rotation, SignalSystem = system };
+        _model.AddElement(element);
+        Elements.Add(element);
+        OnPropertyChanged(nameof(ElementCount));
+        return element;
+    }
+
+    /// <summary>
+    /// Adds a detector element with auto-assigned feedback address.
+    /// </summary>
+    public SbDetector AddDetector(int x, int y, int rotation = 0)
+    {
+        var element = new SbDetector { X = x, Y = y, Rotation = rotation, FeedbackAddress = GetNextFeedbackAddress() };
+        _model.AddElement(element);
+        Elements.Add(element);
+        OnPropertyChanged(nameof(ElementCount));
+        return element;
+    }
+
+    /// <summary>
+    /// Gets the next available address for switches.
+    /// </summary>
+    public int GetNextSwitchAddress()
+    {
+        var switches = Elements.OfType<SbSwitch>().ToList();
+        return switches.Count > 0 ? switches.Max(e => e.Address) + 1 : 1;
+    }
+
+    /// <summary>
+    /// Gets the next available feedback address for detectors.
+    /// </summary>
+    public int GetNextFeedbackAddress()
+    {
+        var detectors = Elements.OfType<SbDetector>().ToList();
+        return detectors.Count > 0 ? detectors.Max(e => e.FeedbackAddress) + 1 : 1;
+    }
+
+    /// <summary>
+    /// Finds an element at the specified grid position.
+    /// </summary>
+    public SbElement? HitTest(int gridX, int gridY)
+        => Elements.FirstOrDefault(e => e.X == gridX && e.Y == gridY);
+
+    /// <summary>
+    /// Finds an element by its ID.
+    /// </summary>
+    public SbElement? FindById(Guid id)
+        => Elements.FirstOrDefault(e => e.Id == id);
+
+    /// <summary>
+    /// Selects an element.
+    /// </summary>
+    public void Select(SbElement? element)
+    {
+        SelectedElement = element;
+    }
+
+    /// <summary>
+    /// Clears the current selection.
+    /// </summary>
+    public void ClearSelection()
+    {
+        SelectedElement = null;
+    }
+
+    /// <summary>
+    /// Forces the canvas to recreate the visual for an element.
+    /// Required because signal templates use one-time bindings on plain domain models.
+    /// </summary>
+    public void RefreshElementVisual(SbElement element)
+    {
+        var index = Elements.IndexOf(element);
+        if (index < 0)
+        {
+            return;
+        }
+
+        Elements.RemoveAt(index);
+        Elements.Insert(index, element);
+    }
+
+    /// <summary>
+    /// Removes an element from the plan with cascading cleanup of connections.
+    /// </summary>
+    public void RemoveElement(SbElement element)
+    {
+        if (SelectedElement?.Id == element.Id)
+            SelectedElement = null;
+
+        _model.RemoveElement(element.Id);
+        Elements.Remove(element);
+        OnPropertyChanged(nameof(ElementCount));
+
+    }
+
+    /// <summary>
+    /// Removes the currently selected element.
+    /// </summary>
+    public void RemoveSelectedElement()
+    {
+        if (SelectedElement is not null)
+            RemoveElement(SelectedElement);
+    }
+
+}

@@ -5,7 +5,7 @@ using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Contracts.Runtime;
 using Moba.Domain;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Mobile;
 using Moba.SharedUI.TrainControl;
 using Moba.SharedUI.ViewModel;
 

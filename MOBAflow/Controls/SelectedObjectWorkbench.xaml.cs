@@ -4,7 +4,7 @@ namespace Moba.MOBAflow.Controls;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
 /// <summary>
 /// Reusable WinUI input adapter for selected-object presentation and commands.

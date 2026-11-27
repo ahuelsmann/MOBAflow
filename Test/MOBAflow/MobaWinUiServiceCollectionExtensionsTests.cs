@@ -18,8 +18,10 @@ using Microsoft.Extensions.Logging;
 
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.Desktop.Service;
 using Moba.SharedUI.TrainControl;
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 using Moba.MOBAflow.Extensions;
 using Moba.MOBAflow.Service;
 using Moba.Speech.Base;

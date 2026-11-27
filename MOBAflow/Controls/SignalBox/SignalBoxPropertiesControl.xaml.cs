@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
 using SharedUI.Interface;
-using SharedUI.ViewModel;
+using SharedUI.Desktop.ViewModel;
 
 using System.ComponentModel;
 

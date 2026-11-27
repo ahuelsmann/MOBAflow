@@ -9,7 +9,7 @@ using Common.Events;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
-using SharedUI.ViewModel;
+using SharedUI.Desktop.ViewModel;
 
 using System.Diagnostics;
 

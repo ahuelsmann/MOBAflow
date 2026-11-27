@@ -11,7 +11,8 @@ using Microsoft.UI.Xaml.Input;
 using Windows.ApplicationModel.DataTransfer;
 
 using SharedUI.ViewModel;
-using SharedUI.Service;
+using SharedUI.Desktop.ViewModel;
+using SharedUI.Desktop.Service;
 
 /// <summary>
 /// Solution page displaying projects list, the Z21 finder and the properties panel.

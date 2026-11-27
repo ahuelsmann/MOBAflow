@@ -2,7 +2,7 @@
 
 namespace Moba.SharedUI.Interface;
 
-using ViewModel;
+using Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// Project and solution selection context for train control and related views.

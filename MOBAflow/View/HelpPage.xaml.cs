@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
 using Moba.MOBAflow.Service;
 using Moba.MOBAflow.ViewModel;
-using SharedUI.Service;
+using SharedUI.Desktop.Service;
 
 internal sealed partial class HelpPage : INavigationParameterReceiver
 {

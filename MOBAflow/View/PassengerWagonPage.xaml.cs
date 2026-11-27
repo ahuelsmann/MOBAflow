@@ -4,8 +4,8 @@ namespace Moba.MOBAflow.View;
 using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
-using Moba.SharedUI.ViewModel;
-using SharedUI.Service;
+using Moba.SharedUI.Desktop.ViewModel;
+using SharedUI.Desktop.Service;
 
 internal sealed partial class PassengerWagonPage
 {

@@ -8,6 +8,7 @@ using Moba.Backend.Interface;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.Desktop.Service;
 
 /// <summary>
 /// Creates solution sessions for ViewModel tests with the same file access and dispatcher as the ViewModel.

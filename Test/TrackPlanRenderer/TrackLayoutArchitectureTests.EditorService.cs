@@ -2,7 +2,7 @@
 
 namespace Moba.Test.TrackPlanRenderer;
 
-using global::Moba.SharedUI.Service;
+using global::Moba.SharedUI.Desktop.Service;
 using global::Moba.TrackLibrary.PikoA;
 using global::Moba.TrackPlan.Editor;
 using global::Moba.Test.Helpers;

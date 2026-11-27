@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Moba.MOBAflow.Controls"
     xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
+    xmlns:dvm="using:Moba.SharedUI.Desktop.ViewModel"
     xmlns:viewmodel="using:Moba.SharedUI.ViewModel">
     <Grid Padding="8" RowSpacing="8">
         <Grid.RowDefinitions>
@@ -85,7 +86,7 @@
                                        PreviewKeyDown="EventsRepeater_PreviewKeyDown">
                             <ItemsRepeater.Layout><StackLayout Orientation="Vertical" Spacing="4" /></ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="viewmodel:JourneyEventViewModel">
+                                <DataTemplate x:DataType="dvm:JourneyEventViewModel">
                                     <ListViewItem Tag="{x:Bind}" Padding="8,8" MinHeight="64" CornerRadius="4" HorizontalContentAlignment="Stretch"
                                                   IsSelected="{x:Bind IsSelected, Mode=OneWay}" AutomationProperties.Name="{x:Bind AutomationName, Mode=OneWay}"
                                                   Tapped="EventRow_Tapped" GotFocus="EventRow_GotFocus" ContextRequested="EventRow_ContextRequested"

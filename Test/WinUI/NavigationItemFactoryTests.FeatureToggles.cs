@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.SharedUI.Configuration;
 using Moba.SharedUI.Interface;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 using Moba.Speech.Base;
 using Moba.Test.Helpers;
 using Moba.MOBAflow.Service;

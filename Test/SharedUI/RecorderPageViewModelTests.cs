@@ -6,7 +6,7 @@ using global::Moba.Backend.Interface;
 using global::Moba.Backend.Service.Recording;
 using global::Moba.Common.Recording;
 using global::Moba.SharedUI.Interface;
-using global::Moba.SharedUI.ViewModel;
+using global::Moba.SharedUI.Desktop.ViewModel;
 
 using Microsoft.Extensions.Logging.Abstractions;
 

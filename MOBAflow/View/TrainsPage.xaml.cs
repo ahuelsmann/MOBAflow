@@ -9,8 +9,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
-using SharedUI.Service;
+using SharedUI.Desktop.Service;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;

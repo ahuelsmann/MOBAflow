@@ -4,7 +4,7 @@ namespace Moba.SharedUI.Interface;
 
 using System.ComponentModel;
 
-using ViewModel;
+using Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// Narrow selection context for journey map and related views.

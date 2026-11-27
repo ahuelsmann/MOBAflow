@@ -4,6 +4,7 @@ namespace Moba.Test.Helpers;
 
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.Desktop.Service;
 
 using Moq;
 

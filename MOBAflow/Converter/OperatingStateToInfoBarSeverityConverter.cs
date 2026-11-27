@@ -4,7 +4,7 @@ namespace Moba.MOBAflow.Converter;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 
 /// <summary>
 /// Converts <see cref="OperatingStateKind"/> values to <see cref="InfoBarSeverity"/>.

@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml.Controls;
 
 using Moba.Domain;
 using Moba.SharedUI.Interface;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Desktop.ViewModel;
 using Moba.Speech.Base;
 using Moba.Test.Helpers;
 using Moba.Test.Speech;

@@ -21,13 +21,13 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Service;
+using Moba.SharedUI.Service;
 
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-using ViewModel;
+using Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// ViewModel for TrainControlPage - provides locomotive drive control interface.

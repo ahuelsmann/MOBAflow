@@ -22,7 +22,7 @@ Use [docs/developer/ARCHITECTURE.md](../../docs/developer/ARCHITECTURE.md) for b
 - Shared ViewModels depend only on `IRuntimeSnapshotProvider`, `IConnectionRuntime` and `ITrafficMonitor` and send
   operator commands through the required
   [IRuntimeCommandGateway](../../SharedUI/Interface/IRuntimeCommandGateway.cs); preserve its recording and
-  [MobileRuntimeCoordinator](../../SharedUI/Service/MobileRuntimeCoordinator.cs) routing.
+  [MobileRuntimeCoordinator](../../SharedUI/Mobile/MobileRuntimeCoordinator.cs) routing.
   `Test/Architecture/RuntimeCommandPathArchitectureTests.cs` guards this path.
 - Z21 raw callbacks reach the runtime in the background; UI EventBus subscriptions go through
   [UiThreadEventBusDecorator](../../SharedUI/Service/UiThreadEventBusDecorator.cs).
@@ -38,7 +38,7 @@ Use [docs/developer/ARCHITECTURE.md](../../docs/developer/ARCHITECTURE.md) for b
   [MAUI registrations](../../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs) compose platform services,
   dispatchers, ViewModels and pages. Extend these rather than duplicating registrations in startup files.
   MOBAsmart's platform-neutral registrations live in the
-  [mobile composition](../../SharedUI/Extensions/MobileServiceCollectionExtensions.cs).
+  [mobile composition](../../SharedUI/Mobile/MobileServiceCollectionExtensions.cs).
 - [EventBus registration](../../SharedUI/Extensions/EventBusUiExtensions.cs) registers the inner bus and decorated
   `IEventBus`; provide the UI dispatcher first. Do not replace the decorated registration with a bare bus later.
 - Preserve singleton shared state and transient page lifetimes. Unsubscribe transient views from singleton events

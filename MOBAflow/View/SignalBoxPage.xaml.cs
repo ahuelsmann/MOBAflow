@@ -11,8 +11,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 
-using SharedUI.ViewModel;
-using SharedUI.Service;
+using SharedUI.Desktop.ViewModel;
+using SharedUI.Desktop.Service;
 
 using System;
 using System.Collections.Specialized;
