@@ -263,6 +263,12 @@ next at the end:
   account (`allowDeclaredReviews: true`), a `moba-final-review` comment carries a self-declared `reviewer-family`,
   `reviewer-model`, and `dispatcher`, and the commit status description includes `"declared (shared account)"`.
   GitHub cannot cryptographically distinguish two agents posting under the same user token.
+- **Declared tier owner restriction:** A declared `PASS` counts only from the repository owner account, which the
+  evaluator resolves from the PR's repository data (never hard-coded); a declared marker from any other account
+  fails the gate.
+- **Limitation (status is per commit):** A commit status belongs to a commit SHA, not to a PR. When the same head
+  SHA is open in two PRs with different bases, both PRs share one status. The status is informational, and the PR
+  comment marker (with its exact `head=` and `base=`) stays the source of truth.
 - **Mitigations:** `scripts/Test-ReviewGate.ps1` cross-checks PR branch prefixes and non-merge commit
   `Co-Authored-By` trailers to reject `"writer family mismatch"`, binds markers to exact `head=` and `base=` SHAs
   plus byte-identical raw-diff carry-forward, and publishes statuses only from base-side workflow triggers with the

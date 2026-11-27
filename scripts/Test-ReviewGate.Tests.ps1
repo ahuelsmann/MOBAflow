@@ -10,6 +10,9 @@ $scriptPath = Join-Path $PSScriptRoot 'Test-ReviewGate.ps1'
 
 $checks = 0
 
+# The repository owner is resolved from PR data in production; tests default it to the fixture account.
+$PSDefaultParameterValues['Get-ReviewGateResult:RepositoryOwner'] = 'ahuelsmann'
+
 function Assert-Equal($Expected, $Actual, [string] $Scenario) {
     if ($Expected -ne $Actual) {
         throw "Expected '$Expected' for '$Scenario', but got '$Actual'."
@@ -163,6 +166,32 @@ $resTrustedBotMarker = Get-ReviewGateResult `
     -IdentitiesConfig $strictIdentities
 Assert-Equal 'success' $resTrustedBotMarker.State 'trusted bot marker succeeds even when allowDeclaredReviews=false'
 Assert-True ($resTrustedBotMarker.Description.Contains('verified')) 'trusted bot description includes verified'
+
+# 6b. Declared tier is restricted to the repository owner account (resolved from repository data).
+$otherAccountComment = @{
+    id = 70
+    created_at = '2026-11-26T10:00:00Z'
+    user = @{ login = 'some-other-user' }
+    body = "<!-- moba-final-review verdict=PASS head=$headA base=$baseA reviewer-family=openai reviewer-model=gpt-6.2-sol dispatcher=Codex-TD -->"
+}
+$resOtherAccount = Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($otherAccountComment) -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resOtherAccount.State 'declared PASS from a non-owner account fails'
+Assert-True ($resOtherAccount.Description -like '*repository owner*') 'non-owner failure names the repository owner rule'
+$resOwnerOverride = Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($tolerantComment) -RepositoryOwner 'another-owner' -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resOwnerOverride.State 'declared PASS fails when the resolved repository owner differs'
+$resOwnerUnknown = Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($tolerantComment) -RepositoryOwner '' -IdentitiesConfig $defaultIdentities
+Assert-Equal 'failure' $resOwnerUnknown.State 'declared PASS fails when the repository owner cannot be resolved'
+Assert-Equal 'success' (Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($tolerantComment) -RepositoryOwner 'AhuelsMann' -IdentitiesConfig $defaultIdentities).State 'owner comparison is case-insensitive'
+
+# 6c. Strict mode with exactly one marker comment (regression: scalar results must be wrapped in arrays).
+$strictSingle = & {
+    Set-StrictMode -Version Latest
+    $single = Get-ReviewGateResult -PullRequestAuthor 'ahuelsmann' -PullRequestBody $standardBody -HeadSha $headA -BaseSha $baseA -Comments @($tolerantComment) -IdentitiesConfig $defaultIdentities
+    $ordered = @(Get-OrderedComments -Comments @($tolerantComment))
+    [pscustomobject] @{ State = $single.State; OrderedCount = $ordered.Count }
+}
+Assert-Equal 'success' $strictSingle.State 'evaluator succeeds under strict mode with exactly one marker comment'
+Assert-Equal 1 $strictSingle.OrderedCount 'single comment orders to a one-element array'
 
 # 7. Unresolved review threads fail the gate regardless of a valid PASS marker.
 $resUnresolved = Get-ReviewGateResult `
@@ -443,6 +472,7 @@ $testsWorkflowText = Get-Content -Raw -LiteralPath (Join-Path $repositoryRoot '.
 Assert-True ($testsWorkflowText -notmatch 'statuses:\s*write') 'PR-head self-test workflow has no statuses: write'
 Assert-True ($testsWorkflowText -notmatch 'secrets\.') 'PR-head self-test workflow uses no secrets'
 Assert-True ((Get-Content -Raw -LiteralPath $scriptPath).Contains('Independent final review (informational)')) 'status context is the informational name'
+Assert-True ($workflowText -match 'gh pr list[^\n]*--limit 1000') 'schedule sweep lists all open PRs, not the default 30'
 Assert-True ($workflowText -notmatch 'gate not yet installed') 'bootstrap path does not emit success commit status'
 Assert-True ($workflowText -match 'exit 0') 'bootstrap path exits cleanly without posting status'
 

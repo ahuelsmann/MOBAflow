@@ -257,7 +257,7 @@ function Get-FinalReviewMarkers {
         return @()
     }
 
-    $orderedComments = Get-OrderedComments -Comments $Comments
+    $orderedComments = @(Get-OrderedComments -Comments $Comments)
     if ($orderedComments.Count -eq 0) {
         return @()
     }
@@ -840,7 +840,9 @@ function Resolve-MarkerTier {
         [pscustomobject] $Marker,
 
         [Parameter(Mandatory = $true)]
-        [pscustomobject] $Identities
+        [pscustomobject] $Identities,
+
+        [string] $RepositoryOwner = ''
     )
 
     $authorKey = if ([string]::IsNullOrWhiteSpace($Marker.Author)) { '' } else { $Marker.Author.Trim().ToLowerInvariant() }
@@ -861,6 +863,16 @@ function Resolve-MarkerTier {
             IsValid = $false
             Tier = 'declared'
             Error = 'Declared (shared account) reviews are disabled; a verified bot review is required.'
+        }
+    }
+
+    # Declared tier: only the repository owner account may declare a review (shared-account transition).
+    if ([string]::IsNullOrWhiteSpace($RepositoryOwner) -or
+        -not $authorKey.Equals($RepositoryOwner.Trim().ToLowerInvariant(), [StringComparison]::Ordinal)) {
+        return [pscustomobject] @{
+            IsValid = $false
+            Tier = 'declared'
+            Error = 'Declared reviews are accepted only from the repository owner account.'
         }
     }
 
@@ -936,6 +948,8 @@ function Resolve-MarkerGateResult {
         [Parameter(Mandatory = $true)]
         [pscustomobject] $Identities,
 
+        [string] $RepositoryOwner = '',
+
         [Parameter(Mandatory = $true)]
         [string] $BaseRef,
 
@@ -950,7 +964,7 @@ function Resolve-MarkerGateResult {
         return New-GateResult -State 'failure' -Reason "Final review verdict is CHANGES for $(Get-ShortSha $Marker.Head)." -Marker $Marker
     }
 
-    $tierInfo = Resolve-MarkerTier -Marker $Marker -Identities $Identities
+    $tierInfo = Resolve-MarkerTier -Marker $Marker -Identities $Identities -RepositoryOwner $RepositoryOwner
     if (-not $tierInfo.IsValid) {
         return New-GateResult -State 'failure' -Reason $tierInfo.Error -Marker $Marker -Tier $tierInfo.Tier
     }
@@ -1026,6 +1040,8 @@ function Get-ReviewGateResult {
 
         [string] $RepositoryRoot = (Get-Location).Path,
 
+        [string] $RepositoryOwner = '',
+
         [string] $IdentitiesPath = '',
 
         [AllowNull()]
@@ -1086,6 +1102,7 @@ function Get-ReviewGateResult {
         -PullRequestBody $PullRequestBody `
         -InferredWriterFamilies $inferredWriterFamilies `
         -Identities $identities `
+        -RepositoryOwner $RepositoryOwner `
         -BaseRef $BaseRef `
         -RepositoryRoot $RepositoryRoot `
         -CarryForwardEvaluator $CarryForwardEvaluator
@@ -1217,6 +1234,7 @@ $result = Get-ReviewGateResult `
     -Commits $commits `
     -Comments $comments `
     -ReviewThreads $threads `
+    -RepositoryOwner ([string] $pr.base.repo.owner.login) `
     -BaseRef $baseRef `
     -RepositoryRoot $RepositoryRoot
 

@@ -58,7 +58,7 @@ jobs:
             'workflow_run' {
               try { $prNumbers = @(($env:RUN_PR_NUMBERS | ConvertFrom-Json) | ForEach-Object { [int] $_ }) } catch { $prNumbers = @() }
             }
-            default { $prNumbers = @(gh pr list --repo $repository --state open --json number --jq '.[].number' | ForEach-Object { [int] $_ }) }
+            default { $prNumbers = @(gh pr list --repo $repository --state open --limit 1000 --json number --jq '.[].number' | ForEach-Object { [int] $_ }) }
           }
 
           if ($prNumbers.Count -eq 0) {
