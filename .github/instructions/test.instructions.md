@@ -6,7 +6,7 @@ applyTo: 'Test/**/*.cs,Test/Test.csproj'
 # Testing
 
 Use the validation policy and commands in [AGENTS.md](../../AGENTS.md).
-[Test.csproj](../../Test/Test.csproj) defines portable and Windows targets; Android participation is opt-in.
+[Test.csproj](../../Test/Test.csproj) defines portable and Windows targets.
 
 ## Test design
 

@@ -163,7 +163,7 @@ jobs:
 
       - name: Restore desktop test graph
         shell: pwsh
-        run: dotnet restore Test/Test.csproj -p:IncludeMobaSmartTests=false
+        run: dotnet restore Test/Test.csproj
 
       - name: Build cross-platform analyzer graph
         shell: pwsh
@@ -177,7 +177,6 @@ jobs:
             --no-restore `
             -m:1 `
             -t:Rebuild `
-            -p:IncludeMobaSmartTests=false `
             -p:MobaAnalyzerGate=true `
             -p:UseSharedCompilation=false
           ./scripts/Test-AnalyzerBaseline.ps1 `
@@ -192,7 +191,6 @@ jobs:
           --configuration Release
           --framework net10.0-windows10.0.22621.0
           --no-restore
-          -p:IncludeMobaSmartTests=false
           -p:DebugType=portable
           -p:DebugSymbols=true
           -p:MobaAnalyzerGate=true
@@ -238,7 +236,6 @@ jobs:
             --configuration Release `
             --framework net10.0-windows10.0.22621.0 `
             --no-build `
-            -p:IncludeMobaSmartTests=false `
             -p:DebugType=portable `
             -p:DebugSymbols=true `
             --logger trx `
@@ -535,7 +532,6 @@ jobs:
         run: >-
           dotnet restore Test/Test.csproj
           -p:TargetFramework=net10.0
-          -p:IncludeMobaSmartTests=false
 
       # Skia rendering stays in the Windows desktop lane because this Linux lane owns protocol and transport only.
       - name: Run display host conformance tests
@@ -552,7 +548,6 @@ jobs:
             --configuration Release `
             --framework net10.0 `
             --no-restore `
-            -p:IncludeMobaSmartTests=false `
             --filter $filter
 
       # Each fixture starts the built MOBApi as an isolated process on a free local port. The result guard
@@ -568,7 +563,6 @@ jobs:
             --configuration Release `
             --framework net10.0 `
             --no-restore `
-            -p:IncludeMobaSmartTests=false `
             --filter $filter `
             --logger 'trx;LogFileName=mobapi-integration.trx' `
             --results-directory artifacts/TestResults/mobapi
