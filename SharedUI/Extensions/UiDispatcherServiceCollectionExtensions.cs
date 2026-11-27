@@ -30,17 +30,16 @@ public static class UiDispatcherServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // Register as singleton because:
-        // 1. DispatcherQueue (WinUI) / MainThread (MAUI) are static, not per-request
-        // 2. No state to manage, safe to share across entire app lifetime
-        // 3. Improves performance by avoiding repeated instantiation
+        // Register the synchronous DefaultUiDispatcher fallback as a singleton.
+        // Do not call this after a host has registered its platform IUiDispatcher,
+        // because AddSingleton appends and the last registration wins.
         services.AddSingleton(GetPlatformDispatcher());
 
         return services;
     }
 
     /// <summary>
-    /// Returns the platform-specific IUiDispatcher implementation.
+    /// Returns the synchronous fallback <see cref="IUiDispatcher"/> implementation.
     /// </summary>
     private static IUiDispatcher GetPlatformDispatcher()
     {

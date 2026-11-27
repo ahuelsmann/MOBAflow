@@ -70,8 +70,8 @@ public static class MobaWinUiServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // SharedUI's AddUiDispatcher() falls back to a no-op dispatcher because SharedUI
-        // is compiled without the WINDOWS symbol. Register the WinUI dispatcher explicitly.
+        // SharedUI's AddUiDispatcher() only registers the synchronous fallback dispatcher.
+        // Register the WinUI dispatcher explicitly.
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
         services.AddEventBusWithUiDispatch();
 

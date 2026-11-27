@@ -77,7 +77,7 @@ Further rules:
 - Every namespace declared in a project starts with the root namespace in the
   table.
 - A new project needs a row in this table.
-- Single-host types in SharedUI live below `Moba.SharedUI.Desktop` (for `MOBAflow`) and `Moba.SharedUI.Mobile` (for `MOBAsmart`). `MOBAsmart` and `Moba.SharedUI.Mobile` never use `Moba.SharedUI.Desktop`; `MOBAflow` and `Moba.SharedUI.Desktop` never use `Moba.SharedUI.Mobile`.
+- Single-host ViewModels, concrete services, shell contracts, and interop in `SharedUI` live below `Moba.SharedUI.Desktop` (for `MOBAflow`) and `Moba.SharedUI.Mobile` (for `MOBAsmart`), while UI service role interfaces remain in `SharedUI/Interface` (`Moba.SharedUI.Interface`). `MOBAsmart` and `Moba.SharedUI.Mobile` never use `Moba.SharedUI.Desktop`; `MOBAflow` and `Moba.SharedUI.Desktop` never use `Moba.SharedUI.Mobile`; and neutral `SharedUI` folders never use either `Moba.SharedUI.Desktop` or `Moba.SharedUI.Mobile`.
 
 `Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from this
 table, the project and build files, and the C# syntax of the sources; a failure

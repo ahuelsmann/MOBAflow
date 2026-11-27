@@ -210,6 +210,17 @@ internal sealed partial class SolutionArchitectureTests
         var root = FindRepositoryRoot();
         var desktopTypes = ReadDeclaredTypeNames(Path.Combine(root, "SharedUI/Desktop"));
         var mobileTypes = ReadDeclaredTypeNames(Path.Combine(root, "SharedUI/Mobile"));
+        string[] neutralSharedUiFolders =
+        [
+            "SharedUI/Appearance",
+            "SharedUI/Configuration",
+            "SharedUI/Extensions",
+            "SharedUI/Helper",
+            "SharedUI/Interface",
+            "SharedUI/Service",
+            "SharedUI/TrainControl",
+            "SharedUI/ViewModel",
+        ];
 
         var violations = new List<string>();
         violations.AddRange(FindSharedUiCrossHostViolations(
@@ -224,12 +235,25 @@ internal sealed partial class SolutionArchitectureTests
             "Moba.SharedUI.Desktop",
             "SharedUI.Desktop",
             desktopTypes));
+        violations.AddRange(FindSharedUiCrossHostViolations(
+            root,
+            neutralSharedUiFolders,
+            "Moba.SharedUI.Desktop",
+            "SharedUI.Desktop",
+            desktopTypes));
+        violations.AddRange(FindSharedUiCrossHostViolations(
+            root,
+            neutralSharedUiFolders,
+            "Moba.SharedUI.Mobile",
+            "SharedUI.Mobile",
+            mobileTypes));
 
         Assert.That(
             violations,
             Is.Empty,
             "Single-host SharedUI rule: MOBAflow and Moba.SharedUI.Desktop never use Moba.SharedUI.Mobile; "
-            + "MOBAsmart and Moba.SharedUI.Mobile never use Moba.SharedUI.Desktop. Violations: "
+            + "MOBAsmart and Moba.SharedUI.Mobile never use Moba.SharedUI.Desktop; neutral SharedUI folders "
+            + "never use Moba.SharedUI.Desktop or Moba.SharedUI.Mobile. Violations: "
             + string.Join("; ", violations));
     }
 
