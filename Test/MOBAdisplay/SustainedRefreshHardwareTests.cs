@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.MOBAdisplay;
 
-using Moba.Display.Protocol;
-using Moba.Display.Rendering;
-using Moba.Display.Runtime;
-using Moba.Display.Transport;
+using Moba.MOBAdisplay.Protocol;
+using Moba.MOBAdisplay.Rendering;
+using Moba.MOBAdisplay.Runtime;
+using Moba.MOBAdisplay.Transport;
 
 using System.Globalization;
 using System.Net;

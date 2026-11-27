@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Display.Runtime;
+namespace Moba.MOBAdisplay.Runtime;
 
 /// <summary>
 /// Raised after each attempt to push a rendered frame to the UDP or serial transport.

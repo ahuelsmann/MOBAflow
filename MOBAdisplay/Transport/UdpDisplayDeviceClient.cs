@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Display.Transport;
+namespace Moba.MOBAdisplay.Transport;
 
-using Moba.Display.Protocol;
+using Moba.MOBAdisplay.Protocol;
 
 /// <summary>
 /// Maintains one live display protocol v1.0 session for diagnostics and user-requested commands.

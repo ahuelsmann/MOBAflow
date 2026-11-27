@@ -3,7 +3,7 @@ using SkiaSharp;
 
 using System.Runtime.InteropServices;
 
-namespace Moba.Display.Rendering;
+namespace Moba.MOBAdisplay.Rendering;
 
 public static class Rgb565Converter
 {

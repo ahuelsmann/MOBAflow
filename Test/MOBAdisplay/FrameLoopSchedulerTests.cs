@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.Display.Rendering;
-using Moba.Display.Runtime;
-using Moba.Display.Transport;
+using Moba.MOBAdisplay.Rendering;
+using Moba.MOBAdisplay.Runtime;
+using Moba.MOBAdisplay.Transport;
 
 namespace Moba.Test.MOBAdisplay;
 
