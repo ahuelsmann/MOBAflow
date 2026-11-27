@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Moba.Test</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The usings of Test/GlobalUsings.cs without Backend, which TrackPlan.Renderer does not reference. -->
+    <Using Include="Moba.Domain" />
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
+    <!-- PlacedTrackPlanEditorTests and TrackPlanTestGeometry exercise TrackPlan.Editor and PikoA placements. -->
+    <ProjectReference Include="..\..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
+    <ProjectReference Include="..\..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Test\TrackPlanRenderer\PathToSvgConverterTests.cs" Link="TrackPlanRenderer\PathToSvgConverterTests.cs" />
+    <Compile Include="..\..\Test\TrackPlanRenderer\PlacedTrackPlanEditorTests.cs" Link="TrackPlanRenderer\PlacedTrackPlanEditorTests.cs" />
+    <Compile Include="..\..\Test\TrackPlanRenderer\SvgExporterTests.cs" Link="TrackPlanRenderer\SvgExporterTests.cs" />
+    <Compile Include="..\..\Test\Helpers\TrackPlanTestGeometry.cs" Link="Helpers\TrackPlanTestGeometry.cs" />
+  </ItemGroup>
+</Project>

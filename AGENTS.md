@@ -27,44 +27,30 @@ on Windows and Linux.
 ## Master coordination: small batches on main
 
 Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows the delivery flow in
-[master coordination](.github/instructions/master-coordination.instructions.md). In short:
+[master coordination](.github/instructions/master-coordination.instructions.md) (updated on 2026-11-27 to the PR-free Master-Merge workflow):
 
 - **Role != single model.** Roles define domain responsibilities and draw on four capability profiles across Claude
   Code (`P1` Opus 5.5 ceiling, `P4` Sonnet 5.5; `Fable 5.2` prohibited), ChatGPT Codex (`P2` Sol 6.2 / GPT-6 Astra) and Antigravity (`P3` Gemini 4 Carbon / Neon,
   `P4` Hydrogen, plus built-in failover models `P1` `Claude Opus 5.5`, `P4` `Claude Sonnet 5.5`, `P2` `GPT-OSS 120B`). Slices are classified by risk (`H` safety/runtime/protocol, `M` features/UI/audio, `L` docs/small
   non-behavioral fixes); review-fix rounds retain their slice's risk class and dependency updates take the class of
   the affected area.
-- **Small slices.** Work is cut into slices of one concern, about 25 files or 400 changed lines at most, each with
-  its own Draft PR that merges on its own. An issue may need several slices; no long-running branches.
+- **Small slices.** Work is cut into slices of one concern, about 25 files or 400 changed lines at most, each developed in an isolated worktree and task branch that lands on its own via coordinated Master merge onto `main`. An issue may need several slices; no long-running branches.
 - **Board, locks, WIP limit.** The COO (Claude; during a verified `Claude Code` `Quota Pause`, `Antigravity` `P3` serves as sole single-writer **`Acting COO`** under `2/3 Acting COO` governance with `Codex` `P2` retaining CPM/TD veto) coordinates open work on the [MOBAflow GitHub Kanban](docs/developer/KANBAN.md)
-  and records each open slice, its risk class, writer and locked areas in the Kanban item fields and the Draft PR
-  slice header. Refactoring and feature work never run in the same locked area at once. At most three code
-  slices (Kanban items with Risk class set, docs-only excluded) are open, at most two local agents build at once.
+  and cross-tool `SwarmBus` locks (`bus_locks`). Refactoring and feature work never run in the same locked area at once. At most three code slices (docs-only excluded) are open, at most two local agents build at once.
   One writer per branch.
-- **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests); code
+- **Design first.** Before code, the developer posts a 10-20 line design note (files, approach, risks, tests) in the issue or SwarmBus; code
   starts after cross-model companion/UX review and the COO's (or Acting COO's / Solution Architect's) Go (class `L` slices and
-  review-fix rounds on an approved design state their intent in the PR body/commit instead, while keeping their
+  review-fix rounds on an approved design state their intent in the commit/SwarmBus message instead, while keeping their
   risk class). New features write their acceptance tests first.
-- **Pull from main.** Before every push that hands work on, merge the current `main` of the configured GitHub remote
-  into the branch, resolve conflicts locally and rerun the affected checks. Merge, never rebase or force-push a
-  shared branch.
-- **Multi-model team and review from the start.** Writer, a companion reviewer from a different model family (Codex
-  `P2` when writer is Claude; Claude `P1` when writer is Codex; Claude `P1` or Codex `P2` when writer is
-  Antigravity) and, for UI/TrackPlan/editorial work, the `P3` Head of UI/UX (`Gemini 4 Carbon`) work each class `H`
-  and `M` slice together: the companion checks the design note and reviews every pushed commit with PR review
-  comments while the slice grows.
-- **Independent final review and auto-merge.** At Ready every slice (`H`, `M` and `L`) receives a separate fresh
-  `P1` Claude review (`Claude Opus 5.5` — exact required tier and ceiling) plus independent cross-family `P2`/`P3` verification on the exact head
-  and base (neither may be the writer's or companion's session). During a `Claude Code` `Quota Pause` (logged with UTC reset time on the PR), `Antigravity` (`Acting COO`) + `Codex` (`P2`) route the fresh `P1` (`Claude Opus 5.5`) final review via an isolated Antigravity sub-agent alongside cross-family `P2`/`P3` verification (`Codex` / `GPT-OSS 120B` / `Gemini 4`). With no open Blocker/High/Medium, zero SonarCloud
-  issues and green non-required mutation lanes, the COO (or Acting COO) arms head-bound GitHub auto-merge; it merges when the
-  required checks pass. Before any push to an armed PR the COO (or Acting COO) disarms it.
+- **Sync with main.** Before every push that hands work on for review or Master merge, merge current `main` of the configured GitHub remote into the branch, resolve conflicts locally, and rerun the affected local checks. Merge, never rebase or force-push a shared branch, and never rewrite `main`.
+- **Multi-model team and cross-family SwarmBus review.** Writer, companion reviewer (`P2`/`P1`/`P3`), and for UI/TrackPlan/editorial slices `P3` Head of UI/UX (`Gemini 4 Carbon`) review pushed branch commits via `SwarmBus` while the slice grows.
+- **Independent final review and Master merge.** At Ready every slice (`H`, `M` and `L`) receives a fresh independent
+  `P1` Claude review (`Claude Opus 5.5` — exact required tier and ceiling) plus independent cross-family `P2`/`P3` verification on the exact branch `head` and `origin/main` base (neither may be the writer's or companion's session). With zero open Blocker/High/Medium findings and green local Release/analyzer/test checks (plus applicable local Stryker verification), a standing Master session squashes/fast-forwards onto `origin/main` (`Closes #<id>` / `Refs #<id>`), deletes the remote task branch, releases explicit `bus_locks`, and monitors post-merge `main` CI (`.github/workflows/quality.yml`) and SonarCloud (`branch=main`, `0` open issues).
 - **Guard rails.** Two failed fix attempts on the same finding (in companion or final review), or more than ten
-  agent messages on one topic, stop the loop and go to the user. Locks, design gos, handovers and merges are logged
-  as UTC-timed comments on the slice's Draft PR; the [Kanban](docs/developer/KANBAN.md) holds the current state. Multi-slice
-  features stay behind feature toggles until complete.
+  agent messages on one topic, stop the loop and go to the user. Multi-slice features stay behind feature toggles until complete.
 - **People.** The user decides product goals, priorities, material UX, fundamental architecture, new costs and every
   app, device or hardware action. Since 2026-11-06 the user's personal acceptance is no merge gate. The user does
-  not relay messages, inspect code or administer PRs. Any role may consult the Head of UI/UX (`Gemini 4 Carbon` via
+  not relay messages or inspect code manually. Any role may consult the Head of UI/UX (`Gemini 4 Carbon` via
   Antigravity CLI) under the contract in master coordination.
 - An explicit narrower assignment, pause or no-merge instruction stays binding; do not infer new product work.
 
@@ -72,9 +58,8 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
 
 - GitHub is the only Git host. Inspect `git remote -v` and branch tracking before synchronizing; use the configured
   GitHub remote rather than assuming `origin` or restoring an Azure remote.
-- Never commit directly on `main` or push changes directly to `main`. Implementations, bug fixes and other
-  repository changes require a task branch and a pull request. Do not bypass GitHub branch protection.
-  The shared `main` checkout may be fast-forwarded to changes already merged through GitHub.
+- Never commit directly in the shared root `main` checkout during active development, never `push --force` to `main`, and never delete `main` (`MOBAflow` Ruleset enforces `deletion` and `non_fast_forward`). Implementations, bug fixes and other repository changes develop in isolated worktrees + task branches and land on `main` via coordinated Master fast-forward/squash push after cross-family review; Pull Requests were intentionally disabled on 2026-11-27.
+  The shared `main` checkout may be fast-forwarded cleanly to integrated remote `main`.
 - Isolate independent write tasks with Git worktrees: use a dedicated task branch/worktree as specified in
   [.github/instructions/git-worktree-isolation.instructions.md](.github/instructions/git-worktree-isolation.instructions.md).
   A user-requested synchronization of the shared checkout can be prepared there and then fast-forwarded into that checkout.
@@ -84,10 +69,7 @@ Since 2026-11-16 every agent (Claude Code, ChatGPT Codex, Antigravity) follows t
   adoption flows. Replace a superseded model and remove its code, tests, API endpoints and docs in the same change.
   Keep `Solution.CurrentSchemaVersion` unless the task requires a bump; removed JSON fields are ignored on load.
   Remove legacy paths that already exist only in a dedicated change, not as incidental cleanup.
-- SonarQube before PR review: run code analysis only through the GitHub PR pipeline, create PRs as drafts, and
-  require a green SonarCloud check on the current PR commit with zero OPEN/CONFIRMED PR issues before marking ready.
-  Do not run local Sonar/Vortex code analysis or install analysis hooks. Local sessions keep local secrets scans;
-  cloud sessions follow the cloud rule below. Follow
+- SonarQube analysis and review: run full SonarCloud analysis through the GitHub pipeline (`main` automatic analysis + CI) and verify `0` OPEN/CONFIRMED issues on `main` post-merge; do not run local Sonar/Vortex code analysis or install analysis hooks. Keep local Release builds, analyzer baseline checks (`Test-AnalyzerBaseline.ps1`), test suites, and deterministic secrets scans required before every push/merge; cloud sessions follow the cloud rule below. Follow
   [the Sonar policy](.github/instructions/sonarqube-pre-pr.instructions.md); preserve existing analyzer baseline gates.
 - Balanced secrets scanning: local sessions scan likely secret-bearing files before reading them (pre-read) and
   changed files before commits/PRs (pre-commit). If a scan finds a secret, stop handling that file and report it

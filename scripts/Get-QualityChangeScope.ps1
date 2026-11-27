@@ -33,7 +33,7 @@ $firmwareInputPatterns = @(
     '^MOBAdisplay/esp32/'
 )
 
-# Shared .NET build and Stryker tool inputs: a change here requires the .NET build and all 7 mutation lanes.
+# Shared .NET build and Stryker tool inputs: a change here requires the .NET build and all 8 mutation lanes.
 $sharedMutationInputPatterns = @(
     '^\.config/dotnet-tools\.json$',
     '^global\.json$',
@@ -127,16 +127,28 @@ $mutationLaneInputPatterns = [ordered] @{
         '^MutationTest/SharedUI/',
         '^MutationTest/stryker-shared-ui-config\.json$'
     )
+    MutationTrackPlanRenderer = @(
+        '^Domain/',
+        '^TrackLibrary\.Base/',
+        '^TrackLibrary\.PikoA/',
+        '^TrackPlan\.Editor/',
+        '^TrackPlan\.Renderer/',
+        '^Test/TrackPlanRenderer/(PathToSvgConverterTests|PlacedTrackPlanEditorTests|SvgExporterTests)\.cs$',
+        '^Test/Helpers/TrackPlanTestGeometry\.cs$',
+        '^MutationTest/TrackPlan\.Renderer/',
+        '^MutationTest/stryker-track-plan-renderer-config\.json$'
+    )
 }
 
 $mutationLaneOutputs = [ordered] @{
-    Mutation           = 'mutation'
-    MutationCommon     = 'mutation_common'
-    MutationContracts  = 'mutation_contracts'
-    MutationSpeechBase = 'mutation_speech_base'
-    MutationBackend    = 'mutation_backend'
-    MutationApi        = 'mutation_api'
-    MutationSharedUI   = 'mutation_shared_ui'
+    Mutation                  = 'mutation'
+    MutationCommon            = 'mutation_common'
+    MutationContracts         = 'mutation_contracts'
+    MutationSpeechBase        = 'mutation_speech_base'
+    MutationBackend           = 'mutation_backend'
+    MutationApi               = 'mutation_api'
+    MutationSharedUI          = 'mutation_shared_ui'
+    MutationTrackPlanRenderer = 'mutation_track_plan_renderer'
 }
 
 # Known .NET repository areas. A path outside every listed area (workflows, scripts, repository configuration,
@@ -256,7 +268,7 @@ function Get-PathScope([string] $RelativePath) {
             $lanes[$laneKey] = $matched
             if ($matched) { $anyMutationMatch = $true }
         }
-        # Shared or newly added files under MutationTest/ (such as mutation-lanes.json) fail open for all 7 lanes.
+        # Shared or newly added files under MutationTest/ (such as mutation-lanes.json) fail open for all 8 lanes.
         if ((-not $anyMutationMatch) -and ($normalizedPath -cmatch '^MutationTest/')) {
             $lanes = New-UniformMutationMap $true
         }
@@ -306,6 +318,7 @@ if ($scope.Code) {
         "mutation_common=$($scope.MutationCommon), mutation_contracts=$($scope.MutationContracts), " +
         "mutation_speech_base=$($scope.MutationSpeechBase), mutation_backend=$($scope.MutationBackend), " +
         "mutation_api=$($scope.MutationApi), mutation_shared_ui=$($scope.MutationSharedUI), " +
+        "mutation_track_plan_renderer=$($scope.MutationTrackPlanRenderer), " +
         "android=$($scope.Android), mobademo=$($scope.MobaDemo).")
     @($changedPaths | Where-Object { (Get-PathScope $_).Code }) | Select-Object -First 20 | ForEach-Object { Write-Host "  $_" }
 }
@@ -324,6 +337,7 @@ if (-not [string]::IsNullOrEmpty($env:GITHUB_OUTPUT)) {
         "mutation_backend=$($scope.MutationBackend.ToString().ToLowerInvariant())"
         "mutation_api=$($scope.MutationApi.ToString().ToLowerInvariant())"
         "mutation_shared_ui=$($scope.MutationSharedUI.ToString().ToLowerInvariant())"
+        "mutation_track_plan_renderer=$($scope.MutationTrackPlanRenderer.ToString().ToLowerInvariant())"
         "android=$($scope.Android.ToString().ToLowerInvariant())"
         "mobademo=$($scope.MobaDemo.ToString().ToLowerInvariant())"
     )

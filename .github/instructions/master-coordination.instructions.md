@@ -7,11 +7,12 @@ applyTo: 'AGENTS.md,CLAUDE.md,docs/developer/AI-DEVELOPMENT.md,.agents/skills/mo
 
 [AGENTS.md](../../AGENTS.md) owns the shared workflow; this guide owns the multi-model agent network, roles and
 the delivery flow. Since 2026-11-16 MOBAflow works in **small batches on `main`**: problems are solved in a short
-design before code, work lands in small pull requests that merge automatically once reviewed and green, and
-parallel work never touches the same code area. On 2026-11-17 the human expanded this into a **multi-model agent
-network**: a role defines a domain responsibility, not a single fixed model or tool. Merge, never rebase, to bring
-`main` into a branch. Use the configured GitHub remote (see [AGENTS.md](../../AGENTS.md)); `<remote>/main` below
-means its `main`.
+design before code, work lands in small isolated slices that merge cleanly once cross-family reviewed and locally green,
+and parallel work never touches the same code area (`bus_locks`). On 2026-11-17 the human expanded this into a **multi-model
+agent network**: a role defines a domain responsibility, not a single fixed model or tool. On 2026-11-27 the human
+retired mandatory GitHub Pull Requests (`has_pull_requests: false`) in favor of the **PR-free Master-Merge workflow** under
+the `main` ruleset (`deletion` + `non_fast_forward` only). Use the configured GitHub remote (see [AGENTS.md](../../AGENTS.md));
+`<remote>/main` below means its `main`.
 
 A request to discuss, research or review alone does not authorize implementation or merge. An implementation
 assignment includes the flow below through merge unless explicitly limited ("draft only", "no merge", pause).
@@ -32,14 +33,14 @@ model mappings live in [AI-assisted development](../../docs/developer/AI-DEVELOP
 | Role | Primary profile(s) | Responsibility |
 | --- | --- | --- |
 | Human (maintainer) | user | Product goals, priorities, material UX decisions, fundamental architecture changes, new costs, app/device/hardware authorizations, feedback from real use |
-| Decision & Steering Triad | `P1` (COO) + `P2` (CPM/TD) + `P3` (Product/UX) | Cross-model steering for slice cutting, risk classification, design Go and escalations; the COO (or single-writer **`Acting COO`** when `Claude Code` is in `Quota Pause`) writes [Kanban slice fields](#board-locks-and-wip-limit) and manages auto-merge |
-| Chief Operating Officer (COO) | `P1` (Claude); **`Acting COO` failover:** `P3` (`Antigravity`) | Overall operational lead: sole technical writer on the [Kanban and slice headers](#board-locks-and-wip-limit), forms slice teams, posts the design Go, dispatches reviews, manages `gh pr update-branch` and auto-merge, escalates to the human. When a verified `Claude Code` `Quota Pause` is logged on the active thread/PR with its reset timestamp, **`Antigravity`** (`P3`) assumes sole single-writer `Acting COO` duties alongside `Codex` (`P2`) CPM/TD (`2/3 Acting COO` quorum) until `Claude Code` resets |
-| Chief Project Manager (CPM) & Technical Director (TD) | `P2` (Codex) | Prioritizes the backlog with the COO, checks repo/Spec Kit/build-graph consistency and may veto a slice or lock through the CLI channel and a PR comment as described [below](#board-locks-and-wip-limit) |
+| Decision & Steering Triad | `P1` (COO) + `P2` (CPM/TD) + `P3` (Product/UX) | Cross-model steering for slice cutting, risk classification, design Go and escalations; the COO (or single-writer **`Acting COO`** when `Claude Code` is in `Quota Pause`) writes [Kanban slice fields](#board-locks-and-wip-limit) and coordinates Master merges |
+| Chief Operating Officer (COO) | `P1` (Claude); **`Acting COO` failover:** `P3` (`Antigravity`) | Overall operational lead: sole technical writer on the [Kanban and slice records](#board-locks-and-wip-limit), forms slice teams, posts the design Go, dispatches reviews, coordinates branch sync and Master merges, escalates to the human. When a verified `Claude Code` `Quota Pause` is logged on the active thread or SwarmBus with its reset timestamp, **`Antigravity`** (`P3`) assumes sole single-writer `Acting COO` duties alongside `Codex` (`P2`) CPM/TD (`2/3 Acting COO` quorum) until `Claude Code` resets |
+| Chief Project Manager (CPM) & Technical Director (TD) | `P2` (Codex) | Prioritizes the backlog with the COO, checks repo/Spec Kit/build-graph consistency and may veto a slice or lock through the CLI channel and a SwarmBus/issue note as described [below](#board-locks-and-wip-limit) |
 | Head of Product Experience & UI/UX | `P3` (Antigravity) | Co-designs UI, TrackPlan, interaction and editorial slices from the design note on; checks visual hierarchy, themes, accessibility and user-facing clarity ([CLI contract](#head-of-uiux-gemini-carbon-via-antigravity)) |
 | Solution Architect | `P1` + `P2` / `P3` | Technical design within scope; one recommendation with trade-offs; prepares fundamental decisions for the human |
-| Senior Developer (Slice Writer) | `P1`, `P2` or `P4` (one named writer per slice) | Design note, test-first implementation, local checks, Draft PR, review fixes |
-| Companion Reviewer | `P1`, `P2` or `P3` (different model family from writer) | Reviews the design note and every pushed commit read-only on the PR while the slice grows |
-| Independent Final Reviewer | `P1` (fresh session) + cross-model `P2`/`P3` check | Read-only final review at Ready on the exact head and base without implementation history |
+| Senior Developer (Slice Writer) | `P1`, `P2` or `P4` (one named writer per slice) | Design note, test-first implementation, local checks, task branch/worktree, review fixes |
+| Companion Reviewer | `P1`, `P2` or `P3` (different model family from writer) | Reviews the design note and every pushed commit read-only on the task branch while the slice grows |
+| Independent Final Reviewer | `P1` (fresh session) + cross-model `P2`/`P3` check | Read-only final review before Master merge on the exact head and base without implementation history |
 | Executive Assistant | `P4` / `P1` cloud session | Portable work (docs, specs, CI-proved changes, triage) delegated by the COO; no merge authority; work needing the local machine, a device, the WinUI app or a secret stays local |
 | Domain Leads (Quality, Security, Communications, Documentation, DevOps, Art) | `P1`–`P4` role cells | Deliver assigned work in their domain through the same cross-model flow |
 
@@ -48,7 +49,7 @@ issues. Checks not run and states not inspected are recorded as limitations, nev
 
 ## Risk classes and domain matrix
 
-Every slice is assigned a risk class (`H`, `M` or `L`) when recorded in the Kanban item and the PR slice header.
+Every slice is assigned a risk class (`H`, `M` or `L`) when recorded in the Kanban item and the slice record (issue note / SwarmBus).
 Review-fix rounds always keep the risk class of their slice. Dependency updates take the risk class of the area
 they affect (`H` for runtime, protocol or transport packages, `M` for UI/feature packages, `L` for
 test/analyzer/build-only tooling):
@@ -57,22 +58,18 @@ test/analyzer/build-only tooling):
 | --- | --- | --- |
 | `H` High (Safety, Runtime & Protocol) | `Backend` (Z21/workflows), `Common` (EventBus/runtime), `MOBApi`, `MOBAdisplay` (`esp32/`), project-switch/stop logic, runtime/protocol dependencies | Writer (`P1`/`P2`), companion reviewer from a different model family (`P2` if writer is Claude; `P1` if writer is Codex), final independent `P1` review plus cross-family `P2` verification; a safety veto is binding |
 | `M` Medium (Features, UI & Audio) | `MOBAflow` (WinUI), `MOBAsmart` (MAUI), `SharedUI`, `TrackPlan.*`, `Speech.*`, `Sound`, `MOBAnews`, UI/feature dependencies | Writer (`P1`/`P2`/`P4`), companion reviewer from a different model family (`P2`/`P1`), `P3` (UI/UX & Product) at the design note for UI, TrackPlan and editorial `M` slices, final independent `P1` review plus cross-family `P2`/`P3` verification |
-| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the PR body (no separate design note or per-commit companion needed); final review at Ready runs a fresh independent `P1` review plus independent cross-family `P2`/`P3` verification |
+| `L` Low (Docs, Wiki & Small Non-Behavioral Fixes) | `docs/`, `docs/wiki/`, `specs/`, test/tooling-only dependency updates, <=3-file fixes without behavior change | One named writer (`P4`/`P2`) states intent in the commit message / SwarmBus note (no separate design note or per-commit companion needed); final review before Master merge runs a fresh independent `P1` review plus independent cross-family `P2`/`P3` verification |
 
 ## Delivery flow
 
-1. **Slice (micro-batch).** The COO cuts each issue into slices that merge independently: one concern, about
-   25 files or 400 changed lines at most, generated or mechanical changes excepted. One Draft PR per slice; an
+1. **Slice (micro-batch).** The COO cuts each issue into slices that integrate independently: one concern, about
+   25 files or 400 changed lines at most, generated or mechanical changes excepted. One isolated worktree (`artifacts/worktrees/wt-*`) and task branch per slice; an
    issue may have several slices in sequence. No long-running branches: a slice that cannot finish within a day
    is cut again.
-2. **Lock and start.** The COO adds the slice's Draft PR to the Kanban project, sets Risk class, Locked areas and
-   Writer, and fills the slice header of the PR with its team before an agent starts
-   ([fields and header](#board-locks-and-wip-limit)). A slice never starts in an area another open slice has
-   locked.
-3. **Design first.** Before touching code, the Senior Developer posts a design note of 10 to 20 lines as the first
-   PR comment or in the Draft body: goal, files and projects, approach, risks, tests that prove it. Exempt from a
+2. **Lock and start.** Claim affected repository-relative paths via `mobai-swarm-bus` (`bus_locks`) and track active slice status on the Kanban project before editing. A slice never starts in an area another open slice has locked.
+3. **Design first.** Before touching code, the Senior Developer posts a design note of 10 to 20 lines in the linked issue or `SwarmBus` message: goal, files and projects, approach, risks, tests that prove it. Exempt from a
    separate design note: class `L` slices and review-fix rounds on an already approved slice design; they state
-   their intent in the PR body or review-fix commit instead, while review-fix rounds retain their slice's risk
+   their intent in the commit/SwarmBus message instead, while review-fix rounds retain their slice's risk
    class (`H`, `M` or `L`). For class `H` and `M` slices the companion reviewer (and `P3` Head of UI/UX for
    UI/product slices; see [slice team](#slice-team-and-review-from-the-start)) checks the note first; the COO (or
    Solution Architect) answers **Go** or corrects it with those findings. No code before Go. Spec Kit features
@@ -80,61 +77,36 @@ test/analyzer/build-only tooling):
 4. **Test first for features.** For new product behavior, the acceptance tests from the specification are written
    first and fail; the implementation makes them pass. Behavior-preserving refactorings rely on the existing tests
    plus new tests only for an uncovered risk.
-5. **Pull from `main` (the writer's duty).** Before every push that hands work on (review, re-review, merge), the
+5. **Pull from `main` (the writer's duty).** Before every push that hands work on (review, re-review, Master merge), the
    writer merges the current `<remote>/main` into the branch, resolves conflicts locally and reruns the affected
-   checks. Never rebase or force-push a shared branch.
+   checks. Merge, never rebase or force-push a shared branch, and never rewrite `<remote>/main`.
 6. **Review.** The companion reviewer accompanies class `H` and `M` slices from the design note on (see
-   [slice team](#slice-team-and-review-from-the-start)). When the Draft is green locally and on CI and SonarCloud
-   reports zero OPEN/CONFIRMED issues on its head ([Sonar policy](sonarqube-pre-pr.instructions.md)), the COO (or Acting COO)
-   marks it Ready and dispatches the final [independent review](#independent-review). Fixes go to the writer;
-   changed code gets a fresh re-review of the changed comparison.
-7. **Auto-merge.** When no Blocker, High or Medium finding is open and SonarCloud still reports zero issues, the
-   COO (or Acting COO) arms GitHub auto-merge bound to the reviewed head
-   (`gh pr merge <n> --squash --auto --match-head-commit <sha>`). The non-required mutation lanes (Common,
-   Contracts, Speech.Base, Backend, MOBApi, SharedUI) must be green, or skipped by the change filter, on that head first; the
-   required checks gate the merge itself. A finding counts as resolved only when it is fixed, or when a fresh
-   independent review or the human accepts the evidence that it does not apply; the writer, the COO (or Acting COO) or the merger
-   never dismisses it alone.
-8. **Armed PRs and new commits.** `main` has the strict up-to-date rule and no merge queue, so a merge makes the
-   other armed PRs BEHIND. Before anyone pushes to an armed PR, the COO (or Acting COO) disarms it
-   (`gh pr merge <n> --disable-auto`); every new head counts as unarmed. The COO (or Acting COO) brings BEHIND branches up to date
-   with `gh pr update-branch <n>`; when GitHub reports a conflict, the writer merges `main` and resolves it. A
-   head whose only change is a conflict-free merge of `main` needs fresh checks but no new review; a resolved
-   conflict or any other change needs a fresh review of that delta. Then the COO (or Acting COO) re-arms with the new head.
-9. **Close the loop.** After merge the Kanban item moves to Done and its locks are released.
-   Documentation and `docs/wiki/` impact is part of the slice (corrections or a concrete no-change reason in the
-   PR body).
+   [slice team](#slice-team-and-review-from-the-start)). When the task branch is green locally (Release builds, analyzer baselines, whitespace/line-ending checks, unit/architecture tests, and applicable Stryker lanes), the branch is pushed to `<remote>/<branch>` and dispatches the final [independent review](#independent-review) via `mobai-swarm-bus`. Fixes go to the writer; changed code gets a fresh re-review of the changed comparison (`base..head`).
+7. **Coordinated Master Merge.** When no Blocker, High or Medium finding is open, a standing Master session verifies the clean `base..head` diff against `<remote>/main`, creates a clean squash commit or fast-forward merge (`Closes #<id>` / `Refs #<id>`), pushes fast-forward to `<remote>/main` (`git push -4 <remote> HEAD:main`), deletes the remote task branch, releases explicit `bus_locks`, and removes the local worktree. The non-required mutation lanes (`Common`, `Contracts`, `Speech.Base`, `Backend`, `MOBApi`, `SharedUI`, `TrackPlan.Renderer`) remain covered locally before merge and by `.github/workflows/quality.yml` on `main`. A finding counts as resolved only when it is fixed, or when a fresh independent review or the human accepts the evidence that it does not apply; the writer, COO or merger never dismisses it alone.
+8. **Post-merge CI and SonarCloud on `main`.** `.github/workflows/quality.yml` (`push: branches: [main]` with `before..sha` scope detection via `Get-QualityChangeScope.ps1` and per-run concurrency isolation) and SonarCloud Automatic Analysis verify every merged commit on `main`. If `main` CI or SonarCloud flags a finding or regression, an immediate targeted fix slice takes priority over new feature work.
+9. **Close the loop.** After merge and clean `main` verification, update/close the Kanban issue (`Done`) and verify all explicit `bus_locks` are released. Documentation and `docs/wiki/` impact is part of the slice (corrections or a concrete no-change reason in the commit/issue note).
 
 Low and Nit findings may be fixed in the slice or recorded as follow-ups; a Low or Nit that is not fixed needs a
-stated reason in the PR. The COO never reviews its own coordination fixes.
+stated reason in the `SwarmBus`/issue record. The COO never reviews its own coordination fixes.
 
 ## Board, locks and WIP limit
 
 The board is the [MOBAflow GitHub Project Kanban](../../docs/developer/KANBAN.md)
-(`https://github.com/users/ahuelsmann/projects/1`). Each open slice is one Kanban item (its Draft PR) with the
-slice fields **Risk class**, **Locked areas**, **Writer** and **Status** described there. The same facts sit in
-the slice header block at the top of the Draft PR body (`.github/PULL_REQUEST_TEMPLATE.md`): issue, risk class,
-locked areas, writer, companion and review profiles. The PR header is the source of truth; if the Kanban field
-differs, the Kanban field is corrected to match. WIP and lock checks use the Kanban view of open slices (items
-with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In review`) and read the PR headers.
+(`https://github.com/users/ahuelsmann/projects/1`) backed by cross-tool path fencing on `mobai-swarm-bus` (`bus_locks`). Each open slice has one Kanban issue (or tracked sub-task), its **Risk class**, **Locked areas** (`bus_locks`), **Writer**, **Status**, and branch (`<agent>/<issue>-<slug>`). The `SwarmBus` slice announcement / lock record and issue note are the source of truth; if a Kanban field differs, the Kanban field is corrected to match. WIP and lock checks use open slice locks and active Kanban items (`Planned`, `Ready`, `In progress`, `In review`).
 
 - **Locks.** A lock names projects or folders (for example `SharedUI/ViewModel`, `MOBAflow/View`,
-  `.github/workflows`) in the Locked areas field. Refactoring and feature work never run in parallel in the same
+  `.github/workflows`) via `bus_locks` (`claim`/`release` with explicit `paths`). Refactoring and feature work never run in parallel in the same
   locked area. Documentation-only slices lock only the files they edit.
-- **WIP limit.** At most three code slices are open at once across all agents, counted as Kanban items with
-  Risk class set that are code slices (documentation-only slices are excluded), and at most two local agents
+- **WIP limit.** At most three code slices are open at once across all agents (documentation-only slices are excluded), and at most two local agents
   build on the maintainer's machine at the same time.
-- **One writer per branch.** Only the named writer pushes to a slice branch. The one exception is the COO's
-  `gh pr update-branch` merge of `main` (step 8); the writer pulls the branch before its next push. A handover to
-  another writer is a PR comment plus an updated Writer field and PR header before the new writer pushes.
-- **CPM/TD veto.** The COO announces a new slice and its locks to the CPM/TD through the CLI channel and in a
-  PR comment, and starts it right away. A CPM/TD veto within 30 minutes, sent through the CLI channel and repeated
-  as a PR comment, stops the slice at its next safe point (no half-pushed state); later the CPM/TD
+- **One writer per branch.** Only the named writer pushes to a slice branch. A handover to
+  another writer is logged via `SwarmBus` (and issue note) plus updated lock ownership before the new writer pushes.
+- **CPM/TD veto.** The COO announces a new slice and its locks to the CPM/TD through `SwarmBus` (and in the issue if needed), and starts it right away. A CPM/TD veto within 30 minutes, sent through `SwarmBus`, stops the slice at its next safe point (no half-pushed state); later the CPM/TD
   re-prioritizes through the Kanban Priority field instead.
-- **Status.** For slice items (Risk class set) the Kanban Status field mirrors the slice: `Planned` = slice cut,
-  design note awaiting Go; `Ready` = Go given, writer may start (not the PR's "Ready for review"); `In progress` =
-  implementation and review fixes; `In review` = PR marked ready for review, final review, and auto-merge armed;
-  `Done` = merged. Status messages that arrive late never overwrite a newer state.
+- **Status.** For tracked slice items the Kanban Status mirrors progress: `Planned` = slice cut,
+  design note awaiting Go; `Ready` = Go given, writer may start; `In progress` =
+  implementation and review fixes; `In review` = branch pushed for cross-family final review and Master merge;
+  `Done` = merged onto `main`. Status messages that arrive late never overwrite a newer state.
 - **Issue intake.** Issue items have no Risk class. `Planned` = accepted backlog; `Ready` = the maintainer's pull
   trigger: the maintainer moved the issue there so that the COO takes it in. Only the COO (or `Antigravity` as single-writer `Acting COO` during a logged `Claude Code` `Quota Pause`) claims `Ready` issues; its
   scheduled monitoring session (`Claude Monitor`, or `Antigravity Monitor` during failover) does this on the COO's behalf. The COO claims an issue when its
@@ -156,20 +128,15 @@ with Risk class set whose Status is `Planned`, `Ready`, `In progress` or `In rev
 - **Circuit breaker.** If the same finding survives two failed fix attempts (whether raised in companion review or
   final review), or an agent-to-agent exchange on one topic exceeds ten messages, the COO stops the loop and asks
   the human with a recommendation.
-- **Agents talk by CLI.** The CLI is the coordination channel: requests and answers between agents go through
-  command-line channels, not through the human. PR comments are the record, not the channel: after a CLI
-  exchange the COO or the receiving role logs announcements, vetoes, design Go and handovers there. Agents start
+- **Agents talk by CLI / SwarmBus.** `mobai-swarm-bus` and CLI channels (`codex.exe queue`, `claude.exe --print`, Antigravity CLI) are the coordination channel: requests and answers between agents go through CLI/SwarmBus, not through the human. Exact `base..head` hashes, design Go decisions, `bus_locks`, review verdicts, and merge records are logged on `SwarmBus` and summarized on the `MOBAflow` issue when closing. Agents start
   requests to Codex with `~/.codex/.sandbox-bin/codex.exe queue --thread <id> --message <text>` (the Codex app
-  must have that thread);
-  Codex answers in the addressed thread, and callers read the reply from
+  must have that thread) or `bus_send(..., wake: true)`;
+  Codex answers via `SwarmBus` or its addressed thread, and callers read thread replies from
   `~/.codex/sessions/**/rollout-*<thread-id>.jsonl` (assistant messages only; never read `auth.json` or other
-  credential files). No command delivers a message into a Claude desktop session, so Codex raises its own
-  requests to Claude in its thread (the outcome is logged as a PR comment). Claude sessions use their session
-  messaging or invoke a fresh `claude.exe --print` call; Antigravity roles use the
+  credential files). Claude sessions use `SwarmBus` hook delivery or invoke a fresh `claude.exe --print` call; Antigravity roles use `SwarmBus` or the
   [CLI contract](#head-of-uiux-gemini-carbon-via-antigravity).
-  PR design notes, the design Go, slice locks and review posts stay on the `MOBAflow` issue and Draft PR.
-- **Log.** Every lock, design go, handover, merge and escalation is a short comment on the slice's Draft PR with
-  UTC time and role; the Kanban fields carry only the current state. Agent IDs and thread IDs
+  Design notes, design Go, slice locks, and final review verdicts (`base..head`) live on `SwarmBus` / the linked `MOBAflow` issue.
+- **Log.** Every lock, design go, handover, merge and escalation is recorded with UTC time, exact SHA range (`base..head`), and role on `SwarmBus` (and summed up on the `MOBAflow` issue at completion); the Kanban fields carry only the current state. Agent IDs and thread IDs
   stay internal and are not shown to the human.
 - **Feature toggles.** A user-visible feature that spans several slices lands behind a toggle that is off by
   default until the feature is complete. The existing page toggles (`FeatureToggleRegistry`) default to on and
@@ -189,32 +156,31 @@ next at the end:
   from a **different model family** (if the writer is Claude `P1`/`P4`, the companion is Codex `P2`; if the writer
   is Codex `P2`, the companion is a fresh Claude `P1` session; if the writer is Antigravity `P3`/`P4`, the
   companion is Claude `P1` or Codex `P2`) and, for class `M` UI, TrackPlan and editorial slices, the `P3` Head of
-  UI/UX (`Gemini 4 Carbon`). The COO forms the team when the slice starts and records it in the PR slice header.
+  UI/UX (`Gemini 4 Carbon`). The COO forms the team when the slice starts and records it in the SwarmBus / issue kickoff note.
 - **Design review.** Before the Go, the companion reviewer checks the design note (plus `P3` for UI, TrackPlan and
   editorial slices: requirements, architecture, risks and planned tests), and the COO or Solution Architect (`P1`)
   gives the **Go** or corrects it, so at least two complementary profiles assess every design.
-- **Review while coding.** The writer pushes small commits to the Draft early (first tests, then implementation).
-  The companion reviewer reviews each pushed commit read-only and posts its findings as PR review comments, so
+- **Review while coding.** The writer pushes small commits to the task branch early (first tests, then implementation).
+  The companion reviewer reviews each pushed commit read-only and posts findings on `SwarmBus`, so
   the writer sees them at once and every finding has a record; the writer fixes them in the next commit instead of
   letting them pile up. Two failed fix attempts on the same finding trigger the circuit breaker.
-- **Final verdict stays independent.** At Ready a separate fresh session gives the final
-  [independent review](#independent-review) of the complete comparison. It sees the companion's PR comments as
+- **Final verdict stays independent.** At Ready for Master merge, a separate fresh session gives the final
+  [independent review](#independent-review) of the complete `origin/main..HEAD` comparison. It sees companion `SwarmBus` notes as
   context but forms its own verdict, so an early design choice is never judged only by the reviewer who shaped it.
-- **No code, no approval.** Reviewers never write, fix or merge code of their slice and never submit a GitHub
-  approval. If a companion session is lost, a new session takes over with the PR history as context.
+- **No code, no approval.** Reviewers never write, fix or merge code of their slice directly on the reviewed branch. If a companion session is lost, a new session takes over with the branch and SwarmBus history as context.
 
 ## Independent review
 
-- Every final review and re-review (`H`, `M` and `L`) runs read-only on the exact head and base in a fresh `P1`
+- Every final review and re-review (`H`, `M` and `L`) runs read-only on the exact `origin/main..HEAD` range in a fresh `P1`
   Claude session (Opus 5.5 maximum tier, verified by actual model output) without implementation history,
   complemented by an independent cross-family `P2` (Codex) or `P3` (Antigravity, for UI/editorial work)
   verification. During a standalone `Claude Code` quota pause, `Codex` (`P2`) + `Antigravity` (`P3`) run `2/3 Acting COO` failover and route the fresh independent `P1` (`Claude Opus 5.5`) review through an isolated Antigravity sub-agent alongside cross-family `P2`/`P3` checks. Neither the `P1` reviewer nor the `P2`/`P3` verifier may be the writer's or companion's session.
   This guarantees both the mandatory `P1` (`Claude Opus 5.5`) gate and independent verification across at least two model
   families for every slice. An incomplete or failed review does not pass. Reviews report findings ranked by
   severity with file, line, trigger, consequence and evidence, separating introduced defects from existing debt.
-  The COO posts the review on the PR. Companion comments follow the
+  Review verdicts are posted on `SwarmBus` (and summarized on the closing issue comment). Companion comments follow the
   [slice team](#slice-team-and-review-from-the-start) rules instead.
-- Reviewers do not fix, approve or merge.
+- Reviewers do not fix or merge.
 
 ## Human communication
 

@@ -90,12 +90,30 @@
     },
     {
       "name": "track-plan-renderer",
+      "status": "active",
+      "stryker-config": "MutationTest/stryker-track-plan-renderer-config.json",
+      "test-directories": [],
+      "test-files": [
+        "Test/TrackPlanRenderer/PathToSvgConverterTests.cs",
+        "Test/TrackPlanRenderer/PlacedTrackPlanEditorTests.cs",
+        "Test/TrackPlanRenderer/SvgExporterTests.cs"
+      ],
+      "production-projects": ["TrackPlan.Renderer/TrackPlan.Renderer.csproj"]
+    },
+    {
+      "name": "track-plan-editor",
       "status": "planned",
-      "test-directories": ["Test/TrackPlanRenderer"],
-      "production-projects": [
-        "TrackPlan.Renderer/TrackPlan.Renderer.csproj",
-        "TrackPlan.Editor/TrackPlan.Editor.csproj"
-      ]
+      "test-directories": [],
+      "test-files": [
+        "Test/TrackPlanRenderer/SegmentPlacementGeometryTests.cs",
+        "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
+        "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.EditorService.cs",
+        "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.ViewModel.cs",
+        "Test/TrackPlanRenderer/TrackPlanFeedbackHighlighterTests.cs",
+        "Test/TrackPlanRenderer/TrackPlanSnapHelperTests.cs",
+        "Test/TrackPlanRenderer/TrackPlanValidationHelperTests.cs"
+      ],
+      "production-projects": ["TrackPlan.Editor/TrackPlan.Editor.csproj"]
     },
     {
       "name": "track-library-piko-a",
