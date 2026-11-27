@@ -290,6 +290,31 @@ internal class PlacedTrackPlanEditorTests
     }
 
     [Test]
+    public void PlacedTrackPlanSvgRenderer_Render_ValidationMarkerBeyondMaxBoundsAndPositiveMajorHorizontalGrid_ExpandViewBoxAndHighlightMajorLine()
+    {
+        SegmentLocalPathBuilder.PathCommand[] tallPath =
+        [
+            new SegmentLocalPathBuilder.MoveTo(0, 0),
+            new SegmentLocalPathBuilder.LineTo(100, 600)
+        ];
+        var scene = new TrackPlanRenderScene(
+            new TrackPlanRenderItem[] { new(Guid.NewGuid(), "Tall", 0, 0, 0, tallPath) },
+            new TrackPlanValidationMarker[] { new(null, 200, 700, "Max marker") });
+
+        var svg = new PlacedTrackPlanSvgRenderer().Render(scene, showGrid: true);
+        var root = XDocument.Parse(svg).Root!;
+        var horizontalFiveHundred = root.Elements(SvgNs + "line")
+            .Single(line => line.Attribute("y1")?.Value == "500.00" && line.Attribute("y2")?.Value == "500.00");
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(root.Attribute("viewBox")?.Value, Is.EqualTo("-50.00 -50.00 300.00 800.00"));
+            Assert.That(horizontalFiveHundred.Attribute("stroke")?.Value, Is.EqualTo("#D0D0D0"));
+            Assert.That(horizontalFiveHundred.Attribute("stroke-width")?.Value, Is.EqualTo("1.5"));
+        }
+    }
+
+    [Test]
     public void PlacedTrackPlanSvgRenderer_Render_GridLines_CoverViewBoxWithMajorAndMinorIntervals()
     {
         SegmentLocalPathBuilder.PathCommand[] diagonalPath =

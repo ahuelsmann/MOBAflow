@@ -45,6 +45,7 @@ jobs:
       mutation_backend: ${{ steps.scope.outputs.mutation_backend }}
       mutation_api: ${{ steps.scope.outputs.mutation_api }}
       mutation_shared_ui: ${{ steps.scope.outputs.mutation_shared_ui }}
+      mutation_track_plan_renderer: ${{ steps.scope.outputs.mutation_track_plan_renderer }}
       android: ${{ steps.scope.outputs.android }}
       mobademo: ${{ steps.scope.outputs.mobademo }}
 
@@ -62,7 +63,7 @@ jobs:
               'code=true', 'firmware=true', 'mutation=true',
               'mutation_common=true', 'mutation_contracts=true', 'mutation_speech_base=true',
               'mutation_backend=true', 'mutation_api=true', 'mutation_shared_ui=true',
-              'android=false', 'mobademo=true'
+              'mutation_track_plan_renderer=true', 'android=false', 'mobademo=true'
             ) -Encoding utf8NoBOM
             exit 0
           }
@@ -509,6 +510,41 @@ jobs:
         with:
           name: shared-ui-mutation-${{ github.run_number }}
           path: artifacts/mutation/shared-ui/**
+          if-no-files-found: warn
+          retention-days: 90
+
+  mutation-track-plan-renderer:
+    name: TrackPlan.Renderer mutation testing
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.mutation_track_plan_renderer != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore local tools and TrackPlan.Renderer mutation test graph
+        shell: pwsh
+        run: |
+          dotnet tool restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet restore MutationTest/TrackPlan.Renderer/TrackPlan.Renderer.MutationTests.csproj
+
+      - name: Run TrackPlan.Renderer mutation tests
+        shell: pwsh
+        run: ./scripts/Invoke-MutationLane.ps1 -LaneName track-plan-renderer -OutputPath artifacts/mutation/track-plan-renderer
+
+      - name: Archive TrackPlan.Renderer mutation report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: track-plan-renderer-mutation-${{ github.run_number }}
+          path: artifacts/mutation/track-plan-renderer/**
           if-no-files-found: warn
           retention-days: 90
 

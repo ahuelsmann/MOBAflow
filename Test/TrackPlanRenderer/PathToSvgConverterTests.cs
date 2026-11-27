@@ -54,6 +54,20 @@ internal sealed class PathToSvgConverterTests
     }
 
     [Test]
+    public void ToSvgPath_CounterClockwiseLargeArc_EmitsExpectedFlags()
+    {
+        IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands =
+        (SegmentLocalPathBuilder.PathCommand[])[
+            new SegmentLocalPathBuilder.MoveTo(0, 0),
+            new SegmentLocalPathBuilder.ArcTo(10, 0, 5, Clockwise: false, LargeArc: true)
+        ];
+
+        var path = PathToSvgConverter.ToSvgPath(commands, 0, 0, 0);
+
+        Assert.That(path, Is.EqualTo("M 0.00,0.00 A 5.00,5.00 0 1,0 10.00,0.00"));
+    }
+
+    [Test]
     public void ToPathDataString_AppliesScaleAndOffset()
     {
         IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands =
@@ -65,5 +79,20 @@ internal sealed class PathToSvgConverterTests
         var path = PathToSvgConverter.ToPathDataString(commands, scale: 2, offsetX: 1, offsetY: 3);
 
         Assert.That(path, Is.EqualTo("M 2.00,6.00 L 22.00,6.00"));
+    }
+
+    [Test]
+    public void ToPathDataString_ArcSegment_ScalesRadiusAndEndpoints()
+    {
+        IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands =
+        (SegmentLocalPathBuilder.PathCommand[])[
+            new SegmentLocalPathBuilder.MoveTo(0, 0),
+            new SegmentLocalPathBuilder.ArcTo(10, 0, 5, Clockwise: true, LargeArc: false),
+            new SegmentLocalPathBuilder.ArcTo(20, 0, 5, Clockwise: false, LargeArc: true)
+        ];
+
+        var path = PathToSvgConverter.ToPathDataString(commands, scale: 2, offsetX: 1, offsetY: 3);
+
+        Assert.That(path, Is.EqualTo("M 2.00,6.00 A 10.00,10.00 0 0,1 22.00,6.00 M 22.00,6.00 A 10.00,10.00 0 1,0 42.00,6.00"));
     }
 }

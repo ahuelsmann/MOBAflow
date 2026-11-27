@@ -211,8 +211,8 @@ Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main` and manual runs classify all scopes as enabled. Other PR changes enable
-desktop and display; all seven active mutation jobs (`Domain`, `Common`,
-`Contracts`, `Speech.Base`, `Backend`, `MOBApi` and `SharedUI`) and the ESP32
+desktop and display; all eight active mutation jobs (`Domain`, `Common`,
+`Contracts`, `Speech.Base`, `Backend`, `MOBApi`, `SharedUI` and `TrackPlan.Renderer`) and the ESP32
 firmware steps also depend on their transitive input paths. Android runs on PRs
 that change
 `MOBAsmart/` or `quality/analyzer-baseline.android.json` and with the manual
@@ -235,14 +235,14 @@ npm advisory turns it red on the next run without a change to the lockfile.
 Code changes also select two expensive parts by the paths they read. The
 ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
 when `MOBAdisplay/esp32/` changes or an unknown input path requires them. All
-seven active mutation jobs (`Domain`, `Common`, `Contracts`, `Speech.Base`,
-`Backend`, `MOBApi` and `SharedUI`) run only when a path in that lane's
+eight active mutation jobs (`Domain`, `Common`, `Contracts`, `Speech.Base`,
+`Backend`, `MOBApi`, `SharedUI` and `TrackPlan.Renderer`) run only when a path in that lane's
 transitive project, linked test, copied fixture or Stryker configuration
 closure changes, or when a shared `.NET` build/tool config or
 `MutationTest/mutation-lanes.json` changes—so desktop-only, mobile-only or
-`MOBAdemo`-only pull requests skip all seven mutation jobs. A path outside the
+`MOBAdemo`-only pull requests skip all eight mutation jobs. A path outside the
 known `.NET` areas, such as `.github/workflows/quality.yml`, `scripts/`, or a
-new top-level folder, fails open and enables both firmware and all seven
+new top-level folder, fails open and enables both firmware and all eight
 mutation jobs. The jobs keep their required check names; skipped steps and a
 skipped job count as successful.
 `scripts/Get-QualityChangeScope.Tests.ps1` checks these rules dynamically across
@@ -325,7 +325,7 @@ The `main` ruleset requires these checks and an up-to-date branch: Repository in
 desktop build, tests, and coverage; Display protocol host, parser, and firmware; Android Release AAB; Domain
 mutation testing; SonarCloud Code Analysis; Portable tests on Linux. A skipped scoped job satisfies its required
 check but is no evidence of a build. The other mutation lanes (Common, Contracts, Speech.Base, Backend, MOBApi,
-SharedUI) do not block a merge in GitHub; the [master
+SharedUI and TrackPlan.Renderer) do not block a merge in GitHub; the [master
 coordination](../../.github/instructions/master-coordination.instructions.md) rules still require them to be green, or
 skipped by the change filter, on the reviewed head before auto-merge is armed. The desktop and Linux jobs archive
 their test results (the desktop job also its coverage), the mutation jobs their reports, `android-release` the AAB
@@ -351,11 +351,12 @@ test-case filters. Planned lanes remain explicitly outside the mutation guarante
 | contracts | `Contracts/Contracts.csproj` | `MutationTest/Contracts/Contracts.MutationTests.csproj` | [`stryker-contracts-config.json`](../../MutationTest/stryker-contracts-config.json) | 68% |
 | shared-ui | `SharedUI/SharedUI.csproj` | `MutationTest/SharedUI/SharedUI.MutationTests.csproj` | [`stryker-shared-ui-config.json`](../../MutationTest/stryker-shared-ui-config.json) | 46% |
 | api | `MOBApi/MOBApi.csproj` | `MutationTest/Api/Api.MutationTests.csproj` | [`stryker-api-config.json`](../../MutationTest/stryker-api-config.json) | 74% |
+| track-plan-renderer | `TrackPlan.Renderer/TrackPlan.Renderer.csproj` | `MutationTest/TrackPlan.Renderer/TrackPlan.Renderer.MutationTests.csproj` | [`stryker-track-plan-renderer-config.json`](../../MutationTest/stryker-track-plan-renderer-config.json) | 85% |
 | speech-base | `Speech.Base/Speech.Base.csproj` | `MutationTest/Speech.Base/Speech.Base.MutationTests.csproj` | [`stryker-speech-base-config.json`](../../MutationTest/stryker-speech-base-config.json) | 65% |
 <!-- documentation-facts:mutation:end -->
 
-All seven active lanes (`Domain`, `Common`, `Contracts`, `Speech.Base`, `Backend`, `SharedUI` and `MOBApi`) run on pull requests only when their transitive inputs, shared `.NET`/Stryker config, or unknown paths change.
-All seven also run on main pushes and manual Quality runs. Domain, Contracts, Speech.Base, Backend, SharedUI and MOBApi run on
+All eight active lanes (`Domain`, `Common`, `Contracts`, `Speech.Base`, `Backend`, `SharedUI`, `MOBApi` and `TrackPlan.Renderer`) run on pull requests only when their transitive inputs, shared `.NET`/Stryker config, or unknown paths change.
+All eight also run on main pushes and manual Quality runs. Domain, Contracts, Speech.Base, Backend, SharedUI, MOBApi and TrackPlan.Renderer run on
 Linux. Common uses Windows because its existing fixtures include Windows-specific
 photo paths. Its concurrency is limited to four test processes. The Common lane includes selected Backend test
 fixtures for Common contracts and `SpeechSettingsTests.cs`; it does not mutate Backend production code.
@@ -372,7 +373,11 @@ largest lane (about 12,000 mutants; 63 minutes locally and 51 minutes in CI with
 Stryker puts into Safe Mode are excluded from the score; see [Safe Mode](#safe-mode-and-methods-outside-the-gate).
 The Contracts lane mutates `Contracts` (wire contracts, about 260 mutants, under one minute) with every fixture under
 `Test/Contracts/`; it has no Safe-Mode sites.
-Thresholds come from the configuration files; the Common, Contracts, Speech.Base, Backend, SharedUI and MOBApi minimums are baseline
+The `TrackPlan.Renderer` lane mutates `TrackPlan.Renderer` (about 189 mutants, under one minute) with the renderer-facing
+fixtures under `Test/TrackPlanRenderer/` (`PathToSvgConverterTests.cs`, `PlacedTrackPlanEditorTests.cs` and
+`SvgExporterTests.cs`); editor-only fixtures under `Test/TrackPlanRenderer/` remain in the planned `track-plan-editor`
+lane.
+Thresholds come from the configuration files; the Common, Contracts, Speech.Base, Backend, SharedUI, MOBApi and TrackPlan.Renderer minimums are baseline
 safeguards, not targets for test quality. Speech.Base keeps scheduling-only `ConfigureAwait`
 mutants visible rather than excluding them to inflate the score.
 
@@ -390,9 +395,10 @@ if ($LASTEXITCODE -ne 0) { throw "Tool restore failed." }
 ./scripts/Invoke-MutationLane.ps1 -LaneName backend -OutputPath artifacts/mutation/backend-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName api -OutputPath artifacts/mutation/api-local
 ./scripts/Invoke-MutationLane.ps1 -LaneName shared-ui -OutputPath artifacts/mutation/shared-ui-local
+./scripts/Invoke-MutationLane.ps1 -LaneName track-plan-renderer -OutputPath artifacts/mutation/track-plan-renderer-local
 ```
 
-On Linux, run the Domain, Contracts, Speech.Base, Backend, MOBApi and SharedUI lanes; omit the Windows-specific Common lane. Run
+On Linux, run the Domain, Contracts, Speech.Base, Backend, MOBApi, SharedUI and TrackPlan.Renderer lanes; omit the Windows-specific Common lane. Run
 Stryker and ordinary builds/tests sequentially: Stryker recreates shared
 intermediate files. CI uses the same runner, which requires a nonempty, fully passing ordinary-test
 TRX baseline before starting Stryker. It validates the new JSON report's production root, registered
@@ -452,6 +458,6 @@ the scores are not floors; a lane's floor is set from measured evidence with a m
 | Candidate | Mutants | Run time | Score | Decision |
 | --- | ---: | ---: | ---: | --- |
 | `contracts` | 264 | 38 s | 76.85% | active; no Safe Mode |
-| `track-plan-renderer` (`TrackPlan.Renderer`, 24 renderer fixtures) | 189 | 65 s | 26.51% | stays planned: 104 of 110 survivors are in `PlacedTrackPlanSvgRenderer`, whose tests assert too little; assertions first, in [#497](https://github.com/ahuelsmann/MOBAflow/issues/497) |
+| `track-plan-renderer` (`TrackPlan.Renderer`, 24 renderer fixtures) | 189 | 65 s | 26.51% | initially `planned` (104 of 110 survivors in `PlacedTrackPlanSvgRenderer`); renderer assertions strengthened in [#497](https://github.com/ahuelsmann/MOBAflow/issues/497) and lane activated at 96.99% (189 mutants, 51 s, 27 tests), splitting `track-plan-editor` out as `planned` |
 | `display` (`MOBAdisplay`, 167 tests without the Skia and hardware fixtures) | 1,643 | 413 s | 50.70% | stays planned: 237 uncovered mutants are in `ClockRenderer` and `Rgb565Converter`, whose Skia tests cannot run on Linux, and two Safe-Mode sites (`EnsureNegotiatedAsync`, `SendResultAsync`) remain; a Windows lane costs more than it adds now |
 | `sound` (2 files, 34 lines: the contract and its null object) | - | - | - | stays `planned` in the registry (every fixture is registered) and never gets an active lane: nothing to mutate meaningfully |

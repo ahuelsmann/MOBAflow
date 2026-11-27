@@ -9,33 +9,36 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $checks = 0
 
 $lanePropertyByName = [ordered] @{
-    'domain'      = 'Mutation'
-    'common'      = 'MutationCommon'
-    'contracts'   = 'MutationContracts'
-    'speech-base' = 'MutationSpeechBase'
-    'backend'     = 'MutationBackend'
-    'api'         = 'MutationApi'
-    'shared-ui'   = 'MutationSharedUI'
+    'domain'              = 'Mutation'
+    'common'              = 'MutationCommon'
+    'contracts'           = 'MutationContracts'
+    'speech-base'         = 'MutationSpeechBase'
+    'backend'             = 'MutationBackend'
+    'api'                 = 'MutationApi'
+    'shared-ui'           = 'MutationSharedUI'
+    'track-plan-renderer' = 'MutationTrackPlanRenderer'
 }
 
 $laneOutputByName = [ordered] @{
-    'domain'      = 'mutation'
-    'common'      = 'mutation_common'
-    'contracts'   = 'mutation_contracts'
-    'speech-base' = 'mutation_speech_base'
-    'backend'     = 'mutation_backend'
-    'api'         = 'mutation_api'
-    'shared-ui'   = 'mutation_shared_ui'
+    'domain'              = 'mutation'
+    'common'              = 'mutation_common'
+    'contracts'           = 'mutation_contracts'
+    'speech-base'         = 'mutation_speech_base'
+    'backend'             = 'mutation_backend'
+    'api'                 = 'mutation_api'
+    'shared-ui'           = 'mutation_shared_ui'
+    'track-plan-renderer' = 'mutation_track_plan_renderer'
 }
 
 $laneJobByName = [ordered] @{
-    'domain'      = 'mutation-domain'
-    'common'      = 'mutation-common'
-    'contracts'   = 'mutation-contracts'
-    'speech-base' = 'mutation-speech-base'
-    'backend'     = 'mutation-backend'
-    'api'         = 'mutation-api'
-    'shared-ui'   = 'mutation-shared-ui'
+    'domain'              = 'mutation-domain'
+    'common'              = 'mutation-common'
+    'contracts'           = 'mutation-contracts'
+    'speech-base'         = 'mutation-speech-base'
+    'backend'             = 'mutation-backend'
+    'api'                 = 'mutation-api'
+    'shared-ui'           = 'mutation-shared-ui'
+    'track-plan-renderer' = 'mutation-track-plan-renderer'
 }
 
 function Get-Scope([string[]] $Paths) {
@@ -100,7 +103,7 @@ Assert-Scope @('plans/QUALITY-AND-REFACTORING-PLAN.md', 'specs/007-x/spec.md', '
 Assert-Scope @('README.md', 'AGENTS.md', 'CHANGELOG.md', 'LICENSE') $false $false $false 'root documentation'
 Assert-Scope @('.github/instructions/quick-reference.md', '.github/ISSUE_TEMPLATE/bug.yml', '.github/PULL_REQUEST_TEMPLATE.md') $false $false $false 'GitHub guidance'
 Assert-Scope @('docs\index.html') $false $false $false 'Windows path separators'
-Assert-MutationLanes @('docs/developer/ARCHITECTURE.md') @() 'documentation skips all 7 mutation lanes'
+Assert-MutationLanes @('docs/developer/ARCHITECTURE.md') @() 'documentation skips all 8 mutation lanes'
 
 # Unknown or shared inputs run everything (fail open).
 Assert-Scope @() $true $true $true 'empty change set'
@@ -113,12 +116,12 @@ Assert-Scope @('Docs/README.md') $true $true $true 'case-sensitive directory mat
 Assert-Scope @('Sound/Resources/Sounds/Station/README.md') $true $false $false 'Markdown packaged by a project'
 
 $allLanes = @($lanePropertyByName.Keys)
-Assert-MutationLanes @() $allLanes 'empty change set runs all 7 mutation lanes'
-Assert-MutationLanes @('.github/workflows/quality.yml') $allLanes 'workflow change runs all 7 mutation lanes'
-Assert-MutationLanes @('scripts/Get-QualityChangeScope.ps1') $allLanes 'change-scope script change runs all 7 mutation lanes'
-Assert-MutationLanes @('scripts/Invoke-MutationLane.ps1') $allLanes 'mutation runner change runs all 7 mutation lanes'
-Assert-MutationLanes @('NewTopLevel/Feature.cs') $allLanes 'unknown path runs all 7 mutation lanes'
-Assert-MutationLanes @('MutationTest/mutation-lanes.json') $allLanes 'shared mutation lane registry runs all 7 mutation lanes'
+Assert-MutationLanes @() $allLanes 'empty change set runs all 8 mutation lanes'
+Assert-MutationLanes @('.github/workflows/quality.yml') $allLanes 'workflow change runs all 8 mutation lanes'
+Assert-MutationLanes @('scripts/Get-QualityChangeScope.ps1') $allLanes 'change-scope script change runs all 8 mutation lanes'
+Assert-MutationLanes @('scripts/Invoke-MutationLane.ps1') $allLanes 'mutation runner change runs all 8 mutation lanes'
+Assert-MutationLanes @('NewTopLevel/Feature.cs') $allLanes 'unknown path runs all 8 mutation lanes'
+Assert-MutationLanes @('MutationTest/mutation-lanes.json') $allLanes 'shared mutation lane registry runs all 8 mutation lanes'
 foreach ($sharedFile in @(
     '.config/dotnet-tools.json',
     'global.json',
@@ -131,7 +134,7 @@ foreach ($sharedFile in @(
     'Directory.Solution.props'
 )) {
     Assert-Scope @($sharedFile) $true $false $true "shared build/tool input '$sharedFile'"
-    Assert-MutationLanes @($sharedFile) $allLanes "shared build/tool input '$sharedFile' runs all 7 mutation lanes"
+    Assert-MutationLanes @($sharedFile) $allLanes "shared build/tool input '$sharedFile' runs all 8 mutation lanes"
 }
 
 # .NET areas outside the firmware and the Domain mutation graph.
@@ -202,14 +205,14 @@ Assert-MobaDemo @('Test/SharedUI/SolutionSessionTests.cs') $false 'tests of othe
 # MOBAdemo is a .NET area of its own: it must not wake the firmware or any mutation lane.
 Assert-Scope @('MOBAdemo/app/src/main.tsx', 'Test/MOBAdemo/Build/BuildScriptTests.cs') $true $false $false 'MOBAdemo wakes neither firmware nor mutation'
 
-# Firmware inputs skip all 7 mutation lanes.
+# Firmware inputs skip all 8 mutation lanes.
 Assert-Scope @('MOBAdisplay/esp32/src/main.cpp') $true $true $false 'firmware source'
 Assert-Scope @('MOBAdisplay/esp32/platformio.ini') $true $true $false 'firmware build configuration'
 Assert-Scope @('MOBAdisplay/esp32/lib/MobaDisplayProtocol/protocol.h', 'Backend/Z21.cs') $true $true $false 'firmware and backend code'
-Assert-MutationLanes @('MOBAdisplay/esp32/src/main.cpp') @() 'ESP32 firmware source skips all 7 mutation lanes'
-Assert-MutationLanes @('MOBAdisplay/esp32/platformio.ini') @() 'ESP32 firmware config skips all 7 mutation lanes'
+Assert-MutationLanes @('MOBAdisplay/esp32/src/main.cpp') @() 'ESP32 firmware source skips all 8 mutation lanes'
+Assert-MutationLanes @('MOBAdisplay/esp32/platformio.ini') @() 'ESP32 firmware config skips all 8 mutation lanes'
 
-# Negative exclusions: .NET areas outside all 7 mutation lanes run desktop/portable/analyzer gates without Stryker.
+# Negative exclusions: .NET areas outside all 8 mutation lanes run desktop/portable/analyzer gates without Stryker.
 foreach ($excludedPath in @(
     'MOBAdemo/Host/MobaDemoHost.cs',
     'MOBAdemo/app/src/main.tsx',
@@ -225,7 +228,7 @@ foreach ($excludedPath in @(
     'Speech.Piper/LocalSpeechProvider.cs',
     'Speech.SystemSpeech/SystemSpeechProvider.cs',
     'Test/Speech/LocalSpeechProviderTests.cs',
-    'Test/TrackPlanRenderer/SvgExporterTests.cs',
+    'Test/TrackPlanRenderer/TrackPlanSnapHelperTests.cs',
     'Test/Integration/MobApiProcessTests.cs',
     'Test/Sound/NullSoundPlayerTests.cs',
     'Test/Unit/UnrelatedUnitTests.cs',
@@ -233,22 +236,22 @@ foreach ($excludedPath in @(
     'Moba.slnx'
 )) {
     Assert-Scope @($excludedPath) $true $false $false "excluded .NET area '$excludedPath'"
-    Assert-MutationLanes @($excludedPath) @() "excluded .NET area '$excludedPath' skips all 7 mutation lanes"
+    Assert-MutationLanes @($excludedPath) @() "excluded .NET area '$excludedPath' skips all 8 mutation lanes"
 }
 
-# Exact transitive dependency graph and per-lane isolation across all 7 Stryker lanes (issue #539).
-Assert-MutationLanes @('Domain/Project.cs') $allLanes 'Domain feeds all 7 mutation lanes'
+# Exact transitive dependency graph and per-lane isolation across all 8 Stryker lanes (issue #539, #497).
+Assert-MutationLanes @('Domain/Project.cs') $allLanes 'Domain feeds all 8 mutation lanes'
 Assert-MutationLanes @('Contracts/Runtime/MobaRuntimeSnapshot.cs') @('common', 'contracts', 'speech-base', 'backend', 'api', 'shared-ui') 'Contracts feeds 6 downstream lanes'
 Assert-MutationLanes @('Common/Configuration/AppSettings.cs') @('common', 'speech-base', 'backend', 'api', 'shared-ui') 'Common feeds 5 downstream lanes'
 Assert-MutationLanes @('Speech.Base/ISpeechEngine.cs') @('speech-base', 'common', 'backend', 'shared-ui') 'Speech.Base feeds 4 downstream lanes'
 Assert-MutationLanes @('Sound/NullSoundPlayer.cs') @('speech-base', 'common', 'backend', 'shared-ui') 'Sound feeds 4 downstream lanes'
 Assert-MutationLanes @('Backend/Service/Z21.cs') @('speech-base', 'common', 'backend', 'shared-ui') 'Backend feeds 4 downstream lanes'
 Assert-MutationLanes @('SharedUI/ViewModel/MainWindowViewModel.cs') @('common', 'backend', 'shared-ui') 'SharedUI feeds common, backend, and shared-ui'
-Assert-MutationLanes @('TrackPlan.Renderer/SvgExporter.cs') @('common', 'backend', 'shared-ui') 'TrackPlan.Renderer feeds common, backend, and shared-ui'
-Assert-MutationLanes @('TrackPlan.Editor/EditableTrackPlan.cs') @('common', 'backend', 'shared-ui') 'TrackPlan.Editor feeds common, backend, and shared-ui'
-Assert-MutationLanes @('TrackLibrary.Base/Segment.cs') @('common', 'backend', 'shared-ui') 'TrackLibrary.Base feeds common, backend, and shared-ui'
+Assert-MutationLanes @('TrackPlan.Renderer/SvgExporter.cs') @('common', 'backend', 'shared-ui', 'track-plan-renderer') 'TrackPlan.Renderer feeds common, backend, shared-ui, and track-plan-renderer'
+Assert-MutationLanes @('TrackPlan.Editor/EditableTrackPlan.cs') @('common', 'backend', 'shared-ui', 'track-plan-renderer') 'TrackPlan.Editor feeds common, backend, shared-ui, and track-plan-renderer'
+Assert-MutationLanes @('TrackLibrary.Base/Segment.cs') @('common', 'backend', 'shared-ui', 'track-plan-renderer') 'TrackLibrary.Base feeds common, backend, shared-ui, and track-plan-renderer'
 Assert-MutationLanes @('MOBAdisplay/Protocol/DisplayPayloadCodec.cs') @('common', 'backend', 'shared-ui') 'MOBAdisplay C# host feeds common, backend, and shared-ui'
-Assert-MutationLanes @('TrackLibrary.PikoA/R1.cs') @('shared-ui') 'TrackLibrary.PikoA feeds shared-ui only'
+Assert-MutationLanes @('TrackLibrary.PikoA/R1.cs') @('shared-ui', 'track-plan-renderer') 'TrackLibrary.PikoA feeds shared-ui and track-plan-renderer'
 Assert-MutationLanes @('MOBApi/Endpoints/RuntimeEndpoints.cs') @('api') 'MOBApi feeds api only'
 
 # Test, fixture, and Stryker configuration isolation per lane.
@@ -269,7 +272,11 @@ Assert-MutationLanes @('Test/TestData/Recording/recording-v1-golden.json') @('co
 Assert-MutationLanes @('Test/Integration/WorkflowExecutionEndToEndTests.cs') @('backend') 'Backend workflow integration test'
 Assert-MutationLanes @('Test/SharedUI/SolutionSessionTests.cs') @('shared-ui') 'SharedUI test'
 Assert-MutationLanes @('Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs') @('shared-ui') 'TrackLayoutArchitectureTests linked by SharedUI'
+Assert-MutationLanes @('Test/TrackPlanRenderer/PathToSvgConverterTests.cs') @('track-plan-renderer') 'PathToSvgConverterTests linked by TrackPlan.Renderer'
+Assert-MutationLanes @('Test/TrackPlanRenderer/PlacedTrackPlanEditorTests.cs') @('track-plan-renderer') 'PlacedTrackPlanEditorTests linked by TrackPlan.Renderer'
+Assert-MutationLanes @('Test/TrackPlanRenderer/SvgExporterTests.cs') @('track-plan-renderer') 'SvgExporterTests linked by TrackPlan.Renderer'
 Assert-MutationLanes @('Test/Helpers/ServiceRegistrations.cs') @('backend', 'shared-ui') 'Shared test helper linked by Backend and SharedUI'
+Assert-MutationLanes @('Test/Helpers/TrackPlanTestGeometry.cs') @('shared-ui', 'track-plan-renderer') 'TrackPlanTestGeometry linked by SharedUI and TrackPlan.Renderer'
 Assert-MutationLanes @('Test/Helpers/ViewModelHelpers.cs') @('shared-ui') 'Test helper linked by SharedUI only'
 Assert-MutationLanes @('Test/GlobalUsings.cs') @('backend', 'shared-ui') 'GlobalUsings linked by Backend and SharedUI'
 Assert-MutationLanes @('MutationTest/stryker-config.json') @('domain') 'Domain Stryker config'
@@ -279,6 +286,7 @@ Assert-MutationLanes @('MutationTest/stryker-speech-base-config.json') @('speech
 Assert-MutationLanes @('MutationTest/stryker-backend-config.json') @('backend') 'Backend Stryker config'
 Assert-MutationLanes @('MutationTest/stryker-api-config.json') @('api') 'Api Stryker config'
 Assert-MutationLanes @('MutationTest/stryker-shared-ui-config.json') @('shared-ui') 'SharedUI Stryker config'
+Assert-MutationLanes @('MutationTest/stryker-track-plan-renderer-config.json') @('track-plan-renderer') 'TrackPlan.Renderer Stryker config'
 
 # Dynamically validate every active lane in MutationTest/mutation-lanes.json against its full transitive
 # ProjectReference, <Compile>, and copied <None>/<Content> closure.
@@ -374,7 +382,7 @@ $expectedWorkflowOutputs = @(
     'code', 'firmware', 'mutation',
     'mutation_common', 'mutation_contracts', 'mutation_speech_base',
     'mutation_backend', 'mutation_api', 'mutation_shared_ui',
-    'android', 'mobademo'
+    'mutation_track_plan_renderer', 'android', 'mobademo'
 )
 foreach ($output in $expectedWorkflowOutputs) {
     if ($readOutputs -notcontains $output) {
@@ -447,7 +455,7 @@ foreach ($job in $jobs.Keys) {
 foreach ($job in @(
     'desktop', 'display-protocol', 'portable-linux', 'android-release', 'mobademo',
     'mutation-domain', 'mutation-common', 'mutation-contracts', 'mutation-speech-base',
-    'mutation-backend', 'mutation-api', 'mutation-shared-ui'
+    'mutation-backend', 'mutation-api', 'mutation-shared-ui', 'mutation-track-plan-renderer'
 )) {
     if ($guardedJobs -notcontains $job) {
         throw "Expected quality.yml job '$job' to read the change scope with a fail-open condition."
@@ -480,6 +488,7 @@ try {
         'mutation_backend=false'
         'mutation_api=false'
         'mutation_shared_ui=false'
+        'mutation_track_plan_renderer=false'
         'android=false'
         'mobademo=false'
     ) -join "`n"
@@ -501,6 +510,7 @@ try {
         'mutation_backend=true'
         'mutation_api=true'
         'mutation_shared_ui=true'
+        'mutation_track_plan_renderer=false'
         'android=false'
         'mobademo=false'
     ) -join "`n"
