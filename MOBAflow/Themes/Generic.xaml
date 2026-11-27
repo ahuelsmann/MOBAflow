@@ -9,19 +9,24 @@
             <Setter.Value>
                 <ControlTemplate TargetType="controls:CollapsibleColumnHelper">
                     <Grid>
-                        <Border
+                        <Button
                             x:Name="CollapsedTab"
                             Width="32"
+                            MinWidth="32"
                             MinHeight="48"
                             Padding="0,6"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
                             AutomationProperties.Name="{TemplateBinding Header}"
                             Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
+                            IsTabStop="True"
                             ToolTipService.ToolTip="{TemplateBinding Header}"
+                            UseSystemFocusVisuals="True"
                             Visibility="Collapsed">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -50,7 +55,7 @@
                                         Glyph="{TemplateBinding Glyph}" />
                                 </Border>
                             </Grid>
-                        </Border>
+                        </Button>
 
                         <Grid
                             x:Name="ExpandedPanel"
@@ -162,19 +167,24 @@
             <Setter.Value>
                 <ControlTemplate TargetType="controls:CollapsibleColumnCollection">
                     <Grid>
-                        <Border
+                        <Button
                             x:Name="CollapsedTab"
                             Width="32"
+                            MinWidth="32"
                             MinHeight="48"
                             Padding="0,6"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
                             AutomationProperties.Name="{TemplateBinding Header}"
                             Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
+                            IsTabStop="True"
                             ToolTipService.ToolTip="{TemplateBinding Header}"
+                            UseSystemFocusVisuals="True"
                             Visibility="Collapsed">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -203,7 +213,7 @@
                                         Glyph="{TemplateBinding Glyph}" />
                                 </Border>
                             </Grid>
-                        </Border>
+                        </Button>
 
                         <Grid
                             x:Name="ExpandedPanel"
@@ -316,19 +326,24 @@
             <Setter.Value>
                 <ControlTemplate TargetType="controls:CollapsibleColumnProperties">
                     <Grid>
-                        <Border
+                        <Button
                             x:Name="CollapsedTab"
                             Width="32"
+                            MinWidth="32"
                             MinHeight="48"
                             Padding="0,6"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
                             AutomationProperties.Name="{TemplateBinding Header}"
                             Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
+                            IsTabStop="True"
                             ToolTipService.ToolTip="{TemplateBinding Header}"
+                            UseSystemFocusVisuals="True"
                             Visibility="Collapsed">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -357,7 +372,7 @@
                                         Glyph="{TemplateBinding Glyph}" />
                                 </Border>
                             </Grid>
-                        </Border>
+                        </Button>
 
                         <Grid
                             x:Name="ExpandedPanel"

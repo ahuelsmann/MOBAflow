@@ -2,7 +2,9 @@
 namespace Moba.MOBAflow.Controls;
 
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
 
@@ -11,14 +13,25 @@ using Microsoft.UI.Xaml.Markup;
 /// Behaves like Visual Studio's auto-hide panels or a vertical expander.
 /// </summary>
 [ContentProperty(Name = nameof(PanelContent))]
+[TemplatePart(Name = CollapsedTabPartName, Type = typeof(ButtonBase))]
+[TemplatePart(Name = CollapseButtonPartName, Type = typeof(ButtonBase))]
+[TemplatePart(Name = ExpandedPanelPartName, Type = typeof(FrameworkElement))]
 public abstract class CollapsibleColumnBase : Control
 {
+    private const string CollapsedTabPartName = "CollapsedTab";
+    private const string CollapseButtonPartName = "CollapseButton";
+    private const string ExpandedPanelPartName = "ExpandedPanel";
+
+    private UIElement? _collapsedTab;
+    private ButtonBase? _collapseButton;
+    private FrameworkElement? _expandedPanel;
+
     /// <summary>
     /// Header text displayed in both collapsed tab and expanded header.
     /// </summary>
     public static readonly DependencyProperty HeaderProperty =
         DependencyProperty.Register(nameof(Header), typeof(string), typeof(CollapsibleColumnBase),
-            new PropertyMetadata("Panel"));
+            new PropertyMetadata("Panel", OnHeaderChanged));
 
     /// <summary>
     /// Segoe Fluent Icons glyph for the panel icon.
@@ -87,20 +100,64 @@ public abstract class CollapsibleColumnBase : Control
 
     protected override void OnApplyTemplate()
     {
+        if (_collapsedTab is ButtonBase previousTabButton)
+        {
+            previousTabButton.Click -= OnCollapsedTabClick;
+        }
+        else if (_collapsedTab is not null)
+        {
+            _collapsedTab.PointerPressed -= OnCollapsedTabPressed;
+        }
+
+        if (_collapseButton is not null)
+        {
+            _collapseButton.Click -= OnCollapseButtonClick;
+        }
+
         base.OnApplyTemplate();
 
+        _expandedPanel = GetTemplateChild(ExpandedPanelPartName) as FrameworkElement;
+        _collapsedTab = GetTemplateChild(CollapsedTabPartName) as UIElement;
+        _collapseButton = GetTemplateChild(CollapseButtonPartName) as ButtonBase;
+
         // Attach event handlers to parts from the template if they exist
-        if (GetTemplateChild("CollapsedTab") is UIElement collapsedTab)
+        if (_collapsedTab is ButtonBase collapsedTabButton)
         {
-            collapsedTab.PointerPressed += OnCollapsedTabPressed;
+            collapsedTabButton.Click += OnCollapsedTabClick;
+        }
+        else if (_collapsedTab is not null)
+        {
+            _collapsedTab.PointerPressed += OnCollapsedTabPressed;
         }
 
-        if (GetTemplateChild("CollapseButton") is Microsoft.UI.Xaml.Controls.Primitives.ButtonBase collapseButton)
+        if (_collapseButton is not null)
         {
-            collapseButton.Click += OnCollapseButtonClick;
+            _collapseButton.Click += OnCollapseButtonClick;
         }
 
+        UpdateCollapsedTabAccessibleName();
         ApplyExpansionState();
+    }
+
+    internal static string FormatExpandTabAccessibleName(string? header)
+    {
+        if (string.IsNullOrWhiteSpace(header))
+        {
+            return "Expand panel";
+        }
+
+        var trimmed = header.Trim();
+        return trimmed.EndsWith("panel", StringComparison.OrdinalIgnoreCase)
+            ? $"Expand {trimmed}"
+            : $"Expand {trimmed} panel";
+    }
+
+    private static void OnHeaderChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CollapsibleColumnBase control)
+        {
+            control.UpdateCollapsedTabAccessibleName();
+        }
     }
 
     private static void OnIsExpandedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -111,9 +168,30 @@ public abstract class CollapsibleColumnBase : Control
         }
     }
 
+    private void UpdateCollapsedTabAccessibleName()
+    {
+        if (_collapsedTab is not null)
+        {
+            AutomationProperties.SetName(_collapsedTab, FormatExpandTabAccessibleName(Header));
+        }
+    }
+
     private void ApplyExpansionState()
     {
         VisualStateManager.GoToState(this, IsExpanded ? "Expanded" : "Collapsed", true);
+    }
+
+    private void OnCollapsedTabClick(object sender, RoutedEventArgs e)
+    {
+        var focusState = (_collapsedTab as Control)?.FocusState ?? FocusState.Unfocused;
+        IsExpanded = true;
+        if (focusState != FocusState.Unfocused)
+        {
+            var targetFocusState = focusState == FocusState.Keyboard
+                ? FocusState.Keyboard
+                : FocusState.Programmatic;
+            _ = DispatcherQueue?.TryEnqueue(() => FocusExpandedTarget(targetFocusState));
+        }
     }
 
     private void OnCollapsedTabPressed(object sender, PointerRoutedEventArgs e)
@@ -123,6 +201,28 @@ public abstract class CollapsibleColumnBase : Control
 
     private void OnCollapseButtonClick(object sender, RoutedEventArgs e)
     {
+        var focusState = _collapseButton?.FocusState ?? FocusState.Unfocused;
         IsExpanded = false;
+        if (focusState == FocusState.Keyboard)
+        {
+            _ = DispatcherQueue?.TryEnqueue(() => (_collapsedTab as Control)?.Focus(FocusState.Keyboard));
+        }
+    }
+
+    private void FocusExpandedTarget(FocusState targetFocusState)
+    {
+        if (!IsExpanded || XamlRoot is null)
+        {
+            return;
+        }
+
+        if (_expandedPanel is not null &&
+            FocusManager.FindFirstFocusableElement(_expandedPanel) is Control firstFocusable)
+        {
+            firstFocusable.Focus(targetFocusState);
+            return;
+        }
+
+        _collapseButton?.Focus(targetFocusState);
     }
 }

@@ -61,10 +61,6 @@
                     <SolidColorBrush x:Key="TrackPlanFeedbackGlowInnerBrush" Color="#FFFFD700" />
                     <!--  Icons (Icons.xaml): schwarz im Light-Theme  -->
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="#FF000000" />
-                    <!--  Panel kind accent strips (Generic.xaml): helper, collection, properties  -->
-                    <SolidColorBrush x:Key="MobaPanelAccentHelperBrush" Color="#FFFFE666" />
-                    <SolidColorBrush x:Key="MobaPanelAccentCollectionBrush" Color="#FF0078D4" />
-                    <SolidColorBrush x:Key="MobaPanelAccentPropertiesBrush" Color="#FFFF8C00" />
                     <!--  Semantic column role chrome (Generic.xaml): collection, helper, properties  -->
                     <SolidColorBrush x:Key="MobaColumnCollectionAccentBrush" Color="#FF0078D4" />
                     <SolidColorBrush x:Key="MobaColumnCollectionBadgeBackgroundBrush" Color="#1A0078D4" />
@@ -121,10 +117,6 @@
                     <SolidColorBrush x:Key="TrackPlanFeedbackGlowInnerBrush" Color="#FFFFD700" />
                     <!--  Icons (Icons.xaml): white in dark theme  -->
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="#FFFFFFFF" />
-                    <!--  Panel kind accent strips (Generic.xaml): helper, collection, properties  -->
-                    <SolidColorBrush x:Key="MobaPanelAccentHelperBrush" Color="#FFFFE666" />
-                    <SolidColorBrush x:Key="MobaPanelAccentCollectionBrush" Color="#FF0078D4" />
-                    <SolidColorBrush x:Key="MobaPanelAccentPropertiesBrush" Color="#FFFF8C00" />
                     <!--  Semantic column role chrome (Generic.xaml): collection, helper, properties  -->
                     <SolidColorBrush x:Key="MobaColumnCollectionAccentBrush" Color="#FF4CC2FF" />
                     <SolidColorBrush x:Key="MobaColumnCollectionBadgeBackgroundBrush" Color="#244CC2FF" />
@@ -178,9 +170,6 @@
                     <SolidColorBrush x:Key="TrackPlanFeedbackGlowOuterBrush" Color="{ThemeResource SystemColorHighlightColor}" />
                     <SolidColorBrush x:Key="TrackPlanFeedbackGlowInnerBrush" Color="{ThemeResource SystemColorHighlightColor}" />
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
-                    <SolidColorBrush x:Key="MobaPanelAccentHelperBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
-                    <SolidColorBrush x:Key="MobaPanelAccentCollectionBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
-                    <SolidColorBrush x:Key="MobaPanelAccentPropertiesBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="MobaColumnCollectionAccentBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="MobaColumnCollectionBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="MobaColumnCollectionBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
