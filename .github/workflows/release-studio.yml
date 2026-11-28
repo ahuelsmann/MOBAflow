@@ -14,7 +14,7 @@ on:
         type: boolean
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ inputs.tag }}
@@ -25,6 +25,11 @@ jobs:
     name: Validate, package, and draft release
     runs-on: windows-latest
     timeout-minutes: 60
+    # contents: write creates the draft release; id-token + attestations sign the build provenance (OIDC, no secret).
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     env:
       # Release Studio only builds the Windows desktop/test surface.
       ANDROID_SDK_ROOT: ""
@@ -158,16 +163,47 @@ jobs:
           ./scripts/Test-ReleasePackage.ps1
           -PublishDirectory artifacts/MOBAflow-win-x64
 
-      - name: Package artifacts and checksums
+      - name: Package artifacts
         shell: pwsh
         env:
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          $tag = $env:RELEASE_TAG
-          $archive = "artifacts/MOBAflow-$tag-win-x64.zip"
+          $archive = "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.zip"
           Compress-Archive -Path artifacts/MOBAflow-win-x64/* -DestinationPath $archive -CompressionLevel Optimal
-          $hash = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  $(Split-Path -Leaf $archive)" | Set-Content artifacts/SHA256SUMS.txt -Encoding utf8NoBOM
+
+      # The SBOM is generated from the exact validated publish directory and bound to the finished ZIP digest,
+      # the checked-out tag commit and this run. It is a small metadata file next to the ZIP, never a copy of it.
+      - name: Generate shipped-package SBOM
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $commit = (git rev-parse HEAD).Trim()
+          ./scripts/New-ReleaseSbom.ps1 `
+            -PublishDirectory artifacts/MOBAflow-win-x64 `
+            -Archive "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.zip" `
+            -Tag $env:RELEASE_TAG `
+            -Commit $commit `
+            -Repository '${{ github.repository }}' `
+            -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}' `
+            -AssetsFile MOBAflow/obj/project.assets.json, MOBApi/obj/project.assets.json `
+            -OutputPath "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.spdx.json" `
+            -CoverageOutputPath "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.sbom-coverage.json"
+          if ($LASTEXITCODE -ne 0) { throw 'SBOM generation failed.' }
+          Get-Content "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.sbom-coverage.json" -Raw |
+            ForEach-Object { '### SBOM coverage', '```json', $_, '```' } | Add-Content $env:GITHUB_STEP_SUMMARY
+
+      - name: Write checksums
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          # The archive stays on the first line; Test-ReleasePackage.ps1 reads its digest from there.
+          $lines = foreach ($name in @("MOBAflow-$env:RELEASE_TAG-win-x64.zip", "MOBAflow-$env:RELEASE_TAG-win-x64.spdx.json")) {
+            $hash = (Get-FileHash -Path "artifacts/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $name"
+          }
+          $lines | Set-Content artifacts/SHA256SUMS.txt -Encoding utf8NoBOM
 
       - name: Validate archive and checksum
         shell: pwsh
@@ -179,12 +215,44 @@ jobs:
           -Archive "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.zip"
           -ChecksumFile artifacts/SHA256SUMS.txt
 
+      - name: Validate SBOM binding
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $commit = (git rev-parse HEAD).Trim()
+          ./scripts/Test-ReleaseSbom.ps1 `
+            -Sbom "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.spdx.json" `
+            -Archive "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.zip" `
+            -Tag $env:RELEASE_TAG `
+            -Commit $commit `
+            -ChecksumFile artifacts/SHA256SUMS.txt
+
+      # Attest only after every validation passed, so provenance covers exactly the assets that are released.
+      - name: Attest build provenance of ZIP and SBOM
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            artifacts/MOBAflow-${{ inputs.tag }}-win-x64.zip
+            artifacts/MOBAflow-${{ inputs.tag }}-win-x64.spdx.json
+
+      - name: Keep attestation bundle
+        shell: pwsh
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: Copy-Item -LiteralPath $env:BUNDLE_PATH "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.provenance.sigstore.json"
+
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: MOBAflow-${{ inputs.tag }}-release-candidate
           path: |
             artifacts/MOBAflow-${{ inputs.tag }}-win-x64.zip
+            artifacts/MOBAflow-${{ inputs.tag }}-win-x64.spdx.json
+            artifacts/MOBAflow-${{ inputs.tag }}-win-x64.sbom-coverage.json
+            artifacts/MOBAflow-${{ inputs.tag }}-win-x64.provenance.sigstore.json
             artifacts/SHA256SUMS.txt
             artifacts/TestResults/**/*.trx
             artifacts/RELEASE-NOTES.md
@@ -201,6 +269,8 @@ jobs:
           $tag = $env:RELEASE_TAG
           $assets = @(
             "artifacts/MOBAflow-$tag-win-x64.zip",
+            "artifacts/MOBAflow-$tag-win-x64.spdx.json",
+            "artifacts/MOBAflow-$tag-win-x64.provenance.sigstore.json",
             "artifacts/SHA256SUMS.txt"
           )
 

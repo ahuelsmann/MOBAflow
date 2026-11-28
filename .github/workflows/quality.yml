@@ -141,6 +141,10 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-LineEndings.Tests.ps1
 
+      - name: Test release SBOM scripts
+        shell: pwsh
+        run: ./scripts/Test-ReleaseSbom.Tests.ps1
+
       - name: Test Quality change scope classification
         shell: pwsh
         run: ./scripts/Get-QualityChangeScope.Tests.ps1
