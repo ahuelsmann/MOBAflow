@@ -2,7 +2,7 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/382
 **Spec Kit**: Not applicable - measurement and verification of existing behavior; telemetry gaps are closed as observability of existing paths, not as new product behavior
-**Status**: Active; steps 1 to 4 are delivered (#383, #397); open: the first benchmark baseline on the maintainer's machine, step 5 device and hardware measurements, and step 6 thresholds, documentation and completion
+**Status**: Active; steps 1 to 4 and the first maintainer-machine benchmark baseline (`90b5db751`) are delivered (#383, #397); open: step 5 device and hardware measurements (MOBAsmart startup and ESP32 packet-loss/Wi-Fi endurance), and step 6 threshold sign-off, documentation and completion
 
 ## Purpose and scope
 
@@ -16,17 +16,17 @@ RF-19 (MOBApi without control-plane security); it does not reopen their implemen
 
 ## Scenario inventory
 
-Recorded on main `f37541d9`.
+Initial inventory recorded on main `f37541d9`; maintainer-machine benchmark baseline recorded on main `90b5db751`.
 
 | Scenario | Code under test | Existing bound or signal | Gap |
 | --- | --- | --- | --- |
-| EventBus publish throughput | `Common/Events/EventBus` | handler failure count (`IEventBusDiagnostics`) | no benchmark or baseline |
-| Z21 event ordering under load | `Backend/Service/Z21EventPipeline` | capacity 1,024; snapshot with queue depth, peak, enqueued, published, rejected, dispatch and subscriber failures, shutdown timeouts; an overload test is on main since #367 (`Z21ReceiveTests`); rejections and dispatch failures are counted (step 4) | no throughput baseline |
-| Runtime snapshot serialization | `Contracts/Runtime/MobaRuntimeSnapshot` (JSON over REST and SignalR) | none | no size or time baseline |
+| EventBus publish throughput | `Common/Events/EventBus` | handler failure count (`IEventBusDiagnostics`); baseline recorded in [`BENCHMARKS.md`](../docs/developer/BENCHMARKS.md#recorded-baseline) (`25.65 ns` / `32 B` at 1 subscriber, `78.61 ns` / `104 B` at 10 subscribers on `90b5db751`) | threshold sign-off on #382 (step 6) |
+| Z21 event ordering under load | `Backend/Service/Z21EventPipeline` | capacity 1,024; snapshot with queue depth, peak, enqueued, published, rejected, dispatch and subscriber failures, shutdown timeouts; an overload test is on main since #367 (`Z21ReceiveTests`); rejections and dispatch failures are counted (step 4); throughput baseline recorded in [`BENCHMARKS.md`](../docs/developer/BENCHMARKS.md#recorded-baseline) (`30.70 μs` / `23.57 KB` at 100 events, `275.50 μs` / `207.77 KB` at 1,000 events on `90b5db751`) | threshold sign-off on #382 (step 6) |
+| Runtime snapshot serialization | `Contracts/Runtime/MobaRuntimeSnapshot` (JSON over REST and SignalR) | round-trip time and allocation baseline recorded in [`BENCHMARKS.md`](../docs/developer/BENCHMARKS.md#recorded-baseline) (`Serialize` `5.104 μs` / `8.91 KB`, `Deserialize` `9.007 μs` / `8.55 KB` at `Items = 10`; `Serialize` `35.917 μs` / `73.26 KB`, `Deserialize` `76.220 μs` / `76.58 KB` at `Items = 100` on `90b5db751`) | threshold sign-off on #382 (step 6) |
 | Remote command queue bounds | `MOBApi/Service/RuntimeCommandQueue`, `RuntimeCommandAdmission` | capacity 128; a full queue rejects with `queue_full`; rejections are counted and logged since #383 | covered by step 3 |
 | SignalR runtime hub load | `MOBApi/Hubs/RuntimeHub` | broadcast state on the Overview page ("Hub broadcast") | multi-client test in step 3; no timing limit yet |
-| MAUI startup and binding cost | `MOBAsmart` | `MauiViewModelPerformanceTests` covers refresh behavior, not timing | no device measurement |
-| ESP32 endurance | `MOBAdisplay/esp32` | length-safe UDP parser (RF-01), provisioning (RF-02) | no packet-loss or Wi-Fi reconnection run |
+| MAUI startup and binding cost | `MOBAsmart` | `MauiViewModelPerformanceTests` covers refresh behavior, not timing | no device measurement (step 5) |
+| ESP32 endurance | `MOBAdisplay/esp32` | length-safe UDP parser (RF-01), provisioning (RF-02) | no packet-loss or Wi-Fi reconnection run (step 5) |
 | Recovery and failed shutdown | Z21 reconnect, project runtime disposal, pipeline drain | `ShutdownTimeouts`, fail-safe state in the runtime snapshot; counters on the meter `Moba.Backend` (step 4) | no endurance run (step 5) |
 
 ## Decisions
@@ -48,7 +48,7 @@ Recorded on main `f37541d9`.
 
 1. **Inventory** (with this plan).
 2. **Benchmarks** (delivered): EventBus publish, Z21 event pipeline enqueue and drain, runtime snapshot JSON round
-   trip; the first baseline on the maintainer's machine is still open and will be recorded on #382.
+   trip; initial maintainer-machine baseline recorded on `90b5db751` in [`docs/developer/BENCHMARKS.md`](../docs/developer/BENCHMARKS.md#recorded-baseline) (recommended investigation threshold: >20% slower `Mean` or unexpected `Allocated` growth on the same machine, pending final sign-off on #382 in step 6).
 3. **Load tests** (delivered): remote command queue under concurrent producers (capacity, rejection, order); SignalR
    runtime hub with several clients against an owned MOBApi process.
    - `Test/MOBApi/RuntimeCommandLoadTests`: eight producers send 64 commands each.
