@@ -14,7 +14,7 @@ using System.Windows.Input;
 public sealed partial class FunctionToggleControl : UserControl
 {
     public static readonly DependencyProperty FunctionIndexProperty =
-        DependencyProperty.Register(nameof(FunctionIndex), typeof(int), typeof(FunctionToggleControl), new PropertyMetadata(0));
+        DependencyProperty.Register(nameof(FunctionIndex), typeof(int), typeof(FunctionToggleControl), new PropertyMetadata(0, OnNamePropertyChanged));
     public static readonly DependencyProperty IsOnProperty =
         DependencyProperty.Register(nameof(IsOn), typeof(bool), typeof(FunctionToggleControl), new PropertyMetadata(false, OnAppearancePropertyChanged));
     public static readonly DependencyProperty BacklightColorHexProperty =
@@ -22,9 +22,9 @@ public sealed partial class FunctionToggleControl : UserControl
     public static readonly DependencyProperty IconAssetProperty =
         DependencyProperty.Register(nameof(IconAsset), typeof(string), typeof(FunctionToggleControl), new PropertyMetadata(string.Empty));
     public static readonly DependencyProperty LabelProperty =
-        DependencyProperty.Register(nameof(Label), typeof(string), typeof(FunctionToggleControl), new PropertyMetadata(string.Empty));
+        DependencyProperty.Register(nameof(Label), typeof(string), typeof(FunctionToggleControl), new PropertyMetadata(string.Empty, OnNamePropertyChanged));
     public static readonly DependencyProperty DescriptionProperty =
-        DependencyProperty.Register(nameof(Description), typeof(string), typeof(FunctionToggleControl), new PropertyMetadata(string.Empty));
+        DependencyProperty.Register(nameof(Description), typeof(string), typeof(FunctionToggleControl), new PropertyMetadata(string.Empty, OnNamePropertyChanged));
     public static readonly DependencyProperty ToggleCommandProperty =
         DependencyProperty.Register(nameof(ToggleCommand), typeof(ICommand), typeof(FunctionToggleControl), new PropertyMetadata(null));
     public static readonly DependencyProperty EditAppearanceCommandProperty =
@@ -83,6 +83,7 @@ public sealed partial class FunctionToggleControl : UserControl
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         ApplyAppearance();
+        ApplyAutomationName();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -106,6 +107,26 @@ public sealed partial class FunctionToggleControl : UserControl
         {
             control.ApplyAppearance();
         }
+    }
+
+    private static void OnNamePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is FunctionToggleControl control)
+        {
+            control.ApplyAutomationName();
+        }
+    }
+
+    /// <summary>Builds the accessible name: always names the function slot, adds the description when present.</summary>
+    internal static string BuildAutomationName(int functionIndex, string? description)
+    {
+        var slot = $"Function F{functionIndex}";
+        return string.IsNullOrWhiteSpace(description) ? slot : $"{slot}, {description.Trim()}";
+    }
+
+    private void ApplyAutomationName()
+    {
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FunctionToggleButton, BuildAutomationName(FunctionIndex, Description));
     }
 
     private void ApplyAppearance()

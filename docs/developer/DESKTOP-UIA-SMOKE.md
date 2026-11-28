@@ -50,12 +50,11 @@ desktop session.
 
 ## Known accessibility gaps
 
-Unnamed controls that exist in the product today are listed in `$knownAccessibilityGaps` at the top of the script.
-They print as `[WARN]` and appear under `KnownAccessibilityGaps` in the JSON report, and they do not fail the run.
-Any other unnamed control fails it, so new gaps cannot slip in. Remove an entry when the product fix lands.
-
-Current entries: the diagnostics `Expander` in `MainWindow.xaml`, the speed steps `ComboBox` on Train Control and
-the `FunctionToggleControl` buttons without a label.
+There are currently none: `$knownAccessibilityGaps` in the script is empty (`0` baseline exceptions).
+Every focusable button or input must expose a non-empty UIA name, and any unnamed control fails the run.
+The diagnostics `Expander`, the speed steps `ComboBox` and the function toggle buttons were named for issue #374.
+If a gap must ever be tolerated temporarily, add it to `$knownAccessibilityGaps`; it then prints as `[WARN]`
+and appears under `KnownAccessibilityGaps` in the JSON report.
 
 ## Troubleshooting
 

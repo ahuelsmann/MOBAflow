@@ -252,6 +252,7 @@
                                 Text="DCC SPEED STEPS" />
                             <ComboBox
                                 HorizontalAlignment="Stretch"
+                                AutomationProperties.Name="DCC speed steps"
                                 SelectedIndex="{x:Bind SpeedStepsSelectedIndex, Mode=TwoWay}"
                                 SelectionChanged="SpeedStepsComboBox_SelectionChanged">
                                 <ComboBoxItem Content="14 Steps" Tag="14" />

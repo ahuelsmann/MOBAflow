@@ -49,13 +49,9 @@ $projectPath = Join-Path $repoRoot 'MOBAflow/MOBAflow.csproj'
 $processName = 'MOBAflow'
 $results = [System.Collections.Generic.List[object]]::new()
 $knownGapReport = [System.Collections.Generic.List[object]]::new()
-# Accessibility gaps that exist in the product today (key: ControlType|ClassName|AutomationId). They are reported as
+# Tolerated accessibility gaps (key: ControlType|ClassName|AutomationId). Currently none. They are reported as
 # warnings; any other unnamed focusable control fails the run. Remove an entry when the product is fixed.
-$knownAccessibilityGaps = @{
-    'Button|Microsoft.UI.Xaml.Controls.Expander|' = 'MainWindow diagnostics Expander has no AutomationProperties.Name (header is only a layout Grid)'
-    'ComboBox|ComboBox|' = 'TrainControlPage speed steps ComboBox has no AutomationProperties.Name'
-    'Button|ToggleButton|FunctionToggleButton' = 'FunctionToggleControl buttons are unnamed when a function has no label or symbol'
-}
+$knownAccessibilityGaps = @{}
 $stagingRoot = $null
 $process = $null
 $exitCode = 0

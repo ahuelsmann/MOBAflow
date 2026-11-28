@@ -129,6 +129,7 @@
         <!--  Structured project diagnostics (state-based, unlike the continuous Monitor logs)  -->
         <Expander
             Grid.Row="2"
+            AutomationProperties.Name="Project diagnostics"
             HorizontalAlignment="Stretch"
             HorizontalContentAlignment="Stretch"
             IsExpanded="{x:Bind ViewModel.Diagnostics.IsDiagnosticsExpanded, Mode=TwoWay}">
