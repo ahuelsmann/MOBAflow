@@ -112,16 +112,24 @@ Linux:
 
 ### Passwordless GitHub Actions deployment (`FR-054`)
 
-`.github/workflows/deploy-mobademo.yml` (`Deploy MOBAdemo`) is started manually via `workflow_dispatch` on GitHub. It
-audits `package-lock.json`, runs frontend lint and unit tests, executes `MOBAdemo/build.ps1 -Configuration Release`,
-enforces the 200 KB Brotli bundle budget, publishes `MOBAdemo/Host/MOBAdemo.csproj`, deploys the zip package with
-`az webapp deploy --type zip --clean true --track-status false`, and verifies `/` and `/health` over HTTPS.
+`.github/workflows/deploy-mobademo.yml` (`Deploy MOBAdemo`) is started manually via `workflow_dispatch` on GitHub and
+splits build from deployment for least privilege:
+
+1. `package` (`contents: read`, no `id-token` access) audits `package-lock.json`, runs frontend lint and unit tests,
+   executes `MOBAdemo/build.ps1 -Configuration Release`, enforces the 200 KB Brotli bundle budget, publishes
+   `MOBAdemo/Host/MOBAdemo.csproj` and uploads `mobademo.zip` as a short-lived workflow artifact (`retention-days: 1`).
+2. `deploy` (`contents: none`, `id-token: write`, `environment: mobademo`) downloads `mobademo.zip` without checking out
+   the repository, records the expected `wwwroot/index.html` SHA-256 and hashed `/assets/*.js` and `/assets/*.css` paths
+   from the archive, deploys with `az webapp deploy --type zip --clean true --track-status false`, and polls `/` and
+   `/health` over HTTPS until the exact new `index.html` hash and its content-hashed assets are served (`200 OK`,
+   `immutable` cache policy, security headers, and `404` on `/api/runtime`).
 
 Authentication uses passwordless OpenID Connect (OIDC) federation between GitHub Actions (`id-token: write`) and
-Microsoft Entra ID (`azure/login`), with `Website Contributor` scoped strictly to the `mobaflow-demo` web app resource.
-No publish profile, client secret or local path is stored in the repository; only the non-secret OIDC identifiers
-(`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) are configured in the `mobademo` GitHub Actions
-environment and repository variables.
+Microsoft Entra ID (`azure/login`), gated on the `mobademo` GitHub Actions environment (whose deployment branch policy
+allows `main` only) and federated exclusively to `repo:ahuelsmann/MOBAflow:environment:mobademo`, with
+`Website Contributor` scoped strictly to the `mobaflow-demo` web app resource. No publish profile, client secret or
+local path is stored in the repository; only the non-secret OIDC identifiers (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`,
+`AZURE_SUBSCRIPTION_ID`) are configured in the `mobademo` GitHub Actions environment variables.
 
 ### Slotless Free-tier replacement (`FR-055`)
 

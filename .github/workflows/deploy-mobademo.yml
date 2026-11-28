@@ -3,9 +3,7 @@ name: Deploy MOBAdemo
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 concurrency:
   # Never cancel an in-flight slotless F1 zip deployment mid-upload (FR-055).
@@ -13,13 +11,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Build, verify, and deploy MOBAdemo
-    environment:
-      name: mobademo
-      url: https://mobaflow-demo.azurewebsites.net/
+  package:
+    name: Audit, test, and package MOBAdemo
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
+    permissions:
+      contents: read
 
     steps:
       - name: Check out repository
@@ -103,13 +100,14 @@ jobs:
         shell: pwsh
         run: |
           $publishDir = Join-Path $env:RUNNER_TEMP 'mobademo-publish'
-          $zipPath = Join-Path $env:RUNNER_TEMP 'mobademo.zip'
-          if (Test-Path -LiteralPath $publishDir) {
-            Remove-Item -LiteralPath $publishDir -Recurse -Force
+          $artifactDir = Join-Path $env:RUNNER_TEMP 'mobademo-artifact'
+          $zipPath = Join-Path $artifactDir 'mobademo.zip'
+          foreach ($dir in @($publishDir, $artifactDir)) {
+            if (Test-Path -LiteralPath $dir) {
+              Remove-Item -LiteralPath $dir -Recurse -Force
+            }
           }
-          if (Test-Path -LiteralPath $zipPath) {
-            Remove-Item -LiteralPath $zipPath -Force
-          }
+          New-Item -ItemType Directory -Path $artifactDir -Force | Out-Null
 
           dotnet publish MOBAdemo/Host/MOBAdemo.csproj --configuration Release --output $publishDir
           if ($LASTEXITCODE -ne 0) {
@@ -151,6 +149,91 @@ jobs:
           }
           Write-Host "Created deployment archive: $zipPath ($((Get-Item -LiteralPath $zipPath).Length) bytes)"
 
+      - name: Upload MOBAdemo deployment package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mobademo-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/mobademo-artifact/mobademo.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    name: Deploy and verify MOBAdemo on Azure
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: none
+      id-token: write
+    environment:
+      name: mobademo
+      url: https://mobaflow-demo.azurewebsites.net/
+
+    steps:
+      - name: Download MOBAdemo deployment package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mobademo-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/mobademo-artifact
+
+      - name: Extract expected revision hashes and asset paths from archive
+        id: expected
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zipPath = Join-Path $env:RUNNER_TEMP 'mobademo-artifact/mobademo.zip'
+          if (-not (Test-Path -LiteralPath $zipPath -PathType Leaf)) {
+            throw "Downloaded deployment archive not found at '$zipPath'."
+          }
+
+          $archive = [IO.Compression.ZipFile]::OpenRead($zipPath)
+          try {
+            $indexEntry = $archive.GetEntry('wwwroot/index.html')
+            if ($null -eq $indexEntry) {
+              throw 'mobademo.zip does not contain wwwroot/index.html.'
+            }
+            $ms = [IO.MemoryStream]::new()
+            try {
+              $entryStream = $indexEntry.Open()
+              try { $entryStream.CopyTo($ms) } finally { $entryStream.Dispose() }
+              $indexBytes = $ms.ToArray()
+            }
+            finally {
+              $ms.Dispose()
+            }
+
+            $sha256 = [Security.Cryptography.SHA256]::HashData($indexBytes)
+            $indexHash = ([BitConverter]::ToString($sha256) -replace '-', '').ToLowerInvariant()
+            $indexHtml = [Text.Encoding]::UTF8.GetString($indexBytes)
+            if ($indexHtml -notmatch '<div id="root"></div>') {
+              throw 'wwwroot/index.html inside mobademo.zip does not contain <div id="root"></div>.'
+            }
+
+            $jsPaths = @([regex]::Matches($indexHtml, 'src="(/assets/[^"]+\.js)"') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
+            $cssPaths = @([regex]::Matches($indexHtml, 'href="(/assets/[^"]+\.css)"') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
+            if ($jsPaths.Count -eq 0 -or $cssPaths.Count -eq 0) {
+              throw "Expected hashed /assets/*.js and /assets/*.css references in wwwroot/index.html; found js=$($jsPaths.Count), css=$($cssPaths.Count)."
+            }
+            foreach ($assetPath in ($jsPaths + $cssPaths)) {
+              $zipEntryPath = 'wwwroot' + $assetPath
+              if ($null -eq $archive.GetEntry($zipEntryPath)) {
+                throw "Referenced asset '$zipEntryPath' is missing from mobademo.zip."
+              }
+            }
+          }
+          finally {
+            $archive.Dispose()
+          }
+
+          $manifestPath = Join-Path $env:RUNNER_TEMP 'mobademo-expected.json'
+          @{
+            indexSha256 = $indexHash
+            assets      = @($jsPaths + $cssPaths)
+          } | ConvertTo-Json -Compress | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
+          Write-Host "Expected index.html SHA-256: $indexHash"
+          Write-Host "Expected hashed assets: $(($jsPaths + $cssPaths) -join ', ')"
+
       - name: Sign in to Azure with OIDC
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
@@ -160,14 +243,14 @@ jobs:
 
       # Shared Free-tier (F1) Linux workers do not populate OneDeploy's dedicated instance-health tracker
       # (--track-status true times out after 10 min even when Kudu finishes in ~6 s and the site starts in ~14 s);
-      # the next step verifies live HTTPS readiness directly against /health and /.
+      # the next step verifies live HTTPS activation of the exact newly deployed revision.
       - name: Deploy MOBAdemo to Azure App Service
         shell: pwsh
         run: |
           az webapp deploy `
             --resource-group rg-mobaflow-demo `
             --name mobaflow-demo `
-            --src-path "$env:RUNNER_TEMP/mobademo.zip" `
+            --src-path "$env:RUNNER_TEMP/mobademo-artifact/mobademo.zip" `
             --type zip `
             --clean true `
             --track-status false
@@ -175,47 +258,95 @@ jobs:
             throw "az webapp deploy failed with exit code $LASTEXITCODE."
           }
 
-      - name: Verify live MOBAdemo endpoints
+      - name: Verify live MOBAdemo revision and endpoints
         shell: pwsh
         run: |
           $baseUrl = 'https://mobaflow-demo.azurewebsites.net'
-          $healthy = $false
-          for ($attempt = 1; $attempt -le 12; $attempt++) {
-            try {
-              $health = Invoke-WebRequest -Uri "$baseUrl/health" -Method Get -TimeoutSec 15 -SkipHttpErrorCheck
-              if ($health.StatusCode -eq 200 -and $health.Content.Trim() -eq 'ok') {
-                $healthy = $true
-                break
+          $expected = Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'mobademo-expected.json') -Raw | ConvertFrom-Json
+          $expectedHash = [string] $expected.indexSha256
+          $expectedAssets = @($expected.assets | ForEach-Object { [string] $_ })
+
+          $handler = [Net.Http.HttpClientHandler]::new()
+          $handler.AutomaticDecompression = [Net.DecompressionMethods]::Brotli -bor [Net.DecompressionMethods]::GZip
+          $client = [Net.Http.HttpClient]::new($handler)
+          $client.Timeout = [TimeSpan]::FromSeconds(15)
+
+          try {
+            $activated = $false
+            $liveRootResponse = $null
+            for ($attempt = 1; $attempt -le 24; $attempt++) {
+              try {
+                $health = Invoke-WebRequest -Uri "$baseUrl/health" -Method Get -Headers @{ 'Cache-Control' = 'no-cache' } -TimeoutSec 15 -SkipHttpErrorCheck
+                if ($health.StatusCode -eq 200 -and $health.Content.Trim() -eq 'ok') {
+                  $req = [Net.Http.HttpRequestMessage]::new([Net.Http.HttpMethod]::Get, "$baseUrl/")
+                  $req.Headers.TryAddWithoutValidation('Accept-Encoding', 'br, gzip') | Out-Null
+                  $req.Headers.TryAddWithoutValidation('Cache-Control', 'no-cache') | Out-Null
+                  $resp = $client.SendAsync($req).GetAwaiter().GetResult()
+                  if ([int] $resp.StatusCode -eq 200) {
+                    $liveBytes = $resp.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult()
+                    $liveHash = ([BitConverter]::ToString([Security.Cryptography.SHA256]::HashData($liveBytes)) -replace '-', '').ToLowerInvariant()
+                    $liveHtml = [Text.Encoding]::UTF8.GetString($liveBytes)
+                    $allAssetsReferenced = $true
+                    foreach ($assetPath in $expectedAssets) {
+                      if (-not $liveHtml.Contains($assetPath, [StringComparison]::Ordinal)) {
+                        $allAssetsReferenced = $false
+                        break
+                      }
+                    }
+                    if ($liveHash -eq $expectedHash -and $allAssetsReferenced) {
+                      $activated = $true
+                      $liveRootResponse = $resp
+                      break
+                    }
+                    Write-Host "Attempt ${attempt}: / served SHA-256 $liveHash (waiting for $expectedHash)."
+                  }
+                  else {
+                    Write-Host "Attempt ${attempt}: / returned HTTP $([int] $resp.StatusCode)."
+                  }
+                }
+                else {
+                  Write-Host "Attempt ${attempt}: /health returned HTTP $($health.StatusCode)."
+                }
               }
-              Write-Host "Attempt ${attempt}: /health returned HTTP $($health.StatusCode)."
+              catch {
+                Write-Host "Attempt ${attempt}: live check failed ($($_.Exception.Message))."
+              }
+              if ($attempt -lt 24) { Start-Sleep -Seconds 5 }
             }
-            catch {
-              Write-Host "Attempt ${attempt}: /health request failed ($($_.Exception.Message))."
+
+            if (-not $activated -or $null -eq $liveRootResponse) {
+              throw "Newly deployed MOBAdemo revision (index.html SHA-256 $expectedHash) did not become active at $baseUrl/ within timeout (if HTTP 403, check Azure Portal Quotas on mobaflow-demo per FR-075)."
             }
-            if ($attempt -lt 12) { Start-Sleep -Seconds 5 }
-          }
-          if (-not $healthy) {
-            throw "Live health check failed at $baseUrl/health (if HTTP 403, check Azure Portal Quotas on mobaflow-demo per FR-075)."
-          }
 
-          $root = Invoke-WebRequest -Uri "$baseUrl/" -Method Get -Headers @{ 'Accept-Encoding' = 'br, gzip' } -TimeoutSec 15
-          if ($root.StatusCode -ne 200) {
-            throw "Expected HTTP 200 from $baseUrl/, got $($root.StatusCode)."
-          }
-          if ($root.Content -notmatch '<div id="root"></div>') {
-            throw "Live root document at $baseUrl/ does not contain the built React root."
-          }
-          $csp = [string] $root.Headers['Content-Security-Policy']
-          if ($csp -notmatch "style-src 'self'") {
-            throw "Missing expected Content-Security-Policy style-src 'self' header on $baseUrl/."
-          }
-          $nosniff = [string] $root.Headers['X-Content-Type-Options']
-          if ($nosniff -ne 'nosniff') {
-            throw "Missing X-Content-Type-Options: nosniff on $baseUrl/."
-          }
+            $csp = if ($liveRootResponse.Headers.Contains('Content-Security-Policy')) { $liveRootResponse.Headers.GetValues('Content-Security-Policy') -join '; ' } else { '' }
+            if ($csp -notmatch "style-src 'self'") {
+              throw "Missing expected Content-Security-Policy style-src 'self' header on $baseUrl/."
+            }
+            $nosniff = if ($liveRootResponse.Headers.Contains('X-Content-Type-Options')) { $liveRootResponse.Headers.GetValues('X-Content-Type-Options') -join ', ' } else { '' }
+            if ($nosniff -ne 'nosniff') {
+              throw "Missing X-Content-Type-Options: nosniff on $baseUrl/."
+            }
 
-          $runtimeProbe = Invoke-WebRequest -Uri "$baseUrl/api/runtime" -Method Get -TimeoutSec 15 -SkipHttpErrorCheck
-          if ($runtimeProbe.StatusCode -ne 404) {
-            throw "Expected HTTP 404 from $baseUrl/api/runtime (FR-002), got $($runtimeProbe.StatusCode)."
+            foreach ($assetPath in $expectedAssets) {
+              $assetUrl = "$baseUrl$assetPath"
+              $assetResp = Invoke-WebRequest -Uri $assetUrl -Method Get -Headers @{ 'Accept-Encoding' = 'br, gzip' } -TimeoutSec 15 -SkipHttpErrorCheck
+              if ($assetResp.StatusCode -ne 200) {
+                throw "Expected HTTP 200 from live asset $assetUrl, got $($assetResp.StatusCode)."
+              }
+              $assetCache = [string] $assetResp.Headers['Cache-Control']
+              if ($assetCache -notmatch 'immutable') {
+                throw "Expected immutable Cache-Control on hashed asset $assetUrl, got '$assetCache'."
+              }
+              Write-Host "Verified live asset 200 OK: $assetPath ($assetCache)"
+            }
+
+            $runtimeProbe = Invoke-WebRequest -Uri "$baseUrl/api/runtime" -Method Get -TimeoutSec 15 -SkipHttpErrorCheck
+            if ($runtimeProbe.StatusCode -ne 404) {
+              throw "Expected HTTP 404 from $baseUrl/api/runtime (FR-002), got $($runtimeProbe.StatusCode)."
+            }
+            Write-Host "Live smoke checks passed for revision $expectedHash at $baseUrl/."
           }
-          Write-Host "Live smoke checks passed for $baseUrl/ and $baseUrl/health."
+          finally {
+            $client.Dispose()
+            $handler.Dispose()
+          }
