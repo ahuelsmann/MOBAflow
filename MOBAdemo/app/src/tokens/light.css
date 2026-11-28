@@ -6,9 +6,9 @@
   --navigation-disabled-text: #737373;
   --stroke-default: #e0e0e0;
   --gauge-track: #8e8e8e;
-  /* Neutral placeholder until slice 20 sets the maintainer's purple (decision 2026-11-20, plan T5). */
-  --accent-fill-default: #6e6e6e;
-  --accent-fill-secondary: #7f7f7f;
-  --accent-fill-tertiary: #909090;
-  --accent-text-default: #4a4a4a;
+  /* MOBAflow purple/violet accent palette with Fluent 2 Light steps (FR-023, plan T5). */
+  --accent-fill-default: #744da9;
+  --accent-fill-secondary: #815bb4;
+  --accent-fill-tertiary: #8f6cc0;
+  --accent-text-default: #5b398c;
 }

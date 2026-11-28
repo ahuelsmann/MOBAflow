@@ -96,3 +96,48 @@ changes below `MOBAdemo/`, `Test/MOBAdemo/` and the shared build inputs. In orde
 (`npm audit` for high and critical vulnerabilities, before any install), the budget script self-tests, `npm ci`,
 lint, frontend unit tests, `build.ps1`, the budget check and the `Moba.Test.MOBAdemo` NUnit tests. It needs Node and
 the .NET SDK only, no WinUI or Android workload.
+
+## Deployment and operations
+
+### Hosting target (`FR-050`)
+
+MOBAdemo is hosted on Azure App Service at `https://mobaflow-demo.azurewebsites.net/` (resource group
+`rg-mobaflow-demo`, web app `mobaflow-demo`), Free tier (`F1`), France Central, running ASP.NET Core on .NET 10 under
+Linux:
+
+- **Startup command**: `dotnet MOBAdemo.dll`
+- **Build on deploy**: disabled (`SCM_DO_BUILD_DURING_DEPLOYMENT=false`) so App Service serves the prebuilt .NET output
+  and precompressed `wwwroot` assets directly without running Oryx, Node or `dotnet build` on the `F1` instance
+- **Transport hardening**: HTTPS-only enabled, minimum TLS 1.2, HTTP/2 enabled and FTPS disabled
+
+### Passwordless GitHub Actions deployment (`FR-054`)
+
+`.github/workflows/deploy-mobademo.yml` (`Deploy MOBAdemo`) is started manually via `workflow_dispatch` on GitHub. It
+audits `package-lock.json`, runs frontend lint and unit tests, executes `MOBAdemo/build.ps1 -Configuration Release`,
+enforces the 200 KB Brotli bundle budget, publishes `MOBAdemo/Host/MOBAdemo.csproj`, deploys the zip package with
+`az webapp deploy --type zip --clean true --track-status false`, and verifies `/` and `/health` over HTTPS.
+
+Authentication uses passwordless OpenID Connect (OIDC) federation between GitHub Actions (`id-token: write`) and
+Microsoft Entra ID (`azure/login`), with `Website Contributor` scoped strictly to the `mobaflow-demo` web app resource.
+No publish profile, client secret or local path is stored in the repository; only the non-secret OIDC identifiers
+(`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) are configured in the `mobademo` GitHub Actions
+environment and repository variables.
+
+### Slotless Free-tier replacement (`FR-055`)
+
+The App Service Free tier (`F1`) has no deployment slots. Each zip deployment (`--clean true`) replaces the live files
+in place and restarts `mobaflow-demo` automatically without manual intervention. Workflow concurrency sets
+`cancel-in-progress: false` so an in-flight upload is never interrupted mid-transfer. Visitors with an already open tab
+keep their client-side view state, and reloading revalidates `index.html` (`Cache-Control: no-cache`) to pick up the new
+content-hashed assets (`FR-059`).
+
+### Free-tier quotas and HTTP 403 exhaustion (`FR-075`)
+
+`F1` enforces platform quotas of **165 MB outgoing bandwidth per day** and **60 CPU minutes per day** (plus 3 CPU
+minutes per 5-minute window), resetting at **00:00 UTC**. Per-visitor request rate limiting (`FR-056`, `FR-078`) bounds
+single-client traffic, while distributed traffic spikes can still consume the daily allowance.
+
+When a Free-tier quota is exhausted, Azure stops the web app until the next UTC reset and answers every request at the
+platform front end with **HTTP 403** (so the MOBAdemo host itself is not reached). Operators can inspect current daily
+bandwidth/CPU consumption and confirm quota exhaustion in the Azure Portal on the `mobaflow-demo` web app under
+**Settings -> Quotas** (the web app's quota view).

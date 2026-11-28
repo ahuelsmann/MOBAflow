@@ -1,0 +1,221 @@
+name: Deploy MOBAdemo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  # Never cancel an in-flight slotless F1 zip deployment mid-upload (FR-055).
+  group: deploy-mobademo
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, verify, and deploy MOBAdemo
+    environment:
+      name: mobademo
+      url: https://mobaflow-demo.azurewebsites.net/
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: MOBAdemo/app/.nvmrc
+          cache: npm
+          cache-dependency-path: MOBAdemo/app/package-lock.json
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+
+      # FR-074: audit the committed lockfile before installing any package.
+      - name: Audit npm dependencies
+        shell: pwsh
+        working-directory: MOBAdemo/app
+        run: |
+          $report = $null
+          $severities = 'critical', 'high', 'moderate', 'low', 'info'
+          foreach ($attempt in 1..2) {
+            $raw = npm audit --package-lock-only --include=prod --include=dev --audit-level=high --registry https://registry.npmjs.org/ --json 2>$null | Out-String
+            try { $candidate = $raw | ConvertFrom-Json } catch { $candidate = $null }
+            $valid = $null -ne $candidate -and
+              $null -eq $candidate.PSObject.Properties['error'] -and
+              $candidate.PSObject.Properties['auditReportVersion'] -and $candidate.auditReportVersion -eq 2 -and
+              $candidate.PSObject.Properties['metadata'] -and $candidate.metadata.PSObject.Properties['vulnerabilities'] -and
+              $candidate.PSObject.Properties['vulnerabilities']
+            if ($valid) {
+              foreach ($severity in $severities) {
+                $count = $candidate.metadata.vulnerabilities.PSObject.Properties[$severity]
+                if ($null -eq $count -or (($count.Value -isnot [int]) -and ($count.Value -isnot [long])) -or $count.Value -lt 0) { $valid = $false }
+              }
+            }
+            if ($valid) {
+              $entries = @($candidate.vulnerabilities.PSObject.Properties)
+              foreach ($severity in $severities) {
+                $listed = @($entries | Where-Object { $_.Value.severity -eq $severity }).Count
+                if ($listed -ne $candidate.metadata.vulnerabilities.PSObject.Properties[$severity].Value) { $valid = $false }
+              }
+            }
+            if ($valid) {
+              $report = $candidate
+              break
+            }
+            Write-Host "Attempt ${attempt}: no valid audit report."
+            if ($attempt -lt 2) { Start-Sleep -Seconds 10 }
+          }
+          if ($null -eq $report) {
+            Write-Host '::error title=npm audit::No valid audit report; the registry or the audit endpoint did not answer.'
+            exit 1
+          }
+          $counts = $report.metadata.vulnerabilities
+          Write-Host "Vulnerabilities: critical=$($counts.critical) high=$($counts.high) moderate=$($counts.moderate) low=$($counts.low) info=$($counts.info)"
+          if (([int] $counts.critical + [int] $counts.high) -gt 0) {
+            Write-Host '::error title=npm audit::Known high or critical vulnerabilities in the lockfile (FR-074).'
+            exit 1
+          }
+          exit 0
+
+      - name: Install, lint, and test frontend
+        working-directory: MOBAdemo/app
+        run: |
+          npm ci --ignore-scripts
+          npm run lint
+          npm test
+
+      - name: Build the MOBAdemo web root and check bundle budget
+        shell: pwsh
+        run: |
+          ./MOBAdemo/build.ps1 -Configuration Release
+          ./MOBAdemo/Test-BundleBudget.ps1 -Path MOBAdemo/Host/wwwroot-build
+
+      - name: Publish MOBAdemo host and package zip archive
+        shell: pwsh
+        run: |
+          $publishDir = Join-Path $env:RUNNER_TEMP 'mobademo-publish'
+          $zipPath = Join-Path $env:RUNNER_TEMP 'mobademo.zip'
+          if (Test-Path -LiteralPath $publishDir) {
+            Remove-Item -LiteralPath $publishDir -Recurse -Force
+          }
+          if (Test-Path -LiteralPath $zipPath) {
+            Remove-Item -LiteralPath $zipPath -Force
+          }
+
+          dotnet publish MOBAdemo/Host/MOBAdemo.csproj --configuration Release --output $publishDir
+          if ($LASTEXITCODE -ne 0) {
+            throw "dotnet publish failed with exit code $LASTEXITCODE."
+          }
+
+          $indexHtmlPath = Join-Path $publishDir 'wwwroot/index.html'
+          if (-not (Test-Path -LiteralPath $indexHtmlPath -PathType Leaf)) {
+            throw 'Published output is missing wwwroot/index.html.'
+          }
+          $indexHtml = Get-Content -LiteralPath $indexHtmlPath -Raw
+          if ($indexHtml -notmatch '<div id="root"></div>') {
+            throw 'Published wwwroot/index.html is the placeholder rather than the built React app.'
+          }
+
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $publishRoot = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($publishDir))
+          $stream = [IO.File]::Open($zipPath, [IO.FileMode]::Create, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+          try {
+            $archive = [IO.Compression.ZipArchive]::new($stream, [IO.Compression.ZipArchiveMode]::Create, $false)
+            try {
+              foreach ($file in Get-ChildItem -LiteralPath $publishRoot -Recurse -File -Force) {
+                if ($file.Name -eq '.mobademo-webroot') { continue }
+                $entryName = [IO.Path]::GetRelativePath($publishRoot, $file.FullName).Replace('\', '/')
+                [void] [IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                  $archive,
+                  $file.FullName,
+                  $entryName,
+                  [IO.Compression.CompressionLevel]::Optimal)
+              }
+            }
+            finally {
+              $archive.Dispose()
+            }
+          }
+          finally {
+            $stream.Dispose()
+          }
+          Write-Host "Created deployment archive: $zipPath ($((Get-Item -LiteralPath $zipPath).Length) bytes)"
+
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Shared Free-tier (F1) Linux workers do not populate OneDeploy's dedicated instance-health tracker
+      # (--track-status true times out after 10 min even when Kudu finishes in ~6 s and the site starts in ~14 s);
+      # the next step verifies live HTTPS readiness directly against /health and /.
+      - name: Deploy MOBAdemo to Azure App Service
+        shell: pwsh
+        run: |
+          az webapp deploy `
+            --resource-group rg-mobaflow-demo `
+            --name mobaflow-demo `
+            --src-path "$env:RUNNER_TEMP/mobademo.zip" `
+            --type zip `
+            --clean true `
+            --track-status false
+          if ($LASTEXITCODE -ne 0) {
+            throw "az webapp deploy failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Verify live MOBAdemo endpoints
+        shell: pwsh
+        run: |
+          $baseUrl = 'https://mobaflow-demo.azurewebsites.net'
+          $healthy = $false
+          for ($attempt = 1; $attempt -le 12; $attempt++) {
+            try {
+              $health = Invoke-WebRequest -Uri "$baseUrl/health" -Method Get -TimeoutSec 15 -SkipHttpErrorCheck
+              if ($health.StatusCode -eq 200 -and $health.Content.Trim() -eq 'ok') {
+                $healthy = $true
+                break
+              }
+              Write-Host "Attempt ${attempt}: /health returned HTTP $($health.StatusCode)."
+            }
+            catch {
+              Write-Host "Attempt ${attempt}: /health request failed ($($_.Exception.Message))."
+            }
+            if ($attempt -lt 12) { Start-Sleep -Seconds 5 }
+          }
+          if (-not $healthy) {
+            throw "Live health check failed at $baseUrl/health (if HTTP 403, check Azure Portal Quotas on mobaflow-demo per FR-075)."
+          }
+
+          $root = Invoke-WebRequest -Uri "$baseUrl/" -Method Get -Headers @{ 'Accept-Encoding' = 'br, gzip' } -TimeoutSec 15
+          if ($root.StatusCode -ne 200) {
+            throw "Expected HTTP 200 from $baseUrl/, got $($root.StatusCode)."
+          }
+          if ($root.Content -notmatch '<div id="root"></div>') {
+            throw "Live root document at $baseUrl/ does not contain the built React root."
+          }
+          $csp = [string] $root.Headers['Content-Security-Policy']
+          if ($csp -notmatch "style-src 'self'") {
+            throw "Missing expected Content-Security-Policy style-src 'self' header on $baseUrl/."
+          }
+          $nosniff = [string] $root.Headers['X-Content-Type-Options']
+          if ($nosniff -ne 'nosniff') {
+            throw "Missing X-Content-Type-Options: nosniff on $baseUrl/."
+          }
+
+          $runtimeProbe = Invoke-WebRequest -Uri "$baseUrl/api/runtime" -Method Get -TimeoutSec 15 -SkipHttpErrorCheck
+          if ($runtimeProbe.StatusCode -ne 404) {
+            throw "Expected HTTP 404 from $baseUrl/api/runtime (FR-002), got $($runtimeProbe.StatusCode)."
+          }
+          Write-Host "Live smoke checks passed for $baseUrl/ and $baseUrl/health."
