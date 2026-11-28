@@ -12,20 +12,17 @@
 .workflows-panes {
   align-items: stretch;
   display: grid;
-  gap: 0.625rem;
+  gap: 6px;
   grid-template-columns: 11.5rem minmax(0, 1fr) 13rem;
+  padding: 6px;
 }
 
 .workflows-pane {
-  background: var(--background-card);
-  border: 1px solid var(--stroke-default);
-  border-radius: 0.5rem;
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   min-inline-size: 0;
-  padding: 0.75rem;
 }
 
 .workflows-pane-header {
@@ -116,6 +113,7 @@
 .workflows-search {
   display: grid;
   gap: 0.25rem;
+  position: relative;
 }
 
 .workflows-search-hint {
@@ -159,6 +157,7 @@
   border-radius: 0.5rem;
   min-inline-size: 0;
   overflow-x: auto;
+  flex: 1;
 }
 
 .workflows-graph-canvas {

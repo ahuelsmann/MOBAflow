@@ -41,7 +41,7 @@ export function TrainControlFrame() {
 
   return (
     <div className="train-control">
-      <div className="train-control-header">
+      <div className="train-control-header moba-page-header">
         <h1>Train Control</h1>
         <div className="train-control-toolbar" role="group" aria-label="Train Control toolbar">
           <SeriesSearch />

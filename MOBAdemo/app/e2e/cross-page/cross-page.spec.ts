@@ -117,7 +117,8 @@ test.describe('MOBAdemo cross-page browser checks (slice 19)', () => {
     }
   });
 
-  test('SC-009: passes axe-core audit across all four pages in Dark and Light themes', async ({ browser }) => {
+  test('SC-009: passes axe-core on all four pages in both themes at full, compact, and narrow widths', async ({ browser }) => {
+    test.setTimeout(90_000);
     const context = await browser.newContext({
       extraHTTPHeaders: { 'X-Forwarded-For': '198.51.100.183' },
     });
@@ -125,24 +126,21 @@ test.describe('MOBAdemo cross-page browser checks (slice 19)', () => {
       const page = await context.newPage();
       await page.goto('/', { waitUntil: 'networkidle' });
 
-      const findings: Array<{ page: string; theme: string; violations: unknown[] }> = [];
-      for (const title of DEMO_PAGES) {
-        await openDemoPage(page, title);
-        const darkAudit = await new AxeBuilder({ page }).analyze();
-        if (darkAudit.violations.length > 0) {
-          findings.push({ page: title, theme: 'dark', violations: darkAudit.violations });
-        }
-      }
-
+      const findings: Array<{ width: number; page: string; theme: string; violations: unknown[] }> = [];
       const lightButton = page.getByRole('button', { name: 'Light theme' });
-      await lightButton.click();
-      await expect(lightButton).toHaveAttribute('aria-pressed', 'true');
 
-      for (const title of DEMO_PAGES) {
-        await openDemoPage(page, title);
-        const lightAudit = await new AxeBuilder({ page }).analyze();
-        if (lightAudit.violations.length > 0) {
-          findings.push({ page: title, theme: 'light', violations: lightAudit.violations });
+      for (const width of [1280, 1100, 900]) {
+        await page.setViewportSize({ width, height: 800 });
+        for (const theme of ['dark', 'light']) {
+          await expect(lightButton).toHaveAttribute('aria-pressed', String(theme === 'light'));
+          for (const title of DEMO_PAGES) {
+            await openDemoPage(page, title);
+            const audit = await new AxeBuilder({ page }).analyze();
+            if (audit.violations.length > 0) {
+              findings.push({ width, page: title, theme, violations: audit.violations });
+            }
+          }
+          await lightButton.click();
         }
       }
 

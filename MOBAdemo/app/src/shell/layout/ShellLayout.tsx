@@ -18,12 +18,12 @@ export function ShellLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <div data-shell-mode={mode}>
       {mode === 'narrow' && !noticeDismissed && (
-        <div className="demo-narrow-notice">
+        <aside className="demo-narrow-notice" aria-label="Display recommendation">
           <p>Desktop UI demo - best on a screen at least 1024 px wide</p>
           <button type="button" aria-label="Dismiss narrow-window notice" onClick={() => setNoticeDismissed(true)}>
             Dismiss
           </button>
-        </div>
+        </aside>
       )}
       <div className="demo-shell-viewport">
         <div className="demo-desktop-layout">{children}</div>

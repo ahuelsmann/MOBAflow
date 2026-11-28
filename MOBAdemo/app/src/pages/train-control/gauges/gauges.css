@@ -1,6 +1,7 @@
 .tc-gauge-panel {
   display: grid;
   gap: 0.5rem;
+  grid-template-rows: auto 1fr auto;
 }
 
 .tc-gauge {
@@ -17,7 +18,7 @@
 
 .tc-gauge-track {
   fill: none;
-  stroke: var(--gauge-track);
+  stroke: var(--gauge-track-subtle);
   stroke-linecap: round;
   stroke-width: 12;
 }
@@ -56,6 +57,9 @@
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
   margin: 0;
+  background: var(--surface-card-secondary);
+  border-radius: 6px;
+  padding: 0.25rem 0.75rem;
 }
 
 .tc-gauge-value {
@@ -160,6 +164,8 @@
 .tc-stop[data-state='current'] {
   border-color: var(--accent-fill-default);
   box-shadow: inset 0.25rem 0 0 var(--accent-fill-default);
+  background: var(--accent-fill-emphasis);
+  color: var(--text-on-accent);
 }
 
 .tc-stop[data-state='past'] {
@@ -193,8 +199,8 @@
 }
 
 .tc-stop[data-state='current'] .tc-stop-badge {
-  border-color: var(--accent-fill-default);
-  color: var(--accent-text-default);
+  border-color: var(--text-on-accent);
+  color: var(--text-on-accent);
   font-weight: 600;
 }
 
@@ -217,4 +223,8 @@
     animation: none;
     transition: none;
   }
+}
+
+.tc-stop[data-state='current'] .tc-stop-details {
+  color: var(--text-on-accent);
 }

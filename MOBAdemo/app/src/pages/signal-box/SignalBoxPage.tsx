@@ -1,3 +1,4 @@
+import { ColumnBadge } from '../../tokens/ColumnBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { defaultSources, parseExamples } from '../../examples/loader';
 import type { SignalBoxElement, SignalBoxElementType } from '../../examples/types';
@@ -281,7 +282,7 @@ export function SignalBoxPage() {
 
   return (
     <div className="signal-box" data-reduced-motion={reducedMotion ? 'reduce' : 'no-preference'}>
-      <div className="signal-box-header">
+      <div className="signal-box-header moba-page-header">
         <h1>Signal Box</h1>
         <fieldset className="signal-box-toolbar" aria-label="Signal Box toolbar">
           <InertButton className="signal-box-button">Delete</InertButton>
@@ -290,8 +291,8 @@ export function SignalBoxPage() {
       </div>
 
       <div className="signal-box-workbench">
-        <section className="signal-box-pane" aria-label="Elements">
-          <h2>Elements</h2>
+        <section className="signal-box-pane moba-col moba-col--collection" aria-label="Elements">
+          <h2 className="moba-col-title"><ColumnBadge role="collection" />{"Elements"}</h2>
           <p className="signal-box-subtitle">Drag &amp; drop onto track canvas</p>
           <ul className="signal-box-tools">
             {TOOLBOX_ITEMS.map((item) => (
@@ -311,9 +312,9 @@ export function SignalBoxPage() {
           </div>
         </section>
 
-        <section className="signal-box-pane" aria-label="Signal box canvas">
+        <section className="signal-box-pane moba-col moba-col--helper" aria-label="Signal box canvas">
           <div className="signal-box-canvas-header">
-            <h2>Track Layout</h2>
+            <h2 className="moba-col-title"><ColumnBadge role="helper" />{"Track Layout"}</h2>
             <ul className="signal-box-legend" aria-label="Element legend">
               <li className="signal-box-legend-item">
                 <span className="signal-box-swatch signal-box-swatch-straight" aria-hidden="true" />
@@ -384,8 +385,8 @@ export function SignalBoxPage() {
           </div>
         </section>
 
-        <section className="signal-box-pane signal-box-context" aria-label="Context">
-          <h2>Context</h2>
+        <section className="signal-box-pane signal-box-context moba-col moba-col--properties" aria-label="Context">
+          <h2 className="moba-col-title"><ColumnBadge role="properties" />{"Context"}</h2>
           <div className="signal-box-selected-summary">
             <span className="signal-box-selected-name">{selectedSignalElement.name}</span>
             <span className="signal-box-selected-system">System: {signalBox.signal.system}</span>
@@ -434,7 +435,7 @@ export function SignalBoxPage() {
         </section>
       </div>
 
-      <section className="signal-box-footer" aria-label="Signal box summary">
+      <section className="signal-box-footer moba-page-footer" aria-label="Signal box summary">
         <span className="signal-box-footer-status">
           <svg aria-hidden="true" className="signal-box-footer-icon" viewBox="0 0 16 16">
             <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5" />

@@ -1,3 +1,4 @@
+import { ColumnBadge } from '../../tokens/ColumnBadge';
 import { useEffect, useId, useRef, useState } from 'react';
 import texts from '../../examples/texts.json';
 import { InertButton } from '../../shell/inert/InertButton';
@@ -131,7 +132,7 @@ function InertZoomSlider() {
 export function TrackPlanPage() {
   return (
     <div className="track-plan">
-      <div className="track-plan-header">
+      <div className="track-plan-header moba-page-header">
         <h1>Track Plan</h1>
         <div className="track-plan-toolbar" role="toolbar" aria-label="Track Plan toolbar">
           {TOOLBAR_ITEMS.map((tool) => (
@@ -143,8 +144,8 @@ export function TrackPlanPage() {
       </div>
 
       <div className="track-plan-workspace">
-        <section className="track-plan-panel track-plan-catalogue" aria-label="Piko A-Track catalogue">
-          <h2>Piko A-Track</h2>
+        <section className="track-plan-panel track-plan-catalogue moba-col moba-col--collection" aria-label="Piko A-Track catalogue">
+          <h2 className="moba-col-title"><ColumnBadge role="collection" />{"Piko A-Track"}</h2>
           <div className="track-plan-catalogue-groups">
             {CATALOGUE_GROUPS.map(([category, items]) => (
               <div key={category} className="track-plan-catalogue-group">
@@ -161,24 +162,25 @@ export function TrackPlanPage() {
           </div>
         </section>
 
-        <section className="track-plan-panel track-plan-canvas-pane" aria-label="Track Plan canvas">
+        <section className="track-plan-panel track-plan-canvas-pane moba-col moba-col--helper" aria-label="Track Plan canvas">
+          <h2 className="moba-col-title"><ColumnBadge role="helper" />Layout</h2>
           <div className="track-plan-canvas-frame">
             <img
               className="track-plan-canvas-image"
               src="/assets/track-plan.svg"
               alt="Example model railway layout on Track Plan canvas"
             />
+            <fieldset className="track-plan-zoom-bar" aria-label="Zoom controls">
+              <InertButton className="track-plan-zoom-button" label="Zoom out">−</InertButton>
+              <InertZoomSlider />
+              <InertButton className="track-plan-zoom-button" label="Zoom in">+</InertButton>
+              <span className="track-plan-zoom-value">100%</span>
+            </fieldset>
           </div>
-          <fieldset className="track-plan-zoom-bar" aria-label="Zoom controls">
-            <InertButton className="track-plan-zoom-button" label="Zoom out">−</InertButton>
-            <InertZoomSlider />
-            <InertButton className="track-plan-zoom-button" label="Zoom in">+</InertButton>
-            <span className="track-plan-zoom-value">100%</span>
-          </fieldset>
         </section>
 
-        <aside className="track-plan-panel track-plan-context" aria-label="Context properties">
-          <h2>Context</h2>
+        <aside className="track-plan-panel track-plan-context moba-col moba-col--properties" aria-label="Context properties">
+          <h2 className="moba-col-title"><ColumnBadge role="properties" />{"Context"}</h2>
 
           <div className="track-plan-context-section">
             <h3>Layout</h3>
@@ -237,7 +239,7 @@ export function TrackPlanPage() {
         </aside>
       </div>
 
-      <section className="track-plan-footer" aria-label="Track Plan status">
+      <section className="track-plan-footer moba-page-footer" aria-label="Track Plan status">
         <span className="track-plan-status">
           <span className="track-plan-status-badge" aria-hidden="true">✓</span>
           <span>Ready — Example layout loaded</span>

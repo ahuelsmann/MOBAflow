@@ -212,6 +212,19 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
     await expect(modeContainer).toHaveAttribute('data-shell-mode', 'full');
     await expect(page.getByText(NARROW_NOTICE)).toHaveCount(0);
 
+    const expectRailSeam = async (width: number) => {
+      const brand = await page.locator('.demo-command-brand').boundingBox();
+      const rail = await page.locator('.demo-nav-sidebar').boundingBox();
+      expect(brand).not.toBeNull();
+      expect(rail).not.toBeNull();
+      expect(brand!.width).toBe(width);
+      expect(brand!.x + brand!.width).toBe(rail!.x + rail!.width);
+
+      const status = await page.getByRole('contentinfo', { name: 'Demo status' }).boundingBox();
+      expect(status).not.toBeNull();
+      expect(status!.y + status!.height).toBeCloseTo(page.viewportSize()!.height, 0);
+    };
+    await expectRailSeam(240);
     const firstNavLabel = page.locator('.demo-nav-label').first();
     const fullLabelBox = await firstNavLabel.boundingBox();
     expect(fullLabelBox).not.toBeNull();
@@ -230,6 +243,7 @@ test.describe('MOBAdemo shell browser checks (slice 10)', () => {
     const compactSidebarBox = await page.locator('.demo-nav-sidebar').boundingBox();
     expect(compactSidebarBox).not.toBeNull();
     expect(compactSidebarBox!.width).toBeLessThanOrEqual(96);
+    await expectRailSeam(52);
 
     const compactOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,

@@ -13,18 +13,25 @@ interface ShellBarsProps {
 function CommandBar({ lightTheme, onToggleTheme }: Pick<ShellBarsProps, 'lightTheme' | 'onToggleTheme'>) {
   return (
     <header className="demo-command-bar">
-      <button className="demo-bar-button demo-bar-toggle" type="button" aria-pressed={lightTheme} onClick={onToggleTheme}>
-        Light theme
-      </button>
-      <div className="demo-command-controls" role="group" aria-label="Commands">
-        <InertButton className="demo-bar-button" hint={texts.fixedProjectHint}>New</InertButton>
-        <InertButton className="demo-bar-button" hint={texts.fixedProjectHint}>Open</InertButton>
-        <div className="demo-simulate-command">
-          <InertButton className="demo-bar-button">Simulate</InertButton>
-          <span>Feedback Point (InPort)</span>
-          <InertNumberBox className="demo-bar-number" label="Feedback Point (InPort)" value={0} />
+      <div className="demo-command-brand">
+        <strong>MOBA<span>flow</span></strong>
+        <small>Web Demo</small>
+      </div>
+      <div className="demo-command-workspace">
+        <button className="demo-bar-button demo-bar-toggle" type="button" aria-pressed={lightTheme} onClick={onToggleTheme}>
+          Light theme
+        </button>
+        <div className="demo-command-controls" role="group" aria-label="Commands">
+          <InertButton className="demo-bar-button" hint={texts.fixedProjectHint}>New</InertButton>
+          <InertButton className="demo-bar-button" hint={texts.fixedProjectHint}>Open</InertButton>
+          <span className="demo-command-separator" aria-hidden="true" />
+          <div className="demo-simulate-command">
+            <InertButton className="demo-bar-button">Simulate</InertButton>
+            <InertNumberBox className="demo-bar-number" label="Feedback Point (InPort)" value={0} />
+          </div>
+          <span className="demo-command-separator" aria-hidden="true" />
+          <InertButton className="demo-bar-button">Reset</InertButton>
         </div>
-        <InertButton className="demo-bar-button">Reset</InertButton>
       </div>
     </header>
   );

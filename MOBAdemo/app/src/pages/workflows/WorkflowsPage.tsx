@@ -1,3 +1,4 @@
+import { ColumnBadge } from '../../tokens/ColumnBadge';
 import { useId, useMemo } from 'react';
 import { defaultSources, parseExamples } from '../../examples/loader';
 import texts from '../../examples/texts.json';
@@ -99,14 +100,14 @@ export function WorkflowsPage() {
 
   return (
     <div className="workflows-page">
-      <div className="workflows-header">
+      <div className="workflows-header moba-page-header">
         <h1>Workflows</h1>
       </div>
 
       <div className="workflows-panes">
-        <section className="workflows-pane workflows-list-pane" aria-label="Workflows list">
+        <section className="workflows-pane workflows-list-pane moba-col moba-col--collection" aria-label="Workflows list">
           <div className="workflows-pane-header">
-            <h2>Workflows</h2>
+            <h2 className="moba-col-title"><ColumnBadge role="collection" />{"Workflows"}</h2>
             <fieldset className="workflows-pane-actions" aria-label="Workflow list actions">
               <InertButton className="workflows-icon-button" label="New workflow">
                 <svg className="workflows-icon" viewBox="0 0 16 16" aria-hidden="true">
@@ -154,9 +155,9 @@ export function WorkflowsPage() {
           </ul>
         </section>
 
-        <section className="workflows-pane workflows-actions-pane" aria-label="Actions">
+        <section className="workflows-pane workflows-actions-pane moba-col moba-col--helper" aria-label="Actions">
           <div className="workflows-pane-header">
-            <h2>Actions</h2>
+            <h2 className="moba-col-title"><ColumnBadge role="helper" />{"Actions"}</h2>
             <fieldset className="workflows-view-toggle" aria-label="View mode">
               <InertButton className="workflows-toolbar-button" pressed={false}>
                 List view
@@ -263,9 +264,9 @@ export function WorkflowsPage() {
           </div>
         </section>
 
-        <section className="workflows-pane workflows-properties-pane" aria-label="Properties">
+        <section className="workflows-pane workflows-properties-pane moba-col moba-col--properties" aria-label="Properties">
           <div className="workflows-pane-header">
-            <h2>Properties</h2>
+            <h2 className="moba-col-title"><ColumnBadge role="properties" />{"Properties"}</h2>
           </div>
 
           <p className="workflows-description">{workflow.description}</p>

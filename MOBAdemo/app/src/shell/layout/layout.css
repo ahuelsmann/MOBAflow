@@ -6,8 +6,16 @@
   min-inline-size: 1024px;
 }
 
-[data-shell-mode]:not([data-shell-mode='full']) .demo-nav-shell {
-  grid-template-columns: 5rem minmax(0, 1fr);
+[data-shell-mode] {
+  --demo-navigation-width: 15rem;
+}
+
+[data-shell-mode]:not([data-shell-mode='full']) {
+  --demo-navigation-width: 3.25rem;
+}
+
+[data-shell-mode='narrow'] .demo-shell-frame {
+  block-size: auto;
 }
 
 [data-shell-mode]:not([data-shell-mode='full']) .demo-nav-entry {

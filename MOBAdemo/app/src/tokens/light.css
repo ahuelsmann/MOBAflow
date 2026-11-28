@@ -11,4 +11,27 @@
   --accent-fill-secondary: #815bb4;
   --accent-fill-tertiary: #8f6cc0;
   --accent-text-default: #5b398c;
+  --surface-layer: #f9f9f9;
+  --surface-card-secondary: #efefef;
+  --surface-control: #fbfbfb;
+  --surface-control-hover: #f0f0f0;
+  --surface-subtle-selected: #eaeaea;
+  --stroke-divider: #e3e3e3;
+  --gauge-track-subtle: #d6d6d6;
+  --text-on-accent: #ffffff;
+  --danger-fill: #c42b1c;
+  --danger-border: #9e1c12;
+  --preview-badge-bg: rgba(255, 138, 0, 0.14);
+  --preview-badge-border: rgba(180, 95, 0, 0.45);
+  --preview-badge-text: #8a4600;
+  --col-collection-accent: #006cbe;
+  --col-collection-badge-bg: rgba(0, 120, 212, 0.10);
+  --col-collection-badge-border: rgba(0, 120, 212, 0.28);
+  --col-helper-accent: #9a6700;
+  --col-helper-badge-bg: rgba(154, 103, 0, 0.10);
+  --col-helper-badge-border: rgba(154, 103, 0, 0.28);
+  --col-properties-accent: #bc4400;
+  --col-properties-badge-bg: rgba(188, 68, 0, 0.10);
+  --col-properties-badge-border: rgba(188, 68, 0, 0.28);
+  --accent-fill-emphasis: var(--accent-fill-default);
 }
