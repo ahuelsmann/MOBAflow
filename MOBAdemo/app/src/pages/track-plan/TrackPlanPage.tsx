@@ -1,4 +1,4 @@
-import { ColumnBadge } from '../../tokens/ColumnBadge';
+import { ColumnBadge, ColumnPin } from '../../tokens/ColumnBadge';
 import { useEffect, useId, useRef, useState } from 'react';
 import texts from '../../examples/texts.json';
 import { InertButton } from '../../shell/inert/InertButton';
@@ -133,7 +133,7 @@ export function TrackPlanPage() {
   return (
     <div className="track-plan">
       <div className="track-plan-header moba-page-header">
-        <h1>Track Plan</h1>
+        <h1 className="sr-only">Track Plan</h1>
         <div className="track-plan-toolbar" role="toolbar" aria-label="Track Plan toolbar">
           {TOOLBAR_ITEMS.map((tool) => (
             <InertButton key={tool.text} className="track-plan-tool" pressed={tool.pressed} label={tool.label}>
@@ -145,7 +145,7 @@ export function TrackPlanPage() {
 
       <div className="track-plan-workspace">
         <section className="track-plan-panel track-plan-catalogue moba-col moba-col--helper" aria-label="Piko A-Track catalogue">
-          <h2 className="moba-col-title"><ColumnBadge role="helper" />Piko A-Track</h2>
+          <h2 className="moba-col-title"><ColumnBadge role="helper" />Piko A-Track<ColumnPin /></h2>
           <div className="track-plan-catalogue-groups">
             {CATALOGUE_GROUPS.map(([category, items]) => (
               <div key={category} className="track-plan-catalogue-group">
@@ -153,7 +153,12 @@ export function TrackPlanPage() {
                 <ul className="track-plan-catalogue-list">
                   {items.map((label) => (
                     <li key={label}>
-                      <InertButton className="track-plan-catalogue-item">{label}</InertButton>
+                      <InertButton className="track-plan-catalogue-item">
+                        <svg aria-hidden="true" className="track-plan-catalogue-glyph" viewBox="0 0 16 16">
+                          <path d="M3 2v12m10-12v12M1 4h14M1 8h14M1 12h14" fill="none" stroke="currentColor" />
+                        </svg>
+                        {label}
+                      </InertButton>
                     </li>
                   ))}
                 </ul>
@@ -179,7 +184,7 @@ export function TrackPlanPage() {
         </section>
 
         <aside className="track-plan-panel track-plan-context moba-col moba-col--properties" aria-label="Context properties">
-          <h2 className="moba-col-title"><ColumnBadge role="properties" />{"Context"}</h2>
+          <h2 className="moba-col-title"><ColumnBadge role="properties" />Context<ColumnPin /></h2>
 
           <div className="track-plan-context-section">
             <h3>Layout</h3>

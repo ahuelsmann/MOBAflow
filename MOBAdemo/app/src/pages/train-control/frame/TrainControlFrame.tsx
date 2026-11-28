@@ -42,10 +42,17 @@ export function TrainControlFrame() {
   return (
     <div className="train-control">
       <div className="train-control-header moba-page-header">
-        <h1>Train Control</h1>
         <div className="train-control-toolbar" role="group" aria-label="Train Control toolbar">
-          <SeriesSearch />
-          <InertButton className="train-control-emergency">EMERGENCY STOP</InertButton>
+          <div className="train-control-heading">
+            <h1>Train Control</h1>
+            <SeriesSearch />
+          </div>
+          <InertButton className="train-control-emergency">
+            <svg aria-hidden="true" viewBox="0 0 16 16" className="train-control-emergency-icon">
+              <path d="m3 3 10 10m0-10L3 13" fill="none" stroke="currentColor" strokeWidth="2" />
+            </svg>
+            EMERGENCY STOP
+          </InertButton>
         </div>
       </div>
       <div className="train-control-panels">
@@ -79,7 +86,7 @@ export function TrainControlFrame() {
             doorBlocking={drive.doorBlocking}
           />
           <section className="train-control-panel tc-gauge-panel" aria-label="Speedometer">
-            <h2>Speedometer</h2>
+            <h2 className="sr-only">Speedometer</h2>
             <SpeedometerGauge speedKmh={drive.speedKmh} />
             <SpeedSlider initialStep={drive.speed} />
           </section>

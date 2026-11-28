@@ -117,7 +117,7 @@
 
 .track-plan-canvas-frame {
   align-items: center;
-  background: var(--background-default);
+  background: var(--canvas-void);
   border: 1px solid var(--stroke-default);
   border-radius: 0.375rem;
   display: flex;
@@ -294,4 +294,23 @@
     animation: none;
     transition: none;
   }
+}
+
+.track-plan-toolbar .track-plan-tool:not([aria-pressed='true']) {
+  background: transparent;
+  border-color: transparent;
+}
+
+.track-plan-toolbar .track-plan-tool[aria-pressed='true'] {
+  background: var(--accent-fill-emphasis);
+  border-color: var(--accent-fill-default);
+  color: var(--text-on-accent);
+}
+
+.track-plan-catalogue-glyph {
+  block-size: 0.875rem;
+  color: var(--accent-text-default);
+  inline-size: 0.875rem;
+  margin-inline-end: 0.375rem;
+  vertical-align: -2px;
 }

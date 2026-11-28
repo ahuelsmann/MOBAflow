@@ -176,3 +176,71 @@
 .demo-bar-button:hover {
   background: var(--surface-control-hover);
 }
+
+.demo-chrome-icon {
+  block-size: 14px;
+  flex: none;
+  inline-size: 14px;
+  margin-inline-end: 0.25rem;
+  vertical-align: -2px;
+}
+
+.demo-command-brand .demo-chrome-icon {
+  color: var(--accent-text-default);
+}
+
+[data-shell-mode]:not([data-shell-mode='full']) .demo-command-brand .demo-chrome-icon {
+  display: none;
+}
+
+.demo-command-bar .demo-bar-button,
+.demo-messages-controls .demo-bar-button[aria-expanded],
+.demo-status-bar .demo-bar-button {
+  background: transparent;
+  border-color: transparent;
+}
+
+.demo-command-bar .demo-bar-button:hover,
+.demo-status-bar .demo-bar-button:hover {
+  background: var(--surface-control-hover);
+}
+
+.demo-command-bar .demo-bar-toggle::before {
+  block-size: 20px;
+  inline-size: 40px;
+}
+
+:root:not([data-theme='light']) .demo-command-bar .demo-bar-toggle[aria-pressed='false']::before {
+  background: radial-gradient(circle at 25% center, var(--canvas-void) 4px, transparent 4.5px) var(--accent-fill-default);
+  border-color: var(--accent-fill-default);
+}
+
+.demo-message-summary {
+  color: var(--text-secondary);
+}
+
+.demo-message-filters .demo-bar-button[aria-pressed='true'] {
+  background: var(--accent-fill-emphasis);
+  border-color: var(--accent-fill-default);
+  border-radius: 6px;
+  color: var(--text-on-accent);
+  font-weight: 600;
+}
+
+.demo-status-bar {
+  background: var(--surface-layer);
+  font-size: 0.75rem;
+}
+
+.demo-status-bar li {
+  min-block-size: 31px;
+  padding-block: 0.125rem;
+}
+
+.demo-status-bar .demo-bar-button {
+  padding-block: 0.125rem;
+}
+
+.demo-track-power {
+  flex-direction: row-reverse;
+}

@@ -1,4 +1,4 @@
-import { ColumnBadge } from '../../tokens/ColumnBadge';
+import { ColumnBadge, ColumnPin } from '../../tokens/ColumnBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { defaultSources, parseExamples } from '../../examples/loader';
 import type { SignalBoxElement, SignalBoxElementType } from '../../examples/types';
@@ -283,7 +283,7 @@ export function SignalBoxPage() {
   return (
     <div className="signal-box" data-reduced-motion={reducedMotion ? 'reduce' : 'no-preference'}>
       <div className="signal-box-header moba-page-header">
-        <h1>Signal Box</h1>
+        <h1 className="sr-only">Signal Box</h1>
         <fieldset className="signal-box-toolbar" aria-label="Signal Box toolbar">
           <InertButton className="signal-box-button">Delete</InertButton>
           <InertButton className="signal-box-button">Context</InertButton>
@@ -292,7 +292,7 @@ export function SignalBoxPage() {
 
       <div className="signal-box-workbench">
         <section className="signal-box-pane moba-col moba-col--helper" aria-label="Elements">
-          <h2 className="moba-col-title"><ColumnBadge role="helper" />Elements</h2>
+          <h2 className="moba-col-title"><ColumnBadge role="helper" />Elements<ColumnPin /></h2>
           <p className="signal-box-subtitle">Drag &amp; drop onto track canvas</p>
           <ul className="signal-box-tools">
             {TOOLBOX_ITEMS.map((item) => (
@@ -386,7 +386,7 @@ export function SignalBoxPage() {
         </section>
 
         <section className="signal-box-pane signal-box-context moba-col moba-col--properties" aria-label="Context">
-          <h2 className="moba-col-title"><ColumnBadge role="properties" />{"Context"}</h2>
+          <h2 className="moba-col-title"><ColumnBadge role="properties" />Context<ColumnPin /></h2>
           <div className="signal-box-selected-summary">
             <span className="signal-box-selected-name">{selectedSignalElement.name}</span>
             <span className="signal-box-selected-system">System: {signalBox.signal.system}</span>

@@ -37,7 +37,7 @@ internal static class DemoTrackPlanAsset
             new XAttribute("y", viewBox[1]),
             new XAttribute("width", viewBox[2]),
             new XAttribute("height", viewBox[3]),
-            new XAttribute("fill", "#242424")));
+            new XAttribute("fill", "#0a0a0a")));
 
         foreach (var path in root.Elements(ns + "path"))
         {

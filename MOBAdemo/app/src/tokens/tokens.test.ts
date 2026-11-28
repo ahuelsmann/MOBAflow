@@ -86,6 +86,12 @@ describe('theme token files (FR-023)', () => {
     const bgCard = readHexToken(css, '--background-card');
     const accentText = readHexToken(css, '--accent-text-default');
     const accentFill = readHexToken(css, '--accent-fill-default');
+    const accentEmphasis = readHexToken(css, _theme === 'dark' ? '--accent-fill-tertiary' : '--accent-fill-default');
+    const onAccent = readHexToken(css, '--text-on-accent');
+    const dangerFill = readHexToken(css, '--danger-fill');
+
+    expect(contrastRatio(onAccent, accentEmphasis)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(onAccent, dangerFill)).toBeGreaterThanOrEqual(4.5);
 
     expect(contrastRatio(accentText, bgDefault)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(accentText, bgCard)).toBeGreaterThanOrEqual(4.5);

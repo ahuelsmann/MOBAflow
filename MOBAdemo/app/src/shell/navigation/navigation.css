@@ -7,7 +7,7 @@
 }
 
 .demo-nav-sidebar {
-  background: var(--background-card);
+  background: var(--surface-layer);
   border-inline-end: 1px solid var(--stroke-divider);
   padding: 0.5rem;
   overflow-y: auto;
@@ -26,7 +26,7 @@
 }
 
 .demo-nav-sidebar ul + ul {
-  border-block-start: 1px solid var(--stroke-default);
+  border-block-start: 1px solid var(--stroke-divider);
   margin-block-start: 0.375rem;
   padding-block-start: 0.375rem;
 }
@@ -92,10 +92,19 @@
 
 .demo-nav-badge {
   border: 1px solid var(--preview-badge-border);
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
   margin-inline-start: auto;
-  padding-inline: 0.25rem;
+  padding: 1px 0.375rem;
   background: var(--preview-badge-bg);
   color: var(--preview-badge-text);
+}
+
+.demo-nav-chrome {
+  color: var(--text-secondary);
+  display: grid;
+  gap: 0.375rem;
+  justify-items: start;
+  padding: 0.25rem 0.625rem 0.5rem;
 }

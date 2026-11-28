@@ -227,3 +227,45 @@
 .tc-stop[data-state='current'] .tc-stop-details {
   color: var(--text-on-accent);
 }
+
+.train-control .tc-cab-panel {
+  background: transparent;
+  border: 0;
+  padding: 0.25rem;
+}
+
+.tc-cab-grid {
+  grid-template-columns: repeat(auto-fit, 4.5rem);
+}
+
+.train-control .tc-cab-tile {
+  block-size: 4.5rem;
+  border-radius: 12px;
+  min-block-size: 0;
+}
+
+.train-control .tc-cab-brake[aria-pressed='false'] {
+  border-color: var(--cab-ok-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cab-ok-ring) 22%, transparent);
+}
+
+.train-control .tc-cab-brake[aria-pressed='true'] {
+  border-color: var(--danger-border);
+  box-shadow: none;
+}
+
+.tc-gauge-panel > .sr-only + .tc-gauge {
+  grid-row: 2;
+}
+
+.tc-gauge-meta {
+  background: var(--surface-card-secondary);
+  border-radius: 6px;
+  inline-size: 100%;
+  padding: 0.25rem;
+  text-align: center;
+}
+
+.tc-stop[data-state='current'] :is(.tc-stop-name, .tc-stop-icon) {
+  color: var(--text-on-accent);
+}

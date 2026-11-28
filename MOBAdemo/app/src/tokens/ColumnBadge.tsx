@@ -11,3 +11,11 @@ export function ColumnBadge({ role }: Readonly<{ role: keyof typeof glyphs }>) {
     </svg>
   );
 }
+
+export function ColumnPin() {
+  return (
+    <svg aria-hidden="true" className="moba-col-pin" viewBox="0 0 16 16">
+      <path d="m9 2 5 5-2 1-2 3-4-4 3-2V2ZM8 9l-5 5" fill="none" stroke="currentColor" strokeLinejoin="round" />
+    </svg>
+  );
+}

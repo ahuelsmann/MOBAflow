@@ -47,10 +47,15 @@ test.describe('MOBAdemo cross-page browser checks (slice 19)', () => {
       await page.goto('/', { waitUntil: 'networkidle' });
       await expect(page.getByRole('heading', { level: 1, name: 'Train Control' })).toBeVisible();
 
+      const nav = page.getByRole('navigation', { name: 'MOBAflow pages' });
+      await expect(nav.locator('button')).toHaveCount(22);
+      const mainButtonCounts = { 'Workflows': 19, 'Track Plan': 43, 'Signal Box': 24, 'Train Control': 40 };
+
       const origin = new URL(page.url()).origin;
       phase = 'round1';
       for (const title of ['Workflows', 'Track Plan', 'Signal Box', 'Train Control'] as const) {
         await openDemoPage(page, title);
+        await expect(page.getByRole('main').locator('button')).toHaveCount(mainButtonCounts[title]);
       }
 
       expect(badStatuses).toEqual([]);

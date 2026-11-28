@@ -5,12 +5,6 @@
   min-block-size: 100%;
 }
 
-.workflows-header {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
-
 .workflows-panes {
   align-items: stretch;
   display: grid;
@@ -365,4 +359,21 @@
     animation: none;
     transition: none;
   }
+}
+
+.workflows-page :is(.workflows-list-item[aria-pressed='false'], .workflows-toolbar button) {
+  background: transparent;
+  border-color: transparent;
+}
+
+.workflows-page .workflows-list-item[aria-pressed='true'] {
+  background: var(--selection-row-bg);
+  border-color: var(--selection-row-border);
+  box-shadow: inset 3px 0 0 var(--accent-fill-default);
+}
+
+.workflows-view-toggle .workflows-toolbar-button[aria-pressed='true'] {
+  background: var(--accent-fill-emphasis);
+  box-shadow: none;
+  color: var(--text-on-accent);
 }

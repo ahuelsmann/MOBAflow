@@ -21,9 +21,9 @@
   --text-on-accent: #ffffff;
   --danger-fill: #c42b1c;
   --danger-border: #9e1c12;
-  --preview-badge-bg: rgba(255, 138, 0, 0.14);
-  --preview-badge-border: rgba(180, 95, 0, 0.45);
-  --preview-badge-text: #8a4600;
+  --preview-badge-bg: var(--accent-fill-emphasis);
+  --preview-badge-border: var(--accent-fill-default);
+  --preview-badge-text: var(--text-on-accent);
   --col-collection-accent: #006cbe;
   --col-collection-badge-bg: rgba(0, 120, 212, 0.10);
   --col-collection-badge-border: rgba(0, 120, 212, 0.28);
@@ -34,4 +34,8 @@
   --col-properties-badge-bg: rgba(188, 68, 0, 0.10);
   --col-properties-badge-border: rgba(188, 68, 0, 0.28);
   --accent-fill-emphasis: var(--accent-fill-default);
+  --selection-row-bg: #e9dff3;
+  --selection-row-border: #956eb9;
+  --canvas-void: #f5f5f5;
+  --cab-ok-ring: #107c41;
 }

@@ -18,7 +18,7 @@ export function CurrentGauge({ currentAmps, maxCurrentAmps, trackVoltage }: Read
 
   return (
     <section className="train-control-panel tc-gauge-panel" aria-label="Track current">
-      <h2>Track current</h2>
+      <h2 className="sr-only">Track current</h2>
       <div className="tc-gauge">
         <GaugeArcSvg ratio={ratio} ticks={ticks} />
         <p className="tc-gauge-readout">

@@ -46,6 +46,10 @@ export function DemoShell() {
   return (
     <div className="demo-nav-shell">
       <aside className="demo-nav-sidebar">
+        <div className="demo-nav-chrome" aria-hidden="true">
+          <span>←</span>
+          <span>☰</span>
+        </div>
         <p hidden id={hintId}>{disabledHint}</p>
         <nav aria-label="MOBAflow pages">
           {Array.from(groups, ([category, entries]) => (

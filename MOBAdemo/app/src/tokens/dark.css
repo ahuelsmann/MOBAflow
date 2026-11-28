@@ -19,11 +19,11 @@
   --stroke-divider: #323232;
   --gauge-track-subtle: #3d3d3d;
   --text-on-accent: #ffffff;
-  --danger-fill: #c42b1c;
-  --danger-border: #a80000;
-  --preview-badge-bg: rgba(255, 138, 0, 0.18);
-  --preview-badge-border: rgba(255, 138, 0, 0.5);
-  --preview-badge-text: #ffb347;
+  --danger-fill: #8b1520;
+  --danger-border: #e81123;
+  --preview-badge-bg: var(--accent-fill-emphasis);
+  --preview-badge-border: var(--accent-fill-default);
+  --preview-badge-text: var(--text-on-accent);
   --col-collection-accent: #4cc2ff;
   --col-collection-badge-bg: rgba(76, 194, 255, 0.14);
   --col-collection-badge-border: rgba(76, 194, 255, 0.32);
@@ -34,4 +34,8 @@
   --col-properties-badge-bg: rgba(255, 140, 58, 0.14);
   --col-properties-badge-border: rgba(255, 140, 58, 0.32);
   --accent-fill-emphasis: var(--accent-fill-tertiary);
+  --selection-row-bg: #493b5b;
+  --selection-row-border: #8764b8;
+  --canvas-void: #0a0a0a;
+  --cab-ok-ring: #00e676;
 }
