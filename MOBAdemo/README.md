@@ -117,12 +117,15 @@ splits build from deployment for least privilege:
 
 1. `package` (`contents: read`, no `id-token` access) audits `package-lock.json`, runs frontend lint and unit tests,
    executes `MOBAdemo/build.ps1 -Configuration Release`, enforces the 200 KB Brotli bundle budget, publishes
-   `MOBAdemo/Host/MOBAdemo.csproj` and uploads `mobademo.zip` as a short-lived workflow artifact (`retention-days: 1`).
+   `MOBAdemo/Host/MOBAdemo.csproj` with an opaque per-package revision marker (`wwwroot/assets/revision-<token>.txt`),
+   and uploads `mobademo.zip` as a short-lived workflow artifact (`retention-days: 1`, exporting its `artifact_name`
+   job output so partial `deploy` re-runs resolve the exact artifact).
 2. `deploy` (`contents: none`, `id-token: write`, `environment: mobademo`) downloads `mobademo.zip` without checking out
-   the repository, records the expected `wwwroot/index.html` SHA-256 and hashed `/assets/*.js` and `/assets/*.css` paths
-   from the archive, deploys with `az webapp deploy --type zip --clean true --track-status false`, and polls `/` and
-   `/health` over HTTPS until the exact new `index.html` hash and its content-hashed assets are served (`200 OK`,
-   `immutable` cache policy, security headers, and `404` on `/api/runtime`).
+   the repository, records the per-package revision marker, `wwwroot/index.html` SHA-256 and hashed `/assets/*.js` and
+   `/assets/*.css` paths from the archive, deploys with `az webapp deploy --type zip --clean true --track-status false`,
+   and polls `/assets/revision-<token>.txt`, `/` and `/health` over HTTPS until the new package marker, `index.html`
+   hash and content-hashed assets are served (`200 OK`, `immutable` cache policy, security headers, and `404` on
+   `/api/runtime`).
 
 Authentication uses passwordless OpenID Connect (OIDC) federation between GitHub Actions (`id-token: write`) and
 Microsoft Entra ID (`azure/login`), gated on the `mobademo` GitHub Actions environment (whose deployment branch policy

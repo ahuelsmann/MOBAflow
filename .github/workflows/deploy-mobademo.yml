@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    outputs:
+      artifact_name: ${{ steps.archive.outputs.artifact_name }}
 
     steps:
       - name: Check out repository
@@ -97,8 +99,15 @@ jobs:
           ./MOBAdemo/Test-BundleBudget.ps1 -Path MOBAdemo/Host/wwwroot-build
 
       - name: Publish MOBAdemo host and package zip archive
+        id: archive
         shell: pwsh
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
+          $artifactName = "mobademo-package-$($env:RUN_ID)-$($env:RUN_ATTEMPT)"
+          Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value "artifact_name=$artifactName" -Encoding utf8NoBOM
+
           $publishDir = Join-Path $env:RUNNER_TEMP 'mobademo-publish'
           $artifactDir = Join-Path $env:RUNNER_TEMP 'mobademo-artifact'
           $zipPath = Join-Path $artifactDir 'mobademo.zip'
@@ -122,6 +131,12 @@ jobs:
           if ($indexHtml -notmatch '<div id="root"></div>') {
             throw 'Published wwwroot/index.html is the placeholder rather than the built React app.'
           }
+
+          # Write an opaque per-package revision marker (no host/path metadata per FR-030) so post-deploy polling
+          # proves the newly uploaded archive is live even when frontend asset hashes are unchanged.
+          $revisionToken = [Guid]::NewGuid().ToString('N')
+          $revisionFilePath = Join-Path $publishDir "wwwroot/assets/revision-$revisionToken.txt"
+          [IO.File]::WriteAllText($revisionFilePath, $revisionToken, [Text.UTF8Encoding]::new($false))
 
           Add-Type -AssemblyName System.IO.Compression
           Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -147,12 +162,12 @@ jobs:
           finally {
             $stream.Dispose()
           }
-          Write-Host "Created deployment archive: $zipPath ($((Get-Item -LiteralPath $zipPath).Length) bytes)"
+          Write-Host "Created deployment archive: $zipPath ($((Get-Item -LiteralPath $zipPath).Length) bytes, revision $revisionToken)"
 
       - name: Upload MOBAdemo deployment package
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: mobademo-package-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ steps.archive.outputs.artifact_name }}
           path: ${{ runner.temp }}/mobademo-artifact/mobademo.zip
           if-no-files-found: error
           retention-days: 1
@@ -173,7 +188,7 @@ jobs:
       - name: Download MOBAdemo deployment package
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: mobademo-package-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ needs.package.outputs.artifact_name }}
           path: ${{ runner.temp }}/mobademo-artifact
 
       - name: Extract expected revision hashes and asset paths from archive
@@ -221,6 +236,24 @@ jobs:
                 throw "Referenced asset '$zipEntryPath' is missing from mobademo.zip."
               }
             }
+
+            $revisionEntries = @($archive.Entries | Where-Object { $_.FullName -match '^wwwroot/assets/revision-([0-9a-f]{32})\.txt$' })
+            if ($revisionEntries.Count -ne 1) {
+              throw "Expected exactly one wwwroot/assets/revision-<32hex>.txt entry in mobademo.zip; found $($revisionEntries.Count)."
+            }
+            $revisionEntry = $revisionEntries[0]
+            $expectedTokenFromName = [regex]::Match($revisionEntry.FullName, '^wwwroot/assets/revision-([0-9a-f]{32})\.txt$').Groups[1].Value
+            $revReader = [IO.StreamReader]::new($revisionEntry.Open(), [Text.Encoding]::UTF8)
+            try {
+              $revisionBody = $revReader.ReadToEnd().Trim()
+            }
+            finally {
+              $revReader.Dispose()
+            }
+            if ($revisionBody -ne $expectedTokenFromName) {
+              throw 'Revision marker body in mobademo.zip does not match its filename token.'
+            }
+            $revisionPath = '/assets/revision-' + $revisionBody + '.txt'
           }
           finally {
             $archive.Dispose()
@@ -228,10 +261,13 @@ jobs:
 
           $manifestPath = Join-Path $env:RUNNER_TEMP 'mobademo-expected.json'
           @{
-            indexSha256 = $indexHash
-            assets      = @($jsPaths + $cssPaths)
+            indexSha256   = $indexHash
+            revisionPath  = $revisionPath
+            revisionToken = $revisionBody
+            assets        = @($jsPaths + $cssPaths)
           } | ConvertTo-Json -Compress | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
           Write-Host "Expected index.html SHA-256: $indexHash"
+          Write-Host "Expected package revision probe: $revisionPath"
           Write-Host "Expected hashed assets: $(($jsPaths + $cssPaths) -join ', ')"
 
       - name: Sign in to Azure with OIDC
@@ -264,6 +300,8 @@ jobs:
           $baseUrl = 'https://mobaflow-demo.azurewebsites.net'
           $expected = Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'mobademo-expected.json') -Raw | ConvertFrom-Json
           $expectedHash = [string] $expected.indexSha256
+          $expectedRevisionPath = [string] $expected.revisionPath
+          $expectedRevisionToken = [string] $expected.revisionToken
           $expectedAssets = @($expected.assets | ForEach-Object { [string] $_ })
 
           $handler = [Net.Http.HttpClientHandler]::new()
@@ -277,7 +315,11 @@ jobs:
             for ($attempt = 1; $attempt -le 24; $attempt++) {
               try {
                 $health = Invoke-WebRequest -Uri "$baseUrl/health" -Method Get -Headers @{ 'Cache-Control' = 'no-cache' } -TimeoutSec 15 -SkipHttpErrorCheck
-                if ($health.StatusCode -eq 200 -and $health.Content.Trim() -eq 'ok') {
+                $revResp = Invoke-WebRequest -Uri "$baseUrl$expectedRevisionPath" -Method Get -Headers @{ 'Cache-Control' = 'no-cache' } -TimeoutSec 15 -SkipHttpErrorCheck
+                if ($health.StatusCode -eq 200 -and
+                    $health.Content.Trim() -eq 'ok' -and
+                    $revResp.StatusCode -eq 200 -and
+                    $revResp.Content.Trim() -eq $expectedRevisionToken) {
                   $req = [Net.Http.HttpRequestMessage]::new([Net.Http.HttpMethod]::Get, "$baseUrl/")
                   $req.Headers.TryAddWithoutValidation('Accept-Encoding', 'br, gzip') | Out-Null
                   $req.Headers.TryAddWithoutValidation('Cache-Control', 'no-cache') | Out-Null
@@ -305,7 +347,7 @@ jobs:
                   }
                 }
                 else {
-                  Write-Host "Attempt ${attempt}: /health returned HTTP $($health.StatusCode)."
+                  Write-Host "Attempt ${attempt}: /health=$($health.StatusCode), $expectedRevisionPath=$($revResp.StatusCode) (waiting for new package activation)."
                 }
               }
               catch {
@@ -315,7 +357,7 @@ jobs:
             }
 
             if (-not $activated -or $null -eq $liveRootResponse) {
-              throw "Newly deployed MOBAdemo revision (index.html SHA-256 $expectedHash) did not become active at $baseUrl/ within timeout (if HTTP 403, check Azure Portal Quotas on mobaflow-demo per FR-075)."
+              throw "Newly deployed MOBAdemo package ($expectedRevisionPath, index.html SHA-256 $expectedHash) did not become active at $baseUrl/ within timeout (if HTTP 403, check Azure Portal Quotas on mobaflow-demo per FR-075)."
             }
 
             $csp = if ($liveRootResponse.Headers.Contains('Content-Security-Policy')) { $liveRootResponse.Headers.GetValues('Content-Security-Policy') -join '; ' } else { '' }
