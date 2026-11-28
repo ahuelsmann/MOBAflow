@@ -156,6 +156,7 @@
                     <ToggleButton
                         Grid.Column="2"
                         Margin="4,0"
+                        AutomationProperties.Name="Show or hide errors"
                         IsChecked="{x:Bind ViewModel.Diagnostics.ShowDiagnosticErrors, Mode=TwoWay}"
                         ToolTipService.ToolTip="Show or hide errors">
                         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -167,6 +168,7 @@
                     <ToggleButton
                         Grid.Column="3"
                         Margin="4,0"
+                        AutomationProperties.Name="Show or hide warnings"
                         IsChecked="{x:Bind ViewModel.Diagnostics.ShowDiagnosticWarnings, Mode=TwoWay}"
                         ToolTipService.ToolTip="Show or hide warnings">
                         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -178,6 +180,7 @@
                     <ToggleButton
                         Grid.Column="4"
                         Margin="4,0"
+                        AutomationProperties.Name="Show or hide information"
                         IsChecked="{x:Bind ViewModel.Diagnostics.ShowDiagnosticInformation, Mode=TwoWay}"
                         ToolTipService.ToolTip="Show or hide information">
                         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -363,6 +366,7 @@
                 <DropDownButton
                     Padding="8,4"
                     VerticalAlignment="Center"
+                    AutomationProperties.Name="Select speech provider"
                     Background="Transparent"
                     BorderThickness="0">
                     <DropDownButton.Content>

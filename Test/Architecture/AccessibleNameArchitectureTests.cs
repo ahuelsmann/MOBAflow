@@ -122,6 +122,50 @@ internal sealed class AccessibleNameArchitectureTests
         }
     }
 
+    [Test]
+    public void MainWindowButtons_HaveWinUiCompatibleAccessibleNames()
+    {
+        var root = FindRepositoryRoot();
+        var mainWindowPath = Path.Combine(root, "MOBAflow", "View", "MainWindow.xaml");
+        var xaml = File.ReadAllText(mainWindowPath);
+        var unnamed = FindUnnamedButtonsStrictWinUi(xaml);
+
+        Assert.That(unnamed, Is.Empty,
+            "MainWindow buttons with non-string content (e.g., StackPanel or DropDownButton.Content) must declare explicit AutomationProperties.Name because WinUI ContentPresenter sets AccessibilityView=Raw.");
+
+        var document = XDocument.Parse(xaml, LoadOptions.SetLineInfo);
+        var errorsToggle = document.Descendants()
+            .FirstOrDefault(e => e.Name.LocalName == "ToggleButton"
+                && (e.Attribute("IsChecked")?.Value.Contains("ShowDiagnosticErrors", StringComparison.Ordinal) ?? false));
+        var warningsToggle = document.Descendants()
+            .FirstOrDefault(e => e.Name.LocalName == "ToggleButton"
+                && (e.Attribute("IsChecked")?.Value.Contains("ShowDiagnosticWarnings", StringComparison.Ordinal) ?? false));
+        var informationToggle = document.Descendants()
+            .FirstOrDefault(e => e.Name.LocalName == "ToggleButton"
+                && (e.Attribute("IsChecked")?.Value.Contains("ShowDiagnosticInformation", StringComparison.Ordinal) ?? false));
+        var speechDropDown = document.Descendants()
+            .FirstOrDefault(e => e.Name.LocalName == "DropDownButton"
+                && e.Descendants().Any(d => d.Name.LocalName == "TextBlock"
+                    && (d.Attribute("Text")?.Value.Contains("SelectedSpeechProviderName", StringComparison.Ordinal) ?? false)));
+
+        using (Assert.EnterMultipleScope())
+        {
+            foreach (var (controlName, element) in new[]
+            {
+                ("ShowDiagnosticErrors ToggleButton", errorsToggle),
+                ("ShowDiagnosticWarnings ToggleButton", warningsToggle),
+                ("ShowDiagnosticInformation ToggleButton", informationToggle),
+                ("SelectedSpeechProvider DropDownButton", speechDropDown)
+            })
+            {
+                Assert.That(element, Is.Not.Null, $"Missing {controlName} in MainWindow.xaml.");
+                var name = element?.Attribute("AutomationProperties.Name")?.Value;
+                Assert.That(string.IsNullOrWhiteSpace(name), Is.False,
+                    $"{controlName} must declare a non-empty AutomationProperties.Name.");
+            }
+        }
+    }
+
     [TestCase("""<DropDownButton><DropDownButton.Content><StackPanel><SymbolIcon Symbol="OpenFile" /><TextBlock Text="Export" /></StackPanel></DropDownButton.Content></DropDownButton>""", true)]
     [TestCase("""<DropDownButton AutomationProperties.Name="Export options"><DropDownButton.Content><StackPanel><SymbolIcon Symbol="OpenFile" /><TextBlock Text="Export" /></StackPanel></DropDownButton.Content></DropDownButton>""", false)]
     [TestCase("""<Button AutomationProperties.Name="" Content="+" />""", true)]
