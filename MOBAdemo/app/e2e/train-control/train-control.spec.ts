@@ -109,6 +109,15 @@ test.describe('Train Control browser checks (slice 13)', () => {
       const functions = main.getByRole('region', { name: 'Functions' });
       await expect(functions.getByRole('button')).toHaveCount(32);
 
+      const driving = main.getByRole('group', { name: 'Driving settings' });
+      const drivingBox = await driving.boundingBox();
+      expect(drivingBox).not.toBeNull();
+      for (const button of await driving.getByRole('button').all()) {
+        const buttonBox = await button.boundingBox();
+        expect(buttonBox).not.toBeNull();
+        expect(buttonBox!.width).toBeCloseTo(drivingBox!.width, 1);
+      }
+
       const totalBytes = transfers.reduce((sum, item) => sum + item.encodedDataLength, 0);
       const scriptAndStyleBytes = transfers
         .filter((item) => /\.(?:mjs|js|css)(?:[?#]|$)/i.test(item.url))

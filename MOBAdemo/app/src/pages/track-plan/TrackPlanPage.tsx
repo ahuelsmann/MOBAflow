@@ -144,8 +144,8 @@ export function TrackPlanPage() {
       </div>
 
       <div className="track-plan-workspace">
-        <section className="track-plan-panel track-plan-catalogue moba-col moba-col--collection" aria-label="Piko A-Track catalogue">
-          <h2 className="moba-col-title"><ColumnBadge role="collection" />{"Piko A-Track"}</h2>
+        <section className="track-plan-panel track-plan-catalogue moba-col moba-col--helper" aria-label="Piko A-Track catalogue">
+          <h2 className="moba-col-title"><ColumnBadge role="helper" />Piko A-Track</h2>
           <div className="track-plan-catalogue-groups">
             {CATALOGUE_GROUPS.map(([category, items]) => (
               <div key={category} className="track-plan-catalogue-group">
@@ -162,8 +162,7 @@ export function TrackPlanPage() {
           </div>
         </section>
 
-        <section className="track-plan-panel track-plan-canvas-pane moba-col moba-col--helper" aria-label="Track Plan canvas">
-          <h2 className="moba-col-title"><ColumnBadge role="helper" />Layout</h2>
+        <section className="track-plan-panel track-plan-canvas-pane" aria-label="Track Plan canvas">
           <div className="track-plan-canvas-frame">
             <img
               className="track-plan-canvas-image"

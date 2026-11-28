@@ -1,6 +1,11 @@
+.train-control {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100%;
+}
+
 .train-control-header,
-.train-control-toolbar,
-.train-control-drive {
+.train-control-toolbar {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
@@ -30,6 +35,7 @@
 .train-control-panels {
   align-items: stretch;
   display: grid;
+  flex: 1;
   gap: 6px;
   grid-template-columns: minmax(11rem, 0.9fr) minmax(0, 1.8fr) minmax(12rem, 1.1fr);
   padding: 6px;
@@ -46,8 +52,14 @@
   border: 1px solid var(--stroke-default);
   border-radius: 0.5rem;
   color: var(--text-primary);
+  min-block-size: 0;
   min-inline-size: 0;
   padding: 0.75rem;
+}
+
+.train-control-panel:not(.tc-gauge-panel) {
+  display: flex;
+  flex-direction: column;
 }
 
 .train-control-panel h2 {
@@ -152,8 +164,23 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.train-control-drive .demo-inert-control,
+.train-control-button {
+  inline-size: 100%;
+}
+
+.train-control-button {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  text-align: start;
+}
+
 .train-control-functions {
-  max-block-size: 32rem;
+  /* Keep the list from determining the height of the three-column grid. */
+  contain: size;
+  flex: 1;
+  min-block-size: 0;
   overflow-y: auto;
   padding: 3px;
 }

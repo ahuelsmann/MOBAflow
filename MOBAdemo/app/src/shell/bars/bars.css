@@ -90,7 +90,6 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  grid-template-columns: minmax(14rem, 1fr) auto auto auto;
 }
 
 .demo-message-list {
@@ -107,7 +106,7 @@
 .demo-status-bar ul {
   border-block-start: 1px solid var(--stroke-default);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, auto));
+  grid-template-columns: minmax(14rem, 1fr) auto auto auto;
 }
 
 .demo-status-bar li {

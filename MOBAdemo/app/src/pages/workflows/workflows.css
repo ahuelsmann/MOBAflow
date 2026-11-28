@@ -1,6 +1,8 @@
 .workflows-page {
   color: var(--text-primary);
-  padding-block-end: 1rem;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100%;
 }
 
 .workflows-header {
@@ -12,6 +14,7 @@
 .workflows-panes {
   align-items: stretch;
   display: grid;
+  flex: 1;
   gap: 6px;
   grid-template-columns: 11.5rem minmax(0, 1fr) 13rem;
   padding: 6px;

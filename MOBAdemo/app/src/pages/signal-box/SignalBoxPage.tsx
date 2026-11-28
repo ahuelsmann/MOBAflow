@@ -291,8 +291,8 @@ export function SignalBoxPage() {
       </div>
 
       <div className="signal-box-workbench">
-        <section className="signal-box-pane moba-col moba-col--collection" aria-label="Elements">
-          <h2 className="moba-col-title"><ColumnBadge role="collection" />{"Elements"}</h2>
+        <section className="signal-box-pane moba-col moba-col--helper" aria-label="Elements">
+          <h2 className="moba-col-title"><ColumnBadge role="helper" />Elements</h2>
           <p className="signal-box-subtitle">Drag &amp; drop onto track canvas</p>
           <ul className="signal-box-tools">
             {TOOLBOX_ITEMS.map((item) => (
@@ -312,9 +312,9 @@ export function SignalBoxPage() {
           </div>
         </section>
 
-        <section className="signal-box-pane moba-col moba-col--helper" aria-label="Signal box canvas">
+        <section className="signal-box-pane signal-box-canvas-pane" aria-label="Signal box canvas">
           <div className="signal-box-canvas-header">
-            <h2 className="moba-col-title"><ColumnBadge role="helper" />{"Track Layout"}</h2>
+            <h2>Track Layout</h2>
             <ul className="signal-box-legend" aria-label="Element legend">
               <li className="signal-box-legend-item">
                 <span className="signal-box-swatch signal-box-swatch-straight" aria-hidden="true" />
