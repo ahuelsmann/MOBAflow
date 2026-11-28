@@ -167,6 +167,7 @@ reference files are missing.
 
 - Architecture and layers: `docs/developer/ARCHITECTURE.md`
 - JSON validation and solution format: `docs/developer/JSON-VALIDATION.md`
+- Offline desktop UIA smoke and accessibility check: `docs/developer/DESKTOP-UIA-SMOKE.md`
 - Hardware and liability notices: `docs/user/HARDWARE-DISCLAIMER.md`
 - Third-party licenses: `docs/user/THIRD-PARTY-NOTICES.md`
 - User wiki: `docs/wiki/INDEX.md`
